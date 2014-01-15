@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{ea7a7a24-bdc7-4f7c-8582-416f65fdf131}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\YAWL">
+      <UniqueIdentifier>{a814bc67-fdfd-42af-ace9-1b12fa498369}</UniqueIdentifier>
+      <Extensions>*.cpp</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{13d9f901-5303-45e1-8c7f-0c38a4fc923e}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\yawl">
+      <UniqueIdentifier>{4febf17a-e9e5-4e48-8f66-7d97d8eee926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{c159ca8f-af9a-492a-8470-00ca3f08fe23}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="gui_ext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\MWCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_cntrls.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_data.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_dialogs.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_ini.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_layout.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_menu.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_modal.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_splitter.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+    <ClCompile Include="yawl\twl_toolbar.cpp">
+      <Filter>Source Files\YAWL</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="yawl\MWCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\Twl.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_cntrls.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_data.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_dialogs.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_imagelist.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_ini.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_keys.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_layout.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_listview.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_menu.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_modal.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_splitter.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_string.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_tab.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_toolbar.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+    <ClInclude Include="yawl\twl_treeview.h">
+      <Filter>Header Files\yawl</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
