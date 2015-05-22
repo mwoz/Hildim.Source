@@ -1,0 +1,6 @@
+; mblua.def : Declares the module parameters for the DLL.
+
+LIBRARY      "mblua"
+
+EXPORTS
+    ; Explicit exports can go here
