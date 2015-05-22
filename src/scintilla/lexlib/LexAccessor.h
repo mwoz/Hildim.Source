@@ -29,11 +29,8 @@ private:
 	int codePage;
 	enum EncodingType encodingType;
 	int lenDoc;
-	int mask;
 	char styleBuf[bufferSize];
 	int validLen;
-	char chFlags;
-	char chWhile;
 	unsigned int startSeg;
 	int startPosStyling;
 	int documentVersion;
@@ -53,14 +50,17 @@ private:
 	}
 
 public:
-	LexAccessor(IDocument *pAccess_) :
+	explicit LexAccessor(IDocument *pAccess_) :
 		pAccess(pAccess_), startPos(extremePosition), endPos(0),
-		codePage(pAccess->CodePage()), 
+		codePage(pAccess->CodePage()),
 		encodingType(enc8bit),
 		lenDoc(pAccess->Length()),
-		mask(127), validLen(0), chFlags(0), chWhile(0),
-		startSeg(0), startPosStyling(0), 
+		validLen(0),
+		startSeg(0), startPosStyling(0),
 		documentVersion(pAccess->Version()) {
+		// Prevent warnings by static analyzers about uninitialized buf and styleBuf.
+		buf[0] = 0;
+		styleBuf[0] = 0;
 		switch (codePage) {
 		case 65001:
 			encodingType = encUnicode;
@@ -79,6 +79,12 @@ public:
 		}
 		return buf[position - startPos];
 	}
+	IDocumentWithLineEnd *MultiByteAccess() const {
+		if (documentVersion >= dvLineEnd) {
+			return static_cast<IDocumentWithLineEnd *>(pAccess);
+		}
+		return 0;
+	}
 	/** Safe version of operator[], returning a defined value for invalid position. */
 	char SafeGetCharAt(int position, char chDefault=' ') {
 		if (position < startPos || position >= endPos) {
@@ -90,7 +96,7 @@ public:
 		}
 		return buf[position - startPos];
 	}
-	bool IsLeadByte(char ch) {
+	bool IsLeadByte(char ch) const {
 		return pAccess->IsDBCSLeadByte(ch);
 	}
 	EncodingType Encoding() const {
@@ -104,13 +110,13 @@ public:
 		}
 		return true;
 	}
-	char StyleAt(int position) {
-		return static_cast<char>(pAccess->StyleAt(position) & mask);
+	char StyleAt(int position) const {
+		return static_cast<char>(pAccess->StyleAt(position));
 	}
-	int GetLine(int position) {
+	int GetLine(int position) const {
 		return pAccess->LineFromPosition(position);
 	}
-	int LineStart(int line) {
+	int LineStart(int line) const {
 		return pAccess->LineStart(line);
 	}
 	int LineEnd(int line) {
@@ -126,36 +132,29 @@ public:
 				return startNext - 1;
 		}
 	}
-	int LevelAt(int line) {
+	int LevelAt(int line) const {
 		return pAccess->GetLevel(line);
 	}
 	int Length() const {
 		return lenDoc;
 	}
 	void Flush() {
-		startPos = extremePosition;
 		if (validLen > 0) {
 			pAccess->SetStyles(validLen, styleBuf);
 			startPosStyling += validLen;
 			validLen = 0;
 		}
 	}
-	int GetLineState(int line) {
+	int GetLineState(int line) const {
 		return pAccess->GetLineState(line);
 	}
 	int SetLineState(int line, int state) {
 		return pAccess->SetLineState(line, state);
 	}
 	// Style setting
-	void StartAt(unsigned int start, char chMask=31) {
-		// Store the mask specified for use with StyleAt.
-		mask = chMask;
-		pAccess->StartStyling(start, chMask);
+	void StartAt(unsigned int start) {
+		pAccess->StartStyling(start, '\377');
 		startPosStyling = start;
-	}
-	void SetFlags(char chFlags_, char chWhile_) {
-		chFlags = chFlags_;
-		chWhile = chWhile_;
 	}
 	unsigned int GetStartSegment() const {
 		return startSeg;
@@ -166,7 +165,7 @@ public:
 	void ColourTo(unsigned int pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
-			//assert(pos >= startSeg);
+			assert(pos >= startSeg);
 			if (pos < startSeg) {
 				return;
 			}
@@ -177,9 +176,6 @@ public:
 				// Too big for buffer so send directly
 				pAccess->SetStyleFor(pos - startSeg + 1, static_cast<char>(chAttr));
 			} else {
-				if (chAttr != chWhile)
-					chFlags = 0;
-				chAttr = static_cast<char>(chAttr | chFlags);
 				for (unsigned int i = startSeg; i <= pos; i++) {
 					assert((startPosStyling + validLen) < Length());
 					styleBuf[validLen++] = static_cast<char>(chAttr);

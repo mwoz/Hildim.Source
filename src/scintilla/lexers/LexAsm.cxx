@@ -150,8 +150,10 @@ class LexerAsm : public ILexer {
 	WordList directives4foldend;
 	OptionsAsm options;
 	OptionSetAsm osAsm;
+	int commentChar;
 public:
-	LexerAsm() {
+	LexerAsm(int commentChar_) {
+		commentChar = commentChar_;
 	}
 	virtual ~LexerAsm() {
 	}
@@ -183,7 +185,11 @@ public:
 	}
 
 	static ILexer *LexerFactoryAsm() {
-		return new LexerAsm();
+		return new LexerAsm(';');
+	}
+
+	static ILexer *LexerFactoryAs() {
+		return new LexerAsm('#');
 	}
 };
 
@@ -343,9 +349,9 @@ void SCI_METHOD LexerAsm::Lex(unsigned int startPos, int length, int initStyle, 
 
 		// Determine if a new state should be entered.
 		if (sc.state == SCE_ASM_DEFAULT) {
-			if (sc.ch == ';'){
+			if (sc.ch == commentChar){
 				sc.SetState(SCE_ASM_COMMENT);
-			} else if (isascii(sc.ch) && (isdigit(sc.ch) || (sc.ch == '.' && isascii(sc.chNext) && isdigit(sc.chNext)))) {
+			} else if (IsASCII(sc.ch) && (isdigit(sc.ch) || (sc.ch == '.' && IsASCII(sc.chNext) && isdigit(sc.chNext)))) {
 				sc.SetState(SCE_ASM_NUMBER);
 			} else if (IsAWordStart(sc.ch)) {
 				sc.SetState(SCE_ASM_IDENTIFIER);
@@ -458,4 +464,5 @@ void SCI_METHOD LexerAsm::Fold(unsigned int startPos, int length, int initStyle,
 }
 
 LexerModule lmAsm(SCLEX_ASM, LexerAsm::LexerFactoryAsm, "asm", asmWordListDesc);
+LexerModule lmAs(SCLEX_AS, LexerAsm::LexerFactoryAs, "as", asmWordListDesc);
 

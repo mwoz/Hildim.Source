@@ -24,7 +24,7 @@ class CallTip {
 	SplitVector<int> startHighlight;    // character offset to start and...
 	SplitVector<int> endHighlight;      // ...end of highlighted text
 //!-end-[BetterCalltips]
-	char *val;
+	std::string val;
 	Font font;
 	PRectangle rectUp;      // rectangle of last up angle in the tip
 	PRectangle rectDown;    // rectangle of last down arrow in the tip
@@ -44,7 +44,7 @@ class CallTip {
 //!	int PaintContents(Surface *surfaceWindow, bool draw);
 	PRectangle PaintContents(Surface *surfaceWindow, bool draw); //!-change-[BetterCalltips]
 	bool IsTabCharacter(char c) const;
-	int NextTabPos(int x);
+	int NextTabPos(int x) const;
 	void WrapLine(const char *text, int offset, int length, SplitVector<int> &wrapPosList); //!-add-[BetterCalltips]
 
 public:
