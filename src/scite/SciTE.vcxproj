@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C9A4D8FA-927A-4951-9622-43C783955E60}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>SciTE</RootNamespace>
+    <SccProjectName>Svn</SccProjectName>
+    <SccAuxPath>Svn</SccAuxPath>
+    <SccLocalPath>Svn</SccLocalPath>
+    <SccProvider>SubversionScc</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>.\$(Configuration)\</OutDir>
+    <IntDir>.\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>.\$(Configuration)\</OutDir>
+    <IntDir>.\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\include;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OutputFile>$(SolutionDir)$(Configuration)\SciTe.exe</OutputFile>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;./$(Configuration)/lua.lib;$(SolutionDir)\iup\lib\iupluacontrols51.lib;$(SolutionDir)\iup\cdlib\cd.lib;$(SolutionDir)\iup\cdlib\freetype6.lib;$(SolutionDir)\iup\cdlib\cdlua51.lib;$(SolutionDir)\iup\cdlib\cdcontextplus.lib;$(SolutionDir)\iup\cdlib\zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>.\Debug/SciTE.pdb</ProgramDatabaseFile>
+      <ProfileGuidedDatabase>$(OutDir)$(TargetName).pgd</ProfileGuidedDatabase>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;NDEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\include;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(SolutionDir)$(Configuration)\SciTe.exe</OutputFile>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;./$(Configuration)/lua.lib;$(SolutionDir)\iup\lib\iupluacontrols51.lib;$(SolutionDir)\iup\cdlib\cd.lib;$(SolutionDir)\iup\cdlib\freetype6.lib;$(SolutionDir)\iup\cdlib\cdlua51.lib;$(SolutionDir)\iup\cdlib\cdcontextplus.lib;$(SolutionDir)\iup\cdlib\zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="lua\include\lauxlib.h" />
+    <ClInclude Include="lua\src\lapi.h" />
+    <ClInclude Include="lua\src\lcode.h" />
+    <ClInclude Include="lua\src\ldebug.h" />
+    <ClInclude Include="lua\src\ldo.h" />
+    <ClInclude Include="lua\src\lfunc.h" />
+    <ClInclude Include="lua\src\lgc.h" />
+    <ClInclude Include="lua\src\llex.h" />
+    <ClInclude Include="lua\src\llimits.h" />
+    <ClInclude Include="lua\src\lmem.h" />
+    <ClInclude Include="lua\src\lobject.h" />
+    <ClInclude Include="lua\src\lopcodes.h" />
+    <ClInclude Include="lua\src\lparser.h" />
+    <ClInclude Include="lua\src\lstate.h" />
+    <ClInclude Include="lua\src\lstring.h" />
+    <ClInclude Include="lua\src\ltable.h" />
+    <ClInclude Include="lua\src\ltm.h" />
+    <ClInclude Include="lua\src\lundump.h" />
+    <ClInclude Include="lua\src\lvm.h" />
+    <ClInclude Include="lua\src\lzio.h" />
+    <ClInclude Include="src\Containers.h" />
+    <ClInclude Include="src\Extender.h" />
+    <ClInclude Include="src\FilePath.h" />
+    <ClInclude Include="src\GUI.h" />
+    <ClInclude Include="src\IFaceTable.h" />
+    <ClInclude Include="src\JobQueue.h" />
+    <ClInclude Include="src\LuaExtension.h" />
+    <ClInclude Include="src\MultiplexExtension.h" />
+    <ClInclude Include="src\Mutex.h" />
+    <ClInclude Include="src\PropSetFile.h" />
+    <ClInclude Include="src\SciTE.h" />
+    <ClInclude Include="src\SciTEBase.h" />
+    <ClInclude Include="src\SciTEKeys.h" />
+    <ClInclude Include="src\scite_lua_win.h" />
+    <ClInclude Include="src\SString.h" />
+    <ClInclude Include="src\StringHelpers.h" />
+    <ClInclude Include="src\StringList.h" />
+    <ClInclude Include="src\StyleWriter.h" />
+    <ClInclude Include="src\Utf8_16.h" />
+    <ClInclude Include="win32\DirectorExtension.h" />
+    <ClInclude Include="win32\resource.h" />
+    <ClInclude Include="win32\SciTEWin.h" />
+    <ClInclude Include="win32\SingleThreadExtension.h" />
+    <ClInclude Include="win32\UniqueInstance.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="win32\DragDrop.cur" />
+    <None Include="win32\resource" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="win32\SciTERes.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\users\mwoz\documents\vs2010imagelibrary\objects\bmp_format\office and vs\bitmap1.bmp" />
+    <Image Include="win32\around.bmp" />
+    <Image Include="win32\backslash.bmp" />
+    <Image Include="win32\bitmap1.bmp" />
+    <Image Include="win32\buttons.bmp" />
+    <Image Include="win32\case.bmp" />
+    <Image Include="win32\icon1.ico" />
+    <Image Include="win32\regex.bmp" />
+    <Image Include="win32\SciBall.ico" />
+    <Image Include="win32\SciTE-file.ico" />
+    <Image Include="win32\SciTE-ses.ico" />
+    <Image Include="win32\up.bmp" />
+    <Image Include="win32\word.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Exporters.cxx" />
+    <ClCompile Include="src\FilePath.cxx" />
+    <ClCompile Include="src\IFaceTable.cxx" />
+    <ClCompile Include="src\JobQueue.cxx" />
+    <ClCompile Include="src\LuaExtension.cxx" />
+    <ClCompile Include="src\MultiplexExtension.cxx" />
+    <ClCompile Include="src\PropSetFile.cxx" />
+    <ClCompile Include="src\SciTEBase.cxx" />
+    <ClCompile Include="src\SciTEBuffers.cxx" />
+    <ClCompile Include="src\SciTEIO.cxx" />
+    <ClCompile Include="src\SciTEProps.cxx" />
+    <ClCompile Include="src\StringHelpers.cxx" />
+    <ClCompile Include="src\StringList.cxx" />
+    <ClCompile Include="src\StyleWriter.cxx" />
+    <ClCompile Include="src\Utf8_16.cxx" />
+    <ClCompile Include="win32\DirectorExtension.cxx" />
+    <ClCompile Include="win32\GUIWin.cxx" />
+    <ClCompile Include="win32\IupLayoutWnd.cpp" />
+    <ClCompile Include="win32\SciTEWin.cxx" />
+    <ClCompile Include="win32\SciTEWinBar.cxx" />
+    <ClCompile Include="win32\SciTEWinDlg.cxx" />
+    <ClCompile Include="win32\SingleThreadExtension.cxx" />
+    <ClCompile Include="win32\UniqueInstance.cxx" />
+    <ClCompile Include="win32\WinMutex.cxx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="win32\SciTE.exe.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\iup\scitePr\iuplua51.vcxproj">
+      <Project>{1ebc7a53-4677-4c3a-8d4a-49d301f17d85}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\iup\scitePr\iupluacontrols51.vcxproj">
+      <Project>{1ebc7a53-4677-75d7-8d4a-49d301f17d85}</Project>
+    </ProjectReference>
+    <ProjectReference Include="lua\lua.vcxproj">
+      <Project>{651dbab5-138e-4bce-b0d1-ea7cb249da89}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

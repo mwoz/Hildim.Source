@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{f07a257e-1d90-4887-833e-57a0a9356411}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\mb">
+      <UniqueIdentifier>{ca8eb34a-72b9-4cbc-a5a4-05130dfd51a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{652b7122-8e95-4cef-a542-db76a350dc65}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\mb">
+      <UniqueIdentifier>{3d42faee-ffe2-4005-8ef2-7a17aa4551cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{bfc2650f-4d83-4803-9606-c38ff0048d9b}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="L_mbConnector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mblua.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mblua_util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\Http\HttpServerSocket.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbMonitorAgent.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbSocket.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbStreamSocket.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransport.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\md5.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\Http\ServerSocket.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StatHtmlGen.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\stmStreamBuffer.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\stmSubjectsWatchlist.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StringBuffer.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StringTokenizer.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysLog.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysRegistry.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxDynamicBuffer.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxlib_misc.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxMessage.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxSocket.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\TypedStorage.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WinAuth.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WMIquery.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransportBase.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMFSocketStream.cpp">
+      <Filter>Header Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysData.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="mblua.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="res\mplua.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\mplua.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="mblua1.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="L_mbConnector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mblua.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mblua_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\Http\HttpServerSocket.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbMonitorAgent.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbProtocol.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbSocket.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbStreamSocket.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransport.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\md5.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\Http\ServerSocket.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StatHtmlGen.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\stmStreamBuffer.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\stmSubjectsWatchlist.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StringBuffer.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StringTokenizer.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysLog.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysRegistry.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxDynamicBuffer.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxlib_misc.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxMessage.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxSocket.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\TypedStorage.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WinAuth.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WMIquery.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\ZLIB\infblock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransportBase.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
