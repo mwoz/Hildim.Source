@@ -34,20 +34,6 @@ using namespace Scintilla;
 #define KW_MSSQL_FUNCTIONS          4
 #define KW_MSSQL_STORED_PROCEDURES  5
 #define KW_MSSQL_OPERATORS          6
-#define KW_MSSQL_M4KEYS             7
-
-static bool isMSSQLOperator(char ch) {
-	if (isascii(ch) && isalnum(ch))
-		return false;
-	// '.' left out as it is used to make up numbers
-	if (ch == '%' || ch == '^' || ch == '&' || ch == '*' ||
-        ch == '-' || ch == '+' || ch == '=' || ch == '|' ||
-        ch == '<' || ch == '>' || ch == '/' ||
-        ch == '!' || ch == '~' || ch == '(' || ch == ')' ||
-		ch == ',')
-		return true;
-	return false;
-}
 
 static char classifyWordSQL(unsigned int start,
                             unsigned int end,
@@ -64,8 +50,7 @@ static char classifyWordSQL(unsigned int start,
     WordList &kwGlobalVariables     = *keywordlists[KW_MSSQL_GLOBAL_VARIABLES];
     WordList &kwFunctions           = *keywordlists[KW_MSSQL_FUNCTIONS];
     WordList &kwStoredProcedures    = *keywordlists[KW_MSSQL_STORED_PROCEDURES];
-	WordList &kwOperators			= *keywordlists[KW_MSSQL_OPERATORS];
-	WordList &kwM4Keys				= *keywordlists[KW_MSSQL_M4KEYS];
+    WordList &kwOperators           = *keywordlists[KW_MSSQL_OPERATORS];
 
 	for (unsigned int i = 0; i < end - start + 1 && i < 128; i++) {
 		s[i] = static_cast<char>(tolower(styler[start + i]));
@@ -95,10 +80,8 @@ static char classifyWordSQL(unsigned int start,
             chAttr = SCE_MSSQL_FUNCTION;
 		else if (kwStoredProcedures.InList(s))
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
-		else if (kwM4Keys.InList(s))
-			chAttr = SCE_MSSQL_M4KEYS;
-	}
-	else {
+
+	} else {
 		if (kwOperators.InList(s))
 			chAttr = SCE_MSSQL_OPERATOR;
 		else if (kwStatements.InList(s))
@@ -111,8 +94,6 @@ static char classifyWordSQL(unsigned int start,
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
 		else if (kwDataTypes.InList(s))
 			chAttr = SCE_MSSQL_DATATYPE;
-		else if (kwM4Keys.InList(s))
-			chAttr = SCE_MSSQL_M4KEYS;
 	}
 
 	styler.ColourTo(end, chAttr);
@@ -163,23 +144,21 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 		}
 
 		// When the last char isn't part of the state (have to deal with it too)...
-		if ((state == SCE_MSSQL_IDENTIFIER) ||
-			(state == SCE_MSSQL_STORED_PROCEDURE) ||
-			(state == SCE_MSSQL_DATATYPE) ||
-			(state == SCE_MSSQL_M4KEYS) ||
-			//~ (state == SCE_MSSQL_COLUMN_NAME) ||
-			(state == SCE_MSSQL_FUNCTION) ||
-			//~ (state == SCE_MSSQL_GLOBAL_VARIABLE) ||
-			(state == SCE_MSSQL_VARIABLE)) {
+		if ( (state == SCE_MSSQL_IDENTIFIER) ||
+                    (state == SCE_MSSQL_STORED_PROCEDURE) ||
+                    (state == SCE_MSSQL_DATATYPE) ||
+                    //~ (state == SCE_MSSQL_COLUMN_NAME) ||
+                    (state == SCE_MSSQL_FUNCTION) ||
+                    //~ (state == SCE_MSSQL_GLOBAL_VARIABLE) ||
+                    (state == SCE_MSSQL_VARIABLE)) {
 			if (!iswordchar(ch)) {
 				int stateTmp;
 
-				if ((state == SCE_MSSQL_VARIABLE) || (state == SCE_MSSQL_COLUMN_NAME)) {
-					styler.ColourTo(i - 1, state);
+                if ((state == SCE_MSSQL_VARIABLE) || (state == SCE_MSSQL_COLUMN_NAME)) {
+                    styler.ColourTo(i - 1, state);
 					stateTmp = state;
-				}
-				else
-					stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
+                } else
+                    stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
 
 				prevState = state;
 
@@ -187,12 +166,6 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 					state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
 				else
 					state = SCE_MSSQL_DEFAULT;
-			}
-		} else if(state == SCE_MSSQL_SYSMCONSTANTS){
-			if (!iswordchar(ch) || ch == '.') {
-				styler.ColourTo(i - 1, state);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
 			}
 		} else if (state == SCE_MSSQL_LINE_COMMENT) {
 			if (ch == '\r' || ch == '\n') {
@@ -210,15 +183,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 
 		// If is the default or one of the above succeeded
 		if (state == SCE_MSSQL_DEFAULT || state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
-			if ((chPrev == '\r' || chPrev == '\n' || i == startPos) && ch == 'd' && chNext == 'n' && styler.SafeGetCharAt(i + 2) == 'l') {	//)
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_LINE_COMMENT;
-			}else if (ch == '_' && chNext == '_'){
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_SYSMCONSTANTS;
-			}else if (iswordstart(ch)) {
+			if (iswordstart(ch)) {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_IDENTIFIER;
@@ -226,7 +191,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_COMMENT;
-			} else if ((ch == '-' && chNext == '-') ) {
+			} else if (ch == '-' && chNext == '-') {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_LINE_COMMENT;
@@ -242,12 +207,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_COLUMN_NAME_2;
-			} else if (ch == '{' || ch == '}') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				styler.ColourTo(i, SCE_MSSQL_M4KBRASHES);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
-			} else if (isMSSQLOperator(ch)) {
+			} else if (isoperator(ch)) {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				styler.ColourTo(i, SCE_MSSQL_OPERATOR);
                 //~ style = SCE_MSSQL_DEFAULT;
@@ -261,7 +221,8 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 //                    i += 2;
                 } else
                     state = SCE_MSSQL_VARIABLE;
-			}
+            }
+
 
 		// When the last char is part of the state...
 		} else if (state == SCE_MSSQL_COMMENT) {
@@ -325,14 +286,14 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
 	char chNext = styler[startPos];
-	bool inComment = (styler.StyleAt(startPos - 1) == SCE_MSSQL_COMMENT);
-	char s[15];
+	bool inComment = (styler.StyleAt(startPos-1) == SCE_MSSQL_COMMENT);
+    char s[10] = "";
 	for (unsigned int i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 		int style = styler.StyleAt(i);
 		bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
-		// Comment folding
+        // Comment folding
 		if (foldComment) {
 			if (!inComment && (style == SCE_MSSQL_COMMENT))
 				levelCurrent++;
@@ -340,92 +301,24 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 				levelCurrent--;
 			inComment = (style == SCE_MSSQL_COMMENT);
 		}
-		if (style == SCE_MSSQL_M4KBRASHES){
-			if (ch == '{')
-				levelCurrent++;
-			else 
-				levelCurrent--;
-		}if (style == SCE_MSSQL_STATEMENT) {
-			// Folding between begin or case and end
-			char c = static_cast<char>(tolower(ch));
-			if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
-				unsigned int j;
-				for (j = 0; j < 6; j++) {
+        if (style == SCE_MSSQL_STATEMENT) {
+            // Folding between begin or case and end
+            if (ch == 'b' || ch == 'B' || ch == 'c' || ch == 'C' || ch == 'e' || ch == 'E') {
+                for (unsigned int j = 0; j < 5; j++) {
 					if (!iswordchar(styler[i + j])) {
 						break;
 					}
 					s[j] = static_cast<char>(tolower(styler[i + j]));
 					s[j + 1] = '\0';
-				}
-				unsigned int ii = i + j;
-
+                }
 				if ((strcmp(s, "begin") == 0) || (strcmp(s, "case") == 0)) {
 					levelCurrent++;
-					unsigned int l;
-					char sNext[200];
-					sNext[0] = '\0';
-					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
-					if (l < 200)
-					{
-						unsigned int k;
-						for (k = 0; k < 200; k++)
-						{
-							if (!iswordchar(styler[ii + k + l])) break;
-							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
-							sNext[k] = styler[ii + k + l];
-							sNext[k + 1] = '\0';
-						}
-						_strlwr_s(sNext, 200);
-						if ((strcmp(sNext, "transaction") == 0)){//не фолдим начало транзакции
-							levelCurrent--;
-						}
-					}
 				}
-				else if (strcmp(s, "create") == 0){
-					unsigned int l;
-					char sNext[200];
-					sNext[0] = '\0';
-					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
-					if (l < 200)
-					{
-						unsigned int k;
-						for (k = 0; k < 200; k++)
-						{
-							if (!iswordchar(styler[ii + k + l])) break;
-							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
-							sNext[k] = styler[ii + k + l];
-							sNext[k + 1] = '\0';
-						}
-						_strlwr_s(sNext, 200);
-						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0)){//не фолдим начало транзакции
-							if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK)) levelCurrent++;
-						}
-
-					}
-				}
-				else if (strcmp(s, "end") == 0) {
+				if (strcmp(s, "end") == 0) {
 					levelCurrent--;
 				}
-				else if (strcmp(s, "go") == 0){
-					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
-				}
-			}
-		}if (style == SCE_MSSQL_SYSMCONSTANTS) {
-			char c = static_cast<char>(tolower(ch));
-			if (c == '_' ) {
-				unsigned int j;
-				for (j = 0; j < 13; j++) {
-					if (!iswordchar(styler[i + j])) {
-						break;
-					}
-					s[j] = static_cast<char>(tolower(styler[i + j]));
-					s[j + 1] = '\0';
-				}
-				if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0){
-					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
-				}
-			}
-		}
+            }
+        }
 		if (atEOL) {
 			int lev = levelPrev;
 			if (visibleChars == 0 && foldCompact)

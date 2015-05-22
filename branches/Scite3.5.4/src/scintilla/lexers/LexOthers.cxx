@@ -41,7 +41,7 @@ static bool Is1To9(char ch) {
 }
 
 static bool IsAlphabetic(int ch) {
-	return isascii(ch) && isalpha(ch);
+	return IsASCII(ch) && isalpha(ch);
 }
 
 static inline bool AtEOL(Accessor &styler, unsigned int i) {
@@ -119,69 +119,6 @@ static unsigned int GetBatchVarLen(char *wordBuffer, unsigned int wbl)
 		}
 	}
 	return 0;
-}
-
-/** similar to InList, but keyword can be a substring of word s.
- * eg. the keyword define is defined as def~ or def~e. This means the word must
- * start with def and finished with e to be a keyword, but also may have any
- * symbols instead of marker.
- * The marker is ~ in this case.
- * Returns in mainLen - the length of starting part and in finLen - final part.
- */
-static bool InListPartly(WordList &wl,const char *s, const char marker, int &mainLen, int &finLen) {
-	if (0 == wl.words || !*s) {
-		mainLen = finLen = 0;
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = wl.starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)wl.words[j][0] == firstChar) {
-			if (s[1] == wl.words[j][1]) {
-				const char *a = wl.words[j] + 1;
-				const char *b = s + 1;
-				mainLen = finLen = 0;
-				while (*a && *a != marker && *a == *b) {
-					a++;
-					b++;
-					mainLen++;
-				}
-				if (!*a && !*b)
-					return true;
-				if (*a == marker) {
-					while (*a) a++;
-					while (*b) b++;
-					finLen = -1;
-					while (*a != marker && *a == *b) {
-						a--;
-						b--;
-						finLen++;
-					}
-					if (*a == marker)
-						return true;
-				}
-			}
-			j++;
-		}
-	}
-	j = wl.starts['^'];
-	if (j >= 0) {
-		while (wl.words[j][0] == '^') {
-			const char *a = wl.words[j] + 1;
-			const char *b = s;
-			mainLen = finLen = 0;
-			while (*a && *a == *b) {
-				a++;
-				b++;
-				mainLen++;
-			}
-			if (!*a)
-				return true;
-			j++;
-		}
-	}
-	mainLen = finLen = 0;
-	return false;
 }
 //!-end-[BatchLexerImprovement]
 
@@ -956,13 +893,16 @@ static char ColourisePropsLine( // return last style //!-change-[PropsColouriseF
 						indent++;
 					}
 					int len=0, fin=0;
-					if (InListPartly(*keywordlists[0],lineBuffer, '~', len, fin)) {
+					if ((*keywordlists[0]).InListPartly(lineBuffer, '~', len, fin)) {
 						chAttr = SCE_PROPS_KEYSSET0;
-					} else if (InListPartly(*keywordlists[1],lineBuffer, '~', len, fin)) {
+					}
+					else if ((*keywordlists[1]).InListPartly(lineBuffer, '~', len, fin)) {
 						chAttr = SCE_PROPS_KEYSSET1;
-					} else if (InListPartly(*keywordlists[2],lineBuffer, '~', len, fin)) {
+					}
+					else if ((*keywordlists[2]).InListPartly(lineBuffer, '~', len, fin)) {
 						chAttr = SCE_PROPS_KEYSSET2;
-					} else if (InListPartly(*keywordlists[3],lineBuffer, '~', len, fin)) {
+					}
+					else if ((*keywordlists[3]).InListPartly(lineBuffer, '~', len, fin)) {
 						chAttr = SCE_PROPS_KEYSSET3;
 					} else {
 						chAttr = SCE_PROPS_KEY;
@@ -1269,8 +1209,9 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 	        (strstr(lineBuffer, " at ") < (lineBuffer + lengthLine)) &&
 	           strstr(lineBuffer, " line ") &&
 	           (strstr(lineBuffer, " line ") < (lineBuffer + lengthLine)) &&
-	        (strstr(lineBuffer, " at ") < (strstr(lineBuffer, " line ")))) {
-		// perl error message
+	        (strstr(lineBuffer, " at ") + 4 < (strstr(lineBuffer, " line ")))) {
+		// perl error message:
+		// <message> at <file> line <line>
 		return SCE_ERR_PERL;
 	} else if ((memcmp(lineBuffer, "   at ", 6) == 0) &&
 	           strstr(lineBuffer, ":line ")) {
@@ -1300,15 +1241,16 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 		// Common: <filename>(<line>): warning|error|note|remark|catastrophic|fatal
 		// Common: <filename>(<line>) warning|error|note|remark|catastrophic|fatal
 		// Microsoft: <filename>(<line>,<column>)<message>
-		// CTags: \t<message>
+		// CTags: <identifier>\t<filename>\t<message>
 		// Lua 5 traceback: \t<filename>:<line>:<message>
 		// Lua 5.1: <exe>: <filename>:<line>:<message>
 		bool initialTab = (lineBuffer[0] == '\t');
 		bool initialColonPart = false;
+		bool canBeCtags = !initialTab;	// For ctags must have an identifier with no spaces then a tab
 		enum { stInitial,
 			stGccStart, stGccDigit, stGccColumn, stGcc,
 			stMsStart, stMsDigit, stMsBracket, stMsVc, stMsDigitComma, stMsDotNet,
-			stCtagsStart, stCtagsStartString, stCtagsStringDollar, stCtags,
+			stCtagsStart, stCtagsFile, stCtagsStartString, stCtagsStringDollar, stCtags,
 			stUnrecognized
 		} state = stInitial;
 		for (unsigned int i = 0; i < lengthLine; i++) {
@@ -1330,9 +1272,11 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 					// May be Microsoft
 					// Check against '0' often removes phone numbers
 					state = stMsStart;
-				} else if ((ch == '\t') && (!initialTab)) {
+				} else if ((ch == '\t') && canBeCtags) {
 					// May be CTags
 					state = stCtagsStart;
+				} else if (ch == ' ') {
+					canBeCtags = false;
 				}
 			} else if (state == stGccStart) {	// <filename>:
 				state = Is1To9(ch) ? stGccDigit : stUnrecognized;
@@ -1380,8 +1324,9 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 						!CompareCaseInsensitive(word, "fatal") || !CompareCaseInsensitive(word, "catastrophic") ||
 						!CompareCaseInsensitive(word, "note") || !CompareCaseInsensitive(word, "remark")) {
 						state = stMsVc;
-					} else
+					} else {
 						state = stUnrecognized;
+					}
 				} else {
 					state = stUnrecognized;
 				}
@@ -1393,11 +1338,15 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 					state = stUnrecognized;
 				}
 			} else if (state == stCtagsStart) {
+				if (ch == '\t') {
+					state = stCtagsFile;
+				}
+			} else if (state == stCtagsFile) {
 				if ((lineBuffer[i - 1] == '\t') &&
-				        ((ch == '/' && lineBuffer[i + 1] == '^') || Is0To9(ch))) {
+				        ((ch == '/' && chNext == '^') || Is0To9(ch))) {
 					state = stCtags;
 					break;
-				} else if ((ch == '/') && (lineBuffer[i + 1] == '^')) {
+				} else if ((ch == '/') && (chNext == '^')) {
 					state = stCtagsStartString;
 				}
 			} else if ((state == stCtagsStartString) && ((lineBuffer[i] == '$') && (lineBuffer[i + 1] == '/'))) {

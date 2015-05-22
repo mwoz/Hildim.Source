@@ -56,43 +56,6 @@ static int LowerCase(int c)
 	return c;
 }
 
-/** like InList, but string can be a part of multi words keyword expresion.
- * eg. the keyword "begin of" is defined as "begin~of". If input string is
- * "begin of" then return true, eq = true and begin = false, if input string
- * is "begin" then return true, eq = false and begin = true.
- * The marker is ~ in this case.
- */
-static bool InMultiWordsList( WordList &wl,
-							  const char *s,
-							  const char marker,
-							  bool &eq,
-							  bool &begin ) {
-	eq = begin = false;
-	if (0 == wl.words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = wl.starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)wl.words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = wl.words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-
 static void ColouriseABAPDoc(unsigned int startPos, int length, int initStyle,
 		WordList *keywordlists[], Accessor &styler)
 {
@@ -190,7 +153,7 @@ static void ColouriseABAPDoc(unsigned int startPos, int length, int initStyle,
 				if (s[currLen-1] != ' ') {
 					bool isEq = false, isBegin = false;
 					bool eq, begin;
-					if (InMultiWordsList(keywords,s, '~', eq, begin)) {
+					if (keywords.InMultiWordsList(s, '~', eq, begin)) {
 						isEq |= eq;
 						isBegin |= begin;
 						if (eq)
@@ -200,25 +163,25 @@ static void ColouriseABAPDoc(unsigned int startPos, int length, int initStyle,
 						isEq = true;
 						sc.ChangeState(SCE_ABAP_TYPE);
 					}
-					if (InMultiWordsList(kw_user1,s, '~', eq, begin)) {
+					if (kw_user1.InMultiWordsList(s, '~', eq, begin)) {
 						isEq |= eq;
 						isBegin |= begin;
 						if (eq)
 							sc.ChangeState(SCE_ABAP_USER1);
 					}
-					if (InMultiWordsList(kw_user2,s, '~', eq, begin)) {
+					if (kw_user2.InMultiWordsList(s, '~', eq, begin)) {
 						isEq |= eq;
 						isBegin |= begin;
 						if (eq)
 							sc.ChangeState(SCE_ABAP_USER2);
 					}
-					if (InMultiWordsList(kw_user3,s, '~', eq, begin)) {
+					if (kw_user3.InMultiWordsList(s, '~', eq, begin)) {
 						isEq |= eq;
 						isBegin |= begin;
 						if (eq)
 							sc.ChangeState(SCE_ABAP_USER3);
 					}
-					if (InMultiWordsList(kw_user4,s, '~', eq, begin)) {
+					if (kw_user4.InMultiWordsList(s, '~', eq, begin)) {
 						isEq |= eq;
 						isBegin |= begin;
 						if (eq)
@@ -406,10 +369,10 @@ static void FoldABAPDoc(unsigned int startPos, int length, int initStyle,
 						} else {
 							// Folding by settings
 							bool isEq, isBegin;
-							if (InMultiWordsList(fold_begin,word, '~', isEq, isBegin) && isEq) {
+							if (fold_begin.InMultiWordsList(word, '~', isEq, isBegin) && isEq) {
 								go = 1;
 							} else
-							if (InMultiWordsList(fold_end,word, '~', isEq, isBegin) && isEq) {
+								if (fold_end.InMultiWordsList(word, '~', isEq, isBegin) && isEq) {
 								go = -1;
 							}
 						}

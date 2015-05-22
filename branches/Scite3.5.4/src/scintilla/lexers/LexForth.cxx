@@ -28,45 +28,6 @@
 using namespace Scintilla;
 #endif
 
-/** like InList, but string can be a part of multi words keyword expresion.
- * eg. the keyword "begin of" is defined as "begin~of". If input string is
- * "begin of" then return true, eq = true and begin = false, if input string
- * is "begin" then return true, eq = false and begin = true.
- * The marker is ~ in this case.
- */
-static bool InMultiWordsList(WordList &wl,
-							 const char *s,
-							 const char marker,
-							 bool &eq,
-							 bool &begin,
-							 const char* &keyword_end) {
-	eq = begin = false;
-	if (0 == wl.words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = wl.starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)wl.words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = wl.words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-					keyword_end = a + 1;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-
 static bool is_whitespace(int ch){
     return ch == '\n' || ch == '\r' || ch == '\t' || ch == ' ';
 }
@@ -216,7 +177,7 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
 
     // go through all provided text segment
     // using the hand-written state machine shown below
-    styler.StartAt(startPos,static_cast<char>(STYLE_MAX));
+	styler.StartAt(startPos);// , static_cast<char>(STYLE_MAX));
     styler.StartSegment(startPos);
     while(parse(BL,true)!=0)
     if(stateFlag==FORTH_INTERP_FLAG){
@@ -239,7 +200,7 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
         }else if(enddefword.InList(buffer)) {
             // rollback and clear interpretation state
             styler.Flush();
-            styler.StartAt(interp_pos1,static_cast<char>(STYLE_MAX));
+			styler.StartAt(interp_pos1);// , static_cast<char>(STYLE_MAX));
             styler.StartSegment(interp_pos1);
             cur_pos = interp_pos2;
             stateFlag = isInDefinition?FORTH_DEFINITION_FLAG:0;
@@ -249,7 +210,8 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
             parse('}',false);
             if(cur_pos<lengthDoc) cur_pos++;
             styler.ColourTo(cur_pos,SCE_FORTH_LOCALE|stateFlag);
-        }else if(InMultiWordsList(strings, buffer, '~', isEq, isBegin, string_end) && isBegin) {
+		}
+		else if (strings.InMultiWordsList(buffer, '~', isEq, isBegin, string_end) && isBegin) {
             styler.ColourTo(pos1,SCE_FORTH_STRING|stateFlag);
             parse(*string_end,false);
             if(cur_pos<lengthDoc) cur_pos++;
@@ -325,7 +287,7 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
                     cur_pos--;
                 }
                 styler.Flush();
-                styler.StartAt(cur_pos,static_cast<char>(STYLE_MAX));
+				styler.StartAt(cur_pos);// , static_cast<char>(STYLE_MAX));
                 styler.StartSegment(cur_pos);
                 delete []buffer;
                 buffer = new char[lengthDoc - cur_pos];
@@ -343,7 +305,8 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
             parse('}',false);
             if(cur_pos<lengthDoc) cur_pos++;
             styler.ColourTo(cur_pos,SCE_FORTH_LOCALE|stateFlag);
-        }else if(InMultiWordsList(strings, buffer, '~', isEq, isBegin, string_end) && isBegin) {
+		}
+		else if (strings.InMultiWordsList(buffer, '~', isEq, isBegin, string_end) && isBegin) {
             styler.ColourTo(pos1,SCE_FORTH_STRING|stateFlag);
             parse(*string_end,false);
             if(cur_pos<lengthDoc) cur_pos++;
@@ -419,7 +382,7 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
                 }
                 if(cur_pos>1) cur_pos-=2;
                 styler.Flush();
-                styler.StartAt(cur_pos,static_cast<char>(STYLE_MAX));
+				styler.StartAt(cur_pos);// , static_cast<char>(STYLE_MAX));
                 styler.StartSegment(cur_pos);
                 delete []buffer;
                 buffer = new char[lengthDoc - cur_pos];
@@ -432,7 +395,8 @@ static void ColouriseForthDoc(unsigned int startPos, int length, int initStyle, 
             parse('}',false);
             if(cur_pos<lengthDoc) cur_pos++;
             styler.ColourTo(cur_pos,SCE_FORTH_LOCALE);
-        }else if(InMultiWordsList(strings, buffer, '~', isEq, isBegin, string_end) && isBegin) {
+		}
+		else if (strings.InMultiWordsList(buffer, '~', isEq, isBegin, string_end) && isBegin) {
             styler.ColourTo(pos1,SCE_FORTH_STRING);
             parse(*string_end,false);
             if(cur_pos<lengthDoc) cur_pos++;
@@ -592,5 +556,5 @@ static const char * const forthWordLists[] = {
             0,
         };
 
-LexerModule lmForth(SCLEX_FORTH, ColouriseForthDoc, "forth",FoldForthDoc,forthWordLists,7);
+LexerModule lmForth(SCLEX_FORTH, ColouriseForthDoc, "forth", FoldForthDoc, forthWordLists);
 //!-end-[ForthImprovement]
