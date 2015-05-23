@@ -1007,7 +1007,7 @@ int Document::InsertString(int position, const char *s, int insertLength) {
 	if (enteredModification != 0) {
 		return 0;
 	}
-		enteredModification++;
+	enteredModification++;
 	insertionSet = false;
 	insertion.clear();
 	NotifyModified(
@@ -1019,29 +1019,29 @@ int Document::InsertString(int position, const char *s, int insertLength) {
 		s = insertion.c_str();
 		insertLength = static_cast<int>(insertion.length());
 	}
-			NotifyModified(
-			    DocModification(
-			        SC_MOD_BEFOREINSERT | SC_PERFORMED_USER,
-			        position, insertLength,
-			        0, s));
-			int prevLinesTotal = LinesTotal();
-			bool startSavePoint = cb.IsSavePoint();
-			bool startSequence = false;
-			const char *text = cb.InsertString(position, s, insertLength, startSequence);
-			if (startSavePoint && cb.IsCollectingUndo())
-				NotifySavePoint(!startSavePoint);
-			ModifiedAt(position);
-			NotifyModified(
-			    DocModification(
-			        SC_MOD_INSERTTEXT | SC_PERFORMED_USER | (startSequence?SC_STARTACTION:0),
-			        position, insertLength,
-			        LinesTotal() - prevLinesTotal, text));
+	NotifyModified(
+		DocModification(
+			SC_MOD_BEFOREINSERT | SC_PERFORMED_USER,
+			position, insertLength,
+			0, s));
+	int prevLinesTotal = LinesTotal();
+	bool startSavePoint = cb.IsSavePoint();
+	bool startSequence = false;
+	const char *text = cb.InsertString(position, s, insertLength, startSequence);
+	if (startSavePoint && cb.IsCollectingUndo())
+		NotifySavePoint(!startSavePoint);
+	ModifiedAt(position);
+	NotifyModified(
+		DocModification(
+			SC_MOD_INSERTTEXT | SC_PERFORMED_USER | (startSequence?SC_STARTACTION:0),
+			position, insertLength,
+			LinesTotal() - prevLinesTotal, text));
 	if (insertionSet) {	// Free memory as could be large
 		std::string().swap(insertion);
-		}
-		enteredModification--;
-	return insertLength;
 	}
+	enteredModification--;
+	return insertLength;
+}
 
 void Document::ChangeInsertion(const char *s, int length) {
 	insertionSet = true;
@@ -1051,7 +1051,7 @@ void Document::ChangeInsertion(const char *s, int length) {
 int SCI_METHOD Document::AddData(char *data, int length) {
 	try {
 		int position = Length();
-		InsertString(position,data, length);
+		InsertString(position, data, length);
 	} catch (std::bad_alloc &) {
 		return SC_STATUS_BADALLOC;
 	} catch (...) {
@@ -1646,7 +1646,6 @@ Document::CharacterExtracted Document::ExtractCharacter(int position) const {
 long Document::FindText(int minPos, int maxPos, const char *search,
                         bool caseSensitive, bool word, bool wordStart, bool regExp, int flags,
                         int *length) {
-	if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 	if (*length <= 0)
 		return minPos;
 	if (regExp) {
@@ -2006,7 +2005,7 @@ bool Document::AddWatcher(DocWatcher *watcher, void *userData) {
 	std::vector<WatcherWithUserData>::iterator it =
 		std::find(watchers.begin(), watchers.end(), wwud);
 	if (it != watchers.end())
-			return false;
+		return false;
 	watchers.push_back(wwud);
 	return true;
 }
@@ -2016,7 +2015,7 @@ bool Document::RemoveWatcher(DocWatcher *watcher, void *userData) {
 		std::find(watchers.begin(), watchers.end(), WatcherWithUserData(watcher, userData));
 	if (it != watchers.end()) {
 		watchers.erase(it);
-			return true;
+		return true;
 	}
 	return false;
 }

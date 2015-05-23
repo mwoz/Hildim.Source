@@ -423,6 +423,33 @@
     <ClCompile Include="lexlib\CharacterCategory.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexBibTeX.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexDMAP.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexDMIS.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexHex.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexKVIrc.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexRust.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexSTTXT.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexRegistry.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\HanjaDic.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -585,6 +612,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lexlib\StringCopy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\HanjaDic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

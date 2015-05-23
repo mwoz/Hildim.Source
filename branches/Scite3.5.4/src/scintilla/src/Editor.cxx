@@ -109,7 +109,6 @@ Editor::Editor() {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 
@@ -405,10 +404,10 @@ int Editor::PositionFromLocation(Point pt, bool canReturnInvalid, bool charPosit
 }
 
 /**
- * Find the document position corresponding to an x coordinate on a particular document line.
- * Ensure is between whole characters when document is in multi-byte or UTF-8 mode.
+* Find the document position corresponding to an x coordinate on a particular document line.
+* Ensure is between whole characters when document is in multi-byte or UTF-8 mode.
 * This method is used for rectangular selections and does not work on wrapped lines.
- */
+*/
 SelectionPosition Editor::SPositionFromLineX(int lineDoc, int x) {
 	RefreshStyleData();
 	if (lineDoc >= pdoc->LinesTotal())
@@ -512,10 +511,10 @@ void Editor::RedrawSelMargin(int line, bool allAfter) {
 				rcSelMargin.Move(-ptOrigin.x, -ptOrigin.y);
 				wMargin.InvalidateRectangle(rcSelMargin);
 			} else {
-			wMain.InvalidateRectangle(rcSelMargin);
+				wMain.InvalidateRectangle(rcSelMargin);
+			}
 		}
 	}
-}
 }
 
 PRectangle Editor::RectangleFromRange(Range r, int overlap) {
@@ -1323,7 +1322,7 @@ void Editor::ShowCaretAtCurrentPosition() {
 			if (caret.period > 0)
 				FineTickerStart(tickCaret, caret.period, caret.period/10);
 		} else {
-		SetTicking(true);
+			SetTicking(true);
 		}
 	} else {
 		caret.active = false;
@@ -1405,14 +1404,14 @@ bool Editor::WrapLines(enum wrapScope ws) {
 	int goodTopLine = topLine;
 	bool wrapOccurred = false;
 	if (!Wrapping()) {
-			if (wrapWidth != LineLayout::wrapWidthInfinite) {
-				wrapWidth = LineLayout::wrapWidthInfinite;
-				for (int lineDoc = 0; lineDoc < pdoc->LinesTotal(); lineDoc++) {
-					cs.SetHeight(lineDoc, 1 +
-						(vs.annotationVisible ? pdoc->AnnotationLines(lineDoc) : 0));
-				}
-				wrapOccurred = true;
+		if (wrapWidth != LineLayout::wrapWidthInfinite) {
+			wrapWidth = LineLayout::wrapWidthInfinite;
+			for (int lineDoc = 0; lineDoc < pdoc->LinesTotal(); lineDoc++) {
+				cs.SetHeight(lineDoc, 1 +
+					(vs.annotationVisible ? pdoc->AnnotationLines(lineDoc) : 0));
 			}
+			wrapOccurred = true;
+		}
 		wrapPending.Reset();
 
 	} else if (wrapPending.NeedsWrap()) {
@@ -1449,7 +1448,7 @@ bool Editor::WrapLines(enum wrapScope ws) {
 		const int lineEndNeedWrap = std::min(wrapPending.end, pdoc->LinesTotal());
 		lineToWrapEnd = std::min(lineToWrapEnd, lineEndNeedWrap);
 
-				// Ensure all lines being wrapped are styled.
+		// Ensure all lines being wrapped are styled.
 		pdoc->EnsureStyledTo(pdoc->LineStart(lineToWrapEnd));
 
 		if (lineToWrap < lineToWrapEnd) {
@@ -1475,7 +1474,7 @@ bool Editor::WrapLines(enum wrapScope ws) {
 			}
 		}
 
-				// If wrapping is done, bring it to resting position
+		// If wrapping is done, bring it to resting position
 		if (wrapPending.start >= lineEndNeedWrap) {
 			wrapPending.Reset();
 		}
@@ -1599,7 +1598,7 @@ void Editor::RefreshPixMaps(Surface *surfaceWindow) {
 	view.RefreshPixMaps(surfaceWindow, wMain.GetID(), vs);
 	marginView.RefreshPixMaps(surfaceWindow, wMain.GetID(), vs);
 	if (view.bufferedDraw) {
-			PRectangle rcClient = GetClientRectangle();
+		PRectangle rcClient = GetClientRectangle();
 		if (!view.pixmapLine->Initialised()) {
 
 			view.pixmapLine->InitPixMap(static_cast<int>(rcClient.Width()), vs.lineHeight,
@@ -1651,12 +1650,12 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 
 	if (paintState != paintAbandoned) {
 		if (vs.marginInside) {
-		PaintSelMargin(surfaceWindow, rcArea);
-		PRectangle rcRightMargin = rcClient;
-		rcRightMargin.left = rcRightMargin.right - vs.rightMarginWidth;
-		if (rcArea.Intersects(rcRightMargin)) {
-			surfaceWindow->FillRectangle(rcRightMargin, vs.styles[STYLE_DEFAULT].back);
-		}
+			PaintSelMargin(surfaceWindow, rcArea);
+			PRectangle rcRightMargin = rcClient;
+			rcRightMargin.left = rcRightMargin.right - vs.rightMarginWidth;
+			if (rcArea.Intersects(rcRightMargin)) {
+				surfaceWindow->FillRectangle(rcRightMargin, vs.styles[STYLE_DEFAULT].back);
+			}
 		} else { // Else separate view so separate paint event but leftMargin included to allow overlap
 			PRectangle rcLeftMargin = rcArea;
 			rcLeftMargin.left = 0;
@@ -1692,8 +1691,8 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 		}
 	}
 
-		NotifyPainted();
-	}
+	NotifyPainted();
+}
 
 // This is mostly copied from the Paint method but with some things omitted
 // such as the margin markers, line numbers, selection and caret
@@ -2247,27 +2246,6 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_CLICK;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt) {
 	NotifyDoubleClick(pt, ModifierFlags(shift, ctrl, alt));
@@ -2312,9 +2290,9 @@ void Editor::NotifyHotSpotReleaseClick(int position, bool shift, bool ctrl, bool
 bool Editor::NotifyUpdateUI() {
 	if (needUpdateUI) {
 		SCNotification scn = {};
-	scn.nmhdr.code = SCN_UPDATEUI;
-	scn.updated = needUpdateUI;
-	NotifyParent(scn);
+		scn.nmhdr.code = SCN_UPDATEUI;
+		scn.updated = needUpdateUI;
+		NotifyParent(scn);
 		needUpdateUI = 0;
 		return true;
 	}
@@ -2743,7 +2721,7 @@ void Editor::NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lPar
 	case SCI_NEWLINE:
 	default:
 		//		printf("Filtered out %ld of macro recording\n", iMessage);
-		return ;
+		return;
 	}
 
 	// Send notification
@@ -3299,7 +3277,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ShowCaretAtCurrentPosition();
 		ContainerNeedsUpdate(SC_UPDATE_CONTENT);
@@ -3616,7 +3593,7 @@ void Editor::Indent(bool forwards) {
 			int lineBottomSel = Platform::Maximum(lineOfAnchor, lineCurrentPos);
 			if (pdoc->LineStart(lineBottomSel) == sel.Range(r).anchor.Position() || pdoc->LineStart(lineBottomSel) == caretPosition)
 				lineBottomSel--;  	// If not selecting any characters on a line, do not indent
-				pdoc->Indent(forwards, lineBottomSel, lineTopSel);
+			pdoc->Indent(forwards, lineBottomSel, lineTopSel);
 			if (lineOfAnchor < lineCurrentPos) {
 				if (currentPosPosOnLine == 0)
 					sel.Range(r) = SelectionRange(pdoc->LineStart(lineCurrentPos), pdoc->LineStart(lineOfAnchor));
@@ -3666,16 +3643,16 @@ long Editor::FindText(
 			static_cast<int>(ft->chrg.cpMin),
 			static_cast<int>(ft->chrg.cpMax),
 			ft->lpstrText,
-	        (wParam & SCFIND_MATCHCASE) != 0,
-	        (wParam & SCFIND_WHOLEWORD) != 0,
-	        (wParam & SCFIND_WORDSTART) != 0,
-	        (wParam & SCFIND_REGEXP) != 0,
+			(wParam & SCFIND_MATCHCASE) != 0,
+			(wParam & SCFIND_WHOLEWORD) != 0,
+			(wParam & SCFIND_WORDSTART) != 0,
+			(wParam & SCFIND_REGEXP) != 0,
 			static_cast<int>(wParam),
-	        &lengthFound);
-	if (pos != -1) {
-		ft->chrgText.cpMin = pos;
-		ft->chrgText.cpMax = pos + lengthFound;
-	}
+			&lengthFound);
+		if (pos != -1) {
+			ft->chrgText.cpMin = pos;
+			ft->chrgText.cpMax = pos + lengthFound;
+		}
 		return static_cast<int>(pos);
 	} catch (RegexError &) {
 		errorStatus = SC_STATUS_WARN_REGEX;
@@ -3715,23 +3692,23 @@ long Editor::SearchText(
 	if (!pdoc->HasCaseFolder())
 		pdoc->SetCaseFolder(CaseFolderForEncoding());
 	try {
-	if (iMessage == SCI_SEARCHNEXT) {
-		pos = pdoc->FindText(searchAnchor, pdoc->Length(), txt,
-		        (wParam & SCFIND_MATCHCASE) != 0,
-		        (wParam & SCFIND_WHOLEWORD) != 0,
-		        (wParam & SCFIND_WORDSTART) != 0,
-		        (wParam & SCFIND_REGEXP) != 0,
+		if (iMessage == SCI_SEARCHNEXT) {
+			pos = pdoc->FindText(searchAnchor, pdoc->Length(), txt,
+					(wParam & SCFIND_MATCHCASE) != 0,
+					(wParam & SCFIND_WHOLEWORD) != 0,
+					(wParam & SCFIND_WORDSTART) != 0,
+					(wParam & SCFIND_REGEXP) != 0,
 					static_cast<int>(wParam),
-		        &lengthFound);
-	} else {
-		pos = pdoc->FindText(searchAnchor, 0, txt,
-		        (wParam & SCFIND_MATCHCASE) != 0,
-		        (wParam & SCFIND_WHOLEWORD) != 0,
-		        (wParam & SCFIND_WORDSTART) != 0,
-		        (wParam & SCFIND_REGEXP) != 0,
+					&lengthFound);
+		} else {
+			pos = pdoc->FindText(searchAnchor, 0, txt,
+					(wParam & SCFIND_MATCHCASE) != 0,
+					(wParam & SCFIND_WHOLEWORD) != 0,
+					(wParam & SCFIND_WORDSTART) != 0,
+					(wParam & SCFIND_REGEXP) != 0,
 					static_cast<int>(wParam),
-		        &lengthFound);
-	}
+					&lengthFound);
+		}
 	} catch (RegexError &) {
 		errorStatus = SC_STATUS_WARN_REGEX;
 		return -1;
@@ -3771,17 +3748,17 @@ long Editor::SearchInTarget(const char *text, int length) {
 		pdoc->SetCaseFolder(CaseFolderForEncoding());
 	try {
 		long pos = pdoc->FindText(targetStart, targetEnd, text,
-	        (searchFlags & SCFIND_MATCHCASE) != 0,
-	        (searchFlags & SCFIND_WHOLEWORD) != 0,
-	        (searchFlags & SCFIND_WORDSTART) != 0,
-	        (searchFlags & SCFIND_REGEXP) != 0,
-	        searchFlags,
-	        &lengthFound);
-	if (pos != -1) {
+				(searchFlags & SCFIND_MATCHCASE) != 0,
+				(searchFlags & SCFIND_WHOLEWORD) != 0,
+				(searchFlags & SCFIND_WORDSTART) != 0,
+				(searchFlags & SCFIND_REGEXP) != 0,
+				searchFlags,
+				&lengthFound);
+		if (pos != -1) {
 			targetStart = static_cast<int>(pos);
 			targetEnd = static_cast<int>(pos + lengthFound);
-	}
-	return pos;
+		}
+		return pos;
 	} catch (RegexError &) {
 		errorStatus = SC_STATUS_WARN_REGEX;
 		return -1;
@@ -3882,7 +3859,7 @@ void Editor::SetDragPosition(SelectionPosition newPos) {
 			if ((caret.active) && (caret.period > 0) && (newPos.Position() < 0))
 				FineTickerStart(tickCaret, caret.period, caret.period/10);
 		} else {
-		SetTicking(true);
+			SetTicking(true);
 		}
 		InvalidateCaret();
 		posDrag = newPos;
@@ -4141,7 +4118,6 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4306,14 +4282,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::ButtonDown(Point pt, unsigned int curTime, bool shift, bool ctrl, bool alt) {
@@ -4506,16 +4480,16 @@ void Editor::ButtonMoveWithModifiers(Point pt, int modifiers) {
 		} else {
 			SetHoverIndicatorPoint(pt);
 			if (PointIsHotspot(pt)) {
-			DisplayCursor(Window::cursorHand);
-			SetHotSpotRange(&pt);
-		} else {
+				DisplayCursor(Window::cursorHand);
+				SetHotSpotRange(&pt);
+			} else {
 				if (hoverIndicatorPos != invalidPosition)
 					DisplayCursor(Window::cursorHand);
 				else
-			DisplayCursor(Window::cursorText);
-			SetHotSpotRange(NULL);
+					DisplayCursor(Window::cursorText);
+				SetHotSpotRange(NULL);
+			}
 		}
-	}
 	}
 }
 
@@ -4611,7 +4585,6 @@ void Editor::ButtonUp(Point pt, unsigned int curTime, bool ctrl) {
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, ctrl); //!-add-[OnMouseButtonUp]
 }
 
 // Called frequently to perform background UI including
@@ -4775,7 +4748,7 @@ void Editor::IdleWork() {
 	if (workNeeded.items & WorkNeeded::workStyle)
 		StyleToPositionInView(pdoc->LineStart(pdoc->LineFromPosition(workNeeded.upTo) + 2));
 
-		NotifyUpdateUI();
+	NotifyUpdateUI();
 	workNeeded.Reset();
 }
 
@@ -4930,7 +4903,7 @@ int Editor::ExpandLine(int line) {
 	int lineMaxSubord = pdoc->GetLastChild(line);
 	line++;
 	while (line <= lineMaxSubord) {
-			cs.SetVisible(line, line, true);
+		cs.SetVisible(line, line, true);
 		int level = pdoc->GetLevel(line);
 		if (level & SC_FOLDLEVELHEADERFLAG) {
 			if (cs.GetExpanded(line)) {
@@ -4939,8 +4912,8 @@ int Editor::ExpandLine(int line) {
 				line = pdoc->GetLastChild(line);
 			}
 		}
-			line++;
-		}
+		line++;
+	}
 	return lineMaxSubord;
 }
 
@@ -4953,11 +4926,11 @@ void Editor::SetFoldExpanded(int lineDoc, bool expanded) {
 void Editor::FoldLine(int line, int action) {
 	if (line >= 0) {
 		if (action == SC_FOLDACTION_TOGGLE) {
-		if ((pdoc->GetLevel(line) & SC_FOLDLEVELHEADERFLAG) == 0) {
-			line = pdoc->GetFoldParent(line);
-			if (line < 0)
-				return;
-		}
+			if ((pdoc->GetLevel(line) & SC_FOLDLEVELHEADERFLAG) == 0) {
+				line = pdoc->GetFoldParent(line);
+				if (line < 0)
+					return;
+			}
 			action = (cs.GetExpanded(line)) ? SC_FOLDACTION_CONTRACT : SC_FOLDACTION_EXPAND;
 		}
 
@@ -4983,10 +4956,10 @@ void Editor::FoldLine(int line, int action) {
 			ExpandLine(line);
 		}
 
-			SetScrollBars();
-			Redraw();
-		}
+		SetScrollBars();
+		Redraw();
 	}
+}
 
 void Editor::FoldExpand(int line, int action, int level) {
 	bool expanding = action == SC_FOLDACTION_EXPAND;
@@ -6019,10 +5992,10 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_GETLINEENDTYPESALLOWED:
 		return pdoc->GetLineEndTypesAllowed();
-		
+
 	case SCI_GETLINEENDTYPESACTIVE:
 		return pdoc->GetLineEndTypesActive();
-		
+
 	case SCI_STARTSTYLING:
 		pdoc->StartStyling(static_cast<int>(wParam), static_cast<char>(lParam));
 		break;
@@ -6057,7 +6030,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_SETPHASESDRAW:
 		if (view.SetPhasesDraw(static_cast<int>(wParam)))
-		InvalidateStyleRedraw();
+			InvalidateStyleRedraw();
 		break;
 
 	case SCI_SETFONTQUALITY:
@@ -6158,10 +6131,10 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_SETWRAPMODE:
 		if (vs.SetWrapState(static_cast<int>(wParam))) {
-		xOffset = 0;
-		ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
-		InvalidateStyleRedraw();
-		ReconfigureScrollBars();
+			xOffset = 0;
+			ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
+			InvalidateStyleRedraw();
+			ReconfigureScrollBars();
 		}
 		break;
 
@@ -6180,7 +6153,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_SETWRAPVISUALFLAGSLOCATION:
 		if (vs.SetWrapVisualFlagsLocation(static_cast<int>(wParam))) {
-		InvalidateStyleRedraw();
+			InvalidateStyleRedraw();
 		}
 		break;
 
@@ -7118,7 +7091,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_CREATEDOCUMENT: {
 			Document *doc = new Document();
-				doc->AddRef();
+			doc->AddRef();
 			return reinterpret_cast<sptr_t>(doc);
 		}
 
@@ -7132,9 +7105,9 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_CREATELOADER: {
 			Document *doc = new Document();
-				doc->AddRef();
+			doc->AddRef();
 			doc->Allocate(static_cast<int>(wParam));
-				doc->SetUndoCollection(false);
+			doc->SetUndoCollection(false);
 			return reinterpret_cast<sptr_t>(static_cast<ILoader *>(doc));
 		}
 
@@ -7209,15 +7182,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
-			inOverstrike = wParam != 0;
-		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_change]
+		inOverstrike = wParam != 0;
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -7690,11 +7655,6 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<int>(wParam), static_cast<int>(lParam));
 		break;
-//!-start-[MouseClickHandled]
-	case SCI_SETMOUSECAPTURE:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));
