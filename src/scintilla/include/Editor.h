@@ -177,7 +177,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 
 	int xCaretMargin;	///< Ensure this many pixels visible on both sides of caret
@@ -290,7 +289,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int XFromPosition(int pos);
 	int XFromPosition(SelectionPosition sp);
 	SelectionPosition SPositionFromLocation(Point pt, bool canReturnInvalid=false, bool charPosition=false, bool virtualSpace=true);
-	int PositionFromLocation(Point pt, bool canReturnInvalid=false, bool charPosition=false);
+	int PositionFromLocation(Point pt, bool canReturnInvalid = false, bool charPosition = false);
 	SelectionPosition SPositionFromLineX(int lineDoc, int x);
 	int PositionFromLineX(int line, int x);
 	int LineFromLocation(Point pt) const;
@@ -393,7 +392,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void InsertPaste(const char *text, int len);
 	enum PasteShape { pasteStream=0, pasteRectangular = 1, pasteLine = 2 };
 	void InsertPasteShape(const char *text, int len, PasteShape shape);
-	void ClearSelection(bool retainMultipleSelections=false);
+	void ClearSelection(bool retainMultipleSelections = false);
 	void ClearAll();
 	void ClearDocumentStyle();
 	void Cut();
@@ -418,9 +417,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	virtual void NotifyStyleToNeeded(int endStyleNeeded);
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
-	void NotifyModifyAttempt();	
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
+	void NotifyModifyAttempt();
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(int position, int modifiers);
