@@ -116,43 +116,6 @@ public:
 	    HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 };
 
-class Strip : public BaseWin {
-protected:
-	HFONT fontText;
-	HTHEME hTheme;
-	bool capturedMouse;
-	SIZE closeSize;
-	enum stripCloseState { csNone, csOver, csClicked, csClickedOver } closeState;
-	GUI::Window wToolTip;
-
-	GUI::Window CreateText(const char *text);
-	GUI::Window CreateButton(const char *text, int ident, bool check=false);
-	void Tab(bool forwards);
-	virtual void Creation();
-	virtual void Destruction();
-	virtual void Close();
-	virtual bool KeyDown(WPARAM key);
-	virtual bool Command(WPARAM wParam);
-	virtual void Size();
-	virtual void Paint(HDC hDC);
-	GUI::Rectangle CloseArea();
-	void InvalidateClose();
-	bool MouseInClose(GUI::Point pt);
-	void TrackMouse(GUI::Point pt);
-	void SetTheme();
-	virtual LRESULT CustomDraw(NMHDR *pnmh);
-	virtual LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
-public:
-	bool visible;
-	Strip() : fontText(0), hTheme(0), capturedMouse(false), closeState(csNone), visible(false) {
-		closeSize.cx = 11;
-		closeSize.cy = 11;
-	}
-	virtual int Height() {
-		return 25;
-	}
-};
-
 class IupChildWnd
 {
 public:
@@ -197,9 +160,6 @@ private:
 /** Windows specific stuff.
  **/
 class SciTEWin : public SciTEBase{
-
-	friend class Strip;
-
 
 protected:
 //!-start-[user.toolbar]

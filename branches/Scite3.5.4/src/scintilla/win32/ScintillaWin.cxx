@@ -2134,11 +2134,11 @@ public:
 
 //!-start-[InsertMultiPasteText]
 void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
-	const char *convertedText = 0;
+	std::string	convertedText;
 	if (convertPastes) {
 		// Convert line endings of the paste into our local line-endings mode
-		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode).c_str();
-		text = convertedText;
+		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode);
+		text = convertedText.c_str();
 	}
 	FilterSelections();
 	UndoGroup ug(pdoc, (sel.Count() > 1) || !sel.Empty());
@@ -2170,7 +2170,6 @@ void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
 			}
 		}
 	}
-	delete []convertedText;
 }
 //!-end-[InsertMultiPasteText]
 
