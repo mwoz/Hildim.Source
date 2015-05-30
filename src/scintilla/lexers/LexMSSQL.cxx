@@ -123,7 +123,7 @@ static char classifyWordSQL(unsigned int start,
 static void ColouriseMSSQLDoc(unsigned int startPos, int length,
                               int initStyle, WordList *keywordlists[], Accessor &styler) {
 
-
+	WordList &kwM4Keys = *keywordlists[KW_MSSQL_M4KEYS];
 	styler.StartAt(startPos);
 
 	bool fold = styler.GetPropertyInt("fold") != 0;
@@ -242,7 +242,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_COLUMN_NAME_2;
-			} else if (ch == '{' || ch == '}') {
+			} else if((ch == '{' || ch == '}') && kwM4Keys.InList("}")) {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				styler.ColourTo(i, SCE_MSSQL_M4KBRASHES);
 				prevState = state;
@@ -344,7 +344,8 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 			if (ch == '{')
 				levelCurrent++;
 			else 
-				levelCurrent--;
+				if ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent) 
+						levelCurrent--;
 		}if (style == SCE_MSSQL_STATEMENT) {
 			// Folding between begin or case and end
 			char c = static_cast<char>(tolower(ch));
@@ -398,12 +399,12 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 						}
 						_strlwr_s(sNext, 200);
 						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0)){//не фолдим начало транзакции
-							if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK)) levelCurrent++;
+							levelCurrent++;	   //if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK)) 
 						}
 
 					}
 				}
-				else if (strcmp(s, "end") == 0) {
+				else if (strcmp(s, "end") == 0 && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
 					levelCurrent--;
 				}
 				else if (strcmp(s, "go") == 0){
