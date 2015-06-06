@@ -4773,19 +4773,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			handled = GoMessage(0, wOutput);
 			if (handled)
 				preserveFocusOnEditor = true;
-		}
-		//if (!handled && notification->nmhdr.idFrom == IDM_FINDRESWIN) {
-		//	handled = GoMessage(0, wFindRes);
-		//	if (handled)
-		//		preserveFocusOnEditor = true;
-		//}
-		if (handled) {
-			if (notification->nmhdr.idFrom == IDM_RUNWIN)
-				wOutput.Call(SCI_SETMOUSECAPTURE, 0);
-			else if (notification->nmhdr.idFrom == IDM_FINDRESWIN)
-				wFindRes.Call(SCI_SETMOUSECAPTURE, 0);
-			else
-				wEditor.Call(SCI_SETMOUSECAPTURE, 0);
+
 		}
 		break;
 //!-end-[OnDoubleClick][GoMessageImprovement][MouseClickHandled]

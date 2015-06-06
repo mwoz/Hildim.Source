@@ -1191,6 +1191,7 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 
 	}
 	if (jobQueue.commandCurrent > 0) {
+		MakeOutputVisible(wFindRes);
 		Execute();
 	}
 	return 1;
