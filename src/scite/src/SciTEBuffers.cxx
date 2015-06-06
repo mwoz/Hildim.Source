@@ -1978,6 +1978,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					}
 				}
 				if (extender) extender->OnNavigation("Go");
+				WindowSetFocus(wEditor);
 
 				wEditor.Call(SCI_MARKERDELETEALL, 0);
 				wEditor.Call(SCI_MARKERDEFINE, 0, SC_MARK_CIRCLE);
@@ -2011,8 +2012,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 				message.substitute('\t', ' ');
 				message.remove("\n");
 				props.Set("CurrentMessage", message.c_str());
-				WindowSetFocus(wEditor);
-				return true; //!-add-[GoMessageImprovement]
+				return false; //!-add-[GoMessageImprovement]
 			}
 			//!return;
 			return false; //!-change-[GoMessageImprovement]
