@@ -109,6 +109,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		NULL),
 		"NAME", "ConsoleExpander",
 		"BARSIZE", "0",
+		"BARPOSITION", "LEFT",
 		"FONT", "::1",
 		"MINSIZE", "0x0", 
 		NULL);
@@ -128,6 +129,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	containers[7] = IupSetAtt(NULL, IupCreatep("hbox",
 		containers[8],
 		NULL),
+		"NAME", "BottomSplitParent",
 		"MINSIZE", "x20",
 		NULL);
 
