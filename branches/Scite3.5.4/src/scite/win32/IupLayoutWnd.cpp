@@ -73,7 +73,7 @@ IupLayoutWnd::~IupLayoutWnd()
 
 Ihandle* IupLayoutWnd::Create_dialog(void)
 {
-	Ihandle* containers[10];
+	Ihandle* containers[12];
 
 	containers[3] = 
 		IupSetAtt(NULL, IupCreatep("split", IupSetAtt(NULL, IupCreate("canvas"),
@@ -126,8 +126,23 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"BARSIZE", "3",
 		NULL);
 
-	containers[7] = IupSetAtt(NULL, IupCreatep("hbox",
+	containers[11] = IupSetAtt(NULL, IupCreatep("scrollbox",
+		NULL),
+		"NAME", "FindPlaceHolder",
+		NULL);
+
+	containers[10] = IupSetAtt(NULL, IupCreatep("split",
 		containers[8],
+		containers[11],
+		NULL),
+		"NAME", "BottomSplit2",
+		"SHOWGRIP", "NO",
+		"BARSIZE", "0",
+		"BGCOLOR", "255 255 255",
+		NULL);
+
+	containers[7] = IupSetAtt(NULL, IupCreatep("hbox",
+		containers[10],
 		NULL),
 		"NAME", "BottomSplitParent",
 		"MINSIZE", "x20",
