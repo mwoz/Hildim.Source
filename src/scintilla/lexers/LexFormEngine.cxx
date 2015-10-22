@@ -448,9 +448,9 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 		}else if(sc.ch == '#'){
 			sc.SetState(SCE_FM_PREPROCESSOR);
 			return;
-		}else if(!IsASpace(sc.ch)){
-			sc.SetState(SCE_FM_X_ERROR);
-		}
+		}//else if(!IsASpace(sc.ch)){
+		//	sc.SetState(SCE_FM_X_ERROR);
+		//}
 	return;
 	case SCE_FM_X_TAG:
 		if(sc.ch == '"'){
@@ -524,7 +524,12 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 				sc.ChangeState(SCE_FM_X_TAG);
 			}
 			sc.SetState(SCE_FM_X_TAG);
-		}
+		}		
+		if (sc.ch == '>'){
+			if (!sc.Match("><")){
+				sc.ForwardSetState(SCE_FM_X_DEFAULT);
+			}
+		} 
 	return;
 	}
 }
