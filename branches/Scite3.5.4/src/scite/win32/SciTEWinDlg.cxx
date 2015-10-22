@@ -293,8 +293,14 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("");
 		FilePath savePath = SaveName(ext);
 		if (!savePath.IsUntitled()) {
-			wcscpy(saveName, savePath.AsInternal());
+			GUI::gui_char saveNameSrt[MAX_PATH] = GUI_TEXT("");
+			wcscpy(saveNameSrt, savePath.Name().AsInternal());
+			if (saveNameSrt[0] == L'^') wcscpy(saveNameSrt, saveNameSrt + 1);
+			wcscpy(saveName, savePath.Directory().AsInternal());
+			wcscat(saveName, L"\\");
+			wcscat(saveName, saveNameSrt);
 		}
+		
 //!-start-[no wornings]
 #if defined(_MSC_VER) && _MSC_VER < 1300
 		OPENFILENAMEW ofn = {
@@ -302,10 +308,10 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		};
 #else
 //!-end-[no wornings]
-		OPENFILENAMEW ofn = {
-		                       sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		                   };
+		OPENFILENAMEW ofn;
+		::ZeroMemory(&ofn, sizeof(ofn));
 #endif //!-add-[no wornings]
+		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = MainHWND();
 		ofn.hInstance = hInstance;
 		ofn.lpstrFile = saveName;
