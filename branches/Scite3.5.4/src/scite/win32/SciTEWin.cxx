@@ -1820,9 +1820,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 		case WM_SIZE:
 		{
-						LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-						layout.Fit();
-						return r; 
+			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			layout.Fit();
+			return r; 
 		}
 			break;
 		case WM_COMMAND:
@@ -2051,16 +2051,6 @@ LRESULT PASCAL SciTEWin::TWndProc(
 			return ::DefWindowProcW(hWnd, iMessage, wParam, lParam);
 	} else
 		return scite->WndProc(iMessage, wParam, lParam);
-}
-
-void SciTEWin::SetSideBarWidth(int w){
-	if (w < 0){
-		widthPanel = 0;
-		sizeSplit = 0;
-	}else{
-		widthPanel = w;
-		sizeSplit = 7;
-	}
 }
 
 void SciTEWin::PostCommand(int cmd, int param){

@@ -873,7 +873,6 @@ protected:
 	bool ShowParametersDialog(const char *msg); //!-add-[ParametersDialogFromLua]
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc);
-	virtual void SetSideBarWidth(int w) = 0;
 	virtual void PostCommand(int cmd, int param) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 
