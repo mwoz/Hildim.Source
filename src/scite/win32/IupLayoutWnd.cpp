@@ -76,21 +76,33 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	Ihandle* containers[12];
 
 	containers[3] = 
-		IupSetAtt(NULL, IupCreatep("split", IupSetAtt(NULL, IupCreate("canvas"),
-		"NAME", "Source",
-		"EXPAND", "YES",
+	IupSetAtt(NULL, IupCreatep("split", IupSetAtt(NULL, IupCreate("canvas"),
+				"NAME", "Source",
+				"EXPAND", "YES",
+			NULL),
+			IupSetAtt(NULL, IupCreatep("expander",
+				IupSetAtt(NULL, IupCreatep("scrollbox",
+					NULL),
+					"NAME", "RightBarPH",
+					"SCROLLBAR", "NO",
+					NULL),
+				NULL),
+				"NAME", "RightBarExpander",
+				"BARSIZE", "0",
+				"BARPOSITION", "LEFT",
+				"MINSIZE", "x0",
+
+				//"STATE", "CLOSE",
+			NULL),
 		NULL),
-		IupSetAtt(NULL, IupCreate("canvas"),
-		"NAME", "SideBarPH",
-		"EXPAND", "YES",
-		NULL),
-		NULL),
-	    "DIRECTION", "EAST",
+		"DIRECTION", "EAST",
 		"NAME", "SourceSplit",
 		"SHOWGRIP", "NO",
 		"BARSIZE", "3",
+		"VALUE", "1000",
+		"LAYOUTDRAG", "NO",
 		"MINSIZE", "x20",
-		NULL);
+	NULL);
 
 	containers[2] = IupSetAtt(NULL, IupCreatep("hbox",
 		containers[3],
@@ -112,6 +124,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"BARPOSITION", "LEFT",
 		"FONT", "::1",
 		"MINSIZE", "0x0", 
+
+		//"STATE", "CLOSE",
 		NULL);
 
 	containers[8] = IupSetAtt(NULL, IupCreatep("split",
@@ -124,11 +138,13 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"NAME", "BottomSplit",
 		"SHOWGRIP", "NO",
 		"BARSIZE", "3",
+		"LAYOUTDRAG", "NO",
 		NULL);
 
 	containers[11] = IupSetAtt(NULL, IupCreatep("scrollbox",
 		NULL),
 		"NAME", "FindPlaceHolder",
+		"SCROLLBAR", "NO",
 		NULL);
 
 	containers[10] = IupSetAtt(NULL, IupCreatep("split",
@@ -138,6 +154,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"NAME", "BottomSplit2",
 		"SHOWGRIP", "NO",
 		"BARSIZE", "0",
+		"LAYOUTDRAG", "NO",
 		"BGCOLOR", "255 255 255",
 		NULL);
 
@@ -145,7 +162,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		containers[10],
 		NULL),
 		"NAME", "BottomSplitParent",
-		"MINSIZE", "x20",
+		"MINSIZE", "x20",	 
+		//"VISIBLE", "NO",
 		NULL);
 
 	containers[6] = IupSetAtt(NULL, IupCreatep("detachbox",
@@ -181,10 +199,12 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"NAME", "BottomBarSplit",
 		"SHOWGRIP", "NO",
 		"BARSIZE", "3",
+		"LAYOUTDRAG", "NO",
 		NULL),
 		NULL),
 		"NAME", "SciteVB",
 		"MINSIZE", "100x100",
+		//"VISIBLE", "NO",
 		NULL);
 
 	containers[0] = IupSetAtt(NULL, IupCreatep("dialog",
@@ -225,8 +245,6 @@ void IupLayoutWnd::CreateLayout(lua_State *L, SciTEWin *pS){
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-	SubclassChild("SideBarPH", NULL);
-	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, 100, 100, 0);
 }
 
 HWND IupLayoutWnd::GetChildHWND(const char* name){

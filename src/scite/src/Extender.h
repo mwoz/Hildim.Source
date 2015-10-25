@@ -34,7 +34,6 @@ public:
 	virtual bool InsertAbbreviation(const char *data, int expandedLength)=0; //!-add-[InsertAbbreviation]
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc) = 0;
-	virtual void SetSideBarWidth(const int w) = 0;
 	virtual void PostCommand(int cmd, int param) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 	virtual void SetDocumentAt(int index, bool updateStack = true) = 0;

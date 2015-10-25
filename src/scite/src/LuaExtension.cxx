@@ -846,11 +846,6 @@ static int cf_iup_reattach_wnd_to(lua_State *L){
 	return 1;
 }
 
-static int cf_iup_showsidebar(lua_State *L){
-	int w = luaL_checkint(L, 1);
-	host->SetSideBarWidth(w);
-	return 1;
-}
 static int cf_post_command(lua_State *L){
 	int p = luaL_checkint(L, 1);
 	int c = luaL_checkint(L, 2);
@@ -1693,8 +1688,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iupcontrolslua_open(luaState);
 
 	lua_getglobal(luaState, "iup");
-	lua_pushcfunction(luaState, cf_iup_showsidebar);
-	lua_setfield(luaState, -2, "ShowSideBar");
 	lua_pushcfunction(luaState, cf_iup_reattach_wnd_to);
 	lua_setfield(luaState, -2, "ReattachWndTo");
 	lua_pop(luaState, 1);
