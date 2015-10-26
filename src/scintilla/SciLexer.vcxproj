@@ -12,10 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lexers\LexA68k.cxx" />
-    <ClCompile Include="lexers\LexABAP.cxx" />
     <ClCompile Include="lexers\LexAbaqus.cxx" />
     <ClCompile Include="lexers\LexAda.cxx" />
-    <ClCompile Include="lexers\LexAHK1.cxx" />
     <ClCompile Include="lexers\LexAPDL.cxx" />
     <ClCompile Include="lexers\LexAsm.cxx" />
     <ClCompile Include="lexers\LexAsn1.cxx" />
@@ -45,7 +43,6 @@
     <ClCompile Include="lexers\LexEiffel.cxx" />
     <ClCompile Include="lexers\LexErlang.cxx" />
     <ClCompile Include="lexers\LexEScript.cxx" />
-    <ClCompile Include="lexers\LexEuphoria.cxx" />
     <ClCompile Include="lexers\LexFlagship.cxx" />
     <ClCompile Include="lexers\LexFormEngine.cxx" />
     <ClCompile Include="lexers\LexForth.cxx" />
