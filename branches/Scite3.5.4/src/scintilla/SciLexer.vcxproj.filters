@@ -617,5 +617,11 @@
     <ClInclude Include="win32\HanjaDic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Sci_Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

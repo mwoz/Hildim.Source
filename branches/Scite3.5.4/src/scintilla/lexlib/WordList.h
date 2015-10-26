@@ -32,9 +32,6 @@ public:
 	bool InList(const char *s) const;
 	bool InListAbbreviated(const char *s, const char marker) const;
 	const char *WordAt(int n) const;
-	bool InMultiWordsList(const char *s, const char marker, bool &eq, bool &begin); //!-add-[InMultiWordsList]
-	bool InMultiWordsList(const char *s, const char marker, bool &eq, bool &begin, const char* &keyword_end); //!-add-[InMultiWordsList]
-	bool InListPartly(const char *s, const char marker, int &mainLen, int &finLen); //!-add-[InMultiWordsList]
 };
 
 #ifdef SCI_NAMESPACE

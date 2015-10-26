@@ -29,15 +29,15 @@
 using namespace Scintilla;
 #endif
 
-static void ColouriseNncrontabDoc(unsigned int startPos, int length, int, WordList
+static void ColouriseNncrontabDoc(Sci_PositionU startPos, Sci_Position length, int, WordList
 *keywordLists[], Accessor &styler)
 {
 	int state = SCE_NNCRONTAB_DEFAULT;
 	char chNext = styler[startPos];
-	int lengthDoc = startPos + length;
+	Sci_Position lengthDoc = startPos + length;
 	// create a buffer large enough to take the largest chunk...
 	char *buffer = new char[length+1];
-	int bufferCount = 0;
+	Sci_Position bufferCount = 0;
 	// used when highliting environment variables inside quoted string:
 	bool insideString = false;
 
@@ -45,20 +45,12 @@ static void ColouriseNncrontabDoc(unsigned int startPos, int length, int, WordLi
 	WordList &section = *keywordLists[0];
 	WordList &keyword = *keywordLists[1];
 	WordList &modifier = *keywordLists[2];
-//!-start-[ForthImprovement]
-	WordList &word1 = *keywordLists[5];
-	WordList &word2 = *keywordLists[6];
-	WordList &word3 = *keywordLists[7];
-	WordList &word4 = *keywordLists[8];
-	WordList &word5 = *keywordLists[9];
-	WordList &word6 = *keywordLists[10];
-//!-end-[ForthImprovement]
 
 	// go through all provided text segment
 	// using the hand-written state machine shown below
 	styler.StartAt(startPos);
 	styler.StartSegment(startPos);
-	for (int i = startPos; i < lengthDoc; i++) {
+	for (Sci_Position i = startPos; i < lengthDoc; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 
@@ -198,20 +190,6 @@ static void ColouriseNncrontabDoc(unsigned int startPos, int length, int, WordLi
 					// }
 					  else if(modifier.InList(buffer)) {
 						styler.ColourTo(i-1,SCE_NNCRONTAB_MODIFIER );
-//!-start-[ForthImprovement]
-					} else if(word1.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD1);
-					} else if(word2.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD2);
-					} else if(word3.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD3);
-					} else if(word4.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD4);
-					} else if(word5.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD5);
-					} else if(word6.InList(buffer)) {
-						styler.ColourTo(i-1,SCE_NNCRONTAB_WORD6);
-//!-end-[ForthImprovement]
 					  }	else {
 						styler.ColourTo(i-1,SCE_NNCRONTAB_DEFAULT);
 					}
@@ -238,82 +216,11 @@ static void ColouriseNncrontabDoc(unsigned int startPos, int length, int, WordLi
 	delete []buffer;
 }
 
-//!-start-[ForthImprovement]
-static void FoldNncrontabDoc(unsigned int startPos, int length, int initStyle,
-	WordList *keywordlists[], Accessor &styler)
-{
-	WordList &fold_begin = *keywordlists[3];
-	WordList &fold_end = *keywordlists[4];
-
-	int line = styler.GetLine(startPos);
-	int level = styler.LevelAt(line);
-	int levelIndent = 0;
-	unsigned int endPos = startPos + length;
-	char word[256];
-	int wordlen = 0;
-	int style = initStyle;
-	// Scan for tokens
-	for (unsigned int i = startPos; i < endPos; i++) {
-		int c = styler.SafeGetCharAt(i, '\n');
-		style = styler.StyleAt(i);
-		if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
-			if (wordlen) { // done with token
-				word[wordlen] = '\0';
-				// CheckFoldPoint
-				if (fold_begin.InList(word)) {
-					levelIndent += 1;
-				} else
-				if (fold_end.InList(word)) {
-					levelIndent -= 1;
-				}
-				wordlen = 0;
-			}
-		}
-		else if (!(style == SCE_NNCRONTAB_COMMENT || style == SCE_NNCRONTAB_STRING)) {
-			if (wordlen) {
-				if (wordlen < 255) {
-					word[wordlen] = static_cast<char>(c);
-					wordlen++;
-				}
-			} else { // start scanning at first word character
-				word[0] = static_cast<char>(c);
-				wordlen = 1;
-			}
-		}
-		if (c == '\n') { // line end
-			if (levelIndent > 0) {
-				level |= SC_FOLDLEVELHEADERFLAG;
-			}
-			if (level != styler.LevelAt(line))
-				styler.SetLevel(line, level);
-			level += levelIndent;
-			if ((level & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
-				level = SC_FOLDLEVELBASE;
-			line++;
-			// reset state
-			levelIndent = 0;
-			level &= ~SC_FOLDLEVELHEADERFLAG;
-			level &= ~SC_FOLDLEVELWHITEFLAG;
-		}
-	}
-}
-//!-end-[ForthImprovement]
 static const char * const cronWordListDesc[] = {
 	"Section keywords and Forth words",
 	"nnCrontab keywords",
 	"Modifiers",
-//!-start-[ForthImprovement]
-	"folding start words",
-	"folding end words",
-	"user defined words 1",
-	"user defined words 2",
-	"user defined words 3",
-	"user defined words 4",
-	"user defined words 5",
-	"user defined words 6",
-//!-end-[ForthImprovement]
 	0
 };
 
-//!LexerModule lmNncrontab(SCLEX_NNCRONTAB, ColouriseNncrontabDoc, "nncrontab", 0, cronWordListDesc);
-LexerModule lmNncrontab(SCLEX_NNCRONTAB, ColouriseNncrontabDoc, "nncrontab", FoldNncrontabDoc, cronWordListDesc); //!-change-[ForthImprovement]
+LexerModule lmNncrontab(SCLEX_NNCRONTAB, ColouriseNncrontabDoc, "nncrontab", 0, cronWordListDesc);
