@@ -180,6 +180,7 @@
     <ClInclude Include="include\Partitioning.h" />
     <ClInclude Include="include\PerLine.h" />
     <ClInclude Include="include\Platform.h" />
+    <ClInclude Include="include\Position.h" />
     <ClInclude Include="include\PositionCache.h" />
     <ClInclude Include="include\RESearch.h" />
     <ClInclude Include="include\RunStyles.h" />
@@ -187,6 +188,7 @@
     <ClInclude Include="include\Scintilla.h" />
     <ClInclude Include="include\ScintillaBase.h" />
     <ClInclude Include="include\ScintillaWidget.h" />
+    <ClInclude Include="include\Sci_Position.h" />
     <ClInclude Include="include\Selection.h" />
     <ClInclude Include="include\SplitVector.h" />
     <ClInclude Include="include\Style.h" />
