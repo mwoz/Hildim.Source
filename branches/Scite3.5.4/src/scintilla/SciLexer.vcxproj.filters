@@ -111,16 +111,10 @@
     <ClCompile Include="lexers\LexA68k.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
-    <ClCompile Include="lexers\LexABAP.cxx">
-      <Filter>Source Files\Lexers</Filter>
-    </ClCompile>
     <ClCompile Include="lexers\LexAbaqus.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
     <ClCompile Include="lexers\LexAda.cxx">
-      <Filter>Source Files\Lexers</Filter>
-    </ClCompile>
-    <ClCompile Include="lexers\LexAHK1.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
     <ClCompile Include="lexers\LexAPDL.cxx">
@@ -202,9 +196,6 @@
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
     <ClCompile Include="lexers\LexEScript.cxx">
-      <Filter>Source Files\Lexers</Filter>
-    </ClCompile>
-    <ClCompile Include="lexers\LexEuphoria.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
     <ClCompile Include="lexers\LexFlagship.cxx">
