@@ -4818,7 +4818,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 //!-end-[OnMouseButtonUp][GoMessageImprovement]
 
 	case SCN_UPDATEUI:
-		if (extender)
+		if (extender && notification->nmhdr.idFrom == IDM_SRCWIN)
 			handled = extender->OnUpdateUI();
 		if (!handled) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN);
