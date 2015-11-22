@@ -235,8 +235,8 @@ bool IsAbbr(const char *item, const char *abr)
 	int i2 = 0;
 	for (int i = 0; i<l; i++)
 	{
-		for (; i2<l2&&item[i2] > 'Z'; i2++);
-		if (item[i2] != abr[i]) return false;
+		for (; i2<l2 && item[i2] > 'Z' && i2>0; i2++);
+		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;
 		i2++;
 	}
 	return true;
@@ -253,7 +253,7 @@ void AutoComplete::Select(const char *word) {
 		char testUpper[21];
 		strncpy(testUpper, word, lenWord + 1);
 		_strupr(testUpper);
-		if (!strncmp(word, testUpper, lenWord))
+		if (!strncmp(word+1, testUpper+1, lenWord-1))
 		{
 			for (int i = 0; i <= end; i++)
 			{

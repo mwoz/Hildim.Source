@@ -7,8 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-
+#include "afxres.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -163,8 +162,8 @@ BEGIN
         MENUITEM "Open Files &Here",            IDM_OPENFILESHERE
         MENUITEM "Vertical &Split",             IDM_SPLITVERTICAL
         MENUITEM "&Wrap",                       IDM_WRAP
-		MENUITEM "Wrap Out&put",                IDM_WRAPOUTPUT
-		MENUITEM "Wrap Find &Result",           IDM_WRAPFINDRES
+        MENUITEM "Wrap Out&put",                IDM_WRAPOUTPUT
+        MENUITEM "Wrap Find &Result",           IDM_WRAPFINDRES
         MENUITEM "&Read-Only",                  IDM_READONLY
         MENUITEM SEPARATOR
         POPUP "&Line End Characters"
@@ -632,8 +631,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
-
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

@@ -206,9 +206,11 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"MINSIZE", "x0",
 		NULL);
 
-	containers[4] = IupSetAtt(NULL, IupCreatep("hbox",
+	containers[4] = IupSetAtt(NULL, IupCreatep("scrollbox",
 		containers[5],
 		NULL),
+		"NAME", "BottomScroll",
+		"SCROLLBAR", "NO",
 		NULL);
 
 	containers[1] = IupSetAtt(NULL, IupCreatep("vbox",
