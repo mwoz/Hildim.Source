@@ -206,12 +206,12 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"MINSIZE", "x0",
 		NULL);
 
-	containers[4] = IupSetAtt(NULL, IupCreatep("scrollbox",
-		containers[5],
-		NULL),
-		"NAME", "BottomScroll",
-		"SCROLLBAR", "NO",
-		NULL);
+	//containers[4] = IupSetAtt(NULL, IupCreatep("scrollbox",
+	//	containers[5],
+	//	NULL),
+	//	"NAME", "BottomScroll",
+	//	"SCROLLBAR", "NO",
+	//	NULL);
 
 	containers[1] = IupSetAtt(NULL, IupCreatep("vbox",
 		IupSetAtt(NULL, IupCreate("canvas"),
@@ -221,7 +221,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"MINSIZE", "x20",
 		NULL),
 		IupSetAtt(NULL, IupCreatep("split", containers[2],
-		containers[4], NULL),
+		containers[5], NULL),
 		"ORIENTATION", "HORIZONTAL",
 		"NAME", "BottomBarSplit",
 		"SHOWGRIP", "NO",

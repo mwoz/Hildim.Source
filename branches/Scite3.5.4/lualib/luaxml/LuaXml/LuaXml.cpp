@@ -161,15 +161,23 @@ const char* Tokenizer_next(Tokenizer* tok) {
 			Tokenizer_append(tok, tok->s[tok->i]);
 			break;
 		case '<':
-			if (!quotMode && (tok->i + 4<tok->s_size) && (strncmp(tok->s + tok->i, "<!--", 4) == 0)) // strip comments
-				tok->i = find(tok->s, "-->", tok->i + 4) + 2;
-			else if (!quotMode && (tok->i + 9<tok->s_size) && (strncmp(tok->s + tok->i, "<![CDATA[", 9) == 0)) { // interpet CDATA
-				size_t b = tok->i + 9;
-				tok->i = find(tok->s, "]]>", b) + 3;
-				if (!tok->m_token_size) return Tokenizer_set(tok, tok->s + b, tok->i - b - 3);
+			if (!quotMode && (tok->i + 4 < tok->s_size) && (strncmp(tok->s + tok->i, "<!--", 4) == 0)){ // strip comments
+				//tok->i = find(tok->s, "-->", tok->i + 4) + 2;
+				size_t b = tok->i;
+				tok->i = find(tok->s, "-->", b) + 3;
+				if (!tok->m_token_size) return Tokenizer_set(tok, tok->s + b, tok->i - b);
 				tokenComplete = 1;
 				tok->m_next = tok->s + b;
-				tok->m_next_size = tok->i - b - 3;
+				tok->m_next_size = tok->i - b;
+				--tok->i;
+			}
+			else if (!quotMode && (tok->i + 9<tok->s_size) && (strncmp(tok->s + tok->i, "<![CDATA[", 9) == 0)) { // interpet CDATA
+				size_t b = tok->i;
+				tok->i = find(tok->s, "]]>", b) + 3;
+				if (!tok->m_token_size) return Tokenizer_set(tok, tok->s + b, tok->i - b);
+				tokenComplete = 1;
+				tok->m_next = tok->s + b;
+				tok->m_next_size = tok->i - b;
 				--tok->i;
 			}
 			else if (!quotMode && (tok->i + 1<tok->s_size) && ((tok->s[tok->i + 1] == '?') || (tok->s[tok->i + 1] == '!'))) // strip meta information
@@ -218,7 +226,7 @@ const char* Tokenizer_next(Tokenizer* tok) {
 			if (tok->tagMode&&!quotMode) {
 				if (tok->m_token_size) tokenComplete = 1;
 			}
-			else if (tok->m_token_size) Tokenizer_append(tok, tok->s[tok->i]);
+			else /*if (tok->m_token_size)*/ Tokenizer_append(tok, tok->s[tok->i]);
 			break;
 		default: Tokenizer_append(tok, tok->s[tok->i]);
 		}
