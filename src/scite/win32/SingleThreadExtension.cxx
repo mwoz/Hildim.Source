@@ -244,3 +244,7 @@ bool SingleThreadExtension::OnIdle(){
 bool SingleThreadExtension::OnLayOutNotify(const char *command) {
 	return ext->OnLayOutNotify(command);
 }
+
+bool SingleThreadExtension::OnHotKey(long hotkey) {
+	return ext->OnHotKey(hotkey);
+}

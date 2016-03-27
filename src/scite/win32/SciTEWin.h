@@ -376,6 +376,10 @@ public:
 		return hAccTable;
 	}
 
+	void SetAcceleratorTable(void *h){
+		hAccTable = (HACCEL)h;
+	}
+
 	uptr_t GetInstance();
 	static void Register(HINSTANCE hInstance_);
 	static LRESULT PASCAL TWndProc(

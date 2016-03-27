@@ -67,6 +67,7 @@ public:
 	virtual bool OnFindCompleted();
 	virtual bool OnIdle();
 	virtual bool OnLayOutNotify(const char *);
+	virtual bool OnHotKey(long);
 protected:
 	Extension *ext;
 

@@ -39,6 +39,7 @@ public:
 	virtual void SetDocumentAt(int index, bool updateStack = true) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
+	virtual void SetAcceleratorTable(void *h) = 0;
 };
 
 /**
@@ -98,6 +99,7 @@ public:
 	virtual bool OnFindCompleted(){ return false; }
 	virtual bool OnIdle(){ return false; }
 	virtual bool OnLayOutNotify(const char *){ return false; }
+	virtual bool OnHotKey(long) { return false; }
 };
 
 #endif
