@@ -550,6 +550,31 @@ static int cf_pane_findtext(lua_State *L) {
 	return 0;
 }
 
+static int cf_Reg_HotKey(lua_State* L){
+	int count = 0;
+
+	if (lua_istable(L, 1)){
+		int i = 0;
+		lua_pushnil(L);
+		while (lua_next(L, 1) != 0) {
+			++count;
+			lua_pop(L, 1);
+		}
+		LPACCEL acc = new ACCEL[count];
+		lua_pushnil(L);
+		while (lua_next(L, 1) != 0) {
+			// key is at index -2 and value at index -1
+			//ccc = luaL_checkint(L, -2);
+
+			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), luaL_checkint(L, -1));
+			lua_pop(L, 1);
+		}
+		host->SetAcceleratorTable((void*) ::CreateAcceleratorTable(acc, count));
+		delete acc;
+	}
+	return 1;
+}
+
 // Pane match generator.  This was prototyped in about 30 lines of Lua.
 // I hope the C++ version is more robust at least, e.g. prevents infinite
 // loops and is more tamper-resistant.
@@ -1782,6 +1807,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_run_lua_thread);
 	lua_setfield(luaState, -2, "RunLuaThread");
 
+	lua_pushcfunction(luaState, cf_Reg_HotKey);
+	lua_setfield(luaState, -2, "RegisterHotKey");
+
 	lua_pushcfunction(luaState, cf_post_command);
 	lua_setfield(luaState, -2, "PostCommand");
 
@@ -2627,6 +2655,9 @@ bool LuaExtension::OnIdle() {
 
 bool LuaExtension::OnLayOutNotify(const char *command) {
 	return CallNamedFunction("OnLayOutNotify", command);
+}
+bool LuaExtension::OnHotKey(long hotkey) {
+	return CallNamedFunction("OnHotKey", hotkey,0);
 }
 
 //!-start-[StartupScriptReload]

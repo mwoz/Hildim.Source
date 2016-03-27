@@ -81,6 +81,129 @@ SciTEBase *SciTEBase::GetApplicationInstance() {
 }
 //!-end-[GetApplicationProps]
 
+int SciTEKeys::GetVK(SString sKey){
+	int keyval = -1;
+	if (sKey.length() == 1) {
+		keyval = VkKeyScan(sKey[0]);
+		if (keyval == -1)
+		{
+			if (sKey[0] >= 'A' &&  sKey[0] <= 'Z')
+				keyval = sKey[0];
+		}
+		else
+			keyval &= 0xFF;
+	}
+	else if (sKey.length() > 1) {
+		if ((sKey[0] == 'F') && (isdigit(sKey[1]))) {
+			sKey.remove("F");
+			int fkeyNum = sKey.value();
+			if (fkeyNum >= 1 && fkeyNum <= 12)
+				keyval = fkeyNum - 1 + VK_F1;
+		}
+		else if ((sKey[0] == 'V') && (isdigit(sKey[1]))) {
+			sKey.remove("V");
+			int vkey = sKey.value();
+			if (vkey > 0 && vkey <= 0x7FFF)
+				keyval = vkey;
+		}
+		else if (sKey.search("Keypad") == 0) {
+			sKey.remove("Keypad");
+			if (isdigit(sKey[0])) {
+				int keyNum = sKey.value();
+				if (keyNum >= 0 && keyNum <= 9)
+					keyval = keyNum + VK_NUMPAD0;
+			}
+			else if (sKey == "Plus") {
+				keyval = VK_ADD;
+			}
+			else if (sKey == "Minus") {
+				keyval = VK_SUBTRACT;
+			}
+			else if (sKey == "Decimal") {
+				keyval = VK_DECIMAL;
+			}
+			else if (sKey == "Divide") {
+				keyval = VK_DIVIDE;
+			}
+			else if (sKey == "Multiply") {
+				keyval = VK_MULTIPLY;
+			}
+		}
+		else if (sKey == "Left") {
+			keyval = VK_LEFT;
+		}
+		else if (sKey == "Right") {
+			keyval = VK_RIGHT;
+		}
+		else if (sKey == "Up") {
+			keyval = VK_UP;
+		}
+		else if (sKey == "Down") {
+			keyval = VK_DOWN;
+		}
+		else if (sKey == "Insert") {
+			keyval = VK_INSERT;
+		}
+		else if (sKey == "End") {
+			keyval = VK_END;
+		}
+		else if (sKey == "Home") {
+			keyval = VK_HOME;
+		}
+		else if (sKey == "Enter") {
+			keyval = VK_RETURN;
+		}
+		else if (sKey == "Space") {
+			keyval = VK_SPACE;
+		}
+		else if (sKey == "Tab") {
+			keyval = VK_TAB;
+		}
+		else if (sKey == "Escape") {
+			keyval = VK_ESCAPE;
+		}
+		else if (sKey == "Delete") {
+			keyval = VK_DELETE;
+		}
+		else if (sKey == "PageUp") {
+			keyval = VK_PRIOR;
+		}
+		else if (sKey == "PageDown") {
+			keyval = VK_NEXT;
+		}
+		else if (sKey == "Win") {
+			keyval = VK_LWIN;
+		}
+		else if (sKey == "Menu") {
+			keyval = VK_APPS;
+		}
+	}
+	return keyval;
+}
+
+void SciTEKeys::FillAccel(void *p, const char *mnemonic, int cmd){
+	LPACCEL pAcc = reinterpret_cast<LPACCEL>(p);
+	pAcc->fVirt = TRUE;
+	if (mnemonic && *mnemonic) {
+		SString sKey = mnemonic;
+
+		if (sKey.contains("Ctrl+")) {
+			pAcc->fVirt |= 0x08;
+			sKey.remove("Ctrl+");
+		}
+		if (sKey.contains("Shift+")) {
+			pAcc->fVirt |= 0x04;
+			sKey.remove("Shift+");
+		}
+		if (sKey.contains("Alt+")) {
+			pAcc->fVirt |= 0x10;
+			sKey.remove("Alt+");
+		}
+		pAcc->key = GetVK(sKey);
+		pAcc->cmd = cmd;
+	}
+}
+
 long SciTEKeys::ParseKeyCode(const char *mnemonic) {
 	int modsInKey = 0;
 	int keyval = -1;
@@ -100,84 +223,38 @@ long SciTEKeys::ParseKeyCode(const char *mnemonic) {
 			modsInKey |= SCMOD_ALT;
 			sKey.remove("Alt+");
 		}
-
-		if (sKey.length() == 1) {
-//!			keyval = VkKeyScan(sKey[0]) & 0xFF;
-//-start-[English_KeyCode]
-			keyval = VkKeyScan(sKey[0]);
-			if (keyval == -1 )
-			{
-				if (sKey[0] >= 'A' &&  sKey[0] <= 'Z')
-					keyval = sKey[0];
-			}
-			else
-				keyval &= 0xFF;
-//-end-[English_KeyCode]
-		} else if (sKey.length() > 1) {
-			if ((sKey[0] == 'F') && (isdigit(sKey[1]))) {
-				sKey.remove("F");
-				int fkeyNum = sKey.value();
-				if (fkeyNum >= 1 && fkeyNum <= 12)
-					keyval = fkeyNum - 1 + VK_F1;
-			} else if ((sKey[0] == 'V') && (isdigit(sKey[1]))) {
-				sKey.remove("V");
-				int vkey = sKey.value();
-				if (vkey > 0 && vkey <= 0x7FFF)
-					keyval = vkey;
-			} else if (sKey.search("Keypad") == 0) {
-				sKey.remove("Keypad");
-				if (isdigit(sKey[0])) {
-					int keyNum = sKey.value();
-					if (keyNum >= 0 && keyNum <= 9)
-						keyval = keyNum + VK_NUMPAD0;
-				} else if (sKey == "Plus") {
-					keyval = VK_ADD;
-				} else if (sKey == "Minus") {
-					keyval = VK_SUBTRACT;
-				} else if (sKey == "Decimal") {
-					keyval = VK_DECIMAL;
-				} else if (sKey == "Divide") {
-					keyval = VK_DIVIDE;
-				} else if (sKey == "Multiply") {
-					keyval = VK_MULTIPLY;
-				}
-			} else if (sKey == "Left") {
-				keyval = VK_LEFT;
-			} else if (sKey == "Right") {
-				keyval = VK_RIGHT;
-			} else if (sKey == "Up") {
-				keyval = VK_UP;
-			} else if (sKey == "Down") {
-				keyval = VK_DOWN;
-			} else if (sKey == "Insert") {
-				keyval = VK_INSERT;
-			} else if (sKey == "End") {
-				keyval = VK_END;
-			} else if (sKey == "Home") {
-				keyval = VK_HOME;
-			} else if (sKey == "Enter") {
-				keyval = VK_RETURN;
-			} else if (sKey == "Space") {
-				keyval = VK_SPACE;
-			} else if (sKey == "Tab") {
-				keyval = VK_TAB;
-			} else if (sKey == "Escape") {
-				keyval = VK_ESCAPE;
-			} else if (sKey == "Delete") {
-				keyval = VK_DELETE;
-			} else if (sKey == "PageUp") {
-				keyval = VK_PRIOR;
-			} else if (sKey == "PageDown") {
-				keyval = VK_NEXT;
-			} else if (sKey == "Win") {
-				keyval = VK_LWIN;
-			} else if (sKey == "Menu") {
-				keyval = VK_APPS;
-			}
-		}
+		keyval = GetVK(sKey);
 	}
 
 	return (keyval > 0) ? (keyval | (modsInKey<<16)) : 0;
+}
+long SciTEKeys::ParseKeyCodeWin(const char *mnemonic){
+	int modsInKey = 0;
+	int keyval = -1;
+
+	if (mnemonic && *mnemonic) {
+		SString sKey = mnemonic;
+
+		if (sKey.contains("Ctrl+")) {
+			modsInKey |= MOD_CONTROL;
+			sKey.remove("Ctrl+");
+		}
+		if (sKey.contains("Shift+")) {
+			modsInKey |= MOD_SHIFT;
+			sKey.remove("Shift+");
+		}
+		if (sKey.contains("Alt+")) {
+			modsInKey |= MOD_ALT;
+			sKey.remove("Alt+");
+		}
+		if (sKey.contains("Win+")) {
+			modsInKey |= MOD_WIN;
+			sKey.remove("Win+");
+		}
+		keyval = GetVK(sKey);
+	}
+
+	return (keyval > 0) ? (keyval | (modsInKey << 16)) : 0;
 }
 
 bool SciTEKeys::MatchKeyCode(long parsedKeyCode, int keyval, int modifiers) {
@@ -1865,6 +1942,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_ONPOST, lParam, wParam);
 		case SCN_FINDCOMPLETED:
 			return (LRESULT)extender->OnFindCompleted();
+		case WM_HOTKEY:
+			//multiExtender
+			//SciTEKeys::
+			extender->OnHotKey(lParam);
+			return 0;
 
 //!-start-[new_on_dbl_clk]
 	case WM_LBUTTONDBLCLK:

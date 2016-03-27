@@ -383,4 +383,11 @@ bool MultiplexExtension::OnLayOutNotify(const char *command) {
 	return false;
 }
 
+bool MultiplexExtension::OnHotKey(long hotkey) {
+	for (int i = 0; i<extensionCount; ++i) {
+		if (extensions[i]->OnHotKey(hotkey)) return true;
+	}
+	return false;
+}
+
 //!-end-[OnSendEditor]
