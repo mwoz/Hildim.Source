@@ -339,7 +339,7 @@ protected:
 
 	void MakeAccelerator(SString sKey, ACCEL &Accel);
 
-	//void RestorePosition();
+	void EnsureVisible();
 
 public:
 

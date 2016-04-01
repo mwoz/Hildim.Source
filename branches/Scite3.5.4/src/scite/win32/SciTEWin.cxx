@@ -1510,22 +1510,30 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 	// OK, the instance will be displayed
 	SizeSubWindows();
-	wSciTE.Show();
-	if (cmdShow) {	// assume SW_MAXIMIZE only
-		::ShowWindow(MainHWND(), cmdShow);
-	}
+	//wSciTE.Show();
+	//if (cmdShow) {	// assume SW_MAXIMIZE only
+	//	::ShowWindow(MainHWND(), cmdShow);
+	//}
 
 	// Open all files given on command line.
 	// The filenames containing spaces must be enquoted.
 	// In case of not using buffers they get closed immediately except
 	// the last one, but they move to the MRU file list
 	ProcessCommandLine(args, 1);
-	Redraw();
+	//Redraw();
 }
 
 /**
  * Draw the split bar.
  */
+
+void SciTEWin::EnsureVisible(){
+	if (cmdShow) {	// assume SW_MAXIMIZE only
+		::ShowWindow(MainHWND(), cmdShow);
+		cmdShow = 0;
+		Redraw();
+	}
+}
 
 
 void SciTEWin::AboutDialog() {

@@ -245,7 +245,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack) {
 
 	if (	index < 0 ||
 	        index >= buffers.length ||
-	        index == currentbuf ||
+	        //index == currentbuf ||
 	        currentbuf < 0 ||
 	        currentbuf >= buffers.length) {
 		return;
