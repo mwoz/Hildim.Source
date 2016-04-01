@@ -277,7 +277,6 @@ static inline int onStartNextLine(int initStyle)
 	case SCE_FM_X_ERROR:
 		initStyle = SCE_FM_X_DEFAULT;
 		break;
-	case SCE_FM_X_STRING:
 	case SCE_FM_X_IDENTIFIER:
 		initStyle = SCE_FM_X_ERROR;
 		break;

@@ -575,6 +575,11 @@ static int cf_Reg_HotKey(lua_State* L){
 	return 1;
 }
 
+static int cf_EnsureVisible(lua_State* L){
+	host->EnsureVisible();
+	return 0;
+}
+
 // Pane match generator.  This was prototyped in about 30 lines of Lua.
 // I hope the C++ version is more robust at least, e.g. prevents infinite
 // loops and is more tamper-resistant.
@@ -1815,6 +1820,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_perform_grep_ex);
 	lua_setfield(luaState, -2, "PerformGrepEx");
+
+	lua_pushcfunction(luaState, cf_EnsureVisible);
+	lua_setfield(luaState, -2, "EnsureVisible");
 
 
 	// buffers

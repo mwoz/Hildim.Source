@@ -5914,6 +5914,7 @@ void SciTEBase::Insert(Pane p, int pos, const char *s) {
 void SciTEBase::Trace(const char *s) {
 	MakeOutputVisible(wOutput);
 	OutputAppendStringSynchronised(s);
+	EnsureVisible();
 }
 
 char *SciTEBase::Property(const char *key) {

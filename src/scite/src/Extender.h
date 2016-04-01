@@ -40,6 +40,7 @@ public:
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
+	virtual void EnsureVisible() = 0;
 };
 
 /**
