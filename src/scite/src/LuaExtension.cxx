@@ -560,7 +560,7 @@ static int cf_Reg_HotKey(lua_State* L){
 			++count;
 			lua_pop(L, 1);
 		}
-		LPACCEL acc = new ACCEL[count];
+		LPACCEL  acc = (LPACCEL)LocalAlloc(LPTR, count * sizeof(ACCEL));
 		lua_pushnil(L);
 		while (lua_next(L, 1) != 0) {
 			// key is at index -2 and value at index -1
@@ -568,9 +568,10 @@ static int cf_Reg_HotKey(lua_State* L){
 
 			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), luaL_checkint(L, -1));
 			lua_pop(L, 1);
+			i++;
 		}
 		host->SetAcceleratorTable((void*) ::CreateAcceleratorTable(acc, count));
-		delete acc;
+		//delete acc;
 	}
 	return 1;
 }
@@ -1813,7 +1814,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "RunLuaThread");
 
 	lua_pushcfunction(luaState, cf_Reg_HotKey);
-	lua_setfield(luaState, -2, "RegisterHotKey");
+	lua_setfield(luaState, -2, "RegistryHotKeys");
 
 	lua_pushcfunction(luaState, cf_post_command);
 	lua_setfield(luaState, -2, "PostCommand");

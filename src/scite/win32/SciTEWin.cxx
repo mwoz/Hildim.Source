@@ -183,7 +183,7 @@ int SciTEKeys::GetVK(SString sKey){
 
 void SciTEKeys::FillAccel(void *p, const char *mnemonic, int cmd){
 	LPACCEL pAcc = reinterpret_cast<LPACCEL>(p);
-	pAcc->fVirt = TRUE;
+	pAcc->fVirt = 3;
 	if (mnemonic && *mnemonic) {
 		SString sKey = mnemonic;
 
@@ -1795,17 +1795,19 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 		}
 	}
 
-	// loop through the Tools menu's active commands.
-	HMENU hMenu = ::GetMenu(MainHWND());
-	HMENU hToolsMenu = ::GetSubMenu(hMenu, menuTools);
-	for (int tool_i = 0; tool_i < toolMax; ++tool_i) {
-		MENUITEMINFO mii;
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_DATA;
-		if (::GetMenuItemInfo(hToolsMenu, IDM_TOOLS+tool_i, FALSE, &mii) && mii.dwItemData) {
-			if (SciTEKeys::MatchKeyCode(reinterpret_cast<long&>(mii.dwItemData), wParam, modifiers)) {
-				SciTEBase::MenuCommand(IDM_TOOLS+tool_i);
-				return 1l;
+	if (bCheckCommsndsOnKey){
+		// loop through the Tools menu's active commands.
+		HMENU hMenu = ::GetMenu(MainHWND());
+		HMENU hToolsMenu = ::GetSubMenu(hMenu, menuTools);
+		for (int tool_i = 0; tool_i < toolMax; ++tool_i) {
+			MENUITEMINFO mii;
+			mii.cbSize = sizeof(MENUITEMINFO);
+			mii.fMask = MIIM_DATA;
+			if (::GetMenuItemInfo(hToolsMenu, IDM_TOOLS + tool_i, FALSE, &mii) && mii.dwItemData) {
+				if (SciTEKeys::MatchKeyCode(reinterpret_cast<long&>(mii.dwItemData), wParam, modifiers)) {
+					SciTEBase::MenuCommand(IDM_TOOLS + tool_i);
+					return 1l;
+				}
 			}
 		}
 	}
@@ -1950,11 +1952,6 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_ONPOST, lParam, wParam);
 		case SCN_FINDCOMPLETED:
 			return (LRESULT)extender->OnFindCompleted();
-		case WM_HOTKEY:
-			//multiExtender
-			//SciTEKeys::
-			extender->OnHotKey(lParam);
-			return 0;
 
 //!-start-[new_on_dbl_clk]
 	case WM_LBUTTONDBLCLK:

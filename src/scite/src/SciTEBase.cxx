@@ -4493,6 +4493,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SetOverrideLanguage(cmdID - IDM_LANGUAGE);
 			extender->OnSwitchFile(props.GetString("FilePath"));
 		}
+		else if (cmdID >= 28000){
+			extender->OnHotKey(cmdID);
+		}
 		break;
 	}
 }

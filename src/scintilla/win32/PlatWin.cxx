@@ -3141,6 +3141,7 @@ void Platform::Assert(const char *c, const char *file, int line) {
 		int idButton = ::MessageBoxA(0, buffer, "Assertion failure",
 			MB_ABORTRETRYIGNORE|MB_ICONHAND|MB_SETFOREGROUND|MB_TASKMODAL);
 		if (idButton == IDRETRY) {
+
 			::DebugBreak();
 		} else if (idButton == IDIGNORE) {
 			// all OK
