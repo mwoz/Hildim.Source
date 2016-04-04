@@ -187,7 +187,7 @@ protected:
 	DWORD subProcessGroupId;
 	int outputScroll;
 
-	HACCEL hAccTable;
+	HACCEL hAccTable = NULL;
 
 	GUI::Rectangle pagesetupMargin;
 	HGLOBAL hDevMode;
@@ -376,8 +376,14 @@ public:
 		return hAccTable;
 	}
 
+	bool bCheckCommsndsOnKey = true;
+
 	void SetAcceleratorTable(void *h){
+		if (hAccTable){
+			DestroyAcceleratorTable(hAccTable);
+		}
 		hAccTable = (HACCEL)h;
+		bCheckCommsndsOnKey = false;
 	}
 
 	uptr_t GetInstance();
