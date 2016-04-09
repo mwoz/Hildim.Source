@@ -39,8 +39,11 @@ public:
 	virtual void SetDocumentAt(int index, bool updateStack = true) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
+	virtual void GetBufferName(int i, char* c) = 0;
+	virtual bool GetBuffersSavedState(int i) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
+	virtual void SetOverrideLanguage(const char *lexer, bool bFireEvent) = 0;
 };
 
 /**

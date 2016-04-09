@@ -581,6 +581,13 @@ static int cf_EnsureVisible(lua_State* L){
 	return 0;
 }
 
+static int sf_SetOverrideLanguage(lua_State* L){
+	const char * lexer = luaL_checkstring(L, 1);
+	host->SetOverrideLanguage(lexer, true);
+	return 0;
+}
+	
+
 // Pane match generator.  This was prototyped in about 30 lines of Lua.
 // I hope the C++ version is more robust at least, e.g. prevents infinite
 // loops and is more tamper-resistant.
@@ -899,6 +906,20 @@ static int bf_current(lua_State *L){
 
 static int bf_get_count(lua_State *L){
 	lua_pushinteger(L, host->GetBuffersCount());
+	return 1;
+}
+
+static int bf_get_buffer_name(lua_State *L){
+	int i = luaL_checkint(L, 1);
+	char c[2000];
+	host->GetBufferName(i, c);
+	lua_pushstring(L, c);
+	return 1;
+}
+
+static int bf_get_buffer_saved(lua_State *L){
+	int i = luaL_checkint(L, 1);
+	lua_pushboolean(L, host->GetBuffersSavedState(i));
 	return 1;
 }
 
@@ -1825,6 +1846,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_EnsureVisible);
 	lua_setfield(luaState, -2, "EnsureVisible");
 
+	lua_pushcfunction(luaState, sf_SetOverrideLanguage);
+	lua_setfield(luaState, -2, "SetLexer");
 
 	// buffers
 	lua_newtable(luaState);
@@ -1832,6 +1855,10 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "GetCount");
 	lua_pushcfunction(luaState, cf_set_document_at);
 	lua_setfield(luaState, -2, "SetDocumentAt");
+	lua_pushcfunction(luaState, bf_get_buffer_name);
+	lua_setfield(luaState, -2, "NameAt");
+	lua_pushcfunction(luaState, bf_get_buffer_saved);
+	lua_setfield(luaState, -2, "SavedAt");
 	//lua_pushcfunction(luaState, bf_set_current);
 	//lua_setfield(luaState, -2, "SetCurrent");
 	lua_pushcfunction(luaState, bf_current);

@@ -195,6 +195,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_FINISHEDEXECUTE",305},
 	{"IDM_FOLDMARGIN",406},
 	{"IDM_FULLSCREEN",961},
+	{"IDM_GANERETED", 28000},
 	{"IDM_GO",303},
 	{"IDM_GOTO",220},
 	{"IDM_HELP",901},
@@ -3160,7 +3161,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 282,
-	ifaceConstantCount = 2529,
+	ifaceConstantCount = 2530,
 	ifacePropertyCount = 209
 };
 

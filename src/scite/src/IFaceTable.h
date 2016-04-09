@@ -84,6 +84,7 @@ public:
 	static int FindProperty(const char *name);
 
 	static int GetConstantName(int value, char *nameOut, unsigned nameBufferLen);
+	static int GetConstantValue(int idx){ return constants[idx].value; };
 };
 
 #endif
