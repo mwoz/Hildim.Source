@@ -1360,7 +1360,7 @@ void SciTEWin::CreateUI() {
 	int top = props.GetInt("position.top", CW_USEDEFAULT);
 	int width = props.GetInt("position.width", CW_USEDEFAULT);
 	int height = props.GetInt("position.height", CW_USEDEFAULT);
-	cmdShow = props.GetInt("position.maximize", 0) ? SW_MAXIMIZE : 0;
+	cmdShow = props.GetInt("position.maximize", 0) ? SW_MAXIMIZE : SW_NORMAL;
 	if (width == -1 || height == -1) {
 		cmdShow = SW_MAXIMIZE;
 		width = CW_USEDEFAULT;
@@ -1529,7 +1529,7 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 void SciTEWin::EnsureVisible(){
 	if (cmdShow) {	// assume SW_MAXIMIZE only
-		::ShowWindow(MainHWND(), cmdShow);
+		::ShowWindow(MainHWND(), cmdShow);			 
 		cmdShow = 0;
 		Redraw();
 	}

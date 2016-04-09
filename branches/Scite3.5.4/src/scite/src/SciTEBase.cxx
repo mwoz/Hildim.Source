@@ -55,6 +55,7 @@
 #include "Scintilla.h"
 #include "SciLexer.h"
 
+#include "IFaceTable.h"
 #include "GUI.h"
 #include "SString.h"
 #include "StringList.h"
@@ -840,19 +841,25 @@ void SciTEBase::AssignKey(int key, int mods, int cmd) {
  * Mostly used to set a language on a file of unknown extension.
  */
 void SciTEBase::SetOverrideLanguage(int cmdID) {
+	SetOverrideLanguage((const char*)languageMenu[cmdID].extension.c_str(), false);
+}
+
+void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	RecentFile rf = GetFilePosition();
 	EnsureRangeVisible(0, wEditor.Call(SCI_GETLENGTH), false);
 	// Zero all the style bytes
 	wEditor.Call(SCI_CLEARDOCUMENTSTYLE);
 
 	CurrentBuffer()->overrideExtension = "x.";
-	CurrentBuffer()->overrideExtension += languageMenu[cmdID].extension;
+	CurrentBuffer()->overrideExtension += lexer;
 	ReadProperties();
 	SetIndentSettings();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	Redraw();
 	DisplayAround(rf);
+	if (bFireEvent) extender->OnSwitchFile(props.GetString("FilePath"));
 }
+
 
 int SciTEBase::LengthDocument() {
 	return wEditor.Call(SCI_GETLENGTH);
@@ -4493,7 +4500,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SetOverrideLanguage(cmdID - IDM_LANGUAGE);
 			extender->OnSwitchFile(props.GetString("FilePath"));
 		}
-		else if (cmdID >= 28000){
+		else if (cmdID >= IDM_GANERETED && cmdID < IDM_GANERETED + 2000){
 			extender->OnHotKey(cmdID);
 		}
 		break;
@@ -4665,6 +4672,15 @@ void SciTEBase::NewLineInOutput() {
 	int line = wOutput.Call(SCI_LINEFROMPOSITION,
 	        wOutput.Call(SCI_GETCURRENTPOS)) - 1;
 	SString cmd = GetLine(wOutput, line);
+	if (cmd.startswith("###")) {
+		if (cmd.lowercase() == "###c") 
+			curOutMode = outConsole;
+		else if (cmd.lowercase() == "###l")
+			curOutMode = outLua;
+		else if (cmd.lowercase() == "###i")
+			curOutMode = outInterface;
+		return;
+	}
 	if (cmd == ">") {
 		// Search output buffer for previous command
 		line--;
@@ -4679,9 +4695,20 @@ void SciTEBase::NewLineInOutput() {
 	} else if (cmd.startswith(">")) {
 		cmd = cmd.substr(1);
 	}
-	returnOutputToCommand = false;
-	AddCommand(cmd, ".", jobCLI);
-	Execute();
+	if (curOutMode == outConsole) {
+		returnOutputToCommand = false;
+		AddCommand(cmd, ".", jobCLI);
+		Execute();
+	}
+	else if (curOutMode == outLua) {
+	}
+	else if (curOutMode == outInterface)
+	{
+		cmd = "IDM_" + cmd.uppercase();
+		int icmd = IFaceTable::FindConstant(cmd.c_str());	
+		if (icmd > 0)
+			::PostMessage((HWND)GetID(), WM_COMMAND, IFaceTable::GetConstantValue(icmd), 0);
+	}
 }
 
 void SciTEBase::Notify(SCNotification *notification) {

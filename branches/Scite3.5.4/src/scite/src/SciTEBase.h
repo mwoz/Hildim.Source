@@ -501,8 +501,10 @@ protected:
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true);
-	int GetBuffersCount(){ return buffers.length; };
-	int GetCurrentBufer(){ return buffers.Current(); };
+	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
+	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
+	int GetBuffersCount(){return buffers.length; };		
+	int GetCurrentBufer(){ return buffers.Current(); };		  
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
@@ -801,6 +803,7 @@ protected:
 	virtual void ReadPropertiesInitial();
 	void ReadFontProperties();
 	void SetOverrideLanguage(int cmdID);
+	void SetOverrideLanguage(const char *lexer, bool bFireEvent);
 	StyleAndWords GetStyleAndWords(const char *base);
 	SString ExtensionFileName();
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
@@ -899,6 +902,8 @@ public:
 		return NULL;
 	}
 //!-end-[GetApplicationProps]
+	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outNull = 0 };
+	OutputMode curOutMode = outConsole;
 
 private:
 	// un-implemented copy-constructor and assignment operator
