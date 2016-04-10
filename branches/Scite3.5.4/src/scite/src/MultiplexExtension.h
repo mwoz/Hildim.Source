@@ -91,7 +91,10 @@ public:
 	virtual bool OnFindCompleted();
 	virtual bool OnIdle();
 	virtual bool OnLayOutNotify(const char *);
-	virtual bool OnHotKey(long);
+	virtual bool OnGeneratedHotKey(long);
+	virtual void DoReboot();
+	virtual void DoLua(const char * c);
+	virtual void OnMouseHook(int x, int y);
 private:
 	Extension **extensions;
 	int extensionCount;

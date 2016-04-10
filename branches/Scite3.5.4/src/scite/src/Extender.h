@@ -44,6 +44,7 @@ public:
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
 	virtual void SetOverrideLanguage(const char *lexer, bool bFireEvent) = 0;
+	virtual bool SwitchMouseHook(bool bSet) = 0;
 };
 
 /**
@@ -103,7 +104,10 @@ public:
 	virtual bool OnFindCompleted(){ return false; }
 	virtual bool OnIdle(){ return false; }
 	virtual bool OnLayOutNotify(const char *){ return false; }
-	virtual bool OnHotKey(long) { return false; }
+	virtual bool OnGeneratedHotKey(long) { return false; }
+	virtual void DoReboot(){ return; };
+	virtual void DoLua(const char * c){ return; };
+	virtual void OnMouseHook(int x, int y){ return; };
 };
 
 #endif

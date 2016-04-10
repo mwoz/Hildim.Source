@@ -4460,7 +4460,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_MACROSTOPRECORD:
 		StopRecordMacro();
 		break;
-
+	case IDM_REBOOT:
+		extender->DoReboot();
+		break;
 	case IDM_HELP: {
 			SelectionIntoProperties();
 			AddCommand(props.GetWild("command.help.", FileNameExt().AsUTF8().c_str()), "",
@@ -4500,8 +4502,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			SetOverrideLanguage(cmdID - IDM_LANGUAGE);
 			extender->OnSwitchFile(props.GetString("FilePath"));
 		}
-		else if (cmdID >= IDM_GANERETED && cmdID < IDM_GANERETED + 2000){
-			extender->OnHotKey(cmdID);
+		else if (cmdID >= IDM_GENERATED && cmdID < IDM_GENERATED + 2000){
+			extender->OnGeneratedHotKey(cmdID);
 		}
 		break;
 	}
@@ -4679,6 +4681,30 @@ void SciTEBase::NewLineInOutput() {
 			curOutMode = outLua;
 		else if (cmd.lowercase() == "###i")
 			curOutMode = outInterface;
+		else if (cmd.lowercase() == "####")
+			curOutMode = outNull;
+		else if (cmd.lowercase() == "###?") {
+			char *c;
+			switch (curOutMode)
+			{
+			case SciTEBase::outConsole:
+				c = "Command line\n";
+				break;
+			case SciTEBase::outLua:
+				c = "LUA concole\n";
+				break;
+			case SciTEBase::outInterface:
+				c = "HildiM interface\n";
+				break;
+			case SciTEBase::outNull:
+				c = "OFF\n";
+				break;
+			default:
+				break;
+			}
+			
+			wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(c));
+		}
 		return;
 	}
 	if (cmd == ">") {
@@ -4701,6 +4727,7 @@ void SciTEBase::NewLineInOutput() {
 		Execute();
 	}
 	else if (curOutMode == outLua) {
+		extender->DoLua(cmd.c_str());
 	}
 	else if (curOutMode == outInterface)
 	{
@@ -4708,6 +4735,12 @@ void SciTEBase::NewLineInOutput() {
 		int icmd = IFaceTable::FindConstant(cmd.c_str());	
 		if (icmd > 0)
 			::PostMessage((HWND)GetID(), WM_COMMAND, IFaceTable::GetConstantValue(icmd), 0);
+		else
+			wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Invalid HildiM interface command\n"));
+	}
+	else
+	{
+		wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Concole OFF. Type ###c for Command Line, ###l for LUA, ###i for interface\n"));
 	}
 }
 

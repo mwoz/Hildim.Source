@@ -394,6 +394,8 @@ public:
 
 	friend class UniqueInstance;
 	friend class SciTEBase; //!-add-[GetApplicationProps]
+	bool SwitchMouseHook(bool bSet);
+	void NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 };
 
 inline bool IsKeyDown(int key) {
