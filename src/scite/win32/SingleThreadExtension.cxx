@@ -245,6 +245,17 @@ bool SingleThreadExtension::OnLayOutNotify(const char *command) {
 	return ext->OnLayOutNotify(command);
 }
 
-bool SingleThreadExtension::OnHotKey(long hotkey) {
-	return ext->OnHotKey(hotkey);
+bool SingleThreadExtension::OnGeneratedHotKey(long hotkey) {
+	return ext->OnGeneratedHotKey(hotkey);
+}
+
+void SingleThreadExtension::DoReboot(){
+	ext->DoReboot();
+}
+
+void SingleThreadExtension::DoLua(const char * c){
+	ext->DoLua(c);
+}
+void SingleThreadExtension::OnMouseHook(int x, int y){
+	ext->OnMouseHook(x, y);
 }

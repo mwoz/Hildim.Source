@@ -383,11 +383,24 @@ bool MultiplexExtension::OnLayOutNotify(const char *command) {
 	return false;
 }
 
-bool MultiplexExtension::OnHotKey(long hotkey) {
+bool MultiplexExtension::OnGeneratedHotKey(long hotkey) {
 	for (int i = 0; i<extensionCount; ++i) {
-		if (extensions[i]->OnHotKey(hotkey)) return true;
+		if (extensions[i]->OnGeneratedHotKey(hotkey)) return true;
 	}
 	return false;
+}
+
+void MultiplexExtension::DoReboot(){
+	if (extensionCount > 0) extensions[0]->DoReboot();
+}
+
+void MultiplexExtension::DoLua(const char * c){
+	if (extensionCount > 0) extensions[0]->DoLua(c);
+}
+void MultiplexExtension::OnMouseHook(int x, int y){
+	for (int i = 0; i<extensionCount; ++i) {
+		extensions[i]->OnMouseHook(x,y);
+	}
 }
 
 //!-end-[OnSendEditor]

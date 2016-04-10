@@ -269,10 +269,11 @@ HINSTANCE SciTEWin::hInstance = 0;
 const TCHAR *SciTEWin::className = NULL;
 const TCHAR *SciTEWin::classNameInternal = NULL;
 SciTEWin *SciTEWin::app = NULL;
-
+SciTEWin *pSciTEWin;
 
 SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 	app = this;
+	pSciTEWin = this;
 
 	cmdShow = 0;
 	heightBar = 7;
@@ -364,7 +365,6 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 	hInstance = hInstance_;
 
 	WNDCLASS wndclass;
-
 	// Register the frame window
 	className = TEXT("SciTEWindow");
 //!	wndclass.style = 0;
@@ -376,7 +376,7 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 	wndclass.hIcon = ::LoadIcon(hInstance, resourceName);
 	wndclass.hCursor = NULL;
 	wndclass.hbrBackground = NULL;
-	wndclass.lpszMenuName = resourceName;
+	wndclass.lpszMenuName = pSciTEWin->props.GetInt("main.menu.used") ? resourceName : 0;
 	wndclass.lpszClassName = className;
 	if (!::RegisterClass(&wndclass))
 		exit(FALSE);
@@ -2377,7 +2377,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	multiExtender.RegisterExtension(DirectorExtension::Instance());
 #endif
 #endif
-
+	SciTEWin MainWind(extender);
 	SciTEWin::Register(hInstance);
 #ifdef STATIC_BUILD
 
@@ -2393,7 +2393,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 	int result;
 	{
-		SciTEWin MainWind(extender);
+		//SciTEWin MainWind(extender);
+		pSciTEWin = &MainWind;
 		LPTSTR lptszCmdLine = GetCommandLine();
 		if (*lptszCmdLine == '\"') {
 			lptszCmdLine++;
@@ -2419,6 +2420,33 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 #endif
 
 	return result;
+}
+
+HHOOK mouseHook = NULL;
+LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	pSciTEWin->NotifyMouseHook(nCode, wParam, lParam);	   
+	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+}
+bool SciTEWin::SwitchMouseHook(bool bSet){
+	bool result = false;
+	if (bSet && !mouseHook){
+		mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, hInstance, GetCurrentThreadId());
+		result = (mouseHook != NULL);
+	}
+	else if (!bSet && mouseHook){
+		result = UnhookWindowsHookEx(mouseHook);
+		//::SetActiveWindow((HWND)GetID());
+		::EndMenu();
+		mouseHook = NULL;
+	}
+	return result;
+}
+void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
+	LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
+	if (wParam == WM_MOUSEMOVE){
+		extender->OnMouseHook(mh->pt.x, mh->pt.y);
+	}
 }
 
 //!-start-[ExtendedContextMenu]

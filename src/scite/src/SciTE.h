@@ -20,7 +20,8 @@
 #define IDM_BUFFER			1200
 #define IDM_IMPORT			1300
 #define IDM_LANGUAGE			1400
-#define IDM_GANERETED       28000
+#define IDM_GENERATED       28000
+#define IDM_REBOOT         667
 
 // File
 #define IDM_NEW			101

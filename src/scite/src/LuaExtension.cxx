@@ -581,6 +581,13 @@ static int cf_EnsureVisible(lua_State* L){
 	return 0;
 }
 
+static int sf_SwitchMouseHook(lua_State* L){
+	bool bSet = lua_toboolean(L, 1);
+	bSet = host->SwitchMouseHook(bSet);
+	lua_pushboolean(L, bSet);
+	return 1;
+}
+
 static int sf_SetOverrideLanguage(lua_State* L){
 	const char * lexer = luaL_checkstring(L, 1);
 	host->SetOverrideLanguage(lexer, true);
@@ -1849,6 +1856,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, sf_SetOverrideLanguage);
 	lua_setfield(luaState, -2, "SetLexer");
 
+	lua_pushcfunction(luaState, sf_SwitchMouseHook);
+	lua_setfield(luaState, -2, "SwitchMouseHook");
+
 	// buffers
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
@@ -2692,10 +2702,22 @@ bool LuaExtension::OnIdle() {
 bool LuaExtension::OnLayOutNotify(const char *command) {
 	return CallNamedFunction("OnLayOutNotify", command);
 }
-bool LuaExtension::OnHotKey(long hotkey) {
-	return CallNamedFunction("OnHotKey", hotkey,0);
+bool LuaExtension::OnGeneratedHotKey(long hotkey) {
+	return CallNamedFunction("event_MenuHotKey", hotkey,0);
 }
 
+void LuaExtension::DoReboot(){
+	
+cf_editor_reload_startup_script(luaState);
+}
+
+void LuaExtension::DoLua(const char *c) {
+	CallNamedFunction("dostring", c);
+}
+
+void LuaExtension::OnMouseHook(int x, int y){
+	CallNamedFunction("event_MenuMouseHook", x, y);
+}
 //!-start-[StartupScriptReload]
 static int cf_editor_reload_startup_script(lua_State*) {
 	InitGlobalScope(false, true);
