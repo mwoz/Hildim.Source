@@ -759,7 +759,7 @@ protected:
 	virtual void CheckMenus();
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
-	void CombineContextMenues(const char *mnuMain, SString &mnuSlave);
+	bool CombineContextMenues(const char *mnuMain, SString &mnuSlave);
 
 	void DeleteFileStackMenu();
 	void SetFileStackMenu();
