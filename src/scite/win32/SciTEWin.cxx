@@ -1857,6 +1857,8 @@ void SciTEWin::AddToPopUp(const char *label, int cmd, bool enabled) {
 
 LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	GUI::ScintillaWindow *w = &wEditor;
+	if (wOutput.Call(SCI_GETFOCUS)) w = &wOutput;
+	else if (wFindRes.Call(SCI_GETFOCUS)) w = &wFindRes;
 	GUI::Point pt = PointFromLong(lParam);
 	if ((pt.x == -1) && (pt.y == -1)) {
 		// Caused by keyboard so display menu near caret
@@ -1870,22 +1872,8 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 		POINT spt = {pt.x, pt.y};
 		::ClientToScreen(static_cast<HWND>(w->GetID()), &spt);
 		pt = GUI::Point(spt.x, spt.y);
-	} else {
-		GUI::Rectangle rcEditor = wEditor.GetPosition();
-		if (!rcEditor.Contains(pt)) {
-			GUI::Rectangle rcOutput = wOutput.GetPosition();
-			if (rcOutput.Contains(pt)) {
-				w = &wOutput;
-			} else {	// In frame so use default.
-				rcOutput = wFindRes.GetPosition();
-				if (rcOutput.Contains(pt)) {
-					w = &wFindRes;
-				} else {
-					return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-				}
-			}
-		}
-	}
+	} 
+
 	menuSource = ::GetDlgCtrlID(HwndOf(*w));
 	ContextMenu(*w, pt, wSciTE);
 	return 0;

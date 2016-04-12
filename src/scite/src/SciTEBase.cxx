@@ -5157,49 +5157,15 @@ void SciTEBase::CheckMenus() {
 //!-end-[LangMenuChecker]
 }
 
-/*
-void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {
-	int currentPos = wSource.Call(SCI_GETCURRENTPOS);
-	int anchor = wSource.Call(SCI_GETANCHOR);
-	popup.CreatePopUp();
-	bool writable = !wSource.Call(SCI_GETREADONLY);
-	AddToPopUp("Undo", IDM_UNDO, writable && wSource.Call(SCI_CANUNDO));
-	AddToPopUp("Redo", IDM_REDO, writable && wSource.Call(SCI_CANREDO));
-	AddToPopUp("");
-	AddToPopUp("Cut", IDM_CUT, writable && currentPos != anchor);
-	AddToPopUp("Copy", IDM_COPY, currentPos != anchor);
-	AddToPopUp("Paste", IDM_PASTE, writable && wSource.Call(SCI_CANPASTE));
-	AddToPopUp("Delete", IDM_CLEAR, writable && currentPos != anchor);
-	AddToPopUp("");
-	AddToPopUp("Select All", IDM_SELECTALL);
-	AddToPopUp("");
-	if (wSource.GetID() == wOutput.GetID()) {
-		AddToPopUp("Hide", IDM_TOGGLEOUTPUT, true);
-	} else {
-		AddToPopUp("Close", IDM_CLOSE, true);
-	}
-	SString userContextMenu = props.GetNewExpand("user.context.menu");
-	userContextMenu.substitute('|', '\0');
-	const char *userContextItem = userContextMenu.c_str();
-	const char *endDefinition = userContextItem + userContextMenu.length();
-	while (userContextItem < endDefinition) {
-		const char *caption = userContextItem;
-		userContextItem += strlen(userContextItem) + 1;
-		if (userContextItem < endDefinition) {
-			int cmd = GetMenuCommandAsInt(userContextItem);
-			userContextItem += strlen(userContextItem) + 1;
-			AddToPopUp(caption, cmd);
-		}
-	}
-	popup.Show(pt, wCmd);
-*/
-//!-start-[ExtendedContextMenu]
-void SciTEBase::CombineContextMenues(const char *mnuMain, SString &mnuSlave) {
+
+bool SciTEBase::CombineContextMenues(const char *mnuMain, SString &mnuSlave) {
 	if (!mnuMain)
-		return;
+		return true;
 	SString m = mnuMain;
+	if (m == "") return false;
 	m.substitute("[MAIN]", mnuSlave.c_str());  
 	mnuSlave = m;
+	return true;
 }
 
 void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {
@@ -5210,14 +5176,14 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 
 	if (wSource.GetID() == wOutput.GetID()) {
 		SString	userContextMenu = props.GetNewExpand("user.outputcontext.menu.", ExtensionFileName().c_str());
-		CombineContextMenues(extender->OnContextMenu(0, 0, "OUTPUT"), userContextMenu);
+		if(!CombineContextMenues(extender->OnContextMenu(0, 0, "OUTPUT"), userContextMenu)) return;
 		userContextMenu.substitute('|', '\0');
 		const char *userContextItem = userContextMenu.c_str();
 		const char *endDefinition = userContextItem + userContextMenu.length();
 		GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded);
 	} else if (wSource.GetID() == wFindRes.GetID()) {	
 		SString	userContextMenu = props.GetNewExpand("user.findrezcontext.menu.", ExtensionFileName().c_str());
-		CombineContextMenues(extender->OnContextMenu(0, 0, "FINDREZ"), userContextMenu);
+		if (!CombineContextMenues(extender->OnContextMenu(0, 0, "FINDREZ"), userContextMenu)) return;
 		userContextMenu.substitute('|', '\0');
 		const char *userContextItem = userContextMenu.c_str();
 		const char *endDefinition = userContextItem + userContextMenu.length();
@@ -5226,7 +5192,7 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 		SString userContextMenu = props.GetNewExpand("user.context.menu.", ExtensionFileName().c_str());
 		if (userContextMenu.length() == 0)
 			userContextMenu = props.GetNewExpand("user.context.menu");
-		CombineContextMenues(extender->OnContextMenu(0, 0, "EDITOR"), userContextMenu);
+		if (!CombineContextMenues(extender->OnContextMenu(0, 0, "EDITOR"), userContextMenu)) return;
 		userContextMenu.substitute('|', '\0');
 		const char *userContextItem = userContextMenu.c_str();
 		const char *endDefinition = userContextItem + userContextMenu.length();
