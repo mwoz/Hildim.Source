@@ -1859,6 +1859,7 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	GUI::ScintillaWindow *w = &wEditor;
 	if (wOutput.Call(SCI_GETFOCUS)) w = &wOutput;
 	else if (wFindRes.Call(SCI_GETFOCUS)) w = &wFindRes;
+	if ((WPARAM)w->GetID() != wParam) return 0;		//ћы можем сюда попасть, когда закрываетс€ без выбора другое меню иуп - отсекаем этот вариант
 	GUI::Point pt = PointFromLong(lParam);
 	if ((pt.x == -1) && (pt.y == -1)) {
 		// Caused by keyboard so display menu near caret
@@ -1868,11 +1869,11 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 			w = &wFindRes;
 		int position = w->Call(SCI_GETCURRENTPOS);
 		pt.x = w->Call(SCI_POINTXFROMPOSITION, 0, position);
-		pt.y = w->Call(SCI_POINTYFROMPOSITION, 0, position);
+		pt.y = w->Call(SCI_POINTYFROMPOSITION, 0, position) + w->Call(SCI_TEXTHEIGHT, w->Call(SCI_LINEFROMPOSITION,position));
 		POINT spt = {pt.x, pt.y};
 		::ClientToScreen(static_cast<HWND>(w->GetID()), &spt);
 		pt = GUI::Point(spt.x, spt.y);
-	} 
+	}
 
 	menuSource = ::GetDlgCtrlID(HwndOf(*w));
 	ContextMenu(*w, pt, wSciTE);
