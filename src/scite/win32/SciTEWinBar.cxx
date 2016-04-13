@@ -131,7 +131,7 @@ void SciTEWin::Notify(SCNotification *notification) {
 
 			bool isAdded = false;
 			SString tabContextMenu = props.GetNewExpand("user.tabcontext.menu.", ExtensionFileName().c_str());
-			if (!CombineContextMenues(extender->OnContextMenu(0, 0, "TABBAR"), tabContextMenu)) return;
+			if (!CombineContextMenues(extender->OnContextMenu(ptCursor.x, ptCursor.y, "TABBAR"), tabContextMenu)) return;
 			tabContextMenu.substitute('|', '\0');
 			const char *userContextItem = tabContextMenu.c_str();
 			const char *endDefinition = userContextItem + tabContextMenu.length();
