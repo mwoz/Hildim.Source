@@ -2751,11 +2751,13 @@ static IFaceFunction ifaceFunctions[] = {
 	{"EndUndoAction", 2079, iface_void, {iface_void, iface_void}},
 	{"EnsureVisible", 2232, iface_void, {iface_int, iface_void}},
 	{"EnsureVisibleEnforcePolicy", 2234, iface_void, {iface_int, iface_void}},
+	{"ExpandChildren", 2239, iface_void, {iface_int, iface_int}},
 	{"FindColumn", 2456, iface_int, {iface_int, iface_int}},
 	{"FindIndicatorFlash", 2641, iface_void, {iface_position, iface_position}},
 	{"FindIndicatorHide", 2642, iface_void, {iface_void, iface_void}},
 	{"FindIndicatorShow", 2640, iface_void, {iface_position, iface_position}},
 	{"FindText", 2150, iface_position, {iface_int, iface_findtext}},
+	{"FoldChildren", 2238, iface_void, {iface_int, iface_int}},
 	{"FormFeed", 2330, iface_void, {iface_void, iface_void}},
 	{"FormatRange", 2151, iface_position, {iface_bool, iface_formatrange}},
 	{"FreeSubStyles", 4023, iface_void, {iface_void, iface_void}},
@@ -3161,7 +3163,7 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 282,
+	ifaceFunctionCount = 284,
 	ifaceConstantCount = 2531,
 	ifacePropertyCount = 209
 };
