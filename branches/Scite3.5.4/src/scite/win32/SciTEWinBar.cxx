@@ -129,25 +129,8 @@ void SciTEWin::Notify(SCNotification *notification) {
 			MenuEx subMenu[50];
 			subMenu[0].CreatePopUp(NULL);
 
-			bool isAdded = false;
-			SString tabContextMenu = props.GetNewExpand("user.tabcontext.menu.", ExtensionFileName().c_str());
-			if (!CombineContextMenues(extender->OnContextMenu(ptCursor.x, ptCursor.y, "TABBAR"), tabContextMenu)) return;
-			tabContextMenu.substitute('|', '\0');
-			const char *userContextItem = tabContextMenu.c_str();
-			const char *endDefinition = userContextItem + tabContextMenu.length();
-			GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded);
+			extender->OnContextMenu(ptCursor.x, ptCursor.y, "TABBAR");
 
-			if (!isAdded) {
-				subMenu[0].Add(localiser.Text("Close").c_str(), IDM_CLOSE, IsMenuItemEnabled(IDM_CLOSE));
-				subMenu[0].Add();
-				subMenu[0].Add(localiser.Text("Save").c_str(), IDM_SAVE, IsMenuItemEnabled(IDM_SAVE));
-				subMenu[0].Add(localiser.Text("Save As").c_str(), IDM_SAVEAS, IsMenuItemEnabled(IDM_SAVEAS));
-				subMenu[0].Add();
-				subMenu[0].Add(localiser.Text("Print").c_str(), IDM_PRINT, IsMenuItemEnabled(IDM_PRINT));
-			}
-
-			subMenu[0].Show(ptCursor, wSciTE);
-//!-end-[ExtendedContextMenu]
 		}
 		break;
 

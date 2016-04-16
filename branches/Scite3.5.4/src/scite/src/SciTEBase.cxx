@@ -840,9 +840,6 @@ void SciTEBase::AssignKey(int key, int mods, int cmd) {
  * Override the language of the current file with the one indicated by @a cmdID.
  * Mostly used to set a language on a file of unknown extension.
  */
-void SciTEBase::SetOverrideLanguage(int cmdID) {
-	SetOverrideLanguage((const char*)languageMenu[cmdID].extension.c_str(), false);
-}
 
 void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	RecentFile rf = GetFilePosition();
@@ -4019,8 +4016,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 			//fprintf(stderr, "Copy from %d\n", source);
 			CallPane(source, SCI_COPY);
 		}
-		// does not trigger SCN_UPDATEUI, so do CheckMenusClipboard() here
-		CheckMenusClipboard();
 		break;
 	case IDM_PASTE:
 		CallPane(source, SCI_PASTE);
@@ -4486,23 +4481,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	default:
-		if ((cmdID >= bufferCmdID) &&
-		        (cmdID < bufferCmdID + buffers.size)) {
-			SetDocumentAt(cmdID - bufferCmdID);
-			CheckReload();
-		} else if ((cmdID >= fileStackCmdID) &&
-		        (cmdID < fileStackCmdID + fileStackMax)) {
-			StackMenu(cmdID - fileStackCmdID);
-		} else if (cmdID >= importCmdID &&
-		        (cmdID < importCmdID + importMax)) {
-			ImportMenu(cmdID - importCmdID);
-		} else if (cmdID >= IDM_TOOLS && cmdID < IDM_TOOLS + toolMax) {
-			ToolsMenu(cmdID - IDM_TOOLS);
-		} else if (cmdID >= IDM_LANGUAGE && cmdID < IDM_LANGUAGE + 100) {
-			SetOverrideLanguage(cmdID - IDM_LANGUAGE);
-			extender->OnSwitchFile(props.GetString("FilePath"));
-		}
-		else if (cmdID >= IDM_GENERATED && cmdID < IDM_GENERATED + 2000){
+		if (cmdID >= IDM_GENERATED && cmdID < IDM_GENERATED + 2000){
 			extender->OnGeneratedHotKey(cmdID);
 		}
 		break;
@@ -4887,7 +4866,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN);
 			if (notification->nmhdr.idFrom == IDM_SRCWIN) {
 			}
-			CheckMenusClipboard();
 		}
 		if (CurrentBuffer()->findMarks == Buffer::fmModified) {
 			RemoveFindMarks();
@@ -4898,12 +4876,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 		if (notification->modificationType & SC_LASTSTEPINUNDOREDO) {
 			//when the user hits undo or redo, several normal insert/delete
 			//notifications may fire, but we will end up here in the end
-			EnableAMenuItem(IDM_UNDO, CallFocused(SCI_CANUNDO));
-			EnableAMenuItem(IDM_REDO, CallFocused(SCI_CANREDO));
 		} else if (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) {
 			//this will be called a lot, and usually means "typing".
-			EnableAMenuItem(IDM_UNDO, TRUE);
-			EnableAMenuItem(IDM_REDO, FALSE);
 			if (CurrentBuffer()->findMarks == Buffer::fmMarked) {
 				CurrentBuffer()->findMarks = Buffer::fmModified;
 			}
@@ -5041,14 +5015,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 	}
 }
 
-void SciTEBase::CheckMenusClipboard() {
-	bool hasSelection = CallFocused(SCI_GETSELECTIONSTART) != CallFocused(SCI_GETSELECTIONEND);
-	EnableAMenuItem(IDM_CUT, hasSelection);
-	EnableAMenuItem(IDM_COPY, hasSelection);
-	EnableAMenuItem(IDM_CLEAR, hasSelection);
-	EnableAMenuItem(IDM_PASTE, CallFocused(SCI_CANPASTE));
-}
-
 void SciTEBase::CheckMenus() {
 	int iEOL = wEditor.Call(SCI_GETVIEWEOL);
 
@@ -5062,162 +5028,23 @@ void SciTEBase::CheckMenus() {
 	props.SetInteger("output.wrap", wrapOutput);
 	props.SetInteger("wrap", wrap);
 
-	CheckMenusClipboard();
-//!-start-[SaveAllEnabled]
-	bool bSaveAllEnabled = false;
-	for ( int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].isDirty) {
-			bSaveAllEnabled = true;
-			break;
-		}
-	}
-	EnableAMenuItem(IDM_SAVEALL, bSaveAllEnabled);
-//!-end-[SaveAllEnabled]
-//!	EnableAMenuItem(IDM_SAVE, CurrentBuffer()->isDirty);
-	EnableAMenuItem(IDM_SAVE, CurrentBuffer()->DocumentNotSaved()); //-change-[OpenNonExistent]
-	EnableAMenuItem(IDM_UNDO, CallFocused(SCI_CANUNDO));
-	EnableAMenuItem(IDM_REDO, CallFocused(SCI_CANREDO));
-	EnableAMenuItem(IDM_DUPLICATE, !isReadOnly);
-	EnableAMenuItem(IDM_FINDINFILES, !jobQueue.IsExecuting());
-	EnableAMenuItem(IDM_SHOWCALLTIP, apis != 0);
-	EnableAMenuItem(IDM_COMPLETE, apis != 0);
-	//CheckAMenuItem(IDM_SPLITVERTICAL, splitVertical);
-	EnableAMenuItem(IDM_OPENFILESHERE, props.GetInt("check.if.already.open") != 0);
-	CheckAMenuItem(IDM_OPENFILESHERE, openFilesHere);
-	CheckAMenuItem(IDM_WRAP, wrap);
-	CheckAMenuItem(IDM_WRAPOUTPUT, wrapOutput);
-	CheckAMenuItem(IDM_WRAPFINDRES, wrapFindRes);
-	CheckAMenuItem(IDM_READONLY, isReadOnly);
-	CheckAMenuItem(IDM_FULLSCREEN, fullScreen);
-	CheckAMenuItem(IDM_VIEWTOOLBAR, tbVisible);
-	CheckAMenuItem(IDM_VIEWTLBARIUP, iuptbVisible);
-	CheckAMenuItem(IDM_VIEWTABBAR, tabVisible);
-	CheckAMenuItem(IDM_VIEWSTATUSBAR, sbVisible);
-	CheckAMenuItem(IDM_VIEWEOL, iEOL);
-	CheckAMenuItem(IDM_VIEWSPACE, viewWs);
-	CheckAMenuItem(IDM_VIEWGUIDES, viewIndent);
-	CheckAMenuItem(IDM_LINENUMBERMARGIN, lineNumbers);
-	CheckAMenuItem(IDM_SELMARGIN, margin);
-	CheckAMenuItem(IDM_FOLDMARGIN, foldMargin);
-	CheckAMenuItem(IDM_TOGGLEOUTPUT, heightOutput > 0);
-	CheckAMenuItem(IDM_TOGGLEPARAMETERS, ParametersOpen());
-	CheckAMenuItem(IDM_MONOFONT, CurrentBuffer()->useMonoFont);
-	EnableAMenuItem(IDM_COMPILE, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0);
-	EnableAMenuItem(IDM_BUILD, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0);
-	EnableAMenuItem(IDM_GO, !jobQueue.IsExecuting() &&
-	        props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0);
-	EnableAMenuItem(IDM_OPENDIRECTORYPROPERTIES, props.GetInt("properties.directory.enable") != 0);
-	for (int toolItem = 0; toolItem < toolMax; toolItem++)
-		EnableAMenuItem(IDM_TOOLS + toolItem, !jobQueue.IsExecuting());
-	EnableAMenuItem(IDM_STOPEXECUTE, jobQueue.IsExecuting());
+	// Tab Bar
 	if (buffers.size > 0) {
-#if !defined(GTK)
-		// Tab Bar
-#ifndef TCM_DESELECTALL
-#define TCM_DESELECTALL TCM_FIRST+50
-#endif
 		if (wTabBar.GetID()) {
 			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DESELECTALL, (WPARAM)0, (LPARAM)0);
 			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_SETCURSEL, (WPARAM)buffers.Current(), (LPARAM)0);
 		}
-#endif
-#if defined(GTK)
-
-		if (wTabBar.GetID())
-			gtk_notebook_set_page(GTK_NOTEBOOK(wTabBar.GetID()), buffers.Current());
-#endif
-
-		for (int bufferItem = 0; bufferItem < buffers.length; bufferItem++) {
-			CheckAMenuItem(IDM_BUFFER + bufferItem, bufferItem == buffers.Current());
-		}
 	}
-	EnableAMenuItem(IDM_MACROPLAY, !recording);
-	EnableAMenuItem(IDM_MACRORECORD, !recording);
-	EnableAMenuItem(IDM_MACROSTOPRECORD, recording);
-//!-start-[LangMenuChecker]
-	static SString last_lang = "";
-	if(language != last_lang) {
-		for (int i = 0; i < languageItems; i++) {
-			CheckAMenuItem(IDM_LANGUAGE + i, false);
-		}
-		for (int item = 0; item < languageItems; item++) {
-			if (languageMenu[item].menuItem[0] == '#') continue;
-			int itemID = IDM_LANGUAGE + item;
-			SString fn = "x.";
-			fn += languageMenu[item].extension;
-			if(language == props.GetNewExpand("lexer.", fn.c_str())) {
-				CheckAMenuItem(itemID, true);
-				last_lang = language;
-				//break;
-			}
-		}
-	}
-//!-end-[LangMenuChecker]
-}
-
-
-bool SciTEBase::CombineContextMenues(const char *mnuMain, SString &mnuSlave) {
-	if (!mnuMain)
-		return true;
-	SString m = mnuMain;
-	if (m == "") return false;
-	m.substitute("[MAIN]", mnuSlave.c_str());  
-	mnuSlave = m;
-	return true;
 }
 
 void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {
-	int item = 0;
-	MenuEx subMenu[50];																	    
-	subMenu[0].CreatePopUp(NULL);
-	bool isAdded = false;
-
-	if (wSource.GetID() == wOutput.GetID()) {
-		SString	userContextMenu = props.GetNewExpand("user.outputcontext.menu.", ExtensionFileName().c_str());
-		if(!CombineContextMenues(extender->OnContextMenu(pt.x, pt.y, "OUTPUT"), userContextMenu)) return;
-		userContextMenu.substitute('|', '\0');
-		const char *userContextItem = userContextMenu.c_str();
-		const char *endDefinition = userContextItem + userContextMenu.length();
-		GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded);
-	} else if (wSource.GetID() == wFindRes.GetID()) {	
-		SString	userContextMenu = props.GetNewExpand("user.findrezcontext.menu.", ExtensionFileName().c_str());
-		if (!CombineContextMenues(extender->OnContextMenu(pt.x, pt.y, "FINDREZ"), userContextMenu)) return;
-		userContextMenu.substitute('|', '\0');
-		const char *userContextItem = userContextMenu.c_str();
-		const char *endDefinition = userContextItem + userContextMenu.length();
-		GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded);
-	} else {
-		SString userContextMenu = props.GetNewExpand("user.context.menu.", ExtensionFileName().c_str());
-		if (userContextMenu.length() == 0)
-			userContextMenu = props.GetNewExpand("user.context.menu");
-		if (!CombineContextMenues(extender->OnContextMenu(pt.x, pt.y, "EDITOR"), userContextMenu)) return;
-		userContextMenu.substitute('|', '\0');
-		const char *userContextItem = userContextMenu.c_str();
-		const char *endDefinition = userContextItem + userContextMenu.length();
-		GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded);
-	}
-
-	if (!isAdded) {
-		subMenu[0].Add(localiser.Text("Undo").c_str(), IDM_UNDO, (int)IsMenuItemEnabled(IDM_UNDO));
-		subMenu[0].Add(localiser.Text("Redo").c_str(), IDM_REDO, (int)IsMenuItemEnabled(IDM_REDO));
-		subMenu[0].Add();
-		subMenu[0].Add(localiser.Text("Cut").c_str(), IDM_CUT, (int)IsMenuItemEnabled(IDM_CUT));
-		subMenu[0].Add(localiser.Text("Copy").c_str(), IDM_COPY, (int)IsMenuItemEnabled(IDM_COPY));
-		subMenu[0].Add(localiser.Text("Paste").c_str(), IDM_PASTE, (int)IsMenuItemEnabled(IDM_PASTE));
-		subMenu[0].Add(localiser.Text("Delete").c_str(), IDM_CLEAR, (int)IsMenuItemEnabled(IDM_CLEAR));
-		subMenu[0].Add();
-		subMenu[0].Add(localiser.Text("Select All").c_str(), IDM_SELECTALL, (int)IsMenuItemEnabled(IDM_SELECTALL));
-		subMenu[0].Add();
-		if (wSource.GetID() == wOutput.GetID()) {
-			subMenu[0].Add(localiser.Text("Hide").c_str(), IDM_TOGGLEOUTPUT, (int)IsMenuItemEnabled(IDM_TOGGLEOUTPUT));
-		} else {
-			subMenu[0].Add(localiser.Text("Close").c_str(), IDM_CLOSE, (int)IsMenuItemEnabled(IDM_CLOSE));
-		}
-	}
-
-	subMenu[0].Show(pt, wCmd);
+	SString mnuFake = "";
+	if (wSource.GetID() == wOutput.GetID())
+		extender->OnContextMenu(pt.x, pt.y, "OUTPUT");
+	else if (wSource.GetID() == wFindRes.GetID())
+		extender->OnContextMenu(pt.x, pt.y, "FINDREZ");
+	else
+		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
 }
 
 bool SciTEBase::IsMenuItemEnabled(int cmd) {
@@ -5465,7 +5292,6 @@ void SciTEBase::PerformOne(char *action) {
 			ExecuteMacroCommand(arg);
 		} else if (isprefix(action, "macroenable:")) {
 			macrosEnabled = atoi(arg);
-			SetToolsMenu();
 		} else if (isprefix(action, "macrolist:")) {
 			StartMacroList(arg);
 		} else if (isprefix(action, "menucommand:")) {
@@ -5864,8 +5690,6 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 				evaluate = true;
 
 			InitialiseBuffers();
-			if (props.GetInt("save.recent"))
-				RestoreRecentMenu();
 
 			if (!PreOpenCheck(arg)){
 				if(extender && !filePath.IsUntitled()) extender->OnNavigation("Open");
@@ -5879,8 +5703,6 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 		// try to load session.
 		if (!buffers.initialised) {
 			InitialiseBuffers();
-			if (props.GetInt("save.recent"))
-				RestoreRecentMenu();
 			if (props.GetInt("buffers") && props.GetInt("save.session"))
 				RestoreSession();
 		}
