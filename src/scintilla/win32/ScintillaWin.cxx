@@ -364,6 +364,7 @@ class ScintillaWin :
 	void ChangeScrollPos(int barType, int pos);
 	sptr_t GetTextLength();
 	sptr_t GetText(uptr_t wParam, sptr_t lParam);
+	void InsertMultiPasteText(const char *text, int len); //!-add-[InsertMultiPasteText]  
 
 public:
 	// Public for benefit of Scintilla_DirectFunction
@@ -1461,6 +1462,18 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN: {
 			//Platform::DebugPrintf("S keydown %d %x %x %x %x\n",iMessage, wParam, lParam, ::IsKeyDown(VK_SHIFT), ::IsKeyDown(VK_CONTROL));
+//!-start-[BetterCalltips]
+                if (ct.wCallTip.Created() && Platform::IsKeyDown(VK_CONTROL) && ((wParam == VK_UP) || (wParam == VK_DOWN))) {
+                    if (wParam == VK_UP) {
+                        ct.clickPlace = 1;
+                        CallTipClick();
+                    } else if (wParam == VK_DOWN) {
+                        ct.clickPlace = 2;
+                        CallTipClick();
+                    }
+                    return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+                }
+//!-end-[BetterCalltips]
 				lastKeyDownConsumed = false;
 				int ret = KeyDown(KeyTranslate(static_cast<int>(wParam)),
 					Platform::IsKeyDown(VK_SHIFT),
@@ -1959,6 +1972,7 @@ void ScintillaWin::NotifyParent(SCNotification scn) {
 	              GetCtrlID(), reinterpret_cast<LPARAM>(&scn));
 }
 
+/*!
 void ScintillaWin::NotifyDoubleClick(Point pt, int modifiers) {
 	//Platform::DebugPrintf("ScintillaWin Double click 0\n");
 	ScintillaBase::NotifyDoubleClick(pt, modifiers);
@@ -1968,6 +1982,20 @@ void ScintillaWin::NotifyDoubleClick(Point pt, int modifiers) {
 			  (modifiers & SCI_SHIFT) ? MK_SHIFT : 0,
 			  MAKELPARAM(pt.x, pt.y));
 }
+*/
+//!-start-[OnDoubleClick]
+void ScintillaWin::NotifyDoubleClick(Point pt, int modifiers) {
+	//Platform:: DebugPrintf("ScintillaWin Double click 0\n");
+	ScintillaBase::NotifyDoubleClick(pt, modifiers);
+	// Send myself a WM_LBUTTONDBLCLK, so the container can handle it too.
+	::SendMessage(MainHWND(),
+			  WM_LBUTTONDBLCLK,
+			  ((modifiers & SCI_SHIFT) ? MK_SHIFT : 0) |
+			  ((modifiers & SCI_CTRL) ? SCI_CTRL : 0) |
+			  ((modifiers & SCI_ALT) ? SCI_ALT : 0),
+			  MAKELPARAM(pt.x, pt.y));
+}
+//!-end-[OnDoubleClick]
 
 class CaseFolderDBCS : public CaseFolderTable {
 	// Allocate the expandable storage here so that it does not need to be reallocated
@@ -2199,16 +2227,71 @@ static bool OpenClipboardRetry(HWND hwnd) {
 	return false;
 }
 
+//!-start-[InsertMultiPasteText]
+void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
+	std::string	convertedText;
+	if (convertPastes) {
+		// Convert line endings of the paste into our local line-endings mode
+		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode);
+		text = convertedText.c_str();
+	}
+	FilterSelections();
+	UndoGroup ug(pdoc, (sel.Count() > 1) || !sel.Empty());
+	for (size_t r=0; r<sel.Count(); r++) {
+		if (!RangeContainsProtected(sel.Range(r).Start().Position(),
+			sel.Range(r).End().Position())) {
+			int positionInsert = sel.Range(r).Start().Position();
+			if (!sel.Range(r).Empty()) {
+				if (sel.Range(r).Length()) {
+					pdoc->DeleteChars(positionInsert, sel.Range(r).Length());
+					sel.Range(r).ClearVirtualSpace();
+				} else {
+					// Range is all virtual so collapse to start of virtual space
+					sel.Range(r).MinimizeVirtualSpace();
+				}
+			}
+			positionInsert = InsertSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
+			if (pdoc->InsertString(positionInsert, text, len)) {
+				sel.Range(r).caret.SetPosition(positionInsert + len);
+				sel.Range(r).anchor.SetPosition(positionInsert + len);
+			}
+			sel.Range(r).ClearVirtualSpace();
+			// If in wrap mode rewrap current line so EnsureCaretVisible has accurate information
+			if (Wrapping()) {
+				AutoSurface surface(this);
+				if (surface) {
+					WrapOneLine(surface, pdoc->LineFromPosition(positionInsert));
+				}
+			}
+		}
+	}
+}
+//!-end-[InsertMultiPasteText]
+
 void ScintillaWin::Paste() {
 	if (!::OpenClipboardRetry(MainHWND())) {
 		return;
 	}
+/*!-remove-[InsertMultiPasteText]
 	UndoGroup ug(pdoc);
 	const bool isLine = SelectionEmpty() &&
 		(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
 	ClearSelection(multiPasteMode == SC_MULTIPASTE_EACH);
 	bool isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
-
+*/
+//!-start-[InsertMultiPasteText]
+	bool isLine = SelectionEmpty() && (::IsClipboardFormatAvailable(cfLineSelect) != 0);
+	SelectionPosition selStart;
+	bool isRectangular = ::IsClipboardFormatAvailable(cfColumnSelect) != 0;
+	bool isMultiPaste = (!isRectangular)&&(!isLine)&&(sel.Count()>1);
+	if(!isMultiPaste) {
+		UndoGroup ug(pdoc);
+		ClearSelection();
+		selStart = sel.IsRectangular() ?
+			sel.Rectangular().Start() :
+			sel.Range(sel.Main()).Start();
+	}
+//!-end-[InsertMultiPasteText]
 	if (!isRectangular) {
 		// Evaluate "Borland IDE Block Type" explicitly
 		GlobalMemory memBorlandSelection(::GetClipboardData(cfBorlandIDEBlockType));
@@ -2243,7 +2326,14 @@ void ScintillaWin::Paste() {
 					                      &putf[0], len + 1, NULL, NULL);
 			}
 
+//!			InsertPasteShape(&putf[0], len, pasteShape);
+//!-start-[InsertMultiPasteText]
+			if(!isMultiPaste) {
 			InsertPasteShape(&putf[0], len, pasteShape);
+			} else {
+				InsertMultiPasteText(&putf[0], len);
+			}
+//!-end-[InsertMultiPasteText]
 		}
 		memUSelection.Unlock();
 	} else {
@@ -2270,9 +2360,23 @@ void ScintillaWin::Paste() {
 					std::vector<char> putf(mlen+1);
 					UTF8FromUTF16(&uptr[0], ulen, &putf[0], mlen);
 
+//!					InsertPasteShape(&putf[0], mlen, pasteShape);
+//!-begin-[InsertMultiPasteText]
+						if(!isMultiPaste) {
 					InsertPasteShape(&putf[0], mlen, pasteShape);
 				} else {
+							InsertMultiPasteText(&putf[0], mlen);
+						}
+//!-end-[InsertMultiPasteText]
+						} else {
+//!					InsertPasteShape(ptr, len, pasteShape);
+//!-begin-[InsertMultiPasteText]
+						if(!isMultiPaste) {
 					InsertPasteShape(ptr, len, pasteShape);
+						} else {
+							InsertMultiPasteText(ptr, len);
+						}
+//!-end-[InsertMultiPasteText]
 				}
 			}
 			memSelection.Unlock();
