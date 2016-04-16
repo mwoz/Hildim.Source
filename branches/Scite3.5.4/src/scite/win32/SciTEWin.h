@@ -247,9 +247,6 @@ protected:
 	/// Handle default print setup values and ask the user its preferences.
 	virtual void PrintSetup();
 
-//!	BOOL HandleReplaceCommand(int cmd);
-	BOOL HandleReplaceCommand(int cmd, bool reverseFind = false); //!-change-[reverse.find]
-
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style);
 	virtual void FindMessageBox(const SString &msg, const SString *findItem=0);
 	virtual void AboutDialog();
@@ -287,27 +284,13 @@ protected:
 	void Command(WPARAM wParam, LPARAM lParam);
 	HWND MainHWND();
 
-	BOOL FindMessage(HWND hDlg, UINT message, WPARAM wParam);
 	void MoveFindRepFromText();
-	static BOOL CALLBACK FindDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	BOOL ReplaceMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK ReplaceDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
 	virtual void UIClosed();
 	void PerformGrep();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
-	void FillCombos(Dialog &dlg);
-	BOOL GrepMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK GrepDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	bool FindReplaceAdvanced();
-	virtual void Find();
-	virtual void FindInFiles();
-	virtual void Replace();
-	virtual void FindReplace(bool replace);
-	virtual void DestroyFindReplace();
 
-	BOOL GoLineMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK GoLineDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual void GoLineDialog();
+	bool FindReplaceAdvanced();
 
 	BOOL AbbrevMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK AbbrevDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

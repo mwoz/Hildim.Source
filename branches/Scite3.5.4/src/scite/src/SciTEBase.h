@@ -248,9 +248,7 @@ public:
 	virtual void ScrollEditorIfNeeded() = 0;
 
 	virtual int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = true) = 0;
-	virtual int MarkAll() = 0;
 	virtual int ReplaceAll(bool inSelection) = 0;
-	virtual void ReplaceOnce() = 0;
 	virtual void UIClosed() = 0;
 	virtual void UIHasFocus() = 0;
 	bool &FlagFromCmd(int cmd);
@@ -599,7 +597,6 @@ protected:
 	void SelectionIntoProperties();
 	int SelectionIntoFind(bool stripEol = true);
 	virtual SString EncodeString(const SString &s);
-	virtual void Find() = 0;
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
 	virtual void FindMessageBox(const SString &msg, const SString *findItem = 0) = 0;
 	int FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition);
@@ -608,17 +605,12 @@ protected:
 	virtual void SetReplace(const char *sReplace);
 	virtual void MoveBack(int distance);
 	virtual void ScrollEditorIfNeeded();
-	int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = true);
-	virtual void FindInFiles() = 0;
-	virtual void Replace() = 0;
-	void ReplaceOnce();
+int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = true);
 	int DoReplaceAll(bool inSelection); // returns number of replacements or negative value if error
 	int ReplaceAll(bool inSelection);
 	int ReplaceInBuffers();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
-	virtual void DestroyFindReplace() = 0;
-	virtual void GoLineDialog() = 0;
 	virtual bool AbbrevDialog() = 0;
 	virtual void TabSizeDialog() = 0;
 	virtual bool ParametersOpen() = 0;
@@ -628,7 +620,6 @@ protected:
 	SString FindOpenXmlTag(const char sel[], int nSize);
 	void GoMatchingBrace(bool select);
 	void GoMatchingPreprocCond(int direction, bool select);
-	virtual void FindReplace(bool replace) = 0;
 	void OutputAppendString(const char *s, int len = -1);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
 	void FindResAppendString(const char *s, int len = -1);
@@ -702,8 +693,7 @@ protected:
 	virtual void ActivateWindow(const char *timestamp) = 0;
 
 	void RemoveFindMarks();
-	int MarkAll();
-	int FindAll();
+
 	void BookmarkAdd(int lineno = -1);
 	void BookmarkDelete(int lineno = -1);
 	bool BookmarkPresent(int lineno = -1);
