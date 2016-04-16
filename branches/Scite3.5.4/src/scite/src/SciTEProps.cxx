@@ -66,52 +66,6 @@ const GUI::gui_char menuAccessIndicator[] = GUI_TEXT("&");
 #include "JobQueue.h"
 #include "SciTEBase.h"
 
-void SciTEBase::SetImportMenu() {
-	for (int i = 0; i < importMax; i++) {
-		DestroyMenuItem(menuOptions, importCmdID + i);
-	}
-	if (importFiles[0].IsSet()) {
-		for (int stackPos = 0; stackPos < importMax; stackPos++) {
-			int itemID = importCmdID + stackPos;
-			if (importFiles[stackPos].IsSet()) {
-				GUI::gui_string entry = localiser.Text("Open");
-				entry += GUI_TEXT(" ");
-				entry += importFiles[stackPos].Name().AsInternal();
-				SetMenuItem(menuOptions, IMPORT_START + stackPos, itemID, entry.c_str());
-			}
-		}
-	}
-}
-
-void SciTEBase::ImportMenu(int pos) {
-	if (pos >= 0) {
-		if (importFiles[pos].IsSet()) {
-			Open(importFiles[pos]);
-		}
-	}
-}
-
-void SciTEBase::SetLanguageMenu() {
-	for (int i = 0; i < 100; i++) {
-		DestroyMenuItem(menuLanguage, languageCmdID + i);
-	}
-	for (int item = 0; item < languageItems; item++) {
-		int itemID = languageCmdID + item;
-		GUI::gui_string entry = localiser.Text(languageMenu[item].menuItem.c_str());
-		if (languageMenu[item].menuKey.length()) {
-#if defined(GTK)
-			entry += GUI_TEXT(" ");
-#else
-			entry += GUI_TEXT("\t");
-#endif
-			entry += GUI::StringFromUTF8(languageMenu[item].menuKey.c_str());
-		}
-		if (entry.size() && entry[0] != '#') {
-			SetMenuItem(menuLanguage, item, itemID, entry.c_str());
-		}
-	}
-}
-
 const GUI::gui_char propLocalFileName[] = GUI_TEXT("SciTE.properties");
 const GUI::gui_char propDirectoryFileName[] = GUI_TEXT("SciTEDirectory.properties");
 
@@ -1221,8 +1175,6 @@ void SciTEBase::ReadProperties() {
 
 	tabHideOne = props.GetInt("tabbar.hide.one");
 
-	SetToolsMenu();
-
 	CallChildren(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
 
 	// To put the folder markers in the line number region
@@ -1589,48 +1541,6 @@ void SciTEBase::ReadPropertiesInitial() {
 	wEditor.Call(SCI_SETWRAPMODE, wrap ? wrapStyle : SC_WRAP_NONE);
 	wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 	wFindRes.Call(SCI_SETWRAPMODE, wrapFindRes ? wrapStyle : SC_WRAP_NONE);
-
-	SString menuLanguageProp = props.GetNewExpand("menu.language");
-	languageItems = 0;
-	for (unsigned int i = 0; i < menuLanguageProp.length(); i++) {
-		if (menuLanguageProp[i] == '|')
-			languageItems++;
-	}
-	languageItems /= 3;
-	languageMenu = new LanguageMenuItem[languageItems];
-
-	menuLanguageProp.substitute('|', '\0');
-	const char *sMenuLanguage = menuLanguageProp.c_str();
-	for (int item = 0; item < languageItems; item++) {
-		languageMenu[item].menuItem = sMenuLanguage;
-		sMenuLanguage += strlen(sMenuLanguage) + 1;
-		languageMenu[item].extension = sMenuLanguage;
-		sMenuLanguage += strlen(sMenuLanguage) + 1;
-		languageMenu[item].menuKey = sMenuLanguage;
-		sMenuLanguage += strlen(sMenuLanguage) + 1;
-	}
-	SetLanguageMenu();
-
-	// load the user defined short cut props
-	SString shortCutProp = props.GetNewExpand("user.shortcuts");
-	if (shortCutProp.length()) {
-		shortCutItems = 0;
-		for (unsigned int i = 0; i < shortCutProp.length(); i++) {
-			if (shortCutProp[i] == '|')
-				shortCutItems++;
-		}
-		shortCutItems /= 2;
-		shortCutItemList = new ShortcutItem[shortCutItems];
-		shortCutProp.substitute('|', '\0');
-		const char *sShortCutProp = shortCutProp.c_str();
-		for (int item = 0; item < shortCutItems; item++) {
-			shortCutItemList[item].menuKey = sShortCutProp;
-			sShortCutProp += strlen(sShortCutProp) + 1;
-			shortCutItemList[item].menuCommand = sShortCutProp;
-			sShortCutProp += strlen(sShortCutProp) + 1;
-		}
-	}
-	// end load the user defined short cut props
 
 
 #if !defined(GTK)

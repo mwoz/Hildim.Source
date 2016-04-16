@@ -790,7 +790,6 @@ protected:
 	void AssignKey(int key, int mods, int cmd);
 	void ViewWhitespace(bool view);
 	void SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle);
-	void SetImportMenu();
 	void ImportMenu(int pos);
 	void SetLanguageMenu();
 	void SetPropertiesInitial();

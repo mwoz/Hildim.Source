@@ -1405,7 +1405,6 @@ void SciTEWin::CreateUI() {
 	pagesetupMargin.bottom = atol(val);
 	delete []ps;
 					 	
-	SetImportMenu();
 	extender->PostInit((void*)layout.hMain);
 }
 
