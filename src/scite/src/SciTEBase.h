@@ -554,7 +554,6 @@ protected:
 	void InitialiseBuffers();
 	FilePath UserFilePath(const GUI::gui_char *name);
 	void LoadSessionFile(const GUI::gui_char *sessionName);
-	void RestoreRecentMenu();
 	void RestoreSession();
 	void SaveSessionFile(const GUI::gui_char *sessionName);
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize) = 0;
@@ -759,8 +758,6 @@ protected:
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
 
-	void DeleteFileStackMenu();
-	void SetFileStackMenu();
 	void DropFileStackTop();
 //!-start-[SubMenu]
 	virtual MenuEx GetToolsMenu() = 0;
@@ -780,9 +777,6 @@ protected:
 	void StackMenuPrev();
 
 	void RemoveToolsMenu();
-	void SetMenuItemLocalised(int menuNumber, int position, int itemID,
-	        const char *text, const char *mnemonic);
-	void SetToolsMenu();
 	JobSubsystem SubsystemType(char c);
 	JobSubsystem SubsystemType(const char *cmd, int item = -1);
 	void ToolsMenu(int item);
