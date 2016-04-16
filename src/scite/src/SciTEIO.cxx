@@ -919,7 +919,6 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 
 void SciTEBase::ReloadProperties() {
 	ReadGlobalPropFile();
-	SetImportMenu();
 	ReadLocalPropFile();
 	ReadAbbrevPropFile();
 	ReadProperties();
