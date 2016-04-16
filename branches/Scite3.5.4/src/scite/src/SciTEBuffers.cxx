@@ -354,14 +354,6 @@ void SciTEBase::InitialiseBuffers() {
 		// First document is the default from creation of control
 		buffers.buffers[0].doc = wEditor.Call(SCI_GETDOCPOINTER, 0, 0);
 		wEditor.Call(SCI_ADDREFDOCUMENT, 0, buffers.buffers[0].doc); // We own this reference
-		if (buffers.size == 1) {
-			// Single buffer mode, delete the Buffers main menu entry
-			DestroyMenuItem(menuBuffers, 0);
-			// Destroy command "View Tab Bar" in the menu "View"
-			DestroyMenuItem(menuView, IDM_VIEWTABBAR);
-			// Make previous change visible.
-			RedrawMenu();
-		}
 	}
 }
 
@@ -396,21 +388,6 @@ void SciTEBase::LoadSessionFile(const GUI::gui_char *sessionName) {
 	FilePath sessionFilePath = FilePath(sessionPathName).AbsolutePath();
 	// Add/update SessionPath environment variable
 	props.Set("SessionPath", sessionFilePath.AsUTF8().c_str());
-}
-
-void SciTEBase::RestoreRecentMenu() {
-	Sci_CharacterRange cr;
-	cr.cpMin = cr.cpMax = 0;
-
-	DeleteFileStackMenu();
-
-	for (int i = 0; i < fileStackMax; i++) {
-		SString propKey = IndexPropKey("mru", i, "path");
-		SString propStr = propsSession.Get(propKey.c_str());
-		if (propStr == "")
-			continue;
-		AddFileToStack(GUI::StringFromUTF8(propStr.c_str()), cr, 0);
-	}
 }
 
 void SciTEBase::RestoreSession() {
@@ -533,14 +510,6 @@ void SciTEBase::SaveSessionFile(const GUI::gui_char *sessionName) {
 		int j = 0;
 
 		fprintf(sessionFile, "\n");
-
-		// Save recent files list
-		for (int i = fileStackMax - 1; i >= 0; i--) {
-			if (recentFileStack[i].IsSet()) {
-				propKey = IndexPropKey("mru", j++, "path");
-				fprintf(sessionFile, "%s=%s\n", propKey.c_str(), recentFileStack[i].AsUTF8().c_str());
-			}
-		}
 	}
 
 	if (props.GetInt("buffers") && (!defaultSession || props.GetInt("save.session"))) {
@@ -681,8 +650,7 @@ void SciTEBase::New() {
 	isReadOnly = false;	// No sense to create an empty, read-only buffer...
 
 	ClearDocument();
-	DeleteFileStackMenu();
-	SetFileStackMenu();
+
 	if (extender)
 		extender->InitBuffer(buffers.Current());
 }
@@ -714,7 +682,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
-		closingLast = !(recentFileStack[0].IsSet());
+		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
 		buffers.buffers[0].Init();
 		filePath.Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
@@ -895,18 +863,14 @@ void SciTEBase::EndStackedTabbing() {
 
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
-	DestroyMenuItem(menuBuffers, IDM_BUFFERSEP);
 	RemoveAllTabs();
 
 	int pos;
-	for (pos = 0; pos < bufferMax; pos++) {
-		DestroyMenuItem(menuBuffers, IDM_BUFFER + pos);
-	}
+
 	if (buffers.size > 1) {
 //!		int menuStart = 5;
 		int menuStart = 7; //!-changed-[TabsMoving]
-		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength",0); //!-add-[TabbarTitleMaxLength]
-		SetMenuItem(menuBuffers, menuStart, IDM_BUFFERSEP, GUI_TEXT(""));
+		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength",0); 
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;
 			GUI::gui_string entry;
@@ -944,30 +908,21 @@ void SciTEBase::BuffersMenu() {
 				} else {
 					titleTab += entry;
 				}
-//!-start-[TabbarTitleMaxLength]
 				if (tabsTitleMaxLength > 0 && titleTab.length() > tabsTitleMaxLength + 3) {
 					titleTab.resize(tabsTitleMaxLength, L'\0');
 					titleTab.append(GUI_TEXT("..."));
 				}
-//!-end-[TabbarTitleMaxLength]
 			}
-			// For short file names:
-			//char *cpDirEnd = strrchr(buffers.buffers[pos]->fileName, pathSepChar);
-			//strcat(entry, cpDirEnd + 1);
 
-//!			if (buffers.buffers[pos].isDirty) {
 			if (buffers.buffers[pos].DocumentNotSaved()) { //-change-[OpenNonExistent]
 				entry += GUI_TEXT(" *");
 				titleTab += GUI_TEXT(" *");
 			}
-//!-start-[ReadOnlyTabMarker]
+
 			if (buffers.buffers[pos].ROMarker != NULL) {
 				entry += buffers.buffers[pos].ROMarker;
 				titleTab += buffers.buffers[pos].ROMarker;
 			}
-//!-end-[ReadOnlyTabMarker]
-
-			SetMenuItem(menuBuffers, menuStart + pos + 1, itemID, entry.c_str());
 			TabInsert(pos, titleTab.c_str());
 		}
 	}
@@ -982,51 +937,11 @@ void SciTEBase::BuffersMenu() {
 #endif
 }
 
-void SciTEBase::DeleteFileStackMenu() {
-	for (int stackPos = 0; stackPos < fileStackMax; stackPos++) {
-		DestroyMenuItem(menuFile, fileStackCmdID + stackPos);
-	}
-	DestroyMenuItem(menuFile, IDM_MRU_SEP);
-}
-
-void SciTEBase::SetFileStackMenu() {
-	if (recentFileStack[0].IsSet()) {
-		SetMenuItem(menuFile, MRU_START, IDM_MRU_SEP, GUI_TEXT(""));
-//!		for (int stackPos = 0; stackPos < fileStackMax; stackPos++) {
-//!-start-[MoreRecentFiles]
-		int fileStackMaxToUse = props.GetInt("save.recent.max",fileStackMaxDefault); //-> props
-		if ( fileStackMaxToUse > fileStackMax )
-			 fileStackMaxToUse = fileStackMax;
-		for (int stackPos = 0; stackPos < fileStackMaxToUse; stackPos++) {
-//!-end-[MoreRecentFiles]
-			int itemID = fileStackCmdID + stackPos;
-			if (recentFileStack[stackPos].IsSet()) {
-				GUI::gui_char entry[MAX_PATH + 20];
-				entry[0] = '\0';
-#if !defined(GTK)
-
-				if ( stackPos < 10 ) //!-add-[MoreRecentFiles]
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-				swprintf(entry, ELEMENTS(entry), GUI_TEXT("&%d "), (stackPos + 1) % 10);
-#else
-				swprintf(entry, GUI_TEXT("&%d "), (stackPos + 1) % 10);
-				else swprintf(entry, GUI_TEXT("   ")); //!-add-[MoreRecentFiles]
-#endif
-#endif
-				GUI::gui_string sEntry(entry);
-				sEntry += recentFileStack[stackPos].AsInternal();
-				SetMenuItem(menuFile, MRU_START + stackPos + 1, itemID, sEntry.c_str());
-			}
-		}
-	}
-}
 
 void SciTEBase::DropFileStackTop() {
-	DeleteFileStackMenu();
 	for (int stackPos = 0; stackPos < fileStackMax - 1; stackPos++)
 		recentFileStack[stackPos] = recentFileStack[stackPos + 1];
 	recentFileStack[fileStackMax - 1].Init();
-	SetFileStackMenu();
 }
 
 bool SciTEBase::AddFileToBuffer(FilePath file, int pos) {
@@ -1042,7 +957,6 @@ bool SciTEBase::AddFileToBuffer(FilePath file, int pos) {
 void SciTEBase::AddFileToStack(FilePath file, Sci_CharacterRange selection, int scrollPos) {
 	if (!file.IsSet())
 		return;
-	DeleteFileStackMenu();
 	// Only stack non-empty names
 	if (file.IsSet() && !file.IsUntitled()) {
 		int stackPos;
@@ -1056,13 +970,11 @@ void SciTEBase::AddFileToStack(FilePath file, Sci_CharacterRange selection, int 
 		recentFileStack[0].selection = selection;
 		recentFileStack[0].scrollPosition = scrollPos;
 	}
-	SetFileStackMenu();
 }
 
 void SciTEBase::RemoveFileFromStack(FilePath file) {
 	if (!file.IsSet())
 		return;
-	DeleteFileStackMenu();
 	int stackPos;
 	for (stackPos = 0; stackPos < fileStackMax; stackPos++) {
 		if (recentFileStack[stackPos].SameNameAs(file)) {
@@ -1072,7 +984,6 @@ void SciTEBase::RemoveFileFromStack(FilePath file) {
 			break;
 		}
 	}
-	SetFileStackMenu();
 }
 
 RecentFile SciTEBase::GetFilePosition() {
@@ -1100,15 +1011,12 @@ void SciTEBase::DisplayAround(const RecentFile &rf) {
 // Decided that "Prev" file should mean the file you had opened last
 // This means "Next" file means the file you opened longest ago.
 void SciTEBase::StackMenuNext() {
-	DeleteFileStackMenu();
 	for (int stackPos = fileStackMax - 1; stackPos >= 0;stackPos--) {
 		if (recentFileStack[stackPos].IsSet()) {
-			SetFileStackMenu();
 			StackMenu(stackPos);
 			return;
 		}
 	}
-	SetFileStackMenu();
 }
 
 void SciTEBase::StackMenuPrev() {
@@ -1140,9 +1048,6 @@ void SciTEBase::StackMenuPrev() {
 				}
 			}
 		}
-
-		DeleteFileStackMenu();
-		SetFileStackMenu();
 	}
 }
 
@@ -1167,146 +1072,6 @@ void SciTEBase::StackMenu(int pos) {
 	}
 }
 
-/*!
-void SciTEBase::RemoveToolsMenu() {
-	for (int pos = 0; pos < toolMax; pos++) {
-		DestroyMenuItem(menuTools, IDM_TOOLS + pos);
-	}
-}
-*///!-remove-[SubMenu]
-
-void SciTEBase::SetMenuItemLocalised(int menuNumber, int position, int itemID,
-        const char *text, const char *mnemonic) {
-	GUI::gui_string localised = localiser.Text(text);
-	SetMenuItem(menuNumber, position, itemID, localised.c_str(), GUI::StringFromUTF8(mnemonic).c_str());
-}
-
-/*
-void SciTEBase::SetToolsMenu() {
-	//command.name.0.*.py=Edit in PythonWin
-	//command.0.*.py="c:\program files\python\pythonwin\pythonwin" /edit c:\coloreditor.py
-	RemoveToolsMenu();
-	int menuPos = TOOLS_START;
-	for (int item = 0; item < toolMax; item++) {
-		int itemID = IDM_TOOLS + item;
-		SString prefix = "command.name.";
-		prefix += SString(item);
-		prefix += ".";
-		SString commandName = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str());
-		if (commandName.length()) {
-			SString sMenuItem = commandName;
-			prefix = "command.shortcut.";
-			prefix += SString(item);
-			prefix += ".";
-			SString sMnemonic = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str());
-			if (item < 10 && sMnemonic.length() == 0) {
-				sMnemonic += "Ctrl+";
-				sMnemonic += SString(item);
-			}
-			SetMenuItemLocalised(menuTools, menuPos, itemID, sMenuItem.c_str(),
-				sMnemonic[0] ? sMnemonic.c_str() : NULL);
-			menuPos++;
-		}
-	}
-
-	DestroyMenuItem(menuTools, IDM_MACRO_SEP);
-	DestroyMenuItem(menuTools, IDM_MACROLIST);
-	DestroyMenuItem(menuTools, IDM_MACROPLAY);
-	DestroyMenuItem(menuTools, IDM_MACRORECORD);
-	DestroyMenuItem(menuTools, IDM_MACROSTOPRECORD);
-	menuPos++;
-	if (macrosEnabled) {
-		SetMenuItem(menuTools, menuPos++, IDM_MACRO_SEP, GUI_TEXT(""));
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACROLIST,
-		        "&List Macros...", "Shift+F9");
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACROPLAY,
-		        "Run Current &Macro", "F9");
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACRORECORD,
-		        "&Record Macro", "Ctrl+F9");
-		SetMenuItemLocalised(menuTools, menuPos, IDM_MACROSTOPRECORD,
-		        "S&top Recording Macro", "Ctrl+Shift+F9");
-	}
-}
-*/
-//!-start-[SubMenu]
-void SciTEBase::SetToolsMenu() {
-	int items;
-	MenuEx arrMenu[toolMax];
-	int menuPos = TOOLS_START+1;
-
-	// erasing menu tools
-	arrMenu[0] = GetToolsMenu();
-	arrMenu[0].RemoveItems(IDM_TOOLS);
-	arrMenu[0].RemoveItems(IDM_MACRO_SEP, IDM_MACROLIST);
-
-	// menu creation
-	for (items = 0; items < toolMax; items++) {
-		int itemID = IDM_TOOLS + items;
-		SString prefix = "command.name." + SString(items) + ".";
-		SString sMenuItem = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str());
-		if (sMenuItem.length()) {
-			prefix = "command.shortcut." + SString(items) + ".";
-			SString sMnemonic = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str());
-			if (items < 10 && sMnemonic.length() == 0)
-				sMnemonic += "Ctrl+" + SString(items);
-			prefix = "command.separator." + SString(items) + ".";
-			int issep = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str()).value();
-			prefix = "command.parent." + SString(items) + ".";
-			int toMenu = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str()).value();
-			GUI::gui_string lsMenuItem = localiser.Text(sMenuItem.c_str());
-			prefix = "command.checked." + SString(items) + ".";
-			int ischecked = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str()).value();
-			if(toMenu > 0 && toMenu < toolMax) {
-				if (arrMenu[toMenu].GetID() == 0)
-					arrMenu[toMenu].CreatePopUp(&arrMenu[0]);
-				if (issep)
-					arrMenu[toMenu].Add();
-				arrMenu[toMenu].Add(lsMenuItem.c_str(), itemID, 1 + ischecked, sMnemonic.c_str());
-			}
-			else {
-				if (issep)
-					arrMenu[0].Add(0, IDM_TOOLSMAX, true, 0, menuPos++);
-				arrMenu[0].Add(lsMenuItem.c_str(), itemID, 1 + ischecked, sMnemonic.c_str(), menuPos++);
-			}
-		}
-	}
-
-	// adding macro's menu items
-	if (macrosEnabled) {
-		SetMenuItem(menuTools, menuPos++, IDM_MACRO_SEP, GUI_TEXT(""));
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACROLIST,
-			"&List Macros...", "Shift+F9");
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACROPLAY,
-			"Run Current &Macro", "F9");
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACRORECORD,
-			"&Record Macro", "Ctrl+F9");
-		SetMenuItemLocalised(menuTools, menuPos++, IDM_MACROSTOPRECORD,
-			"S&top Recording Macro", "Ctrl+Shift+F9");
-	}
-
-	// inserting submenus to the top
-	menuPos = TOOLS_START+1;
-	for (items = 1; items < toolMax; items++) {
-		if (arrMenu[items].GetID() != 0) {
-			SString prefix = "command.submenu.name." + SString(items) + ".";
-			SString commandName = props.GetNewExpand(prefix.c_str(), filePath.AsUTF8().c_str());
-			if (commandName.length()) {
-				prefix = "command.submenu.parent." + SString(items) + ".";
-				int toMenu = props.GetNewExpand(prefix.c_str(), FileNameExt().AsUTF8().c_str()).value();
-				GUI::gui_string lcommandName = localiser.Text(commandName.c_str());
-				if (toMenu > 0 && toMenu < toolMax) {
-					arrMenu[toMenu].AddSubMenu(lcommandName.c_str(), arrMenu[items], 0);
-				}
-				else {
-					if (menuPos == TOOLS_START+1)
-						arrMenu[0].Add(0, IDM_TOOLSMAX, true, 0, menuPos++);
-					arrMenu[0].AddSubMenu(lcommandName.c_str(), arrMenu[items], menuPos++);
-				}
-			}
-		}
-	}
-}
-//!-end-[SubMenu]
 
 JobSubsystem SciTEBase::SubsystemType(char c) {
 	if (c == '1')

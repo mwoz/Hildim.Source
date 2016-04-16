@@ -429,8 +429,6 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	int index = buffers.GetDocumentByName(absPath);
 	if (index >= 0) {
 		SetDocumentAt(index);
-		DeleteFileStackMenu();
-		SetFileStackMenu();
 		if (!(of & ofForceLoad)) // Just rotate into view
 			return true;
 	}
@@ -496,8 +494,6 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		wEditor.Call(SCI_SETREADONLY, isReadOnly);
 	}
 	RemoveFileFromStack(filePath);
-	DeleteFileStackMenu();
-	SetFileStackMenu();
 	SetWindowName();
 	if (lineNumbers && lineNumbersExpand)
 		SetLineNumberWidth();
