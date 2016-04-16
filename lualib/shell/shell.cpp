@@ -287,7 +287,7 @@ public:
 		return ::PathFileExistsA( lpszFileName ) != FALSE;
 	}
 };
-
+char currentDir[MAX_PATH + 1];
 // получить последнее сообщение об ошибке
 // для возвращаемой строки нужно вызвать LocalFree
 static char* GetLastErrorString( DWORD* lastErrorCode, int* iLenMsg )
@@ -437,6 +437,13 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 	// continue the enumeration
 	return(TRUE);
 }
+static int set_curent_dir(lua_State *L)
+{
+	const char* d = luaL_checkstring(L, -1);
+	strcpy(currentDir, d);
+	lua_pushstring(L, currentDir);
+	return 1;
+}
 static int activate_proc_wnd(lua_State *L)
 {
 	ENUMINFO EnumInfo;
@@ -543,7 +550,8 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 		strcat( bufCmdLine.GetBuffer(), " " );
 		strcat( bufCmdLine.GetBuffer(), path.GetFileParams() );
 	}
-
+	char *lp = NULL;
+	if (strlen(currentDir) > 0)	lp = currentDir;
 	PROCESS_INFORMATION pi = { 0 };
 	BOOL RetCode = ::CreateProcessA( NULL, // не используем имя файла, все в строке запуска
 									 bufCmdLine.GetBuffer(), // строка запуска
@@ -552,7 +560,7 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 									 TRUE, // Set handle inheritance to FALSE
 									 0, // No creation flags
 									 NULL, // Use parent's environment block
-									 NULL, //path.GetDirectory(), // устанавливаем дирректорию запуска
+									 lp, //path.GetDirectory(), // устанавливаем дирректорию запуска
 									 &si, // STARTUPINFO
 									 &pi ); // PROCESS_INFORMATION
 
@@ -903,7 +911,9 @@ static int exec( lua_State* L )
 			shinf.lpFile = file.GetPath();
 			shinf.lpParameters = file.GetFileParams();
 			shinf.lpVerb = verb;
-			//shinf.lpDirectory = file.GetDirectory();
+			if (strlen(currentDir) > 3) {
+				shinf.lpDirectory = currentDir;
+			}
 			shinf.fMask = SEE_MASK_FLAG_NO_UI |
 						  SEE_MASK_NO_CONSOLE |
 						  SEE_MASK_FLAG_DDEWAIT;
@@ -1283,11 +1293,13 @@ static const struct luaL_reg shell[] =
 	{ "delete_file", delete_file },
 	{ "rename_file", rename_file },
 	{ "activate_proc_wnd", activate_proc_wnd },
+	{ "set_curent_dir", set_curent_dir },
 	{ NULL, NULL }
 };
 
 extern "C" __declspec(dllexport) int luaopen_shell( lua_State* L )
 {
+	::ZeroMemory(currentDir, MAX_PATH + 1);
 	luaL_register( L, "shell", shell );
 	return 1;
 }
