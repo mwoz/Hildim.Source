@@ -1647,6 +1647,7 @@ Document::CharacterExtracted Document::ExtractCharacter(int position) const {
  */
 long Document::FindText(int minPos, int maxPos, const char *search,
                         int flags, int *length) {
+if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -1883,6 +1884,9 @@ void Document::EnsureStyledTo(int pos) {
 			int lineEndStyled = LineFromPosition(GetEndStyled());
 			int endStyledTo = LineStart(lineEndStyled);
 			pli->Colourise(endStyledTo, pos);
+			for (int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
+				watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
+			}
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
 			for (std::vector<WatcherWithUserData>::iterator it = watchers.begin();

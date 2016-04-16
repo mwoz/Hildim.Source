@@ -1745,6 +1745,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	luaL_openlibs(luaState);
 	iuplua_open(luaState);
 	iupcontrolslua_open(luaState);
+	//IupImageLibOpen();
 
 	lua_getglobal(luaState, "iup");
 	lua_pushcfunction(luaState, cf_iup_reattach_wnd_to);

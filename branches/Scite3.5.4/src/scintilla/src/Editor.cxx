@@ -110,6 +110,7 @@ Editor::Editor() {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
+	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 
@@ -2294,6 +2295,19 @@ void Editor::NotifyStyleNeeded(Document *, void *, int endStyleNeeded) {
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
+void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
+	NotifyColorized(wParam, lParam);
+}
+
+void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
+{
+	SCNotification scn = { 0 };
+	scn.nmhdr.code = SCN_COLORIZED;
+	scn.wParam = wParam;
+	scn.lParam = lParam;
+	NotifyParent(scn);
+}
+
 void Editor::NotifyLexerChanged(Document *, void *) {
 }
 
@@ -2332,6 +2346,27 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
+//!-start-[OnClick]
+void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
+	SCNotification scn = {0};
+	scn.nmhdr.code = SCN_CLICK;
+	scn.line = LineFromLocation(pt);
+	scn.position = PositionFromLocation(pt, true);
+	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
+		(alt ? SCI_ALT : 0);
+	NotifyParent(scn);
+}
+//!-end-[OnClick]
+//!-start-[OnMouseButtonUp]
+void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
+	SCNotification scn = {0};
+	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
+	scn.line = LineFromLocation(pt);
+	scn.position = PositionFromLocation(pt, true);
+	scn.modifiers = (ctrl ? SCI_CTRL : 0);
+	NotifyParent(scn);
+}
+//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt) {
 	NotifyDoubleClick(pt, ModifierFlags(shift, ctrl, alt));
@@ -2992,8 +3027,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-
-	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+	UndoGroup ug(pdoc,true); ///!!!ћой фикс - один ундо при переходе на новую строку
+	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3676,6 +3711,7 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
+		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ShowCaretAtCurrentPosition();
 		ContainerNeedsUpdate(SC_UPDATE_CONTENT);
@@ -4386,6 +4422,7 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
+	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4550,12 +4587,14 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
+			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
+	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::ButtonDown(Point pt, unsigned int curTime, bool shift, bool ctrl, bool alt) {
@@ -4850,6 +4889,7 @@ void Editor::ButtonUp(Point pt, unsigned int curTime, bool ctrl) {
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
+	NotifyMouseButtonUp(pt, ctrl); //!-add-[OnMouseButtonUp]
 }
 
 // Called frequently to perform background UI including
@@ -7539,7 +7579,15 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
+//!		inOverstrike = wParam != 0;
+//!-start-[ignore_overstrike_change]
+		if ( wParam < 2 ) {
 		inOverstrike = wParam != 0;
+		}
+		else {
+			ignoreOverstrikeChange = wParam == 2;
+		}
+//!-end-[ignore_overstrike_change]
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -8030,6 +8078,11 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<int>(wParam), static_cast<int>(lParam));
 		break;
+//!-start-[MouseClickHandled]
+	case SCI_SETMOUSECAPTURE:
+		SetMouseCapture(wParam != 0);
+		break;
+//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));

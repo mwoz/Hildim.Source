@@ -227,11 +227,45 @@ void AutoComplete::Move(int delta) {
 	lb->Select(current);
 }
 
+bool IsAbbr(const char *item, const char *abr)
+{//Проверка, что слово является аббревиатурой
+	int l = strlen(abr);
+	int l2 = strlen(item);
+	if (l2< l) return false;
+	int i2 = 0;
+	for (int i = 0; i<l; i++)
+	{
+		for (; i2<l2 && item[i2] > 'Z' && i2>0; i2++);
+		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;
+		i2++;
+	}
+	return true;
+}
+
 void AutoComplete::Select(const char *word) {
 	size_t lenWord = strlen(word);
 	int location = -1;
+	char item[maxItemLen];
 	int start = 0; // lower bound of the api array block to search
 	int end = lb->Length() - 1; // upper bound of the api array block to search
+	if (separator = '‡' && lenWord > 1 && lenWord < 20)
+	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '‡'
+		char testUpper[21];
+		strncpy(testUpper, word, lenWord + 1);
+		_strupr(testUpper);
+		if (!strncmp(word+1, testUpper+1, lenWord-1))
+		{
+			for (int i = 0; i <= end; i++)
+			{
+				lb->GetValue(i, item, maxItemLen);
+				if (IsAbbr(item, word))
+				{
+					location = i;
+					break;
+				}
+			}
+		}
+	}
 	while ((start <= end) && (location == -1)) { // Binary searching loop
 		int pivot = (start + end) / 2;
 		char item[maxItemLen];
