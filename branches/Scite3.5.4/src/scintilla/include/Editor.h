@@ -36,7 +36,7 @@ public:
 
 /**
  * When platform has a way to generate an event before painting,
- * accumulate needed styling range and other work items in 
+ * accumulate needed styling range and other work items in
  * WorkNeeded to avoid unnecessary work inside paint handler
  */
 class WorkNeeded {
@@ -177,7 +177,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 
 	int xCaretMargin;	///< Ensure this many pixels visible on both sides of caret
@@ -235,6 +234,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	bool paintingAllText;
 	bool willRedrawAll;
 	WorkNeeded workNeeded;
+	int idleStyling;
+	bool needIdleStyling;
 
 	int modEventMask;
 
@@ -423,8 +424,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(int position, int modifiers);
@@ -452,9 +451,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData);
 	void NotifyErrorOccurred(Document *doc, void *userData, int status);
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
-
 
 	void ContainerNeedsUpdate(int flags);
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);
@@ -531,6 +527,10 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	int PositionAfterArea(PRectangle rcArea) const;
 	void StyleToPositionInView(Position pos);
+	int PositionAfterMaxStyling(int posMax, bool scrolling) const;
+	void StartIdleStyling(bool truncatedLastStyling);
+	void StyleAreaBounded(PRectangle rcArea, bool scrolling);
+	void IdleStyling();
 	virtual void IdleWork();
 	virtual void QueueIdleWork(WorkNeeded::workItems items, int upTo=0);
 
