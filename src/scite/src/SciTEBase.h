@@ -755,11 +755,9 @@ protected:
 	virtual void DestroyMenuItem(int menuNumber, int itemID) = 0;
 	virtual void CheckAMenuItem(int wIDCheckItem, bool val) = 0;
 	virtual void EnableAMenuItem(int wIDCheckItem, bool val) = 0;
-	virtual void CheckMenusClipboard();
 	virtual void CheckMenus();
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
-	bool CombineContextMenues(const char *mnuMain, SString &mnuSlave);
 
 	void DeleteFileStackMenu();
 	void SetFileStackMenu();
