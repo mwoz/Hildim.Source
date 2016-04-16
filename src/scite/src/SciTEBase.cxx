@@ -489,12 +489,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 
 	abbrevInsert[0] = '\0';
 
-	languageMenu = 0;
-	languageItems = 0;
-
-	shortCutItemList = 0;
-	shortCutItems = 0;
-
 	macrosEnabled = false;
 	recording = false;
 
@@ -515,8 +509,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 SciTEBase::~SciTEBase() {
 	if (extender)
 		extender->Finalise();
-	delete []languageMenu;
-	delete []shortCutItemList;
 //!	popup.Destroy();	//!-remove-[ExtendedContextMenu]
 }
 
@@ -5046,116 +5038,6 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 	else
 		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
 }
-
-bool SciTEBase::IsMenuItemEnabled(int cmd) {
-	switch (cmd)
-	{
-	case IDM_SAVEALL:
-		{
-			for ( int i = 0; i < buffers.length; i++) {
-				if (buffers.buffers[i].isDirty) return true;
-			}
-			return false;
-		}
-		break;
-	case IDM_SAVE:
-		return CurrentBuffer()->isDirty;
-		break;
-	case IDM_UNDO:
-		return CallFocused(SCI_CANUNDO);
-		break;
-	case IDM_REDO:
-		return CallFocused(SCI_CANREDO);
-		break;
-	case IDM_DUPLICATE:
-		return !isReadOnly;
-		break;
-	case IDM_FINDINFILES:
-		return !jobQueue.IsExecuting();
-		break;
-	case IDM_SHOWCALLTIP:
-		return apis != 0;
-		break;
-	case IDM_COMPLETE:
-		return apis != 0;
-		break;
-	case IDM_CUT:
-		return CallFocused(SCI_GETSELECTIONSTART) != CallFocused(SCI_GETSELECTIONEND);
-		break;
-	case IDM_COPY:
-		return CallFocused(SCI_GETSELECTIONSTART) != CallFocused(SCI_GETSELECTIONEND);
-		break;
-	case IDM_CLEAR:
-		return CallFocused(SCI_GETSELECTIONSTART) != CallFocused(SCI_GETSELECTIONEND);
-		break;
-	case IDM_PASTE:
-		return CallFocused(SCI_CANPASTE);
-		break;
-	case IDM_OPENFILESHERE:
-		return props.GetInt("check.if.already.open") != 0;
-		break;
-	case IDM_COMPILE:
-		return !jobQueue.IsExecuting() && props.GetWild("command.compile.", FileNameExt().AsUTF8().c_str()).size() != 0;
-		break;
-	case IDM_BUILD:
-		return !jobQueue.IsExecuting() && props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()).size() != 0;
-		break;
-	case IDM_GO:
-		return !jobQueue.IsExecuting() && props.GetWild("command.go.", FileNameExt().AsUTF8().c_str()).size() != 0;
-		break;
-	case IDM_OPENDIRECTORYPROPERTIES:
-		return props.GetInt("properties.directory.enable") != 0;
-		break;
-	case IDM_STOPEXECUTE:
-		return jobQueue.IsExecuting();
-		break;
-	case IDM_MACROPLAY:
-		return !recording;
-		break;
-	case IDM_MACRORECORD:
-		return !recording;
-		break;
-	case IDM_MACROSTOPRECORD:
-		return recording;
-		break;
-	}
-
-	if (cmd>IDM_TOOLS && cmd<IDM_TOOLSMAX)
-		return !jobQueue.IsExecuting();
-
-	return true;
-}
-
-void SciTEBase::GenerateMenu(MenuEx *subMenu, const char *&userContextItem,
-							 const char *&endDefinition, int &item, bool &isAdded, int parent)
-{
-	while (userContextItem < endDefinition) {
-		const char *caption = userContextItem;
-		userContextItem += strlen(userContextItem) + 1;
-		if (userContextItem < endDefinition) {
-			if ( strcmp(userContextItem,"POPUPBEGIN") == 0 ) {
-				userContextItem += strlen(userContextItem) + 1;
-				if ( caption[0] != '#') {
-					item++;
-					subMenu[item].CreatePopUp(&subMenu[0]);
-					subMenu[parent].AddSubMenu(localiser.Text(caption).c_str(), subMenu[item]);
-					GenerateMenu(subMenu, userContextItem, endDefinition, item, isAdded, item);
-				}
-			} else if ( strcmp(userContextItem,"POPUPEND") == 0 ) {
-				userContextItem += strlen(userContextItem) + 1;
-				if ( caption[0] != '#') break;
-			} else {
-				int cmd = GetMenuCommandAsInt(userContextItem);
-				userContextItem += strlen(userContextItem) + 1;
-				if ( caption[0] != '#') {
-					subMenu[parent].Add(localiser.Text(caption).c_str(), cmd, IsMenuItemEnabled(cmd));
-					isAdded = true;
-				}
-			}
-		}
-	}
-}
-//!-end-[ExtendedContextMenu]
 
 /**
  * Ensure that a splitter bar position is inside the main window.

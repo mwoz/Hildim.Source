@@ -42,22 +42,6 @@ inline Colour ColourRGB(unsigned int red, unsigned int green, unsigned int blue)
 	return red | (green << 8) | (blue << 16);
 }
 
-//!-start-[ExtendedContextMenu]
-class MenuEx {
-public:
-	MenuEx(void *_id = 0) : mid(_id) {}
-	void* GetID() const { return mid; }
-	void Add(const GUI::gui_char *label = 0, int cmd = 0, int enabled = 1, const char *mnemonic = 0, int position = -1);
-	void AddSubMenu(const GUI::gui_char *label, MenuEx &subMenu, int position = -1);
-	void RemoveItems(int fromID = 0, int toID = -1);
-	void CreatePopUp(MenuEx* parentMenu);
-	void Destroy();
-	void Show(GUI::Point pt, GUI::Window &w);
-private:
-	void *mid;
-};
-//!-end-[ExtendedContextMenu]
-
 /**
  * The order of menus on Windows - the Buffers menu may not be present
  * and there is a Help menu at the end.
@@ -158,20 +142,6 @@ public:
 	void ShiftTo(int indexFrom, int indexTo);
 private:
 	void PopStack();
-};
-
-// class to hold user defined keyboard short cuts
-class ShortcutItem {
-public:
-	SString menuKey; // the keyboard short cut
-	SString menuCommand; // the menu command to be passed to "SciTEBase::MenuCommand"
-};
-
-class LanguageMenuItem {
-public:
-	SString menuItem;
-	SString menuKey;
-	SString extension;
 };
 
 enum {
@@ -322,12 +292,6 @@ protected:
 	char abbrevInsert[200];
 
 	enum { languageCmdID = IDM_LANGUAGE };
-	LanguageMenuItem *languageMenu;
-	int languageItems;
-
-	// an array of short cut items that are defined by the user in the properties file.
-	ShortcutItem *shortCutItemList; // array
-	int shortCutItems; // length of array
 
 	int codePage;
 	int characterSet;
@@ -748,24 +712,12 @@ protected:
 	void ToggleOutputVisible();
 	virtual void SizeSubWindows() = 0;
 
-	virtual void SetMenuItem(int menuNumber, int position, int itemID,
-		const GUI::gui_char *text, const GUI::gui_char *mnemonic = 0) = 0;
-	virtual void RedrawMenu() {}
-	virtual void DestroyMenuItem(int menuNumber, int itemID) = 0;
-	virtual void CheckAMenuItem(int wIDCheckItem, bool val) = 0;
-	virtual void EnableAMenuItem(int wIDCheckItem, bool val) = 0;
 	virtual void CheckMenus();
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd);
 
 	void DropFileStackTop();
-//!-start-[SubMenu]
-	virtual MenuEx GetToolsMenu() = 0;
-//!-end-[SubMenu]
-//!-start-[ExtendedContextMenu]
-	bool IsMenuItemEnabled(int cmd);
-	void GenerateMenu(MenuEx *subMenu, const char *&userContextItem,
-		const char *&endDefinition, int &item, bool &isAdded, int parent = 0);
+
 //!-end-[ExtendedContextMenu]
 	bool AddFileToBuffer(FilePath file, int pos);
 	void AddFileToStack(FilePath file, Sci_CharacterRange selection, int scrollPos);
@@ -776,7 +728,6 @@ protected:
 	void StackMenuNext();
 	void StackMenuPrev();
 
-	void RemoveToolsMenu();
 	JobSubsystem SubsystemType(char c);
 	JobSubsystem SubsystemType(const char *cmd, int item = -1);
 	void ToolsMenu(int item);
@@ -793,7 +744,6 @@ protected:
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();
 	void ReadFontProperties();
-	void SetOverrideLanguage(int cmdID);
 	void SetOverrideLanguage(const char *lexer, bool bFireEvent);
 	StyleAndWords GetStyleAndWords(const char *base);
 	SString ExtensionFileName();

@@ -218,21 +218,11 @@ protected:
 	virtual void ReadLocalization();
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
-	virtual MenuEx GetToolsMenu() { return MenuEx(((GUI::MenuID)::GetSubMenu(::GetMenu(reinterpret_cast<HWND>(wSciTE.GetID())), menuTools)));}; //!-add-[SubMenu]
 	virtual void ReadProperties();
 
-	virtual void SetMenuItem(int menuNumber, int position, int itemID,
-	                         const GUI::gui_char *text, const GUI::gui_char *mnemonic = 0);
-	virtual void RedrawMenu();
-	virtual void DestroyMenuItem(int menuNumber, int itemID);
-	virtual void CheckAMenuItem(int wIDCheckItem, bool val);
-	virtual void EnableAMenuItem(int wIDCheckItem, bool val);
 	virtual void CheckMenus();
 
-	void LocaliseAccelerators();
 	GUI::gui_string LocaliseAccelerator(const GUI::gui_char *Accelerator, int cmd);
-	void LocaliseMenu(HMENU hmenu);
-	void LocaliseMenus();
 	void LocaliseControl(HWND w);
 	void LocaliseDialog(HWND wDialog);
 
@@ -376,14 +366,11 @@ public:
 		return hAccTable;
 	}
 
-	bool bCheckCommsndsOnKey = true;
-
 	void SetAcceleratorTable(void *h){
 		if (hAccTable){
 			DestroyAcceleratorTable(hAccTable);
 		}
 		hAccTable = (HACCEL)h;
-		bCheckCommsndsOnKey = false;
 	}
 
 	uptr_t GetInstance();

@@ -705,7 +705,6 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 	case IDM_ONTOP:
 		topMost = (topMost ? false : true);
 		::SetWindowPos(MainHWND(), (topMost ? HWND_TOPMOST : HWND_NOTOPMOST ), 0, 0, 0, 0, SWP_NOMOVE + SWP_NOSIZE);
-		CheckAMenuItem(IDM_ONTOP, topMost);
 		break;
 
 	case IDM_OPENFILESHERE:
@@ -1390,8 +1389,6 @@ void SciTEWin::CreateUI() {
 	if (!wSciTE.Created())
 		exit(FALSE);
 
-	LocaliseMenus();
-	LocaliseAccelerators();
 	SString pageSetup = props.Get("print.margins");
 	char val[32];
 	char *ps = StringDup(pageSetup.c_str());
@@ -1785,51 +1782,6 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 			return 1l;
 		}
 	}
-//!-end-[OnKey]
-
-	for (int j = 0; j < languageItems; j++) {
-		if (KeyMatch(languageMenu[j].menuKey, wParam, modifiers)) {
-			SciTEBase::MenuCommand(IDM_LANGUAGE + j);
-			return 1l;
-		}
-	}
-
-	if (bCheckCommsndsOnKey){
-		// loop through the Tools menu's active commands.
-		HMENU hMenu = ::GetMenu(MainHWND());
-		HMENU hToolsMenu = ::GetSubMenu(hMenu, menuTools);
-		for (int tool_i = 0; tool_i < toolMax; ++tool_i) {
-			MENUITEMINFO mii;
-			mii.cbSize = sizeof(MENUITEMINFO);
-			mii.fMask = MIIM_DATA;
-			if (::GetMenuItemInfo(hToolsMenu, IDM_TOOLS + tool_i, FALSE, &mii) && mii.dwItemData) {
-				if (SciTEKeys::MatchKeyCode(reinterpret_cast<long&>(mii.dwItemData), wParam, modifiers)) {
-					SciTEBase::MenuCommand(IDM_TOOLS + tool_i);
-					return 1l;
-				}
-			}
-		}
-	}
-
-	// loop through the keyboard short cuts defined by user.. if found
-	// exec it the command defined
-	for (int cut_i = 0; cut_i < shortCutItems; cut_i++) {
-		if (KeyMatch(shortCutItemList[cut_i].menuKey, wParam, modifiers)) {
-			int commandNum = SciTEBase::GetMenuCommandAsInt(shortCutItemList[cut_i].menuCommand);
-			if (commandNum != -1) {
-				// its possible that the command is for scintilla directly
-				// all scintilla commands are larger then 2000
-//!				if (commandNum < 2000) {
-				if (commandNum < 2000 || (commandNum>IDM_TOOLS && commandNum<IDM_TOOLSMAX)) { //-change-[ToolsMax]
-					SciTEBase::MenuCommand(commandNum);
-				} else {
-					if (!extender->OnMenuCommand(commandNum, commandNum))
-						SciTEBase::CallFocused(commandNum);
-				}
-				return 1l;
-			}
-		}
-	}
 
 	return 0l;
 }
@@ -1840,19 +1792,6 @@ LRESULT SciTEWin::KeyUp(WPARAM wParam) {
 	}
 	return 0l;
 }
-
-/*!-remove-[ExtendedContextMenu]
-void SciTEWin::AddToPopUp(const char *label, int cmd, bool enabled) {
-	GUI::gui_string localised = localiser.Text(label);
-	HMENU menu = reinterpret_cast<HMENU>(popup.GetID());
-	if (0 == localised.length())
-		::AppendMenu(menu, MF_SEPARATOR, 0, TEXT(""));
-	else if (enabled)
-		::AppendMenu(menu, MF_STRING, cmd, localised.c_str());
-	else
-		::AppendMenu(menu, MF_STRING | MF_DISABLED | MF_GRAYED, cmd, localised.c_str());
-}
-*/
 
 LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	GUI::ScintillaWindow *w = &wEditor;
@@ -2437,98 +2376,3 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 	}
 }
 
-//!-start-[ExtendedContextMenu]
-void MenuEx::CreatePopUp(MenuEx*) {
-	Destroy();
-	mid = ::CreatePopupMenu();
-}
-
-void MenuEx::Destroy() {
-	if (mid) {
-		::DestroyMenu(reinterpret_cast<HMENU>(mid));
-		mid = 0;
-	}
-}
-
-void MenuEx::Show(GUI::Point pt, GUI::Window &w) {
-	::TrackPopupMenu(reinterpret_cast<HMENU>(mid),
-		0, pt.x - 4, pt.y, 0,
-		reinterpret_cast<HWND>(w.GetID()), NULL);
-	Destroy();
-}
-
-void MenuEx::Add(const wchar_t *label, int cmd, int enabled, const char *mnemonic, int position) {
-	HMENU menu = reinterpret_cast<HMENU>(GetID());
-	if (label && label[0] == '^'){	 //Используем крыжик в первом символе заголовка как признак checked menu
-		enabled = 2;
-		label++;
-	}
-	GUI::gui_string sTextMnemonic = label ? label : GUI_TEXT("");
-	long keycode = 0;
-	if (mnemonic && *mnemonic) {
-		keycode = SciTEKeys::ParseKeyCode(mnemonic);
-		if (keycode)
-			sTextMnemonic += GUI_TEXT("\t") + GUI::StringFromUTF8(mnemonic);
-	}
-
-	UINT flags;
-	if ( sTextMnemonic.length()==0 ) 
-		flags = MF_BYPOSITION | MF_SEPARATOR;
-	else  {
-		switch(enabled)
-		{
-		case 1:
-			flags = MF_BYPOSITION | MF_STRING;
-			break;
-		case 2:
-			flags = MF_BYPOSITION | MF_STRING | MF_CHECKED;
-			break;
-		default:
-			flags = MF_BYPOSITION | MF_STRING | MF_DISABLED | MF_GRAYED;
-			break;
-		}
-	}
-
-	::InsertMenuW(menu, (UINT)position, flags, cmd, sTextMnemonic.c_str());
-	
-	if (cmd >= IDM_TOOLS && cmd < IDM_TOOLSMAX) {
-		MENUITEMINFO mii;
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_DATA;
-		mii.dwItemData = reinterpret_cast<DWORD&>(keycode);
-		::SetMenuItemInfo(menu, cmd, FALSE, &mii);
-	}
-}
-
-void MenuEx::AddSubMenu(const wchar_t *label, MenuEx &subMenu, int position) {
-	if ( label && *label && subMenu.GetID())
-	{
-		HMENU menu = reinterpret_cast<HMENU>(GetID());
-		::InsertMenuW(menu, (UINT)position, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT)subMenu.GetID(), label);
-	}
-}
-
-void MenuEx::RemoveItems(int fromID, int toID/*-1*/) {
-	if (GetID() && fromID>=0) {
-		HMENU hMenu = reinterpret_cast<HMENU>(GetID());
-		int	ptr = 0, to_check = 0;
-		HMENU UMenu[300];
-		UMenu[ptr++] = hMenu;
-		
-		int i;
-		do {
-			for (i = 0; i < ::GetMenuItemCount(UMenu[to_check]); i++)
-				UMenu[ptr++] = ::GetSubMenu(UMenu[to_check], i);
-		} while (++to_check<=ptr);
-		
-		for (i = ptr-1; i > 0; i--) {
-			while (GetMenuItemCount(UMenu[i]) > 0) ::DeleteMenu(UMenu[i], 0, MF_BYPOSITION);
-		}
-		
-		for (i = ::GetMenuItemCount(hMenu) - 1; i >= 0 ; i--) {
-			if (::GetMenuItemID(hMenu, i) >= (UINT)fromID && ::GetMenuItemID(hMenu, i) <= (UINT)toID)
-				::DeleteMenu(hMenu, i, MF_BYPOSITION);
-		}
-	}
-}
-//!-end-[ExtendedContextMenu]
