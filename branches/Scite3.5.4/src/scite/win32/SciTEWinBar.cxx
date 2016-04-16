@@ -123,14 +123,7 @@ void SciTEWin::Notify(SCNotification *notification) {
 				CheckReload();
 			}
 
-			// Pop up menu here:
-
-			int item = 0;
-			MenuEx subMenu[50];
-			subMenu[0].CreatePopUp(NULL);
-
 			extender->OnContextMenu(ptCursor.x, ptCursor.y, "TABBAR");
-
 		}
 		break;
 
@@ -212,12 +205,6 @@ void SciTEWin::SizeSubWindows() {
 	layout.AdjustTabBar();
 }
 
-
-
-// Keymod param is interpreted using the same notation (and much the same
-// code) as KeyMatch uses in SciTEWin.cxx.
-
-
 //!-start-[user.toolbar]
 struct BarButtonIn {
 	BarButtonIn() :id(0), cmd(0) {};
@@ -225,67 +212,6 @@ struct BarButtonIn {
 	int id;
 	int cmd;
 };
-
-void SciTEWin::SetMenuItem(int menuNumber, int position, int itemID,
-                           const GUI::gui_char *text, const GUI::gui_char *mnemonic) {
-	// On Windows the menu items are modified if they already exist or are created
-	HMENU hmenu = ::GetSubMenu(::GetMenu(MainHWND()), menuNumber);
-//!-start-[UserPropertiesFilesSubmenu]
-	if ((menuNumber==menuOptions) && (position>=IMPORT_START)) {
-		if (props.GetExpanded("ext.lua.startup.script").length())
-			hmenu = ::GetSubMenu(hmenu, IMPORT_START);
-		else
-			hmenu = ::GetSubMenu(hmenu, IMPORT_START-1);
-	}
-//!-end-[UserPropertiesFilesSubmenu]
-	GUI::gui_string sTextMnemonic = text;
-	long keycode = 0;
-	if (mnemonic && *mnemonic) {
-		keycode = SciTEKeys::ParseKeyCode(GUI::UTF8FromString(mnemonic).c_str());
-		if (keycode) {
-			sTextMnemonic += GUI_TEXT("\t");
-			sTextMnemonic += LocaliseAccelerator(mnemonic, itemID);
-		}
-		// the keycode could be used to make a custom accelerator table
-		// but for now, the menu's item data is used instead for command
-		// tools, and for other menu entries it is just discarded.
-	}
-
-	if (::GetMenuState(hmenu, itemID, MF_BYCOMMAND) == 0xffffffff) {
-		if (text[0])
-			::InsertMenuW(hmenu, position, MF_BYPOSITION, itemID, sTextMnemonic.c_str());
-		else
-			::InsertMenuW(hmenu, position, MF_BYPOSITION | MF_SEPARATOR, itemID, sTextMnemonic.c_str());
-	} else {
-		::ModifyMenuW(hmenu, position, MF_BYCOMMAND, itemID, sTextMnemonic.c_str());
-	}
-
-	if (itemID >= IDM_TOOLS && itemID < IDM_TOOLS + toolMax) {
-		// Stow the keycode for later retrieval.
-		// Do this even if 0, in case the menu already existed (e.g. ModifyMenu)
-		MENUITEMINFO mii;
-		mii.cbSize = sizeof(MENUITEMINFO);
-		mii.fMask = MIIM_DATA;
-		mii.dwItemData = reinterpret_cast<DWORD&>(keycode);
-		::SetMenuItemInfo(hmenu, itemID, FALSE, &mii);
-	}
-}
-
-void SciTEWin::RedrawMenu() {
-	// Make previous change visible.
-	::DrawMenuBar(reinterpret_cast<HWND>(wSciTE.GetID()));
-}
-
-void SciTEWin::DestroyMenuItem(int menuNumber, int itemID) {
-	// On Windows menu items are destroyed as they can not be hidden and they can be recreated in any position
-	HMENU hmenuBar = ::GetMenu(MainHWND());
-	if (itemID) {
-		HMENU hmenu = ::GetSubMenu(hmenuBar, menuNumber);
-		::DeleteMenu(hmenu, itemID, MF_BYCOMMAND);
-	} else {
-		::DeleteMenu(hmenuBar, menuNumber, MF_BYPOSITION);
-	}
-}
 
 //!-start-[user.toolbar]
 static void CheckToolbarButton(HWND wTools, int id, bool enable) {
@@ -296,27 +222,11 @@ static void CheckToolbarButton(HWND wTools, int id, bool enable) {
 }
 //!-end-[user.toolbar]
 
-void SciTEWin::CheckAMenuItem(int wIDCheckItem, bool val) {
-	if (val)
-		CheckMenuItem(::GetMenu(MainHWND()), wIDCheckItem, MF_CHECKED | MF_BYCOMMAND);
-	else
-		CheckMenuItem(::GetMenu(MainHWND()), wIDCheckItem, MF_UNCHECKED | MF_BYCOMMAND);
-	::CheckToolbarButton(reinterpret_cast<HWND>(wToolBar.GetID()), wIDCheckItem, val); //!-add-[user.toolbar]
-}
-
 void EnableButton(HWND wTools, int id, bool enable) {
 	if (wTools) {
 		::SendMessage(wTools, TB_ENABLEBUTTON, id,
 	              LongFromTwoShorts(static_cast<short>(enable ? TRUE : FALSE), 0));
 	}
-}
-
-void SciTEWin::EnableAMenuItem(int wIDCheckItem, bool val) {
-	if (val)
-		::EnableMenuItem(::GetMenu(MainHWND()), wIDCheckItem, MF_ENABLED | MF_BYCOMMAND);
-	else
-		::EnableMenuItem(::GetMenu(MainHWND()), wIDCheckItem, MF_DISABLED | MF_GRAYED | MF_BYCOMMAND);
-	::EnableButton(reinterpret_cast<HWND>(wToolBar.GetID()), wIDCheckItem, val);
 }
 
 void SciTEWin::CheckMenus() {
@@ -434,72 +344,6 @@ GUI::gui_string SciTEWin::LocaliseAccelerator(const GUI::gui_char *pAccelerator,
 #else
 	return pAccelerator;
 #endif
-}
-
-void SciTEWin::LocaliseMenu(HMENU hmenu) {
-	for (int i = 0; i <= ::GetMenuItemCount(hmenu); i++) {
-		GUI::gui_char buff[200];
-		buff[0] = '\0';
-		MENUITEMINFOW mii;
-		memset(&mii, 0, sizeof(mii));
-		// Explicitly use the struct size for NT 4 as otherwise
-		// GetMenuItemInfo will fail on NT 4.
-		//mii.cbSize = sizeof(mii);
-		mii.cbSize = 44;
-		mii.fMask = MIIM_CHECKMARKS | MIIM_DATA | MIIM_ID |
-		            MIIM_STATE | MIIM_SUBMENU | MIIM_TYPE;
-		mii.dwTypeData = buff;
-		mii.cch = sizeof(buff) - 1;
-		if (::GetMenuItemInfoW(hmenu, i, TRUE, &mii)) {
-			if (mii.hSubMenu) {
-				LocaliseMenu(mii.hSubMenu);
-			}
-			if (mii.fType == MFT_STRING || mii.fType == MFT_RADIOCHECK) {
-				if (mii.dwTypeData) {
-					GUI::gui_string text(mii.dwTypeData);
-					GUI::gui_string accel(mii.dwTypeData);
-					size_t len = text.length();
-					size_t tab = text.find(GUI_TEXT("\t"));
-					if (tab != GUI::gui_string::npos) {
-						text.erase(tab, len - tab);
-						accel.erase(0, tab + 1);
-					} else {
-						accel = GUI_TEXT("");
-					}
-					text = localiser.Text(GUI::UTF8FromString(text.c_str()).c_str(), true);
-					if (text.length()) {
-						if (accel != GUI_TEXT("")) {
-							text += GUI_TEXT("\t");
-							text += LocaliseAccelerator(accel.c_str(), mii.wID);
-						}
-						mii.dwTypeData = const_cast<GUI::gui_char *>(text.c_str());
-						::SetMenuItemInfoW(hmenu, i, TRUE, &mii);
-					}
-				}
-			}
-		}
-	}
-}
-
-void SciTEWin::LocaliseMenus() {
-	LocaliseMenu(::GetMenu(MainHWND()));
-	::DrawMenuBar(MainHWND());
-}
-
-void SciTEWin::LocaliseAccelerators() {
-	LocaliseAccelerator(GUI_TEXT("Alt+1"), IDM_BUFFER + 0);
-	LocaliseAccelerator(GUI_TEXT("Alt+2"), IDM_BUFFER + 1);
-	LocaliseAccelerator(GUI_TEXT("Alt+3"), IDM_BUFFER + 2);
-	LocaliseAccelerator(GUI_TEXT("Alt+4"), IDM_BUFFER + 3);
-	LocaliseAccelerator(GUI_TEXT("Alt+5"), IDM_BUFFER + 4);
-	LocaliseAccelerator(GUI_TEXT("Alt+6"), IDM_BUFFER + 5);
-	LocaliseAccelerator(GUI_TEXT("Alt+7"), IDM_BUFFER + 6);
-	LocaliseAccelerator(GUI_TEXT("Alt+8"), IDM_BUFFER + 7);
-	LocaliseAccelerator(GUI_TEXT("Alt+9"), IDM_BUFFER + 8);
-	LocaliseAccelerator(GUI_TEXT("Alt+0"), IDM_BUFFER + 9);
-
-	// todo read keymap from cfg
-	// AssignKey('Y', SCMOD_CTRL, SCI_LINECUT);
 }
 
 void SciTEWin::LocaliseControl(HWND w) {
@@ -868,10 +712,4 @@ void SciTEWin::Creation() {
 
 	wTabBar.Show();
 
-#ifndef NO_LUA
-		if (props.GetExpanded("ext.lua.startup.script").length() == 0)
-			DestroyMenuItem(menuOptions,IDM_OPENLUAEXTERNALFILE);
-#else
-		DestroyMenuItem(menuOptions,IDM_OPENLUAEXTERNALFILE);
-#endif
 }
