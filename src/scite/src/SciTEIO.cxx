@@ -609,7 +609,7 @@ bool SciTEBase::OpenSelected() {
 					wEditor.Call(SCI_GOTOLINE, atol(cTag) - 1);
 				} else {
 					findWhat = cTag;
-					FindNext(false);
+					//FindNext(false);	   
 				}
 			}
 			return true;

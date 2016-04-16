@@ -1462,117 +1462,6 @@ void SciTEBase::RemoveFindMarks() {
 	}
 }
 
-int SciTEBase::MarkAll() {
-//-start-[NewFind-MarkerDeleteAll]
-	if ( props.GetInt("find.mark.delete") )
-		wEditor.Call(SCI_MARKERDELETEALL, 1);
-//-end-[NewFind-MarkerDeleteAll]
-	int posCurrent = wEditor.Call(SCI_GETCURRENTPOS);
-	int marked = 0;
-	int posFirstFound = FindNext(false, false, false);
-
-	SString findMark = props.Get("find.mark");
-	if (findMark.length()) {
-		wEditor.Call(SCI_SETINDICATORCURRENT, indicatorMatch);
-		RemoveFindMarks();
-		CurrentBuffer()->findMarks = Buffer::fmMarked;
-	}
-
-	bool findBookmarkEnabled = props.GetInt("find.bookmark.disable") < 1; //-add-[find.bookmark.disable]
-
-	if (posFirstFound != -1) {
-		int posFound = posFirstFound;
-		do {
-			marked++;
-			int line = wEditor.Call(SCI_LINEFROMPOSITION, posFound);
-			if ( findBookmarkEnabled ) //-add-[find.bookmark.disable]
-			BookmarkAdd(line);
-			if (findMark.length()) {
-				wEditor.Call(SCI_INDICATORFILLRANGE, posFound, wEditor.Call(SCI_GETTARGETEND) - posFound);
-			}
-			posFound = FindNext(false, false, false);
-		} while ((posFound != -1) && (posFound != posFirstFound));
-	}
-	wEditor.Call(SCI_SETCURRENTPOS, posCurrent);
-	return marked;
-}
-int SciTEBase::FindAll()
-{//Находим все вхождения и выводим на консоль
-	bool needCode = (wEditor.Call(SCI_GETCODEPAGE) != 0);
-
-	int len = wFindRes.Call(SCI_GETLENGTH);
-	wFindRes.Call(SCI_SETSEL,len,len);
-	int ancCurrent = wEditor.Call(SCI_GETANCHOR);
-	int posCurrent = wEditor.Call(SCI_GETCURRENTPOS);
-	int iLn = wFindRes.Call(SCI_GETLINECOUNT);
-	int iFirstLine = wEditor.Call(SCI_GETFIRSTVISIBLELINE);
-	int ixOffset = wEditor.Call(SCI_GETXOFFSET);
-	SetSelection(1,1);
-	int marked = 0;
-	int posFirstFound = FindNext(false, false, false);
-	//Заголовок поиска - обеспечивает подсветку найденных вхождений
-	//НЕЛЬЗЯ менять формат следующей строки (ее обработка - в файле LexerOthers, ColouriseErrorListDoc)
-	//GUI::gui_string gFind = GUI::StringFromUTF8(findWhat.c_str()) ;
-
-	SString tmp;
-	WideChrToMyltiBate(findWhat,tmp);
-	SString s = ">??Internal search for \"" + tmp + "\" in \"" + FileNameExt().AsUTF8().c_str() + "\" (Current)\n";
-
-
-	CollapseOutput();
-
-	//wFindRes.SendPointer(SCI_APPENDTEXT,s.length(),(void*)s.c_str());
-	int iOcur = 0;
-	int iLines = 0;
-	if (posFirstFound != -1) {
-		int posFound = posFirstFound;
-		int prevLine = -1;
-		do 
-		{
-			marked++;
-			int line = wEditor.Call(SCI_LINEFROMPOSITION, posFound);
-			int lineLen = wEditor.Call(SCI_LINELENGTH,line);
-			SBuffer text(lineLen);
-			wEditor.SendPointer(SCI_GETLINE,line,text.ptr());
-			iOcur++;	
-			if(line != prevLine)
-			{
-				iLines++;
-				prevLine = line;
-				//Соберем выходную строку
-				SString out = "";
-				out.append(text.ptr(), lineLen);
-				out.substitute('\t', ' ');
-				out.trimleft("\n\r ");
-				out.insert(0, " ", 1);
-				while (out.substitute("  ", " "));
-				if (needCode) WideChrToMyltiBate(out, out);
-				s.append(".\\").append(FileNameExt().AsUTF8().c_str()).append(":").append(SString(line+1).c_str()).append(":");
-				s += out;
-				//Добавляем текст в конец консоли
-				//wFindRes.SendPointer(SCI_APPENDTEXT,s.length(),(void*)s.c_str());
-			}
-			posFound = FindNext(false, false, false);
-		} while ((posFound != -1) && (posFound != posFirstFound));
-	}
-	s.append(">!!    Occurrences:");
-	s += SString(iOcur);
-	s.append(" in ");
-	s += SString(iLines);
-	s.append(" lines\n");
-	wFindRes.Call(SCI_SETSEL, 0, 0);
-	wFindRes.CallString(SCI_REPLACESEL, 0, s.c_str());
-	//wFindRes.Call(SCI_SETSEL, 1, 1);
-	wFindRes.Call(SCI_SETFIRSTVISIBLELINE, 0);
-	//В редакторе восстанавливаем позицию, а в консоли идем в конец
-	SetSelection(ancCurrent,posCurrent);
-	wEditor.Call(SCI_SETFIRSTVISIBLELINE, iFirstLine);
-
-	MakeOutputVisible(wFindRes);
-	//wFindRes.Call(SCI_SETFIRSTVISIBLELINE, iLn-1);
-	wEditor.Call(SCI_SETXOFFSET,ixOffset);
-	return marked;
-}
 
 int SciTEBase::FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition) {
 	wEditor.Call(SCI_SETTARGETSTART, startPosition);
@@ -1627,7 +1516,6 @@ void SciTEBase::ScrollEditorIfNeeded() {
 
 int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool fireEvent) {
 	if (findWhat.length() == 0) {
-		Find();
 		return -1;
 	}
 	SString findTarget = EncodeString(findWhat);
@@ -1680,41 +1568,10 @@ int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool fireEvent
 		int end = wEditor.Call(SCI_GETTARGETEND);
 		EnsureRangeVisible(start, end);
 		SetSelection(start, end);
-		if (!replacing && closeFind) {
-			DestroyFindReplace();
-		}
+
 		if (extender && fireEvent) extender->OnNavigation("Find-");
 	}
 	return posFind;
-}
-
-void SciTEBase::ReplaceOnce() {
-	if (!FindHasText())
-		return;
-
-//	if (!havefound) { //!-remove-[FixReplaceOnce]
-		Sci_CharacterRange crange = GetSelection();
-		SetSelection(crange.cpMin, crange.cpMin);
-		FindNext(false);
-//	} //!-remove-[FixReplaceOnce]
-
-	if (havefound) {
-		SString replaceTarget = EncodeString(replaceWhat);
-		int replaceLen = UnSlashAsNeeded(replaceTarget, unSlash, regExp);
-		Sci_CharacterRange cr = GetSelection();
-		wEditor.Call(SCI_SETTARGETSTART, cr.cpMin);
-		wEditor.Call(SCI_SETTARGETEND, cr.cpMax);
-		int lenReplaced = replaceLen;
-		if (regExp)
-			lenReplaced = wEditor.CallString(SCI_REPLACETARGETRE, replaceLen, replaceTarget.c_str());
-		else	// Allow \0 in replacement
-			wEditor.CallString(SCI_REPLACETARGET, replaceLen, replaceTarget.c_str());
-		SetSelection(cr.cpMin + lenReplaced, cr.cpMin);
-		havefound = false;
-		FindNext(false, false); //!-add-[FixReplaceOnce]
-	}
-
-//!	FindNext(false); //!-remove-[FixReplaceOnce]
 }
 
 int SciTEBase::DoReplaceAll(bool inSelection) {
@@ -4034,20 +3891,15 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_FIND:
-		Find();
 		break;
 
 	case IDM_FINDNEXT:
-		FindNext(reverseFind);
 		break;
 
 	case IDM_FINDNEXTBACK:
-		FindNext(!reverseFind);
 		break;
 
 	case IDM_FINDNEXTSEL:
-		SelectionIntoFind();
-		FindNext(reverseFind);
 		break;
 
 	case IDM_ENTERSELECTION:
@@ -4055,20 +3907,15 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_FINDNEXTBACKSEL:
-		SelectionIntoFind();
-		FindNext(!reverseFind);
 		break;
 
 	case IDM_FINDINFILES:
-		FindInFiles();
 		break;
 
 	case IDM_REPLACE:
-		Replace();
 		break;
 
 	case IDM_GOTO:
-		GoLineDialog();
 		break;
 
 	case IDM_MATCHBRACE:
@@ -5145,9 +4992,6 @@ void SciTEBase::PerformOne(char *action) {
 			SaveToTEX(GUI::StringFromUTF8(arg));
 		} else if (isprefix(action, "exportasxml:")) {
 			SaveToXML(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "find:") && wEditor.Created()) {
-			findWhat = arg;
-			FindNext(false, false);
 		} else if (isprefix(action, "goto:") && wEditor.Created()) {
 			int line = atoi(arg) - 1;
 			GotoLineEnsureVisible(line);

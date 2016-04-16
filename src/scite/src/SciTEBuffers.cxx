@@ -1736,7 +1736,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 							sourceLine = atol(cTag) - 1;
 						} else {
 							findWhat = cTag;
-							FindNext(false);
+							//FindNext(false);
 							//get linenumber for marker from found position
 							sourceLine = wEditor.Call(SCI_LINEFROMPOSITION, wEditor.Call(SCI_GETCURRENTPOS));
 						}
