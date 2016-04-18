@@ -127,24 +127,6 @@ void SciTEWin::Notify(SCNotification *notification) {
 		}
 		break;
 
-	case NM_CLICK:
-		// Click on a control
-		if (notification->nmhdr.idFrom == IDM_STATUSWIN) {
-			// Click on the status bar
-			NMMOUSE *pNMMouse = (NMMOUSE *)notification;
-			switch (pNMMouse->dwItemSpec) {
-			case 0: 		/* Display of status */
-				sbNum++;
-				if (sbNum > props.GetInt("statusbar.number")) {
-					sbNum = 1;
-				}
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-
 	case SCN_CHARADDED:
 		if ((notification->nmhdr.idFrom == IDM_RUNWIN) &&
 		        jobQueue.IsExecuting() &&
@@ -205,146 +187,13 @@ void SciTEWin::SizeSubWindows() {
 	layout.AdjustTabBar();
 }
 
-//!-start-[user.toolbar]
-struct BarButtonIn {
-	BarButtonIn() :id(0), cmd(0) {};
-	BarButtonIn(int _id, int _cmd) : id(_id), cmd(_cmd) {};
-	int id;
-	int cmd;
-};
-
-//!-start-[user.toolbar]
-static void CheckToolbarButton(HWND wTools, int id, bool enable) {
-	if (wTools) {
-		::SendMessage(wTools, TB_CHECKBUTTON, id,
-		          LongFromTwoShorts(static_cast<short>(enable ? TRUE : FALSE), 0));
-	}
-}
-//!-end-[user.toolbar]
-
-void EnableButton(HWND wTools, int id, bool enable) {
-	if (wTools) {
-		::SendMessage(wTools, TB_ENABLEBUTTON, id,
-	              LongFromTwoShorts(static_cast<short>(enable ? TRUE : FALSE), 0));
-	}
-}
-
 void SciTEWin::CheckMenus() {
-//!-start-[user.toolbar]
-	// check user toolbar buttons status
-	if (props.GetInt("toolbar.visible") != 0) {
-		SString fileNameForExtension = ExtensionFileName();
-		for (int i = 0; i < toolbarUsersPressableButtons.GetSize(); i++) {
-			SString prefix = "command.checked." + SString(toolbarUsersPressableButtons[i] - IDM_TOOLS) + ".";
-			int ischecked = props.GetNewExpand(prefix.c_str(), fileNameForExtension.c_str()).value();
-			::CheckToolbarButton(reinterpret_cast<HWND>(wToolBar.GetID()), toolbarUsersPressableButtons[i], ischecked);
-		}
-	}
-//!-end-[user.toolbar]
+//	!!!TODO-  notify
+
 	SciTEBase::CheckMenus();
-	::CheckMenuRadioItem(::GetMenu(MainHWND()), IDM_EOL_CRLF, IDM_EOL_LF,
-	                   wEditor.Call(SCI_GETEOLMODE) - SC_EOL_CRLF + IDM_EOL_CRLF, 0);
-	::CheckMenuRadioItem(::GetMenu(MainHWND()), IDM_ENCODING_DEFAULT, IDM_ENCODING_UCOOKIE,
-	                   CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT, 0);
+
 }
 
-void SciTEWin::MakeAccelerator(SString sAccelerator, ACCEL &Accel) {
-	SString s = sAccelerator;
-
-	if (s.contains("null")) {
-		Accel.key = 0;
-		return ;
-	}
-
-	if (s.contains("Ctrl+")) {
-		Accel.fVirt |= FCONTROL;
-		s.remove("Ctrl+");
-	}
-	if (s.contains("Shift+")) {
-		Accel.fVirt |= FSHIFT;
-		s.remove("Shift+");
-	}
-	if (s.contains("Alt+")) {
-		Accel.fVirt |= FALT;
-		s.remove("Alt+");
-	}
-	if (s.length() == 1) {
-		Accel.key = s[0];
-		Accel.fVirt |= FVIRTKEY;
-	} else if ((s.length() > 1) && (s[0] == 'F') && (isdigit(s[1]))) {
-		s.remove("F");
-		int keyNum = s.value();
-		Accel.key = static_cast<WORD>(keyNum + VK_F1 - 1);
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Del")) {
-		Accel.key = VK_DELETE;
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Space")) {
-		Accel.key = VK_SPACE;
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Enter")) {
-		Accel.key = VK_RETURN;
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Back")) {
-		Accel.key = VK_BACK;
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Tab")) {
-		Accel.key = VK_TAB;
-		Accel.fVirt |= FVIRTKEY;
-	} else if (s.contains("Num")) {
-		Accel.fVirt |= FVIRTKEY;
-		s.remove("Num");
-		if (isdigit(s[0])) {
-			int keyNum = s.value();
-			Accel.key = static_cast<WORD>(keyNum + VK_NUMPAD0);
-		} else {
-			switch (s[0]) {
-			case '*':
-				Accel.key = VK_MULTIPLY;
-				break;
-			case '+':
-				Accel.key = VK_ADD;
-				break;
-			case '-':
-				Accel.key = VK_SUBTRACT;
-				break;
-			case '/':
-				Accel.key = VK_DIVIDE;
-				break;
-			default:
-				Accel.key = 0;
-				break;
-			}
-		}
-	}
-}
-
-//SString SciTEWin::LocaliseAccelerator(const char *pAccelerator, int cmd) {
-GUI::gui_string SciTEWin::LocaliseAccelerator(const GUI::gui_char *pAccelerator, int) {
-#ifdef LOCALISE_ACCELERATORS_WORKED
-	SString translation = localiser.Text(pAccelerator, true);
-	int AccelCount = ::CopyAcceleratorTable(hAccTable, NULL, 0);
-	ACCEL *AccelTable = new ACCEL[AccelCount];
-	::CopyAcceleratorTable(hAccTable, AccelTable, AccelCount);
-	for (int i = 0; i < AccelCount; i++) {
-		if (AccelTable[i].cmd == cmd) {
-			MakeAccelerator(translation, AccelTable[i]);
-		}
-	}
-
-	::DestroyAcceleratorTable(hAccTable);
-	hAccTable = ::CreateAcceleratorTable(AccelTable, AccelCount);
-	delete []AccelTable;
-
-	if (translation.contains("null")) {
-		translation.clear();
-	}
-
-	return translation;
-#else
-	return pAccelerator;
-#endif
-}
 
 void SciTEWin::LocaliseControl(HWND w) {
 	char wtext[200];
@@ -372,33 +221,6 @@ void SciTEWin::LocaliseDialog(HWND wDialog) {
 #define TB_LOADIMAGES (WM_USER + 50)
 #endif
 
-/*!-remove-[user.toolbar]
-struct BarButton {
-	int id;
-	int cmd;
-};
-
-static BarButton bbs[] = {
-    { -1,           0 },
-    { STD_FILENEW,  IDM_NEW },
-    { STD_FILEOPEN, IDM_OPEN },
-    { STD_FILESAVE, IDM_SAVE },
-    { 0,            IDM_CLOSE },
-    { -1,           0 },
-    { STD_PRINT,    IDM_PRINT },
-    { -1,           0 },
-    { STD_CUT,      IDM_CUT },
-    { STD_COPY,     IDM_COPY },
-    { STD_PASTE,    IDM_PASTE },
-    { STD_DELETE,   IDM_CLEAR },
-    { -1,           0 },
-    { STD_UNDO,     IDM_UNDO },
-    { STD_REDOW,    IDM_REDO },
-    { -1,           0 },
-    { STD_FIND,     IDM_FIND },
-    { STD_REPLACE,  IDM_REPLACE },
-};
-*/
 
 static WNDPROC stDefaultTabProc = NULL;
 static LRESULT PASCAL TabWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {

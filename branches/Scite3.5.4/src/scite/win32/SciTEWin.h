@@ -222,7 +222,6 @@ protected:
 
 	virtual void CheckMenus();
 
-	GUI::gui_string LocaliseAccelerator(const GUI::gui_char *Accelerator, int cmd);
 	void LocaliseControl(HWND w);
 	void LocaliseDialog(HWND wDialog);
 
@@ -310,7 +309,6 @@ protected:
 	static BOOL CALLBACK AboutDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void AboutDialogWithBuild(int staticBuild);
 
-	void MakeAccelerator(SString sKey, ACCEL &Accel);
 
 	void EnsureVisible();
 

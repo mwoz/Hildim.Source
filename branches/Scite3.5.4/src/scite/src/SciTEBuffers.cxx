@@ -487,8 +487,6 @@ void SciTEBase::SaveSessionFile(const GUI::gui_char *sessionName) {
 
 		fprintf(sessionFile, "iuptoolbar.visible=%d\n", props.GetInt("iuptoolbar.visible"));
 		fprintf(sessionFile, "tabbar.visible=%d\n", props.GetInt("tabbar.visible"));
-		fprintf(sessionFile, "toolbar.visible=%d\n", props.GetInt("toolbar.visible"));
-		fprintf(sessionFile, "statusbar.visible=%d\n", props.GetInt("statusbar.visible"));
 		fprintf(sessionFile, "view.whitespace=%d\n", props.GetInt("view.whitespace"));
 		fprintf(sessionFile, "view.eol=%d\n", props.GetInt("view.eol"));
 		fprintf(sessionFile, "view.indentation.guides=%d\n", props.GetInt("view.indentation.guides"));

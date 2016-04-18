@@ -1424,8 +1424,6 @@ void SciTEBase::SetPropertiesInitial() {
 	wrapOutput = props.GetInt("output.wrap");
 	wrapFindRes = props.GetInt("findrez.wrap");
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
-	sbVisible = props.GetInt("statusbar.visible");
-	tbVisible = props.GetInt("toolbar.visible");
 
 	tabVisible = props.GetInt("tabbar.visible");
 	tabMultiLine = props.GetInt("tabbar.multiline");

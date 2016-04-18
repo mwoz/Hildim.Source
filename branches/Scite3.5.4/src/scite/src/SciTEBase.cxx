@@ -414,8 +414,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	statementLookback = 10;
 	preprocessorSymbol = '\0';
 
-	tbVisible = false;
-	sbVisible = false;
 	tabVisible = false;
 	tabHideOne = false;
 	tabMultiLine = false;
@@ -4042,7 +4040,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_VIEWTOOLBAR:
-		tbVisible = !tbVisible;
 		ShowToolBar();
 		CheckMenus();
 		break;
@@ -4096,7 +4093,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_VIEWSTATUSBAR:
-		sbVisible = !sbVisible;
 		ShowStatusBar();
 		CheckMenus();
 		break;
@@ -4858,8 +4854,6 @@ void SciTEBase::CheckMenus() {
 	int iEOL = wEditor.Call(SCI_GETVIEWEOL);
 
 	props.SetInteger("tabbar.visible", tabVisible);
-	props.SetInteger("toolbar.visible", tbVisible);
-	props.SetInteger("statusbar.visible", sbVisible);
 	props.SetInteger("view.whitespace", viewWs);
 	props.SetInteger("view.indentation.guides", viewIndent);
 	props.SetInteger("line.margin.visible", lineNumbers);
