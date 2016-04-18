@@ -332,15 +332,12 @@ protected:
 	GUI::Window wIncrement;
 	GUI::Window wToolBar;
 	GUI::Window wTabBar;
-//!	GUI::Menu popup; //!-remove-[ExtendedContextMenu]
-	bool tbVisible;
 	bool tabVisible;
 	bool viewWs;
 	bool viewIndent;
 	bool tabHideOne; // Hide tab bar if one buffer is opened only
 	bool tabMultiLine;
 	bool iuptbVisible;
-	bool sbVisible;	///< @c true if status bar is visible.
 	SString sbValue;	///< Status bar text.
 	int sbNum;	///< Number of the currenly displayed status bar information.
 	int visHeightTools;
