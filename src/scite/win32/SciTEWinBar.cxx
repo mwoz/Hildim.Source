@@ -195,22 +195,8 @@ void SciTEWin::CheckMenus() {
 }
 
 
-void SciTEWin::LocaliseControl(HWND w) {
-	char wtext[200];
-	if (::GetWindowTextA(w, wtext, sizeof(wtext))) {
-		GUI::gui_string text = localiser.Text(wtext, false);
-		if (text.length())
-			::SetWindowTextW(w, text.c_str());
-	}
-}
-
 void SciTEWin::LocaliseDialog(HWND wDialog) {
-	LocaliseControl(wDialog);
-	HWND wChild = ::GetWindow(wDialog, GW_CHILD);
-	while (wChild) {
-		LocaliseControl(wChild);
-		wChild = ::GetWindow(wChild, GW_HWNDNEXT);
-	}
+
 }
 
 // Mingw headers do not have this:

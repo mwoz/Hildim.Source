@@ -4162,7 +4162,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_BUILD: {
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {
+			if (SaveIfUnsureForBuilt() != IDCANCEL) {			
 				SelectionIntoProperties();
 				AddCommand(
 				    props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()),
@@ -4482,6 +4482,13 @@ void SciTEBase::EnsureAllChildrenVisible(int line, int level) {
 	Expand(line, true, true, 100, level);
 }
 
+void SciTEBase::RunInConcole(){
+	OutputMode prevMode = curOutMode;
+	curOutMode = outConsole;
+	NewLineInOutput();
+	curOutMode = prevMode;
+}
+
 void SciTEBase::NewLineInOutput() {
 	if (jobQueue.IsExecuting())
 		return;
@@ -4497,6 +4504,8 @@ void SciTEBase::NewLineInOutput() {
 			curOutMode = outInterface;
 		else if (cmd.lowercase() == "####")
 			curOutMode = outNull;
+		else if (cmd.lowercase() == "###p")
+			curOutMode = outluaPrint;
 		else if (cmd.lowercase() == "###?") {
 			char *c;
 			switch (curOutMode)
@@ -4506,6 +4515,9 @@ void SciTEBase::NewLineInOutput() {
 				break;
 			case SciTEBase::outLua:
 				c = "LUA concole\n";
+				break;
+			case SciTEBase::outluaPrint:
+				c = "LUA print\n";
 				break;
 			case SciTEBase::outInterface:
 				c = "HildiM interface\n";
@@ -4541,6 +4553,10 @@ void SciTEBase::NewLineInOutput() {
 		Execute();
 	}
 	else if (curOutMode == outLua) {
+		extender->DoLua(cmd.c_str());
+	}
+	else if (curOutMode == outluaPrint) {
+		cmd = "print(" + cmd + ")";
 		extender->DoLua(cmd.c_str());
 	}
 	else if (curOutMode == outInterface)

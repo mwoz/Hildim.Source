@@ -588,6 +588,11 @@ static int sf_SwitchMouseHook(lua_State* L){
 	return 1;
 }
 
+static int sf_RunInConcole(lua_State* L){
+	host->RunInConcole();
+	return 0;
+}
+
 static int sf_SetOverrideLanguage(lua_State* L){
 	const char * lexer = luaL_checkstring(L, 1);
 	host->SetOverrideLanguage(lexer, true);
@@ -1859,6 +1864,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_SwitchMouseHook);
 	lua_setfield(luaState, -2, "SwitchMouseHook");
+
+	lua_pushcfunction(luaState, sf_RunInConcole);
+	lua_setfield(luaState, -2, "RunInConcole");
 
 	// buffers
 	lua_newtable(luaState);
