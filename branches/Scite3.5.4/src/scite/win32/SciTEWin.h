@@ -222,7 +222,6 @@ protected:
 
 	virtual void CheckMenus();
 
-	void LocaliseControl(HWND w);
 	void LocaliseDialog(HWND wDialog);
 
 	int DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc);

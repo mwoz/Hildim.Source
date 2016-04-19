@@ -806,6 +806,7 @@ int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = t
 	virtual int RunLuaThread(const char *s, const char *desc);
 	virtual void PostCommand(int cmd, int param) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
+	virtual void RunInConcole();
 
 	// Valid CurrentWord characters
 	bool iswordcharforsel(char ch);
@@ -830,8 +831,8 @@ public:
 		return NULL;
 	}
 //!-end-[GetApplicationProps]
-	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outNull = 0 };
-	OutputMode curOutMode = outConsole;
+	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
+	OutputMode curOutMode = outNull;
 
 private:
 	// un-implemented copy-constructor and assignment operator
