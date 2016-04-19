@@ -856,47 +856,6 @@ public:
 
 };
 
-static void FillComboFromProps(HWND combo, PropSetFile &props) {
-	const char *key;
-	const char *val;
-	if (props.GetFirst(key, val)) {
-		GUI::gui_string wkey = GUI::StringFromUTF8(key);
-		::SendMessage(combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(wkey.c_str()));
-		while (props.GetNext(key, val)) {
-			wkey = GUI::StringFromUTF8(key);
-			::SendMessage(combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(wkey.c_str()));
-		}
-	}
-}
-
-void SciTEWin::MoveFindRepFromText()
-{//Отодвигаем  диалог поиска замены с текущей позиции
-	rFindReplace = wFindReplace.GetPosition();
-	int iPos = wEditor.Call(SCI_GETCURRENTPOS);
-	POINT p;
-	p.x = wEditor.Call(SCI_POINTXFROMPOSITION,0,iPos);
-	p.y = wEditor.Call(SCI_POINTYFROMPOSITION,0,iPos);
-	::MapWindowPoints(reinterpret_cast<HWND>(this->wEditor.GetID()),HWND_DESKTOP,&p, 1);
-	//GUI::Point gp(p.x,p.y);
-	int lHeight = wEditor.Call(SCI_TEXTHEIGHT,wEditor.Call(SCI_LINEFROMPOSITION,iPos));
-	if(rFindReplace.Contains(GUI::Point(p.x,p.y))||rFindReplace.Contains(GUI::Point(p.x,p.y+lHeight)))
-	{
-		RECT r;
-		::GetWindowRect(::GetDesktopWindow(),&r);
-		int H = rFindReplace.Height();
-		if(p.y - H - lHeight < 0)
-		{
-			rFindReplace.top = p.y + 2*lHeight;
-			rFindReplace.bottom = p.y + 2*lHeight + H;
-		}
-		else
-		{
-			rFindReplace.top = p.y - H - lHeight;
-			rFindReplace.bottom = p.y - lHeight;
-		}
-		wFindReplace.MoveToLeftTop(rFindReplace);
-	}
-}
 
 void SciTEWin::UIClosed() {
 	SciTEBase::UIClosed();
@@ -992,47 +951,6 @@ void SciTEWin::PerformGrep() {
 	if (jobQueue.commandCurrent > 0) {
 		Execute();
 	}
-}
-
-BOOL SciTEWin::AbbrevMessage(HWND hDlg, UINT message, WPARAM wParam) {
-	Dialog dlg(hDlg);
-	HWND hAbbrev = ::GetDlgItem(hDlg, IDABBREV);
-	switch (message) {
-
-	case WM_INITDIALOG:
-		LocaliseDialog(hDlg);
-		FillComboFromProps(hAbbrev, propsAbbrev);
-		return TRUE;
-
-	case WM_CLOSE:
-		::SendMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
-		break;
-
-	case WM_COMMAND:
-		if (ControlIDOfCommand(wParam) == IDCANCEL) {
-			::EndDialog(hDlg, IDCANCEL);
-			return FALSE;
-		} else if (ControlIDOfCommand(wParam) == IDOK) {
-			SString sAbbrev = dlg.ItemTextU(IDABBREV);
-			strncpy(abbrevInsert, sAbbrev.c_str(), sizeof(abbrevInsert));
-			abbrevInsert[sizeof(abbrevInsert) - 1] = '\0';
-			::EndDialog(hDlg, IDOK);
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-BOOL CALLBACK SciTEWin::AbbrevDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	return Caller(hDlg, message, lParam)->AbbrevMessage(hDlg, message, wParam);
-}
-
-bool SciTEWin::AbbrevDialog() {
-	bool success = (DoDialog(hInstance, TEXT("InsAbbrev"), MainHWND(),
-		reinterpret_cast<DLGPROC>(AbbrevDlg)) == IDOK);
-	WindowSetFocus(wEditor);
-	return success;
 }
 
 BOOL SciTEWin::TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam) {

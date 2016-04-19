@@ -608,7 +608,6 @@ int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = t
 	int ReplaceInBuffers();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
-	virtual bool AbbrevDialog() = 0;
 	virtual void TabSizeDialog() = 0;
 	virtual bool ParametersOpen() = 0;
 	virtual void ParamGrab() = 0;
@@ -635,9 +634,6 @@ int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = t
 	virtual void EliminateDuplicateWords(char *words);
 	virtual bool StartAutoComplete();
 	virtual bool StartAutoCompleteWord(bool onlyOneWord);
-	virtual bool StartExpandAbbreviation();
-	virtual bool StartInsertAbbreviation();
-	virtual bool InsertAbbreviation(const char* data, int expandedLength); //!-add-[InsertAbbreviation]
 	virtual bool StartBlockComment();
 	virtual bool StartBoxComment();
 	virtual bool StartStreamComment();

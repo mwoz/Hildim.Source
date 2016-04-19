@@ -299,16 +299,6 @@ static int cf_scite_perform(lua_State *L) {
 }
 //!-end-[Perform]
 
-//!-start-[InsertAbbreviation]
-static int cf_editor_insert_abbrev(lua_State *L) {
-	const char *s = luaL_checkstring(L, 1);
-	if (s) {
-		host->InsertAbbreviation(s,0);
-	}
-	return 0;
-}
-//!-end-[InsertAbbreviation]
-
 //!-start-[ParametersDialogFromLua]
 static int cf_scite_show_parameters_dialog(lua_State *L) {
 	const char *s = luaL_checkstring(L, 1);
@@ -1823,11 +1813,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_scite_perform);
 	lua_setfield(luaState, -2, "Perform");
 //!-end-[Perform]
-
-//!-begin-[InsertAbbreviation]
-	lua_pushcfunction(luaState, cf_editor_insert_abbrev);
-	lua_setfield(luaState, -2, "InsertAbbreviation");
-//!-end-[InsertAbbreviation]
 
 //!-start-[ParametersDialogFromLua]
 	lua_pushcfunction(luaState, cf_scite_show_parameters_dialog);

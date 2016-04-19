@@ -282,17 +282,12 @@ protected:
 	void Command(WPARAM wParam, LPARAM lParam);
 	HWND MainHWND();
 
-	void MoveFindRepFromText();
-
 	virtual void UIClosed();
 	void PerformGrep();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
 
 	bool FindReplaceAdvanced();
 
-	BOOL AbbrevMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK AbbrevDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual bool AbbrevDialog();
 
 	BOOL TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK TabSizeDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
