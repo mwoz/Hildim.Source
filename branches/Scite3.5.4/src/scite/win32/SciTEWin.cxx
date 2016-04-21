@@ -60,6 +60,7 @@ const GUI::gui_char appName[] = GUI_TEXT("SciTE");
 bool bIsPopUpMenuItem = false;
 HHOOK mouseHook = NULL;
 HHOOK keyBoardHook = NULL;
+HMENU topLevelPopUp = NULL;
 
 static GUI::gui_string GetErrorMessage(DWORD nRet) {
 	LPWSTR lpMsgBuf = NULL;
@@ -1945,7 +1946,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_MENUSELECT:
-			bIsPopUpMenuItem = (HIWORD(wParam) & MF_POPUP) ;
+			if (!topLevelPopUp) topLevelPopUp = (HMENU)lParam;	   //При снлнкте пераой строет после установеи хука запоминаем меню
+			bIsPopUpMenuItem = (HIWORD(wParam) & MF_POPUP) || topLevelPopUp != (HMENU)lParam; //Не будем посылать нотификацию на метках открытия сабменб=ю и на сбменю
 			break;
 
 		case WM_CLOSE:
@@ -2329,6 +2331,7 @@ bool SciTEWin::SwitchMouseHook(bool bSet){
 	bool result = false;
 	if (bSet && !mouseHook){
 		bIsPopUpMenuItem = false;
+		topLevelPopUp = NULL;
 		mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, hInstance, GetCurrentThreadId());
 		keyBoardHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoardProc, hInstance, GetCurrentThreadId());
 		result = (mouseHook != NULL);
