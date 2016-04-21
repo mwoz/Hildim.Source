@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <shlwapi.h>
+#include <time.h>
 
 extern "C" {
 	#include "lua.h"
@@ -444,6 +445,25 @@ static int set_curent_dir(lua_State *L)
 	lua_pushstring(L, currentDir);
 	return 1;
 }
+static int datetime(lua_State *L){
+	struct tm *newtime;
+	__int64 ltime;
+	char buff[80];
+
+	_time64(&ltime);
+
+	// Obtain coordinated universal time:
+	newtime = _localtime64(&ltime); // C4996
+
+	lua_pushinteger(L, newtime->tm_year +1900);
+	lua_pushinteger(L, newtime->tm_mon);
+	lua_pushinteger(L, newtime->tm_mday);
+	lua_pushinteger(L, newtime->tm_hour);
+	lua_pushinteger(L, newtime->tm_min);
+	lua_pushinteger(L, newtime->tm_sec);
+	return 6;
+}
+	
 static int activate_proc_wnd(lua_State *L)
 {
 	ENUMINFO EnumInfo;
@@ -1294,6 +1314,7 @@ static const struct luaL_reg shell[] =
 	{ "rename_file", rename_file },
 	{ "activate_proc_wnd", activate_proc_wnd },
 	{ "set_curent_dir", set_curent_dir },
+	{ "datetime", datetime },
 	{ NULL, NULL }
 };
 
