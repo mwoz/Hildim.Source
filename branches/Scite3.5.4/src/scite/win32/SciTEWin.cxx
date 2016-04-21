@@ -57,6 +57,10 @@ const GUI::gui_char appName[] = GUI_TEXT("Sc1");
 const GUI::gui_char appName[] = GUI_TEXT("SciTE");
 #endif
 
+bool bIsPopUpMenuItem = false;
+HHOOK mouseHook = NULL;
+HHOOK keyBoardHook = NULL;
+
 static GUI::gui_string GetErrorMessage(DWORD nRet) {
 	LPWSTR lpMsgBuf = NULL;
 	::FormatMessage(
@@ -1779,7 +1783,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 		}
 
 		if ( extender->OnKey( (int)wParam, modifiers, ch[0] ) ) {
-			return 1l;
+			return 1l;	  
 		}
 	}
 
@@ -1818,9 +1822,10 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
+
 LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	int statusFailure = 0;
-	static int boxesVisible = 0;
+	static int boxesVisible = 0;			
 	try {
 		LRESULT uim = uniqueInstance.CheckMessage(iMessage, wParam, lParam);
 		if (uim != 0) {
@@ -1847,8 +1852,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return ContextMenuMessage(iMessage, wParam, lParam);
 
 		case WM_ENTERMENULOOP:
-			if (!wParam)
+			if (!wParam){
 				menuSource = 0;
+				::EndMenu();
+				if (!wParam) extender->OnMouseHook(-100, -100);
+			}
 			break;
 
 		case WM_SYSCOMMAND:
@@ -1936,6 +1944,10 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			CheckMenus();
 			break;
 
+		case WM_MENUSELECT:
+			bIsPopUpMenuItem = (HIWORD(wParam) & MF_POPUP) ;
+			break;
+
 		case WM_CLOSE:
 			QuitProgram();
 			return 0;
@@ -1969,25 +1981,17 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		case WM_QUERYNEWPALETTE:
 			wEditor.Call(WM_QUERYNEWPALETTE, wParam, lParam);
-			//wOutput.Call(WM_QUERYNEWPALETTE, wParam, lParam);
 			return TRUE;
 
 		case WM_ACTIVATEAPP:
-//!			wEditor.Call(SCI_HIDESELECTION, !wParam); //!-remove-[selection.hide.on.deactivate]
-//!-start-[selection.hide.on.deactivate]
 			if (props.GetInt("selection.hide.on.deactivate", 1)) {
 				wEditor.Call(SCI_HIDESELECTION, !wParam);
 			}
-//!-end-[selection.hide.on.deactivate]
 			// Do not want to display dialog yet as may be in middle of system mouse capture
 			::PostMessage(MainHWND(), WM_COMMAND, IDM_ACTIVATE, wParam);
 			if(wParam == WA_INACTIVE)
 			{
 				wActive = ::GetFocus();
-				//if(wFindReplace.GetID() == ::GetActiveWindow())
-				//{
-				//	int i=1;
-				//}
 			}
 			else
 			{
@@ -2189,28 +2193,9 @@ SString SciTEWin::EncodeString(const SString &s) {
 	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
 
 	if (codePage != SC_CP_UTF8) {
-//!		codePage = CodePageFromCharSet(characterSet, codePage);
-		codePage = GUI::CodePageFromCharSet(characterSet, codePage); //!-change-[FixEncoding]
+		codePage = GUI::CodePageFromCharSet(characterSet, codePage); 
 
-/*!-remove-[FixEncoding]
-		int cchWide = ::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), s.length(), NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(CP_UTF8, 0, s.c_str(), s.length(), pszWide, cchWide + 1);
-
-		int cchMulti = ::WideCharToMultiByte(codePage, 0, pszWide, cchWide, NULL, 0, NULL, NULL);
-		char *pszMulti = new char[cchMulti + 1];
-		::WideCharToMultiByte(codePage, 0, pszWide, cchWide, pszMulti, cchMulti + 1, NULL, NULL);
-		pszMulti[cchMulti] = 0;
-
-		SString result(pszMulti);
-
-		delete []pszWide;
-		delete []pszMulti;
-
-		//::MessageBox(GetFocus(),result.c_str(),"EncodeString:out",0);
-		return result;
-*/
-		return SString(GUI::ConvertFromUTF8(s.c_str(), codePage).c_str()); //!-add-[FixEncoding]
+		return SString(GUI::ConvertFromUTF8(s.c_str(), codePage).c_str()); 
 	}
 	return SciTEBase::EncodeString(s);
 }
@@ -2222,26 +2207,9 @@ SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, 
 	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
 
 	if (codePage != SC_CP_UTF8) {
-//!		codePage = CodePageFromCharSet(characterSet, codePage);
-		codePage = GUI::CodePageFromCharSet(characterSet, codePage); //!-change-[FixEncoding]
-/*!-remove-[FixEncoding]
-		int cchWide = ::MultiByteToWideChar(codePage, 0, s.c_str(), s.length(), NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(codePage, 0, s.c_str(), s.length(), pszWide, cchWide + 1);
+		codePage = GUI::CodePageFromCharSet(characterSet, codePage);
 
-		int cchMulti = ::WideCharToMultiByte(CP_UTF8, 0, pszWide, cchWide, NULL, 0, NULL, NULL);
-		char *pszMulti = new char[cchMulti + 1];
-		::WideCharToMultiByte(CP_UTF8, 0, pszWide, cchWide, pszMulti, cchMulti + 1, NULL, NULL);
-		pszMulti[cchMulti] = 0;
-
-		SString result(pszMulti);
-
-		delete []pszWide;
-		delete []pszMulti;
-
-		return result;
-*/
-		return GUI::ConvertToUTF8(s.c_str(), codePage).c_str(); //!-add-[FixEncoding]
+		return GUI::ConvertToUTF8(s.c_str(), codePage).c_str(); 
 	}
 	return s;
 }
@@ -2249,14 +2217,7 @@ SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, 
 int SciTEWin::EventLoop() {
 	MSG msg;
 	msg.wParam = 0;
-	//while (::GetMessageW(&msg, NULL, 0, 0)){
-	//	      						// !GetID() ||
-	//	if (!ModelessHandler(&msg) && ( !::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
-	//	{				
-	//		::TranslateMessage(&msg);
-	//		::DispatchMessageW(&msg);
-	//	}
-	//}
+
 	while (TRUE)
 	{
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -2349,30 +2310,47 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	return result;
 }
 
-HHOOK mouseHook = NULL;
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	pSciTEWin->NotifyMouseHook(nCode, wParam, lParam);	   
+	pSciTEWin->NotifyMouseHook(nCode, wParam, lParam);
+	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+}
+LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (!bIsPopUpMenuItem && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)){
+		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
+	}
+	else if (!bIsPopUpMenuItem && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)){
+		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
+	}
 	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
 }
 bool SciTEWin::SwitchMouseHook(bool bSet){
 	bool result = false;
 	if (bSet && !mouseHook){
+		bIsPopUpMenuItem = false;
 		mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, hInstance, GetCurrentThreadId());
+		keyBoardHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoardProc, hInstance, GetCurrentThreadId());
 		result = (mouseHook != NULL);
 	}
 	else if (!bSet && mouseHook){
 		result = UnhookWindowsHookEx(mouseHook);
-		//::SetActiveWindow((HWND)GetID());
+		result = UnhookWindowsHookEx(keyBoardHook);
+		
 		::EndMenu();
+		keyBoardHook = NULL;
 		mouseHook = NULL;
 	}
 	return result;
 }
 void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
-	LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
-	if (wParam == WM_MOUSEMOVE){
+	
+	if (wParam == WM_MOUSEMOVE){	 
+		LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
 		extender->OnMouseHook(mh->pt.x, mh->pt.y);
+	}
+	else if (wParam == WM_KEYUP) {
+		extender->OnMouseHook(-100, lParam);
 	}
 }
 
