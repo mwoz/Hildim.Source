@@ -63,9 +63,6 @@
     <ClCompile Include="src\Utf8_16.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win32\DirectorExtension.cxx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="win32\GUIWin.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -147,9 +144,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Utf8_16.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="win32\DirectorExtension.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win32\resource.h">

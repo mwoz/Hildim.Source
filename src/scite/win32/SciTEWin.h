@@ -276,7 +276,6 @@ protected:
 	void ExecuteHelp(const char *cmd);
 	void ExecuteOtherHelp(const char *cmd);
 	void CopyAsRTF();
-	void CopyPath();
 	void FullScreenToggle();
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);
 	void Command(WPARAM wParam, LPARAM lParam);
