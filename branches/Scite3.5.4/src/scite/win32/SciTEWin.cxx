@@ -40,10 +40,6 @@
 #ifndef NO_EXTENSIONS
 #include "MultiplexExtension.h"
 
-#ifndef NO_FILER
-#include "DirectorExtension.h"
-#endif
-
 #ifndef NO_LUA
 #include "SingleThreadExtension.h"
 #include "LuaExtension.h"
@@ -394,50 +390,6 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 	if (!::RegisterClass(&wndclass))
 		exit(FALSE);
 }
-/*!-remove-[FixEncoding]
-static int CodePageFromName(const SString &encodingName) {
-	struct Encoding {
-		const char *name;
-		int codePage;
-	} knownEncodings[] = {
-		{ "ascii", CP_UTF8 },
-		{ "utf-8", CP_UTF8 },
-		{ "latin1", 1252 },
-		{ "latin2", 28592 },
-		{ "big5", 950 },
-		{ "gbk", 936 },
-		{ "shift_jis", 932 },
-		{ "euc-kr", 949 },
-		{ "cyrillic", 1251 },
-		{ "iso-8859-5", 28595 },
-		{ "iso8859-11", 874 },
-		{ "1250", 1250 },
-		{ "windows-1251", 1251 },
-		{ 0, 0 },
-	};
-	for (Encoding *enc=knownEncodings; enc->name; enc++) {
-		if (encodingName == enc->name) {
-			return enc->codePage;
-		}
-	}
-	return CP_UTF8;
-}
-
-// Convert to UTF-8
-static std::string ConvertEncoding(const char *original, int codePage) {
-	if (codePage == CP_UTF8) {
-		return original;
-	} else {
-		int cchWide = ::MultiByteToWideChar(codePage, 0, original, -1, NULL, 0);
-		wchar_t *pszWide = new wchar_t[cchWide + 1];
-		::MultiByteToWideChar(codePage, 0, original, -1, pszWide, cchWide + 1);
-		GUI::gui_string sWide(pszWide);
-		std::string ret = GUI::UTF8FromString(sWide);
-		delete []pszWide;
-		return ret;
-	}
-}
-*/
 
 void SciTEWin::ReadLocalization() {
 	SciTEBase::ReadLocalization();
@@ -631,23 +583,6 @@ void SciTEWin::CopyAsRTF() {
 	}
 }
 
-void SciTEWin::CopyPath() {
-	if (filePath.IsUntitled())
-		return;
-
-	GUI::gui_string clipText(filePath.AsInternal());
-	size_t blobSize = sizeof(GUI::gui_char)*(clipText.length()+1);
-	HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, blobSize);
-	if (hand && ::OpenClipboard(MainHWND())) {
-		::EmptyClipboard();
-		GUI::gui_char *ptr = static_cast<GUI::gui_char*>(::GlobalLock(hand));
-		memcpy(ptr, clipText.c_str(), blobSize);
-		::GlobalUnlock(hand);
-		::SetClipboardData(CF_UNICODETEXT, hand);
-		::CloseClipboard();
-	}
-}
-
 void SciTEWin::FullScreenToggle() {
 	extender->OnLayOutNotify("FULLSCREEN_TOGGLE");
 }
@@ -740,26 +675,6 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 		SciTEBase::MenuCommand(cmdID, menuSource);
 	}
 }
-/*!-remove-[FixEncoding]
-// from ScintillaWin.cxx
-static UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage) {
-	CHARSETINFO ci = { 0, 0, { { 0, 0, 0, 0 }, { 0, 0 } } };
-	BOOL bci = ::TranslateCharsetInfo((DWORD*)characterSet,
-	                                  &ci, TCI_SRCCHARSET);
-
-	UINT cp;
-	if (bci)
-		cp = ci.ciACP;
-	else
-		cp = documentCodePage;
-
-	CPINFO cpi;
-	if (!::IsValidCodePage(cp) && !::GetCPInfo(cp, &cpi))
-		cp = CP_ACP;
-
-	return cp;
-}
-*/
 
 void SciTEWin::OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage) {
 	int cchMulti = ::WideCharToMultiByte(codePage, 0, s.c_str(), s.size(), NULL, 0, NULL, NULL);
@@ -1335,27 +1250,6 @@ void SciTEWin::QuitProgram() {
 		wSciTE.Destroy();
 	}
 }
-
-//void SciTEWin::RestorePosition() {
-//	int left = propsSession.GetInt("position.left", CW_USEDEFAULT);
-//	int top = propsSession.GetInt("position.top", CW_USEDEFAULT);
-//	int width = propsSession.GetInt("position.width", CW_USEDEFAULT);
-//	int height = propsSession.GetInt("position.height", CW_USEDEFAULT);
-//	cmdShow = propsSession.GetInt("position.maximize", 0) ? SW_MAXIMIZE : 0;
-//
-//	if (left != static_cast<int>(CW_USEDEFAULT) &&
-//	    top != static_cast<int>(CW_USEDEFAULT) &&
-//	    width != static_cast<int>(CW_USEDEFAULT) &&
-//	    height != static_cast<int>(CW_USEDEFAULT)) {
-//		winPlace.length = sizeof(winPlace);
-//		winPlace.rcNormalPosition.left = left;
-//		winPlace.rcNormalPosition.right = left + width;
-//		winPlace.rcNormalPosition.top = top;
-//		winPlace.rcNormalPosition.bottom = top + height;
-//		winPlace.showCmd = SW_HIDE; //ѕока окно не показываем, только позиционируем - чтобы избежать фликеринга, если открыт другой инстанс, а наш потом закроетс€. ѕокажем в Run позднее
-//		::SetWindowPlacement(MainHWND(), &winPlace);
-//	}
-//}
 
 void SciTEWin::CreateUI() {
 	CreateBuffers();
@@ -2263,9 +2157,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	multiExtender.RegisterExtension(luaAdapter);
 #endif
 
-#ifndef NO_FILER
-	multiExtender.RegisterExtension(DirectorExtension::Instance());
-#endif
+
 #endif
 	SciTEWin MainWind(extender);
 	SciTEWin::Register(hInstance);

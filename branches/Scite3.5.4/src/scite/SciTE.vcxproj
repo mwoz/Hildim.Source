@@ -161,7 +161,6 @@
     <ClInclude Include="src\StringList.h" />
     <ClInclude Include="src\StyleWriter.h" />
     <ClInclude Include="src\Utf8_16.h" />
-    <ClInclude Include="win32\DirectorExtension.h" />
     <ClInclude Include="win32\resource.h" />
     <ClInclude Include="win32\SciTEWin.h" />
     <ClInclude Include="win32\SingleThreadExtension.h" />
@@ -206,7 +205,6 @@
     <ClCompile Include="src\StringList.cxx" />
     <ClCompile Include="src\StyleWriter.cxx" />
     <ClCompile Include="src\Utf8_16.cxx" />
-    <ClCompile Include="win32\DirectorExtension.cxx" />
     <ClCompile Include="win32\GUIWin.cxx" />
     <ClCompile Include="win32\IupLayoutWnd.cpp" />
     <ClCompile Include="win32\SciTEWin.cxx" />

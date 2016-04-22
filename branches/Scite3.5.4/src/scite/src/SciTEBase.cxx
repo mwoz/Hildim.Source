@@ -3321,7 +3321,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_COPYPATH:
-		CopyPath();
 		break;
 	case IDM_SAVEASHTML:
 		SaveAsHTML();
