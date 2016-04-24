@@ -73,7 +73,7 @@ IupLayoutWnd::~IupLayoutWnd()
 
 Ihandle* IupLayoutWnd::Create_dialog(void)
 {
-	Ihandle* containers[12];
+	Ihandle* containers[13];
 
 	containers[3] = 
 	IupSetAtt(NULL, IupCreatep("split", 
@@ -134,36 +134,55 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"NAME", "SourceHB",
 		NULL);
 
-	containers[9] = IupSetAtt(NULL, IupCreatep("expander", IupSetAtt(NULL, IupCreatep("detachbox", IupSetAtt(NULL, IupCreate("canvas"),
-		"NAME", "Run",
-		"MINSIZE", "x20",
-		NULL),
-		NULL),
-		"NAME", "ConsoleDetach",
-		"ORIENTATION", "HORIZONTAL",
-		NULL),
+	containers[9] = 
+	IupSetAtt(NULL, IupCreatep("expander", 
+		IupSetAtt(NULL, IupCreatep("detachbox", 
+			IupSetAtt(NULL, IupCreate("canvas"),
+				"NAME", "Run",
+				"MINSIZE", "x20",
+				NULL),
+			NULL),
+			"NAME", "ConsoleDetach",
+			"ORIENTATION", "HORIZONTAL",
+			NULL),
 		NULL),
 		"NAME", "ConsoleExpander",
 		"BARSIZE", "0",
 		"BARPOSITION", "LEFT",
 		"FONT", "::1",
 		"MINSIZE", "0x0", 
+	NULL);
 
-		//"STATE", "CLOSE",
-		NULL);
-
-	containers[8] = IupSetAtt(NULL, IupCreatep("split",
-		containers[9],
-		IupSetAtt(NULL, IupCreate("canvas"),
-		"NAME", "FindRes",
-		"MINSIZE", "x20",
+	containers[12] = 
+	IupSetAtt(NULL, IupCreatep("expander", 
+		IupSetAtt(NULL, IupCreatep("detachbox", 
+			IupSetAtt(NULL, IupCreate("canvas"),
+				"NAME", "FindRes",
+				"MINSIZE", "x20",
+				NULL),
+			NULL),
+			"NAME", "FindResDetach",
+			"ORIENTATION", "HORIZONTAL",
+			NULL),
 		NULL),
+		"NAME", "FindResExpander",
+		"BARSIZE", "0",
+		"BARPOSITION", "LEFT",
+		"FONT", "::1",
+		"MINSIZE", "0x0", 
+	NULL);
+
+
+	containers[8] = 
+	IupSetAtt(NULL, IupCreatep("split",
+		containers[9],
+		containers[12],
 		NULL),
 		"NAME", "BottomSplit",
 		"SHOWGRIP", "NO",
 		"BARSIZE", "3",
 		"LAYOUTDRAG", "NO",
-		NULL);
+	NULL);
 
 	containers[11] = IupSetAtt(NULL, IupCreatep("scrollbox",
 		NULL),
@@ -171,7 +190,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"SCROLLBAR", "NO",
 		NULL);
 
-	containers[10] = IupSetAtt(NULL, IupCreatep("split",
+	containers[10] = 
+	IupSetAtt(NULL, IupCreatep("split",
 		containers[8],
 		containers[11],
 		NULL),
@@ -181,24 +201,25 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"LAYOUTDRAG", "NO",
 		"BGCOLOR", "255 255 255",
 		"VALUE", "1000",
-		NULL);
+	NULL);
 
-	containers[7] = IupSetAtt(NULL, IupCreatep("hbox",
+	containers[7] = 
+	IupSetAtt(NULL, IupCreatep("hbox",
 		containers[10],
 		NULL),
 		"NAME", "BottomSplitParent",
 		"MINSIZE", "x20",	 
 		//"VISIBLE", "NO",
-		NULL);
+	NULL);
 
-	containers[6] = IupSetAtt(NULL, IupCreatep("detachbox",
-		containers[7],
-		NULL),
-		"NAME", "BottomBar",
-		NULL);
+//	containers[6] = IupSetAtt(NULL, IupCreatep("detachbox",
+//		containers[7],
+//		NULL),
+//		"NAME", "BottomBar",
+//		NULL);
 
 	containers[5] = IupSetAtt(NULL, IupCreatep("expander",
-		containers[6],
+		containers[7],
 		NULL),
 		"NAME", "BottomExpander",
 		"BARSIZE", "0",
