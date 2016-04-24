@@ -500,6 +500,7 @@ void SciTEBase::SaveSessionFile(const GUI::gui_char *sessionName) {
 		fprintf(sessionFile, "print.magnification=%d\n", props.GetInt("print.magnification"));
 		fprintf(sessionFile, "findrez.magnification=%d\n", props.GetInt("findrez.magnification"));
 		fprintf(sessionFile, "output.magnification=%d\n", props.GetInt("output.magnification"));
+		fprintf(sessionFile, "iup.defaultfontsize=%d\n", props.GetInt("iup.defaultfontsize"));
 
 	}
 
