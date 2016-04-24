@@ -512,11 +512,19 @@ void SciTEWin::Creation() {
 	LOGFONT lfIconTitle;
 	ZeroMemory(&lfIconTitle, sizeof(lfIconTitle));
 	::SystemParametersInfo(SPI_GETICONTITLELOGFONT,sizeof(lfIconTitle),&lfIconTitle,FALSE);
+	int pt = props.GetInt("iup.defaultfontsize");
+	if (pt)
+		lfIconTitle.lfHeight = -MulDiv(pt, GetDeviceCaps(GetWindowDC(GetDesktopWindow()), LOGPIXELSY), 72);
 	fontTabs = ::CreateFontIndirect(&lfIconTitle);
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
-	              WM_SETFONT,
-	              reinterpret_cast<WPARAM>(fontTabs),      // handle to font
-	              0);    // redraw option
+		WM_SETFONT,
+		reinterpret_cast<WPARAM>(fontTabs),      // handle to font
+		0);    // redraw option
+	if (pt)
+	    ::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
+			TCM_SETPADDING,
+			0,      // handle to font
+			5);    // redraw option
 
 	wTabBar.Show();
 

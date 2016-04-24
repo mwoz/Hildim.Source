@@ -53,7 +53,7 @@ const GUI::gui_char appName[] = GUI_TEXT("Sc1");
 const GUI::gui_char appName[] = GUI_TEXT("SciTE");
 #endif
 
-bool bIsPopUpMenuItem = false;
+int bIsPopUpMenuItem = 0;
 HHOOK mouseHook = NULL;
 HHOOK keyBoardHook = NULL;
 HMENU topLevelPopUp = NULL;
@@ -605,10 +605,6 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 	int cmdID = ControlIDOfCommand(wParam);
 	if (wParam & 0x10000) {
 		// From accelerator -> goes to focused pane.
-		menuSource = 0;
-	}
-	if (reinterpret_cast<HWND>(lParam) == wToolBar.GetID()) {
-		// From toolbar -> goes to focused pane.
 		menuSource = 0;
 	}
 
@@ -1841,7 +1837,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		case WM_MENUSELECT:
 			if (!topLevelPopUp) topLevelPopUp = (HMENU)lParam;	   //При снлнкте пераой строет после установеи хука запоминаем меню
-			bIsPopUpMenuItem = (HIWORD(wParam) & MF_POPUP) || topLevelPopUp != (HMENU)lParam; //Не будем посылать нотификацию на метках открытия сабменб=ю и на сбменю
+			bIsPopUpMenuItem = ((HIWORD(wParam) & MF_POPUP) ? 1 : 0) +(( topLevelPopUp != (HMENU)lParam) ? 2 : 0); //Не будем посылать нотификацию на метках открытия сабменб=ю и на сбменю
 			break;
 
 		case WM_CLOSE:
@@ -2211,10 +2207,10 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 }
 LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	if (!bIsPopUpMenuItem && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)){
+	if (!(bIsPopUpMenuItem&2) && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)){
 		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
 	}
-	else if (!bIsPopUpMenuItem && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)){
+	else if (!(bIsPopUpMenuItem&1) && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)){
 		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
 	}
 	return CallNextHookEx(mouseHook, nCode, wParam, lParam);

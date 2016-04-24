@@ -314,7 +314,7 @@ protected:
 	StringList preprocCondMiddle;	///< List of preprocessor conditional middle keywords (in C: else elif)
 	StringList preprocCondEnd;	///< List of preprocessor conditional end keywords (in C: endif)
 
-	GUI::Window wSciTE;  ///< Contains wToolBar, wTabBar, wContent,wIupStatus, wIupBar
+	GUI::Window wSciTE;  ///< Contains wTabBar, wContent,wIupStatus, wIupBar
 
 //!	GUI::ScintillaWindow wEditor;
 //!-start-[OnSendEditor]
@@ -330,7 +330,6 @@ protected:
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
 	GUI::Window wIncrement;
-	GUI::Window wToolBar;
 	GUI::Window wTabBar;
 	bool tabVisible;
 	bool viewWs;
