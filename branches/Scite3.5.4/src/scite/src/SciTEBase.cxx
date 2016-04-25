@@ -5079,8 +5079,13 @@ void SciTEBase::Insert(Pane p, int pos, const char *s) {
 		wFindRes.CallString(SCI_INSERTTEXT, pos, s);
 }
 
+static bool makeVisible = false;
 void SciTEBase::Trace(const char *s) {
-	MakeOutputVisible(wOutput);
+	if (!makeVisible) {
+		makeVisible = true;		  //Защищаемся от рекурсивного зацикливания - может возникнуть еще одна ошибка при попытке открытия окна!
+		MakeOutputVisible(wOutput);
+		makeVisible = false;
+	}
 	OutputAppendStringSynchronised(s);
 	EnsureVisible();
 }
