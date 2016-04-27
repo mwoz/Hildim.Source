@@ -513,14 +513,14 @@ void SciTEWin::Creation() {
 	ZeroMemory(&lfIconTitle, sizeof(lfIconTitle));
 	::SystemParametersInfo(SPI_GETICONTITLELOGFONT,sizeof(lfIconTitle),&lfIconTitle,FALSE);
 	int pt = props.GetInt("iup.defaultfontsize");
-	if (pt)
+	if (pt && pt > 4)
 		lfIconTitle.lfHeight = -MulDiv(pt, GetDeviceCaps(GetWindowDC(GetDesktopWindow()), LOGPIXELSY), 72);
 	fontTabs = ::CreateFontIndirect(&lfIconTitle);
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
 		WM_SETFONT,
 		reinterpret_cast<WPARAM>(fontTabs),      // handle to font
 		0);    // redraw option
-	if (pt)
+	if (pt && pt > 4)
 	    ::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
 			TCM_SETPADDING,
 			0,      // handle to font
