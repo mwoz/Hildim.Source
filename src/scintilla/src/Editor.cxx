@@ -3583,6 +3583,11 @@ int Editor::DelWordOrLine(unsigned int iMessage) {
 }
 
 int Editor::KeyCommand(unsigned int iMessage) {
+	SCNotification scn = { 0 };
+	scn.nmhdr.code = SCN_KEYCOMMAND;
+	scn.wParam = iMessage;
+	scn.lParam = 0;
+	NotifyParent(scn);
 	switch (iMessage) {
 	case SCI_LINEDOWN:
 		CursorUpOrDown(1, Selection::noSel);
@@ -3830,6 +3835,9 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		ScrollTo(MaxScrollPos());
 		break;
 	}
+
+	scn.lParam = 1;
+	NotifyParent(scn);
 	return 0;
 }
 

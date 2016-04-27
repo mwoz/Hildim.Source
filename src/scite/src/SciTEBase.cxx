@@ -4226,6 +4226,30 @@ void SciTEBase::Notify(SCNotification *notification) {
 				handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
 		break;
+	case SCN_KEYCOMMAND:
+		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+			switch (notification->wParam){
+			case SCI_PAGEUP:
+			case SCI_PAGEUPRECTEXTEND:
+			case SCI_PAGEUPEXTEND:
+				handled = extender->OnNavigation(notification->lParam ? "PageUp" : "-PageUp");
+				break;
+			case SCI_PAGEDOWN:
+			case SCI_PAGEDOWNEXTEND:
+			case SCI_PAGEDOWNRECTEXTEND:
+				handled = extender->OnNavigation(notification->lParam ? "PageDown":"-PageDown");
+				break;
+			case SCI_DOCUMENTSTART:
+			case SCI_DOCUMENTSTARTEXTEND:
+				handled = extender->OnNavigation(notification->lParam ? "DocStart":"-DocStart");
+				break;
+			case SCI_DOCUMENTEND:
+			case SCI_DOCUMENTENDEXTEND:
+				handled = extender->OnNavigation(notification->lParam ? "DocEnd":"-DocEnd");
+				break;
+			}
+		}
+		break;
 	case SCN_SAVEPOINTLEFT:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
 			if (extender)
