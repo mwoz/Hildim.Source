@@ -1746,7 +1746,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if (!wParam){
 				menuSource = 0;
 				::EndMenu();
-				if (!wParam) extender->OnMouseHook(-100, -100);
+				if (!wParam) extender->OnMouseHook(-70000, -70000);
 			}
 			break;
 
@@ -2241,7 +2241,7 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 		extender->OnMouseHook(mh->pt.x, mh->pt.y);
 	}
 	else if (wParam == WM_KEYUP) {
-		extender->OnMouseHook(-100, lParam);
+		extender->OnMouseHook(-70000, lParam);
 	}
 }
 
