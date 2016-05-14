@@ -970,12 +970,16 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 						}
 //!-end-[oem2ansi]
 						// Display the data
-						buffer[bytesRead] = 0;
+						//buffer[bytesRead] = 0;
+						char *tmpbuff = new char[bytesRead+ 1];
+						StrCpyNA(tmpbuff, buffer, bytesRead);
+						tmpbuff[bytesRead] = 0;
 						//Поскольку мы находимся в отдельном потоке, напрямую нельзя вызывать OnSendEditor
 						//Пошлем сообщение. Если скрипт вернет ненулевое значение, не будем ничего писать в консоль
-						if(!::SendMessage(MainHWND(),SCITE_NOTIYCMD,bytesRead,(WPARAM)(buffer))){
-							OutputAppendStringSynchronised(buffer, bytesRead);
+						if (!::SendMessage(MainHWND(), SCITE_NOTIYCMD, bytesRead, (WPARAM)(tmpbuff))){
+							OutputAppendStringSynchronised(tmpbuff, bytesRead);
 						}
+						delete tmpbuff;
 					}
 
 					::UpdateWindow(MainHWND());
