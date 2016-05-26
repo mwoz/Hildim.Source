@@ -31,6 +31,7 @@ extern "C" {
 #include "iuplua.h"
 #include "iupcontrols.h"
 #include "iupluacontrols.h"
+#include "..\..\iup\src\iup_key.h"
 }
 
 
@@ -1565,6 +1566,11 @@ static int cf_iup_get_layout(lua_State *L){
 	iuplua_pushihandle(L, hLayout);
 	return 1;
 }
+static int cf_iup_KeyCodeToName(lua_State *L){
+	int k = luaL_checkint(L, 1);
+	lua_pushfstring(L, iupKeyCodeToName(k));
+	return 1;
+}
 static int cf_iup_set_nativeparent(lua_State *L){
 	Ihandle *ih = iuplua_checkihandle(L, 1);
 	SString sWnd = luaL_checkstring(L, 2);
@@ -1597,7 +1603,9 @@ void ContinueInit(void* h){
 	lua_setfield(luaState, -2, "GetLayout");
 	lua_pushcfunction(luaState, cf_iup_set_nativeparent);
 	lua_setfield(luaState, -2, "SetNativeparent");
-	lua_pop(luaState, 1);	
+	lua_pushcfunction(luaState, cf_iup_KeyCodeToName);
+	lua_setfield(luaState, -2, "KeyCodeToName");
+	lua_pop(luaState, 1);
 
 	if (startupScript) {
 		// TODO: Should buffer be deactivated temporarily, so editor iface
