@@ -455,7 +455,7 @@ static int datetime(lua_State *L){
 	// Obtain coordinated universal time:
 	newtime = _localtime64(&ltime); // C4996
 
-	lua_pushinteger(L, newtime->tm_year +1900);
+	lua_pushinteger(L, newtime->tm_year + 1900);
 	lua_pushinteger(L, newtime->tm_mon);
 	lua_pushinteger(L, newtime->tm_mday);
 	lua_pushinteger(L, newtime->tm_hour);
@@ -463,7 +463,14 @@ static int datetime(lua_State *L){
 	lua_pushinteger(L, newtime->tm_sec);
 	return 6;
 }
-	
+static int async_mouse_state(lua_State *L){
+
+	lua_pushinteger(L, ::GetAsyncKeyState(VK_LBUTTON));
+	lua_pushinteger(L, ::GetAsyncKeyState(VK_MBUTTON));
+	lua_pushinteger(L, ::GetAsyncKeyState(VK_RBUTTON));
+	return 3;
+}
+
 static int activate_proc_wnd(lua_State *L)
 {
 	ENUMINFO EnumInfo;
@@ -1299,7 +1306,7 @@ static const struct luaL_reg shell[] =
 	{ "exec", exec },
 	{ "msgbox", msgbox },
 	{ "getfileattr", getfileattr },
-	{ "setfileattr", setfileattr },
+	{ "setfileattr", setfileattr },				   
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
 	{ "findfiles", findfiles },
@@ -1315,6 +1322,7 @@ static const struct luaL_reg shell[] =
 	{ "activate_proc_wnd", activate_proc_wnd },
 	{ "set_curent_dir", set_curent_dir },
 	{ "datetime", datetime },
+	{ "async_mouse_state", async_mouse_state},
 	{ NULL, NULL }
 };
 
