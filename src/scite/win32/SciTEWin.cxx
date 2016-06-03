@@ -584,7 +584,18 @@ void SciTEWin::CopyAsRTF() {
 }
 
 void SciTEWin::FullScreenToggle() {
-	extender->OnLayOutNotify("FULLSCREEN_TOGGLE");
+	LONG_PTR oldstyle = ::GetWindowLongPtr(MainHWND(), GWL_STYLE);
+	if (oldstyle & WS_CAPTION) {
+		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle & (~ WS_CAPTION));
+		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
+		::ShowWindow(MainHWND(), SW_SHOWMAXIMIZED);
+		extender->OnLayOutNotify("FULLSCREEN_ON");
+	}
+	else{
+		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle | WS_CAPTION);
+		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
+		extender->OnLayOutNotify("FULLSCREEN_OFF");
+	}
 }
 
 void SciTEWin::MakeOutputVisible(GUI::ScintillaWindow &wBottom)
