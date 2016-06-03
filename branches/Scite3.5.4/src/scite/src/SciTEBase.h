@@ -664,6 +664,7 @@ int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = t
 	void SaveTitledBuffers();
 	virtual void CopyAsRTF() {}
 	void SetLineNumberWidth();
+	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
 	void FoldChanged(int line, int levelNow, int levelPrev);
 	void FoldChanged(int position);

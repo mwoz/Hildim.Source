@@ -5156,7 +5156,7 @@ void SciTEBase::Perform(const char *actionList) {
 }
 
 void SciTEBase::DoMenuCommand(int cmdID) {
-	MenuCommand(cmdID, 0);
+	Command(cmdID, 0);
 }
 
 //!-start-[ParametersDialogFromLua]
