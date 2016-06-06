@@ -575,8 +575,8 @@ static int lp_star (lua_State *L) {
   TTree *tree1 = getpatt(L, 1, &size1);
   if (n >= 0) {  /* seq tree1 (seq tree1 ... (seq tree1 (rep tree1))) */
     TTree *tree = newtree(L, (n + 1) * (size1 + 1));
-    if (nullable(tree1))
-      luaL_error(L, "loop body may accept empty string");
+//    if (nullable(tree1))
+//      luaL_error(L, "loop body may accept empty string");
     while (n--)  /* repeat 'n' times */
       tree = seqaux(tree, tree1, size1);
     tree->tag = TRep;
@@ -1282,7 +1282,8 @@ static struct luaL_Reg metareg[] = {
 };
 
 
-int luaopen_lpeg (lua_State *L);
+//int luaopen_lpeg (lua_State *L);
+__declspec(dllexport)
 int luaopen_lpeg (lua_State *L) {
   luaL_newmetatable(L, PATTERN_T);
   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
