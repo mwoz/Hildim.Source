@@ -491,14 +491,14 @@ void SciTEBase::SaveSessionFile(const GUI::gui_char *sessionName) {
 		fprintf(sessionFile, "view.eol=%d\n", props.GetInt("view.eol"));
 		fprintf(sessionFile, "view.indentation.guides=%d\n", props.GetInt("view.indentation.guides"));
 		fprintf(sessionFile, "line.margin.visible=%d\n", props.GetInt("line.margin.visible"));
-		fprintf(sessionFile, "findrez.wrap=%d\n", props.GetInt("findrez.wrap"));
+		fprintf(sessionFile, "findres.wrap=%d\n", props.GetInt("findres.wrap"));
 		fprintf(sessionFile, "output.wrap=%d\n", props.GetInt("output.wrap"));
 		fprintf(sessionFile, "wrap=%d\n", props.GetInt("wrap"));
-		fprintf(sessionFile, "findrez.width=%d\n", props.GetInt("findrez.width"));
+		fprintf(sessionFile, "findres.width=%d\n", props.GetInt("findres.width"));
 		fprintf(sessionFile, "output.vertical.size=%d\n", props.GetInt("output.vertical.size"));
 		fprintf(sessionFile, "magnification=%d\n", props.GetInt("magnification"));
 		fprintf(sessionFile, "print.magnification=%d\n", props.GetInt("print.magnification"));
-		fprintf(sessionFile, "findrez.magnification=%d\n", props.GetInt("findrez.magnification"));
+		fprintf(sessionFile, "findres.magnification=%d\n", props.GetInt("findres.magnification"));
 		fprintf(sessionFile, "output.magnification=%d\n", props.GetInt("output.magnification"));
 		fprintf(sessionFile, "iup.defaultfontsize=%d\n", props.GetInt("iup.defaultfontsize"));
 

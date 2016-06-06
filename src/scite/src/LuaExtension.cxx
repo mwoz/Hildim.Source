@@ -1785,8 +1785,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	push_pane_object(luaState, ExtensionAPI::paneOutput);
 	lua_setglobal(luaState, "output");
 
-	push_pane_object(luaState, ExtensionAPI::paneFindRez);
-	lua_setglobal(luaState, "findrez");
+	push_pane_object(luaState, ExtensionAPI::paneFindRes);
+	lua_setglobal(luaState, "findres");
 
 	// scite
 	lua_newtable(luaState);
@@ -1799,9 +1799,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcclosure(luaState, cf_scite_send, 1);
 	lua_setfield(luaState, -2, "SendOutput");
 
-	lua_getglobal(luaState, "findrez");
+	lua_getglobal(luaState, "findres");
 	lua_pushcclosure(luaState, cf_scite_send, 1);
-	lua_setfield(luaState, -2, "SendFindRez");
+	lua_setfield(luaState, -2, "SendFindRes");
 
 	lua_pushcfunction(luaState, cf_scite_constname);
 	lua_setfield(luaState, -2, "ConstantName");

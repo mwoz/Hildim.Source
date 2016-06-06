@@ -1422,7 +1422,7 @@ void SciTEBase::SetPropertiesInitial() {
 	openFilesHere = props.GetInt("check.if.already.open");
 	wrap = props.GetInt("wrap");
 	wrapOutput = props.GetInt("output.wrap");
-	wrapFindRes = props.GetInt("findrez.wrap");
+	wrapFindRes = props.GetInt("findres.wrap");
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
 
 	tabVisible = props.GetInt("tabbar.visible");
@@ -1516,7 +1516,7 @@ void SciTEBase::ReadLocalization() {
 
 void SciTEBase::ReadPropertiesInitial() {
 	SetPropertiesInitial();
-	widthFindRes = props.GetInt("findrez.width", 0);
+	widthFindRes = props.GetInt("findres.width", 0);
 	prevousWidthFindRes = widthFindRes;
 	int sizeVertical = props.GetInt("output.vertical.size", 0);
 	int hideOutput = props.GetInt("output.initial.hide", 0);
@@ -1535,7 +1535,7 @@ void SciTEBase::ReadPropertiesInitial() {
 	wEditor.Call(SCI_SETVIEWEOL, props.GetInt("view.eol"));
 	wEditor.Call(SCI_SETZOOM, props.GetInt("magnification"));
 	wOutput.Call(SCI_SETZOOM, props.GetInt("output.magnification"));
-	wFindRes.Call(SCI_SETZOOM, props.GetInt("findrez.magnification"));
+	wFindRes.Call(SCI_SETZOOM, props.GetInt("findres.magnification"));
 	wEditor.Call(SCI_SETWRAPMODE, wrap ? wrapStyle : SC_WRAP_NONE);
 	wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 	wFindRes.Call(SCI_SETWRAPMODE, wrapFindRes ? wrapStyle : SC_WRAP_NONE);

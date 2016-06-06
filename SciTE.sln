@@ -48,6 +48,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iuplua", "iup\scitePr\iuplu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupluacontrols", "iup\scitePr\iuplua\iupluacontrols.vcxproj", "{1EBC7A53-4677-75D7-8D4A-49D301F17D85}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lpeg", "lualib\lpeg\lpeg.vcxproj", "{EF1B9445-ECF9-420E-9FA9-C040A84F7322}"
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
@@ -152,6 +154,12 @@ Global
 		{1EBC7A53-4677-75D7-8D4A-49D301F17D85}.Release|Win32.Build.0 = Release|Win32
 		{1EBC7A53-4677-75D7-8D4A-49D301F17D85}.Release|x64.ActiveCfg = Debug|x64
 		{1EBC7A53-4677-75D7-8D4A-49D301F17D85}.Release|x64.Build.0 = Debug|x64
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Debug|Win32.Build.0 = Debug|Win32
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Debug|x64.ActiveCfg = Debug|Win32
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Release|Win32.ActiveCfg = Release|Win32
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Release|Win32.Build.0 = Release|Win32
+		{EF1B9445-ECF9-420E-9FA9-C040A84F7322}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
