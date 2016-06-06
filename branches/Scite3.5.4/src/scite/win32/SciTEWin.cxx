@@ -50,7 +50,7 @@
 #ifdef STATIC_BUILD
 const GUI::gui_char appName[] = GUI_TEXT("Sc1");
 #else
-const GUI::gui_char appName[] = GUI_TEXT("SciTE");
+const GUI::gui_char appName[] = GUI_TEXT("HildiM");
 #endif
 
 int bIsPopUpMenuItem = 0;

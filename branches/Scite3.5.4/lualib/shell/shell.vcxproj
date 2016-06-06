@@ -77,7 +77,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <OutputFile>..\..\Release\tools\LuaLib\shell.dll</OutputFile>
       <ImportLibrary>.\shell.lib</ImportLibrary>
-      <AdditionalDependencies>../lib/SciTE.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../lib/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -85,7 +85,7 @@
     <Link>
       <OutputFile>..\..\Debug\tools\LuaLib\shell.dll</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>../lib/SciTE.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>../lib/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>DEBUG;WIN32;_WINDOWS;_USRDLL;SHELL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>

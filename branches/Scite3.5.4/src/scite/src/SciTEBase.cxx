@@ -760,7 +760,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		}
 #endif
 		AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.23 .89Ru\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 1.0\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -4458,7 +4458,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			props.SetInteger("output.magnification", wOutput.Call(SCI_GETZOOM));
 		}
 		else if (notification->nmhdr.idFrom == IDM_FINDRESWIN) {
-			props.SetInteger("findrez.magnification", wFindRes.Call(SCI_GETZOOM));
+			props.SetInteger("findres.magnification", wFindRes.Call(SCI_GETZOOM));
 		}
 		else{
 			int zoom = wEditor.Call(SCI_GETZOOM);
@@ -4478,7 +4478,7 @@ void SciTEBase::CheckMenus() {
 	props.SetInteger("view.whitespace", viewWs);
 	props.SetInteger("view.indentation.guides", viewIndent);
 	props.SetInteger("line.margin.visible", lineNumbers);
-	props.SetInteger("findrez.wrap", wrapFindRes);
+	props.SetInteger("findres.wrap", wrapFindRes);
 	props.SetInteger("output.wrap", wrapOutput);
 	props.SetInteger("wrap", wrap);
 
@@ -4496,7 +4496,7 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 	if (wSource.GetID() == wOutput.GetID())
 		extender->OnContextMenu(pt.x, pt.y, "OUTPUT");
 	else if (wSource.GetID() == wFindRes.GetID())
-		extender->OnContextMenu(pt.x, pt.y, "FINDREZ");
+		extender->OnContextMenu(pt.x, pt.y, "FINDRES");
 	else
 		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
 }
