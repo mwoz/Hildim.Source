@@ -87,6 +87,9 @@
     <ClCompile Include="win32\IupLayoutWnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\scite_detachbox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Containers.h">
@@ -217,6 +220,9 @@
     </ClInclude>
     <ClInclude Include="lua\src\lvm.h">
       <Filter>Header Files\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scite_detachbox.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

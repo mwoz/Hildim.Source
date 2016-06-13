@@ -136,7 +136,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 
 	containers[7] = 
 	IupSetAtt(NULL, IupCreatep("expander", 
-		IupSetAtt(NULL, IupCreatep("detachbox", 
+		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
 			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("canvas"),
 				"NAME", "Run",
 				"MINSIZE", "x20",
@@ -155,7 +155,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 
 	containers[10] = 
 	IupSetAtt(NULL, IupCreatep("expander", 
-		IupSetAtt(NULL, IupCreatep("detachbox", 
+		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
 			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("canvas"),
 				"NAME", "FindRes",
 				"MINSIZE", "x20",

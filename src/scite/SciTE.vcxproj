@@ -157,6 +157,7 @@
     <ClInclude Include="src\SciTE.h" />
     <ClInclude Include="src\SciTEBase.h" />
     <ClInclude Include="src\SciTEKeys.h" />
+    <ClInclude Include="src\scite_detachbox.h" />
     <ClInclude Include="src\scite_lua_win.h" />
     <ClInclude Include="src\SString.h" />
     <ClInclude Include="src\StringHelpers.h" />
@@ -203,6 +204,7 @@
     <ClCompile Include="src\SciTEBuffers.cxx" />
     <ClCompile Include="src\SciTEIO.cxx" />
     <ClCompile Include="src\SciTEProps.cxx" />
+    <ClCompile Include="src\scite_detachbox.c" />
     <ClCompile Include="src\StringHelpers.cxx" />
     <ClCompile Include="src\StringList.cxx" />
     <ClCompile Include="src\StyleWriter.cxx" />
