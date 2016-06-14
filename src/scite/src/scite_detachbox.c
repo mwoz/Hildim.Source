@@ -37,39 +37,8 @@ struct _IcontrolData
 };
 
 
-int sc_ShowXY(Ihandle *ih, int x, int y)
-{
-	int ret;
-
-	//iupASSERT(iupObjectCheck(ih));
-	if (!iupObjectCheck(ih))
-		return IUP_INVALID;
-
-	if (ih->iclass->nativetype != IUP_TYPEDIALOG)
-	{
-		//iupERROR("Must be a dialog in IupShowXY.");
-		return IUP_INVALID;
-	}
-
-	ret = IupMap(ih);
-	if (ret == IUP_ERROR)
-		return ret;
-
-	//ret = iupDialogShowXY(ih, x, y);
-	//if (ret != IUP_NOERROR)
-	//{
-	//	iupERROR("Error during IupShowXY.");
-	//	return ret;
-	//}
-
-	return IUP_NOERROR;
-}
-
-
-
 static int iDetachBoxSetDetachAttribHidden(Ihandle* ih, const char* value)
 {
-	//int cur_x, cur_y;
 	IFnnii detachedCB = (IFnnii)IupGetCallback(ih, "DETACHED_CB");
 
 	/* Create new dialog */
@@ -78,8 +47,6 @@ static int iDetachBoxSetDetachAttribHidden(Ihandle* ih, const char* value)
 
 	/* Set new dialog as child of the current application */
 	IupSetAttributeHandle(new_parent, "PARENTDIALOG", old_dialog);
-
-	//iupStrToIntInt(IupGetGlobal("CURSORPOS"), &cur_x, &cur_y, 'x');
 
 	if (detachedCB)
 	{
