@@ -304,7 +304,10 @@ protected:
 
 
 	void EnsureVisible();
-
+	LRESULT		OnChangeCBChain(WPARAM wParam, LPARAM lParam);
+	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
+	HWND hNextCBWnd;
+	WORD cfColumnSelect;
 public:
 
 	SciTEWin(Extension *ext = 0);

@@ -108,6 +108,7 @@ public:
 	virtual void DoReboot(){ return; };
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
+	virtual bool OnDrawClipboard(int) { return false; }
 };
 
 #endif

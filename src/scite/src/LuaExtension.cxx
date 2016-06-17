@@ -2723,7 +2723,11 @@ void LuaExtension::DoLua(const char *c) {
 void LuaExtension::OnMouseHook(int x, int y){
 	CallNamedFunction("event_MenuMouseHook", x, y);
 }
-//!-start-[StartupScriptReload]
+
+bool LuaExtension::OnDrawClipboard(int flag){
+	return CallNamedFunction("OnDrawClipboard", flag, 0);
+}
+
 static int cf_editor_reload_startup_script(lua_State*) {
 	InitGlobalScope(false, true);
 	if (extensionScript.length()) {
@@ -2731,8 +2735,6 @@ static int cf_editor_reload_startup_script(lua_State*) {
 	}
 	return 0;
 }
-//!-end-[StartupScriptReload]
-
 
 #ifdef _MSC_VER
 // Unreferenced inline functions are OK

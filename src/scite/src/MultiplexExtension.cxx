@@ -402,5 +402,11 @@ void MultiplexExtension::OnMouseHook(int x, int y){
 		extensions[i]->OnMouseHook(x,y);
 	}
 }
+bool MultiplexExtension::OnDrawClipboard(int flag) {
+	for (int i = 0; i<extensionCount; ++i) {
+		if (extensions[i]->OnDrawClipboard(flag)) return true;
+	}
+	return false;
+}
 
 //!-end-[OnSendEditor]

@@ -1258,6 +1258,7 @@ void SciTEWin::QuitProgram() {
 		if (fullScreen)	// Ensure tray visible on exit
 			FullScreenToggle();
 		::PostQuitMessage(0);
+		ChangeClipboardChain(MainHWND(), hNextCBWnd);
 		wSciTE.Destroy();
 	}
 }
@@ -1426,6 +1427,8 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// In case of not using buffers they get closed immediately except
 	// the last one, but they move to the MRU file list
 	ProcessCommandLine(args, 1);
+	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
+	hNextCBWnd = ::SetClipboardViewer(MainHWND());
 	//Redraw();
 }
 
@@ -1920,6 +1923,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_COPYDATA:
 			return uniqueInstance.CopyData(reinterpret_cast<COPYDATASTRUCT *>(lParam));
 
+		case WM_DRAWCLIPBOARD:
+			return OnDrawClipBoardMsg(wParam);
+		case WM_CHANGECBCHAIN:
+			return OnChangeCBChain(wParam, lParam);
+
 		default:
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		}
@@ -2119,6 +2127,39 @@ SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, 
 		return GUI::ConvertToUTF8(s.c_str(), codePage).c_str(); 
 	}
 	return s;
+}
+
+LRESULT SciTEWin::OnDrawClipBoardMsg(WPARAM wParam)
+{
+	if (wParam == 1){
+		extender->OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1 ) : 0);
+	}
+	else
+	{
+		extender->OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1) : 0);
+		if (hNextCBWnd&&IsWindow(hNextCBWnd))
+		{
+			SendMessage(hNextCBWnd, WM_DRAWCLIPBOARD, 0, 0);
+		}
+		else hNextCBWnd = 0;
+		//PostMessage(MainHWND(), WM_DRAWCLIPBOARD, 1, 1);
+		//SendMessageTimeout(MainHWND(), WM_DRAWCLIPBOARD, 1, 1, SMTO_ABORTIFHUNG, 100, NULL);
+	}
+	return 0;
+}
+
+LRESULT SciTEWin::OnChangeCBChain(WPARAM wParam, LPARAM lParam)
+{
+	//Удалился какой-то вьювер
+	if (hNextCBWnd == (HWND)wParam)
+	{//Он следующий в очереди: изменяем нашу глобальную переменную
+		hNextCBWnd = (HWND)lParam;
+		return 0;
+	}
+	else
+	{//Иначе пересылаем сообщение дальше
+		return::SendMessage(hNextCBWnd, WM_CHANGECBCHAIN, wParam, lParam);
+	}
 }
 
 int SciTEWin::EventLoop() {

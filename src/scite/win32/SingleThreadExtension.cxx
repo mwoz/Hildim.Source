@@ -259,3 +259,6 @@ void SingleThreadExtension::DoLua(const char * c){
 void SingleThreadExtension::OnMouseHook(int x, int y){
 	ext->OnMouseHook(x, y);
 }
+bool SingleThreadExtension::OnDrawClipboard(int flag){
+	return ext->OnDrawClipboard(flag);
+}
