@@ -33,6 +33,7 @@ extern "C" {
 #include "iupluacontrols.h"
 #include "..\..\iup\src\iup_key.h"
 #include "scite_detachbox.h"
+#include "scite_sbox.h"
 }
 
 
@@ -1750,6 +1751,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iuplua_open(luaState);
 	Iupsc_DetachBoxOpen();
 	iupsc_detachboxlua_open(luaState);
+	Iupsc_SBoxOpen();
+	iupsc_SBoxlua_open(luaState);
 	iupcontrolslua_open(luaState);
 
 

@@ -2136,14 +2136,14 @@ LRESULT SciTEWin::OnDrawClipBoardMsg(WPARAM wParam)
 	}
 	else
 	{
-		extender->OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1) : 0);
+		//extender->OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1) : 0);
 		if (hNextCBWnd&&IsWindow(hNextCBWnd))
 		{
 			SendMessage(hNextCBWnd, WM_DRAWCLIPBOARD, 0, 0);
 		}
 		else hNextCBWnd = 0;
 		//PostMessage(MainHWND(), WM_DRAWCLIPBOARD, 1, 1);
-		//SendMessageTimeout(MainHWND(), WM_DRAWCLIPBOARD, 1, 1, SMTO_ABORTIFHUNG, 100, NULL);
+		SendMessageTimeout(MainHWND(), WM_DRAWCLIPBOARD, 1, 1, SMTO_ABORTIFHUNG, 100, NULL);
 	}
 	return 0;
 }

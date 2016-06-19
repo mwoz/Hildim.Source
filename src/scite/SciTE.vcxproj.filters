@@ -90,6 +90,9 @@
     <ClCompile Include="src\scite_detachbox.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\scite_sbox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Containers.h">
@@ -222,6 +225,9 @@
       <Filter>Header Files\lua</Filter>
     </ClInclude>
     <ClInclude Include="src\scite_detachbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scite_sbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
