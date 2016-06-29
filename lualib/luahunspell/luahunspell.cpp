@@ -83,6 +83,12 @@ static int l_spell(lua_State *L) {
 	return 1;
 }
 
+static int l_destroy(lua_State *L) {
+	THIS;
+	sp->~Hunspell();
+	return 0;
+}
+
 /**
 h:suggest(word) -> [table]
 returns a table of suggestions for the word (or empty table)
@@ -201,7 +207,8 @@ luaL_Reg spell_methods[] = {
 	{"suggest", l_suggest},
 	{"add_word", l_add_word},
 	{"add_with_affix", l_add_with_affix},
-	{"get_dic_encoding", l_get_dic_encoding},
+	{ "get_dic_encoding", l_get_dic_encoding },
+	{ "destroy", l_destroy },
 	{NULL, NULL}
 };
 

@@ -529,8 +529,7 @@ protected:
 	virtual void OpenUriList(const char *) {}
 	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter) = 0;
 	virtual bool SaveAsDialog() = 0;
-	virtual void LoadSessionDialog() {}
-	virtual void SaveSessionDialog() {}
+
 	void CountLineEnds(int &linesCR, int &linesLF, int &linesCRLF);
 	enum OpenFlags {
 	    ofNone = 0, 		// Default

@@ -388,61 +388,6 @@ void SciTEWin::SaveAsXML() {
 	}
 }
 
-void SciTEWin::LoadSessionDialog() {
-	GUI::gui_char openName[MAX_PATH] = GUI_TEXT("");
-//!-start-[no wornings]
-#if defined(_MSC_VER) && _MSC_VER < 1300
-	OPENFILENAMEW ofn = {
-		   sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-#else
-//!-end-[no wornings]
-	OPENFILENAMEW ofn = {
-	                       sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	                   };
-#endif //!-add-[no wornings]
-	ofn.hwndOwner = MainHWND();
-	ofn.hInstance = hInstance;
-	ofn.lpstrFile = openName;
-	ofn.nMaxFile = ELEMENTS(openName);
-	ofn.lpstrFilter = GUI_TEXT("Session (.session)\0*.session\0");
-	GUI::gui_string translatedTitle = localiser.Text("Load Session");
-	ofn.lpstrTitle = translatedTitle.c_str();
-	ofn.Flags = OFN_HIDEREADONLY;
-	if (::GetOpenFileNameW(&ofn)) {
-		LoadSessionFile(openName);
-		RestoreSession();
-	}
-}
-
-void SciTEWin::SaveSessionDialog() {
-	GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("\0");
-	wcscpy(saveName, GUI_TEXT("SciTE.session"));
-//!-start-[no wornings]
-#if defined(_MSC_VER) && _MSC_VER < 1300
-	OPENFILENAMEW ofn = {
-		   sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-#else
-//!-end-[no wornings]
-	OPENFILENAMEW ofn = {
-			       sizeof(ofn), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-			   };
-#endif //!-add-[no wornings]
-	ofn.hwndOwner = MainHWND();
-	ofn.hInstance = hInstance;
-	ofn.lpstrDefExt = GUI_TEXT("session");
-	ofn.lpstrFile = saveName;
-	ofn.nMaxFile = ELEMENTS(saveName);
-	GUI::gui_string translatedTitle = localiser.Text("Save Current Session");
-	ofn.lpstrTitle = translatedTitle.c_str();
-	ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
-	ofn.lpstrFilter = GUI_TEXT("Session (.session)\0*.session\0");
-	if (::GetSaveFileNameW(&ofn)) {
-		SaveSessionFile(saveName);
-	}
-}
-
 static void DeleteFontObject(HFONT &font) {
 	if (font) {
 		::DeleteObject(font);

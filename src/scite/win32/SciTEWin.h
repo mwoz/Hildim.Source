@@ -235,8 +235,6 @@ protected:
 	virtual void SaveAsPDF();
 	virtual void SaveAsTEX();
 	virtual void SaveAsXML();
-	virtual void LoadSessionDialog();
-	virtual void SaveSessionDialog();
 	virtual bool PreOpenCheck(const GUI::gui_char *file);
 	virtual bool IsStdinBlocked();
 

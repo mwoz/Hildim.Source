@@ -3348,14 +3348,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_PRINTSETUP:
 		PrintSetup();
 		break;
-	case IDM_LOADSESSION:
-		LoadSessionDialog();
-		WindowSetFocus(wEditor);
-		break;
-	case IDM_SAVESESSION:
-		SaveSessionDialog();
-		WindowSetFocus(wEditor);
-		break;
 	case IDM_ABOUT:
 		AboutDialog();
 		break;
@@ -4661,10 +4653,6 @@ void SciTEBase::PerformOne(char *action) {
 				SaveAs(GUI::StringFromUTF8(arg).c_str(), true);
 			} else {
 				SaveAsDialog();
-			}
-		} else if (isprefix(action, "savesession:")) {
-			if (*arg) {
-				SaveSessionFile(GUI::StringFromUTF8(arg).c_str());
 			}
 		} else if (isprefix(action, "extender:")) {
 			extender->OnExecute(arg);
