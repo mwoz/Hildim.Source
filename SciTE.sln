@@ -17,11 +17,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luahunspell", "lualib\luahu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhunspell", "lualib\hunspell\src\win_api\libhunspell.vcxproj", "{53609BB3-D874-465C-AF7B-DF626DB0D89B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gui_ext", "lualib\gui\gui_ext.vcxproj", "{5CBA6514-7248-46AC-8DAA-E36A48F02C0E}"
-	ProjectSection(ProjectDependencies) = postProject
-		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mblua", "lualib\mblua\mblua.vcxproj", "{465000B6-959F-4B72-A71B-425D586996D1}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
@@ -82,10 +77,6 @@ Global
 		{53609BB3-D874-465C-AF7B-DF626DB0D89B}.Release|Win32.ActiveCfg = Release|Win32
 		{53609BB3-D874-465C-AF7B-DF626DB0D89B}.Release|Win32.Build.0 = Release|Win32
 		{53609BB3-D874-465C-AF7B-DF626DB0D89B}.Release|x64.ActiveCfg = Release|Win32
-		{5CBA6514-7248-46AC-8DAA-E36A48F02C0E}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5CBA6514-7248-46AC-8DAA-E36A48F02C0E}.Debug|x64.ActiveCfg = Debug|Win32
-		{5CBA6514-7248-46AC-8DAA-E36A48F02C0E}.Release|Win32.ActiveCfg = Release|Win32
-		{5CBA6514-7248-46AC-8DAA-E36A48F02C0E}.Release|x64.ActiveCfg = Release|Win32
 		{465000B6-959F-4B72-A71B-425D586996D1}.Debug|Win32.ActiveCfg = Debug|Win32
 		{465000B6-959F-4B72-A71B-425D586996D1}.Debug|Win32.Build.0 = Debug|Win32
 		{465000B6-959F-4B72-A71B-425D586996D1}.Debug|x64.ActiveCfg = Debug|Win32

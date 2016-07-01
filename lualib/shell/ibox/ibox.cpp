@@ -743,7 +743,7 @@ BOOL CALLBACK CheckSciteWindow(HWND hwnd, LPARAM lParam)
 {
 	char buff[120];
     GetClassName(hwnd, buff, sizeof(buff));	
-    if (lstrcmp(buff, "SciTEWindow") == 0) {
+    if (lstrcmp(buff, "HildiMWindow") == 0) {
 		*reinterpret_cast<HWND*>(lParam) = hwnd;
 		return FALSE;
     }

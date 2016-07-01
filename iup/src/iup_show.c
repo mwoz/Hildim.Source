@@ -30,7 +30,7 @@ void SciTE_NATIVEPARENT(Ihandle *ih)
 		DWORD p = GetCurrentProcessId();
 
 		for (;;){
-			hwnd = FindWindowEx(NULL, hwnd, "SciTEWindow", NULL);
+			hwnd = FindWindowEx(NULL, hwnd, "HildiMWindow", NULL);
 			DWORD d = 0;
 			GetWindowThreadProcessId(hwnd, &d);
 			if (d == p) break;

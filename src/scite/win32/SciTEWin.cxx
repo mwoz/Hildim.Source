@@ -336,11 +336,6 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 	hToolbarBitmap = 0; //!-add-[user.toolbar]
 	oldToolbarBitmapID = 0; //!-add-[user.toolbar]
 
-	//¬ыставим место по умолчанию дл€ поиска.замены
-	rFindReplace.left = props.GetInt("findreplace.position.left",100);
-	rFindReplace.top = props.GetInt("findreplace.position.top",100);
-	rFindInFiles.left = props.GetInt("findinfiles.position.left",100);
-	rFindInFiles.top = props.GetInt("findinfiles.position.top",100);
 }
 
 SciTEWin::~SciTEWin() {
@@ -367,7 +362,7 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 
 	WNDCLASS wndclass;
 	// Register the frame window
-	className = TEXT("SciTEWindow");
+	className = TEXT("HildiMWindow");
 //!	wndclass.style = 0;
 	wndclass.style = CS_DBLCLKS;	//!-change-[new_on_dbl_clk]
 	wndclass.lpfnWndProc = SciTEWin::TWndProc;
@@ -1277,7 +1272,7 @@ void SciTEWin::CreateUI() {
 		height = CW_USEDEFAULT;
 	}
 
-	if (props.GetInt("position.tile") && ::FindWindow(TEXT("SciTEWindow"), NULL) &&
+	if (props.GetInt("position.tile") && ::FindWindow(TEXT("HildiMWindow"), NULL) &&
 	        (left != static_cast<int>(CW_USEDEFAULT))) {
 		left += width;
 	}

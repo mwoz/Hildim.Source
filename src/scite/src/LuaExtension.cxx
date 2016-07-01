@@ -877,7 +877,7 @@ static int cf_iup_reattach_wnd_to(lua_State *L){
 	Ihandle *ih = iuplua_checkihandle(L, 1);
 	SString sWnd = luaL_checkstring(L, 2);	   
 	HWND hChild = NULL;
-	hChild = ::FindWindowEx(NULL, hChild, L"SciTEWindow", NULL);
+	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
 	hChild = ::FindWindowEx(hChild, NULL, NULL, L"Source");
 	HWND hChild1 = ::FindWindowEx(hChild, NULL, NULL, NULL);
 	HWND hChild2 = ::FindWindowEx(hChild, hChild1, NULL, NULL);
@@ -1586,7 +1586,7 @@ static int cf_iup_set_nativeparent(lua_State *L){
 		DWORD p = ::GetCurrentProcessId();
 
 		for (;;){
-			hwnd = ::FindWindowEx(NULL, hwnd, L"SciTEWindow", NULL);
+			hwnd = ::FindWindowEx(NULL, hwnd, L"HildiMWindow", NULL);
 			DWORD d = 0;
 			::GetWindowThreadProcessId(hwnd, &d);
 			if (d == p) break;

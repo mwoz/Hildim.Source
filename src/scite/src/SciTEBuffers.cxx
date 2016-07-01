@@ -480,11 +480,6 @@ void SciTEBase::SaveSessionFile(const GUI::gui_char *sessionName) {
 		fprintf(sessionFile, "position.height=%d\n", height);
 		fprintf(sessionFile, "position.maximize=%d\n", maximize);
 
-		fprintf(sessionFile, "findreplace.position.left=%d\n", rFindReplace.left);
-		fprintf(sessionFile, "findreplace.position.top=%d\n", rFindReplace.top);
-		fprintf(sessionFile, "findinfiles.position.left=%d\n", rFindInFiles.left);
-		fprintf(sessionFile, "findinfiles.position.top=%d\n", rFindInFiles.top);
-
 		fprintf(sessionFile, "iuptoolbar.visible=%d\n", props.GetInt("iuptoolbar.visible"));
 		fprintf(sessionFile, "tabbar.visible=%d\n", props.GetInt("tabbar.visible"));
 		fprintf(sessionFile, "view.whitespace=%d\n", props.GetInt("view.whitespace"));
