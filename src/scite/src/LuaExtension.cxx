@@ -658,8 +658,7 @@ static int cf_match_metatable_index(lua_State *L) {
 				lua_pushstring(L, range);
 				delete []range;
 				return 1;
-			} else 
-
+			} else {
 				return 0;
 			}
 		} else if (0 == strcmp(key, "replace")) {
