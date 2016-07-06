@@ -369,7 +369,6 @@ Searcher::Searcher() {
 	havefound = false;
 	findInStyle = false;
 	findStyle = 0;
-	closeFind = true;
 
 	focusOnReplace = false;
 }
@@ -1393,41 +1392,6 @@ void SciTEBase::SelectionIntoProperties() {
 	props.SetInteger("SelectionEndColumn", CallFocused(SCI_GETCOLUMN, selEnd) + 1);
 }
 
-int SciTEBase::SelectionIntoFind(bool stripEol /*=true*/) {
-	SString sel = SelectionWord(stripEol);
-	int l = sel.length();
-	if (l && !sel.contains('\r') && !sel.contains('\n')) {
-		// The selection does not include a new line, so is likely to be
-		// the expression to search...
-//!-start-[find.fillout]
-		int findFillout = props.GetInt("find.fillout", 0);
-		SString sel;
-		switch (findFillout) {
-			case 2:
-				; //never fill search field
-				break;
-			case 1:
-				sel = SelectionExtend(0, stripEol); //fill with selection, if none leave blank
-				break;
-			default:
-				sel = SelectionWord(stripEol); //fill with word if no selection is present
-				break;
-		}
-//!-end-[find.fillout]
-
-		findWhat = sel;
-		if (unSlash) {
-			char *slashedFind = Slash(findWhat.c_str(), false);
-			if (slashedFind) {
-				findWhat = slashedFind;
-				delete []slashedFind;
-			}
-		}
-	}
-	// else findWhat remains the same as last time.
-	return l;
-}
-
 SString SciTEBase::EncodeString(const SString &s) {
 	return SString(s);
 }
@@ -1478,21 +1442,8 @@ int SciTEBase::FindInTarget(const char *findWhat, int lenFind, int startPosition
 	return posFind;
 }
 
-void SciTEBase::SetFind(const char *sFind) {
-	findWhat = sFind;
-	memFinds.Insert(findWhat.c_str());
-	props.Set("find.what.history", memFinds.AsString().c_str());
-	props.Set("find.replasewith.history", memReplaces.AsString().c_str());
-	props.Set("find.what", findWhat.c_str());
-}
-
 bool SciTEBase::FindHasText() const {
 	return findWhat[0];
-}
-
-void SciTEBase::SetReplace(const char *sReplace) {
-	replaceWhat = sReplace;
-	memReplaces.Insert(replaceWhat.c_str());
 }
 
 void SciTEBase::MoveBack(int distance) {
@@ -1510,226 +1461,6 @@ void SciTEBase::ScrollEditorIfNeeded() {
 	GUI::Rectangle rcEditor = wEditor.GetClientPosition();
 	if (!rcEditor.Contains(ptCaret))
 		wEditor.Call(SCI_SCROLLCARET);
-}
-
-int SciTEBase::FindNext(bool reverseDirection, bool showWarnings, bool fireEvent) {
-	if (findWhat.length() == 0) {
-		return -1;
-	}
-	SString findTarget = EncodeString(findWhat);
-	int lenFind = UnSlashAsNeeded(findTarget, unSlash, regExp);
-	if (lenFind == 0)
-		return -1;
-
-	Sci_CharacterRange cr = GetSelection();
-	int startPosition = cr.cpMax;
-	int endPosition = LengthDocument();
-	if (reverseDirection) {
-		startPosition = cr.cpMin;
-		endPosition = 0;
-	}
-	int flags = (wholeWord ? SCFIND_WHOLEWORD : 0) |
-	        (matchCase ? SCFIND_MATCHCASE : 0) |
-	        (regExp ? SCFIND_REGEXP : 0) |
-	        (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
-
-	wEditor.Call(SCI_SETSEARCHFLAGS, flags);
-	int posFind = FindInTarget(findTarget.c_str(), lenFind, startPosition, endPosition);
-	if (posFind == -1 && wrapFind) {
-		// Failed to find in indicated direction
-		// so search from the beginning (forward) or from the end (reverse)
-		// unless wrapFind is false
-		if (reverseDirection) {
-			startPosition = LengthDocument();
-			endPosition = 0;
-		} else {
-			startPosition = 0;
-			endPosition = LengthDocument();
-		}
-		posFind = FindInTarget(findTarget.c_str(), lenFind, startPosition, endPosition);
-		WarnUser(warnFindWrapped);
-	}
-	if (posFind == -1) {
-		havefound = false;
-		if (showWarnings) {
-//!			WarnUser(warnNotFound);
-			WarnUser(warnNotFound, NULL, false); //!-change-[WarningMessage]
-			FindMessageBox("Can not find the string '^0'.",
-			        &findWhat);
-		}
-	} else {
-		//Вызовем нотификацию в скрипте
-		if (extender && fireEvent) extender->OnNavigation("Find");
-
-		havefound = true;
-		int start = wEditor.Call(SCI_GETTARGETSTART);
-		int end = wEditor.Call(SCI_GETTARGETEND);
-		EnsureRangeVisible(start, end);
-		SetSelection(start, end);
-
-		if (extender && fireEvent) extender->OnNavigation("Find-");
-	}
-	return posFind;
-}
-
-int SciTEBase::DoReplaceAll(bool inSelection) {
-	SString findTarget = EncodeString(findWhat);
-	int findLen = UnSlashAsNeeded(findTarget, unSlash, regExp);
-	if (findLen == 0) {
-		return -1;
-	}
-
-	Sci_CharacterRange cr = GetSelection();
-	int startPosition = cr.cpMin;
-	int endPosition = cr.cpMax;
-	int countSelections = wEditor.Call(SCI_GETSELECTIONS);
-	if (inSelection) {
-		int selType = wEditor.Call(SCI_GETSELECTIONMODE);
-		if (selType == SC_SEL_LINES) {
-			// Take care to replace in whole lines
-			int startLine = wEditor.Call(SCI_LINEFROMPOSITION, startPosition);
-			startPosition = wEditor.Call(SCI_POSITIONFROMLINE, startLine);
-			int endLine = wEditor.Call(SCI_LINEFROMPOSITION, endPosition);
-			endPosition = wEditor.Call(SCI_POSITIONFROMLINE, endLine + 1);
-		} else {
-			for (int i=0; i<countSelections; i++) {
-				startPosition = Minimum(startPosition, wEditor.Call(SCI_GETSELECTIONNSTART, i));
-				endPosition = Maximum(endPosition, wEditor.Call(SCI_GETSELECTIONNEND, i));
-			}
-		}
-		if (startPosition == endPosition) {
-			return -2;
-		}
-	} else {
-		endPosition = LengthDocument();
-		if (wrapFind) {
-			// Whole document
-			startPosition = 0;
-		}
-		// If not wrapFind, replace all only from caret to end of document
-	}
-
-	SString replaceTarget = EncodeString(replaceWhat);
-	int replaceLen = UnSlashAsNeeded(replaceTarget, unSlash, regExp);
-	int flags = (wholeWord ? SCFIND_WHOLEWORD : 0) |
-	        (matchCase ? SCFIND_MATCHCASE : 0) |
-	        (regExp ? SCFIND_REGEXP : 0) |
-	        (props.GetInt("find.replace.regexp.posix") ? SCFIND_POSIX : 0);
-	wEditor.Call(SCI_SETSEARCHFLAGS, flags);
-	int posFind = FindInTarget(findTarget.c_str(), findLen, startPosition, endPosition);
-	if ((findLen == 1) && regExp && (findTarget[0] == '^')) {
-		// Special case for replace all start of line so it hits the first line
-		posFind = startPosition;
-		wEditor.Call(SCI_SETTARGETSTART, startPosition);
-		wEditor.Call(SCI_SETTARGETEND, startPosition);
-	}
-	if ((posFind != -1) && (posFind <= endPosition)) {
-		int lastMatch = posFind;
-		int replacements = 0;
-		wEditor.Call(SCI_BEGINUNDOACTION);
-		// Replacement loop
-		while (posFind != -1) {
-			int lenTarget = wEditor.Call(SCI_GETTARGETEND) - wEditor.Call(SCI_GETTARGETSTART);
-			if (inSelection && countSelections > 1) {
-				// We must check that the found target is entirely inside a selection
-				bool insideASelection = false;
-				for (int i=0; i<countSelections && !insideASelection; i++) {
-					int startPos= wEditor.Call(SCI_GETSELECTIONNSTART, i);
-					int endPos = wEditor.Call(SCI_GETSELECTIONNEND, i);
-					if (posFind >= startPos && posFind + lenTarget <= endPos)
-						insideASelection = true;
-				}
-				if (!insideASelection) {
-					// Found target is totally or partly outside the selections
-					lastMatch = posFind + 1;
-					if (lastMatch >= endPosition) {
-						// Run off the end of the document/selection with an empty match
-						posFind = -1;
-					} else {
-						posFind = FindInTarget(findTarget.c_str(), findLen, lastMatch, endPosition);
-					}
-					continue;	// No replacement
-				}
-			}
-			int movepastEOL = 0;
-			if (lenTarget <= 0) {
-				char chNext = static_cast<char>(wEditor.Call(SCI_GETCHARAT, wEditor.Call(SCI_GETTARGETEND)));
-				if (chNext == '\r' || chNext == '\n') {
-					movepastEOL = 1;
-				}
-			}
-			int lenReplaced = replaceLen;
-			if (regExp) {
-				lenReplaced = wEditor.CallString(SCI_REPLACETARGETRE, replaceLen, replaceTarget.c_str());
-			} else {
-				wEditor.CallString(SCI_REPLACETARGET, replaceLen, replaceTarget.c_str());
-			}
-			// Modify for change caused by replacement
-			endPosition += lenReplaced - lenTarget;
-			// For the special cases of start of line and end of line
-			// something better could be done but there are too many special cases
-			lastMatch = posFind + lenReplaced + movepastEOL;
-			if (lenTarget == 0) {
-				lastMatch = wEditor.Call(SCI_POSITIONAFTER, lastMatch);
-			}
-			if (lastMatch >= endPosition) {
-				// Run off the end of the document/selection with an empty match
-				posFind = -1;
-			} else {
-				posFind = FindInTarget(findTarget.c_str(), findLen, lastMatch, endPosition);
-			}
-			replacements++;
-		}
-		if (inSelection) {
-			if (countSelections == 1)
-				SetSelection(startPosition, endPosition);
-		} else {
-			if(!props.GetInt("find.replace.return.to.start")) //!-add-[ReturnBackAfterRALL]
-			SetSelection(lastMatch, lastMatch);
-		}
-		wEditor.Call(SCI_ENDUNDOACTION);
-		return replacements;
-	}
-	return 0;
-}
-
-int SciTEBase::ReplaceAll(bool inSelection) {
-	int replacements = DoReplaceAll(inSelection);
-	props.SetInteger("Replacements", (replacements > 0 ? replacements : 0));
-	if (replacements == -1) {
-		FindMessageBox(
-		    inSelection ?
-		    "Find string must not be empty for 'Replace in Selection' command." :
-		    "Find string must not be empty for 'Replace All' command.");
-	} else if (replacements == -2) {
-		FindMessageBox(
-		    "Selection must not be empty for 'Replace in Selection' command.");
-	} else if (replacements == 0) {
-		FindMessageBox(
-		    "No replacements because string '^0' was not present.", &findWhat);
-	}
-	return replacements;
-}
-
-int SciTEBase::ReplaceInBuffers() {
-	int currentBuffer = buffers.Current();
-	int replacements = 0;
-	for (int i = 0; i < buffers.length; i++) {
-		SetDocumentAt(i);
-		replacements += DoReplaceAll(false);
-		if (i == 0 && replacements < 0) {
-			FindMessageBox(
-			    "Find string must not be empty for 'Replace in Buffers' command.");
-			break;
-		}
-	}
-	SetDocumentAt(currentBuffer);
-	props.SetInteger("Replacements", replacements);
-	if (replacements == 0) {
-		FindMessageBox(
-		    "No replacements because string '^0' was not present.", &findWhat);
-	}
-	return replacements;
 }
 
 void SciTEBase::UIClosed() {
@@ -3289,8 +3020,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_OPENSELECTED:
-		if (OpenSelected())
-			WindowSetFocus(wEditor);
 		break;
 	case IDM_REVERT:
 		Revert();
@@ -3473,10 +3202,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_FINDNEXTSEL:
-		break;
-
-	case IDM_ENTERSELECTION:
-		SelectionIntoFind();
 		break;
 
 	case IDM_FINDNEXTBACKSEL:
@@ -4641,13 +4366,6 @@ void SciTEBase::PerformOne(char *action) {
 			ReloadProperties();
 		} else if (isprefix(action, "quit:")) {
 			QuitProgram();
-		} else if (isprefix(action, "replaceall:") && wEditor.Created()) {
-			if (len > strlen(action)) {
-				char *arg2 = arg + strlen(arg) + 1;
-				findWhat = arg;
-				replaceWhat = arg2;
-				ReplaceAll(false);
-			}
 		} else if (isprefix(action, "saveas:")) {
 			if (*arg) {
 				SaveAs(GUI::StringFromUTF8(arg).c_str(), true);

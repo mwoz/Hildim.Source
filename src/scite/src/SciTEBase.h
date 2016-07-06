@@ -233,22 +233,15 @@ public:
 	bool havefound;
 	bool findInStyle;
 	int findStyle;
-	bool closeFind;
-	ComboMemory memFinds;
-	ComboMemory memReplaces;
 
 	bool focusOnReplace;
 
 	Searcher();
 
-	virtual void SetFind(const char *sFind) = 0;
 	virtual bool FindHasText() const = 0;
-	virtual void SetReplace(const char *sReplace) = 0;
 	virtual void MoveBack(int distance) = 0;
 	virtual void ScrollEditorIfNeeded() = 0;
 
-	virtual int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = true) = 0;
-	virtual int ReplaceAll(bool inSelection) = 0;
 	virtual void UIClosed() = 0;
 	virtual void UIHasFocus() = 0;
 	bool &FlagFromCmd(int cmd);
@@ -284,8 +277,6 @@ protected:
 
 	enum { indicatorMatch = INDIC_CONTAINER };
 	enum { markerBookmark = 1 };
-	ComboMemory memFiles;
-	ComboMemory memDirectory;
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 
@@ -540,7 +531,6 @@ protected:
 	};
 	virtual bool PreOpenCheck(const GUI::gui_char *file);
 	bool Open(FilePath file, OpenFlags of = ofNone);
-	bool OpenSelected();
 	void Revert();
 	FilePath SaveName(const char *ext);
 	int SaveIfUnsure(bool forceQuestion = false);
@@ -590,20 +580,13 @@ protected:
 	SString SelectionWord(bool stripEol = true);
 	SString SelectionFilename();
 	void SelectionIntoProperties();
-	int SelectionIntoFind(bool stripEol = true);
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
 	virtual void FindMessageBox(const SString &msg, const SString *findItem = 0) = 0;
 	int FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition);
-	virtual void SetFind(const char *sFind);
 	virtual bool FindHasText() const;
-	virtual void SetReplace(const char *sReplace);
 	virtual void MoveBack(int distance);
 	virtual void ScrollEditorIfNeeded();
-int FindNext(bool reverseDirection, bool showWarnings = true, bool fireEvent = true);
-	int DoReplaceAll(bool inSelection); // returns number of replacements or negative value if error
-	int ReplaceAll(bool inSelection);
-	int ReplaceInBuffers();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
 	virtual void TabSizeDialog() = 0;

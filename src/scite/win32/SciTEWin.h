@@ -280,11 +280,7 @@ protected:
 	HWND MainHWND();
 
 	virtual void UIClosed();
-	void PerformGrep();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
-
-	bool FindReplaceAdvanced();
-
 
 	BOOL TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK TabSizeDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

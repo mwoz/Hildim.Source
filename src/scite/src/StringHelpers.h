@@ -94,4 +94,3 @@ public:
 	}
 };
 
-typedef EntryMemory < 10 > ComboMemory;

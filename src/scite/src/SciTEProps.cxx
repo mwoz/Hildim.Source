@@ -868,8 +868,6 @@ void SciTEBase::ReadProperties() {
 		wEditor.Call(SCI_INDICSETFORE, indicatorMatch, ColourFromString(findMark));
 	}
 
-	closeFind = props.GetInt("find.close.on.find", 1);
-
 	SString controlCharSymbol = props.Get("control.char.symbol");
 	if (controlCharSymbol.length()) {
 		wEditor.Call(SCI_SETCONTROLCHARSYMBOL, static_cast<unsigned char>(controlCharSymbol[0]));
@@ -1132,11 +1130,6 @@ void SciTEBase::ReadProperties() {
 	list = props.GetNewExpand("preprocessor.end.", fileNameForExtension.c_str());
 	preprocCondEnd.Clear();
 	preprocCondEnd.Set(list.c_str());
-
-	memFiles.AppendList(props.GetNewExpand(props.Get("find.files.history") == "" ? "find.files" : "find.files.history" ).c_str());
-	memFinds.AppendList(props.GetNewExpand("find.what.history").c_str());
-	memReplaces.AppendList(props.GetNewExpand("find.replasewith.history").c_str());
-	memDirectory.AppendList(props.GetNewExpand("find.directory.history").c_str());
 
 	wEditor.Call(SCI_SETWRAPVISUALFLAGS, props.GetInt("wrap.visual.flags"));
 	wEditor.Call(SCI_SETWRAPVISUALFLAGSLOCATION, props.GetInt("wrap.visual.flags.location"));

@@ -786,19 +786,6 @@ public:
 		return BST_CHECKED == ::SendMessage(::GetDlgItem(hDlg, id), BM_GETCHECK, 0, 0);
 	}
 
-	void FillComboFromMemory(int id, const ComboMemory &mem, bool useTop = false) {
-		HWND combo = Item(id);
-		::SendMessage(combo, CB_RESETCONTENT, 0, 0);
-		for (int i = 0; i < mem.Length(); i++) {
-			GUI::gui_string gs = GUI::StringFromUTF8(mem.At(i).c_str());
-			::SendMessageW(combo, CB_ADDSTRING, 0,
-				       reinterpret_cast<LPARAM>(gs.c_str()));
-		}
-		if (useTop) {
-			::SendMessage(combo, CB_SETCURSEL, 0, 0);
-		}
-	}
-
 };
 
 
@@ -807,10 +794,6 @@ void SciTEWin::UIClosed() {
 	props.Set("Replacements", "");
 	SizeSubWindows();
 	WindowSetFocus(wEditor);
-}
-
-bool SciTEWin::FindReplaceAdvanced() {
-	return props.GetInt("find.replace.advanced");
 }
 
 // Set a call back with the handle after init to set the path.
@@ -859,43 +842,6 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 		Execute();
 	}
 	return 1;
-}
-void SciTEWin::PerformGrep() {
-	SelectionIntoProperties();
-
-	SString findInput;
-	long flags = 0;
-	if (props.Get("find.input").length()) {
-		findInput = props.GetNewExpand("find.input");
-		flags += jobHasInput;
-	}
-
-	SString findCommand = props.GetNewExpand("find.command");
-	if (findCommand == "") {
-		// Call InternalGrep in a new thread
-		// searchParams is "(w|~)(c|~)(d|~)(b|r|~)(s|~)\0files\0text"
-		// A "w" indicates whole word, "c" case sensitive, "d" dot directories, "b" binary files
-		SString searchParams;
-		searchParams.append(wholeWord ? "w" : "~");
-		searchParams.append(matchCase ? "c" : "~");
-		searchParams.append(props.GetInt("find.in.dot") ? "d" : "~");
-		//Непонятно, где устанавливается find.in.binary - но если установлено - не будем использовать регулярный поиск
-		searchParams.append(props.GetInt("find.in.binary") ? "b" : regExp ? "r" : "~");
-		searchParams.append(subDirSearch ? "s" : "~");
-		searchParams.append("~"); //признак группировки по файлам выставляется только из луа дилога 
-		searchParams.append("\0", 1);
-		searchParams.append(props.Get("find.files").c_str());
-		searchParams.append("\0", 1);
-		searchParams.append(props.Get("find.what").c_str());
-		AddCommand(searchParams, props.Get("find.directory"), jobGrep, findInput, flags);
-	} else {
-		AddCommand(findCommand,
-			   props.Get("find.directory"),
-			   jobCLI, findInput, flags);
-	}
-	if (jobQueue.commandCurrent > 0) {
-		Execute();
-	}
 }
 
 BOOL SciTEWin::TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam) {
