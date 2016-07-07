@@ -159,7 +159,7 @@ public:
 	LexerFormEngine(bool caseSensitive_) :
 	    setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
 		caseSensitive(caseSensitive_){
-			wRefold.Set("case else elseif");
+			wRefold.Set("else elseif");
 			wFold.Set("do function sub for with private public property class while");
 			wUnfold.Set("end next wend loop");
 	}
@@ -977,6 +977,7 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 	FoldContext fc(startPos, length, styler, options.foldCompact);
 	int blockReFoldLine = -1;
 	int processComment = 0;
+	static bool selectStart = false;
 	for (bool doing = fc.More(); doing; doing = fc.More(), fc.Forward()){
 		switch(GetSector(fc.style)){
 		case TYPE_SPACE:
@@ -1049,26 +1050,40 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 							fc.currentLevel--;
 						}
 					}else if(!strcmp(s, "select")){
-						fc.currentLevel += 2;
-						blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
+						fc.currentLevel ++;
+						selectStart = true;
+						//blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
 					}else if(wFold.InList(s)){//начало фолдинга - do function sub for with property while
 						fc.currentLevel++;
-					}else if(wRefold.InList(s) && options.foldAtElse){//промежуточный фолдинг для ифа и свитча - case else elseif
+					}
+					else if (!strcmp(s, "case")){
+						if (selectStart){
+							fc.currentLevel++;
+						}
+						else{
+							fc.SetCurLevel(fc.currentLevel - 1);
+						}
+						selectStart = false;
+					}
+					else if (wRefold.InList(s) && options.foldAtElse){//промежуточный фолдинг для ифа и свитча - case else elseif
 						if(!fc.startLineResolved)return false;
 						if(fc.currentLine != blockReFoldLine){
 							fc.SetCurLevel(fc.currentLevel - 1); //Фолдим, если не фолдили в прошлой строке
 						}
 						blockReFoldLine= fc.currentLine + 1;//в следующей строке тоже не рефолдим
 					}else if(wUnfold.InList(s)){//конец фолдинга - end next wend loop
-						fc.currentLevel--;
 						if(fc.Skip()){//точно нашли кусок в другом стиле на этой строке
 							if(fc.style == SCE_FM_VB_KEYWORD){
 								fc.GetNextLowered(s, 100);
+								if (!strcmp(s, "select")){
+									fc.SetCurLevel(fc.currentLevel - 1);
+								}
 								if(!strcmp(s, "if") || !strcmp(s, "select")){
 									fc.currentLevel--;
 								}
 							}
 						}
+						fc.currentLevel--;
 					}
 				}
 				break;
