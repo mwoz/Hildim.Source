@@ -164,8 +164,8 @@ bool SingleThreadExtension::OnUpdateUI() {
 	return ext->OnUpdateUI();
 }
 
-bool SingleThreadExtension::OnMarginClick() {
-	return ext->OnMarginClick();
+bool SingleThreadExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
+	return ext->OnMarginClick(margin, modif, line);
 }
 
 bool SingleThreadExtension::OnMacro(const char *p, const char *q) {

@@ -2624,8 +2624,8 @@ bool LuaExtension::OnUpdateUI() {
 	return CallNamedFunction("OnUpdateUI");
 }
 
-bool LuaExtension::OnMarginClick() {
-	return CallNamedFunction("OnMarginClick");
+bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
+	return CallNamedFunction("OnMarginClick", margin, modif, line);
 }
 /*!
 bool LuaExtension::OnUserListSelection(int listType, const char *selection) {

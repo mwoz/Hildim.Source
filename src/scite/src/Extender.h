@@ -83,7 +83,7 @@ public:
 	virtual bool OnMouseButtonUp(int) { return false; } //!-add-[OnMouseButtonUp]
 	virtual bool OnHotSpotReleaseClick(int) { return false; } //!-add-[OnHotSpotReleaseClick]
 	virtual bool OnUpdateUI() { return false; }
-	virtual bool OnMarginClick() { return false; }
+	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line) { return false; }
 	virtual bool OnMacro(const char *, const char *) { return false; }
 //!	virtual bool OnUserListSelection(int, const char *) { return false; }
 	virtual bool OnUserListSelection(int, const char *,int) { return false; } //!-change-[UserListItemID]

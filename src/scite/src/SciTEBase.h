@@ -658,7 +658,7 @@ protected:
 	void EnsureAllChildrenVisible(int line, int level);
 	void EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy = true);
 	void GotoLineEnsureVisible(int line);
-	bool MarginClick(int position, int modifiers);
+	bool MarginClick(int position, int modifiers, GUI::ScintillaWindow *w);
 	void NewLineInOutput();
 	virtual void Notify(SCNotification *notification);
 	virtual void ShowToolBar() = 0;

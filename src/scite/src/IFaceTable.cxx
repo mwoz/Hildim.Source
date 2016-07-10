@@ -2757,7 +2757,9 @@ static IFaceFunction ifaceFunctions[] = {
 	{"FindIndicatorHide", 2642, iface_void, {iface_void, iface_void}},
 	{"FindIndicatorShow", 2640, iface_void, {iface_position, iface_position}},
 	{"FindText", 2150, iface_position, {iface_int, iface_findtext}},
+	{"FoldAll", 2662, iface_void, {iface_int, iface_int}},
 	{"FoldChildren", 2238, iface_void, {iface_int, iface_int}},
+	{"FoldLine", 2237, iface_void, {iface_int, iface_int}},
 	{"FormFeed", 2330, iface_void, {iface_void, iface_void}},
 	{"FormatRange", 2151, iface_position, {iface_bool, iface_formatrange}},
 	{"FreeSubStyles", 4023, iface_void, {iface_void, iface_void}},
@@ -3163,7 +3165,7 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 284,
+	ifaceFunctionCount = 286,
 	ifaceConstantCount = 2531,
 	ifacePropertyCount = 209
 };

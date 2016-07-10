@@ -3622,31 +3622,32 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 }
 
 void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev) {
-//	if (levelNow & SC_FOLDLEVELHEADERFLAG) {
-//		if (!(levelPrev & SC_FOLDLEVELHEADERFLAG)) {
-//			// Adding a fold point.
-//    			wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-//    			Expand(line, true, false, 0, levelPrev);
-//    	}
-//    } else if (levelPrev & SC_FOLDLEVELHEADERFLAG) {
-//    	if (!wEditor.Call(SCI_GETFOLDEXPANDED, line)) {
-//    		// Removing the fold from one that has been contracted so should expand
-//    		// otherwise lines are left invisible with no way to make them visible
-//    			wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-//    			Expand(line, true, false, 0, levelPrev);
-//		}
-//	}
-	if (!(levelNow & SC_FOLDLEVELWHITEFLAG) &&
-	        ((levelPrev & SC_FOLDLEVELNUMBERMASK) > (levelNow & SC_FOLDLEVELNUMBERMASK))) {
-		// See if should still be hidden
-		int parentLine = wEditor.Call(SCI_GETFOLDPARENT, line);
-		if (parentLine < 0) {
-			wEditor.Call(SCI_SHOWLINES, line, line);
-		} else if (wEditor.Call(SCI_GETFOLDEXPANDED, parentLine) && wEditor.Call(SCI_GETLINEVISIBLE, parentLine)) {
+	int parentLine = wEditor.Call(SCI_GETFOLDPARENT, line);
+	if (wEditor.Call(SCI_GETFOLDEXPANDED, parentLine) && wEditor.Call(SCI_GETLINEVISIBLE, parentLine)){
+		if (levelNow & SC_FOLDLEVELHEADERFLAG) {
+			if (!(levelPrev & SC_FOLDLEVELHEADERFLAG)) {
+				// Adding a fold point.
+				wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
+				Expand(line, true, false, 0, levelPrev);
+			}
+		}
+		else if (levelPrev & SC_FOLDLEVELHEADERFLAG) {
+			if (!wEditor.Call(SCI_GETFOLDEXPANDED, line)) {
+				// Removing the fold from one that has been contracted so should expand
+				// otherwise lines are left invisible with no way to make them visible
+				wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
+				Expand(line, true, false, 0, levelPrev);
+			}
+		}
+		if (!(levelNow & SC_FOLDLEVELWHITEFLAG) &&
+			((levelPrev & SC_FOLDLEVELNUMBERMASK) > (levelNow & SC_FOLDLEVELNUMBERMASK))) {
+			// See if should still be hidden   
 			wEditor.Call(SCI_SHOWLINES, line, line);
 		}
 	}
 }
+
+
 
 void SciTEBase::Expand(int &line, bool doExpand, bool force, int visLevels, int level) {
 	int lineMaxSubord = wEditor.Call(SCI_GETLASTCHILD, line, level & SC_FOLDLEVELNUMBERMASK);
@@ -3742,12 +3743,12 @@ void SciTEBase::EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy)
 	}
 }
 
-bool SciTEBase::MarginClick(int position, int modifiers) {
-	int lineClick = wEditor.Call(SCI_LINEFROMPOSITION, position);
-	if ((modifiers & SCMOD_SHIFT) && (modifiers & SCMOD_CTRL)) {
+bool SciTEBase::MarginClick(int position, int modifiers, GUI::ScintillaWindow *w) {
+	int lineClick = w->Call(SCI_LINEFROMPOSITION, position);
+	if ((modifiers & SCMOD_SHIFT) && (modifiers & SCMOD_CTRL)) { 
 		FoldAll();
 	} else {
-		int levelClick = wEditor.Call(SCI_GETFOLDLEVEL, lineClick);
+		int levelClick = w->Call(SCI_GETFOLDLEVEL, lineClick);
 		if (levelClick & SC_FOLDLEVELHEADERFLAG) {
 			if (modifiers & SCMOD_SHIFT) {
 				EnsureAllChildrenVisible(lineClick, levelClick);
@@ -3755,8 +3756,22 @@ bool SciTEBase::MarginClick(int position, int modifiers) {
 				ToggleFoldRecursive(lineClick, levelClick);
 			} else {
 				// Toggle this line
-				wEditor.Call(SCI_TOGGLEFOLD, lineClick);
+				w->Call(SCI_TOGGLEFOLD, lineClick);
 			}
+		}
+	}
+	if (!w->Call(SCI_GETLINEVISIBLE, w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONSTART))) ||
+		!w->Call(SCI_GETLINEVISIBLE, w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONEND)))){
+		int lineSel;
+		for (lineSel = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONSTART));
+			lineSel > 0 && !w->Call(SCI_GETLINEVISIBLE, lineSel);
+			lineSel = w->Call(SCI_GETFOLDPARENT, lineSel))
+		{
+		}
+
+		if (w->Call(SCI_GETLINEVISIBLE, lineSel)){
+			w->Call(SCI_SETSELECTIONSTART, w->Call(SCI_POSITIONFROMLINE, lineSel));
+			w->Call(SCI_SETSELECTIONEND, w->Call(SCI_POSITIONFROMLINE, lineSel));
 		}
 	}
 	return true;
@@ -4067,7 +4082,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_MARGINCLICK: {
 			if (extender)
-				handled = extender->OnMarginClick();
+				handled = extender->OnMarginClick(notification->margin, notification->modifiers, int(wEditor.Call(SCI_LINEFROMPOSITION, notification->position)));
 			if (!handled) {
 //!-start-[SetBookmark]
 				if (notification->margin == 1) {
@@ -4082,26 +4097,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 					else if (notification->nmhdr.idFrom == IDM_FINDRESWIN)
 						w = &wFindRes;
 					else{
-						MarginClick(notification->position, notification->modifiers);
-						break;
+						w = &wEditor;
 					}
-									
-					int lineClick = w->Call(SCI_LINEFROMPOSITION, notification->position);
-					if ((notification->modifiers & SCMOD_SHIFT) && (notification->modifiers & SCMOD_CTRL)) {
-						FoldAll();
-					} else {
-						int levelClick = w->Call(SCI_GETFOLDLEVEL, lineClick);
-						if (levelClick & SC_FOLDLEVELHEADERFLAG) {
-							if (notification->modifiers & SCMOD_SHIFT) {
-								EnsureAllChildrenVisible(lineClick, levelClick);
-							} else if (notification->modifiers & SCMOD_CTRL) {
-								ToggleFoldRecursive(lineClick, levelClick);
-							} else {
-								// Toggle this line
-								w->Call(SCI_TOGGLEFOLD, lineClick);
-							}
-						}
-					}					
+					MarginClick(notification->position, notification->modifiers, w);					
 				}
 			}
 		}

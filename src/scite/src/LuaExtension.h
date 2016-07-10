@@ -40,7 +40,7 @@ public:
 	virtual bool OnMouseButtonUp(int modifiers); //!-add-[OnMouseButtonUp]
 	virtual bool OnHotSpotReleaseClick(int modifiers); //!-add-[OnHotSpotReleaseClick]
 	virtual bool OnUpdateUI();
-	virtual bool OnMarginClick();
+	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line);
 //!	virtual bool OnUserListSelection(int listType, const char *selection);
 	virtual bool OnUserListSelection(int listType, const char *selection, int id); //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item);

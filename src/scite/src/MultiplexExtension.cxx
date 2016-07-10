@@ -251,10 +251,10 @@ bool MultiplexExtension::OnUpdateUI() {
 	return handled;
 }
 
-bool MultiplexExtension::OnMarginClick() {
+bool MultiplexExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
 	bool handled = false;
 	for (int i = 0; i < extensionCount && !handled; ++i)
-		if (extensions[i]->OnMarginClick())
+	if (extensions[i]->OnMarginClick(margin, modif, line))
 			handled = true;
 	return handled;
 }
