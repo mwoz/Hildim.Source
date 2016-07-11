@@ -648,10 +648,12 @@ protected:
 	void SetLineNumberWidth();
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
-	void FoldChanged(int line, int levelNow, int levelPrev);
+	void FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w);
 	void FoldChanged(int position);
 	void Expand(int &line, bool doExpand, bool force = false,
-	        int visLevels = 0, int level = -1);
+		int visLevels = 0, int level = -1);
+	void Expand(GUI::ScintillaWindow *w, int &line, bool doExpand, bool force = false,
+		int visLevels = 0, int level = -1);
 	void FoldAll();
 	void CollapseOutput();
 	void ToggleFoldRecursive(int line, int level);

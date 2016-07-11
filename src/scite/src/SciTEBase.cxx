@@ -3621,28 +3621,28 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	}
 }
 
-void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev) {
-	int parentLine = wEditor.Call(SCI_GETFOLDPARENT, line);
-	if (wEditor.Call(SCI_GETFOLDEXPANDED, parentLine) && wEditor.Call(SCI_GETLINEVISIBLE, parentLine)){
+void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w) {
+	int parentLine = w->Call(SCI_GETFOLDPARENT, line);
+	if (w->Call(SCI_GETFOLDEXPANDED, parentLine) && w->Call(SCI_GETLINEVISIBLE, parentLine)){
 		if (levelNow & SC_FOLDLEVELHEADERFLAG) {
 			if (!(levelPrev & SC_FOLDLEVELHEADERFLAG)) {
 				// Adding a fold point.
-				wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
+				w->Call(SCI_SETFOLDEXPANDED, line, 1);
 				Expand(line, true, false, 0, levelPrev);
 			}
 		}
 		else if (levelPrev & SC_FOLDLEVELHEADERFLAG) {
-			if (!wEditor.Call(SCI_GETFOLDEXPANDED, line)) {
+			if (!w->Call(SCI_GETFOLDEXPANDED, line)) {
 				// Removing the fold from one that has been contracted so should expand
 				// otherwise lines are left invisible with no way to make them visible
-				wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-				Expand(line, true, false, 0, levelPrev);
+				w->Call(SCI_SETFOLDEXPANDED, line, 1);
+				Expand(w , line, true, false, 0, levelPrev);
 			}
 		}
 		if (!(levelNow & SC_FOLDLEVELWHITEFLAG) &&
 			((levelPrev & SC_FOLDLEVELNUMBERMASK) > (levelNow & SC_FOLDLEVELNUMBERMASK))) {
 			// See if should still be hidden   
-			wEditor.Call(SCI_SHOWLINES, line, line);
+			w->Call(SCI_SHOWLINES, line, line);
 		}
 	}
 }
@@ -3650,32 +3650,35 @@ void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev) {
 
 
 void SciTEBase::Expand(int &line, bool doExpand, bool force, int visLevels, int level) {
-	int lineMaxSubord = wEditor.Call(SCI_GETLASTCHILD, line, level & SC_FOLDLEVELNUMBERMASK);
+	Expand(&wEditor, line, doExpand, force, visLevels, level);
+}
+void SciTEBase::Expand(GUI::ScintillaWindow *w, int &line, bool doExpand, bool force, int visLevels, int level) {
+	int lineMaxSubord = w->Call(SCI_GETLASTCHILD, line, level & SC_FOLDLEVELNUMBERMASK);
 	line++;
 	while (line <= lineMaxSubord) {
 		if (force) {
 			if (visLevels > 0)
-				wEditor.Call(SCI_SHOWLINES, line, line);
+				w->Call(SCI_SHOWLINES, line, line);
 			else
-				wEditor.Call(SCI_HIDELINES, line, line);
+				w->Call(SCI_HIDELINES, line, line);
 		} else {
 			if (doExpand)
-				wEditor.Call(SCI_SHOWLINES, line, line);
+				w->Call(SCI_SHOWLINES, line, line);
 		}
 		int levelLine = level;
 		if (levelLine == -1)
-			levelLine = wEditor.Call(SCI_GETFOLDLEVEL, line);
+			levelLine = w->Call(SCI_GETFOLDLEVEL, line);
 		if (levelLine & SC_FOLDLEVELHEADERFLAG) {
 			if (force) {
 				if (visLevels > 1)
-					wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
+					w->Call(SCI_SETFOLDEXPANDED, line, 1);
 				else
-					wEditor.Call(SCI_SETFOLDEXPANDED, line, 0);
+					w->Call(SCI_SETFOLDEXPANDED, line, 0);
 				Expand(line, doExpand, force, visLevels - 1);
 			} else {
 				if (doExpand) {
-					if (!wEditor.Call(SCI_GETFOLDEXPANDED, line))
-						wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
+					if (!w->Call(SCI_GETFOLDEXPANDED, line))
+						w->Call(SCI_SETFOLDEXPANDED, line, 1);
 					Expand(line, true, force, visLevels - 1);
 				} else {
 					Expand(line, false, force, visLevels - 1);
@@ -4074,9 +4077,11 @@ void SciTEBase::Notify(SCNotification *notification) {
 		if (notification->linesAdded && lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
 
-		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD)) {
+		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD) && notification->nmhdr.idFrom != IDM_FINDRESWIN) {
+			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - в будущем могут быть еще варианты
+
 			FoldChanged(notification->line,
-			        notification->foldLevelNow, notification->foldLevelPrev);
+			        notification->foldLevelNow, notification->foldLevelPrev, w);
 		}
 		break;
 
@@ -4106,7 +4111,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_NEEDSHOWN: {
-			EnsureRangeVisible(notification->position, notification->position + notification->length, false);
+			if (notification->nmhdr.idFrom == IDM_SRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
 		}
 		break;
 
