@@ -2957,9 +2957,9 @@ static int winTreeMapMethod(Ihandle* ih)
   }
 
   /* Initialize the default images */
-  ih->data->def_image_leaf = (void*)winTreeGetImageIndex(ih, "IMGLEAF");
-  ih->data->def_image_collapsed = (void*)winTreeGetImageIndex(ih, "IMGCOLLAPSED");
-  ih->data->def_image_expanded = (void*)winTreeGetImageIndex(ih, "IMGEXPANDED");
+  ih->data->def_image_leaf = (void*)winTreeGetImageIndex(ih, iupAttribGetStr(ih, "IMAGELEAF"));
+  ih->data->def_image_collapsed = (void*)winTreeGetImageIndex(ih, iupAttribGetStr(ih, "IMAGEBRANCHCOLLAPSED"));
+  ih->data->def_image_expanded = (void*)winTreeGetImageIndex(ih, iupAttribGetStr(ih, "IMAGEBRANCHEXPANDED"));
 
   if (ih->data->show_toggle)
   {
@@ -3081,7 +3081,6 @@ void iupdrvTreeInitClass(Iclass* ic)
   iupClassRegisterAttributeId(ic, "DEPTH",  winTreeGetDepthAttrib,  NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "KIND",   winTreeGetKindAttrib,   NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "PARENT", winTreeGetParentAttrib, NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
-  iupClassRegisterAttributeId(ic, "NAME",   winTreeGetTitleAttrib,  winTreeSetTitleAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TITLE",  winTreeGetTitleAttrib,  winTreeSetTitleAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "CHILDCOUNT", winTreeGetChildCountAttrib, NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "COLOR", winTreeGetColorAttrib, winTreeSetColorAttrib, IUPAF_NO_INHERIT);

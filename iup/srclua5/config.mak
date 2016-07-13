@@ -59,7 +59,7 @@ CTRLUA = button.lua canvas.lua dialog.lua colordlg.lua clipboard.lua \
        sbox.lua scrollbox.lua split.lua spin.lua spinbox.lua cbox.lua \
        radio.lua val.lua tabs.lua fontdlg.lua tree.lua progressbar.lua \
        messagedlg.lua progressdlg.lua backgroundbox.lua flatbutton.lua \
-       animatedlabel.lua calendar.lua datepick.lua
+       animatedlabel.lua calendar.lua datepick.lua param.lua parambox.lua
 
 GC := $(addsuffix .c, $(basename $(CTRLUA)))
 GC := $(addprefix elem/il_, $(GC))
@@ -69,5 +69,5 @@ SRCLUA = iuplua.lua constants.lua iup_config.lua $(CTRLUA)
 $(GC) : elem/il_%.c : elem/%.lua generator.lua
 	$(LUABIN) generator.lua $<
 
-SRC = iuplua.c iuplua_api.c iuplua_tree_aux.c iuplua_scanf.c \
+SRC = iuplua.c iuplua_api.c iuplua_draw.c iuplua_tree_aux.c iuplua_scanf.c \
       iuplua_getparam.c iuplua_getcolor.c iuplua_config.c $(GC)

@@ -320,6 +320,7 @@ static void winButtonDrawText(Ihandle* ih, HDC hDC, int rect_width, int rect_hei
 
 static void winButtonDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 { 
+  int has_border = 1;
   HDC hDC;
   iupwinBitmapDC bmpDC;
   int border, draw_border;
@@ -343,9 +344,12 @@ static void winButtonDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 
   border = winButtonGetBorder();
 
-  if (ih->data->type&IUP_BUTTON_IMAGE && 
-      iupAttribGet(ih, "IMPRESS") && 
+  if (ih->data->type & IUP_BUTTON_IMAGE &&
+      iupAttribGet(ih, "IMPRESS") &&
       !iupAttribGetBoolean(ih, "IMPRESSBORDER"))
+    has_border = 0;
+
+  if (!has_border)
   {
     draw_border = 0;
   }
@@ -377,7 +381,7 @@ static void winButtonDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
       iupAttribGetBoolean(ih, "CANFOCUS"))
   {
     border--;
-    iupdrvDrawFocusRect(ih, hDC, border, border, width-2*border, height-2*border);
+    iupdrvPaintFocusRect(ih, hDC, border, border, width - 2 * border, height - 2 * border);
   }
 
   iupwinDrawDestroyBitmapDC(&bmpDC);

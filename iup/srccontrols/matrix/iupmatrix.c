@@ -1220,7 +1220,29 @@ static int iMatrixSetTypeAttrib(Ihandle* ih, int lin, int col, const char* value
 
 static int iMatrixSetFontAttrib(Ihandle* ih, int lin, int col, const char* value)
 {
+  if (lin == IUP_INVALID_ID && col == IUP_INVALID_ID)  /* empty id */
+  {
+    if (!value)
+      value = IupGetGlobal("DEFAULTFONT");
+    iupdrvSetFontAttrib(ih, value);
+    iupAttribSetStr(ih, "FONT", value);
+    return 1;
+  }
+
   return iMatrixSetFlagsAttrib(ih, lin, col, value, IMAT_HAS_FONT);
+}
+
+static char* iMatrixGetFontAttrib(Ihandle* ih, int lin, int col)
+{
+  if (lin == IUP_INVALID_ID && col == IUP_INVALID_ID)  /* empty id */
+  {
+    char* value = iupAttribGetInherit(ih, "FONT");
+    if (!value)
+      return IupGetGlobal("DEFAULTFONT");
+    else
+      return value;
+  }
+  return NULL;
 }
 
 static int iMatrixSetFrameHorizColorAttrib(Ihandle* ih, int lin, int col, const char* value)
@@ -1235,13 +1257,6 @@ static int iMatrixSetFrameVertColorAttrib(Ihandle* ih, int lin, int col, const c
   if (value)
     ih->data->checkframecolor = 1;
   return iMatrixSetFlagsAttrib(ih, lin, col, value, IMAT_HAS_FRAMEVERTCOLOR);
-}
-
-static char* iMatrixGetFontAttrib(Ihandle* ih, int lin, int col)
-{
-  if (lin==IUP_INVALID_ID && col==IUP_INVALID_ID)  /* empty id */
-    return iupGetFontAttrib(ih);
-  return NULL;
 }
 
 static char* iMatrixGetBgColorAttrib(Ihandle* ih, int lin, int col)
@@ -1323,15 +1338,6 @@ static char* iMatrixGetNumColVisibleAttrib(Ihandle* ih)
 static char* iMatrixGetNumLinVisibleAttrib(Ihandle* ih)
 {
   return iupStrReturnInt(ih->data->lines.last - ih->data->lines.first);
-}
-
-static char* iMatrixGetMaskDataAttrib(Ihandle* ih)
-{
-  /* Used only by the OLD iupmask API */
-  if (ih->data->editing)
-    return IupGetAttribute(ih->data->datah,"OLD_MASK_DATA");
-  else
-    return NULL;
 }
 
 static int iMatrixSetActiveAttrib(Ihandle* ih, const char* value)
@@ -1780,8 +1786,8 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttributeId2(ic, "TOGGLEVALUE", NULL, (IattribSetId2Func)iMatrixSetNeedRedraw, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId2(ic, "ALIGN", NULL, (IattribSetId2Func)iMatrixSetNeedRedraw, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TOGGLECENTERED", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "TOGGLEMAGEON", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME|IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "TOGGLEMAGEOFF", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TOGGLEIMAGEON", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TOGGLEIMAGEOFF", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
 
 
   /* IupMatrix Attributes - COLUMN */
@@ -1867,9 +1873,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttribute(ic, "RESIZEMATRIXCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "102 102 102", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HIDEFOCUS", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWFILLVALUE", iMatrixGetShowFillValueAttrib, iMatrixSetShowFillValueAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
-
-  /* IupMatrix Attributes - MASK (DEPRECATED) */
-  iupClassRegisterAttribute(ic, "OLD_MASK_DATA", iMatrixGetMaskDataAttrib, NULL, NULL, NULL, IUPAF_NO_STRING|IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TYPECOLORINACTIVE", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "CLASSUPDATE", NULL, (IattribSetFunc)iMatrixSetClassUpdate, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   
@@ -1893,45 +1897,5 @@ Ihandle* IupMatrix(const char* action)
   params[0] = (void*)action;
   params[1] = NULL;
   return IupCreatev("matrix", params);
-}
-
-/***********************************************************************/
-
-/* DEPRECATED backward compatibility */
-
-void IupMatSetAttribute(Ihandle* ih, const char* name, int lin, int col, const char* value)
-{
-  IupSetAttributeId2(ih, name, lin, col, value);
-}
-
-void IupMatStoreAttribute(Ihandle* ih, const char* name, int lin, int col, const char* value)
-{
-  IupStoreAttributeId2(ih, name, lin, col, value);
-}
-
-char* IupMatGetAttribute(Ihandle* ih, const char* name, int lin, int col)
-{
-  return IupGetAttributeId2(ih, name, lin, col);
-}
-
-int IupMatGetInt(Ihandle* ih, const char* name, int lin, int col)
-{
-  return IupGetIntId2(ih, name, lin, col);
-}
-
-float IupMatGetFloat(Ihandle* ih, const char* name, int lin, int col)
-{
-  return IupGetFloatId2(ih, name, lin, col);
-}
-
-void IupMatSetfAttribute(Ihandle* ih, const char* name, int lin, int col, const char* f, ...)
-{
-  int size;
-  char* value = iupStrGetLargeMem(&size);
-  va_list arglist;
-  va_start(arglist, f);
-  vsnprintf(value, size, f, arglist);
-  va_end(arglist);
-  IupStoreAttributeId2(ih, name, lin, col, value);
 }
 

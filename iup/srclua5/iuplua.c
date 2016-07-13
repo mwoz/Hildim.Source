@@ -1281,6 +1281,7 @@ int iuplua_open(lua_State * L)
 
   /* Iup Modules initialization */
   iupbuttonlua_open(L);
+  iupluadraw_open(L);  /* must be before canvas */
   iupcanvaslua_open(L);
   iupdialoglua_open(L);
   iupfilllua_open(L);

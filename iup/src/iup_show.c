@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-#include <Windows.h>
 
 #include "iup.h"
 
@@ -20,27 +19,6 @@
 #include "iup_str.h"
 #include "iup_drv.h"
 #include "iup_drvfont.h"
-
-void SciTE_NATIVEPARENT(Ihandle *ih)
-{
-	if (!IupGetAttribute(ih, "PARENT") && !IupGetAttribute(ih, "NATIVEPARENT"))
-	{
-		HWND hwnd = NULL;
-
-		DWORD p = GetCurrentProcessId();
-
-		for (;;){
-			hwnd = FindWindowEx(NULL, hwnd, "HildiMWindow", NULL);
-			DWORD d = 0;
-			GetWindowThreadProcessId(hwnd, &d);
-			if (d == p) break;
-			if (!hwnd) break;
-		}
-		if (hwnd){
-			IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
-		}
-	}
-}
 
 
 void IupUnmap(Ihandle *ih)
@@ -98,7 +76,7 @@ int IupMap(Ihandle* ih)
     /* does nothing if not a dialog and already mapped */
     return IUP_NOERROR;
   }
-  SciTE_NATIVEPARENT(ih);
+
   /* parent must be mapped to map child */
   if (ih->parent && !(ih->parent->handle))
     return IUP_ERROR;
@@ -114,7 +92,7 @@ int IupMap(Ihandle* ih)
   if (ih->iclass->nativetype != IUP_TYPEVOID &&
       ih->iclass->nativetype != IUP_TYPEIMAGE &&
       ih->iclass->nativetype != IUP_TYPEMENU)
-    iupUpdateStandardFontAttrib(ih);
+    iupUpdateFontAttrib(ih);
 
   /* ensure attributes default values, at this time only the ones that need to be set after map */
   iupClassObjectEnsureDefaultAttributes(ih);
@@ -180,7 +158,7 @@ int IupPopup(Ihandle *ih, int x, int y)
     return ret;
 
   if (ih->iclass->nativetype == IUP_TYPEDIALOG)
-      ret = iupDialogPopup(ih, x, y);
+    ret = iupDialogPopup(ih, x, y);
   else
     ret = iupMenuPopup(ih, x, y);
 
@@ -231,7 +209,6 @@ int IupShow(Ihandle* ih)
     IupSetAttribute(ih, "VISIBLE", "YES");
   else   
   {
-	//SciTE_NATIVEPARENT(ih);
     int ret = IupMap(ih);
     if (ret == IUP_ERROR) 
       return ret;

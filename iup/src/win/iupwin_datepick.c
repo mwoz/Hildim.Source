@@ -79,9 +79,9 @@ static char* winDatePickGetValueAttrib(Ihandle* ih)
   return iupStrReturnStrf("%d/%d/%d", st.wYear, st.wMonth, st.wDay);
 }
 
-static int winDatePickSetStandardFontAttrib(Ihandle* ih, const char* value)
+static int winDatePickSetFontAttrib(Ihandle* ih, const char* value)
 {
-  iupdrvSetStandardFontAttrib(ih, value);
+  iupdrvSetFontAttrib(ih, value);
 
   if (ih->handle)
   {
@@ -155,19 +155,42 @@ static int winDatePickSetOrderAttrib(Ihandle* ih, const char* value)
 
 /*********************************************************************************************/
 
+#if 0
+// We are changing the date in the Edit box, so sign it
+if (NULL == DateTime_GetMonthCal(hWndStartDate))
+bFirstEnter = true;
+// We are changing the date in the Month Control, we only handle the second notification
+else
+bFirstEnter = !bFirstEnter;
+
+if (bFirstEnter)
+{
+  Date = (LPNMDATETIMECHANGE)lParam;
+  if (Date->nmhdr.hwndFrom == hWndStartDate || Date->nmhdr.hwndFrom == hWndStartTime)
+  {
+    DateTime_SetRange(hWndStartDate, GDTR_MAX, &st);
+    DateTime_SetRange(hWndStartTime, GDTR_MAX, &st);
+    MessageBox(NULL, _T("hello"), _T("hello"), MB_OK);
+  }
+}
+#endif
+
 
 static int winDatePickWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)
 {
   if (msg_info->code == DTN_DATETIMECHANGE)
   {
-    char* old_value = iupAttribGet(ih, "_IUP_OLDVALUE");
-    char* value = winDatePickGetValueAttrib(ih);
-    if (!iupStrEqual(old_value, value))
+    HWND drop_down = (HWND)SendMessage(ih->handle, DTM_GETMONTHCAL, 0, 0);
+    if (drop_down && !iupAttribGet(ih, "_IUP_DROPFIRST"))
     {
-      /* when user uses the dropdown, notification is called twice */
-      iupBaseCallValueChangedCb(ih);
-      iupAttribSetStr(ih, "_IUP_OLDVALUE", value);
+      /* when user uses the dropdown, notification is called twice, avoid the first one */
+      iupAttribSet(ih, "_IUP_DROPFIRST", "1");
+      return 0;
     }
+
+    iupAttribSetStr(ih, "_IUP_DROPFIRST", NULL);
+
+    iupBaseCallValueChangedCb(ih);
   }
 
   (void)result;
@@ -261,7 +284,7 @@ Iclass* iupDatePickNewClass(void)
   /* Visual */
   iupBaseRegisterVisualAttrib(ic);
 
-  iupClassRegisterAttribute(ic, "STANDARDFONT", NULL, winDatePickSetStandardFontAttrib, IUPAF_SAMEASSYSTEM, "DEFAULTFONT", IUPAF_NO_SAVE | IUPAF_NOT_MAPPED);
+  iupClassRegisterAttribute(ic, "FONT", NULL, winDatePickSetFontAttrib, IUPAF_SAMEASSYSTEM, "DEFAULTFONT", IUPAF_NOT_MAPPED);  /* inherited */
 
   iupClassRegisterAttribute(ic, "VALUE", winDatePickGetValueAttrib, winDatePickSetValueAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TODAY", winDatePickGetTodayAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);

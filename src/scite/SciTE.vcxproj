@@ -74,7 +74,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)$(Configuration)\HildiM.exe</OutputFile>
-      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;./$(Configuration)/lua.lib;$(SolutionDir)\iup\cdlib\cd.lib;$(SolutionDir)\iup\cdlib\freetype6.lib;$(SolutionDir)\iup\cdlib\cdlua51.lib;$(SolutionDir)\iup\cdlib\cdcontextplus.lib;$(SolutionDir)\iup\cdlib\zlib1.lib;$(SolutionDir)\iup\lib\Debug\Lua51\iupluacontrols51.lib;$(SolutionDir)\iup\lib\Debug\Lua51\iuplua51.lib;$(SolutionDir)\iup\lib\Debug\iup.lib;$(SolutionDir)\iup\lib\Debug\iupcontrols.lib;$(SolutionDir)\iup\lib\Debug\iupcore.lib;$(SolutionDir)\iup\srcview\iupview\lib\iupluacd51.lib;$(SolutionDir)\iup\srcview\iupview\lib\iupcd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;./$(Configuration)/lua.lib;$(SolutionDir)\iup\cdlib\cd.lib;$(SolutionDir)\iup\cdlib\freetype6.lib;$(SolutionDir)\iup\cdlib\cdlua51.lib;$(SolutionDir)\iup\cdlib\cdcontextplus.lib;$(SolutionDir)\iup\cdlib\zlib1.lib;$(SolutionDir)iup\lib\Debug\Lua51\iupluacontrols51.lib;$(SolutionDir)\iup\lib\Debug\Lua51\iuplua51.lib;$(SolutionDir)\iup\lib\Debug\iup.lib;$(SolutionDir)\iup\lib\Debug\iupcontrols.lib;$(SolutionDir)\iup\lib\Debug\iupcore.lib;$(SolutionDir)\iup\srcview\iupview\lib\iupluacd51.lib;$(SolutionDir)\iup\srcview\iupview\lib\iupcd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>.\Debug/SciTE.pdb</ProgramDatabaseFile>
       <ProfileGuidedDatabase>$(OutDir)$(TargetName).pgd</ProfileGuidedDatabase>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>

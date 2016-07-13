@@ -22,7 +22,6 @@
 #include "../../iup/src/iup_stdcontrols.h"
 #include "../../iup/src/iup_layout.h"
 #include "../../iup/src/iup_childtree.h"
-#include "../../iup/src/iup_draw.h"
 #include "scite_sbox.h"
 
 #define ISBOX_THICK 5

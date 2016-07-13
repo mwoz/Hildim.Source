@@ -27,7 +27,7 @@
 #include "iup_image.h"
 #include "iup_array.h"
 #include "iup_assert.h"
-#include "iup_draw.h"
+#include "iup_drvdraw.h"
 #include "iup_childtree.h"
 
 #include "iupwin_drv.h"
@@ -576,7 +576,7 @@ static void winTabsDeleteItem(Ihandle* ih, int p, HWND tab_container)
 /* winTabs - Sets and Gets Attrib                                           */
 /* ------------------------------------------------------------------------- */
 
-static int winTabsSetPaddingAttrib(Ihandle* ih, const char* value)
+static int winTabsSetTabPaddingAttrib(Ihandle* ih, const char* value)
 {
   iupStrToIntInt(value, &ih->data->horiz_padding, &ih->data->vert_padding, 'x');
 
@@ -1240,7 +1240,7 @@ static void winTabsDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 
   /* If the item has the focus, draw the focus rectangle */
   if (drawitem->itemState & ODS_FOCUS)
-    iupdrvDrawFocusRect(ih, hDC, 0, 0, width, height);
+    iupdrvPaintFocusRect(ih, hDC, 0, 0, width, height);
 
   iupwinDrawDestroyBitmapDC(&bmpDC);
 }
@@ -1444,7 +1444,7 @@ void iupdrvTabsInitClass(Iclass* ic)
   iupClassRegisterAttributeId(ic, "TABTITLE", iupTabsGetTitleAttrib, winTabsSetTabTitleAttrib, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABIMAGE", NULL, winTabsSetTabImageAttrib, IUPAF_IHANDLENAME|IUPAF_NO_DEFAULTVALUE|IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABVISIBLE", iupTabsGetTabVisibleAttrib, winTabsSetTabVisibleAttrib, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "PADDING", iupTabsGetPaddingAttrib, winTabsSetPaddingAttrib, IUPAF_SAMEASSYSTEM, "0x0", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TABPADDING", iupTabsGetTabPaddingAttrib, winTabsSetTabPaddingAttrib, IUPAF_SAMEASSYSTEM, "0x0", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 
   /* necessary because transparent background does not work when not using visual styles */
   if (!iupwin_comctl32ver6)  /* Used by iupdrvImageCreateImage */
