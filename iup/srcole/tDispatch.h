@@ -14,6 +14,7 @@
 class tDispatch : public IDispatch  
 {
 public:
+		DWORD m_DLCONTROL_Flag;
     protected:
         ULONG           m_cRef;
         class tOleHandler  *m_pTen;

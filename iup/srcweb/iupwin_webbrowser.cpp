@@ -49,50 +49,6 @@ static CComModule* iweb_module = NULL;
 #define OLECMDID_OPTICAL_ZOOM (OLECMDID)63
 #endif
 
-class WebPreview : public IWebBrowser2
-{
-public:
-	void NotifyControl();
-
-	long m_Prop;
-	// Implementation
-public:
-	virtual ~WebPreview();
-	virtual /* [local] */ HRESULT STDMETHODCALLTYPE Invoke(
-		/* [in] */ DISPID dispIdMember,
-		/* [in] */ REFIID riid,
-		/* [in] */ LCID lcid,
-		/* [in] */ WORD wFlags,
-		/* [out][in] */ DISPPARAMS *pDispParams,
-		/* [out] */ VARIANT *pVarResult,
-		/* [out] */ EXCEPINFO *pExcepInfo,
-		/* [out] */ UINT *puArgErr) = 0;
-protected:
-};
-
-HRESULT STDMETHODCALLTYPE WebPreview::Invoke(DISPID dispidMember, REFIID riid,
-	LCID lcid, WORD wFlags,
-	DISPPARAMS* pDispParams,
-	VARIANT* pvarResult,
-	EXCEPINFO* pExcepInfo,
-	UINT* puArgErr)
-{
-	switch (dispidMember)
-	{
-	case DISPID_AMBIENT_DLCONTROL:
-
-		pvarResult->vt = VT_I4;
-		pvarResult->lVal = DLCTL_DLIMAGES | DLCTL_VIDEOS | DLCTL_NO_SCRIPTS;
-		break;
-
-	default:
-		return DISP_E_MEMBERNOTFOUND;
-	}
-
-	return S_OK;
-}
-
-
 interface CSink:public IDispEventImpl<0, CSink, &DIID_DWebBrowserEvents2, &LIBID_SHDocVw, 1, 0>
 {
 public:
