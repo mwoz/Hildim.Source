@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <LUA_SUFFIX>5.1</LUA_SUFFIX>
+    <LUACOM_VERSION>1.4</LUACOM_VERSION>
+    <LUA_BINDIR>..\..\lua5.1\bin</LUA_BINDIR>
+    <LUAC>$(LUA) ..\mak\luac.exe</LUAC>
+    <BIN2C>$(LUA) ..\mak\bin2c.exe</BIN2C>
+    <LUA>$(LUA_BINDIR)\lua$(LUA_SUFFIX).exe</LUA>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(lua2cBeforeTargets)' == '' and '$(lua2cAfterTargets)' == '' and '$(ConfigurationType)' != 'Makefile'">
+    <lua2cBeforeTargets>Midl</lua2cBeforeTargets>
+    <lua2cAfterTargets>CustomBuild</lua2cAfterTargets>
+  </PropertyGroup>
+  <PropertyGroup>
+    <lua2cDependsOn Condition="'$(ConfigurationType)' != 'Makefile'">_SelectedFiles;$(lua2cDependsOn)</lua2cDependsOn>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+    <_PropertySheetDisplayName>LuaCOM Properties</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemGroup>
+    <BuildMacro Include="LUA_SUFFIX">
+      <Value>$(LUA_SUFFIX)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUACOM_VERSION">
+      <Value>$(LUACOM_VERSION)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUA_BINDIR">
+      <Value>$(LUA_BINDIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUAC">
+      <Value>$(LUAC)</Value>
+    </BuildMacro>
+    <BuildMacro Include="BIN2C">
+      <Value>$(BIN2C)</Value>
+    </BuildMacro>
+    <BuildMacro Include="LUA">
+      <Value>$(LUA)</Value>
+    </BuildMacro>
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <lua2c>
+      <OutputFile>$(OutDir)..\src\library\%(Filename).loh</OutputFile>
+      <CommandLineTemplate>$(LUAC) -o $(IntDir)tmp.lo [inputs] &amp;&amp; $(BIN2C) $(IntDir)tmp.lo &gt; ..\src\library\%(Filename).loh</CommandLineTemplate>
+      <Outputs>[OutputFile]</Outputs>
+      <ExecutionDescription>Compiling Lua to C: [inputs] -&gt; $(OutputFile)</ExecutionDescription>
+    </lua2c>
+  </ItemDefinitionGroup>
+</Project>
