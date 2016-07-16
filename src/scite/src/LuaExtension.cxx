@@ -32,6 +32,7 @@ extern "C" {
 #include "iupcontrols.h"
 #include "iupluacontrols.h"
 #include "iupluaweb.h"
+#include "iupluaole.h"
 #include "..\..\iup\src\iup_key.h"
 #include "scite_detachbox.h"
 #include "scite_sbox.h"
@@ -1750,6 +1751,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	// ...register standard libraries
 	luaL_openlibs(luaState);
 	iuplua_open(luaState);
+	iupolelua_open(luaState);
 	iupweblua_open(luaState);
 	Iupsc_DetachBoxOpen();
 	iupsc_detachboxlua_open(luaState);

@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9B245550-2DC3-4A2E-870B-9E165EDC3916}</ProjectGuid>
+    <RootNamespace>makvs2005</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="luacom.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="luacom.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="luacom.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../../lua5.1/include;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MAKVS2005_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)lualib\lib\HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)</OutputFile>
+      <AdditionalLibraryDirectories>../../lua5.1/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>../../../lua5.1/include;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MAKVS2005_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)lualib\lib\HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)</OutputFile>
+      <AdditionalLibraryDirectories>../../lua5.1/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\library\LuaAux.cpp" />
+    <ClCompile Include="..\src\library\luabeans.cpp" />
+    <ClCompile Include="..\src\library\luacom.cpp" />
+    <ClCompile Include="..\src\dll\luacom_dll.cpp" />
+    <ClCompile Include="..\src\library\LuaCompat.cpp" />
+    <ClCompile Include="..\src\library\tCOMUtil.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOM.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOMClassFactory.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOMConnPoints.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOMEnumerator.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOMException.cpp" />
+    <ClCompile Include="..\src\library\tLuaCOMTypeHandler.cpp" />
+    <ClCompile Include="..\src\library\tLuaControl.cpp" />
+    <ClCompile Include="..\src\library\tLuaDispatch.cpp" />
+    <ClCompile Include="..\src\library\tLuaObject.cpp" />
+    <ClCompile Include="..\src\library\tLuaObjList.cpp" />
+    <ClCompile Include="..\src\library\tLuaTLB.cpp" />
+    <ClCompile Include="..\src\library\tLuaVector.cpp" />
+    <ClCompile Include="..\src\library\tStringBuffer.cpp" />
+    <ClCompile Include="..\src\library\tUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\library\LuaAux.h" />
+    <ClInclude Include="..\src\library\luabeans.h" />
+    <ClInclude Include="..\src\dll\luacom_dll.h" />
+    <ClInclude Include="..\src\library\luacom_internal.h" />
+    <ClInclude Include="..\src\library\LuaCompat.h" />
+    <ClInclude Include="..\src\library\tCOMUtil.h" />
+    <ClInclude Include="..\src\library\tLuaCOM.h" />
+    <ClInclude Include="..\src\library\tLuaCOMClassFactory.h" />
+    <ClInclude Include="..\src\library\tLuaCOMConnPoints.h" />
+    <ClInclude Include="..\src\library\tLuaCOMEnumerator.h" />
+    <ClInclude Include="..\src\library\tLuaCOMException.h" />
+    <ClInclude Include="..\src\library\tLuaCOMTypeHandler.h" />
+    <ClInclude Include="..\src\library\tLuaControl.h" />
+    <ClInclude Include="..\src\library\tLuaDispatch.h" />
+    <ClInclude Include="..\src\library\tLuaObject.h" />
+    <ClInclude Include="..\src\library\tLuaObjList.h" />
+    <ClInclude Include="..\src\library\tLuaTLB.h" />
+    <ClInclude Include="..\src\library\tLuaVector.h" />
+    <ClInclude Include="..\src\library\tStringBuffer.h" />
+    <ClInclude Include="..\src\library\tUtil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\dll\luacom_dll.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <lua2c Include="..\src\library\luacom5.lua">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
+    </lua2c>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="luacom.targets" />
+  </ImportGroup>
+</Project>
