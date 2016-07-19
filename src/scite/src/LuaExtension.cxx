@@ -2623,9 +2623,9 @@ bool LuaExtension::OnMouseButtonUp(int modifiers) {
 }
 //!-end-[OnMouseButtonUp]
 
-bool LuaExtension::OnUpdateUI() {
+bool LuaExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag) {
 	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
-	return CallNamedFunction("OnUpdateUI");
+	return CallNamedFunction("OnUpdateUI", bModified, bSelChange, flag);
 }
 
 bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {

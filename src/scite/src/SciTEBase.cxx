@@ -4052,7 +4052,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_UPDATEUI:
 		if (extender && notification->nmhdr.idFrom == IDM_SRCWIN)
-			handled = extender->OnUpdateUI();
+			handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)<<4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 		if (!handled) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN);
 			if (notification->nmhdr.idFrom == IDM_SRCWIN) {

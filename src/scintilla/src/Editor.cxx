@@ -2562,7 +2562,7 @@ static inline int MovePositionForDeletion(int position, int startDeletion, int l
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate(SC_UPDATE_CONTENT);
+	ContainerNeedsUpdate(SC_UPDATE_CONTENT | (mh.modificationType << 4));
 	if (paintState == painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -4972,7 +4972,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case tickScroll:
 			// Auto scroll
-			ButtonMove(ptMouseLast);
+			//ButtonMove(ptMouseLast);		- Убрано для перехода по Shift+Click - иначе сбивается выделение
 			break;
 		case tickWiden:
 			SetScrollBars();

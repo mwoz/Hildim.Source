@@ -160,8 +160,8 @@ bool SingleThreadExtension::OnMouseButtonUp(int modifiers){
 }
 //!-end-[OnMouseButtonUp]
 
-bool SingleThreadExtension::OnUpdateUI() {
-	return ext->OnUpdateUI();
+bool SingleThreadExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag) {
+	return ext->OnUpdateUI(bModified, bSelChange, flag);
 }
 
 bool SingleThreadExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {

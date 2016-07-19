@@ -39,7 +39,7 @@ public:
 	virtual bool OnClick(int modifiers); //!-add-[OnClick]
 	virtual bool OnMouseButtonUp(int modifiers); //!-add-[OnMouseButtonUp]
 	virtual bool OnHotSpotReleaseClick(int modifiers); //!-add-[OnHotSpotReleaseClick]
-	virtual bool OnUpdateUI();
+	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line);
 //!	virtual bool OnUserListSelection(int listType, const char *selection);
 	virtual bool OnUserListSelection(int listType, const char *selection, int id); //!-change-[UserListItemID]

@@ -169,6 +169,7 @@ int ScintillaBase::KeyCommand(unsigned int iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case SCI_TAB:
+		case SCI_BACKTAB:
 			AutoCompleteCompleted(0, SC_AC_TAB);
 			return 0;
 		case SCI_NEWLINE:
