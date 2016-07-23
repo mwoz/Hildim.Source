@@ -277,7 +277,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;SCI_LEXER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
