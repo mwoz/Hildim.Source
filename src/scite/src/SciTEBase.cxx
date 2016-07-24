@@ -4824,7 +4824,21 @@ void SciTEBase::Trace(const char *s) {
 }
 
 char *SciTEBase::Property(const char *key) {
-	SString value = props.GetExpanded(key);
+	SString value;
+	if (key[strlen(key) - 1] == '$'){
+		char *key2 = new char[strlen(key) + 1];
+		strcpy(key2, key);
+		key2[strlen(key) - 1] = '.';
+		value = props.GetNewExpand(key2, ExtensionFileName().c_str());
+		if (value.length() == 0){
+			key2[strlen(key) - 1] = 0;
+			value = props.GetExpanded(key2);
+		}
+		delete key2;
+	}
+	else{
+		value = props.GetExpanded(key);
+	}
 	char *retval = new char[value.length() + 1];
 	strcpy(retval, value.c_str());
 	return retval;
