@@ -821,6 +821,11 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 		// Call InternalGrep in a new thread
 		// searchParams is "(w|~)(c|~)(d|~)(b|r|~)(s|~)\0files\0text"
 		// A "w" indicates whole word, "c" case sensitive, "d" dot directories, "b" binary files
+		
+		if (jobQueue.IsExecuting()){	 
+			jobQueue.SetContinueSearch(false);
+			return -1;
+		}
 		SString searchParams;
 
 		searchParams.append(sParams);
@@ -834,11 +839,13 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 		//AddCommand(findCommand,
 		//	props.Get("find.directory"),
 		//	jobCLI, findInput, flags);
+		
 		return -1;
 
 	}
 	if (jobQueue.commandCurrent > 0) {
 		MakeOutputVisible(wFindRes);
+		jobQueue.SetContinueSearch(true);
 		Execute();
 	}
 	return 1;

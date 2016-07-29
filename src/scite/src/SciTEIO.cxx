@@ -1180,7 +1180,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 	size_t searchLength = strlen(searchString);
 	SString os;
 	lua_State *luaState = (lua_State*) pluaState;
-	for (size_t i = 0; i < files.Length(); i ++) {
+	for (size_t i = 0; (i < files.Length())&&jobQueue.ContinueSearch(); i ++) {
 		FilePath fPath = files.At(i);
 		grepOut->iFiles += 1;
 		bool bFindInFiles = false;
@@ -1245,7 +1245,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		}
 	}
 	if (gf & grepSubDir){
-		for (size_t j = 0; j < directories.Length(); j++) {
+		for (size_t j = 0; (j < directories.Length()) && jobQueue.ContinueSearch(); j++) {
 			FilePath fPath = directories.At(j);
 			if ((gf & grepDot) || (fPath.Name().AsInternal()[0] != '.')) {
 				GrepRecursive(gf, fPath, searchString, fileTypes, basePath, grepOut, pluaState);
@@ -1303,6 +1303,9 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		if (jobQueue.TimeCommands()) {
 			os += "    Time: ";
 			os += SString(commandTime.Duration(), 3);
+		}
+		if (!jobQueue.ContinueSearch()){
+			os += " (Cancelled)";
 		}
 		os += "    Lines: ";
 		os += SString(grepOut.iLines);

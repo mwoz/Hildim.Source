@@ -52,13 +52,15 @@ public:
 	bool clearBeforeExecute;
 	bool isBuilding;
 	bool isBuilt;
-	bool executing;
+	bool executing;	
+	bool continueSearch;
 	enum { commandMax = 2 };
 	int commandCurrent;
 	Job jobQueue[commandMax];
 	bool jobUsesOutputPane;
 	long cancelFlag;
 	bool timeCommands;
+	
 
 	JobQueue() {
 		mutex = Mutex::Create();
@@ -70,11 +72,22 @@ public:
 		jobUsesOutputPane = false;
 		cancelFlag = 0L;
 		timeCommands = false;
+		continueSearch = true;
 	}
 
 	~JobQueue() {
 		delete mutex;
 		mutex = 0;
+	}
+
+	bool ContinueSearch() const{
+		Lock lock(mutex);
+		return continueSearch;
+	}
+
+	void SetContinueSearch(bool state) {
+		Lock lock(mutex);
+		continueSearch = state;
 	}
 
 	bool TimeCommands() const {
