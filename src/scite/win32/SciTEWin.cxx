@@ -2289,7 +2289,9 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 	
 	if (wParam == WM_MOUSEMOVE){	 
 		LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
-		extender->OnMouseHook(mh->pt.x, mh->pt.y);
+		RECT area;
+		SystemParametersInfoA(SPI_GETWORKAREA, 0, &area, 0);
+		extender->OnMouseHook(mh->pt.x - area.left, mh->pt.y - area.top);
 	}
 	else if (wParam == WM_KEYUP) {
 		extender->OnMouseHook(-70000, lParam);

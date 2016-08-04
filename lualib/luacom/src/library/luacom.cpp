@@ -1229,6 +1229,12 @@ static int luacom_GetIUnknown(lua_State *L)
 }
 
 
+static int luacom_SkipCheckError(lua_State *L)
+{
+	tLuaCOM* obj = (tLuaCOM *)LuaBeans::check_tag(L, 1);
+	obj->bSkipCheckError = true;
+	return 0;
+}
 static int luacom_GetTypeInfo(lua_State *L)
 {
   // check parameters
@@ -2164,7 +2170,8 @@ static struct luaL_Reg functions_tb []=
   {"GetCurrentDirectory", luacom_GetCurrentDirectory},
   {"DetectAutomation", luacom_LuaDetectAutomation},
   {"StartMessageLoop", luacom_StartMessageLoop},
-  {"RoundTrip", luacom_RoundTrip},
+  { "RoundTrip", luacom_RoundTrip },
+  { "SkipCheckError", luacom_SkipCheckError },
   {NULL, NULL}
 };
   

@@ -45,6 +45,7 @@ public:
   ITypeInfo* GetTypeInfo(void);
   CLSID GetCLSID(void);
   void GetIID(IID *piid);
+  bool bSkipCheckError = false;
   IDispatch * GetIDispatch(void);
   void ReleaseFuncDesc(FUNCDESC *pfuncdesc);
   ITypeInfo * GetDefaultEventsInterface(void);

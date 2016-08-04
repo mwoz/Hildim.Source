@@ -333,8 +333,9 @@ int tLuaCOM::call(lua_State* L,
 
    //hr = S_OK;
 
-   if(SUCCEEDED(hr))
+   if (SUCCEEDED(hr) || bSkipCheckError)
    {
+	   bSkipCheckError = false;
      try
      {
        // pushes first return value (if any)
