@@ -3886,7 +3886,7 @@ void SciTEBase::NewLineInOutput() {
 	}
 	else
 	{
-		wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Concole OFF. Type ###c for Command Line, ###l for LUA, ###i for interface\n"));
+		wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Concole OFF. Type ###c for Command Line, ###l for LUA, ###p for print LUA values, ###i for interface\n"));
 	}
 }
 

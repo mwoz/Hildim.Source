@@ -791,7 +791,6 @@
 #define LANG_YI                         0x78
 #define IDM_MRU_SEP                     120
 #define VK_F10                          0x79
-#define IDI_ICON1                       121
 #define VK_F11                          0x7A
 #define LANG_MAPUDUNGUN                 0x7a
 #define VK_F12                          0x7B
