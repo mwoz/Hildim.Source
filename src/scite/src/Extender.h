@@ -45,6 +45,7 @@ public:
 	virtual void SetOverrideLanguage(const char *lexer, bool bFireEvent) = 0;
 	virtual bool SwitchMouseHook(bool bSet) = 0;
 	virtual void RunInConcole() = 0;
+	virtual void ExecuteHelp(const char *cmd, int hh_cmd) = 0;
 };
 
 /**

@@ -696,7 +696,6 @@ protected:
 
 	JobSubsystem SubsystemType(char c);
 	JobSubsystem SubsystemType(const char *cmd, int item = -1);
-	void ToolsMenu(int item);
 
 	void AssignKey(int key, int mods, int cmd);
 	void ViewWhitespace(bool view);

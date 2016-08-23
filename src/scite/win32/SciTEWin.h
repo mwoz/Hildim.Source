@@ -271,7 +271,7 @@ protected:
 	virtual void ShowTabBar();
 	virtual void ShowStatusBar();
 	virtual void ActivateWindow(const char *timestamp);
-	void ExecuteHelp(const char *cmd);
+	void ExecuteHelp(const char *cmd, int hh_cmd = 0x000d);
 	void ExecuteOtherHelp(const char *cmd);
 	void CopyAsRTF();
 	void FullScreenToggle();

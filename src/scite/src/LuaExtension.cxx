@@ -593,7 +593,14 @@ static int sf_SetOverrideLanguage(lua_State* L){
 	host->SetOverrideLanguage(lexer, true);
 	return 0;
 }
-	
+
+static int sf_ExecuteHelp(lua_State* L){
+	const char * cmd = luaL_checkstring(L, 1);
+	int hh_cmd = luaL_checkint(L, 2);
+	host->ExecuteHelp(cmd, hh_cmd);
+	return 0;
+}
+
 
 // Pane match generator.  This was prototyped in about 30 lines of Lua.
 // I hope the C++ version is more robust at least, e.g. prevents infinite
@@ -1870,6 +1877,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_RunInConcole);
 	lua_setfield(luaState, -2, "RunInConcole");
+
+	lua_pushcfunction(luaState, sf_ExecuteHelp);
+	lua_setfield(luaState, -2, "ExecuteHelp");
 
 	// buffers
 	lua_newtable(luaState);

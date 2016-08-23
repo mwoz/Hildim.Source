@@ -518,37 +518,49 @@ struct XHH_AKLINK {
 };
 
 // Help command lines contain topic!path
-void SciTEWin::ExecuteHelp(const char *cmd) {
+void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 	if (!hHH)
 		hHH = ::LoadLibrary(TEXT("HHCTRL.OCX"));
 
 	if (hHH) {
 		GUI::gui_string s = GUI::StringFromUTF8(cmd);
-		unsigned int pos = s.find_first_of('!');
-		if (pos != GUI::gui_string::npos) {
-			GUI::gui_string topic = s.substr(0, pos);
-			GUI::gui_string path = s.substr(pos + 1);
-			typedef HWND (WINAPI *HelpFn) (HWND, const wchar_t *, UINT, DWORD_PTR);
-			HelpFn fnHHW = (HelpFn)::GetProcAddress(hHH, "HtmlHelpW");
-			if (fnHHW) {
-				XHH_AKLINK ak;
-				ak.cbStruct = sizeof(ak);
-				ak.fReserved = FALSE;
-				ak.pszKeywords = topic.c_str();
-				ak.pszUrl = NULL;
-				ak.pszMsgText = NULL;
-				ak.pszMsgTitle = NULL;
-				ak.pszWindow = NULL;
-				ak.fIndexOnFail = TRUE;
-				fnHHW(NULL,
-				      path.c_str(),
-				      0x000d,          	// HH_KEYWORD_LOOKUP
-				      reinterpret_cast<DWORD_PTR>(&ak)
-				     );
+		typedef HWND(WINAPI *HelpFn) (HWND, const wchar_t *, UINT, DWORD_PTR);
+		HelpFn fnHHW = (HelpFn)::GetProcAddress(hHH, "HtmlHelpW");
+		if (fnHHW) {
+			switch (hh_cmd){
+			case 0x000d:
+			{
+				unsigned int pos = s.find_first_of('!');
+				if (pos != GUI::gui_string::npos) {
+					GUI::gui_string topic = s.substr(0, pos);
+					GUI::gui_string path = s.substr(pos + 1);
+					XHH_AKLINK ak;
+					ak.cbStruct = sizeof(ak);
+					ak.fReserved = FALSE;
+					ak.pszKeywords = topic.c_str();
+					ak.pszUrl = NULL;
+					ak.pszMsgText = NULL;
+					ak.pszMsgTitle = NULL;
+					ak.pszWindow = NULL;
+					ak.fIndexOnFail = TRUE;
+					fnHHW(NULL,
+						path.c_str(),
+						0x000d,          	// HH_KEYWORD_LOOKUP
+						reinterpret_cast<DWORD_PTR>(&ak)
+						);
+				}
 			}
+				return;
+			}
+			fnHHW(NULL,
+				s.c_str(),
+				hh_cmd,
+				NULL
+				);
 		}
 	}
 }
+
 
 void SciTEWin::CopyAsRTF() {
 	Sci_CharacterRange cr = GetSelection();
