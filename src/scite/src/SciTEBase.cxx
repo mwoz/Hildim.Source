@@ -758,7 +758,8 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 			}
 		}
 #endif
-		AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
+		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
+        AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
 		AddStyledText(wsci, " 1.0\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
@@ -1038,7 +1039,7 @@ static bool IsBrace(char ch) {
 bool SciTEBase::FindMatchingBracePosition(bool editor, int &braceAtCaret, int &braceOpposite, bool sloppy) {
 	int maskStyle = (1 << wEditor.Call(SCI_GETSTYLEBITSNEEDED)) - 1;
 	bool isInside = false;
-//!	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;			  !!!TODO!!! - 
+//!	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;			  !!!TODO!!! -
 	GUI::ScintillaWindow &win = editor ? reinterpret_cast<GUI::ScintillaWindow&>(wEditor) : wOutput; //!-change-[OnSendEditor]
 
 	int mainSel = win.Send(SCI_GETMAINSELECTION, 0, 0);
@@ -3460,7 +3461,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_BUILD: {
-			if (SaveIfUnsureForBuilt() != IDCANCEL) {			
+			if (SaveIfUnsureForBuilt() != IDCANCEL) {
 				SelectionIntoProperties();
 				AddCommand(
 				    props.GetWild("command.build.", FileNameExt().AsUTF8().c_str()),
@@ -3641,7 +3642,7 @@ void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev, GUI::Scintill
 		}
 		if (!(levelNow & SC_FOLDLEVELWHITEFLAG) &&
 			((levelPrev & SC_FOLDLEVELNUMBERMASK) > (levelNow & SC_FOLDLEVELNUMBERMASK))) {
-			// See if should still be hidden   
+			// See if should still be hidden
 			w->Call(SCI_SHOWLINES, line, line);
 		}
 	}
@@ -3748,7 +3749,7 @@ void SciTEBase::EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy)
 
 bool SciTEBase::MarginClick(int position, int modifiers, GUI::ScintillaWindow *w) {
 	int lineClick = w->Call(SCI_LINEFROMPOSITION, position);
-	if ((modifiers & SCMOD_SHIFT) && (modifiers & SCMOD_CTRL)) { 
+	if ((modifiers & SCMOD_SHIFT) && (modifiers & SCMOD_CTRL)) {
 		FoldAll();
 	} else {
 		int levelClick = w->Call(SCI_GETFOLDLEVEL, lineClick);
@@ -3812,7 +3813,7 @@ void SciTEBase::NewLineInOutput() {
 	        wOutput.Call(SCI_GETCURRENTPOS)) - 1;
 	SString cmd = GetLine(wOutput, line);
 	if (cmd.startswith("###")) {
-		if (cmd.lowercase() == "###c") 
+		if (cmd.lowercase() == "###c")
 			curOutMode = outConsole;
 		else if (cmd.lowercase() == "###l")
 			curOutMode = outLua;
@@ -3844,7 +3845,7 @@ void SciTEBase::NewLineInOutput() {
 			default:
 				break;
 			}
-			
+
 			wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(c));
 		}
 		return;
@@ -3878,7 +3879,7 @@ void SciTEBase::NewLineInOutput() {
 	else if (curOutMode == outInterface)
 	{
 		cmd = "IDM_" + cmd.uppercase();
-		int icmd = IFaceTable::FindConstant(cmd.c_str());	
+		int icmd = IFaceTable::FindConstant(cmd.c_str());
 		if (icmd > 0)
 			::PostMessage((HWND)GetID(), WM_COMMAND, IFaceTable::GetConstantValue(icmd), 0);
 		else
@@ -4104,7 +4105,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					else{
 						w = &wEditor;
 					}
-					MarginClick(notification->position, notification->modifiers, w);					
+					MarginClick(notification->position, notification->modifiers, w);
 				}
 			}
 		}
@@ -4243,7 +4244,7 @@ void SciTEBase::MoveSplit(GUI::Point ptNewDrag,int movedSplitter) {
 	switch (movedSplitter)
 	{
 	case splitOut:{
-	
+
 		int newHeightOutput = heightOutputStartDrag + (ptStartDrag.y - ptNewDrag.y);
 
 		newHeightOutput = NormaliseSplit(newHeightOutput);
@@ -4255,7 +4256,7 @@ void SciTEBase::MoveSplit(GUI::Point ptNewDrag,int movedSplitter) {
 		previousHeightOutput = newHeightOutput;
 	}break;
 	case splitSidebar:{
-	
+
 		int newwidthPanel = widthPanelStartDrag + (ptStartDrag.x - ptNewDrag.x);
 		if (widthPanel != newwidthPanel) {
 			widthPanel = newwidthPanel;

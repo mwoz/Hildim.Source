@@ -2250,7 +2250,7 @@ void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
 					sel.Range(r).MinimizeVirtualSpace();
 				}
 			}
-			positionInsert = InsertSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
+			positionInsert = RealizeVirtualSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
 			if (pdoc->InsertString(positionInsert, text, len)) {
 				sel.Range(r).caret.SetPosition(positionInsert + len);
 				sel.Range(r).anchor.SetPosition(positionInsert + len);

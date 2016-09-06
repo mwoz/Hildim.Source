@@ -53,6 +53,7 @@
     <ClCompile Include="lexers\LexHex.cxx" />
     <ClCompile Include="lexers\LexHTML.cxx" />
     <ClCompile Include="lexers\LexInno.cxx" />
+    <ClCompile Include="lexers\LexJSON.cxx" />
     <ClCompile Include="lexers\LexKix.cxx" />
     <ClCompile Include="lexers\LexKVIrc.cxx" />
     <ClCompile Include="lexers\LexLaTeX.cxx" />
@@ -60,6 +61,7 @@
     <ClCompile Include="lexers\LexLout.cxx" />
     <ClCompile Include="lexers\LexLua.cxx" />
     <ClCompile Include="lexers\LexMagik.cxx" />
+    <ClCompile Include="lexers\LexMake.cxx" />
     <ClCompile Include="lexers\LexMarkdown.cxx" />
     <ClCompile Include="lexers\LexMatlab.cxx" />
     <ClCompile Include="lexers\LexMetapost.cxx" />

@@ -7,7 +7,8 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "afxres.h"
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -43,7 +44,7 @@ SCITESES                ICON                    "SciTE-ses.ico"
 
 ABOUT DIALOGEX 26, 41, 350, 242
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About SciTE"
+CAPTION "About HildiM"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "",IDABOUTSCINTILLA,"Scintilla",WS_TABSTOP,1,1,346,218
@@ -146,12 +147,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "scite.net.ru"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "1.0.1.0"
+            VALUE "FileVersion", "1.0.2.0"
             VALUE "InternalName", "HildiM"
-            VALUE "LegalCopyright", "Copyright 1998-2010 by Neil Hodgson"
+            VALUE "LegalCopyright", "Copyright 2016 Michel Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "1.0.1.0"
+            VALUE "ProductVersion", "1.0.2.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -209,7 +210,8 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

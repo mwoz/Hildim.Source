@@ -441,6 +441,12 @@
     <ClCompile Include="win32\HanjaDic.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexJSON.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexMake.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
