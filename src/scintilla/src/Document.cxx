@@ -16,7 +16,7 @@
 #include <vector>
 #include <algorithm>
 
-#ifdef CXX11_REGEX
+#ifndef NO_CXX11_REGEX
 #include <regex>
 #endif
 
@@ -1647,7 +1647,6 @@ Document::CharacterExtracted Document::ExtractCharacter(int position) const {
  */
 long Document::FindText(int minPos, int maxPos, const char *search,
                         int flags, int *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -1824,7 +1823,7 @@ void Document::SetCharClasses(const unsigned char *chars, CharClassify::cc newCh
     charClass.SetCharClasses(chars, newCharClass);
 }
 
-int Document::GetCharsOfClass(CharClassify::cc characterClass, unsigned char *buffer) {
+int Document::GetCharsOfClass(CharClassify::cc characterClass, unsigned char *buffer) const {
     return charClass.GetCharsOfClass(characterClass, buffer);
 }
 
@@ -1884,9 +1883,6 @@ void Document::EnsureStyledTo(int pos) {
 			int lineEndStyled = LineFromPosition(GetEndStyled());
 			int endStyledTo = LineStart(lineEndStyled);
 			pli->Colourise(endStyledTo, pos);
-			for (int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-				watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
-			}
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
 			for (std::vector<WatcherWithUserData>::iterator it = watchers.begin();
@@ -2340,7 +2336,7 @@ public:
 	}
 };
 
-#ifdef CXX11_REGEX
+#ifndef NO_CXX11_REGEX
 
 class ByteIterator : public std::iterator<std::bidirectional_iterator_tag, char> {
 public:
@@ -2621,9 +2617,9 @@ bool MatchOnLines(const Document *doc, const Regex &regexp, const RESearchRange 
 		for (size_t co = 0; co < match.size(); co++) {
 			search.bopat[co] = match[co].first.Pos();
 			search.eopat[co] = match[co].second.PosRoundUp();
-			size_t lenMatch = search.eopat[co] - search.bopat[co];
+			Sci::Position lenMatch = search.eopat[co] - search.bopat[co];
 			search.pat[co].resize(lenMatch);
-			for (size_t iPos = 0; iPos < lenMatch; iPos++) {
+			for (Sci::Position iPos = 0; iPos < lenMatch; iPos++) {
 				search.pat[co][iPos] = doc->CharAt(iPos + search.bopat[co]);
 			}
 		}
@@ -2700,7 +2696,7 @@ long BuiltinRegex::FindText(Document *doc, int minPos, int maxPos, const char *s
                         bool caseSensitive, bool, bool, int flags,
                         int *length) {
 
-#ifdef CXX11_REGEX
+#ifndef NO_CXX11_REGEX
 	if (flags & SCFIND_CXX11REGEX) {
 			return Cxx11RegexFindText(doc, minPos, maxPos, s,
 			caseSensitive, length, search);

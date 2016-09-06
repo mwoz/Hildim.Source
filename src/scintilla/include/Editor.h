@@ -46,13 +46,11 @@ public:
 		workStyle=1,
 		workUpdateUI=2
 	};
-	bool active;
 	enum workItems items;
 	Position upTo;
 
-	WorkNeeded() : active(false), items(workNone), upTo(0) {}
+	WorkNeeded() : items(workNone), upTo(0) {}
 	void Reset() {
-		active = false;
 		items = workNone;
 		upTo = 0;
 	}
@@ -177,7 +175,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 
 	int xCaretMargin;	///< Ensure this many pixels visible on both sides of caret
@@ -368,6 +365,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void DropCaret();
 	void CaretSetPeriod(int period);
 	void InvalidateCaret();
+	virtual void NotifyCaretMove();
 	virtual void UpdateSystemCaret();
 
 	bool Wrapping() const;
@@ -392,7 +390,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void ChangeSize();
 
 	void FilterSelections();
-	int InsertSpace(int position, unsigned int spaces);
+	int RealizeVirtualSpace(int position, unsigned int virtualSpace);
+	SelectionPosition RealizeVirtualSpace(const SelectionPosition &position);
 	void AddChar(char ch);
 	virtual void AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS=false);
 	void ClearBeforeTentativeStart();
@@ -415,7 +414,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void DelCharBack(bool allowLineStartDeletion);
 	virtual void ClaimSelection() = 0;
 
-	static int ModifierFlags(bool shift, bool ctrl, bool alt, bool meta=false);
+	static int ModifierFlags(bool shift, bool ctrl, bool alt, bool meta=false, bool super=false);
 	virtual void NotifyChange() = 0;
 	virtual void NotifyFocus(bool focus);
 	virtual void SetCtrlID(int identifier);
@@ -425,8 +424,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(int position, int modifiers);
@@ -454,9 +451,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData);
 	void NotifyErrorOccurred(Document *doc, void *userData, int status);
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
-
 
 	void ContainerNeedsUpdate(int flags);
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);

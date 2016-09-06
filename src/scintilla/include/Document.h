@@ -401,7 +401,7 @@ public:
 
 	void SetDefaultCharClasses(bool includeWordClass);
 	void SetCharClasses(const unsigned char *chars, CharClassify::cc newCharClass);
-	int GetCharsOfClass(CharClassify::cc characterClass, unsigned char *buffer);
+	int GetCharsOfClass(CharClassify::cc characterClass, unsigned char *buffer) const;
 	void SCI_METHOD StartStyling(Sci_Position position, char mask);
 	bool SCI_METHOD SetStyleFor(Sci_Position length, char style);
 	bool SCI_METHOD SetStyles(Sci_Position length, const char *styles);
@@ -534,7 +534,6 @@ public:
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, int endPos) = 0;
 	virtual void NotifyLexerChanged(Document *doc, void *userData) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, int status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 #ifdef SCI_NAMESPACE
