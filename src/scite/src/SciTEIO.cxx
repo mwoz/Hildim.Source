@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <regex>
 
 #if defined(GTK)
 
@@ -1137,40 +1138,24 @@ static bool IsWordCharacter(int ch, const char *chSet) {
 	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')  || (ch >= '0' && ch <= '9')  || (ch == '_');
 }
 
-static char *strstrLua(const char *text,const char *sub, lua_State *luaState)
-{//При инициализированной luaState использует поиск луа для определения индекса первого вхождения подстроки в текст
-	if(!luaState) return (char*)strstr(text, sub); 
-	bool handled = false;
-	char* result = NULL;
-	int stackBase = lua_gettop(luaState);
-
-	lua_pushliteral(luaState, "string");
-	lua_rawget(luaState, LUA_GLOBALSINDEX);
-	if (lua_istable(luaState, -1)) {
-		lua_pushliteral(luaState, "find");
-		lua_rawget(luaState, -2);
-		if (lua_isfunction(luaState, -1)) {
-			lua_pushstring(luaState, text);
-			lua_pushstring(luaState, sub);
-			int status = lua_pcall(luaState, 2, 4, 0);
-			if (status==0) 
-			{
-				if(!lua_isnil(luaState, 2))
-				{
-					int i = lua_tonumber(luaState, 2)-1;
-					result = (char*)(text + i);
-				}
-				lua_pop(luaState,4);
+bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp)
+{//При инициализированной luaState использует поиск regex_search для определения индекса первого вхождения подстроки в текст
+	if (!pRegExp) {
+		char *lineEnd = text + strlen(text);
+		char *match = strstr(text, sub);
+		size_t searchLength = strlen(sub);
+		while (match) {
+			if (((match == text) || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str()) &&
+				((match + searchLength == (lineEnd)) || !IsWordCharacter(match[searchLength], props.GetExpanded("chars.accented").c_str())))) {
+				return true;
 			}
+			match = strstr(match + 1, sub);
 		}
-	} else {
-		//this->Trace("> Lua: string library not loaded\n");
-		return NULL;
+		return false;
 	}
+	std::regex *pReg = (std::regex*) pRegExp;
+	return std::regex_search(text, *pReg);
 
-	lua_settop(luaState, stackBase);
-
-	return result;
 }
 
 void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, void *pluaState){
@@ -1186,52 +1171,39 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		bool bFindInFiles = false;
 	
 		FileReader fr(fPath, gf & grepMatchCase);
-		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {				 // || 	  			
+		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {					  			
 			while (char *line = fr.Next()) {
-				char *match = strstrLua(line, searchString, (gf & grepRegExp) ? luaState: 0);
-				if (match) {
-					if (gf & grepWholeWord) {
-						char *lineEnd = line + strlen(line);
-						while (match) {
-							if (((match == line) || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str()) &&
-								((match + searchLength == (lineEnd)) || !IsWordCharacter(match[searchLength], props.GetExpanded("chars.accented").c_str())))) {
-									break;
-							}
-							match = strstr(match + 1, searchString);
-						}
-					}
-					if (match) {
-						grepOut->iLines += 1;
-						if (!bFindInFiles) {
-							if (gf & grepGroup){
-								os.append(" ");
-								os.append(fPath.AsUTF8().c_str());
-								os.append("\n");
-							}
-							grepOut->iInFiles += 1;
-							bFindInFiles = true;
-						}
+				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? luaState : 0)) {
+					grepOut->iLines += 1;
+					if (!bFindInFiles) {
 						if (gf & grepGroup){
-							os.append("\t");
-						} 
-						else {
-							os.append(".");
-							os.append(fPath.AsUTF8().c_str() + basePath);
-							os.append(":");
+							os.append(" ");
+							os.append(fPath.AsUTF8().c_str());
+							os.append("\n");
 						}
-						SString lNumber(fr.LineNumber());
-						os.append(lNumber.c_str());
-						os.append(":");
-
-						lNumber = fr.Original();
-						lNumber.substitute('\t',' ');
-						lNumber.trimleft("\n\r ");
-						lNumber.insert(0," ",1);
-						while ( lNumber.substitute("  "," ") );
-						os.append(lNumber.c_str());
-
-						os.append("\n");
+						grepOut->iInFiles += 1;
+						bFindInFiles = true;
 					}
+					if (gf & grepGroup){
+						os.append("\t");
+					} 
+					else {
+						os.append(".");
+						os.append(fPath.AsUTF8().c_str() + basePath);
+						os.append(":");
+					}
+					SString lNumber(fr.LineNumber());
+					os.append(lNumber.c_str());
+					os.append(":");
+
+					lNumber = fr.Original();
+					lNumber.substitute('\t',' ');
+					lNumber.trimleft("\n\r ");
+					lNumber.insert(0," ",1);
+					while ( lNumber.substitute("  "," ") );
+					os.append(lNumber.c_str());
+
+					os.append("\n");
 				}
 			}
 		}		
@@ -1285,6 +1257,29 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		searchString = chtmp;
 	}
 
+	std::regex regexp;
+	
+	if ((gf & grepRegExp)){
+		try {
+			//ElapsedTime et;
+			std::regex::flag_type flagsRe = std::regex::ECMAScript;
+			// Flags that apper to have no effect:
+			// | std::regex::collate | std::regex::extended;
+			if (!(gf & grepMatchCase))
+				flagsRe = flagsRe | std::regex::icase;
+
+			std::string strSearch = searchString.c_str();
+
+			bool matched = false;
+
+			regexp.assign(search, flagsRe);
+		}
+		catch (...) {
+			// Failed in some other way
+			return;
+		}
+	}
+
 	wFindRes.Send(SCI_SETSEL, 0, 0);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
 	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Wait...\n"));
@@ -1296,7 +1291,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	lua_State  *luaState;
 	luaState = lua_open();
 	luaL_openlibs(luaState);
-	GrepRecursive(gf, FilePath(directory), searchString.c_str(), fileTypes, basePathLen, &grepOut, (void*)luaState); //!-change-[FindResultListStyle]
+	GrepRecursive(gf, FilePath(directory), searchString.c_str(), fileTypes, basePathLen, &grepOut, (void*)&regexp); 
 	lua_close(luaState);
 	if (!(gf & grepStdOut)) {
 		//SString sExitMessage();
@@ -1316,9 +1311,6 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		os += " files\n";
 		os += grepOut.strOut;
 		os.append("<\n");
-		//OutputAppendStringSynchronised(os.c_str());
-		//if (props.GetInt("output.scroll", 1) == 1 && returnOutputToCommand)
-		//	wFindRes.Send(SCI_GOTOPOS, originalEnd, 0);
 	}
 	wFindRes.Send(SCI_SETSEL, 0, 8);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
@@ -1341,105 +1333,5 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	::PostMessage(reinterpret_cast<HWND>(GetID()), SCN_FINDCOMPLETED, 0, 0);
 
 }
-static int LuaPanicFunction(lua_State *Ls) {
 
-		lua_close(Ls);
-		::MessageBox(NULL, L" Lua: error occurred in unprotected call.  This is very bad.", L"Scite", MB_OK);
-		ExitThread(1);
-	return 1;
-}
 
-///Поддержка запуска луа в отдельном потоке
-static ExtensionAPI *host = 0;
-
-inline void raise_error(lua_State *L, const char *errMsg = NULL) {
-	luaL_where(L, 1);
-	if (errMsg) {
-		lua_pushstring(L, errMsg);
-	}
-	else {
-		lua_insert(L, -2);
-	}
-	lua_concat(L, 2);
-	lua_error(L);
-}
-static int lua_string_from_utf8(lua_State *L) {
-	if (lua_gettop(L) != 2) raise_error(L, "Wrong arguments count for scite.ConvertFromUTF8");
-	const char *s = luaL_checkstring(L, 1);
-	int cp = 0;
-	if (!lua_isnumber(L, 2))
-		cp = GUI::CodePageFromName(lua_tostring(L, 2));
-	else
-		cp = lua_tointeger(L, 2);
-	std::string ss = GUI::ConvertFromUTF8(s, cp);
-	lua_pushstring(L, ss.c_str());
-	return 1;
-}
-
-static int cf_global_print(lua_State *L) {
-	int nargs = lua_gettop(L);
-
-	lua_getglobal(L, "tostring");
-
-	for (int i = 1; i <= nargs; ++i) {
-		if (i > 1)
-			host->Trace("\t");
-
-		const char *argStr = lua_tostring(L, i);
-		if (argStr) {
-			host->Trace(argStr);
-		}
-		else {
-			lua_pushvalue(L, -1); // tostring
-			lua_pushvalue(L, i);
-			lua_call(L, 1, 1);
-			argStr = lua_tostring(L, -1);
-			if (argStr) {
-				host->Trace(argStr);
-			}
-			else {
-				raise_error(L, "tostring (called from print) returned a non-string");
-			}
-			lua_settop(L, nargs + 1);
-		}
-	}
-
-	host->Trace("\n");
-	return 0;
-}
-
-int SciTEBase::internalRunLuaThread(SString strCmd,SString strDesc)	{
-	lua_State  *L;
-	host = this;
-	L = lua_open();
-	lua_atpanic(L, LuaPanicFunction);
-	luaL_openlibs(L);
-	lua_register(L, "print", cf_global_print);
-	lua_getglobal(L, "string");
-	lua_pushcfunction(L, lua_string_from_utf8);
-	lua_setfield(L, -2, "from_utf8");
-	lua_pop(L, 1);
-
-	if (0 == luaL_loadbuffer(L, strCmd.c_str(), strCmd.length(), strDesc.c_str())) {
-		if (lua_pcall(L, 0, LUA_MULTRET, 0)){
-			if (lua_isstring(L, -1)) {
-				size_t len;
-				const char *msg = lua_tolstring(L, -1, &len);
-				char *buff = new char[len + 2];
-				strncpy(buff, msg, len);
-				buff[len] = '\n';
-				buff[len + 1] = '\0';
-				wOutput.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(buff));
-				delete[] buff;
-			}
-		}
-		return lua_gettop(L);
-	}
-	else {
-		raise_error(L);
-	}
-
-	lua_close(L);
-
-	return 0;
-}

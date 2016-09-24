@@ -1956,7 +1956,8 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_YAML_OPERATOR",9},
 	{"SCE_YAML_REFERENCE",5},
 	{"SCE_YAML_TEXT",7},
-	{"SCFIND_MATCHCASE",4},
+	{"SCFIND_CXX11REGEX", 0x00800000},
+	{"SCFIND_MATCHCASE", 4},
 	{"SCFIND_POSIX",0x00400000},
 	{"SCFIND_REGEXP",0x00200000},
 	{"SCFIND_WHOLEWORD",2},
@@ -3166,7 +3167,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2531,
+	ifaceConstantCount = 2532,
 	ifacePropertyCount = 209
 };
 

@@ -757,13 +757,13 @@ protected:
 		int iInFiles;
 	}GrepOut;
 	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, void *pluaState); //!-change-[FindResultListStyle]
+	bool strstrRegExp(char *text, const char *sub, void *pRegExp);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
 	void EnumProperties(const char *action);
 	void SendOneProperty(const char *kind, const char *key, const char *val);
 	void PropertyFromDirector(const char *arg);
 	void PropertyToDirector(const char *arg);
 	void WideChrToMyltiBate(SString strIn, SString &strOut);//ѕерекодировка дл€ последующего вывода в консоль
-	int internalRunLuaThread(SString strCmd, SString strDesc);
 
 
 	// ExtensionAPI
