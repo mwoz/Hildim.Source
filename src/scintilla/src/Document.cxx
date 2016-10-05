@@ -2683,9 +2683,10 @@ long Cxx11RegexFindText(Document *doc, int minPos, int maxPos, const char *s,
 		//double durSearch = et.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error &) {
+	} catch (std::regex_error & rerr) {
 		// Failed to create regular expression
-		throw RegexError();
+		//throw RegexError();
+		return -1;
 	} catch (...) {
 		// Failed in some other way
 		return -1;

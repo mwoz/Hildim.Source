@@ -1138,11 +1138,13 @@ static bool IsWordCharacter(int ch, const char *chSet) {
 	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')  || (ch >= '0' && ch <= '9')  || (ch == '_');
 }
 
-bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp)
+bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf)
 {//При инициализированной luaState использует поиск regex_search для определения индекса первого вхождения подстроки в текст
 	if (!pRegExp) {
 		char *lineEnd = text + strlen(text);
-		char *match = strstr(text, sub);
+		char *match = strstr(text, sub); 
+		if (!(gf & grepWholeWord)) return match ? true : false;
+
 		size_t searchLength = strlen(sub);
 		while (match) {
 			if (((match == text) || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str()) &&
@@ -1173,7 +1175,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		FileReader fr(fPath, gf & grepMatchCase);
 		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {					  			
 			while (char *line = fr.Next()) {
-				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? luaState : 0)) {
+				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? luaState : 0, gf)) {
 					grepOut->iLines += 1;
 					if (!bFindInFiles) {
 						if (gf & grepGroup){

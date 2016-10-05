@@ -757,7 +757,7 @@ protected:
 		int iInFiles;
 	}GrepOut;
 	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, void *pluaState); //!-change-[FindResultListStyle]
-	bool strstrRegExp(char *text, const char *sub, void *pRegExp);
+	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
 	void EnumProperties(const char *action);
 	void SendOneProperty(const char *kind, const char *key, const char *val);

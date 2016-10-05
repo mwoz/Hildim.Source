@@ -23,6 +23,8 @@
 #include "IFaceTable.h"
 #include "SciTEKeys.h"
 
+#include <regex>
+
 extern "C" {
 #include "lua.h"
 #include "lualib.h"
@@ -598,6 +600,32 @@ static int sf_ExecuteHelp(lua_State* L){
 	const char * cmd = luaL_checkstring(L, 1);
 	int hh_cmd = luaL_checkint(L, 2);
 	host->ExecuteHelp(cmd, hh_cmd);
+	return 0;
+}
+
+static int sf_CheckRegexp(lua_State* L){
+	const char * s = luaL_checkstring(L, 1);
+	try{
+		//ElapsedTime et;
+		std::regex::flag_type flagsRe = std::regex::ECMAScript;
+
+		bool matched = false;
+
+		std::regex regexp;
+		regexp.assign(s, flagsRe);
+
+	}
+	catch (std::regex_error & rerr) {
+		// Failed to create regular expression
+		//throw RegexError();
+		lua_pushstring(L, rerr.what());
+		return 1;
+	}
+	catch (...) {
+		// Failed in some other way
+		lua_pushstring(L, "No Regex Error");
+		return 1;
+	}
 	return 0;
 }
 
@@ -1880,6 +1908,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_ExecuteHelp);
 	lua_setfield(luaState, -2, "ExecuteHelp");
+
+	lua_pushcfunction(luaState, sf_CheckRegexp);
+	lua_setfield(luaState, -2, "CheckRegexp");
 
 	// buffers
 	lua_newtable(luaState);
