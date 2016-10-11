@@ -1179,8 +1179,8 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 					grepOut->iLines += 1;
 					if (!bFindInFiles) {
 						if (gf & grepGroup){
-							os.append(" ");
-							os.append(fPath.AsUTF8().c_str());
+							os.append(" ");	  
+							os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), 1251).c_str());
 							os.append("\n");
 						}
 						grepOut->iInFiles += 1;
@@ -1191,7 +1191,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 					} 
 					else {
 						os.append(".");
-						os.append(fPath.AsUTF8().c_str() + basePath);
+						os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), 1251).c_str() + basePath);
 						os.append(":");
 					}
 					SString lNumber(fr.LineNumber());
@@ -1238,7 +1238,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	if (!(gf & grepStdOut)) {
 		os.append(">Search for \"").append(searchString.c_str()).append("\" in \"");
 
-		std::string dir = GUI::UTF8FromString(directory);
+		std::string dir = GUI::ConvertFromUTF8( GUI::UTF8FromString(directory), 1251);
 		basePathLen = dir.length();
 		os.append(dir.c_str());
 		if (pathSepChar == os[os.length()-1]) {
@@ -1270,11 +1270,9 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 			if (!(gf & grepMatchCase))
 				flagsRe = flagsRe | std::regex::icase;
 
-			std::string strSearch = searchString.c_str();
-
 			bool matched = false;
 
-			regexp.assign(search, flagsRe);
+			regexp.assign(searchString.c_str(), flagsRe);
 		}
 		catch (...) {
 			// Failed in some other way
@@ -1290,11 +1288,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	grepOut.iFiles = 0;
 	grepOut.iInFiles = 0;
 	grepOut.strOut = "";
-	lua_State  *luaState;
-	luaState = lua_open();
-	luaL_openlibs(luaState);
 	GrepRecursive(gf, FilePath(directory), searchString.c_str(), fileTypes, basePathLen, &grepOut, (void*)&regexp); 
-	lua_close(luaState);
 	if (!(gf & grepStdOut)) {
 		//SString sExitMessage();
 		if (jobQueue.TimeCommands()) {
