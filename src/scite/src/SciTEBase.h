@@ -764,6 +764,7 @@ protected:
 	void PropertyFromDirector(const char *arg);
 	void PropertyToDirector(const char *arg);
 	void WideChrToMyltiBate(SString strIn, SString &strOut);//ѕерекодировка дл€ последующего вывода в консоль
+	int internalRunLuaThread(SString strCmd, SString strDesc);
 
 
 	// ExtensionAPI

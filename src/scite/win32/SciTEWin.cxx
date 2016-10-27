@@ -783,7 +783,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 		r.substitute('|', '\0');
 		const char *strMsg = r.c_str();
 		const char *strRunAfter = strMsg + strlen(strMsg) + 1;
-
+		internalRunLuaThread(jobToRun.command, strMsg);
 		SendMessage(MainHWND(), SCITE_NOTIYCMD, strlen(strRunAfter), (WPARAM)(strRunAfter));
 		return 0;
 	}

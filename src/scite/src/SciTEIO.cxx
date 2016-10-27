@@ -1329,5 +1329,105 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	::PostMessage(reinterpret_cast<HWND>(GetID()), SCN_FINDCOMPLETED, 0, 0);
 
 }
+static int LuaPanicFunction(lua_State *Ls) {
 
+	lua_close(Ls);
+	::MessageBox(NULL, L" Lua: error occurred in unprotected call.  This is very bad.", L"Scite", MB_OK);
+	ExitThread(1);
+	return 1;
+}
 
+///Поддержка запуска луа в отдельном потоке
+static ExtensionAPI *host = 0;
+
+inline void raise_error(lua_State *L, const char *errMsg = NULL) {
+	luaL_where(L, 1);
+	if (errMsg) {
+		lua_pushstring(L, errMsg);
+	}
+	else {
+		lua_insert(L, -2);
+	}
+	lua_concat(L, 2);
+	lua_error(L);
+}
+static int lua_string_from_utf8(lua_State *L) {
+	if (lua_gettop(L) != 2) raise_error(L, "Wrong arguments count for scite.ConvertFromUTF8");
+	const char *s = luaL_checkstring(L, 1);
+	int cp = 0;
+	if (!lua_isnumber(L, 2))
+		cp = GUI::CodePageFromName(lua_tostring(L, 2));
+	else
+		cp = lua_tointeger(L, 2);
+	std::string ss = GUI::ConvertFromUTF8(s, cp);
+	lua_pushstring(L, ss.c_str());
+	return 1;
+}
+
+static int cf_global_print(lua_State *L) {
+	int nargs = lua_gettop(L);
+
+	lua_getglobal(L, "tostring");
+
+	for (int i = 1; i <= nargs; ++i) {
+		if (i > 1)
+			host->Trace("\t");
+
+		const char *argStr = lua_tostring(L, i);
+		if (argStr) {
+			host->Trace(argStr);
+		}
+		else {
+			lua_pushvalue(L, -1); // tostring
+			lua_pushvalue(L, i);
+			lua_call(L, 1, 1);
+			argStr = lua_tostring(L, -1);
+			if (argStr) {
+				host->Trace(argStr);
+			}
+			else {
+				raise_error(L, "tostring (called from print) returned a non-string");
+			}
+			lua_settop(L, nargs + 1);
+		}
+	}
+
+	host->Trace("\n");
+	return 0;
+}
+
+int SciTEBase::internalRunLuaThread(SString strCmd, SString strDesc)	{
+	lua_State  *L;
+	host = this;
+	L = lua_open();
+	lua_atpanic(L, LuaPanicFunction);
+	luaL_openlibs(L);
+	lua_register(L, "print", cf_global_print);
+	lua_getglobal(L, "string");
+	lua_pushcfunction(L, lua_string_from_utf8);
+	lua_setfield(L, -2, "from_utf8");
+	lua_pop(L, 1);
+
+	if (0 == luaL_loadbuffer(L, strCmd.c_str(), strCmd.length(), strDesc.c_str())) {
+		if (lua_pcall(L, 0, LUA_MULTRET, 0)){
+			if (lua_isstring(L, -1)) {
+				size_t len;
+				const char *msg = lua_tolstring(L, -1, &len);
+				char *buff = new char[len + 2];
+				strncpy(buff, msg, len);
+				buff[len] = '\n';
+				buff[len + 1] = '\0';
+				wOutput.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(buff));
+				delete[] buff;
+			}
+		}
+		return lua_gettop(L);
+	}
+	else {
+		raise_error(L);
+	}
+
+	lua_close(L);
+
+	return 0;
+}
