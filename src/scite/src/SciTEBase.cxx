@@ -3933,8 +3933,17 @@ void SciTEBase::Notify(SCNotification *notification) {
 //!-end-[autocompleteword.incremental]
 
 	case SCN_CHARADDED:
-		if (extender)
-			handled = extender->OnChar(static_cast<char>(notification->ch));
+		if (extender){
+			if (notification->ch > 255){
+			    wchar_t c = static_cast<wchar_t>(notification->ch);
+				char cc;
+				WideCharToMultiByte(CP_ACP, 0, &c, 1, &cc, 1, NULL, NULL);
+				handled = extender->OnChar(cc);
+			}
+			else {
+ 				handled = extender->OnChar(static_cast<char>(notification->ch));
+			}
+		}
 		if (!handled) {
 			if (notification->nmhdr.idFrom == IDM_SRCWIN) {
 				CharAdded(static_cast<char>(notification->ch));
