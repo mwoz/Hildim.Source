@@ -1293,8 +1293,20 @@ static int bit_and(lua_State* L)
 }
 static int bit_or(lua_State* L)
 {
+
 	lua_pushinteger(L, luaL_checkinteger(L,1)|luaL_checkinteger(L,2));
 	return 1;
+}
+static int greateCuid(lua_State* L)
+{
+
+	GUID MyGuid;
+	HRESULT hr = CoCreateGuid(&MyGuid);
+	lua_pushinteger(L, MyGuid.Data1);
+	lua_pushinteger(L, MyGuid.Data2);
+	lua_pushinteger(L, MyGuid.Data3);
+	lua_pushfstring(L, (const char*)MyGuid.Data4);
+	return 4;
 }
 
 extern int showinputbox( lua_State* );
@@ -1303,6 +1315,7 @@ extern int showinputbox( lua_State* );
 
 static const struct luaL_reg shell[] = 
 {
+	{ "greateCuid", greateCuid },
 	{ "exec", exec },
 	{ "msgbox", msgbox },
 	{ "getfileattr", getfileattr },

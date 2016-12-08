@@ -166,10 +166,14 @@ int do_Publish(lua_State* L)
 	{
 		if(mbTransport->mbPublish(cmessage_arg(L, "do_Publish")) != MB_ERROR_OK)
 		{
-			throw_L_error(L, "Error when publish message");
+			//throw_L_error(L, "Error when publish message");
+			lua_pushboolean(L, false);
+		}
+		else{
+			lua_pushboolean(L, true);
 		}
 	}
-	return 0;
+	return 1;
 }
 int do_Subscribe(lua_State* L)
 {

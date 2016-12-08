@@ -1880,19 +1880,19 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(int pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		int lineEndStyled = LineFromPosition(GetEndStyled());
+		int endStyledTo = LineStart(lineEndStyled);
 		if (pli && !pli->UseContainerLexing()) {
-			int lineEndStyled = LineFromPosition(GetEndStyled());
-			int endStyledTo = LineStart(lineEndStyled);
 			pli->Colourise(endStyledTo, pos);
-			for (int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-				watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
-			}
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
 			for (std::vector<WatcherWithUserData>::iterator it = watchers.begin();
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
+		}
+		for (int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
+			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }

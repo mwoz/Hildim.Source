@@ -1020,8 +1020,8 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 			NotifyStyleToNeeded((lParam == -1) ? pdoc->Length() : static_cast<int>(lParam));
 		} else {
 			DocumentLexState()->Colourise(static_cast<int>(wParam), static_cast<int>(lParam));
-			NotifyColorized(wParam, lParam);
 		}
+		NotifyColorized(wParam, lParam);
 		Redraw();
 		break;
 
