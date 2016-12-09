@@ -42,10 +42,11 @@ static void iParamSetDoublePrec(Ihandle* ih, const char* name, double num, int p
 
 static int iParamDlgClose_CB(Ihandle* dlg)
 {
-  Ihandle* param_box = (Ihandle*)iupAttribGetInherit(dlg, "PARAMBOX");
-  Iparamcb cb = (Iparamcb)IupGetCallback(param_box, "PARAM_CB");
-  iupAttribSet(param_box, "STATUS", "0");
-  if (cb && !cb(param_box, IUP_GETPARAM_CLOSE, (void*)iupAttribGet(param_box, "USERDATA")))
+//	Видимо исправлен копипаст
+
+  Iparamcb cb = (Iparamcb)IupGetCallback(dlg, "PARAM_CB");
+  iupAttribSet(dlg, "STATUS", "0");
+  if (cb && !cb(dlg, IUP_GETPARAM_CLOSE, (void*)iupAttribGet(dlg, "USERDATA")))
     return IUP_IGNORE;
   else
     return IUP_CLOSE;
