@@ -36,8 +36,7 @@ public:
 	virtual ~tOleHandler();
   tAmbientProperties m_ambientProp;
 
-  HWND            m_hWnd; 
-  void			  ResetInvokeFlag(int flag);
+  HWND            m_hWnd;         
 private:
 
   DWORD           m_cOpens;       //Count calls to Open

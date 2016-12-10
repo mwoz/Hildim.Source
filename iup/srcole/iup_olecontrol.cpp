@@ -52,13 +52,6 @@ static int iOleControlSetDesignModeDontNotifyAttrib(Ihandle* ih, const char* val
   return 1;
 }
 
-static int iOleControlSetInvokeFlagAttrib(Ihandle* ih, const char* value){
-	int flag;
-	if (!iupStrToInt(value, &flag))	flag = 0;
-	ih->data->olehandler->ResetInvokeFlag(flag);
-	return 1;
-}
-
 static int iOleControlSetProgIdAttrib(Ihandle* ih, const char* value)
 {
   CLSID clsid;
@@ -188,8 +181,7 @@ static Iclass* iOleControlNewClass(void)
   ic->LayoutUpdate = iOleControlLayoutUpdateMethod;
   ic->ComputeNaturalSize = iOleControlComputeNaturalSizeMethod;
 
-  iupClassRegisterAttribute(ic, "INVOKEFLAG", NULL, iOleControlSetInvokeFlagAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "PROGID", NULL, iOleControlSetProgIdAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "PROGID", NULL, iOleControlSetProgIdAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DESIGNMODE", iOleControlGetDesignModeAttrib, iOleControlSetDesignModeAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DESIGNMODE_DONT_NOTIFY", iOleControlGetDesignModeAttrib, iOleControlSetDesignModeDontNotifyAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IUNKNOWN", iOleControlGetIUnknownAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT|IUPAF_NO_STRING);

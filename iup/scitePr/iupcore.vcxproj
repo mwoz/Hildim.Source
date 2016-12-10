@@ -172,6 +172,7 @@
     <ClCompile Include="..\src\iup_draw.c" />
     <ClCompile Include="..\src\iup_expander.c" />
     <ClCompile Include="..\src\iup_flatbutton.c" />
+    <ClCompile Include="..\src\iup_flatframe.c" />
     <ClCompile Include="..\src\iup_focus.c" />
     <ClCompile Include="..\src\iup_font.c" />
     <ClCompile Include="..\src\iup_func.c" />

@@ -1710,19 +1710,27 @@ static char* winTreeGetMarkedAttrib(Ihandle* ih, int id)
 static int winTreeSetMarkedAttrib(Ihandle* ih, int id, const char* value)
 {
   HTREEITEM hItem = iupTreeGetNode(ih, id);
+  int set_focus = 0;
   if (!hItem)
     return 0;
 
   if (ih->data->mark_mode==ITREE_MARK_SINGLE)
   {
     HTREEITEM hItemFocus = iupdrvTreeGetFocusNode(ih);
-    winTreeSelectNode(ih, hItemFocus, 0);
+    if (hItemFocus != hItem)
+    {
+      winTreeSelectNode(ih, hItemFocus, 0);
+      set_focus = 1;
+    }
   }
 
   winTreeSelectNode(ih, hItem, iupStrBoolean(value));
 
-  if (ih->data->mark_mode==ITREE_MARK_SINGLE)
+  if (set_focus)
     winTreeSetFocusNode(ih, hItem);
+
+  if (ih->data->mark_mode == ITREE_MARK_SINGLE && !iupStrBoolean(value))
+    iupAttribSet(ih, "_IUP_UNSELECTEDNODE", (char*)hItem);
 
   return 0;
 }
@@ -2526,6 +2534,28 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       }
     }
 
+    if (ih->data->mark_mode == ITREE_MARK_SINGLE)
+    {
+      HTREEITEM hUnSelectedItem = (HTREEITEM)iupAttribGet(ih, "_IUP_UNSELECTEDNODE");
+      if (hUnSelectedItem)
+      {
+        TVHITTESTINFO info;
+        HTREEITEM hItem;
+        info.pt.x = GET_X_LPARAM(lp);
+        info.pt.y = GET_Y_LPARAM(lp);
+        hItem = (HTREEITEM)SendMessage(ih->handle, TVM_HITTEST, 0, (LPARAM)&info);
+
+        if ((info.flags & TVHT_ONITEM) && hItem && hItem == hUnSelectedItem)
+        {
+          /* reselect unselected node */
+          winTreeSelectNode(ih, hItem, TRUE);
+          winTreeCallSelectionCb(ih, 1, hItem);  /* node selected */
+        }
+
+        iupAttribSet(ih, "_IUP_UNSELECTEDNODE", NULL);
+      }
+    }
+
     if (ih->data->show_dragdrop && (HTREEITEM)iupAttribGet(ih, "_IUPTREE_DRAGITEM") != NULL)
       winTreeDragDrop(ih);
 
@@ -2546,8 +2576,7 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
 
 static COLORREF winTreeInvertColor(COLORREF color)
 {
-	return color;
-	// return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
+  return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
 }
 
 static int winTreeWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)

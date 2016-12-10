@@ -37,6 +37,7 @@ IupGetName
 IupHbox
 IupHelp
 IupExecute
+IupExecuteWait
 IupImage
 IupHide
 IupItem
@@ -207,6 +208,7 @@ IupSetStrAttributeId2
 IupSetStrfId2
 IupSetStrGlobal
 IupFlatButton
+IupFlatFrame
 IupAnimatedLabel
 IupDatePick
 IupCalendar
@@ -573,3 +575,5 @@ iupwinStrToSystem
 iupwinStrToSystemLen
 iupwinStrChar2Wide
 iupwinStrWide2Char
+iupwinShowLastError
+iupwinSetInstance

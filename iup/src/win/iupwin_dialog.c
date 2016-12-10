@@ -1118,8 +1118,7 @@ static int winDialogMapMethod(Ihandle* ih)
 
   if (iupAttribGetBoolean(ih, "CONTROL") && native_parent) 
   {
-    /* TODO: this were used by LuaCom to create embedded controls, 
-       don't know if it is still working */
+    /* this is used to create embedded controls in COM or OLE */
     dwStyle = WS_CHILD | WS_TABSTOP | WS_CLIPCHILDREN;
     classname = TEXT("IupDialogControl");
   }
@@ -1259,7 +1258,7 @@ static char* winDialogGetClientOffsetAttrib(Ihandle *ih)
 {
   (void)ih;
 
-  //if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
   {
     int x, y;
     int border, caption, menu;

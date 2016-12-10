@@ -252,19 +252,19 @@ static int iMatrixDrawCallDrawCB(Ihandle* ih, int lin, int col, int x1, int x2, 
 
   iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
 
-//  old_cnv = cdActiveCanvas();
-//  if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-//    cdActivate(ih->data->cd_canvas);
-//
+  old_cnv = cdActiveCanvas();
+  if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+    cdActivate(ih->data->cd_canvas);
+
   ret = draw_cb(ih, lin, col, x1, x2, iupMATRIX_INVERTYAXIS(ih, y1), iupMATRIX_INVERTYAXIS(ih, y2), ih->data->cd_canvas);
 
   iMatrixDrawResetCellClipping(ih);
 
-// if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-// {
-//   cdActivate(old_cnv);
-//   cdCanvasActivate(ih->data->cd_canvas);
-// }
+  if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+  {
+    cdActivate(old_cnv);
+    cdCanvasActivate(ih->data->cd_canvas);
+  }
 
   if (ret == IUP_DEFAULT)
     return 0;
@@ -921,7 +921,7 @@ static void iMatrixDrawFocus(Ihandle* ih)
 /**************************************************************************/
 
 /* Color attenuation factor in a marked cell, 20% darker */
-#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*9)/10))
+#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*8)/10))
 
 void iupMatrixAddMarkedAttenuation(Ihandle* ih, unsigned char *r, unsigned char *g, unsigned char *b)
 {
@@ -1365,6 +1365,13 @@ static void iMatrixDrawMatrix(Ihandle* ih)
     ih->data->lines.num_noscroll - 1, ih->data->columns.last);
   iupMatrixDrawCells(ih, ih->data->lines.first, ih->data->columns.first,
                      ih->data->lines.last, ih->data->columns.last);
+
+  if (iupAttribGetBoolean(ih, "FRAMEBORDER"))
+  {
+    long framecolor = cdIupConvertColor(iupAttribGetStr(ih, "FRAMECOLOR"));
+    cdCanvasForeground(ih->data->cd_canvas, framecolor);
+    iupMATRIX_RECT(ih, 0, ih->data->w - 1, 0, ih->data->h - 1);
+  }
 }
 
 void iupMatrixDraw(Ihandle* ih, int update)

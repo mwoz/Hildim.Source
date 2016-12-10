@@ -60,6 +60,7 @@ tOleHandler::tOleHandler()
   m_cLockInPlace=0;
   m_fPendingDeactivate=FALSE;
   //End CHAPTER24MOD
+
   return;
 }
 
@@ -384,9 +385,6 @@ BOOL tOleHandler::Open(LPSTORAGE pIStorage)
     return TRUE;
     }
 
-void tOleHandler::ResetInvokeFlag(int flag){
-	if (m_pImpIDispatch) m_pImpIDispatch->m_DLCONTROL_Flag = flag;
-}
 
 
 

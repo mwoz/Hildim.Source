@@ -42,11 +42,10 @@ static void iParamSetDoublePrec(Ihandle* ih, const char* name, double num, int p
 
 static int iParamDlgClose_CB(Ihandle* dlg)
 {
-//	Видимо исправлен копипаст
-
-  Iparamcb cb = (Iparamcb)IupGetCallback(dlg, "PARAM_CB");
-  iupAttribSet(dlg, "STATUS", "0");
-  if (cb && !cb(dlg, IUP_GETPARAM_CLOSE, (void*)iupAttribGet(dlg, "USERDATA")))
+  Ihandle* param_box = (Ihandle*)iupAttribGetInherit(dlg, "PARAMBOX");
+  Iparamcb cb = (Iparamcb)IupGetCallback(param_box, "PARAM_CB");
+  iupAttribSet(param_box, "STATUS", "0");
+  if (cb && !cb(param_box, IUP_GETPARAM_CLOSE, (void*)iupAttribGet(param_box, "USERDATA")))
     return IUP_IGNORE;
   else
     return IUP_CLOSE;
@@ -959,6 +958,50 @@ static Ihandle* iParamCreateCtrlBox(Ihandle* param, const char *type)
                     Creates the Dialog and Normalize Sizes
 *******************************************************************************************/
 
+static int iParamBoxSetLabelAlignAttrib(Ihandle* param_box, const char* value)
+{
+  int i, count = iupAttribGetInt(param_box, "PARAMCOUNT");
+
+  for (i = 0; i < count; i++)
+  {
+    Ihandle* param = (Ihandle*)iupAttribGetId(param_box, "PARAM", i);
+    Ihandle* label = (Ihandle*)iupAttribGet(param, "LABEL");
+    IupSetStrAttribute(label, "ALIGNMENT", value);
+  }
+
+  return 1;
+}
+
+static int iParamBoxSetModifiableAttrib(Ihandle* param_box, const char* value)
+{
+  int i, count = iupAttribGetInt(param_box, "PARAMCOUNT");
+
+  for (i = 0; i < count; i++)
+  {
+    Ihandle* param = (Ihandle*)iupAttribGetId(param_box, "PARAM", i);
+    Ihandle* label = (Ihandle*)iupAttribGet(param, "LABEL");
+    Ihandle* ctrl = (Ihandle*)iupAttribGet(param, "CONTROL");
+    Ihandle* aux = (Ihandle*)iupAttribGet(param, "AUXCONTROL");
+
+    IupSetStrAttribute(label, "ACTIVE", value);
+
+    if (IupClassMatch(ctrl, "text"))
+    {
+      if (iupStrBoolean(value))
+        IupSetStrAttribute(ctrl, "READONLY", "No");
+      else
+        IupSetStrAttribute(ctrl, "READONLY", "Yes");
+    }
+    else
+      IupSetStrAttribute(ctrl, "ACTIVE", value);
+
+    if (aux)
+      IupSetStrAttribute(aux, "ACTIVE", value);
+  }
+
+  return 1;
+}
+
 static void iParamBoxNormalizeSize(Ihandle** params, int count)
 {
   int i, lbl_width;
@@ -1015,7 +1058,7 @@ static void iParamBoxNormalizeSize(Ihandle** params, int count)
   }
 }
 
-static Ihandle* iupParamBoxDlg(Ihandle *param_box)
+static Ihandle* iupParamBoxDlg(Ihandle *param_box, const char* title)
 {
   Ihandle* button1, *button2;
   Ihandle* dlg = IupDialog(param_box);
@@ -1038,6 +1081,12 @@ static Ihandle* iupParamBoxDlg(Ihandle *param_box)
 
   IupSetAttributeHandle(dlg, "DEFAULTENTER", button1);
   IupSetAttributeHandle(dlg, "DEFAULTESC", button2);
+
+  IupSetAttribute(dlg, "PARENTDIALOG", IupGetGlobal("PARENTDIALOG"));
+  IupSetAttribute(dlg, "ICON", IupGetGlobal("ICON"));
+  IupSetStrAttribute(dlg, "TITLE", (char*)title);
+  IupSetCallback(dlg, "CLOSE_CB", (Icallback)iParamDlgClose_CB);
+  iupAttribSet(dlg, "PARAMBOX", (char*)param_box);  /* found by inheritance */
 
   return dlg;
 }
@@ -1674,11 +1723,7 @@ int IupGetParamv(const char* title, Iparamcb action, void* user_data, const char
   IupSetCallback(param_box, "PARAM_CB", (Icallback)action);
   iupAttribSet(param_box, "USERDATA", (char*)user_data);
 
-  dlg = iupParamBoxDlg(param_box);
-  IupSetAttribute(dlg, "PARENTDIALOG", IupGetGlobal("PARENTDIALOG"));
-  IupSetAttribute(dlg, "ICON", IupGetGlobal("ICON"));
-  IupSetStrAttribute(dlg, "TITLE", (char*)title);
-  IupSetCallback(dlg, "CLOSE_CB", (Icallback)iParamDlgClose_CB);
+  dlg = iupParamBoxDlg(param_box, title);
 
   if (action)
   {
@@ -1914,6 +1959,8 @@ Iclass* iupParamBoxNewClass(void)
   iupClassRegisterAttribute(ic, "BUTTON2", NULL, NULL, NULL, NULL, IUPAF_IHANDLE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BUTTON3", NULL, NULL, NULL, NULL, IUPAF_IHANDLE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "USERDATA", NULL, NULL, NULL, NULL, IUPAF_NO_STRING | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "LABELALIGN", NULL, iParamBoxSetLabelAlignAttrib, IUPAF_SAMEASSYSTEM, "ALEFT", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "MODIFIABLE", NULL, iParamBoxSetModifiableAttrib, IUPAF_SAMEASSYSTEM, "ALEFT", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   /* ATTENTION: can NOT set IUPAF_READONLY if get is not defined when attribute is used before map. 
      In iupAttribUpdate (called by IupMap) store will be 0 for read-only attributes, then attribute will be removed from the hash table.
