@@ -40,6 +40,7 @@
     <ClCompile Include="lexers\LexDMAP.cxx" />
     <ClCompile Include="lexers\LexDMIS.cxx" />
     <ClCompile Include="lexers\LexECL.cxx" />
+    <ClCompile Include="lexers\LexEDIFACT.cxx" />
     <ClCompile Include="lexers\LexEiffel.cxx" />
     <ClCompile Include="lexers\LexErlang.cxx" />
     <ClCompile Include="lexers\LexEScript.cxx" />
@@ -189,6 +190,7 @@
     <ClInclude Include="include\ScintillaWidget.h" />
     <ClInclude Include="include\Sci_Position.h" />
     <ClInclude Include="include\Selection.h" />
+    <ClInclude Include="include\SparseVector.h" />
     <ClInclude Include="include\SplitVector.h" />
     <ClInclude Include="include\Style.h" />
     <ClInclude Include="include\SVector.h" />

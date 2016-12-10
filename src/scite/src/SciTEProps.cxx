@@ -1042,7 +1042,7 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));		
 	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
 
-	wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
+	//wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
 	wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
 	wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
 

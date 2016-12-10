@@ -447,6 +447,9 @@
     <ClCompile Include="lexers\LexMake.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexEDIFACT.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -618,6 +621,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Sci_Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SparseVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
