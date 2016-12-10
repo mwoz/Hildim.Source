@@ -175,8 +175,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
+	bool mouseWheelCaptures;
 
 	int xCaretMargin;	///< Ensure this many pixels visible on both sides of caret
 	bool horizontalScrollBarVisible;
@@ -285,8 +285,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int LinesToScroll() const;
 	int MaxScrollPos() const;
 	SelectionPosition ClampPositionIntoDocument(SelectionPosition sp) const;
-	Point LocationFromPosition(SelectionPosition pos);
-	Point LocationFromPosition(int pos);
+	Point LocationFromPosition(SelectionPosition pos, PointEnd pe=peDefault);
+	Point LocationFromPosition(int pos, PointEnd pe=peDefault);
 	int XFromPosition(int pos);
 	int XFromPosition(SelectionPosition sp);
 	SelectionPosition SPositionFromLocation(Point pt, bool canReturnInvalid=false, bool charPosition=false, bool virtualSpace=true);
@@ -425,8 +425,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(int position, int modifiers);
@@ -441,6 +439,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyIndicatorClick(bool click, int position, bool shift, bool ctrl, bool alt);
 	bool NotifyMarginClick(Point pt, int modifiers);
 	bool NotifyMarginClick(Point pt, bool shift, bool ctrl, bool alt);
+	bool NotifyMarginRightClick(Point pt, int modifiers);
 	void NotifyNeedShown(int pos, int len);
 	void NotifyDwelling(Point pt, bool state);
 	void NotifyZoom();
@@ -454,9 +453,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData);
 	void NotifyErrorOccurred(Document *doc, void *userData, int status);
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
-
 
 	void ContainerNeedsUpdate(int flags);
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);
@@ -470,6 +466,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	SelectionPosition PositionUpOrDown(SelectionPosition spStart, int direction, int lastX);
 	void CursorUpOrDown(int direction, Selection::selTypes selt);
 	void ParaUpOrDown(int direction, Selection::selTypes selt);
+	Range RangeDisplayLine(int lineVisible);
 	int StartEndDisplayLine(int pos, bool start);
 	int VCHomeDisplayPosition(int position);
 	int VCHomeWrapPosition(int position);
@@ -512,6 +509,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void DwellEnd(bool mouseMoved);
 	void MouseLeave();
 	virtual void ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifiers);
+	virtual void RightButtonDownWithModifiers(Point pt, unsigned int curTime, int modifiers);
 	virtual void ButtonDown(Point pt, unsigned int curTime, bool shift, bool ctrl, bool alt);
 	void ButtonMoveWithModifiers(Point pt, int modifiers);
 	void ButtonMove(Point pt);
@@ -576,6 +574,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void AddStyledText(char *buffer, int appendLength);
 
 	virtual sptr_t DefWndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) = 0;
+	bool ValidMargin(uptr_t wParam) const;
 	void StyleSetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 	sptr_t StyleGetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 
