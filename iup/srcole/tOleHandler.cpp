@@ -385,6 +385,9 @@ BOOL tOleHandler::Open(LPSTORAGE pIStorage)
     return TRUE;
     }
 
+void tOleHandler::ResetInvokeFlag(int flag){
+	if (m_pImpIDispatch) m_pImpIDispatch->m_DLCONTROL_Flag = flag;
+}
 
 
 

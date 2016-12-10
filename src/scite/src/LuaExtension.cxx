@@ -1595,6 +1595,9 @@ static char *CheckStartupScript() {
 	if (startupScript && startupScript[0] == '\0') {
 		delete[] startupScript;
 		startupScript = NULL;
+		//Startup path not found in ext.lua.startup.script";
+		//Global properties is absent?
+		::exit(111222333);
 	}
 
 	return startupScript;

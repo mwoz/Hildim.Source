@@ -264,10 +264,10 @@ static void iScrollBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
     else
       h = ih->currentheight; /* expand space */
 
-    if (!has_sb_horiz && has_sb_vert)
+    if (!has_sb_horiz && has_sb_vert && !iupStrEqualNoCase(IupGetAttribute(ih, "SCROLLBAR"), "NO"))
       w -= iupdrvGetScrollbarSize();  /* reduce expand space */
 
-    if (has_sb_horiz && !has_sb_vert)
+	if (has_sb_horiz && !has_sb_vert && !iupStrEqualNoCase(IupGetAttribute(ih, "SCROLLBAR"), "NO"))
       h -= iupdrvGetScrollbarSize();  /* reduce expand space */
 
     /* Now w and h is a possible child size */

@@ -4,6 +4,7 @@
 
 #include "tDispatch.h"
 #include "tOleHandler.h"
+#include <mshtmdid.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -24,6 +25,7 @@ tDispatch::tDispatch(tOleHandler *pTen, LPUNKNOWN pUnkOuter)
     m_cRef=0;
     m_pTen=pTen;
     m_pUnkOuter=pUnkOuter;
+	m_DLCONTROL_Flag = 0;
     return;
     }
 
@@ -226,6 +228,16 @@ STDMETHODIMP tDispatch::Invoke(DISPID dispIDMember, REFIID riid
           V_BOOL(pVarResult)=FALSE;
           V_VT(pVarResult) = VT_BOOL;
           break;
+		case DISPID_AMBIENT_DLCONTROL:
+			if (m_DLCONTROL_Flag){
+				pVarResult->vt = VT_I4;
+				pVarResult->lVal = m_DLCONTROL_Flag; // DLCTL_DLIMAGES | DLCTL_VIDEOS | DLCTL_NO_SCRIPTS;
+			}
+			else
+			{
+				hr = ResultFromScode(DISP_E_MEMBERNOTFOUND);
+			}
+			break;
 
         default:
             hr=ResultFromScode(DISP_E_MEMBERNOTFOUND);

@@ -26,6 +26,7 @@
 #include "iup_webbrowser.h"
 #include "iup_drv.h"
 #include "iup_drvfont.h"
+#include <mshtmdid.h>
 
 /* Exported from "iupwin_str.c" */
 extern "C" WCHAR* iupwinStrChar2Wide(const char* str);
@@ -235,6 +236,79 @@ static int winWebBrowserSetHTMLAttrib(Ihandle* ih, const char* value)
   return 0; /* do not store value in hash table */
 }
 #endif
+
+static int winWebBrowserSetHTMLSMARTAttrib(Ihandle* ih, const char* value)
+{
+	if (!value)
+		return 0;
+	IWebBrowser2 *pweb = (IWebBrowser2*)iupAttribGet(ih, "_IUPWEB_BROWSER");
+
+	/* Retrieve the document object. */
+	IDispatch* lpDispatch = NULL;
+	pweb->get_Document(&lpDispatch);
+	if (!lpDispatch)
+	{
+		iupAttribSet(ih, "_IUPWEB_FAILED", NULL);
+		iupAttribSet(ih, "_IUPWEB_IGNORE_NAVIGATE", "1");						
+		pweb->Navigate(L"about:blank", NULL, NULL, NULL, NULL);
+		IupFlush();
+		iupAttribSet(ih, "_IUPWEB_IGNORE_NAVIGATE", NULL);
+
+		pweb->get_Document(&lpDispatch);
+	}
+
+	IHTMLDocument2 *htmlDoc2;
+	IHTMLDocument3 *htmlDoc3;
+	IHTMLElement *htmlBody;
+	IHTMLElement2 *htmlBody2;
+	lpDispatch->QueryInterface(IID_IHTMLDocument2, (void**)&htmlDoc2);
+	lpDispatch->QueryInterface(IID_IHTMLDocument3, (void**)&htmlDoc3);
+
+	WCHAR* wvalue = iupwinStrChar2Wide(value);
+
+	VARIANT *param;
+	SAFEARRAY *sfArray;
+	long y;
+	sfArray = SafeArrayCreateVector(VT_VARIANT, 0, 1);
+	SafeArrayAccessData(sfArray, (LPVOID*)&param);
+	param->vt = VT_BSTR;
+	param->bstrVal = SysAllocString(wvalue);
+	SafeArrayUnaccessData(sfArray);
+	htmlDoc2->get_body((IHTMLElement**)&htmlBody);
+	htmlBody->QueryInterface(IID_IHTMLElement2, (void**)&htmlBody2);
+	htmlBody2->get_scrollTop(&y);
+	htmlBody2->Release();
+	htmlBody->Release();
+
+	htmlDoc2->write(sfArray);
+
+	htmlDoc2->get_body((IHTMLElement**)&htmlBody);
+	htmlBody->QueryInterface(IID_IHTMLElement2, (void**)&htmlBody2);
+	IHTMLElement *hCurs;
+	htmlDoc3->getElementById(L"cursor___", &hCurs);
+	if (hCurs){
+		VARIANT v;
+		v.vt = VT_BOOL;
+		v.boolVal = TRUE;
+		HRESULT r = hCurs->scrollIntoView(v);
+		bool b = r == S_OK;
+		htmlBody2->get_scrollTop(&y);
+		y -= iupAttribGetInt(ih, "TOPMARGIN");
+	}
+	htmlBody2->put_scrollTop(y);
+	htmlBody2->get_scrollTop(&y);
+	htmlBody2->Release();
+	htmlBody->Release();
+	htmlDoc2->close();
+
+	/* Releases */
+	SafeArrayDestroy(sfArray);
+	htmlDoc2->Release();
+	lpDispatch->Release();
+	free(wvalue);
+
+	return 0; /* do not store value in hash table */
+}
 
 static int winWebBrowserSetCopyAttrib(Ihandle* ih, const char* value)
 {
@@ -464,6 +538,7 @@ Iclass* iupWebBrowserNewClass(void)
   iupClassRegisterAttribute(ic, "STOP", NULL, winWebBrowserSetStopAttrib, NULL, NULL, IUPAF_WRITEONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RELOAD", NULL, winWebBrowserSetReloadAttrib, NULL, NULL, IUPAF_WRITEONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HTML", NULL, winWebBrowserSetHTMLAttrib, NULL, NULL, IUPAF_WRITEONLY|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "HTMLSMAPT", NULL, winWebBrowserSetHTMLSMARTAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "STATUS", winWebBrowserGetStatusAttrib, NULL, NULL, NULL, IUPAF_NO_DEFAULTVALUE|IUPAF_READONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "COPY", NULL, winWebBrowserSetCopyAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SELECTALL", NULL, winWebBrowserSetSelectAllAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
@@ -477,7 +552,7 @@ Iclass* iupWebBrowserNewClass(void)
     iweb_module = new CComModule();
 
     /* Initializing ATL Support */
-    iweb_module->Init(NULL, (HINSTANCE)IupGetGlobal("HINSTANCE"));
+    iweb_module->Init(NULL, GetModuleHandle(NULL));
   }
 
   return ic;
