@@ -256,7 +256,11 @@ int do_CheckXML(lua_State* L)
 
 	return irez;
 }
-
+int mesage_GetName(lua_State* L)
+{
+	lua_pushstring(L, cmessage_arg(L, "Name")->id());
+	return 1;
+}
 int mesage_ToString(lua_State* L)
 {
 	lua_pushstring(L, cmessage_arg(L, "mesage_ToString")->ToString());
@@ -484,7 +488,9 @@ static const struct luaL_reg message_methods[] = {
 	{"RemoveMessage",mesage_RemoveMessage},
 	{"AttachMessage",mesage_AttachMessage},
 	{"ExistsMessage",mesage_ExistsMessage},
-	{"CopyFrom",mesage_CopyFrom},
+	{ "Name", mesage_GetName },
+	//{ "CopyFrom", mesage_CopyFrom },
+	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},
 };
 
