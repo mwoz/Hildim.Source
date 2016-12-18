@@ -141,8 +141,16 @@ bool MultiplexExtension::OnSwitchFile(const char *filename) {
 bool MultiplexExtension::OnBeforeSave(const char *filename) {
 	bool handled = false;
 	for (int i = 0; i < extensionCount && !handled; ++i)
-		if (extensions[i]->OnBeforeSave(filename))
-			handled = true;
+	if (extensions[i]->OnBeforeSave(filename))
+		handled = true;
+	return handled;
+}
+
+bool MultiplexExtension::OnBeforeOpen(const char *filename, const char *extension) {
+	bool handled = false;
+	for (int i = 0; i < extensionCount && !handled; ++i)
+	if (extensions[i]->OnBeforeOpen(filename, extension))
+		handled = true;
 	return handled;
 }
 

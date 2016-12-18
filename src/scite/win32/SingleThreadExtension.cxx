@@ -107,6 +107,10 @@ bool SingleThreadExtension::OnBeforeSave(const char *filename) {
 	return ext->OnBeforeSave(filename);
 }
 
+bool SingleThreadExtension::OnBeforeOpen(const char *filename, const char *extension) {
+	return ext->OnBeforeOpen(filename, extension);
+}
+
 bool SingleThreadExtension::OnSave(const char *filename) {
 	return ext->OnSave(filename);
 }

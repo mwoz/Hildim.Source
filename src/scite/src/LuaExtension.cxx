@@ -2201,6 +2201,10 @@ bool LuaExtension::OnBeforeSave(const char *filename) {
 	return CallNamedFunction("OnBeforeSave", filename);
 }
 
+bool LuaExtension::OnBeforeOpen(const char *filename, const char *extension) {
+	return CallNamedFunction("OnBeforeOpen", filename, extension);
+}
+
 bool LuaExtension::OnSave(const char *filename) {
 	bool result = CallNamedFunction("OnSave", filename);
 

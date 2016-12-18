@@ -32,6 +32,7 @@ public:
 	virtual bool OnOpen(const char *);
 	virtual bool OnSwitchFile(const char *);
 	virtual bool OnBeforeSave(const char *);
+	virtual bool OnBeforeOpen(const char *, const char *);
 	virtual bool OnSave(const char *);
 	virtual bool OnChar(char);
 	virtual bool OnExecute(const char *);

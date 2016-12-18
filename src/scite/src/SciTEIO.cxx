@@ -424,9 +424,11 @@ bool SciTEBase::PreOpenCheck(const GUI::gui_char *) {
 }
 
 bool SciTEBase::Open(FilePath file, OpenFlags of) {
+	FilePath absPath = file.AbsolutePath();
+	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str())) return false;
+
 	InitialiseBuffers();
 
-	FilePath absPath = file.AbsolutePath();
 	int index = buffers.GetDocumentByName(absPath);
 	if (index >= 0) {
 		SetDocumentAt(index);

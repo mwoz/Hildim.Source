@@ -70,6 +70,7 @@ public:
 	virtual bool OnOpen(const char *) { return false; }
 	virtual bool OnSwitchFile(const char *) { return false; }
 	virtual bool OnBeforeSave(const char *) { return false; }
+	virtual bool OnBeforeOpen(const char *filename, const char *extension) { return false; }
 	virtual bool OnSave(const char *) { return false; }
 	virtual bool OnChar(char) { return false; }
 	virtual bool OnExecute(const char *) { return false; }
