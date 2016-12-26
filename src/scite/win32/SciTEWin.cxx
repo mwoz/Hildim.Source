@@ -1446,8 +1446,16 @@ void SciTEWin::EnsureVisible(){
 	if (cmdShow) {	// assume SW_MAXIMIZE only
 		::ShowWindow(MainHWND(), cmdShow);			 
 		cmdShow = 0;
-		Redraw();
+		Redraw();	 
 	}
+}
+
+void SciTEWin::HideForeReolad(){
+	WINDOWPLACEMENT wp;
+	wp.length = sizeof(wp);
+	::GetWindowPlacement(MainHWND(), &wp);
+	cmdShow = wp.showCmd;
+	::ShowWindow(MainHWND(), SW_HIDE);
 }
 
 

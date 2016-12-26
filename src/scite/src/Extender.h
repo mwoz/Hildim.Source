@@ -42,6 +42,7 @@ public:
 	virtual bool GetBuffersSavedState(int i) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
+	virtual void HideForeReolad() = 0;
 	virtual void SetOverrideLanguage(const char *lexer, bool bFireEvent) = 0;
 	virtual bool SwitchMouseHook(bool bSet) = 0;
 	virtual void RunInConcole() = 0;

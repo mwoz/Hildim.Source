@@ -843,11 +843,24 @@ void SciTEBase::ReadProperties() {
 	if (caretLineBack.length()) {
 		wEditor.Call(SCI_SETCARETLINEVISIBLE, 1);
 		wEditor.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	} else {
+	}
+	else {
 		wEditor.Call(SCI_SETCARETLINEVISIBLE, 0);
 	}
 	wEditor.Call(SCI_SETCARETLINEBACKALPHA,
 		props.GetInt("caret.line.back.alpha", SC_ALPHA_NOALPHA));
+	
+	caretLineBack = props.Get("findres.caret.line.back");
+	if (caretLineBack.length()) {
+		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
+		wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
+		wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
+	}
+	else {
+		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
+	}
+	wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
+		props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
 
 //!-start-[output.caret]  - не будем делать в поиске
 	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));

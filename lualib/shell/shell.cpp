@@ -445,6 +445,18 @@ static int set_curent_dir(lua_State *L)
 	lua_pushstring(L, currentDir);
 	return 1;
 }
+static int load_kb_layout(lua_State *L)
+{
+	const char* pnL1 = luaL_checkstring(L, -1);
+	HKL hkl = LoadKeyboardLayout(pnL1, KLF_SUBSTITUTE_OK | KLF_NOTELLSHELL);
+	if (!hkl){
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	ActivateKeyboardLayout(hkl, KLF_REORDER);
+	lua_pushboolean(L, true);
+	return 1;
+}
 static int datetime(lua_State *L){
 	struct tm *newtime;
 	__int64 ltime;
@@ -1335,7 +1347,8 @@ static const struct luaL_reg shell[] =
 	{ "activate_proc_wnd", activate_proc_wnd },
 	{ "set_curent_dir", set_curent_dir },
 	{ "datetime", datetime },
-	{ "async_mouse_state", async_mouse_state},
+	{ "async_mouse_state", async_mouse_state },
+	{ "load_kb_layout", load_kb_layout },
 	{ NULL, NULL }
 };
 

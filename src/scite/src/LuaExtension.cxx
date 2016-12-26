@@ -578,6 +578,11 @@ static int cf_EnsureVisible(lua_State* L){
 	return 0;
 }
 
+static int cf_HideForeReolad(lua_State* L){
+	host->HideForeReolad();
+	return 0;
+}
+
 static int sf_SwitchMouseHook(lua_State* L){
 	bool bSet = lua_toboolean(L, 1);
 	bSet = host->SwitchMouseHook(bSet);
@@ -1899,6 +1904,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_EnsureVisible);
 	lua_setfield(luaState, -2, "EnsureVisible");
+
+	lua_pushcfunction(luaState, cf_HideForeReolad);
+	lua_setfield(luaState, -2, "HideForeReolad");
 
 	lua_pushcfunction(luaState, sf_SetOverrideLanguage);
 	lua_setfield(luaState, -2, "SetLexer");

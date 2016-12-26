@@ -298,6 +298,7 @@ protected:
 
 
 	void EnsureVisible();
+	virtual void HideForeReolad();
 	LRESULT		OnChangeCBChain(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
 	HWND hNextCBWnd;

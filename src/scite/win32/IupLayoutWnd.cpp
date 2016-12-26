@@ -262,6 +262,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"CONTROL", "YES",
 		"MINSIZE", "200x200",
 		"SIZE", "200x200",
+		"SHRINK", "YES", 
 		NULL);
 
 	return containers[0];
