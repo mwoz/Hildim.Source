@@ -10,7 +10,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 
 #define _AUTOINCREASEVERSIONFORRELEASE_		//autoincrease last number in version on successfull release build
 #define _AUTOINCREASEBOTHVERSIONS_			//autoincrease both File Version and Product Version
@@ -29,7 +29,7 @@
 #include <atlconv.h>		
 
 #include <TLX_LIB\tlxlib_misc.h>
-
+#include <TLX_LIB\sysLog.h>
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 

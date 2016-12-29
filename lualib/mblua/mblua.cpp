@@ -126,7 +126,7 @@ int do_RestoreMessage(lua_State* L)
 		{
 			dwSize = f.Read(pByte,dwSize);
 		}
-		catch(CFileException e)
+		catch(CFileException& e)
 		{
 			CString str;
 			str.Format("do_RestoreMessage:File could not be reader %d", e.m_cause);
@@ -183,7 +183,7 @@ int do_Subscribe(lua_State* L)
 		cn->SetCallback();
 		//mb_handle h = mbTransport->mbSubscribe(cn,luaL_checkstring(L,2),lua_touserdata(L,3));
 		mb_handle h = mbTransport->mbSubscribe((CmbConnectorBase*)cn, luaL_checkstring(L, 2), lua_touserdata(L, 3));
-		lua_pushlightuserdata(L,h);
+		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
 	return 0;
@@ -198,7 +198,7 @@ int do_Request(lua_State* L)
 		if(lua_type(L,4)!= LUA_TNIL)
 			pOpaq=(void*)cmessage_arg(L, "do_Request",4);
 		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3),pOpaq);
-		lua_pushlightuserdata(L,h);
+		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
 	return 0;

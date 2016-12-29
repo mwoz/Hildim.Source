@@ -19,7 +19,7 @@ HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CM
 {
 	if (callback_idx != 0) {
 		lua_rawgeti(L,LUA_REGISTRYINDEX,callback_idx);
-		lua_pushlightuserdata(L,handle);
+		lua_pushlightuserdata(L,(void*)handle);
 		wrap_cmsg(L,(CMessage*)pOpaque);
 		lua_pushinteger(L, error);
 		wrap_cmsg(L,pMsg);
