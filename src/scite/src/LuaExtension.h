@@ -55,7 +55,8 @@ public:
 	virtual const char *OnSendEditor(unsigned int, unsigned int, long); //!-add-[OnSendEditor]
 	virtual bool OnColorized(unsigned int, unsigned int);
 	virtual const char *OnContextMenu(unsigned int, unsigned int, const char *);
-	virtual bool OnFindCompleted();
+	virtual bool OnFindProgress(int state, int all);
+	virtual bool OnPostCallback(int idx);
 	virtual bool OnIdle();
 	virtual bool OnLayOutNotify(const char *);
 	virtual bool OnGeneratedHotKey(long);  //“олько дл€ команд, посылаемых по хотке€м, сгенерированным автоматически!

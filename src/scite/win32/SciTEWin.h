@@ -267,9 +267,7 @@ protected:
 	virtual void WarnUser(int warnID, const char *msg = NULL, bool isCanBeAlerted = true); //!-change-[WarningMessage]
 
 	virtual void Notify(SCNotification *notification);
-	virtual void ShowToolBar();
-	virtual void ShowTabBar();
-	virtual void ShowStatusBar();
+
 	virtual void ActivateWindow(const char *timestamp);
 	void ExecuteHelp(const char *cmd, int hh_cmd = 0x000d);
 	void ExecuteOtherHelp(const char *cmd);
@@ -299,6 +297,7 @@ protected:
 
 	void EnsureVisible();
 	virtual void HideForeReolad();
+	virtual void RunAsync(int idx);
 	LRESULT		OnChangeCBChain(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
 	HWND hNextCBWnd;
@@ -349,7 +348,6 @@ public:
 	static void Register(HINSTANCE hInstance_);
 	static LRESULT PASCAL TWndProc(
 	    HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	virtual void PostCommand(int cmd, int param);
 
 	friend class UniqueInstance;
 	friend class SciTEBase; //!-add-[GetApplicationProps]

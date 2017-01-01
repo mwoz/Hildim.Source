@@ -33,7 +33,6 @@ public:
 	virtual bool ShowParametersDialog(const char *msg)=0; //!-add-[ParametersDialogFromLua]
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc) = 0;
-	virtual void PostCommand(int cmd, int param) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 	virtual void SetDocumentAt(int index, bool updateStack = true) = 0;
 	virtual int GetBuffersCount() = 0;
@@ -47,6 +46,7 @@ public:
 	virtual bool SwitchMouseHook(bool bSet) = 0;
 	virtual void RunInConcole() = 0;
 	virtual void ExecuteHelp(const char *cmd, int hh_cmd) = 0;
+	virtual void RunAsync(int idx)=0;
 };
 
 /**
@@ -104,7 +104,8 @@ public:
 	virtual bool OnClose(const char *) { return false; }
 	virtual bool OnColorized(unsigned int, unsigned int) { return false; }
 	virtual const char *OnContextMenu(unsigned int msg, unsigned int wp, const char *lp){ return 0; }
-	virtual bool OnFindCompleted(){ return false; }
+	virtual bool OnFindProgress(int state, int all){ return false; }
+	virtual bool OnPostCallback(int idx){ return false; }
 	virtual bool OnIdle(){ return false; }
 	virtual bool OnLayOutNotify(const char *){ return false; }
 	virtual bool OnGeneratedHotKey(long) { return false; }

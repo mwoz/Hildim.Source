@@ -659,10 +659,6 @@ int SciTEBase::SaveIfUnsureAll(bool forceQuestion) {
 			AddFileToStack(buff, buff.selection, buff.scrollPosition);
 		}
 	}
-	if (!props.GetInt("save.session.multibuffers.only") || buffers.length > 1) //!-add-[save.session.multibuffers.only]
-	if (props.GetInt("save.session") || props.GetInt("save.position") || props.GetInt("save.recent")) {
-		SaveSessionFile(GUI_TEXT(""));
-	}
 
 	// Ensure extender is told about each buffer closing
 	for (int k = 0; k < buffers.length; k++) {
@@ -1162,22 +1158,38 @@ bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFla
 
 }
 
-void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, void *pluaState){
+void SciTEBase::CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut){
 	FilePathSet directories;
-	FilePathSet files; 
+	FilePathSet files;
 	baseDir.List(directories, files, fileTypes);
-	size_t searchLength = strlen(searchString);
-	SString os;
-	lua_State *luaState = (lua_State*) pluaState;
-	for (size_t i = 0; (i < files.Length())&&jobQueue.ContinueSearch(); i ++) {
-		FilePath fPath = files.At(i);
-		grepOut->iFiles += 1;
-		bool bFindInFiles = false;
+
+	grepOut->iFiles += files.Length();
+	if (gf & grepSubDir){
+		for (size_t j = 0; (j < directories.Length() && jobQueue.ContinueSearch()); j++) {
+			FilePath fPath = directories.At(j);
+			if ((gf & grepDot) || (fPath.Name().AsInternal()[0] != '.')) {
+				CountRecursive(gf, fPath, fileTypes, grepOut);
+			}
+		}
+	}
+}
+
+void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp){
+			FilePathSet directories;
+			FilePathSet files;
+			baseDir.List(directories, files, fileTypes);
+			size_t searchLength = strlen(searchString);
+			SString os;
+			//lua_State *luaState = (lua_State*)pluaState;
+			for (size_t i = 0; (i < files.Length()) && jobQueue.ContinueSearch(true); i++) {
+				FilePath fPath = files.At(i);
+				grepOut->iFiles += 1;
+				bool bFindInFiles = false;
 	
 		FileReader fr(fPath, gf & grepMatchCase);
 		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {					  			
 			while (char *line = fr.Next()) {
-				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? luaState : 0, gf)) {
+				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? pRegExp : 0, gf)) {
 					grepOut->iLines += 1;
 					if (!bFindInFiles) {
 						if (gf & grepGroup){
@@ -1224,7 +1236,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		for (size_t j = 0; (j < directories.Length()) && jobQueue.ContinueSearch(); j++) {
 			FilePath fPath = directories.At(j);
 			if ((gf & grepDot) || (fPath.Name().AsInternal()[0] != '.')) {
-				GrepRecursive(gf, fPath, searchString, fileTypes, basePath, grepOut, pluaState);
+				GrepRecursive(gf, fPath, searchString, fileTypes, basePath, grepOut, pRegExp);
 			}
 		}
 	}
@@ -1282,15 +1294,24 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		}
 	}
 
-	wFindRes.Send(SCI_SETSEL, 0, 0);
-	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
-	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Wait...\n"));
+	jobQueue.StartSearch(gf & grepProgress);
+
 	GrepOut grepOut;
 	grepOut.iLines = 0;
 	grepOut.iFiles = 0;
 	grepOut.iInFiles = 0;
-	grepOut.strOut = "";
-	GrepRecursive(gf, FilePath(directory), searchString.c_str(), fileTypes, basePathLen, &grepOut, (void*)&regexp); 
+	grepOut.strOut = "";	
+	if (gf & grepProgress){
+		CountRecursive(gf, FilePath(directory), fileTypes, &grepOut);
+		jobQueue.SetAll(grepOut.iFiles);
+		grepOut.iFiles = 0;
+	}
+
+	wFindRes.Send(SCI_SETSEL, 0, 0);
+	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
+	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Wait...\n"));
+
+	GrepRecursive(gf, FilePath(directory), searchString.c_str(), fileTypes, basePathLen, &grepOut, &regexp); 
 	if (!(gf & grepStdOut)) {
 		//SString sExitMessage();
 		if (jobQueue.TimeCommands()) {
@@ -1328,7 +1349,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(os.c_str()));
 	wFindRes.Send(SCI_SETSEL, 0, 0);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
-	::PostMessage(reinterpret_cast<HWND>(GetID()), SCN_FINDCOMPLETED, 0, 0);
+	::PostMessage(reinterpret_cast<HWND>(GetID()), SCI_FINDPROGRESS, 2, 0);
 
 }
 static int LuaPanicFunction(lua_State *Ls) {

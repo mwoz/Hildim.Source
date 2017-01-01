@@ -65,7 +65,8 @@ public:
 	virtual const char *OnSendEditor(unsigned int, unsigned int, long); //!-add-[OnSendEditor]
 	virtual bool OnColorized(unsigned int, unsigned int);
 	virtual const char *OnContextMenu(unsigned int msg, unsigned int wp, const char *lp);
-	virtual bool OnFindCompleted();
+	virtual bool OnFindProgress(int state, int all);
+	virtual bool OnPostCallback(int idx);
 	virtual bool OnIdle();
 	virtual bool OnLayOutNotify(const char *);
 	virtual bool OnGeneratedHotKey(long);

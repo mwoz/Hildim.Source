@@ -387,6 +387,8 @@ bool FilePath::SetWorkingDirectory() const {
 void FilePath::List(FilePathSet &directories, FilePathSet &files, const GUI::gui_char *fileTypes) {
 	GUI::gui_string pat(fileTypes);
 	std::replace(pat.begin(), pat.end(), ' ', '\0');
+	std::replace(pat.begin(), pat.end(), ';', '\0');
+	std::replace(pat.begin(), pat.end(), ',', '\0');
 	size_t start = 0;
 	bool complete;
 	WIN32_FIND_DATAW findFileData;

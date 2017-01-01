@@ -413,8 +413,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	statementLookback = 10;
 	preprocessorSymbol = '\0';
 
-	tabVisible = false;
-	tabHideOne = false;
 	tabMultiLine = false;
 	iuptbVisible = false;
 	sbNum = 1;
@@ -3341,15 +3339,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		CheckMenus();
 		break;
 
-	case IDM_VIEWTOOLBAR:
-		ShowToolBar();
-		CheckMenus();
-		break;
-
 	case IDM_VIEWTLBARIUP:
 		iuptbVisible = !iuptbVisible;
 		props.SetInteger("iuptoolbar.visible", iuptbVisible);
-		ShowToolBar();//Все равно там запускается только ресайз окон
 		CheckMenus();
 		break;
 
@@ -3386,17 +3378,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		wEditor.Call(SCI_SETREADONLY, isReadOnly);
 		CheckMenus();
 		BuffersMenu(); //!-add-[ReadOnlyTabMarker]
-		break;
-
-	case IDM_VIEWTABBAR:
-		tabVisible = !tabVisible;
-		ShowTabBar();
-		CheckMenus();
-		break;
-
-	case IDM_VIEWSTATUSBAR:
-		ShowStatusBar();
-		CheckMenus();
 		break;
 
 	case IDM_CLEAROUTPUT:
@@ -4207,7 +4188,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 void SciTEBase::CheckMenus() {
 	int iEOL = wEditor.Call(SCI_GETVIEWEOL);
 
-	props.SetInteger("tabbar.visible", tabVisible);
 	props.SetInteger("view.whitespace", viewWs);
 	props.SetInteger("view.indentation.guides", viewIndent);
 	props.SetInteger("line.margin.visible", lineNumbers);
@@ -4357,11 +4337,6 @@ void SciTEBase::PerformOne(char *action) {
 			}
 		} else if (isprefix(action, "insert:") && wEditor.Created()) {
 			wEditor.CallString(SCI_REPLACESEL, 0, arg);
-		} else if (isprefix(action, "loadsession:")) {
-			if (*arg) {
-				LoadSessionFile(GUI::StringFromUTF8(arg).c_str());
-				RestoreSession();
-			}
 		} else if (isprefix(action, "macrocommand:")) {
 			ExecuteMacroCommand(arg);
 		} else if (isprefix(action, "macroenable:")) {
@@ -4766,8 +4741,6 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 		// try to load session.
 		if (!buffers.initialised) {
 			InitialiseBuffers();
-			if (props.GetInt("buffers") && props.GetInt("save.session"))
-				RestoreSession();
 		}
 		// No open file after session load so create empty document.
 		if (filePath.IsUntitled() && buffers.length == 1 && !buffers.buffers[0].isDirty) {

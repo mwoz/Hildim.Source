@@ -62,7 +62,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\include;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
@@ -96,7 +96,7 @@
       <Optimization>MinSpace</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
-      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;NDEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;NDEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\include;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>

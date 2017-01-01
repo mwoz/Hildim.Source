@@ -159,18 +159,6 @@ void SciTEWin::Notify(SCNotification *notification) {
 	}
 }
 
-void SciTEWin::ShowToolBar() {
-	SizeSubWindows();
-}
-
-void SciTEWin::ShowTabBar() {
-	SizeSubWindows();
-}
-
-void SciTEWin::ShowStatusBar() {
-	SizeSubWindows();
-}
-
 void SciTEWin::ActivateWindow(const char *) {
 	// This does nothing as, on Windows, you can no longer activate yourself
 }

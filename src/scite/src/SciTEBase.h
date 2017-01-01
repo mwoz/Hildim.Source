@@ -5,6 +5,8 @@
 // Copyright 1998-2010 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
+#ifndef __SCITEBASE_H
+#define	 __SCITEBASE_H
 extern const GUI::gui_char appName[];
 
 extern const GUI::gui_char propUserFileName[];
@@ -22,6 +24,7 @@ extern const GUI::gui_char propAbbrevFileName[];
 #include <time.h>
 #endif
 #endif
+#include <regex>
 
 #define ELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
@@ -322,10 +325,8 @@ protected:
 	GUI::ScintillaWindow wFindRes;
 	GUI::Window wIncrement;
 	GUI::Window wTabBar;
-	bool tabVisible;
 	bool viewWs;
 	bool viewIndent;
-	bool tabHideOne; // Hide tab bar if one buffer is opened only
 	bool tabMultiLine;
 	bool iuptbVisible;
 	SString sbValue;	///< Status bar text.
@@ -502,9 +503,6 @@ protected:
 	void CreateBuffers();
 	void InitialiseBuffers();
 	FilePath UserFilePath(const GUI::gui_char *name);
-	void LoadSessionFile(const GUI::gui_char *sessionName);
-	void RestoreSession();
-	void SaveSessionFile(const GUI::gui_char *sessionName);
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize) = 0;
 	void SetIndentSettings();
 	void SetEol();
@@ -663,9 +661,7 @@ protected:
 	bool MarginClick(int position, int modifiers, GUI::ScintillaWindow *w);
 	void NewLineInOutput();
 	virtual void Notify(SCNotification *notification);
-	virtual void ShowToolBar() = 0;
-	virtual void ShowTabBar() = 0;
-	virtual void ShowStatusBar() = 0;
+
 	virtual void ActivateWindow(const char *timestamp) = 0;
 
 	void RemoveFindMarks();
@@ -748,7 +744,7 @@ protected:
 	void OpenFilesFromStdin();
 	enum GrepFlags {
 	    grepNone = 0, grepWholeWord = 1, grepMatchCase = 2, grepStdOut = 4,
-	    grepDot = 8, grepBinary = 16, grepRegExp = 32, grepSubDir = 64, grepGroup = 128
+		grepDot = 8, grepBinary = 16, grepRegExp = 32, grepSubDir = 64, grepGroup = 128, grepProgress = 256
 	};
 	typedef struct GrepOut{
 		SString strOut;
@@ -756,7 +752,8 @@ protected:
 		int iFiles;
 		int iInFiles;
 	}GrepOut;
-	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, void *pluaState); //!-change-[FindResultListStyle]
+	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
+	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);
 	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
 	void EnumProperties(const char *action);
@@ -783,9 +780,9 @@ protected:
 	bool ShowParametersDialog(const char *msg); //!-add-[ParametersDialogFromLua]
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc);
-	virtual void PostCommand(int cmd, int param) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 	virtual void RunInConcole();
+	virtual void RunAsync(int idx)=0;
 
 	// Valid CurrentWord characters
 	bool iswordcharforsel(char ch);
@@ -843,3 +840,4 @@ void WindowSetFocus(GUI::ScintillaWindow &w);
 inline bool isspacechar(unsigned char ch) {
     return (ch == ' ') || ((ch >= 0x09) && (ch <= 0x0d));
 }
+#endif

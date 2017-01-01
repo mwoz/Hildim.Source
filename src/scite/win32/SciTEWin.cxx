@@ -749,7 +749,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 	}
 
 	if (jobToRun.jobType == jobGrep) {
-		// jobToRun.command is "(w|~)(c|~)(d|~)(b|r|~)(s|~)\0files\0text"
+		// jobToRun.command is "(w|~)(c|~)(d|~)(b|r|~)(s|~)(g|~)(p|~)\0files\0text"
 		const char *grepCmd = jobToRun.command.c_str();
 		GrepFlags gf = grepNone;
 		if (*grepCmd == 'w')
@@ -771,6 +771,9 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 		grepCmd++;
 		if (*grepCmd == 'g')
 			gf = static_cast<GrepFlags>(gf | grepGroup);
+		grepCmd++;
+		if (*grepCmd == 'p')
+			gf = static_cast<GrepFlags>(gf | grepProgress);
 		grepCmd++;
 		const char *findFiles = grepCmd + 1;
 		const char *findWhat = findFiles + strlen(findFiles) + 1;
@@ -1305,6 +1308,7 @@ void SciTEWin::CreateUI() {
 	             reinterpret_cast<LPSTR>(this));
 	if (!wSciTE.Created())
 		exit(FALSE);
+	jobQueue.hwnd = (HWND)wSciTE.GetID();
 
 	SString pageSetup = props.Get("print.margins");
 	char val[32];
@@ -1374,10 +1378,6 @@ GUI::gui_string SciTEWin::ProcessArgs(const GUI::gui_char *cmdLine) {
  * to other instance and exit or just show the window and open files.
  */
 void SciTEWin::Run(const GUI::gui_char *cmdLine) {
-	// Load the default session file
-	if (props.GetInt("save.session") || props.GetInt("save.position") || props.GetInt("save.recent")) {
-		LoadSessionFile(GUI_TEXT(""));
-	}
 
 	// Break up the command line into individual arguments
 	GUI::gui_string args = ProcessArgs(cmdLine);
@@ -1456,6 +1456,10 @@ void SciTEWin::HideForeReolad(){
 	::GetWindowPlacement(MainHWND(), &wp);
 	cmdShow = wp.showCmd;
 	::ShowWindow(MainHWND(), SW_HIDE);
+}
+
+void SciTEWin::RunAsync(int idx)	{
+	PostMessage((HWND)GetID(), SCI_POSTCALBACK, idx, 0);
 }
 
 
@@ -1806,10 +1810,10 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case SCITE_NOTIFYCMDEXIT:
 			//закончился консольный поток - выполним скрипт в луа
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTEXIT, lParam, wParam);
-		case SCI_POSTNOTIFY:
-			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_ONPOST, lParam, wParam);
-		case SCN_FINDCOMPLETED:
-			return (LRESULT)extender->OnFindCompleted();
+		case SCI_POSTCALBACK:
+			return (LRESULT)extender->OnPostCallback(wParam);
+		case SCI_FINDPROGRESS:
+			return (LRESULT)extender->OnFindProgress(wParam, lParam);
 
 //!-start-[new_on_dbl_clk]
 	case WM_LBUTTONDBLCLK:
@@ -1998,10 +2002,6 @@ LRESULT PASCAL SciTEWin::TWndProc(
 			return ::DefWindowProcW(hWnd, iMessage, wParam, lParam);
 	} else
 		return scite->WndProc(iMessage, wParam, lParam);
-}
-
-void SciTEWin::PostCommand(int cmd, int param){
-	PostMessage((HWND)GetID(), SCI_POSTNOTIFY, cmd, param);
 }
 
 

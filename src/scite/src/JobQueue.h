@@ -10,6 +10,7 @@
 
 #ifndef JOBQUEUE_H
 #define JOBQUEUE_H
+#include <windows.h>
 
 enum JobSubsystem {
     jobCLI = 0, jobGUI = 1, jobShell = 2, jobExtension = 3, jobHelp = 4, jobOtherHelp = 5, jobGrep = 6, iobAsyncLua = 7};
@@ -60,6 +61,10 @@ public:
 	bool jobUsesOutputPane;
 	long cancelFlag;
 	bool timeCommands;
+	bool bProgress = false;
+	int iAll = 0;
+	int iProg = 0;
+	HWND hwnd;
 	
 
 	JobQueue() {
@@ -80,8 +85,29 @@ public:
 		mutex = 0;
 	}
 
-	bool ContinueSearch() const{
+	void StartSearch(bool progress){
 		Lock lock(mutex);
+		bProgress = progress;
+		iAll = 0;
+		iProg = 0;
+
+	}
+	void SetAll(int count){
+		Lock lock(mutex);
+		iAll = count;
+		if (bProgress){
+			::PostMessage(hwnd, SCI_FINDPROGRESS, 0, iAll);
+		}
+	}
+
+	bool ContinueSearch(bool isFile = false) {
+		Lock lock(mutex);
+		if (bProgress && isFile && continueSearch){
+			iProg++;
+			if (iProg % 50 == 0){
+				::PostMessage(hwnd, SCI_FINDPROGRESS, 1, iProg);
+			}
+		}
 		return continueSearch;
 	}
 

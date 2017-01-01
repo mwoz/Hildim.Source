@@ -2466,7 +2466,6 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCMOD_NORM",0},
 	{"SCMOD_SHIFT",1},
 	{"SCMOD_SUPER",8},
-	{"SCN_NOTYFY_ONPOST", 3995},
 	{"SCN_NOTYFY_OUTPUTCMD", 3998},
 	{"SCN_NOTYFY_OUTPUTEXIT",3999},
 	{"SCVS_NONE",0},
@@ -3167,7 +3166,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2532,
+	ifaceConstantCount = 2531,
 	ifacePropertyCount = 209
 };
 

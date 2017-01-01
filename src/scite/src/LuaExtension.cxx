@@ -634,7 +634,6 @@ static int sf_CheckRegexp(lua_State* L){
 	return 0;
 }
 
-
 // Pane match generator.  This was prototyped in about 30 lines of Lua.
 // I hope the C++ version is more robust at least, e.g. prevents infinite
 // loops and is more tamper-resistant.
@@ -931,12 +930,6 @@ static int cf_iup_reattach_wnd_to(lua_State *L){
 	return 1;
 }
 
-static int cf_post_command(lua_State *L){
-	int p = luaL_checkint(L, 1);
-	int c = luaL_checkint(L, 2);
-	host->PostCommand(c, p);
-	return 1;
-}
 static int cf_perform_grep_ex(lua_State *L){
 	const char *p = luaL_checkstring(L, 1);
 	const char *w = luaL_checkstring(L, 2);
@@ -1042,6 +1035,19 @@ static bool call_function(lua_State *L, int nargs, bool ignoreFunctionReturnValu
 		}
 	}
 	return handled;
+}
+
+static int sf_RunAsync(lua_State* L){
+	int idx = luaL_ref(L, LUA_REGISTRYINDEX);
+	host->RunAsync(idx);
+	return 0;
+}
+
+bool LuaExtension::OnPostCallback(int idx) {
+	lua_rawgeti(luaState, LUA_REGISTRYINDEX, idx);
+	call_function(luaState, 0);
+	luaL_unref(luaState, LUA_REGISTRYINDEX, idx);
+	return false;
 }
 
 //!-start-[macro] [OnSendEditor]
@@ -1896,9 +1902,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_Reg_HotKey);
 	lua_setfield(luaState, -2, "RegistryHotKeys");
 
-	lua_pushcfunction(luaState, cf_post_command);
-	lua_setfield(luaState, -2, "PostCommand");
-
 	lua_pushcfunction(luaState, cf_perform_grep_ex);
 	lua_setfield(luaState, -2, "PerformGrepEx");
 
@@ -1922,6 +1925,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_CheckRegexp);
 	lua_setfield(luaState, -2, "CheckRegexp");
+
+	lua_pushcfunction(luaState, sf_RunAsync);
+	lua_setfield(luaState, -2, "RunAsync");
 
 	// buffers
 	lua_newtable(luaState);
@@ -2759,8 +2765,8 @@ const char *LuaExtension::OnContextMenu(unsigned int msg, unsigned int wp, const
 	return CallNamedFunction("OnContextMenu", msg, wp, lp);
 }
 
-bool LuaExtension::OnFindCompleted() {
-	return CallNamedFunction("OnFindCompleted");
+bool LuaExtension::OnFindProgress(int state, int all) {
+	return CallNamedFunction("OnFindProgress", state, all);
 }
 
 bool LuaExtension::OnIdle() {

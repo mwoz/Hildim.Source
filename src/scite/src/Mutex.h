@@ -11,6 +11,8 @@
 #ifndef MUTEX_H
 #define MUTEX_H
 
+#include <mutex>
+
 class Mutex {
 public:
 	virtual void Lock() = 0;

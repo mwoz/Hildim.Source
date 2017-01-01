@@ -237,8 +237,12 @@ const char *SingleThreadExtension::OnContextMenu(unsigned int msg, unsigned int 
 	return ext->OnContextMenu(msg, wp, lp);
 }
 
-bool SingleThreadExtension::OnFindCompleted(){
-	return ext->OnFindCompleted();
+bool SingleThreadExtension::OnFindProgress(int state, int all){
+	return ext->OnFindProgress(state, all);
+}
+
+bool SingleThreadExtension::OnPostCallback(int idx) {
+	return ext->OnPostCallback(idx);
 }
 
 bool SingleThreadExtension::OnIdle(){

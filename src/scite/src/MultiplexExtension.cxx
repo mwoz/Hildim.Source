@@ -6,7 +6,6 @@
 // The License.txt file describes the conditions under which this software may be distributed.
 
 #include <string>
-
 #include "Scintilla.h"
 #include "GUI.h"
 #include "MultiplexExtension.h"
@@ -371,12 +370,20 @@ const char *MultiplexExtension::OnContextMenu(unsigned int msg, unsigned int wp,
 	}
 	return result;
 }
-bool MultiplexExtension::OnFindCompleted() {
+bool MultiplexExtension::OnFindProgress(int state, int all) {
 	for (int i = 0; i<extensionCount; ++i) {
-		if (extensions[i]->OnFindCompleted()) return true;
+		if (extensions[i]->OnFindProgress(state, all)) return true;
 	}
 	return false;
 }
+
+bool MultiplexExtension::OnPostCallback(int idx) {
+	for (int i = 0; i<extensionCount; ++i) {
+		if (extensions[i]->OnPostCallback(idx)) return true;
+	}
+	return false;
+}
+
 bool MultiplexExtension::OnIdle() {
 	for (int i = 0; i<extensionCount; ++i) {
 		if (extensions[i]->OnIdle()) return true;

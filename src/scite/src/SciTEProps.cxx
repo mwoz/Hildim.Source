@@ -1179,8 +1179,6 @@ void SciTEBase::ReadProperties() {
 
 	scrollOutput = props.GetInt("output.scroll", 1);
 
-	tabHideOne = props.GetInt("tabbar.hide.one");
-
 	CallChildren(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
 
 	// To put the folder markers in the line number region
@@ -1431,7 +1429,6 @@ void SciTEBase::SetPropertiesInitial() {
 	wrapFindRes = props.GetInt("findres.wrap");
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
 
-	tabVisible = props.GetInt("tabbar.visible");
 	tabMultiLine = props.GetInt("tabbar.multiline");
 	lineNumbers = props.GetInt("line.margin.visible");	
 	viewIndent = props. GetInt("view.indentation.guides");
