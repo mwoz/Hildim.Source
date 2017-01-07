@@ -585,7 +585,7 @@ void SciTEWin::CopyAsRTF() {
 			}
 			fclose(fp);
 		}
-		unlink(fileNameTemp);
+		_unlink(fileNameTemp);
 		free(fileNameTemp);
 	}
 }
@@ -1126,7 +1126,7 @@ void SciTEWin::ShellExec(const SString &cmd, const char *dir) {
 	// guess if cmd is an executable, if this succeeds it can
 	// contain spaces without enclosing it with "
 	char *mycmdcopy = StringDup(cmd.c_str());
-	strlwr(mycmdcopy);
+	_strlwr(mycmdcopy);
 
 	char *mycmd_end = NULL;
 	char *myparams = NULL;
@@ -1263,13 +1263,11 @@ void SciTEWin::AddCommand(const SString &cmd, const SString &dir, JobSubsystem j
 }
 
 void SciTEWin::QuitProgram() {
-	if (SaveIfUnsureAll() != IDCANCEL) {
-		if (fullScreen)	// Ensure tray visible on exit
-			FullScreenToggle();
-		::PostQuitMessage(0);
-		ChangeClipboardChain(MainHWND(), hNextCBWnd);
-		wSciTE.Destroy();
-	}
+	if (fullScreen)	// Ensure tray visible on exit
+		FullScreenToggle();
+	::PostQuitMessage(0);
+	ChangeClipboardChain(MainHWND(), hNextCBWnd);
+	wSciTE.Destroy();
 }
 
 void SciTEWin::CreateUI() {
@@ -1817,7 +1815,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 //!-start-[new_on_dbl_clk]
 	case WM_LBUTTONDBLCLK:
-		::SendMessage(MainHWND(), WM_COMMAND, IDM_NEW, 0);
+		if (props.GetInt("tabbar.tab.close.on.doubleclick") == 1)
+			::SendMessage(MainHWND(), WM_COMMAND, IDM_NEW, 0);
 		return 0;
 //!-end-[new_on_dbl_clk]
 

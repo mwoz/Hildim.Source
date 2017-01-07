@@ -46,14 +46,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>.\$(Configuration)\</OutDir>
-    <IntDir>.\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)/</OutDir>
+    <IntDir>$(Configuration)/</IntDir>
     <TargetName>HildiM</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>.\$(Configuration)\</OutDir>
-    <IntDir>.\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)/</OutDir>
+    <IntDir>$(Configuration)/</IntDir>
     <TargetName>HildiM</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

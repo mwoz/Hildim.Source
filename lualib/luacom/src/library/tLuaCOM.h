@@ -46,6 +46,7 @@ public:
   CLSID GetCLSID(void);
   void GetIID(IID *piid);
   bool bSkipCheckError = false;
+  int tryCatch = LUA_REFNIL;
   IDispatch * GetIDispatch(void);
   void ReleaseFuncDesc(FUNCDESC *pfuncdesc);
   ITypeInfo * GetDefaultEventsInterface(void);

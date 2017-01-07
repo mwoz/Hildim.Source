@@ -450,7 +450,7 @@ protected:
 	void UpdateBuffersCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
-	void SetDocumentAt(int index, bool updateStack = true);
+	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
@@ -495,7 +495,7 @@ protected:
 //!	virtual void WarnUser(int warnID) = 0;
 	virtual void WarnUser(int warnID, const char *msg = NULL, bool isCanBeAlerted = true) = 0; //!-change-[WarningMessage]
 	void SetWindowName();
-	void SetFileName(FilePath openName, bool fixCase = true);
+	void SetFileName(FilePath openName, bool fixCase = true, bool setCaption = true);
 	FilePath FileNameExt() const {
 		return filePath.Name();
 	}
@@ -507,7 +507,7 @@ protected:
 	void SetIndentSettings();
 	void SetEol();
 	void New();
-	void RestoreState(const Buffer &buffer);
+	void RestoreState(const Buffer &buffer, bool setCaption = true);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
 	bool IsAbsolutePath(const char *path);
 	bool Exists(const GUI::gui_char *dir, const GUI::gui_char *path, FilePath *resultPath);
@@ -532,7 +532,6 @@ protected:
 	void Revert();
 	FilePath SaveName(const char *ext);
 	int SaveIfUnsure(bool forceQuestion = false);
-	int SaveIfUnsureAll(bool forceQuestion = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
 	bool Save();
@@ -770,7 +769,6 @@ protected:
 	void Remove(Pane p, int start, int end);
 	void Insert(Pane p, int pos, const char *s);
 	void Trace(const char *s);
-	char *Property(const char *key);
 	void SetProperty(const char *key, const char *val);
 	void UnsetProperty(const char *key);
 	uptr_t GetInstance();
@@ -790,6 +788,7 @@ protected:
 	bool islexerwordcharforsel(char ch);
 	int OnMenuCommandCallsCount; //!-add-[OnMenuCommand]
 public:
+	char *Property(const char *key);
 
 	enum { maxParam = 4 };
 

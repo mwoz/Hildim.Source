@@ -965,7 +965,13 @@ static int bf_get_buffer_saved(lua_State *L){
 
 static int cf_set_document_at(lua_State *L){
 	int index = luaL_checkint(L, 1);
-	host->SetDocumentAt(index);
+	int updateStack = 1;
+	if (lua_isboolean(L, 2))
+		updateStack = lua_toboolean(L, 2);
+	int switchTab = 1;
+	if (lua_isboolean(L, 3))
+		switchTab = lua_toboolean(L, 3);
+	host->SetDocumentAt(index, updateStack == 1, switchTab == 1);
 	return 0;
 }
 

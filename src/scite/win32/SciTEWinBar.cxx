@@ -74,7 +74,18 @@ void SciTEWin::TabInsert(int index, const GUI::gui_char *title) {
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_INSERTITEMW, (WPARAM)index, (LPARAM)&tie);
 }
 
+static bool _blockResetTabBar = false;
 void SciTEWin::TabSelect(int index) {
+	if (index == -2){
+		_blockResetTabBar = true;
+		return;
+	}
+	if (index == -3){
+		_blockResetTabBar = false;
+		return;
+	}
+	if (_blockResetTabBar)
+		return;
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_SETCURSEL, (WPARAM)index, (LPARAM)0);
 }
 

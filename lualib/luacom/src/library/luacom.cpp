@@ -1229,9 +1229,24 @@ static int luacom_GetIUnknown(lua_State *L)
 }
 
 
-static int luacom_SkipCheckError(lua_State *L)
+static int luacom_TryCatch(lua_State *L)
 {
 	tLuaCOM* obj = (tLuaCOM *)LuaBeans::check_tag(L, 1);
+	//lua_pop(L, 1);
+	if (obj->tryCatch != LUA_REFNIL)
+		luaL_unref(L, LUA_REGISTRYINDEX, obj->tryCatch);
+	obj->tryCatch = LUA_REFNIL;
+	obj->bSkipCheckError = false;
+	const char *c = luaL_typename(L, 2);
+	if (!strcmp(c, "function")){
+		lua_remove(L, 1);
+		int idx = luaL_ref(L, LUA_REGISTRYINDEX);
+		obj->tryCatch = idx;
+	}
+	else if (strcmp(c, "no value") && strcmp(c, "nil")){
+		luaL_typerror(L, 2, "function");
+		return 0;
+	}
 	obj->bSkipCheckError = true;
 	return 0;
 }
@@ -2171,7 +2186,7 @@ static struct luaL_Reg functions_tb []=
   {"DetectAutomation", luacom_LuaDetectAutomation},
   {"StartMessageLoop", luacom_StartMessageLoop},
   { "RoundTrip", luacom_RoundTrip },
-  { "SkipCheckError", luacom_SkipCheckError },
+  { "TryCatch", luacom_TryCatch },
   {NULL, NULL}
 };
   

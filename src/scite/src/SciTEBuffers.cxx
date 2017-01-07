@@ -240,9 +240,11 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 	return buffers.buffers[index].doc;
 }
 
-void SciTEBase::SetDocumentAt(int index, bool updateStack) {
+void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
 	int currentbuf = buffers.Current();
-
+	if (!switchTab)
+		TabSelect(-2);
+	
 	if (	index < 0 ||
 	        index >= buffers.length ||
 	        //index == currentbuf ||
@@ -265,9 +267,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack) {
 	}
 
 	Buffer bufferNext = buffers.buffers[buffers.Current()];
-	SetFileName(bufferNext);
+	SetFileName(bufferNext, true, switchTab);
 	wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
-	RestoreState(bufferNext);
+	RestoreState(bufferNext, switchTab);
 
 	TabSelect(index);
 
@@ -281,6 +283,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack) {
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 	}
+	TabSelect(-3);
 }
 
 void SciTEBase::UpdateBuffersCurrent() {
@@ -454,8 +457,9 @@ void SciTEBase::New() {
 		extender->InitBuffer(buffers.Current());
 }
 
-void SciTEBase::RestoreState(const Buffer &buffer) {
-	SetWindowName();
+void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
+	if (setCaption)
+		SetWindowName();
 	ReadProperties();
 	if (CurrentBuffer()->unicodeMode != uni8Bit) {
 		// Override the code page if Unicode

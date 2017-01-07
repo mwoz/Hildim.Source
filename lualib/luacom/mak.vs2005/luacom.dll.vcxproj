@@ -28,9 +28,6 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="luacom.props" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="luacom.props" />
@@ -44,14 +41,16 @@
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>luacom</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>luacom</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PreBuildEvent>
@@ -60,7 +59,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../../lua5.1/include;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MAKVS2005_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -70,7 +69,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)lualib\lib\HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>../../lua5.1/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -89,7 +88,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)lualib\lib\HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>../../lua5.1/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

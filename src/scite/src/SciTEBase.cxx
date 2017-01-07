@@ -4199,7 +4199,7 @@ void SciTEBase::CheckMenus() {
 	if (buffers.size > 0) {
 		if (wTabBar.GetID()) {
 			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DESELECTALL, (WPARAM)0, (LPARAM)0);
-			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_SETCURSEL, (WPARAM)buffers.Current(), (LPARAM)0);
+			TabSelect(buffers.Current());
 		}
 	}
 }

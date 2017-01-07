@@ -40,7 +40,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 	case WM_LBUTTONDBLCLK:
 	{
-		pSciteWin->WndProc(WM_COMMAND, IDM_NEW, 0);
+		if (!strcmp(pSciteWin->Property("tabbar.tab.close.on.doubleclick"),"1") )
+			pSciteWin->WndProc(WM_COMMAND, IDM_NEW, 0);
 	}
 		break;
 	case WM_CLOSE:

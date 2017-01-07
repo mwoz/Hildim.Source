@@ -89,7 +89,7 @@ static bool IsPropertiesFile(const FilePath &filename) {
 	return false;
 }
 
-void SciTEBase::SetFileName(FilePath openName, bool fixCase) {
+void SciTEBase::SetFileName(FilePath openName, bool fixCase, bool setCaption) {
 	if (openName.AsInternal()[0] == '\"') {
 		// openName is surrounded by double quotes
 		GUI::gui_string pathCopy = openName.AsInternal();
@@ -117,7 +117,8 @@ void SciTEBase::SetFileName(FilePath openName, bool fixCase) {
 	props.Set("FileExt", filePath.Extension().AsUTF8().c_str());
 	props.Set("FileNameExt", FileNameExt().AsUTF8().c_str());
 	SetFileProperties(props);	//!-add-[FileAttr in PROPS]
-	SetWindowName();
+	if (setCaption)
+		SetWindowName();
 	if (buffers.buffers)
 		buffers.buffers[buffers.Current()].Set(filePath);
 	BuffersMenu();
@@ -646,39 +647,6 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion) {
 				return IDCANCEL;
 		}
 	}
-	return IDYES;
-}
-
-int SciTEBase::SaveIfUnsureAll(bool forceQuestion) {
-	if (SaveAllBuffers(forceQuestion) == IDCANCEL) {
-		return IDCANCEL;
-	}
-	if (props.GetInt("save.recent")) {
-		for (int i = 0; i < buffers.length; ++i) {
-			Buffer buff = buffers.buffers[i];
-			AddFileToStack(buff, buff.selection, buff.scrollPosition);
-		}
-	}
-
-	// Ensure extender is told about each buffer closing
-	for (int k = 0; k < buffers.length; k++) {
-		SetDocumentAt(k);
-		if (extender) {
-			extender->OnClose(filePath.AsUTF8().c_str());
-		}
-	}
-
-	// Definitely going to exit now, so delete all documents
-	// Set editor back to initial document
-	if (buffers.length > 0) {
-		wEditor.Call(SCI_SETDOCPOINTER, 0, buffers.buffers[0].doc);
-	}
-	// Release all the extra documents
-	for (int j = 0; j < buffers.size; j++) {
-		if (buffers.buffers[j].doc)
-			wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.buffers[j].doc);
-	}
-	// Initial document will be deleted when editor deleted
 	return IDYES;
 }
 

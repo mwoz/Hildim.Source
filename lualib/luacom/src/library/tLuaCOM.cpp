@@ -335,7 +335,74 @@ int tLuaCOM::call(lua_State* L,
 
    if (SUCCEEDED(hr) || bSkipCheckError)
    {
-	   bSkipCheckError = false;
+	 bSkipCheckError = false;
+	 if (!SUCCEEDED(hr) && tryCatch != LUA_REFNIL){
+		 lua_rawgeti(L, LUA_REGISTRYINDEX, tryCatch);
+		 tStringBuffer src = "";
+		 tStringBuffer descr = "";
+		 int wCode = 0;
+		 int scode = 0;
+		 if (hr == DISP_E_EXCEPTION) // excecoes
+		 {
+			 if (excepinfo.bstrSource != NULL)
+				 src = tUtil::bstr2string(excepinfo.bstrSource);
+			 if (excepinfo.bstrDescription != NULL)
+				 descr = tUtil::bstr2string(excepinfo.bstrDescription);
+			 if (excepinfo.wCode != 0)
+				 wCode = excepinfo.wCode;
+			 else if (excepinfo.scode != 0)
+				 scode = excepinfo.scode;
+		 }
+
+		 lua_pushfstring(L, src);
+		 lua_pushfstring(L, descr);
+		 lua_pushinteger(L, wCode);
+		 lua_pushinteger(L, scode);
+		 {
+			 int traceback = 0;
+			 int nargs = 4;
+			 lua_getglobal(L, "debug");
+			 lua_getfield(L, -1, "traceback");
+			 lua_remove(L, -2);
+			 if (lua_isfunction(L, -1)) {
+				 traceback = lua_gettop(L) - nargs - 1;
+				 lua_insert(L, traceback);
+			 }
+			 else {
+				 lua_pop(L, 1);
+			 }
+
+			 int result = lua_pcall(L, nargs, 0 , traceback);
+
+			 if (traceback) {
+				 lua_remove(L, traceback);
+			 }
+			 if (0 == result) {
+				 // OK
+			 }
+			 else if (result == LUA_ERRRUN) {
+				 lua_getglobal(L, "print");
+				 lua_insert(L, -2); // use pushed error message
+				 lua_pcall(L, 1, 0, 0);
+			 }
+			 else {
+				 lua_pop(L, 1);
+				 if (result == LUA_ERRMEM) {
+					 COM_EXCEPTION("> Lua: memory allocation error\n");
+				 }
+				 else if (result == LUA_ERRERR) {
+					 COM_EXCEPTION("> Lua: an error occurred, but cannot be reported due to failure in _TRACEBACK\n");
+				 }
+				 else {
+					 COM_EXCEPTION("> Lua: unexpected error\n");
+				 }
+			 }
+		 }
+	 }
+	 if (tryCatch != LUA_REFNIL){
+		 luaL_unref(L, LUA_REGISTRYINDEX, tryCatch);
+		 tryCatch = LUA_REFNIL;
+	 }
      try
      {
        // pushes first return value (if any)

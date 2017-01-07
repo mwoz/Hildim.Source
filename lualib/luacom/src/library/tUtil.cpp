@@ -108,7 +108,8 @@ tStringBuffer tUtil::bstr2string(BSTR bstr, bool nullTerminated)
 
       // gets string length
       int lenMulti = WideCharToMultiByte(
-        CP_UTF8,            // code page
+		 CP_ACP,	  // code page
+        //  CP_UTF8,            
         0,            // performance and mapping flags
         bstr,    // wide-character string
         static_cast<int>(lenWide),  // number of chars in string
@@ -125,7 +126,8 @@ tStringBuffer tUtil::bstr2string(BSTR bstr, bool nullTerminated)
 		~C() { delete [] s; } char * s; } str(lenMulti + (nullTerminated? 1 : 0));
 
       int result = WideCharToMultiByte(
-        CP_UTF8,            // code page
+		  CP_ACP,	    // code page
+		 //CP_UTF8,           
         0,            // performance and mapping flags
         bstr,    // wide-character string
         static_cast<int>(lenWide),  // number of chars in string
