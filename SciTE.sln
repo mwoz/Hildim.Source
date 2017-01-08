@@ -37,6 +37,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupwin", "iup\scitePr\iupwi
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupcore", "iup\scitePr\iupcore.vcxproj", "{2C7E83B9-7FE8-432A-97BA-FCF4D0728408}"
+	ProjectSection(ProjectDependencies) = postProject
+		{651DBAB5-138E-4BCE-B0D1-EA7CB249DA89} = {651DBAB5-138E-4BCE-B0D1-EA7CB249DA89}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupcontrols", "iup\scitePr\iupcontrols.vcxproj", "{5EEFE977-C56D-462F-BDEE-12A5452EB8CC}"
 EndProject
@@ -56,6 +59,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luacom.dll", "lualib\luacom\mak.vs2005\luacom.dll.vcxproj", "{9B245550-2DC3-4A2E-870B-9E165EDC3916}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupole", "iup\scitePr\iupole.vcxproj", "{0C80BBEE-1B00-4567-1234-067292C84EDB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{651DBAB5-138E-4BCE-B0D1-EA7CB249DA89} = {651DBAB5-138E-4BCE-B0D1-EA7CB249DA89}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,9 +101,9 @@ Global
 		{465000B6-959F-4B72-A71B-425D586996D1}.Release|Win32.ActiveCfg = Release|Win32
 		{465000B6-959F-4B72-A71B-425D586996D1}.Release|Win32.Build.0 = Release|Win32
 		{465000B6-959F-4B72-A71B-425D586996D1}.Release|x64.ActiveCfg = Release|Win32
-		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|Win32.ActiveCfg = Debug1|Win32
-		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|Win32.Build.0 = Debug1|Win32
-		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|x64.ActiveCfg = Debug1|Win32
+		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|Win32.ActiveCfg = Release|Win32
+		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|Win32.Build.0 = Release|Win32
+		{61A46457-B235-7896-AC4B-647812FA181C}.Debug|x64.ActiveCfg = Debug|Win32
 		{61A46457-B235-7896-AC4B-647812FA181C}.Release|Win32.ActiveCfg = Release|Win32
 		{61A46457-B235-7896-AC4B-647812FA181C}.Release|Win32.Build.0 = Release|Win32
 		{61A46457-B235-7896-AC4B-647812FA181C}.Release|x64.ActiveCfg = Release|Win32

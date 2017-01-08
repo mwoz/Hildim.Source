@@ -71,16 +71,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\Debug\tools\LuaLib\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">false</LinkIncremental>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
@@ -148,7 +148,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <OutputFile>..\..\Release\tools\LuaLib\mblua.dll</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreSpecificDefaultLibraries>MSVCRTD.lib;MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -185,7 +185,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>../lib/HildiM.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
-      <OutputFile>..\..\Debug\tools\LuaLib\mblua.dll</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -229,7 +229,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>../lib/SciTE.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
-      <OutputFile>c:\Program Files\Scite\tools\LuaLib\mblua.dll</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -272,7 +272,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>../lib/SciTE.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
-      <OutputFile>c:\Program Files\Scite\tools\LuaLib\mblua.dll</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

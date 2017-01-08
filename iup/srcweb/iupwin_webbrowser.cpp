@@ -290,8 +290,7 @@ static int winWebBrowserSetHTMLSMARTAttrib(Ihandle* ih, const char* value)
 		VARIANT v;
 		v.vt = VT_BOOL;
 		v.boolVal = TRUE;
-		HRESULT r = hCurs->scrollIntoView(v);
-		bool b = r == S_OK;
+		hCurs->scrollIntoView(v);
 		htmlBody2->get_scrollTop(&y);
 		y -= iupAttribGetInt(ih, "TOPMARGIN");
 	}

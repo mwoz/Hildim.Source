@@ -248,7 +248,7 @@ static void iMatrixGetCellAlign(Ihandle* ih, int lin, int col, int *col_alignmen
 static int iMatrixDrawCallDrawCB(Ihandle* ih, int lin, int col, int x1, int x2, int y1, int y2, IFniiiiiiC draw_cb)
 {
   int ret;
-  cdCanvas* old_cnv;
+//  cdCanvas* old_cnv;
 
   iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
 
