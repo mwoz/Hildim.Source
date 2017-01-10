@@ -460,7 +460,6 @@ static int load_kb_layout(lua_State *L)
 static int datetime(lua_State *L){
 	struct tm *newtime;
 	__int64 ltime;
-	char buff[80];
 
 	_time64(&ltime);
 
@@ -488,7 +487,7 @@ static int activate_proc_wnd(lua_State *L)
 	ENUMINFO EnumInfo;
 	HWND w;
 	DWORD PId;
-	PId = luaL_checknumber(L, 1);
+	PId = (DWORD)luaL_checknumber(L, 1);
 	// set the search parameters 
 	EnumInfo.PId = PId;
 
@@ -1061,7 +1060,7 @@ static int findfiles( lua_State* L )
 
 
 			__int64 t = findFileData.ftLastWriteTime.dwLowDateTime + ((__int64)findFileData.ftLastWriteTime.dwHighDateTime << 32);
-			lua_pushnumber(L, t );
+			lua_pushnumber(L, (lua_Number)t);
 			lua_setfield(L, -2, "writetime");
 
 			lua_settable(L, -3);
@@ -1313,7 +1312,7 @@ static int greateCuid(lua_State* L)
 {
 
 	GUID MyGuid;
-	HRESULT hr = CoCreateGuid(&MyGuid);
+	HRESULT hr = CoCreateGuid(&MyGuid);	hr;
 	lua_pushinteger(L, MyGuid.Data1);
 	lua_pushinteger(L, MyGuid.Data2);
 	lua_pushinteger(L, MyGuid.Data3);

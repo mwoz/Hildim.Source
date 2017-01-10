@@ -737,7 +737,7 @@ void SCI_METHOD LexerFormEngine::Lex(unsigned int startPos, int length, int init
 	// Do not leak onto next line
 	//initStyle =onStartNextLine(initStyle);
 
-	StyleContext sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
+	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 
 	//!	for (; sc.More(); sc.Forward()) {
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) { //!-change-[LexersLastWordFix]

@@ -500,7 +500,7 @@ STDMETHODIMP tLuaControl::SetExtent(DWORD  dwDrawAspect, SIZEL *psizel)
     lua_pushnumber(L, sl.cx);
     lua_pushnumber(L, sl.cy);
     if(luaCompat_call(L, 3, 1)) return E_FAIL;
-    bool resize = lua_toboolean(L,-1);  // allow resize?
+    bool resize = (lua_toboolean(L,-1) != 0);  // allow resize?
 
     if(resize)
       ::HimetricToPixel(psizel, &m_Size);

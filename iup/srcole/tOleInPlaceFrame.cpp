@@ -198,6 +198,7 @@ STDMETHODIMP tOleInPlaceFrame::GetBorder(LPRECT prcBorder)
 STDMETHODIMP tOleInPlaceFrame::RequestBorderSpace(LPCBORDERWIDTHS pBW)
     {
     //Everything is fine with us, so always return an OK.
+	pBW;
     return NOERROR;
     }
 
@@ -224,6 +225,7 @@ STDMETHODIMP tOleInPlaceFrame::RequestBorderSpace(LPCBORDERWIDTHS pBW)
 
 STDMETHODIMP tOleInPlaceFrame::SetBorderSpace(LPCBORDERWIDTHS pBW)
     {
+	pBW;
     return NOERROR;
     }
 
@@ -248,6 +250,7 @@ STDMETHODIMP tOleInPlaceFrame::SetBorderSpace(LPCBORDERWIDTHS pBW)
 STDMETHODIMP tOleInPlaceFrame::SetActiveObject
     (LPOLEINPLACEACTIVEOBJECT pIIPActiveObj, LPCOLESTR pszObj)
     {
+	pszObj;
     if (NULL!=m_pIOleIPActiveObject)
         m_pIOleIPActiveObject->Release();
 
@@ -284,6 +287,7 @@ STDMETHODIMP tOleInPlaceFrame::SetActiveObject
 STDMETHODIMP tOleInPlaceFrame::InsertMenus(HMENU hMenu
     , LPOLEMENUGROUPWIDTHS pMGW)
     {
+	pMGW; hMenu;
     return NOERROR;
     }
 
@@ -310,7 +314,9 @@ STDMETHODIMP tOleInPlaceFrame::InsertMenus(HMENU hMenu
 STDMETHODIMP tOleInPlaceFrame::SetMenu(HMENU hMenu
     , HOLEMENU hOLEMenu, HWND hWndObj)
     {
-    HRESULT         hr;
+	hMenu; hOLEMenu; hWndObj;
+
+   // HRESULT         hr;
 
     /*
      * Our responsibilities here are to put the menu on the frame
@@ -345,6 +351,7 @@ STDMETHODIMP tOleInPlaceFrame::SetMenu(HMENU hMenu
 
 STDMETHODIMP tOleInPlaceFrame::RemoveMenus(HMENU hMenu)
     {
+	hMenu;
     return NOERROR;
     }
 
@@ -371,6 +378,7 @@ STDMETHODIMP tOleInPlaceFrame::RemoveMenus(HMENU hMenu)
 
 STDMETHODIMP tOleInPlaceFrame::SetStatusText(LPCOLESTR pszText)
     {
+	pszText;
     return NOERROR;
     }
 
@@ -394,6 +402,7 @@ STDMETHODIMP tOleInPlaceFrame::SetStatusText(LPCOLESTR pszText)
 
 STDMETHODIMP tOleInPlaceFrame::EnableModeless(BOOL fEnable)
     {
+	fEnable;
     return NOERROR;
     }
 
@@ -422,6 +431,7 @@ STDMETHODIMP tOleInPlaceFrame::EnableModeless(BOOL fEnable)
 
 STDMETHODIMP tOleInPlaceFrame::TranslateAccelerator(LPMSG pMSG, WORD wID)
     {
+	wID; pMSG;
     SCODE       sc;
 
         sc=S_OK;

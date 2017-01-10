@@ -485,7 +485,7 @@ STDMETHODIMP tLuaCOMEnumConnections::Next(
     }
 
   // copy values and advance mNextIndex.
-  int i = 0;
+  unsigned int i = 0;
   for ( ; i<cReq && mNextIndex < mConnections.size(); i++, mNextIndex++)
     {
     if (mConnections[mNextIndex]) mConnections[mNextIndex]->AddRef();

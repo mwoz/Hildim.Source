@@ -109,6 +109,7 @@ STDMETHODIMP tOleInPlaceSite::GetWindow(HWND *phWnd)
 STDMETHODIMP tOleInPlaceSite::ContextSensitiveHelp
     (BOOL fEnterMode)
     {
+	fEnterMode;
     return E_NOTIMPL;
     }
 
@@ -260,8 +261,8 @@ STDMETHODIMP tOleInPlaceSite::OnUIActivate(void)
 
 STDMETHODIMP tOleInPlaceSite::OnUIDeactivate(BOOL fUndoable)
     {
-    MSG         msg;
-
+    //MSG         msg;
+	fUndoable;
     /*
      * Ignore this notification if we're switching between
      * multiple active objects.
@@ -386,7 +387,7 @@ STDMETHODIMP tOleInPlaceSite::GetWindowContext
     *ppIIPUIWindow, LPRECT prcPos, LPRECT prcClip
     , LPOLEINPLACEFRAMEINFO pFI)
     {
-    RECTL           rcl;
+   // RECTL           rcl;
 
     *ppIIPUIWindow=NULL;
     *ppIIPFrame=m_oleinplaceframe;
@@ -446,8 +447,9 @@ STDMETHODIMP tOleInPlaceSite::GetWindowContext
 
 STDMETHODIMP tOleInPlaceSite::Scroll(SIZE sz)
     {
+	sz;
     /*int         x, y;
-
+	
     x=m_pTen->m_pPG->m_xPos+sz.cx;
     y=m_pTen->m_pPG->m_yPos+sz.cy;
 

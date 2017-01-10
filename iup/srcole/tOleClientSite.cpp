@@ -59,6 +59,7 @@ STDMETHODIMP tOleClientSite::GetMoniker(DWORD dwAssign,
                                         DWORD dwWhich,
                                         LPMONIKER *ppmk)
 {
+	ppmk; dwWhich; dwAssign;
   // Linking nao suportado
   return E_FAIL;
 }
@@ -95,6 +96,7 @@ STDMETHODIMP tOleClientSite::ShowObject(void)
 
 STDMETHODIMP tOleClientSite::OnShowWindow(BOOL fShow)
 {
+	fShow;
   return NOERROR;
 }
 

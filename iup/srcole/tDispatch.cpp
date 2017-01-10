@@ -80,6 +80,7 @@ STDMETHODIMP tDispatch::GetTypeInfoCount(UINT *pctInfo)
 STDMETHODIMP tDispatch::GetTypeInfo(UINT itinfo
     , LCID lcid, ITypeInfo **pptInfo)
     {
+	lcid; itinfo;
     *pptInfo=NULL;
     return ResultFromScode(E_NOTIMPL);
     }
@@ -87,6 +88,7 @@ STDMETHODIMP tDispatch::GetTypeInfo(UINT itinfo
 STDMETHODIMP tDispatch::GetIDsOfNames(REFIID riid
     , OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgDispID)
     {
+	cNames; lcid; riid;
     *rgszNames=NULL;
     *rgDispID=NULL;
     return ResultFromScode(E_NOTIMPL);
@@ -124,6 +126,8 @@ STDMETHODIMP tDispatch::Invoke(DISPID dispIDMember, REFIID riid
     , LCID lcid, unsigned short wFlags, DISPPARAMS *pDispParams
     , VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
     {
+	puArgErr; pExcepInfo; pDispParams; lcid;
+
     HRESULT     hr;
     VARIANT     varResult;
 

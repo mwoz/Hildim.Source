@@ -402,7 +402,7 @@ int Xml_encode(lua_State *L) {
 		luaL_gsub(L, lua_tostring(L, -1), sv_code[i], sv_code[i + 1]);
 		lua_remove(L, -2);
 	}
-	char buf[8];
+	//char buf[8];
 	const char* s = lua_tostring(L, 1);
 	//size_t start, pos;
 	//luaL_Buffer b;

@@ -2084,7 +2084,7 @@ void Document::EnsureStyledTo(int pos) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
 		}
-		for (int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
+		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
 			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
@@ -2918,6 +2918,7 @@ long Cxx11RegexFindText(Document *doc, int minPos, int maxPos, const char *s,
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
 	} catch (std::regex_error & rerr) {
+		rerr;
 		// Failed to create regular expression
 		//throw RegexError();
 		return -1;
