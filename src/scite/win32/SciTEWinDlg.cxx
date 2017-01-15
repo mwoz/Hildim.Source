@@ -287,7 +287,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	return succeeded;
 }
 
-FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter, const char *ext) {
+FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter, const char *ext, int *nFilter) {
 	FilePath path;
 	if (0 == dialogsOnScreen) {
 		GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("");
@@ -325,6 +325,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		dialogsOnScreen++;
 		if (::GetSaveFileNameW(&ofn)) {
 			path = saveName;
+			if (nFilter) *nFilter = ofn.nFilterIndex;
 		}
 		dialogsOnScreen--;
 	}
@@ -332,18 +333,34 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 }
 
 bool SciTEWin::SaveAsDialog() {
-	GUI::gui_string saveFilter = DialogFilterFromProperty(
-		GUI::StringFromUTF8(props.GetExpanded("save.filter").c_str()).c_str());
-	FilePath path = ChooseSaveName(filePath.Directory(), "Save File", saveFilter.c_str());
+	GUI::gui_string filter = GUI::StringFromUTF8(props.GetExpanded("save.filter").c_str()).c_str();
+	GUI::gui_string ext = GUI::StringFromUTF8(props.GetExpanded("FileExt").c_str());
+	if (ext != GUI::gui_string(L"")){
+		filter = ext + L" (." + ext + L")|*." + ext + L"|" + filter;
+	}
+	filter = DialogFilterFromProperty(filter.c_str());
+	int nFilter;;
+	FilePath path = ChooseSaveName(filePath.Directory(), "Save File", filter.c_str(), NULL, &nFilter);
 	if (path.IsSet()) {
+		if (nFilter == 1 && path.Extension().AsInternal() != ext && ext != GUI::gui_string(L""))
+			path = path.AsInternal() + GUI::gui_string(L".") + ext;
 		return SaveIfNotOpen(path, false);
 	}
 	return false;
 }
 
 void SciTEWin::SaveACopy() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Save a Copy");
+	GUI::gui_string filter = GUI::StringFromUTF8(props.GetExpanded("save.filter").c_str()).c_str();
+	GUI::gui_string ext = GUI::StringFromUTF8(props.GetExpanded("FileExt").c_str());  
+	if (ext != GUI::gui_string(L"")){
+		filter = ext + L" (." + ext + L")|*." + ext + L"|" + filter;
+	}
+	filter = DialogFilterFromProperty(filter.c_str());
+	int nFilter;
+	FilePath path = ChooseSaveName(filePath.Directory(), "Save a Copy", filter.c_str(), NULL, &nFilter);
 	if (path.IsSet()) {
+		if (nFilter == 1 && path.Extension().AsInternal() != ext && ext != GUI::gui_string(L""))
+			path = path.AsInternal() + GUI::gui_string(L".") + ext;
 		SaveBuffer(path);
 	}
 }

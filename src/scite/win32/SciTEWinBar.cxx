@@ -58,7 +58,7 @@ void SciTEWin::SetFileProperties(
 	::GetDateFormatA(LOCALE_USER_DEFAULT,
 	                DATE_SHORTDATE, NULL,     	// Current date
 	                NULL, temp, TEMP_LEN);
-	ps.Set("CurrentDate", temp);
+	ps.Set("CurrentDate", temp);			  
 
 	::GetTimeFormatA(LOCALE_USER_DEFAULT,
 	                0, NULL,     	// Current time
@@ -67,6 +67,8 @@ void SciTEWin::SetFileProperties(
 }
 
 void SciTEWin::TabInsert(int index, const GUI::gui_char *title) {
+	if (bBlockUIUpdate)
+		return;
 	TCITEMW tie;
 	tie.mask = TCIF_TEXT | TCIF_IMAGE;
 	tie.iImage = -1;
@@ -76,20 +78,14 @@ void SciTEWin::TabInsert(int index, const GUI::gui_char *title) {
 
 static bool _blockResetTabBar = false;
 void SciTEWin::TabSelect(int index) {
-	if (index == -2){
-		_blockResetTabBar = true;
-		return;
-	}
-	if (index == -3){
-		_blockResetTabBar = false;
-		return;
-	}
-	if (_blockResetTabBar)
+	if (bBlockUIUpdate)
 		return;
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_SETCURSEL, (WPARAM)index, (LPARAM)0);
 }
 
 void SciTEWin::RemoveAllTabs() {
+	if (bBlockUIUpdate)
+		return;
 	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DELETEALLITEMS, (WPARAM)0, (LPARAM)0);
 }
 

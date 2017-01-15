@@ -242,9 +242,6 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
 	int currentbuf = buffers.Current();
-	if (!switchTab)
-		TabSelect(-2);
-	
 	if (	index < 0 ||
 	        index >= buffers.length ||
 	        //index == currentbuf ||
@@ -283,7 +280,6 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 	}
-	TabSelect(-3);
 }
 
 void SciTEBase::UpdateBuffersCurrent() {
@@ -671,8 +667,6 @@ void SciTEBase::BuffersMenu() {
 	int pos;
 
 	if (buffers.size > 1) {
-//!		int menuStart = 5;
-		int menuStart = 7; //!-changed-[TabsMoving]
 		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength",0); 
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;

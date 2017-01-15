@@ -1822,9 +1822,12 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		case SCITE_DROP:
 			// Open the files
-			extender->OnNavigation("Open");
+			extender->OnNavigation("_openSet");
 			while (!dropFilesQueue.empty()) {
 				FilePath file(dropFilesQueue.front());
+				if (dropFilesQueue.size() == 1){
+					extender->OnNavigation("_openSetLast");
+				}
 				dropFilesQueue.pop_front();
 				if (file.Exists()) {
 					Open(file.AsInternal());
@@ -1832,7 +1835,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 					GUI::gui_string msg = LocaliseMessage("Could not open file '^0'.", file.AsInternal());
 					WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
 				}
-			}
+			} 
+			extender->OnNavigation("_-openSet");
 			break;
 
 		case WM_NOTIFY:

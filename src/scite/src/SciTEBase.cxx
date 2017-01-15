@@ -1152,6 +1152,8 @@ void SciTEBase::BraceMatch(bool editor) {
 }
 
 void SciTEBase::SetWindowName() {
+	if (bBlockUIUpdate)
+		return;
 	if (filePath.IsUntitled()) {
 		windowName = localiser.Text("Untitled");
 		windowName.insert(0, GUI_TEXT("("));
@@ -3945,9 +3947,11 @@ void SciTEBase::Notify(SCNotification *notification) {
 				CurrentBuffer()->isDirty = false;
 			}
 		}
-		CheckMenus();
-		SetWindowName();
-		BuffersMenu();
+		if (!bBlockUIUpdate){
+			CheckMenus();
+			SetWindowName();
+			BuffersMenu();
+		}
 		break;
 	case SCN_COLORIZED:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
@@ -4297,9 +4301,19 @@ void SciTEBase::PerformOne(char *action) {
 			extender->OnMacro("filename", filePath.AsUTF8().c_str());
 		} else if (isprefix(action, "askproperty:")) {
 			PropertyToDirector(arg);
+		} else if (isprefix(action, "blockuiupdate:")) {
+			bBlockUIUpdate = (*arg == 'y'); 
+			if (*arg == 'u'){
+				SetWindowName();
+				BuffersMenu();
+				CheckMenus();
+			}
 		} else if (isprefix(action, "close:")) {
 			Close();
-			WindowSetFocus(wEditor);
+			//bBlockUIUpdate = (*arg == 'n');
+			//Close(!bBlockUIUpdate);
+			//if (!bBlockUIUpdate)
+				WindowSetFocus(wEditor);
 		} else if (isprefix(action, "currentmacro:")) {
 			currentMacro = arg;
 		} else if (isprefix(action, "cwd:")) {

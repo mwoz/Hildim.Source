@@ -509,6 +509,7 @@ protected:
 	void New();
 	void RestoreState(const Buffer &buffer, bool setCaption = true);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
+	bool bBlockUIUpdate = false;
 	bool IsAbsolutePath(const char *path);
 	bool Exists(const GUI::gui_char *dir, const GUI::gui_char *path, FilePath *resultPath);
 	void DiscoverEOLSetting();

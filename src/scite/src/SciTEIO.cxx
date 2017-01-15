@@ -121,7 +121,8 @@ void SciTEBase::SetFileName(FilePath openName, bool fixCase, bool setCaption) {
 		SetWindowName();
 	if (buffers.buffers)
 		buffers.buffers[buffers.Current()].Set(filePath);
-	BuffersMenu();
+	if (setCaption)
+		BuffersMenu();
 }
 
 // See if path exists.
