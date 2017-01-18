@@ -1143,17 +1143,23 @@ void SciTEBase::CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_ch
 	}
 }
 
+static bool LessStdNoCase(std::string a, std::string b){
+	return _stricmp(a.c_str(), b.c_str()) < 0;
+}
+
 void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp){
 			FilePathSet directories;
 			FilePathSet files;
 			baseDir.List(directories, files, fileTypes);
 			size_t searchLength = strlen(searchString);
-			SString os;
+			
 			//lua_State *luaState = (lua_State*)pluaState;
-			for (size_t i = 0; (i < files.Length()) && jobQueue.ContinueSearch(true); i++) {
-				FilePath fPath = files.At(i);
-				grepOut->iFiles += 1;
-				bool bFindInFiles = false;
+	for (size_t i = 0; (i < files.Length()) && jobQueue.ContinueSearch(true); i++) {
+		FilePath fPath = files.At(i);
+		grepOut->iFiles += 1;
+		bool bFindInFiles = false;
+
+		std::string os;
 	
 		FileReader fr(fPath, gf & grepMatchCase);
 		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {					  			
@@ -1192,15 +1198,24 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 				}
 			}
 		}		
+		if (os.length()) {
+			if (gf & grepStdOut) {
+				fwrite(os.c_str(), os.length(), 1, stdout);
+			} else {
+
+				grepOut->vOut.push_back(os);
+			}
+		}	
+	}
+	if (grepOut->vOut.size()){
+		std::sort(grepOut->vOut.begin(), grepOut->vOut.end(), LessStdNoCase);
+		for (size_t i = 0; i < grepOut->vOut.size(); i++)
+		{
+			grepOut->strOut += grepOut->vOut[i].c_str();
+		}
+		grepOut->vOut.clear();
 	}
 
-	if (os.length()) {
-		if (gf & grepStdOut) {
-			fwrite(os.c_str(), os.length(), 1, stdout);
-		} else {
-			grepOut->strOut += os;
-		}
-	}
 	if (gf & grepSubDir){
 		for (size_t j = 0; (j < directories.Length()) && jobQueue.ContinueSearch(); j++) {
 			FilePath fPath = directories.At(j);

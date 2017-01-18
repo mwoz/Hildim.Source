@@ -292,8 +292,8 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 	if (0 == dialogsOnScreen) {
 		GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("");
 		FilePath savePath = SaveName(ext);
+		GUI::gui_char saveNameSrt[MAX_PATH] = GUI_TEXT("");
 		if (!savePath.IsUntitled()) {
-			GUI::gui_char saveNameSrt[MAX_PATH] = GUI_TEXT("");
 			wcscpy(saveNameSrt, savePath.Name().AsInternal());
 			if (saveNameSrt[0] == L'^') wcscpy(saveNameSrt, saveNameSrt + 1);
 			wcscpy(saveName, savePath.Directory().AsInternal());
@@ -314,7 +314,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = MainHWND();
 		ofn.hInstance = hInstance;
-		ofn.lpstrFile = saveName;
+		ofn.lpstrFile = NULL;// saveName;
 		ofn.nMaxFile = ELEMENTS(saveName);
 		GUI::gui_string translatedTitle = localiser.Text(title);
 		ofn.lpstrTitle = translatedTitle.c_str();
@@ -323,7 +323,14 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		ofn.lpstrInitialDir = directory.AsInternal();
 
 		dialogsOnScreen++;
-		if (::GetSaveFileNameW(&ofn)) {
+		BOOL res = ::GetSaveFileNameW(&ofn);
+		if (!res && CommDlgExtendedError()){
+			GUI::gui_char myDoc[MAX_PATH] = GUI_TEXT("");
+			SHGetFolderPath((HWND)wSciTE.GetID(), CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, myDoc);
+			ofn.lpstrFile = saveNameSrt;
+			ofn.lpstrInitialDir = myDoc;
+		}
+		if (res) {
 			path = saveName;
 			if (nFilter) *nFilter = ofn.nFilterIndex;
 		}

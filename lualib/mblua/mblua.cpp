@@ -489,7 +489,7 @@ static const struct luaL_reg message_methods[] = {
 	{"AttachMessage",mesage_AttachMessage},
 	{"ExistsMessage",mesage_ExistsMessage},
 	{ "Name", mesage_GetName },
-	//{ "CopyFrom", mesage_CopyFrom },
+	{ "CopyFrom", mesage_CopyFrom },
 	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},
 };
