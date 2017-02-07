@@ -751,7 +751,6 @@ protected:
 		int iLines;
 		int iFiles;
 		int iInFiles;
-		std::vector<std::string> vOut;
 	}GrepOut;
 	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
 	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);

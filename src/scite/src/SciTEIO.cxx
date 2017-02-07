@@ -470,7 +470,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 			New();
 		}
 	}
-
+	
 	SetFileName(absPath);
 	CurrentBuffer()->overrideExtension = "";
 	ReadProperties();
@@ -495,8 +495,10 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		} else {
 			wEditor.Call(SCI_EMPTYUNDOBUFFER);
 		}
-		isReadOnly = props.GetInt("read.only");
-		wEditor.Call(SCI_SETREADONLY, isReadOnly);
+		SString atr = props.Get("FileAttr");
+		bool isReadOnly = atr.contains("H") || atr.contains("S") || atr.contains("R");
+		wEditor.Call(SCI_SETREADONLY, isReadOnly); 
+		BuffersMenu();
 	}
 	RemoveFileFromStack(filePath);
 	SetWindowName();
@@ -504,6 +506,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		SetLineNumberWidth();
 	if (extender)
 		extender->OnOpen(filePath.AsUTF8().c_str());
+	
 	return true;
 }
 
@@ -755,10 +758,10 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 			}
 			convert.fclose();
 		}
-	}
 
-	if (retVal && extender) {
-		extender->OnSave(saveName.AsUTF8().c_str());
+		if (retVal && extender) {
+			extender->OnSave(saveName.AsUTF8().c_str());
+		}	
 	}
 	return retVal;
 }
@@ -1148,10 +1151,11 @@ static bool LessStdNoCase(std::string a, std::string b){
 }
 
 void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp){
-			FilePathSet directories;
-			FilePathSet files;
-			baseDir.List(directories, files, fileTypes);
-			size_t searchLength = strlen(searchString);
+	FilePathSet directories;
+	FilePathSet files;
+	baseDir.List(directories, files, fileTypes);
+	size_t searchLength = strlen(searchString);
+	std::vector<std::string> v;
 			
 			//lua_State *luaState = (lua_State*)pluaState;
 	for (size_t i = 0; (i < files.Length()) && jobQueue.ContinueSearch(true); i++) {
@@ -1202,18 +1206,18 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 			if (gf & grepStdOut) {
 				fwrite(os.c_str(), os.length(), 1, stdout);
 			} else {
-
-				grepOut->vOut.push_back(os);
+				v.emplace_back(os);
 			}
 		}	
 	}
-	if (grepOut->vOut.size()){
-		std::sort(grepOut->vOut.begin(), grepOut->vOut.end(), LessStdNoCase);
-		for (size_t i = 0; i < grepOut->vOut.size(); i++)
+	std::string os;
+	if (v.size()){
+		std::sort(v.begin(), v.end(), LessStdNoCase);
+		for (size_t i = 0; i < v.size(); i++)
 		{
-			grepOut->strOut += grepOut->vOut[i].c_str();
+			os += v[i].c_str();
 		}
-		grepOut->vOut.clear();
+		v.clear();
 	}
 
 	if (gf & grepSubDir){
@@ -1221,9 +1225,20 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 			FilePath fPath = directories.At(j);
 			if ((gf & grepDot) || (fPath.Name().AsInternal()[0] != '.')) {
 				GrepRecursive(gf, fPath, searchString, fileTypes, basePath, grepOut, pRegExp);
+				v.push_back(grepOut->strOut.c_str());
 			}
 		}
+		if (v.size()){
+			std::sort(v.begin(), v.end(), LessStdNoCase);
+			for (size_t i = 0; i < v.size(); i++)
+			{
+				os += v[i].c_str();
+			}
+			v.clear();
+		}
+
 	}
+	grepOut->strOut = os.c_str();
 }
 
 void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *fileTypes, const char *search) {

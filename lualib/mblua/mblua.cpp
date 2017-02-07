@@ -322,6 +322,71 @@ int mesage_SetPathValue(lua_State* L)
 	}
 	return 0;
 }
+int mesage_FieldType(lua_State* L){
+	CString type = luaL_typename(L, 2);
+	CMessage* msg = cmessage_arg(L, "mesage_Field");
+	CDatum* d;
+	if (type == "string")
+		d = msg->GetDatum(luaL_checkstring(L, 2));
+	else
+		d = msg->GetDatum(luaL_checkint(L, 2));
+
+	if (!d) return 0;	 
+	lua_pushstring(L, d->GetVarTypeText());
+	return 1;
+
+}
+int mesage_FieldName(lua_State* L){
+	CMessage* msg = cmessage_arg(L, "mesage_Field");
+	int i = luaL_checkint(L, 2);
+	CDatum* d = msg->GetDatum(i);
+	if (!d) return 0;
+	lua_pushstring(L, d->id());
+	return 1;
+}
+int mesage_Field(lua_State* L){
+	CString type = luaL_typename(L, 2);
+	CMessage* msg = cmessage_arg(L, "mesage_Field");
+	CDatum* d;
+	if(type == "string")
+		d = msg->GetDatum(luaL_checkstring(L, 2));
+	else
+		d = msg->GetDatum(luaL_checkint(L, 2));
+
+	if (!d) return 0;
+	switch (d->GetVarType())
+	{
+	case VT_R8:
+	{
+		double i;
+		d->GetValueAsDouble(i);
+		lua_pushnumber(L, i);
+	}
+		break;
+	case VT_I4:
+	{
+		long i;
+		d->GetValueAsLong(i);
+		lua_pushinteger(L, i);
+	}
+		break;
+	case VT_BOOL:
+	{
+		bool i;
+		d->GetValueAsBool(i);
+		lua_pushboolean(L, i);
+	}
+		break;
+	case VT_BSTR:
+	case VT_DATE:
+		lua_pushstring(L, d->GetValueText());
+		break;
+	default:
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
 int mesage_GetPathValue(lua_State* L)
 {
 	CString path = luaL_checkstring(L,2);
@@ -479,7 +544,10 @@ static const struct luaL_reg message_methods[] = {
 	{"Subjects",mesage_Subjects},//Send, replay -  и в аргументах и в результате
 	{"Counts",mesage_Counts},//FieldCount, MessageCount
 	{"SetPathValue",mesage_SetPathValue},
-	{"GetPathValue",mesage_GetPathValue},
+	{"GetPathValue", mesage_GetPathValue },
+	{"Field", mesage_Field },
+	{"FieldType", mesage_FieldType },
+	{"FieldName", mesage_FieldName },
 	{"Store",mesage_Store},
 	{"Destroy", mesage_Destroy},
 	{"GetMessage",mesage_GetMessage},

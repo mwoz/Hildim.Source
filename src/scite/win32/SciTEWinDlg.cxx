@@ -314,7 +314,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = MainHWND();
 		ofn.hInstance = hInstance;
-		ofn.lpstrFile = NULL;// saveName;
+		ofn.lpstrFile = saveName;
 		ofn.nMaxFile = ELEMENTS(saveName);
 		GUI::gui_string translatedTitle = localiser.Text(title);
 		ofn.lpstrTitle = translatedTitle.c_str();
@@ -329,6 +329,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 			SHGetFolderPath((HWND)wSciTE.GetID(), CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, myDoc);
 			ofn.lpstrFile = saveNameSrt;
 			ofn.lpstrInitialDir = myDoc;
+			res = ::GetSaveFileNameW(&ofn);
 		}
 		if (res) {
 			path = saveName;
