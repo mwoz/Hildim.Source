@@ -216,6 +216,9 @@
     <ClInclude Include="win32\HanjaDic.h" />
     <ClInclude Include="win32\PlatWin.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="win32\ScintRes.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{00AAFF9A-F770-41B8-A27F-53BF47C329D0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
