@@ -35,10 +35,10 @@ int luaopen_iupluagl(lua_State* L)
 }
 
 -- Defined in C
-ctrl.SwapBuffers = iup.GLSwapBuffers
-ctrl.IsCurrent = iup.GLIsCurrent
-ctrl.MakeCurrent = iup.GLMakeCurrent
-ctrl.Palette = iup.GLPalette
+ctrl.SwapBuffers = iup.GLSwapBuffers
+ctrl.IsCurrent = iup.GLIsCurrent
+ctrl.MakeCurrent = iup.GLMakeCurrent
+ctrl.Palette = iup.GLPalette
 ctrl.UseFont = iup.GLUseFont
 
 function ctrl.createElement(class, param)

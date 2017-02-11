@@ -1112,11 +1112,11 @@ static int iParamBoxCreateMethod(Ihandle* param_box, void** vparams)
     return IUP_ERROR;
 
   button_1 = IupButton("_@IUP_APPLY", NULL);
-  IupSetAttribute(button_1, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+  IupSetStrAttribute(button_1, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
   IupSetCallback(button_1, "ACTION", (Icallback)iParamButton1_CB);
 
   button_2 = IupButton("_@IUP_RESET", NULL);
-  IupSetAttribute(button_2, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+  IupSetStrAttribute(button_2, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
   IupSetCallback(button_2, "ACTION", (Icallback)iParamButton2_CB);
   
   ctrl_box = IupVbox(NULL);
@@ -1135,7 +1135,7 @@ static int iParamBoxCreateMethod(Ihandle* param_box, void** vparams)
       if (value && *value) 
       {
         button_3 = IupButton(value, NULL);
-        IupSetAttribute(button_3, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+        IupSetStrAttribute(button_3, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
         IupSetCallback(button_3, "ACTION", (Icallback)iParamButton3_CB);
       }
 
@@ -1727,6 +1727,8 @@ int IupGetParamv(const char* title, Iparamcb action, void* user_data, const char
 
   if (action)
   {
+    action(param_box, IUP_GETPARAM_MAP, user_data);
+
     IupMap(dlg);
 
     action(param_box, IUP_GETPARAM_INIT, user_data);

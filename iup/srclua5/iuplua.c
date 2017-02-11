@@ -63,15 +63,15 @@ void iuplua_show_error_message(const char *pname, const char* msg)
   if (value) IupSetStrAttribute(lbl, "TITLE", value);
 
   copy = IupButton("Copy", NULL);
-  IupSetAttribute(copy, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+  IupSetStrAttribute(copy, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
   IupSetCallback(copy, "ACTION", show_error_copy_action);
 
   button = IupButton("Continue", NULL);
-  IupSetAttribute(button, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+  IupSetStrAttribute(button, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
   IupSetCallback(button, "ACTION", show_error_continue_action);
 
   abort = IupButton("Exit", NULL);
-  IupSetAttribute(abort, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
+  IupSetStrAttribute(abort, "PADDING", IupGetGlobal("DEFAULTBUTTONPADDING"));
   IupSetCallback(abort, "ACTION", show_error_exit_action);
 
   multi_text = IupMultiLine(NULL);
@@ -1342,6 +1342,7 @@ int iuplua_open(lua_State * L)
   iupanimatedlabellua_open(L);
   iupcalendarlua_open(L);
   iupdatepicklua_open(L);
+  iupflattabslua_open(L);
 
   return 0; /* nothing in stack */
 }

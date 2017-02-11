@@ -104,6 +104,12 @@ static int winDialogSetTaskBarProgressStateAttrib(Ihandle *ih, const char *value
 /****************************************************************
                      Utilities
 ****************************************************************/
+
+void iupdrvDialogSetParent(Ihandle* ih, InativeHandle* parent)
+{
+  SetParent(ih->handle, parent);
+}
+
 int iupdrvDialogIsVisible(Ihandle* ih)
 {
   return iupdrvIsVisible(ih);
@@ -1258,7 +1264,7 @@ static char* winDialogGetClientOffsetAttrib(Ihandle *ih)
 {
   (void)ih;
 
-  //if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
   {
     int x, y;
     int border, caption, menu;

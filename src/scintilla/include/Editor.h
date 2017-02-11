@@ -175,7 +175,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -276,7 +275,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	// The top left visible point in main window coordinates. Will be 0,0 except for
 	// scroll views where it will be equivalent to the current scroll position.
 	virtual Point GetVisibleOriginInMain() const;
-	Point DocumentPointFromView(Point ptView) const;  // Convert a point from view space to document
+	PointDocument DocumentPointFromView(Point ptView) const;  // Convert a point from view space to document
 	int TopLineOfMain() const;   // Return the line at Main's y coordinate 0
 	virtual PRectangle GetClientRectangle() const;
 	virtual PRectangle GetClientDrawingRectangle();
@@ -426,8 +425,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(int position, int modifiers);
@@ -456,9 +453,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData);
 	void NotifyErrorOccurred(Document *doc, void *userData, int status);
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
-
 
 	void ContainerNeedsUpdate(int flags);
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);
@@ -583,6 +577,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	bool ValidMargin(uptr_t wParam) const;
 	void StyleSetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 	sptr_t StyleGetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
+	void SetSelectionNMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 
 	static const char *StringFromEOLMode(int eolMode);
 

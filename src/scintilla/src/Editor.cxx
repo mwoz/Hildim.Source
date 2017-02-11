@@ -110,7 +110,6 @@ Editor::Editor() {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -284,8 +283,8 @@ Point Editor::GetVisibleOriginInMain() const {
 	return Point(0,0);
 }
 
-Point Editor::DocumentPointFromView(Point ptView) const {
-	Point ptDocument = ptView;
+PointDocument Editor::DocumentPointFromView(Point ptView) const {
+	PointDocument ptDocument(ptView);
 	if (wMargin.GetID()) {
 		Point ptOrigin = GetVisibleOriginInMain();
 		ptDocument.x += ptOrigin.x;
@@ -400,8 +399,8 @@ SelectionPosition Editor::SPositionFromLocation(Point pt, bool canReturnInvalid,
 		if (pt.y < 0)
 			return SelectionPosition(INVALID_POSITION);
 	}
-	pt = DocumentPointFromView(pt);
-	return view.SPositionFromLocation(surface, *this, pt, canReturnInvalid, charPosition, virtualSpace, vs);
+	PointDocument ptdoc = DocumentPointFromView(pt);
+	return view.SPositionFromLocation(surface, *this, ptdoc, canReturnInvalid, charPosition, virtualSpace, vs);
 }
 
 int Editor::PositionFromLocation(Point pt, bool canReturnInvalid, bool charPosition) {
@@ -2311,19 +2310,6 @@ void Editor::NotifyStyleNeeded(Document *, void *, int endStyleNeeded) {
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_COLORIZED;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
-}
-
 void Editor::NotifyLexerChanged(Document *, void *) {
 }
 
@@ -2362,27 +2348,6 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_CLICK;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt) {
 	NotifyDoubleClick(pt, ModifierFlags(shift, ctrl, alt));
@@ -2588,7 +2553,7 @@ static inline int MovePositionForDeletion(int position, int startDeletion, int l
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate(SC_UPDATE_CONTENT | (mh.modificationType << 4));
+	ContainerNeedsUpdate(SC_UPDATE_CONTENT);
 	if (paintState == painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3053,8 +3018,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!Мой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3615,11 +3580,6 @@ int Editor::DelWordOrLine(unsigned int iMessage) {
 }
 
 int Editor::KeyCommand(unsigned int iMessage) {
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_KEYCOMMAND;
-	scn.wParam = iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case SCI_LINEDOWN:
 		CursorUpOrDown(1, Selection::noSel);
@@ -3748,7 +3708,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ShowCaretAtCurrentPosition();
 		ContainerNeedsUpdate(SC_UPDATE_CONTENT);
@@ -3867,9 +3826,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		ScrollTo(MaxScrollPos());
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -4462,7 +4418,6 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4631,14 +4586,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, int modifiers) {
@@ -4938,7 +4891,6 @@ void Editor::ButtonUp(Point pt, unsigned int curTime, bool ctrl) {
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, ctrl); //!-add-[OnMouseButtonUp]
 }
 
 // Called frequently to perform background UI including
@@ -5013,7 +4965,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case tickScroll:
 			// Auto scroll
-			//ButtonMove(ptMouseLast);		- Убрано для перехода по Shift+Click - иначе сбивается выделение
+			ButtonMove(ptMouseLast);
 			break;
 		case tickWiden:
 			SetScrollBars();
@@ -5740,6 +5692,39 @@ sptr_t Editor::StyleGetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lPar
 		return vs.styles[wParam].hotspot ? 1 : 0;
 	}
 	return 0;
+}
+
+void Editor::SetSelectionNMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
+	InvalidateRange(sel.Range(wParam).Start().Position(), sel.Range(wParam).End().Position());
+
+	switch (iMessage) {
+	case SCI_SETSELECTIONNCARET:
+		sel.Range(wParam).caret.SetPosition(static_cast<int>(lParam));
+		break;
+
+	case SCI_SETSELECTIONNANCHOR:
+		sel.Range(wParam).anchor.SetPosition(static_cast<int>(lParam));
+		break;
+
+	case SCI_SETSELECTIONNCARETVIRTUALSPACE:
+		sel.Range(wParam).caret.SetVirtualSpace(static_cast<int>(lParam));
+		break;
+
+	case SCI_SETSELECTIONNANCHORVIRTUALSPACE:
+		sel.Range(wParam).anchor.SetVirtualSpace(static_cast<int>(lParam));
+		break;
+
+	case SCI_SETSELECTIONNSTART:
+		sel.Range(wParam).anchor.SetPosition(static_cast<int>(lParam));
+		break;
+
+	case SCI_SETSELECTIONNEND:
+		sel.Range(wParam).caret.SetPosition(static_cast<int>(lParam));
+		break;
+	}
+
+	InvalidateRange(sel.Range(wParam).Start().Position(), sel.Range(wParam).End().Position());
+	ContainerNeedsUpdate(SC_UPDATE_SELECTION);
 }
 
 sptr_t Editor::StringResult(sptr_t lParam, const char *val) {
@@ -7671,15 +7656,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
 		inOverstrike = wParam != 0;
-		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_change]
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -8023,54 +8000,28 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return sel.Main();
 
 	case SCI_SETSELECTIONNCARET:
-		sel.Range(wParam).caret.SetPosition(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
+	case SCI_SETSELECTIONNANCHOR:
+	case SCI_SETSELECTIONNCARETVIRTUALSPACE:
+	case SCI_SETSELECTIONNANCHORVIRTUALSPACE:
+	case SCI_SETSELECTIONNSTART:
+	case SCI_SETSELECTIONNEND:
+		SetSelectionNMessage(iMessage, wParam, lParam);
 		break;
 
 	case SCI_GETSELECTIONNCARET:
 		return sel.Range(wParam).caret.Position();
 
-	case SCI_SETSELECTIONNANCHOR:
-		sel.Range(wParam).anchor.SetPosition(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
-		break;
 	case SCI_GETSELECTIONNANCHOR:
 		return sel.Range(wParam).anchor.Position();
-
-	case SCI_SETSELECTIONNCARETVIRTUALSPACE:
-		sel.Range(wParam).caret.SetVirtualSpace(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
-		break;
 
 	case SCI_GETSELECTIONNCARETVIRTUALSPACE:
 		return sel.Range(wParam).caret.VirtualSpace();
 
-	case SCI_SETSELECTIONNANCHORVIRTUALSPACE:
-		sel.Range(wParam).anchor.SetVirtualSpace(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
-		break;
-
 	case SCI_GETSELECTIONNANCHORVIRTUALSPACE:
 		return sel.Range(wParam).anchor.VirtualSpace();
 
-	case SCI_SETSELECTIONNSTART:
-		sel.Range(wParam).anchor.SetPosition(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
-		break;
-
 	case SCI_GETSELECTIONNSTART:
 		return sel.Range(wParam).Start().Position();
-
-	case SCI_SETSELECTIONNEND:
-		sel.Range(wParam).caret.SetPosition(static_cast<int>(lParam));
-		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
-		Redraw();
-		break;
 
 	case SCI_GETSELECTIONNEND:
 		return sel.Range(wParam).End().Position();
@@ -8177,11 +8128,6 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<int>(wParam), static_cast<int>(lParam));
 		break;
-//!-start-[MouseClickHandled]
-	case SCI_SETMOUSECAPTURE:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));
