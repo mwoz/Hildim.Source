@@ -168,10 +168,11 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
                            border_width, ih->currentheight - 1 - border_width,
                            bgcolor, NULL, 1);  /* always active */
 
+  const char* fbi = iFlatButtonGetImageName(ih, "IMAGE", image, active, &make_inactive);
   iupFlatDrawIcon(ih, dc, border_width, border_width,
                   ih->currentwidth - 2 * border_width, ih->currentheight - 2 * border_width,
                   ih->data->img_position, ih->data->spacing, ih->data->horiz_alignment, ih->data->vert_alignment, ih->data->horiz_padding, ih->data->vert_padding,
-                  iFlatButtonGetImageName(ih, "IMAGE", image, active, &make_inactive), make_inactive, title, fgcolor, bgcolor, active);
+                  fbi, make_inactive, title, fgcolor, bgcolor, active);
 
   if (fgimage)
     iFlatButtonDrawImage(ih, dc, border_width, border_width, "FRONTIMAGE", fgimage, active);

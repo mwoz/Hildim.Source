@@ -1264,7 +1264,7 @@ static char* winDialogGetClientOffsetAttrib(Ihandle *ih)
 {
   (void)ih;
 
-  if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
+  //if (iupAttribGetBoolean(ih, "CUSTOMFRAME"))
   {
     int x, y;
     int border, caption, menu;
