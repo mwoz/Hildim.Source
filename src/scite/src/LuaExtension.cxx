@@ -940,7 +940,8 @@ static int cf_perform_grep_ex(lua_State *L){
 }
 
 static int bf_current(lua_State *L){
-	lua_pushinteger(L, host->GetCurrentBufer());
+	
+	lua_pushinteger(L, curBufferIndex < 0? -1: host->GetCurrentBufer());
 	return 1;
 }
 
@@ -1846,6 +1847,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	// pane objects
 	push_pane_object(luaState, ExtensionAPI::paneEditor);
 	lua_setglobal(luaState, "editor");
+
+	push_pane_object(luaState, ExtensionAPI::paneCoEditor);
+	lua_setglobal(luaState, "coeditor");
 
 	push_pane_object(luaState, ExtensionAPI::paneOutput);
 	lua_setglobal(luaState, "output");

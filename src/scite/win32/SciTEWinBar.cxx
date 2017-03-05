@@ -411,24 +411,44 @@ void SciTEWin::Creation() {
 	
 	layout.CreateLayout(L, this);
 
-	wEditor.SetID(::CreateWindowEx(
-	              0,
-	              TEXT("Scintilla"),
-	              TEXT("Source"),
-	              WS_CHILD | WS_VSCROLL | WS_HSCROLL | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-	              0, 0,
-	              100, 100,
-	              //reinterpret_cast<HWND>(wContent.GetID()),
-				  layout.GetChildHWND("Source"),
-	              reinterpret_cast<HMENU>(IDM_SRCWIN),
-	              hInstance,
-	              0));
-	if (!wEditor.CanCall())
+	wEditorL.SetID(::CreateWindowEx(
+		0,
+		TEXT("Scintilla"),
+		TEXT("Source"),
+		WS_CHILD | WS_VSCROLL | WS_HSCROLL | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+		0, 0,
+		100, 100,
+		//reinterpret_cast<HWND>(wContent.GetID()),
+		layout.GetChildHWND("Source"),
+		reinterpret_cast<HMENU>(IDM_SRCWIN),
+		hInstance,
+		0));
+	if (!wEditorL.CanCall())
 		exit(FALSE);
-	wEditor.Show();
-	wEditor.Call(SCI_USEPOPUP, 0);
-	layout.SubclassChild("Source", &wEditor);
-	WindowSetFocus(wEditor);
+	wEditorL.Show();
+	wEditorL.Call(SCI_USEPOPUP, 0);
+	layout.SubclassChild("Source", &wEditorL);
+	WindowSetFocus(wEditorL);
+	wEditor.SetID(wEditorL.GetID());
+
+	wEditorR.SetID(::CreateWindowEx(
+		0,
+		TEXT("Scintilla"),
+		TEXT("CoSource"),
+		WS_CHILD | WS_VSCROLL | WS_HSCROLL | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+		0, 0,
+		100, 100,
+		//reinterpret_cast<HWND>(wContent.GetID()),
+		layout.GetChildHWND("CoSource"),
+		reinterpret_cast<HMENU>(IDM_COSRCWIN),
+		hInstance,
+		0));
+	if (!wEditorR.CanCall())
+		exit(FALSE);
+	wEditorR.Show();
+	wEditorR.Call(SCI_USEPOPUP, 0);
+	layout.SubclassChild("CoSource", &wEditorR);
+	wEditor.coEditor.SetID(wEditorR.GetID());
 
 	wOutput.SetID(::CreateWindowEx(
 		0,

@@ -90,10 +90,11 @@ public:
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<int> foldState;
+	Buffer* pFriend;
 	Buffer() :
 //!			RecentFile(), doc(0), isDirty(false), useMonoFont(false),
 			RecentFile(), doc(0), isDirty(false), ROMarker(0), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), foldState() {}
+			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), foldState(), pFriend(NULL){}
 
 	void Init() {
 		RecentFile::Init();
@@ -106,17 +107,29 @@ public:
 		findMarks = fmNone;
 		overrideExtension = "";
 		foldState.clear();
+		pFriend = NULL;
 	}
 
 	void SetTimeFromFile() {
 		fileModTime = ModifiedTime();
 		fileModLastAsk = fileModTime;
+		if (pFriend){
+			pFriend->fileModTime = fileModTime;
+			pFriend->fileModTime = fileModTime;
+		}
 	}
 //!-start-[OpenNonExistent]
 	bool DocumentNotSaved() const {
-		return (isDirty || (!IsUntitled() && (fileModTime == 0)));
+		return (isDirty || (!IsUntitled() && (fileModTime == 0))) || (pFriend && (pFriend->isDirty || (!pFriend->IsUntitled() && (pFriend->fileModTime == 0))));
 	}
 //!-end-[OpenNonExistent]
+};
+
+class EditSwitcher{
+public:
+	virtual void SwitchTo(int wndIdm, Buffer* pBuf) = 0;
+	virtual int GetWindowIdm() = 0;
+	virtual void SetBuffPointer(Buffer* pBuf) = 0;
 };
 
 class BufferList {
@@ -126,14 +139,16 @@ protected:
 	int *stack;
 public:
 	Buffer *buffers;
+	EditSwitcher * pEditor;
+	int *idm;
 	int size;
 	int length;
 	bool initialised;
 	BufferList();
 	~BufferList();
 	void Allocate(int maxSize);
-	int Add();
-	int GetDocumentByName(FilePath filename, bool excludeCurrent=false);
+	int Add(sptr_t doc = NULL);
+	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, int forIdm = NULL);
 	void RemoveCurrent();
 	int Current() const;
 	Buffer *CurrentBuffer();
@@ -315,10 +330,26 @@ protected:
 	class ScintillaWindowEditor : public GUI::ScintillaWindow
 	{
 	public:
-		virtual sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);
+		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
 	};
-	ScintillaWindowEditor wEditor;
+	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
+	public:	
+		virtual void SwitchTo(int wndIdm, Buffer* pBuf) ;
+		virtual int GetWindowIdm();
+		virtual void SetBuffPointer(Buffer* pBuf);
+		void Switch();
+		ScintillaWindowEditor coEditor;
+	private:
+		Buffer *buffer_L;
+		Buffer *buffer_R;
+	};
+	
+	ScintillaWindowSwitcher wEditor;
+	ScintillaWindowEditor wEditorR;
+	ScintillaWindowEditor wEditorL;
+	virtual sptr_t CallAll(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t CallStringAll(unsigned int msg, uptr_t wParam, const char *s);
 	friend class ScintillaWindowEditor;
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
@@ -438,9 +469,6 @@ protected:
 
 	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
 
-	GUI::Rectangle rFindReplace;//позиция окна поиска\замены
-	GUI::Rectangle rFindInFiles;//позиция окна поиска в файлах
-
 	enum { bufferMax = 100 };
 	BufferList buffers;
 
@@ -450,7 +478,7 @@ protected:
 	void UpdateBuffersCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
-	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true);
+	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
@@ -471,6 +499,8 @@ protected:
 	void ShiftTab(int indexFrom, int indexTo);
 	void MoveTabRight();
 	void MoveTabLeft();
+	void CloneTab();
+	void ChangeTabWnd();
 
 	void ReadGlobalPropFile();
 	void ReadAbbrevPropFile();

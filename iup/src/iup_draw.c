@@ -444,7 +444,7 @@ static void iFlatGetImageTextPosition(int x, int y, int img_position, int spacin
   }
 }
 
-void iupFlatDrawIcon(Ihandle* ih, IdrawCanvas* dc, int icon_x, int icon_y, int icon_width, int icon_height,
+void  iupFlatDrawIcon(Ihandle* ih, IdrawCanvas* dc, int icon_x, int icon_y, int icon_width, int icon_height,
                      int img_position, int spacing, int horiz_alignment, int vert_alignment, int horiz_padding, int vert_padding,
                      const char* imagename, int make_inactive, const char* title, const char* fgcolor, const char* bgcolor, int active)
 {

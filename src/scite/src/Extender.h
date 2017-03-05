@@ -16,7 +16,7 @@ class ExtensionAPI {
 public:
 	virtual ~ExtensionAPI() {
 	}
-	enum Pane { paneEditor = 1, paneOutput = 2, paneFindRes = 3 };
+	enum Pane { paneEditor = 1, paneCoEditor = 2, paneOutput = 3, paneFindRes = 4 };
 	virtual sptr_t Send(Pane p, unsigned int msg, uptr_t wParam=0, sptr_t lParam=0)=0;
 	virtual char *Range(Pane p, int start, int end)=0;
 	virtual void Remove(Pane p, int start, int end)=0;
@@ -34,7 +34,7 @@ public:
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
-	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true) = 0;
+	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
 	virtual void GetBufferName(int i, char* c) = 0;

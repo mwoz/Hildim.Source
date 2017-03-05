@@ -22,6 +22,8 @@
 #define IDM_LANGUAGE			1400
 #define IDM_GENERATED       28000
 #define IDM_REBOOT         667
+#define IDM_CHANGETAB         668
+#define IDM_CLONETAB         669
 
 // File
 #define IDM_NEW			101
@@ -129,6 +131,7 @@
 #define IDM_ACTIVATE			320
 
 #define IDM_SRCWIN			350
+#define IDM_COSRCWIN		356
 #define IDM_RUNWIN			351
 #define IDM_TOOLWIN			352
 #define IDM_STATUSWIN		353
