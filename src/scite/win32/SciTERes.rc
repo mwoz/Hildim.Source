@@ -7,7 +7,8 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include "afxres.h"
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -146,12 +147,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "scite.net.ru"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "1.0.4.0"
+            VALUE "FileVersion", "1.0.5.0"
             VALUE "InternalName", "HildiM"
             VALUE "LegalCopyright", "Copyright 2016 Michel Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "1.0.4.0"
+            VALUE "ProductVersion", "1.0.5.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -209,7 +210,8 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
