@@ -450,6 +450,9 @@
     <ClCompile Include="lexers\LexEDIFACT.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexIndent.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">

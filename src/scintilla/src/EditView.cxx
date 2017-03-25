@@ -1848,19 +1848,19 @@ void EditView::DrawLine(Surface *surface, const EditModel &model, const ViewStyl
 
 	if (phasesDraw != phasesOne) {
 		if (phase & drawBack) {
-			DrawBackground(surface, model, vsDraw, ll, rcLine, lineRange, posLineStart, xStart,
-				subLine, background);
+		DrawBackground(surface, model, vsDraw, ll, rcLine, lineRange, posLineStart, xStart,
+			subLine, background);
 			DrawFoldDisplayText(surface, model, vsDraw, ll, line, xStart, rcLine, subLine, subLineStart, drawBack);
 			phase = static_cast<DrawPhase>(phase & ~drawBack);	// Remove drawBack to not draw again in DrawFoldDisplayText
-			DrawEOL(surface, model, vsDraw, ll, rcLine, line, lineRange.end,
-				xStart, subLine, subLineStart, background);
-		}
+		DrawEOL(surface, model, vsDraw, ll, rcLine, line, lineRange.end,
+			xStart, subLine, subLineStart, background);
+	}
 
-		if (phase & drawIndicatorsBack) {
-			DrawIndicators(surface, model, vsDraw, ll, line, xStart, rcLine, subLine, lineRange.end, true, model.hoverIndicatorPos);
-			DrawEdgeLine(surface, vsDraw, ll, rcLine, lineRange, xStart);
-			DrawMarkUnderline(surface, model, vsDraw, line, rcLine);
-		}
+	if (phase & drawIndicatorsBack) {
+		DrawIndicators(surface, model, vsDraw, ll, line, xStart, rcLine, subLine, lineRange.end, true, model.hoverIndicatorPos);
+		DrawEdgeLine(surface, vsDraw, ll, rcLine, lineRange, xStart);
+		DrawMarkUnderline(surface, model, vsDraw, line, rcLine);
+	}
 	}
 
 	if (phase & drawText) {

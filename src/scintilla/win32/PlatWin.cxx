@@ -19,9 +19,9 @@
 #include <map>
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 #undef WINVER
-#define WINVER 0x0500
+#define WINVER 0x0501
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
@@ -1796,11 +1796,11 @@ void Window::SetPosition(PRectangle rc) {
 }
 
 static RECT RectFromMonitor(HMONITOR hMonitor) {
-	MONITORINFO mi = {0};
-	mi.cbSize = sizeof(mi);
+		MONITORINFO mi = {0};
+		mi.cbSize = sizeof(mi);
 	if (GetMonitorInfo(hMonitor, &mi)) {
-		return mi.rcWork;
-	}
+			return mi.rcWork;
+		}
 	RECT rc = {0, 0, 0, 0};
 	if (::SystemParametersInfoA(SPI_GETWORKAREA, 0, &rc, 0) == 0) {
 		rc.left = 0;
