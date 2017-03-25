@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #define NOEXCEPT
 
@@ -140,8 +141,7 @@ Document::~Document() {
 		delete perLineData[j];
 		perLineData[j] = 0;
 	}
-	delete regex;
-	regex = 0;
+	regex.release();
 	delete pli;
 	pli = 0;
 	delete pcf;
@@ -1840,7 +1840,6 @@ Document::CharacterExtracted Document::ExtractCharacter(int position) const {
  */
 long Document::FindText(int minPos, int maxPos, const char *search,
                         int flags, int *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -1849,7 +1848,7 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 	const bool regExp = (flags & SCFIND_REGEXP) != 0;
 	if (regExp) {
 		if (!regex)
-			regex = CreateRegexSearch(&charClass);
+			regex = std::unique_ptr<RegexSearchBase>(CreateRegexSearch(&charClass));
 		return regex->FindText(this, minPos, maxPos, search, caseSensitive, word, wordStart, flags, length);
 	} else {
 
@@ -1888,7 +1887,7 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 			}
 		} else if (SC_CP_UTF8 == dbcsCodePage) {
 			const size_t maxFoldingExpansion = 4;
-			std::vector<char> searchThing(lengthFind * UTF8MaxBytes * maxFoldingExpansion + 1);
+			std::vector<char> searchThing((lengthFind+1) * UTF8MaxBytes * maxFoldingExpansion + 1);
 			const int lenSearch = static_cast<int>(
 				pcf->Fold(&searchThing[0], searchThing.size(), search, lengthFind));
 			char bytes[UTF8MaxBytes + 1];
@@ -1915,6 +1914,8 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 						break;
 					const int lenFlat = static_cast<int>(pcf->Fold(folded, sizeof(folded), bytes, widthChar));
 					folded[lenFlat] = 0;
+					// memcmp may examine lenFlat bytes in both arguments so assert it doesn't read past end of searchThing
+					assert(static_cast<size_t>(indexSearch + lenFlat) <= searchThing.size());
 					// Does folded match the buffer
 					characterMatches = 0 == memcmp(folded, &searchThing[0] + indexSearch, lenFlat);
 					if (!characterMatches)
@@ -1940,7 +1941,7 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 		} else if (dbcsCodePage) {
 			const size_t maxBytesCharacter = 2;
 			const size_t maxFoldingExpansion = 4;
-			std::vector<char> searchThing(lengthFind * maxBytesCharacter * maxFoldingExpansion + 1);
+			std::vector<char> searchThing((lengthFind+1) * maxBytesCharacter * maxFoldingExpansion + 1);
 			const int lenSearch = static_cast<int>(
 				pcf->Fold(&searchThing[0], searchThing.size(), search, lengthFind));
 			while (forward ? (pos < endPos) : (pos >= endPos)) {
@@ -1960,6 +1961,8 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 					char folded[maxBytesCharacter * maxFoldingExpansion + 1];
 					const int lenFlat = static_cast<int>(pcf->Fold(folded, sizeof(folded), bytes, widthChar));
 					folded[lenFlat] = 0;
+					// memcmp may examine lenFlat bytes in both arguments so assert it doesn't read past end of searchThing
+					assert(static_cast<size_t>(indexSearch + lenFlat) <= searchThing.size());
 					// Does folded match the buffer
 					characterMatches = 0 == memcmp(folded, &searchThing[0] + indexSearch, lenFlat);
 					indexDocument += widthChar;
@@ -2073,9 +2076,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(int pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			int lineEndStyled = LineFromPosition(GetEndStyled());
 			int endStyledTo = LineStart(lineEndStyled);
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2083,9 +2086,6 @@ void Document::EnsureStyledTo(int pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2485,14 +2485,14 @@ class BuiltinRegex : public RegexSearchBase {
 public:
 	explicit BuiltinRegex(CharClassify *charClassTable) : search(charClassTable) {}
 
-	virtual ~BuiltinRegex() {
+	~BuiltinRegex() override {
 	}
 
-	virtual long FindText(Document *doc, int minPos, int maxPos, const char *s,
+	long FindText(Document *doc, int minPos, int maxPos, const char *s,
                         bool caseSensitive, bool word, bool wordStart, int flags,
-                        int *length);
+                        int *length) override;
 
-	virtual const char *SubstituteByPosition(Document *doc, const char *text, int *length);
+	const char *SubstituteByPosition(Document *doc, const char *text, int *length) override;
 
 private:
 	RESearch search;
@@ -2563,10 +2563,10 @@ public:
 		pdoc(pdoc_), end(end_) {
 	}
 
-	virtual ~DocumentIndexer() {
+	~DocumentIndexer() override {
 	}
 
-	virtual char CharAt(int index) {
+	char CharAt(int index) override {
 		if (index < 0 || index >= end)
 			return 0;
 		else
@@ -2917,11 +2917,9 @@ long Cxx11RegexFindText(Document *doc, int minPos, int maxPos, const char *s,
 		//double durSearch = et.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;

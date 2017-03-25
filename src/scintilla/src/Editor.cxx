@@ -110,7 +110,6 @@ Editor::Editor() {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -817,7 +816,7 @@ void Editor::MovedCaret(SelectionPosition newPos, SelectionPosition previousPos,
 	if (ensureVisible) {
 		// In case in need of wrapping to ensure DisplayFromDoc works.
 		if (currentLine >= wrapPending.start)
-			WrapLines(wsAll);
+			WrapLines(WrapScope::wsAll);
 		XYScrollPosition newXY = XYScrollToMakeVisible(
 			SelectionRange(posDrag.IsValid() ? posDrag : newPos), xysDefault);
 		if (previousPos.IsValid() && (newXY.xOffset == xOffset)) {
@@ -1477,7 +1476,7 @@ bool Editor::WrapOneLine(Surface *surface, int lineToWrap) {
 // wsVisible: wrap currently visible lines
 // wsIdle: wrap one page + 100 lines
 // Return true if wrapping occurred.
-bool Editor::WrapLines(enum wrapScope ws) {
+bool Editor::WrapLines(WrapScope ws) {
 	int goodTopLine = topLine;
 	bool wrapOccurred = false;
 	if (!Wrapping()) {
@@ -1495,14 +1494,14 @@ bool Editor::WrapLines(enum wrapScope ws) {
 		wrapPending.start = std::min(wrapPending.start, pdoc->LinesTotal());
 		if (!SetIdle(true)) {
 			// Idle processing not supported so full wrap required.
-			ws = wsAll;
+			ws = WrapScope::wsAll;
 		}
 		// Decide where to start wrapping
 		int lineToWrap = wrapPending.start;
 		int lineToWrapEnd = std::min(wrapPending.end, pdoc->LinesTotal());
 		const int lineDocTop = cs.DocFromDisplay(topLine);
 		const int subLineTop = topLine - cs.DisplayFromDoc(lineDocTop);
-		if (ws == wsVisible) {
+		if (ws == WrapScope::wsVisible) {
 			lineToWrap = Platform::Clamp(lineDocTop-5, wrapPending.start, pdoc->LinesTotal());
 			// Priority wrap to just after visible area.
 			// Since wrapping could reduce display lines, treat each
@@ -1519,7 +1518,7 @@ bool Editor::WrapLines(enum wrapScope ws) {
 				// Currently visible text does not need wrapping
 				return false;
 			}
-		} else if (ws == wsIdle) {
+		} else if (ws == WrapScope::wsIdle) {
 			lineToWrapEnd = lineToWrap + LinesOnScreen() + 100;
 		}
 		const int lineEndNeedWrap = std::min(wrapPending.end, pdoc->LinesTotal());
@@ -1712,7 +1711,7 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 	}
 
 	// Wrap the visible lines if needed.
-	if (WrapLines(wsVisible)) {
+	if (WrapLines(WrapScope::wsVisible)) {
 		// The wrapping process has changed the height of some lines so
 		// abandon this paint for a complete repaint.
 		if (AbandonPaint()) {
@@ -1873,10 +1872,6 @@ void Editor::FilterSelections() {
 	}
 }
 
-static bool cmpSelPtrs(const SelectionRange *a, const SelectionRange *b) {
-	return *a < *b;
-}
-
 // AddCharUTF inserts an array of bytes which may or may not be in UTF-8.
 void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
 	FilterSelections();
@@ -1889,7 +1884,8 @@ void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
 			selPtrs.push_back(&sel.Range(r));
 		}
 		// Order selections by position in document.
-		std::sort(selPtrs.begin(), selPtrs.end(), cmpSelPtrs);
+		std::sort(selPtrs.begin(), selPtrs.end(),
+			[](const SelectionRange *a, const SelectionRange *b) {return *a < *b;});
 
 		// Loop in reverse to avoid disturbing positions of selections yet to be processed.
 		for (std::vector<SelectionRange *>::reverse_iterator rit = selPtrs.rbegin();
@@ -2311,19 +2307,6 @@ void Editor::NotifyStyleNeeded(Document *, void *, int endStyleNeeded) {
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_COLORIZED;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
-}
-
 void Editor::NotifyLexerChanged(Document *, void *) {
 }
 
@@ -2362,27 +2345,6 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_CLICK;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt) {
 	NotifyDoubleClick(pt, ModifierFlags(shift, ctrl, alt));
@@ -2588,7 +2550,7 @@ static inline int MovePositionForDeletion(int position, int startDeletion, int l
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate(SC_UPDATE_CONTENT | (mh.modificationType << 4));
+	ContainerNeedsUpdate(SC_UPDATE_CONTENT);
 	if (paintState == painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3053,8 +3015,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!Мой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3146,6 +3108,9 @@ SelectionPosition Editor::PositionUpOrDown(SelectionPosition spStart, int direct
 }
 
 void Editor::CursorUpOrDown(int direction, Selection::selTypes selt) {
+	if ((selt == Selection::noSel) && sel.MoveExtends()) {
+		selt = Selection::selStream;
+	}
 	SelectionPosition caretToUse = sel.Range(sel.Main()).caret;
 	if (sel.IsRectangular()) {
 		if (selt ==  Selection::noSel) {
@@ -3615,11 +3580,6 @@ int Editor::DelWordOrLine(unsigned int iMessage) {
 }
 
 int Editor::KeyCommand(unsigned int iMessage) {
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_KEYCOMMAND;
-	scn.wParam = iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case SCI_LINEDOWN:
 		CursorUpOrDown(1, Selection::noSel);
@@ -3748,7 +3708,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ShowCaretAtCurrentPosition();
 		ContainerNeedsUpdate(SC_UPDATE_CONTENT);
@@ -3867,9 +3826,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		ScrollTo(MaxScrollPos());
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -3975,7 +3931,7 @@ public:
 	CaseFolderASCII() {
 		StandardASCII();
 	}
-	~CaseFolderASCII() {
+	~CaseFolderASCII() override {
 	}
 };
 
@@ -4070,15 +4026,15 @@ long Editor::SearchText(
 
 std::string Editor::CaseMapString(const std::string &s, int caseMapping) {
 	std::string ret(s);
-	for (size_t i=0; i<ret.size(); i++) {
+	for (char &ch : ret) {
 		switch (caseMapping) {
 			case cmUpper:
-				if (ret[i] >= 'a' && ret[i] <= 'z')
-					ret[i] = static_cast<char>(ret[i] - 'a' + 'A');
+				if (ch >= 'a' && ch <= 'z')
+					ch = static_cast<char>(ch - 'a' + 'A');
 				break;
 			case cmLower:
-				if (ret[i] >= 'A' && ret[i] <= 'Z')
-					ret[i] = static_cast<char>(ret[i] - 'A' + 'a');
+				if (ch >= 'A' && ch <= 'Z')
+					ch = static_cast<char>(ch - 'A' + 'a');
 				break;
 		}
 	}
@@ -4462,7 +4418,6 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4631,14 +4586,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, int modifiers) {
@@ -4938,7 +4891,6 @@ void Editor::ButtonUp(Point pt, unsigned int curTime, bool ctrl) {
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, ctrl); //!-add-[OnMouseButtonUp]
 }
 
 // Called frequently to perform background UI including
@@ -4979,7 +4931,7 @@ bool Editor::Idle() {
 
 	if (needWrap) {
 		// Wrap lines during idle.
-		WrapLines(wsIdle);
+		WrapLines(WrapScope::wsIdle);
 		// No more wrapping
 		needWrap = wrapPending.NeedsWrap();
 	} else if (needIdleStyling) {
@@ -5013,7 +4965,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case tickScroll:
 			// Auto scroll
-			//ButtonMove(ptMouseLast);		- Убрано для перехода по Shift+Click - иначе сбивается выделение
+			ButtonMove(ptMouseLast);
 			break;
 		case tickWiden:
 			SetScrollBars();
@@ -5418,7 +5370,7 @@ void Editor::EnsureLineVisible(int lineDoc, bool enforcePolicy) {
 
 	// In case in need of wrapping to ensure DisplayFromDoc works.
 	if (lineDoc >= wrapPending.start)
-		WrapLines(wsAll);
+		WrapLines(WrapScope::wsAll);
 
 	if (!cs.GetVisible(lineDoc)) {
 		// Back up to find a non-blank line
@@ -7602,6 +7554,13 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		std::vector<EdgeProperties>().swap(vs.theMultiEdge); // Free vector and memory, C++03 compatible
 		InvalidateStyleRedraw();
 		break;
+	
+	case SCI_GETACCESSIBILITY:
+		return SC_ACCESSIBILITY_DISABLED;
+
+	case SCI_SETACCESSIBILITY:
+		// May be implemented by platform code.
+		break;
 
 	case SCI_GETDOCPOINTER:
 		return reinterpret_cast<sptr_t>(pdoc);
@@ -7704,15 +7663,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
 		inOverstrike = wParam != 0;
-		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_change]
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -8184,11 +8135,6 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<int>(wParam), static_cast<int>(lParam));
 		break;
-//!-start-[MouseClickHandled]
-	case SCI_SETMOUSECAPTURE:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));
