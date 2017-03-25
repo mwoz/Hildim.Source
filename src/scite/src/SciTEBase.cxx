@@ -745,6 +745,15 @@ void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(Buffer* pBuf){
 	}
 }
 
+void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(Buffer* pBuf){
+	if (GetWindowIdm() == IDM_SRCWIN){
+		buffer_R = pBuf;
+	}
+	else{
+		buffer_L = pBuf;
+	}
+}
+
 int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
 	if (GetID() == pBase->wEditorL.GetID())	return IDM_SRCWIN;
 	return IDM_COSRCWIN;

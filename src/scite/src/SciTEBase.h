@@ -90,11 +90,12 @@ public:
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<int> foldState;
+	int editorSide;
 	Buffer* pFriend;
 	Buffer() :
 //!			RecentFile(), doc(0), isDirty(false), useMonoFont(false),
 			RecentFile(), doc(0), isDirty(false), ROMarker(0), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), foldState(), pFriend(NULL){}
+			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(IDM_SRCWIN), foldState(), pFriend(NULL){}
 
 	void Init() {
 		RecentFile::Init();
@@ -140,7 +141,6 @@ protected:
 public:
 	Buffer *buffers;
 	EditSwitcher * pEditor;
-	int *idm;
 	int size;
 	int length;
 	bool initialised;
@@ -150,6 +150,7 @@ public:
 	int Add(sptr_t doc = NULL);
 	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, int forIdm = NULL);
 	void RemoveCurrent();
+	int NextByIdm(int idm);
 	int Current() const;
 	Buffer *CurrentBuffer();
 	void SetCurrent(int index);
@@ -338,6 +339,7 @@ protected:
 		virtual void SwitchTo(int wndIdm, Buffer* pBuf) ;
 		virtual int GetWindowIdm();
 		virtual void SetBuffPointer(Buffer* pBuf);
+		virtual void SetCoBuffPointer(Buffer* pBuf);
 		void Switch();
 		ScintillaWindowEditor coEditor;
 	private:
