@@ -20,9 +20,9 @@
 #include <memory>
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0501
 #undef WINVER
-#define WINVER 0x0500
+#define WINVER 0x0501
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
