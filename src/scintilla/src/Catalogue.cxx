@@ -5,12 +5,9 @@
 // Copyright 1998-2002 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cassert>
+#include <cstring>
 
 #include <stdexcept>
 #include <vector>
@@ -31,10 +28,9 @@ static int nextLanguage = SCLEX_AUTOMATIC+1;
 
 const LexerModule *Catalogue::Find(int language) {
 	Scintilla_LinkLexers();
-	for (std::vector<LexerModule *>::iterator it=lexerCatalogue.begin();
-		it != lexerCatalogue.end(); ++it) {
-		if ((*it)->GetLanguage() == language) {
-			return *it;
+	for (const LexerModule *lm : lexerCatalogue) {
+		if (lm->GetLanguage() == language) {
+			return lm;
 		}
 	}
 	return 0;
@@ -43,10 +39,9 @@ const LexerModule *Catalogue::Find(int language) {
 const LexerModule *Catalogue::Find(const char *languageName) {
 	Scintilla_LinkLexers();
 	if (languageName) {
-		for (std::vector<LexerModule *>::iterator it=lexerCatalogue.begin();
-			it != lexerCatalogue.end(); ++it) {
-			if ((*it)->languageName && (0 == strcmp((*it)->languageName, languageName))) {
-				return *it;
+		for (const LexerModule *lm : lexerCatalogue) {
+			if (lm->languageName && (0 == strcmp(lm->languageName, languageName))) {
+				return lm;
 			}
 		}
 	}
@@ -118,7 +113,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmESCRIPT);
 	LINK_LEXER(lmF77);
 	LINK_LEXER(lmFlagShip);
-	LINK_LEXER(lmFormEngine);
 	LINK_LEXER(lmForth);
 	LINK_LEXER(lmFortran);
 	LINK_LEXER(lmFreeBasic);
@@ -174,7 +168,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmRuby);
 	LINK_LEXER(lmRust);
 	LINK_LEXER(lmScriptol);
-	LINK_LEXER(lmSearchResult);
 	LINK_LEXER(lmSmalltalk);
 	LINK_LEXER(lmSML);
 	LINK_LEXER(lmSorc);

@@ -5,15 +5,16 @@
 // Copyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cassert>
+#include <cstring>
+#include <cstdio>
 
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "Platform.h"
 
@@ -32,7 +33,6 @@ AutoComplete::AutoComplete() :
 	typesep('?'),
 	ignoreCase(false),
 	chooseSingle(false),
-	lb(0),
 	posStart(0),
 	startLen(0),
 	cancelAtStartPos(true),
@@ -42,14 +42,12 @@ AutoComplete::AutoComplete() :
 	widthLBDefault(100),
 	heightLBDefault(100),
 	autoSort(SC_ORDER_PRESORTED) {
-	lb = ListBox::Allocate();
+	lb.reset(ListBox::Allocate());
 }
 
 AutoComplete::~AutoComplete() {
 	if (lb) {
 		lb->Destroy();
-		delete lb;
-		lb = 0;
 	}
 }
 
@@ -58,7 +56,7 @@ bool AutoComplete::Active() const {
 }
 
 void AutoComplete::Start(Window &parent, int ctrlID,
-	int position, Point location, int startLen_,
+	Sci::Position position, Point location, int startLen_,
 	int lineHeight, bool unicodeMode, int technology) {
 	if (active) {
 		Cancel();
@@ -131,9 +129,9 @@ struct Sorter {
 	}
 
 	bool operator()(int a, int b) {
-		int lenA = indices[a * 2 + 1] - indices[a * 2];
-		int lenB = indices[b * 2 + 1] - indices[b * 2];
-		int len  = std::min(lenA, lenB);
+		const int lenA = indices[a * 2 + 1] - indices[a * 2];
+		const int lenB = indices[b * 2 + 1] - indices[b * 2];
+		const int len  = std::min(lenA, lenB);
 		int cmp;
 		if (ac->ignoreCase)
 			cmp = CompareNCaseInsensitive(list + indices[a * 2], list + indices[b * 2], len);
@@ -156,7 +154,7 @@ void AutoComplete::SetList(const char *list) {
 
 	Sorter IndexSort(this, list);
 	sortMatrix.clear();
-	for (int i = 0; i < (int)IndexSort.indices.size() / 2; ++i)
+	for (int i = 0; i < static_cast<int>(IndexSort.indices.size()) / 2; ++i)
 		sortMatrix.push_back(i);
 	std::sort(sortMatrix.begin(), sortMatrix.end(), IndexSort);
 	if (autoSort == SC_ORDER_CUSTOM || sortMatrix.size() < 2) {
@@ -186,7 +184,7 @@ void AutoComplete::SetList(const char *list) {
 		item[wordLen] = '\0';
 		sortedList += item;
 	}
-	for (int i = 0; i < (int)sortMatrix.size(); ++i)
+	for (int i = 0; i < static_cast<int>(sortMatrix.size()); ++i)
 		sortMatrix[i] = i;
 	lb->SetList(sortedList.c_str(), separator, typesep);
 }
@@ -217,7 +215,7 @@ void AutoComplete::Cancel() {
 
 
 void AutoComplete::Move(int delta) {
-	int count = lb->Length();
+	const int count = lb->Length();
 	int current = lb->GetSelection();
 	current += delta;
 	if (current >= count)
@@ -227,45 +225,11 @@ void AutoComplete::Move(int delta) {
 	lb->Select(current);
 }
 
-bool IsAbbr(const char *item, const char *abr)
-{//Проверка, что слово является аббревиатурой
-	int l = strlen(abr);
-	int l2 = strlen(item);
-	if (l2< l) return false;
-	int i2 = 0;
-	for (int i = 0; i<l; i++)
-	{
-		for (; i2<l2 && item[i2] > 'Z' && i2>0; i2++);
-		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;
-		i2++;
-	}
-	return true;
-}
-
 void AutoComplete::Select(const char *word) {
 	size_t lenWord = strlen(word);
 	int location = -1;
-	char item[maxItemLen];
 	int start = 0; // lower bound of the api array block to search
 	int end = lb->Length() - 1; // upper bound of the api array block to search
-	if (separator = '‡' && lenWord > 1 && lenWord < 20)
-	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '‡'
-		char testUpper[21];
-		strncpy(testUpper, word, lenWord + 1);
-		_strupr(testUpper);
-		if (!strncmp(word+1, testUpper+1, lenWord-1))
-		{
-			for (int i = 0; i <= end; i++)
-			{
-				lb->GetValue(i, item, maxItemLen);
-				if (IsAbbr(item, word))
-				{
-					location = i;
-					break;
-				}
-			}
-		}
-	}
 	while ((start <= end) && (location == -1)) { // Binary searching loop
 		int pivot = (start + end) / 2;
 		char item[maxItemLen];
