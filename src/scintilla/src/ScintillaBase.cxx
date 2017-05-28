@@ -812,6 +812,9 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		AutoCompleteStart(static_cast<int>(wParam), reinterpret_cast<const char *>(lParam));
 		break;
 
+	case SCI_PASTE:
+		ac.Cancel();
+		return Editor::WndProc(iMessage, wParam, lParam);
 	case SCI_AUTOCCANCEL:
 		ac.Cancel();
 		break;
