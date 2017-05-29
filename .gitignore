@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Debug/abbrev
+/Debug
+/iup/lib/Debug/iupweb.lib
+/iup/lib/Debug/iupole.lib
+/iup/lib/Debug/iupcore.lib
+/iup/lib/Debug/iupcontrols.lib
+/iup/lib/Debug/iup.lib
+/iup/obj/Debug
