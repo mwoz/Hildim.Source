@@ -128,7 +128,7 @@ int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, int fo
 }
 
 int BufferList::NextByIdm(int idm){
-	for (int i = current; i < length; i++){
+	for (int i = current + 1; i < length; i++){
 		if (buffers[i].editorSide == idm)
 			return i;
 	}
@@ -250,21 +250,24 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 }
 
 void SciTEBase::ChangeTabWnd(){
-	if (buffers.CurrentBuffer()->editorSide)
+	if (buffers.CurrentBuffer()->pFriend)
 		return;
 
 	Buffer* bPrev = buffers.CurrentBuffer();
+	int iPrev = buffers.Current();
+	int iPrevSide = buffers.CurrentBuffer()->editorSide;
 	sptr_t d = bPrev->doc;
+
+	int iNext = buffers.NextByIdm(buffers.CurrentBuffer()->editorSide);
+
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	
+	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+	
 	wEditor.Switch();
-
-	buffers.SetCurrent(buffers.Add(d));
-
-
-	Buffer* bCur = buffers.CurrentBuffer();
 
 	SetFileName(bPrev->AbsolutePath());
 	CurrentBuffer()->overrideExtension = "";
@@ -276,11 +279,26 @@ void SciTEBase::ChangeTabWnd(){
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
+
 	BuffersMenu();
+	if (iNext > -1){
+		wEditor.Switch();
+		SetDocumentAt(iNext);
+	}
+	else {
+		sptr_t d = wEditor.coEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
+		wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+		wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+		wEditor.SetCoBuffPointer(NULL);
+		if (iPrevSide == IDM_SRCWIN) {
+			wEditor.Switch();
+			New();
+		}
+	}
 }
 
 void SciTEBase::CloneTab(){
-	if (buffers.CurrentBuffer()->editorSide)
+	if (buffers.CurrentBuffer()->pFriend)
 		return;
 
 	Buffer* bPrev = buffers.CurrentBuffer();
@@ -294,8 +312,6 @@ void SciTEBase::CloneTab(){
 	buffers.SetCurrent(buffers.Add(d));
 	bPrev->pFriend = CurrentBuffer();
 	CurrentBuffer()->pFriend = bPrev;
-
-	Buffer* bCur = buffers.CurrentBuffer();
 
 	SetFileName(bPrev->AbsolutePath());
 	CurrentBuffer()->overrideExtension = "";
@@ -553,7 +569,8 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
 
 void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew) {
 	bool closingLast = false;
-
+	int nextFriend = -2;
+	int prevIdm = -2;
 	if (extender) {
 		extender->OnClose(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close");
@@ -579,10 +596,12 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			if (extender)
 				extender->InitBuffer(0);
 		} else {
-			int prevIdm = buffers.CurrentBuffer()->editorSide;
+			prevIdm = buffers.CurrentBuffer()->editorSide;
 			if (extender)
 				extender->RemoveBuffer(buffers.Current());
 			if (buffers.CurrentBuffer()->pFriend){
+				if (buffers.CurrentBuffer()->isDirty)
+					buffers.CurrentBuffer()->pFriend->isDirty = true;
 				buffers.CurrentBuffer()->pFriend->pFriend = NULL;
 				buffers.CurrentBuffer()->pFriend = NULL;
 				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	 
@@ -596,7 +615,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			if (extender && !makingRoomForNew)
 				extender->ActivateBuffer(buffers.Current());
 			if (prevIdm != buffers.CurrentBuffer()->editorSide){
-				int nextFriend = buffers.NextByIdm(prevIdm);
+				nextFriend = buffers.NextByIdm(prevIdm);
 				if (nextFriend == -1){
 					wEditor.SetCoBuffPointer(NULL);
 				}
@@ -634,6 +653,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (extender && !closingLast && !makingRoomForNew) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close-");
+	}
+	if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
+		wEditor.Switch();
+		New();
 	}
 
 	if (closingLast && props.GetInt("quit.on.close.last") && !loadingSession) {
