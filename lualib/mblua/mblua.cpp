@@ -156,6 +156,7 @@ int do_CreateMbTransport(lua_State* L)
 		m_strLan = strLan;
 		m_strNetwork = strNetwork;
 		m_strService = strService;
+		mbTransport->setAppName(_T("HildiM"));
 		mbTransport->create(strDaemon,strLan,strNetwork, strService);
 	}
 	return 0;

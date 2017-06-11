@@ -35,9 +35,6 @@ class CallTip {
 	int wrapBound;          // calltip wrap bound in chars, 0 - no wrap //!-add-[BetterCalltips]
 	bool above;		// if true, display calltip above text
 
-	// Private so CallTip objects can not be copied
-	CallTip(const CallTip &);
-	CallTip &operator=(const CallTip &);
 	void DrawChunk(Surface *surface, int &x, const char *s,
 		int posStart, int posEnd, int ytext, PRectangle rcClient,
 		bool highlight, bool draw);
@@ -51,7 +48,7 @@ public:
 	Window wCallTip;
 	Window wDraw;
 	bool inCallTipMode;
-	int posStartCallTip;
+	Sci::Position posStartCallTip;
 	ColourDesired colourBG;
 	ColourDesired colourUnSel;
 	ColourDesired colourSel;
@@ -66,6 +63,9 @@ public:
 	int verticalOffset; // pixel offset up or down of the calltip with respect to the line
 
 	CallTip();
+	// Deleted so CallTip objects can not be copied.
+	CallTip(const CallTip &) = delete;
+	CallTip &operator=(const CallTip &) = delete;
 	~CallTip();
 
 	void PaintCT(Surface *surfaceWindow);
@@ -73,7 +73,7 @@ public:
 	void MouseClick(Point pt);
 
 	/// Setup the calltip and return a rectangle of the area required.
-	PRectangle CallTipStart(int pos, Point pt, int textHeight, const char *defn,
+	PRectangle CallTipStart(Sci::Position pos, Point pt, int textHeight, const char *defn,
 		const char *faceName, int size, int codePage_,
 		int characterSet, int technology, Window &wParent);
 
