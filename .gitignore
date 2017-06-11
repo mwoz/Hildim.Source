@@ -3,3 +3,12 @@
 ################################################################################
 
 /Debug
+/iup/lib
+/iup/obj
+/src
+/SciTE.VC.VC.opendb
+/SciTE.VC.db
+/SciTE.sdf
+/Release
+/Obj/RadiusServer_Dlg_Debug
+/lualib
