@@ -81,7 +81,7 @@ void BufferList::Allocate(int maxSize) {
 	size = maxSize;
 	buffers = new Buffer[size];
 	stack = new int[size];
-	pEditor->SetBuffPointer(&buffers[0]);
+	pEditor->SetBuffPointer(&buffers[0].AbsolutePath());
 	stack[0] = 0;
 }
 
@@ -101,17 +101,17 @@ int BufferList::Add(sptr_t doc) {
 	switch (SciTEBase::GetProps()->GetInt("buffers.new.position", 0)) {
 	case 1:
 		ShiftTo(length - 1, current + 1);
-		pEditor->SetBuffPointer(&buffers[current + 1]);
+		pEditor->SetBuffPointer(&buffers[current + 1].AbsolutePath());
 		return current + 1;
 		break;
 	case 2:
 		ShiftTo(length - 1, 0);
-		pEditor->SetBuffPointer(&buffers[0]);
+		pEditor->SetBuffPointer(&buffers[0].AbsolutePath());
 		return 0;
 		break;
 	}
 //!-end-[NewBufferPosition]
-    pEditor->SetBuffPointer(&buffers[length - 1]);
+    pEditor->SetBuffPointer(&buffers[length - 1].AbsolutePath());
 	return length - 1;
 }
 
@@ -180,7 +180,7 @@ Buffer *BufferList::CurrentBuffer() {
 
 void BufferList::SetCurrent(int index) {
 	current = index;
-	pEditor->SwitchTo(buffers[current].editorSide, &buffers[current]);
+	pEditor->SwitchTo(buffers[current].editorSide, &buffers[current].AbsolutePath());
 	SciTEBase::GetProps()->SetInteger("BufferNumber", current+1); //!-add-[BufferNumber]
 }
 
@@ -639,7 +639,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					wEditor.SetCoBuffPointer(NULL);
 				}
 				else{
-					wEditor.SetCoBuffPointer(&buffers.buffers[nextFriend]);
+					wEditor.SetCoBuffPointer(&buffers.buffers[nextFriend].AbsolutePath());
 					sptr_t d = buffers.buffers[nextFriend].doc;
 
 					wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);

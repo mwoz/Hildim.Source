@@ -473,6 +473,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	
 	SetFileName(absPath);
 	CurrentBuffer()->overrideExtension = "";
+	wEditor.SetBuffPointer(&absPath);
 	ReadProperties();
 	SetIndentSettings();
 	SetEol();

@@ -696,18 +696,18 @@ void SciTEBase::ScintillaWindowSwitcher::Switch(){
 	}
 }
 
-void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, Buffer* pBuff){
+void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 	bool needGrab =  (GetWindowIdm() != wndIdm);
 	if (!needGrab && !pBuff) return;
 	if (wndIdm == IDM_SRCWIN ){
 		SetID(pBase->wEditorL.GetID());	
 		coEditor.SetID(pBase->wEditorR.GetID());
 		if (pBuff){
-			buffer_L = pBuff;
+			buffer_L.Set(pBuff->AsInternal());
 		}
-		else if (buffer_L)
+		else if (buffer_L.AsInternal() != L"")
 		{
-			int id = pBase->buffers.GetDocumentByName(buffer_L->AbsolutePath(), false, IDM_SRCWIN);
+			int id = pBase->buffers.GetDocumentByName(buffer_L, false, IDM_SRCWIN);
 			if (id > -1) {
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
@@ -719,11 +719,11 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, Buffer* pBuff){
 		SetID(pBase->wEditorR.GetID());	
 		coEditor.SetID(pBase->wEditorL.GetID());
 		if (pBuff){
-			buffer_R = pBuff;
+			buffer_R.Set(pBuff->AsInternal());
 		}
-		else if (buffer_R)
+		else if (buffer_R.AsInternal()!= L"")
 		{
-			int id = pBase->buffers.GetDocumentByName(buffer_R->AbsolutePath(), false, IDM_COSRCWIN);
+			int id = pBase->buffers.GetDocumentByName(buffer_R, false, IDM_COSRCWIN);
 			if (id > -1) {
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
@@ -736,21 +736,21 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, Buffer* pBuff){
 	Call(SCI_GRABFOCUS, true);
 	
 }
-void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(Buffer* pBuf){
+void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf){
 	if (GetWindowIdm() == IDM_SRCWIN){
-		buffer_L = pBuf;
+		buffer_L.Set(pBuf ? pBuf->AsInternal() : L"");
 	}
 	else{
-		buffer_R = pBuf;
+		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
 	}
 }
 
-void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(Buffer* pBuf){
+void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
 	if (GetWindowIdm() == IDM_SRCWIN){
-		buffer_R = pBuf;
+		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
 	}
 	else{
-		buffer_L = pBuf;
+		buffer_L.Set(pBuf ? pBuf->AsInternal(): L"");
 	}
 }
 

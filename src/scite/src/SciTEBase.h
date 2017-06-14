@@ -128,9 +128,9 @@ public:
 
 class EditSwitcher{
 public:
-	virtual void SwitchTo(int wndIdm, Buffer* pBuf) = 0;
+	virtual void SwitchTo(int wndIdm, FilePath* pBuf) = 0;
 	virtual int GetWindowIdm() = 0;
-	virtual void SetBuffPointer(Buffer* pBuf) = 0;
+	virtual void SetBuffPointer(FilePath* pBuf) = 0;
 };
 
 class BufferList {
@@ -336,15 +336,15 @@ protected:
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
-		virtual void SwitchTo(int wndIdm, Buffer* pBuf) ;
+		virtual void SwitchTo(int wndIdm, FilePath* pBuf) ;
 		virtual int GetWindowIdm();
-		virtual void SetBuffPointer(Buffer* pBuf);
-		virtual void SetCoBuffPointer(Buffer* pBuf);
+		virtual void SetBuffPointer(FilePath* pBuf);
+		virtual void SetCoBuffPointer(FilePath* pBuf);
 		void Switch();
 		ScintillaWindowEditor coEditor;
 	private:
-		Buffer *buffer_L;
-		Buffer *buffer_R= NULL;
+		FilePath buffer_L;
+		FilePath buffer_R= NULL;
 	};
 	
 	ScintillaWindowSwitcher wEditor;
