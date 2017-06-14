@@ -296,6 +296,11 @@ static int cf_scite_menu_command(lua_State *L) {
 	return 0;
 }
 
+static int cf_scite_get_editor(lua_State *L) {
+	lua_pushinteger(L, host->ActiveEditor());
+	return 1;
+}
+
 //!-start-[Perform]
 static int cf_scite_perform(lua_State *L) {
 	const char *s = luaL_checkstring(L, 1);
@@ -1126,7 +1131,7 @@ static bool CallNamedFunction(const char *name, const char *arg) {
 			handled = call_function(luaState, 1);
 		} else {
 			lua_pop(luaState, 1);
-		}
+	}	
 	}
 	return handled;
 }
@@ -1938,6 +1943,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_RunAsync);
 	lua_setfield(luaState, -2, "RunAsync");
+
+	lua_pushcfunction(luaState, cf_scite_get_editor);
+	lua_setfield(luaState, -2, "ActiveEditor");
 
 	// buffers
 	lua_newtable(luaState);
@@ -2805,6 +2813,10 @@ void LuaExtension::OnMouseHook(int x, int y){
 
 bool LuaExtension::OnDrawClipboard(int flag){
 	return CallNamedFunction("OnDrawClipboard", flag, 0);
+}
+
+void LuaExtension::OnRightEditorVisibility(bool show) {
+	CallNamedFunction("OnRightEditorVisibility", show, 0);
 }
 
 static int cf_editor_reload_startup_script(lua_State*) {

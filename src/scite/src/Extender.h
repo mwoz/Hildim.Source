@@ -47,6 +47,7 @@ public:
 	virtual void RunInConcole() = 0;
 	virtual void ExecuteHelp(const char *cmd, int hh_cmd) = 0;
 	virtual void RunAsync(int idx)=0;
+	virtual int ActiveEditor()=0;
 };
 
 /**
@@ -113,6 +114,7 @@ public:
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
 	virtual bool OnDrawClipboard(int) { return false; }
+	virtual void OnRightEditorVisibility(bool) {}
 };
 
 #endif

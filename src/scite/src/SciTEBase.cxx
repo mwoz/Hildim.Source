@@ -4993,6 +4993,9 @@ void SciTEBase::Perform(const char *actionList) {
 void SciTEBase::DoMenuCommand(int cmdID) {
 	Command(cmdID, 0);
 }
+int SciTEBase::ActiveEditor() {
+	return buffers.pEditor->GetWindowIdm() == IDM_SRCWIN ? 0 : 1;
+}
 
 //!-start-[ParametersDialogFromLua]
 bool SciTEBase::ShowParametersDialog(const char *msg) {

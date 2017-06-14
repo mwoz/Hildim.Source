@@ -295,6 +295,7 @@ void SciTEBase::ChangeTabWnd(){
 			New();
 		}
 	}
+	SetDocumentAt(iPrev);
 }
 
 void SciTEBase::CloneTab(){
@@ -303,6 +304,7 @@ void SciTEBase::CloneTab(){
 
 	Buffer* bPrev = buffers.CurrentBuffer();
 	sptr_t d = bPrev->doc;
+	int iPrev = buffers.Current();
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
@@ -323,7 +325,24 @@ void SciTEBase::CloneTab(){
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	BuffersMenu();
+	SetDocumentAt(iPrev + 1);
+
+}
+
+void SciTEBase::CheckRightEditorVisible() {
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide != IDM_SRCWIN) {
+			if (!m_bRightEditorVisible) {
+				m_bRightEditorVisible = true;
+				extender->OnRightEditorVisibility(true);
+			}
+			return;
+		}
+	}
+	if (m_bRightEditorVisible) {
+		extender->OnRightEditorVisibility(false);
+		m_bRightEditorVisible = false;
+	}
 }
 
 sptr_t SciTEBase::GetDocumentAt(int index) {
@@ -359,8 +378,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 			extender->InitBuffer(0);
 	}
 
-		Buffer bufferNext = buffers.buffers[buffers.Current()];
-		SetFileName(bufferNext, true, switchTab);
+	Buffer bufferNext = buffers.buffers[buffers.Current()];
+	SetFileName(bufferNext, true, switchTab);
 	if (!bExit) {
 		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
 		RestoreState(bufferNext, switchTab);
@@ -854,6 +873,7 @@ void SciTEBase::BuffersMenu() {
 		}
 	}
 	CheckMenus();
+	CheckRightEditorVisible();
 #if !defined(GTK)
 
 	SizeSubWindows();

@@ -344,7 +344,7 @@ protected:
 		ScintillaWindowEditor coEditor;
 	private:
 		Buffer *buffer_L;
-		Buffer *buffer_R;
+		Buffer *buffer_R= NULL;
 	};
 	
 	ScintillaWindowSwitcher wEditor;
@@ -476,7 +476,7 @@ protected:
 
 	// Handle buffers
 	sptr_t GetDocumentAt(int index);
-	int AddBuffer();
+	
 	void UpdateBuffersCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
@@ -503,6 +503,8 @@ protected:
 	void MoveTabLeft();
 	void CloneTab();
 	void ChangeTabWnd();
+	void CheckRightEditorVisible();
+	bool m_bRightEditorVisible = false;
 
 	void ReadGlobalPropFile();
 	void ReadAbbrevPropFile();
@@ -808,6 +810,7 @@ protected:
 	void ShutDown();
 	void Perform(const char *actions);
 	void DoMenuCommand(int cmdID);
+	virtual int ActiveEditor();
 	bool ShowParametersDialog(const char *msg); //!-add-[ParametersDialogFromLua]
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc);
