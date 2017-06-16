@@ -81,6 +81,7 @@ void BufferList::Allocate(int maxSize) {
 	size = maxSize;
 	buffers = new Buffer[size];
 	stack = new int[size];
+	buffers[0].Init(this);
 	pEditor->SetBuffPointer(&buffers[0].AbsolutePath());
 	stack[0] = 0;
 }
@@ -89,7 +90,7 @@ int BufferList::Add(sptr_t doc) {
 	if (length < size) {
 		length++;
 	}
-	buffers[length - 1].Init();
+	buffers[length - 1].Init(this);
 	if (doc)
 		buffers[length - 1].doc = doc;
 	stack[length - 1] = length - 1;
@@ -152,7 +153,7 @@ void BufferList::RemoveCurrent() {
 		PopStack();
 		length--;
 
-		buffers[length].Init();
+		buffers[length].Init(this);
 		if (current >= length) {
 			SetCurrent(length - 1);
 		}
@@ -165,7 +166,7 @@ void BufferList::RemoveCurrent() {
 		}
 //!-end-[ZorderSwitchingOnClose]
 	} else {
-		buffers[current].Init();
+		buffers[current].Init(this);
 	}
 	MoveToStackTop(current);
 }
@@ -312,8 +313,8 @@ void SciTEBase::CloneTab(){
 	wEditor.Switch();
 
 	buffers.SetCurrent(buffers.Add(d));
-	bPrev->pFriend = CurrentBuffer();
-	CurrentBuffer()->pFriend = bPrev;
+	bPrev->pFriend = true;
+	CurrentBuffer()->pFriend = true;
 
 	SetFileName(bPrev->AbsolutePath());
 	CurrentBuffer()->overrideExtension = "";
@@ -598,7 +599,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
 		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
-		buffers.buffers[0].Init();
+		buffers.buffers[0].Init(&buffers);
 		filePath.Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
 		if (!makingRoomForNew)
@@ -611,7 +612,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 		closingLast = (buffers.length == 1);
 		if (closingLast) {
-			buffers.buffers[0].Init();
+			buffers.buffers[0].Init(&buffers);
 			if (extender)
 				extender->InitBuffer(0);
 		} else {
@@ -620,9 +621,9 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 				extender->RemoveBuffer(buffers.Current());
 			if (buffers.CurrentBuffer()->pFriend){
 				if (buffers.CurrentBuffer()->isDirty)
-					buffers.CurrentBuffer()->pFriend->isDirty = true;
-				buffers.CurrentBuffer()->pFriend->pFriend = NULL;
-				buffers.CurrentBuffer()->pFriend = NULL;
+					buffers.CurrentBuffer()->Friend()->isDirty = true;
+				buffers.CurrentBuffer()->Friend()->pFriend = false;
+				buffers.CurrentBuffer()->pFriend = false;
 				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	 
 				sptr_t d = wEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
 				wEditor.Call(SCI_ADDREFDOCUMENT, 0, d);

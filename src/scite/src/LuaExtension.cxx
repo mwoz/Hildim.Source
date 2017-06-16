@@ -944,9 +944,31 @@ static int cf_perform_grep_ex(lua_State *L){
 	return 1;
 }
 
-static int bf_current(lua_State *L){
-	
-	lua_pushinteger(L, curBufferIndex < 0? -1: host->GetCurrentBufer());
+static int bf_current(lua_State *L) {
+
+	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->GetCurrentBufer());
+	return 1;
+}
+static int bf_get_buffer_side(lua_State *L) {
+
+	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->GetBufferSide(luaL_checkint(L, 1)));
+	return 1;
+}
+static int bf_is_cloned(lua_State *L) {
+	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->Cloned(luaL_checkint(L, 1)));
+	return 1;
+}
+static int bf_index_of_clone(lua_State *L) {
+	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->IndexOfClone(luaL_checkint(L, 1)));
+	return 1;
+}
+static int bf_buffer_by_name(lua_State *L) {
+	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->BufferByName(luaL_checkstring(L, 1)));
+	return 1;
+}
+static int bf_second_editor_active(lua_State *L) {
+
+	lua_pushinteger(L, curBufferIndex < 0 ? false : host->SecondEditorActive());
 	return 1;
 }
 
@@ -1961,6 +1983,21 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	//lua_setfield(luaState, -2, "SetCurrent");
 	lua_pushcfunction(luaState, bf_current);
 	lua_setfield(luaState, -2, "GetCurrent");
+
+	lua_pushcfunction(luaState, bf_get_buffer_side);
+	lua_setfield(luaState, -2, "GetBufferSide");
+
+	lua_pushcfunction(luaState, bf_is_cloned);
+	lua_setfield(luaState, -2, "IsCloned");
+
+	lua_pushcfunction(luaState, bf_index_of_clone);
+	lua_setfield(luaState, -2, "IndexOfClone");
+
+	lua_pushcfunction(luaState, bf_buffer_by_name);
+	lua_setfield(luaState, -2, "BufferByName");
+
+	lua_pushcfunction(luaState, bf_second_editor_active);
+	lua_setfield(luaState, -2, "SecondEditorActive");
 	lua_setfield(luaState, -2, "buffers");
 	
 	lua_setglobal(luaState, "scite");
