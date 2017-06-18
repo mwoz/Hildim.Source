@@ -498,6 +498,10 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	needReadProperties = false;
 	preserveFocusOnEditor = false; //!-add-[GoMessageImprovement]
 	wEditor.pBase = this; //!-add-[OnSendEditor]
+	wEditor.coEditor.pBase = this; //!-add-[OnSendEditor]
+	wEditorR.pBase = this;
+	wEditorL.pBase = this;
+	buffers.pEditor = &wEditor;
 	OnMenuCommandCallsCount = 0;	//!-add-[OnMenuCommand]
 }
 
@@ -681,6 +685,89 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call( unsigned int msg, uptr_t wParam, 
 }
 //!-end-[OnSendEditor]
 
+void SciTEBase::ScintillaWindowSwitcher::Switch(){
+	if (GetWindowIdm() == IDM_SRCWIN){
+		SetID(pBase->wEditorR.GetID());
+		coEditor.SetID(pBase->wEditorL.GetID());
+	}
+	else{
+		SetID(pBase->wEditorL.GetID());
+		coEditor.SetID(pBase->wEditorR.GetID());
+	}
+}
+
+void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
+	bool needGrab =  (GetWindowIdm() != wndIdm);
+	if (!needGrab && !pBuff) return;
+	if (wndIdm == IDM_SRCWIN ){
+		SetID(pBase->wEditorL.GetID());	
+		coEditor.SetID(pBase->wEditorR.GetID());
+		if (pBuff){
+			buffer_L.Set(pBuff->AsInternal());
+		}
+		else if (buffer_L.AsInternal() != L"")
+		{
+			int id = pBase->buffers.GetDocumentByName(buffer_L, false, IDM_SRCWIN);
+			if (id > -1) {
+				pBase->SetDocumentAt(id, true, true, true);
+				return;
+			}
+			throw std::runtime_error("Buffers Filed");
+		}
+	}
+	else if (wndIdm == IDM_COSRCWIN){
+		SetID(pBase->wEditorR.GetID());	
+		coEditor.SetID(pBase->wEditorL.GetID());
+		if (pBuff){
+			buffer_R.Set(pBuff->AsInternal());
+		}
+		else if (buffer_R.AsInternal()!= L"")
+		{
+			int id = pBase->buffers.GetDocumentByName(buffer_R, false, IDM_COSRCWIN);
+			if (id > -1) {
+				pBase->SetDocumentAt(id, true, true, true);
+				return;
+			}
+			throw std::runtime_error("Buffers Filed");
+		}
+	}
+	else throw std::runtime_error("ScintillaWindowSwitcher: unknown idm");
+	//Call(SCI_SETFOCUS, true);
+	Call(SCI_GRABFOCUS, true);
+	
+}
+void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf){
+	if (GetWindowIdm() == IDM_SRCWIN){
+		buffer_L.Set(pBuf ? pBuf->AsInternal() : L"");
+	}
+	else{
+		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
+	}
+}
+
+void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
+	if (GetWindowIdm() == IDM_SRCWIN){
+		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
+	}
+	else{
+		buffer_L.Set(pBuf ? pBuf->AsInternal(): L"");
+	}
+}
+
+int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
+	if (GetID() == pBase->wEditorL.GetID())	return IDM_SRCWIN;
+	return IDM_COSRCWIN;
+}
+
+sptr_t SciTEBase::CallStringAll(unsigned int msg, uptr_t wParam, const char *s){
+	wEditorR.CallString(msg, wParam, s);
+	return wEditorL.CallString(msg, wParam, s);
+}
+
+sptr_t SciTEBase::CallAll(unsigned int msg, uptr_t wParam, sptr_t lParam) {
+	wEditorR.Call(msg, wParam, lParam);
+	return wEditorL.Call(msg, wParam, lParam);
+}
 sptr_t SciTEBase::CallFocused(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 	if (wOutput.HasFocus())
 		return wOutput.Call(msg, wParam, lParam);
@@ -758,7 +845,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 1.0.4.2\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.0.0\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -803,7 +890,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 
 void SciTEBase::ViewWhitespace(bool view) {
 	if (view && indentationWSVisible)
-		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);
+		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);	  
 	else if (view)
 		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEAFTERINDENT);
 	else
@@ -3147,15 +3234,25 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		MoveTabRight();
 		WindowSetFocus(wEditor);
 		break;
+
 	case IDM_MOVETABLEFT:
 		MoveTabLeft();
 		WindowSetFocus(wEditor);
+		break;
+
+	case IDM_CLONETAB:
+		CloneTab();
+		break;
+
+	case IDM_CHANGETAB:
+		ChangeTabWnd();
 		break;
 
 	case IDM_UNDO:
 		CallPane(source, SCI_UNDO);
 		CheckMenus();
 		break;
+
 	case IDM_REDO:
 		CallPane(source, SCI_REDO);
 		CheckMenus();
@@ -3880,6 +3977,11 @@ void SciTEBase::NewLineInOutput() {
 void SciTEBase::Notify(SCNotification *notification) {
 	bool handled = false;
 	switch (notification->nmhdr.code) {
+	case SCN_FOCUSIN:
+		if ((notification->nmhdr.idFrom == IDM_SRCWIN) || (notification->nmhdr.idFrom == IDM_COSRCWIN)){
+			wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
+		}
+		break;
 	case SCEN_SETFOCUS:
 	case SCEN_KILLFOCUS:
 		CheckMenus();
@@ -3888,7 +3990,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_STYLENEEDED: {
 			if (extender) {
 				// Colourisation may be performed by script
-				if ((notification->nmhdr.idFrom == IDM_SRCWIN) && (lexLanguage == SCLEX_CONTAINER)) {
+				if ((notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) && (lexLanguage == SCLEX_CONTAINER)) {
 					int endStyled = wEditor.Call(SCI_GETENDSTYLED);
 					int lineEndStyled = wEditor.Call(SCI_LINEFROMPOSITION, endStyled);
 					endStyled = wEditor.Call(SCI_POSITIONFROMLINE, lineEndStyled);
@@ -3931,7 +4033,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			}
 		}
 		if (!handled) {
-			if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+			if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 				CharAdded(static_cast<char>(notification->ch));
 			} else if (notification->nmhdr.idFrom == IDM_RUNWIN){
 				CharAddedOutput(notification->ch);
@@ -3940,7 +4042,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_SAVEPOINTREACHED:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if (extender)
 				handled = extender->OnSavePointReached();
 			if (!handled) {
@@ -3954,13 +4056,13 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_COLORIZED:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if (extender)
 				handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
 		break;
 	case SCN_KEYCOMMAND:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			switch (notification->wParam){
 			case SCI_PAGEUP:
 			case SCI_PAGEUPRECTEXTEND:
@@ -3984,7 +4086,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_SAVEPOINTLEFT:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if (extender)
 				handled = extender->OnSavePointLeft();
 			if (!handled) {
@@ -4049,11 +4151,11 @@ void SciTEBase::Notify(SCNotification *notification) {
 //!-end-[OnMouseButtonUp][GoMessageImprovement]
 
 	case SCN_UPDATEUI:
-		if (extender && notification->nmhdr.idFrom == IDM_SRCWIN)
+		if (extender && notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)
 			handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)<<4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 		if (!handled) {
-			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN);
-			if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN);
+			if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			}
 		}
 		if (CurrentBuffer()->findMarks == Buffer::fmModified) {
@@ -4109,7 +4211,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_NEEDSHOWN: {
-			if (notification->nmhdr.idFrom == IDM_SRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
+							if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
 		}
 		break;
 
@@ -4768,6 +4870,8 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
 	if (p == paneEditor)
 		return wEditor.Call(msg, wParam, lParam);
+	else if (p == paneCoEditor)
+		return wEditor.coEditor.Call(msg, wParam, lParam);
 	else if (p == paneOutput)
 		return wOutput.Call(msg, wParam, lParam);
 	else
@@ -4779,6 +4883,8 @@ char *SciTEBase::Range(Pane p, int start, int end) {
 	char *s = new char[len + 1];
 	if (p == paneEditor)
 		GetRange(wEditor, start, end, s);
+	else  if (p == paneCoEditor)
+		GetRange(wEditor.coEditor, start, end, s);
 	else  if (p == paneOutput)
 		GetRange(wOutput, start, end, s);
 	else
@@ -4791,6 +4897,10 @@ void SciTEBase::Remove(Pane p, int start, int end) {
 	if (p == paneEditor) {
 		wEditor.Call(SCI_SETSEL, start, end);
 		wEditor.Call(SCI_CLEAR);
+	}
+	else if (p == paneCoEditor)	{
+		wEditor.coEditor.Call(SCI_SETSEL, start, end);
+		wEditor.coEditor.Call(SCI_CLEAR);
 	}
 	else  if (p == paneOutput){
 		wOutput.Call(SCI_SETSEL, start, end);
@@ -4806,6 +4916,8 @@ void SciTEBase::Remove(Pane p, int start, int end) {
 void SciTEBase::Insert(Pane p, int pos, const char *s) {
 	if (p == paneEditor)
 		wEditor.CallString(SCI_INSERTTEXT, pos, s);
+	else if (p == paneCoEditor)
+		wEditor.coEditor.CallString(SCI_INSERTTEXT, pos, s);
 	else if (p == paneOutput)
 		wOutput.CallString(SCI_INSERTTEXT, pos, s);
 	else
@@ -4880,6 +4992,9 @@ void SciTEBase::Perform(const char *actionList) {
 
 void SciTEBase::DoMenuCommand(int cmdID) {
 	Command(cmdID, 0);
+}
+int SciTEBase::ActiveEditor() {
+	return buffers.pEditor->GetWindowIdm() == IDM_SRCWIN ? 0 : 1;
 }
 
 //!-start-[ParametersDialogFromLua]

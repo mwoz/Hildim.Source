@@ -473,6 +473,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	
 	SetFileName(absPath);
 	CurrentBuffer()->overrideExtension = "";
+	wEditor.SetBuffPointer(&absPath);
 	ReadProperties();
 	SetIndentSettings();
 	SetEol();
@@ -630,6 +631,8 @@ FilePath SciTEBase::SaveName(const char *ext) {
 }
 
 int SciTEBase::SaveIfUnsure(bool forceQuestion) {
+	if (buffers.CurrentBuffer()->pFriend)
+		return IDOK;
 	if ((CurrentBuffer()->isDirty) && (LengthDocument() || !filePath.IsUntitled() || forceQuestion)) {
 		if ((props.GetInt("are.you.sure", 1) && props.GetInt("are.you.sure.close", 1)) ||
 		        filePath.IsUntitled() ||

@@ -78,6 +78,12 @@ enum UniMode {
     uniCookie = 4
 };
 
+class BufferListAPI {
+public:
+	virtual int GetDocumentByName(FilePath filename, bool excludeCurrent = false, int forIdm = NULL) = 0;
+	virtual void* GetAt(int index) = 0;
+};
+
 class Buffer : public RecentFile {
 public:
 	sptr_t doc;
@@ -90,12 +96,25 @@ public:
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<int> foldState;
+	int editorSide;
+	bool pFriend;
+	BufferListAPI* pBase;
+	int FriendIndex() {
+		return  pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
+	}
+
+	Buffer* Friend() {
+		int i = pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN );
+		if (i == -1) 
+			return NULL;
+		return (Buffer*)pBase->GetAt(i);
+	}
 	Buffer() :
 //!			RecentFile(), doc(0), isDirty(false), useMonoFont(false),
 			RecentFile(), doc(0), isDirty(false), ROMarker(0), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), foldState() {}
+			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(IDM_SRCWIN), foldState(), pFriend(false){}
 
-	void Init() {
+	void Init(BufferListAPI* pB) {
 		RecentFile::Init();
 		isDirty = false;
 		ROMarker = NULL; //!-add-[ReadOnlyTabMarker]
@@ -106,35 +125,54 @@ public:
 		findMarks = fmNone;
 		overrideExtension = "";
 		foldState.clear();
+		pFriend = false;
+		pBase = pB;
 	}
 
 	void SetTimeFromFile() {
 		fileModTime = ModifiedTime();
 		fileModLastAsk = fileModTime;
+		if (pFriend){
+			Buffer* b = Friend();
+			if (b) b->fileModTime = fileModTime;
+		}
 	}
 //!-start-[OpenNonExistent]
-	bool DocumentNotSaved() const {
-		return (isDirty || (!IsUntitled() && (fileModTime == 0)));
+	bool DocumentNotSaved()  {
+		bool rez = (isDirty || (!IsUntitled() && (fileModTime == 0)));
+		if (rez || !pFriend)
+			return rez;
+		Buffer* b = Friend();
+		return b && (b->isDirty || (!b->IsUntitled() && (b->fileModTime == 0)));
 	}
 //!-end-[OpenNonExistent]
 };
 
-class BufferList {
+class EditSwitcher{
+public:
+	virtual void SwitchTo(int wndIdm, FilePath* pBuf) = 0;
+	virtual int GetWindowIdm() = 0;
+	virtual void SetBuffPointer(FilePath* pBuf) = 0;
+};
+
+class BufferList: public BufferListAPI {
 protected:
 	int current;
 	int stackcurrent;
 	int *stack;
 public:
 	Buffer *buffers;
+	EditSwitcher * pEditor;
 	int size;
 	int length;
 	bool initialised;
 	BufferList();
 	~BufferList();
 	void Allocate(int maxSize);
-	int Add();
-	int GetDocumentByName(FilePath filename, bool excludeCurrent=false);
+	int Add(sptr_t doc = NULL);
+	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, int forIdm = NULL);
 	void RemoveCurrent();
+	int NextByIdm(int idm);
 	int Current() const;
 	Buffer *CurrentBuffer();
 	void SetCurrent(int index);
@@ -143,6 +181,9 @@ public:
 	void CommitStackSelection();
 	void MoveToStackTop(int index);
 	void ShiftTo(int indexFrom, int indexTo);
+	virtual void* GetAt(int index) {
+		return (void*) &buffers[index];
+	}
 private:
 	void PopStack();
 };
@@ -315,10 +356,27 @@ protected:
 	class ScintillaWindowEditor : public GUI::ScintillaWindow
 	{
 	public:
-		virtual sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);
+		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
 	};
-	ScintillaWindowEditor wEditor;
+	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
+	public:	
+		virtual void SwitchTo(int wndIdm, FilePath* pBuf) ;
+		virtual int GetWindowIdm();
+		virtual void SetBuffPointer(FilePath* pBuf);
+		virtual void SetCoBuffPointer(FilePath* pBuf);
+		void Switch();
+		ScintillaWindowEditor coEditor;
+	private:
+		FilePath buffer_L;
+		FilePath buffer_R= NULL;
+	};
+	
+	ScintillaWindowSwitcher wEditor;
+	ScintillaWindowEditor wEditorR;
+	ScintillaWindowEditor wEditorL;
+	virtual sptr_t CallAll(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t CallStringAll(unsigned int msg, uptr_t wParam, const char *s);
 	friend class ScintillaWindowEditor;
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
@@ -438,23 +496,37 @@ protected:
 
 	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
 
-	GUI::Rectangle rFindReplace;//позиция окна поиска\замены
-	GUI::Rectangle rFindInFiles;//позиция окна поиска в файлах
-
 	enum { bufferMax = 100 };
 	BufferList buffers;
 
 	// Handle buffers
 	sptr_t GetDocumentAt(int index);
-	int AddBuffer();
+	
 	void UpdateBuffersCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
-	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true);
+	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
-	int GetCurrentBufer(){ return buffers.Current(); };		  
+	int GetCurrentBufer(){ return buffers.Current(); };	
+	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
+	virtual int SecondEditorActive() {
+		for (int i = 0; i < buffers.length; i++) {
+			if (buffers.buffers[i].editorSide == IDM_COSRCWIN)
+				return true;
+		}
+		return false;
+	}
+	virtual int Cloned(int index) {
+		return buffers.buffers[index].pFriend;
+	}
+	virtual int IndexOfClone(int index) {
+		return buffers.buffers[index].FriendIndex();
+	}
+	virtual int BufferByName(const char* c) {
+		return buffers.GetDocumentByName(FilePath(GUI::StringFromUTF8(c)));
+	}
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
@@ -471,6 +543,10 @@ protected:
 	void ShiftTab(int indexFrom, int indexTo);
 	void MoveTabRight();
 	void MoveTabLeft();
+	void CloneTab();
+	void ChangeTabWnd();
+	void CheckRightEditorVisible();
+	bool m_bRightEditorVisible = false;
 
 	void ReadGlobalPropFile();
 	void ReadAbbrevPropFile();
@@ -776,6 +852,7 @@ protected:
 	void ShutDown();
 	void Perform(const char *actions);
 	void DoMenuCommand(int cmdID);
+	virtual int ActiveEditor();
 	bool ShowParametersDialog(const char *msg); //!-add-[ParametersDialogFromLua]
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc);

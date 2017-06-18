@@ -352,6 +352,7 @@ bool SciTEWin::SaveAsDialog() {
 	if (path.IsSet()) {
 		if (nFilter == 1 && path.Extension().AsInternal() != ext && ext != GUI::gui_string(L""))
 			path = path.AsInternal() + GUI::gui_string(L".") + ext;
+		wEditor.SetBuffPointer(&path);
 		return SaveIfNotOpen(path, false);
 	}
 	return false;

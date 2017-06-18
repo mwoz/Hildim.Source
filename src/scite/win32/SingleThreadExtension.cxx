@@ -270,3 +270,6 @@ void SingleThreadExtension::OnMouseHook(int x, int y){
 bool SingleThreadExtension::OnDrawClipboard(int flag){
 	return ext->OnDrawClipboard(flag);
 }
+void SingleThreadExtension::OnRightEditorVisibility(bool show) {
+	ext->OnRightEditorVisibility(show);
+}

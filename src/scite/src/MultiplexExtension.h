@@ -98,6 +98,7 @@ public:
 	virtual void DoLua(const char * c);
 	virtual void OnMouseHook(int x, int y);
 	virtual bool OnDrawClipboard(int flag);
+	virtual void OnRightEditorVisibility(bool show);
 private:
 	Extension **extensions;
 	int extensionCount;

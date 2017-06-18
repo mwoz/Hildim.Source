@@ -81,41 +81,61 @@ void BufferList::Allocate(int maxSize) {
 	size = maxSize;
 	buffers = new Buffer[size];
 	stack = new int[size];
+	buffers[0].Init(this);
+	pEditor->SetBuffPointer(&buffers[0].AbsolutePath());
 	stack[0] = 0;
 }
 
-int BufferList::Add() {
+int BufferList::Add(sptr_t doc) {
 	if (length < size) {
 		length++;
 	}
-	buffers[length - 1].Init();
+	buffers[length - 1].Init(this);
+	if (doc)
+		buffers[length - 1].doc = doc;
 	stack[length - 1] = length - 1;
+	buffers[length - 1].editorSide = pEditor->GetWindowIdm();
+	
 	MoveToStackTop(length - 1);
 
 //!-start-[NewBufferPosition]
 	switch (SciTEBase::GetProps()->GetInt("buffers.new.position", 0)) {
 	case 1:
 		ShiftTo(length - 1, current + 1);
+		pEditor->SetBuffPointer(&buffers[current + 1].AbsolutePath());
 		return current + 1;
 		break;
 	case 2:
 		ShiftTo(length - 1, 0);
+		pEditor->SetBuffPointer(&buffers[0].AbsolutePath());
 		return 0;
 		break;
 	}
 //!-end-[NewBufferPosition]
-
+    pEditor->SetBuffPointer(&buffers[length - 1].AbsolutePath());
 	return length - 1;
 }
 
-int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent) {
+int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, int forIdm) {
 	if (!filename.IsSet()) {
 		return -1;
 	}
 	for (int i = 0;i < length;i++) {
-		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename)) {
+		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (!forIdm || forIdm == buffers[i].editorSide)) {
 			return i;
 		}
+	}
+	return -1;
+}
+
+int BufferList::NextByIdm(int idm){
+	for (int i = current + 1; i < length; i++){
+		if (buffers[i].editorSide == idm)
+			return i;
+	}
+	for (int i = 0; i < current; i++){
+		if (buffers[i].editorSide == idm)
+			return i;
 	}
 	return -1;
 }
@@ -133,7 +153,7 @@ void BufferList::RemoveCurrent() {
 		PopStack();
 		length--;
 
-		buffers[length].Init();
+		buffers[length].Init(this);
 		if (current >= length) {
 			SetCurrent(length - 1);
 		}
@@ -146,7 +166,7 @@ void BufferList::RemoveCurrent() {
 		}
 //!-end-[ZorderSwitchingOnClose]
 	} else {
-		buffers[current].Init();
+		buffers[current].Init(this);
 	}
 	MoveToStackTop(current);
 }
@@ -161,6 +181,7 @@ Buffer *BufferList::CurrentBuffer() {
 
 void BufferList::SetCurrent(int index) {
 	current = index;
+	pEditor->SwitchTo(buffers[current].editorSide, &buffers[current].AbsolutePath());
 	SciTEBase::GetProps()->SetInteger("BufferNumber", current+1); //!-add-[BufferNumber]
 }
 
@@ -214,7 +235,7 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	Buffer tmp = buffers[indexFrom];
 	int i;
 	for (i = indexFrom; i != indexTo; i += step) {
-		buffers[i] = buffers[i+step];
+		buffers[i] = buffers[i + step];
 	}
 	buffers[indexTo] = tmp;
 	// update stack indexes
@@ -229,6 +250,102 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	}
 }
 
+void SciTEBase::ChangeTabWnd(){
+	if (buffers.CurrentBuffer()->pFriend)
+		return;
+
+	Buffer* bPrev = buffers.CurrentBuffer();
+	int iPrev = buffers.Current();
+	int iPrevSide = buffers.CurrentBuffer()->editorSide;
+	sptr_t d = bPrev->doc;
+
+	int iNext = buffers.NextByIdm(buffers.CurrentBuffer()->editorSide);
+
+
+	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
+	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	
+	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+	
+	wEditor.Switch();
+
+	SetFileName(bPrev->AbsolutePath());
+	CurrentBuffer()->overrideExtension = "";
+	ReadProperties();
+	SetIndentSettings();
+	SetEol();
+	UpdateBuffersCurrent();
+	SizeSubWindows();
+
+	buffers.CurrentBuffer()->SetTimeFromFile();
+
+
+	BuffersMenu();
+	if (iNext > -1){
+		wEditor.Switch();
+		SetDocumentAt(iNext);
+	}
+	else {
+		sptr_t d = wEditor.coEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
+		wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+		wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+		wEditor.SetCoBuffPointer(NULL);
+		if (iPrevSide == IDM_SRCWIN) {
+			wEditor.Switch();
+			New();
+		}
+	}
+	SetDocumentAt(iPrev);
+}
+
+void SciTEBase::CloneTab(){
+	if (buffers.CurrentBuffer()->pFriend)
+		return;
+
+	Buffer* bPrev = buffers.CurrentBuffer();
+	sptr_t d = bPrev->doc;
+	int iPrev = buffers.Current();
+
+	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
+	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	wEditor.Switch();
+
+	buffers.SetCurrent(buffers.Add(d));
+	bPrev->pFriend = true;
+	CurrentBuffer()->pFriend = true;
+
+	SetFileName(bPrev->AbsolutePath());
+	CurrentBuffer()->overrideExtension = "";
+	ReadProperties();
+	SetIndentSettings();
+	SetEol();
+	UpdateBuffersCurrent();
+	SizeSubWindows();
+
+	buffers.CurrentBuffer()->SetTimeFromFile();
+
+	SetDocumentAt(iPrev + 1);
+
+}
+
+void SciTEBase::CheckRightEditorVisible() {
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide != IDM_SRCWIN) {
+			if (!m_bRightEditorVisible) {
+				m_bRightEditorVisible = true;
+				extender->OnRightEditorVisibility(true);
+			}
+			return;
+		}
+	}
+	if (m_bRightEditorVisible) {
+		extender->OnRightEditorVisibility(false);
+		m_bRightEditorVisible = false;
+	}
+}
+
 sptr_t SciTEBase::GetDocumentAt(int index) {
 	if (index < 0 || index >= buffers.size) {
 		return 0;
@@ -240,7 +357,7 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 	return buffers.buffers[index].doc;
 }
 
-void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
+void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
 	int currentbuf = buffers.Current();
 	if (	index < 0 ||
 	        index >= buffers.length ||
@@ -250,7 +367,6 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
 		return;
 	}
 	UpdateBuffersCurrent();
-
 	buffers.SetCurrent(index);
 	if (updateStack) {
 		buffers.MoveToStackTop(index);
@@ -265,18 +381,18 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab) {
 
 	Buffer bufferNext = buffers.buffers[buffers.Current()];
 	SetFileName(bufferNext, true, switchTab);
-	wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
-	RestoreState(bufferNext, switchTab);
+	if (!bExit) {
+		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
+		RestoreState(bufferNext, switchTab);
+		TabSelect(index);
 
-	TabSelect(index);
+		if (lineNumbers && lineNumbersExpand)
+			SetLineNumberWidth();
 
-	if (lineNumbers && lineNumbersExpand)
-		SetLineNumberWidth();
+		DisplayAround(bufferNext);
 
-	DisplayAround(bufferNext);
-
-	CheckMenus();
-
+		CheckMenus();
+	}
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 	}
@@ -473,7 +589,8 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
 
 void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew) {
 	bool closingLast = false;
-
+	int nextFriend = -2;
+	int prevIdm = -2;
 	if (extender) {
 		extender->OnClose(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close");
@@ -482,7 +599,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
 		closingLast = true;	  //¬р€дли мы будем работать в однооконном режиме !!!!!!!!!!!!
-		buffers.buffers[0].Init();
+		buffers.buffers[0].Init(&buffers);
 		filePath.Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
 		if (!makingRoomForNew)
@@ -495,16 +612,41 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 		closingLast = (buffers.length == 1);
 		if (closingLast) {
-			buffers.buffers[0].Init();
+			buffers.buffers[0].Init(&buffers);
 			if (extender)
 				extender->InitBuffer(0);
 		} else {
+			prevIdm = buffers.CurrentBuffer()->editorSide;
 			if (extender)
 				extender->RemoveBuffer(buffers.Current());
+			if (buffers.CurrentBuffer()->pFriend){
+				if (buffers.CurrentBuffer()->isDirty)
+					buffers.CurrentBuffer()->Friend()->isDirty = true;
+				buffers.CurrentBuffer()->Friend()->pFriend = false;
+				buffers.CurrentBuffer()->pFriend = false;
+				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	 
+				sptr_t d = wEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
+				wEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+				wEditor.Call(SCI_SETDOCPOINTER, 0, d);
+			}
 			ClearDocument();
+
 			buffers.RemoveCurrent();
 			if (extender && !makingRoomForNew)
 				extender->ActivateBuffer(buffers.Current());
+			if (prevIdm != buffers.CurrentBuffer()->editorSide){
+				nextFriend = buffers.NextByIdm(prevIdm);
+				if (nextFriend == -1){
+					wEditor.SetCoBuffPointer(NULL);
+				}
+				else{
+					wEditor.SetCoBuffPointer(&buffers.buffers[nextFriend].AbsolutePath());
+					sptr_t d = buffers.buffers[nextFriend].doc;
+
+					wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
+					wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+				}
+			}
 		}
 		Buffer bufferNext = buffers.buffers[buffers.Current()];
 
@@ -531,6 +673,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (extender && !closingLast && !makingRoomForNew) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close-");
+	}
+	if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
+		wEditor.Switch();
+		New();
 	}
 
 	if (closingLast && props.GetInt("quit.on.close.last") && !loadingSession) {
@@ -720,10 +866,15 @@ void SciTEBase::BuffersMenu() {
 				entry += buffers.buffers[pos].ROMarker;
 				titleTab += buffers.buffers[pos].ROMarker;
 			}
+			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN){
+				entry = GUI_TEXT("Ы") + entry;
+				titleTab = GUI_TEXT("Ы") + titleTab;
+			}
 			TabInsert(pos, titleTab.c_str());
 		}
 	}
 	CheckMenus();
+	CheckRightEditorVisible();
 #if !defined(GTK)
 
 	SizeSubWindows();

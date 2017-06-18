@@ -1,4 +1,12 @@
-﻿################################################################################
+﻿
+
+
+
+
+
+
+
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -54,3 +62,8 @@
 /src/scite/Debug/HildiM.exe.embed.manifest
 /src/scite/Debug/HildiM.exe.embed.manifest.res
 *.ipch
+*.lastbuildstate
+*.sdf
+/src/scite/Debug/lua.lib
+/src/scite/Debug/SciTERes.res
+/src/scite/Debug

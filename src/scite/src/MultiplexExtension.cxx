@@ -423,5 +423,10 @@ bool MultiplexExtension::OnDrawClipboard(int flag) {
 	}
 	return false;
 }
+void MultiplexExtension::OnRightEditorVisibility(bool show) {
+	for (int i = 0; i<extensionCount; ++i) {
+		extensions[i]->OnRightEditorVisibility(show);
+	}
+}
 
 //!-end-[OnSendEditor]
