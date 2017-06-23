@@ -860,7 +860,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f));
 		AddStyledText(wsci, "Scintilla 3.7.5 code editing componen, Neil Hodgson\n", 3);
 		AddStyledText(wsci, "http://www.scintilla.org\n", 4);
-		AddStyledText(wsci, "UIP libraries 3.21 by TeCGraf, PUC-Rio\n", 3);
+		AddStyledText(wsci, "UIP libraries 3.22 by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://iup.sourceforge.net\n", 4);
 		AddStyledText(wsci, "Lua scripting language by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://www.lua.org\n", 4);

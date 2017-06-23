@@ -179,6 +179,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\iup_flattabs.c" />
+    <ClCompile Include="..\src\iup_flatscrollbar.c" />
+    <ClCompile Include="..\src\iup_flatscrollbox.c" />
     <ClCompile Include="..\src\iup_focus.c" />
     <ClCompile Include="..\src\iup_font.c" />
     <ClCompile Include="..\src\iup_func.c" />

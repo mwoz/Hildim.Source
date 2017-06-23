@@ -193,6 +193,7 @@
     <ClCompile Include="..\..\srclua5\elem\il_fill.c" />
     <ClCompile Include="..\..\srclua5\elem\il_flatbutton.c" />
     <ClCompile Include="..\..\srclua5\elem\il_flatframe.c" />
+    <ClCompile Include="..\..\srclua5\elem\il_flatscrollbox.c" />
     <ClCompile Include="..\..\srclua5\elem\il_flattabs.c" />
     <ClCompile Include="..\..\srclua5\elem\il_fontdlg.c" />
     <ClCompile Include="..\..\srclua5\elem\il_frame.c" />
