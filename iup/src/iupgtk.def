@@ -91,6 +91,7 @@ IupStoreGlobal
 IupSubmenu
 IupSplit
 IupScrollBox
+IupFlatScrollBox
 IupDetachBox
 IupBackgroundBox
 IupLink
@@ -261,6 +262,7 @@ iupdrvGetCursorPos
 iupdrvGetComputerName
 iupdrvFontGetStringWidth
 iupdrvFontGetMultiLineStringSize
+iupdrvFontGetTextSize
 iupdrvFontGetCharSize
 iupdrvPaintFocusRect
 iupdrvPostRedraw
@@ -307,6 +309,7 @@ iupStrToRGBA
 iupStrToMac
 iupStrToIntInt
 iupStrToInt
+iupStrToUInt
 iupStrToFloatFloat
 iupStrToDoubleDouble
 iupStrToFloat
@@ -319,6 +322,7 @@ iupStrReturnRGBA
 iupStrReturnBoolean
 iupStrReturnChecked
 iupStrReturnInt
+iupStrReturnUInt
 iupStrReturnIntInt
 iupStrReturnFloat
 iupStrReturnDouble
@@ -332,7 +336,8 @@ iupStrCompareEqual
 iupStrCompareFind
 iupStrNextLine
 iupStrNextValue
-iupShowError
+IupMessageError
+IupMessageAlarm
 IupGetLanguageString
 iupStrLower
 iupStrUpper
@@ -462,6 +467,14 @@ iupBaseSetCurrentSize
 iupBaseCallValueChangedCb
 iupBaseGetClientOffsetAttrib
 iupBackgroundBoxNewBaseClass
+iupFlatScrollBarCreate
+iupFlatScrollBarRegister
+iupFlatScrollBarGet
+iupFlatScrollBarSetChildrenCurrentSize
+iupFlatScrollBarSetChildrenPosition
+iupFlatScrollBarWheelUpdate
+iupFlatScrollBarMotionUpdate
+iupFlatScrollBarSetPos
 
 iupAttribSetClassObject
 iupAttribSetClassObjectId
@@ -495,6 +508,7 @@ iupAttribGetInheritNativeParent
 iupAttribGetStr
 iupAttribGetLocal
 iupAttribGetInt
+iupAttribGetIntInt
 iupAttribGetBoolean
 iupAttribGetFloat
 iupAttribGetDouble
@@ -569,3 +583,4 @@ IupConfigRecentInit
 IupConfigRecentUpdate
 IupConfigDialogShow
 IupConfigDialogClosed
+IupConfigSetListVariable

@@ -2576,8 +2576,7 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
 
 static COLORREF winTreeInvertColor(COLORREF color)
 {
-	return color;
-	//return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
+  return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
 }
 
 static int winTreeWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)

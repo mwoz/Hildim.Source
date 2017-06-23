@@ -21,9 +21,9 @@ extern "C" {
 #define IUP_NAME "IUP - Portable User Interface"
 #define IUP_DESCRIPTION	"Multi-platform Toolkit for Building Graphical User Interfaces"
 #define IUP_COPYRIGHT "Copyright (C) 1994-2017 Tecgraf/PUC-Rio"
-#define IUP_VERSION "3.21"         /* bug fixes are reported only by IupVersion functions */
-#define IUP_VERSION_NUMBER 321000
-#define IUP_VERSION_DATE "2017/01/20"  /* does not include bug fix releases */
+#define IUP_VERSION "3.22"         /* bug fixes are reported only by IupVersion functions */
+#define IUP_VERSION_NUMBER 322000
+#define IUP_VERSION_DATE "2017/06/12"  /* does not include bug fix releases */
 
 typedef struct Ihandle_ Ihandle;
 typedef int (*Icallback)(Ihandle*);
@@ -205,6 +205,7 @@ Ihandle*  IupCboxv      (Ihandle* *children);
 Ihandle*  IupSbox       (Ihandle* child);
 Ihandle*  IupSplit      (Ihandle* child1, Ihandle* child2);
 Ihandle*  IupScrollBox  (Ihandle* child);
+Ihandle*  IupFlatScrollBox(Ihandle* child);
 Ihandle*  IupGridBox    (Ihandle* child, ...);
 Ihandle*  IupGridBoxv   (Ihandle* *children);
 Ihandle*  IupExpander   (Ihandle* child);
@@ -299,6 +300,8 @@ Ihandle* IupProgressDlg(void);
 int  IupGetFile(char *arq);
 void IupMessage(const char *title, const char *msg);
 void IupMessagef(const char *title, const char *format, ...);
+void IupMessageError(Ihandle* parent, const char* message);
+int IupMessageAlarm(Ihandle* parent, const char* title, const char *message, const char *buttons);
 int  IupAlarm(const char *title, const char *msg, const char *b1, const char *b2, const char *b3);
 int  IupScanf(const char *format, ...);
 int  IupListDialog(int type, const char *title, int size, const char** list,

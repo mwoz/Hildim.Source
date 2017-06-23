@@ -248,23 +248,23 @@ static void iMatrixGetCellAlign(Ihandle* ih, int lin, int col, int *col_alignmen
 static int iMatrixDrawCallDrawCB(Ihandle* ih, int lin, int col, int x1, int x2, int y1, int y2, IFniiiiiiC draw_cb)
 {
   int ret;
-  //cdCanvas* old_cnv;
+  cdCanvas* old_cnv;
 
   iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
 
-  //old_cnv = cdActiveCanvas();
-  //if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-  //  cdActivate(ih->data->cd_canvas);
+  old_cnv = cdActiveCanvas();
+  if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+    cdActivate(ih->data->cd_canvas);
 
   ret = draw_cb(ih, lin, col, x1, x2, iupMATRIX_INVERTYAXIS(ih, y1), iupMATRIX_INVERTYAXIS(ih, y2), ih->data->cd_canvas);
 
   iMatrixDrawResetCellClipping(ih);
 
-  //if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-  //{
-  //  cdActivate(old_cnv);
-  //  cdCanvasActivate(ih->data->cd_canvas);
-  //}
+  if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+  {
+    cdActivate(old_cnv);
+    cdCanvasActivate(ih->data->cd_canvas);
+  }
 
   if (ret == IUP_DEFAULT)
     return 0;
@@ -313,35 +313,49 @@ static unsigned long iMatrixDrawSetTypeColor(Ihandle* ih, const char* color, int
   return cdCanvasForeground(ih->data->cd_canvas, cdEncodeColor(r, g, b));
 }
 
-static int iMatrixDrawGetFrameHorizColor(Ihandle* ih, int lin, int col, long *framecolor)
+static int iMatrixDrawGetFrameHorizColor(Ihandle* ih, int lin, int col, long *framecolor, int title)
 {
   if (ih->data->checkframecolor && (ih->data->callback_mode || 
                                     ih->data->cells[lin][col].flags & IMAT_HAS_FRAMEHORIZCOLOR ||
                                     ih->data->lines.dt[lin].flags & IMAT_HAS_FRAMEHORIZCOLOR))
   {
-    char* color;
+    char* color = NULL;
     unsigned char r,g,b;
-    color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", lin, col);
+    if (title && lin == 0)
+    {
+      color = iupAttribGetId2(ih, "FRAMETITLEHORIZCOLOR", 0, col);
+      if (!color)
+        color = iupAttribGetId2(ih, "FRAMETITLEHORIZCOLOR", 0, IUP_INVALID_ID);
+    }
+    if (!color)
+      color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", lin, col);
     if (!color)
       color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", lin, IUP_INVALID_ID);
     if (iupStrEqual(color, "BGCOLOR"))
       return 1;
-    if (framecolor && iupStrToRGB(color, &r, &g, &b))
+    if (iupStrToRGB(color, &r, &g, &b))
       *framecolor = cdEncodeColor(r, g, b);
   }
 
   return 0;
 }
 
-static int iMatrixDrawGetFrameVertColor(Ihandle* ih, int lin, int col, long *framecolor)
+static int iMatrixDrawGetFrameVertColor(Ihandle* ih, int lin, int col, long *framecolor, int title)
 {
   if (ih->data->checkframecolor && (ih->data->callback_mode || 
                                     ih->data->cells[lin][col].flags & IMAT_HAS_FRAMEVERTCOLOR ||
                                     ih->data->columns.dt[col].flags & IMAT_HAS_FRAMEVERTCOLOR))
   {
-    char* color;
+    char* color = NULL;
     unsigned char r,g,b;
-    color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", lin, col);
+    if (title && col == 0)
+    {
+      color = iupAttribGetId2(ih, "FRAMETITLEVERTCOLOR", lin, 0);
+      if (!color)
+        color = iupAttribGetId2(ih, "FRAMETITLEVERTCOLOR", IUP_INVALID_ID, 0);
+    }
+    if (!color)
+      color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", lin, col);
     if (!color)
       color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", IUP_INVALID_ID, col);
     if (iupStrEqual(color, "BGCOLOR"))
@@ -357,7 +371,7 @@ static int iMatrixDrawFrameVertLineHighlight(Ihandle* ih, int lin, int col, int 
 {
   if (col > 0)
   {
-    int transp = iMatrixDrawGetFrameVertColor(ih, lin, col-1, &framecolor);
+    int transp = iMatrixDrawGetFrameVertColor(ih, lin, col - 1, &framecolor, 0); /* framecolor is ignored here */
     if (transp)
       return 1;
   }
@@ -368,11 +382,11 @@ static int iMatrixDrawFrameVertLineHighlight(Ihandle* ih, int lin, int col, int 
   return 0;
 }
 
-static int iMatrixDrawFrameHorizLineHighlight(Ihandle* ih, int lin, int col, int x1, int x2, int y, long framecolor)
+static int iMatrixDrawFrameHorizLineTitleHighlight(Ihandle* ih, int lin, int col, int x1, int x2, int y, long framecolor)
 {
   if (lin > 0)
   {
-    int transp = iMatrixDrawGetFrameHorizColor(ih, lin-1, col, &framecolor);
+    int transp = iMatrixDrawGetFrameHorizColor(ih, lin - 1, col, &framecolor, 0); /* framecolor is ignored here */
     if (transp)
       return 1;
   }
@@ -385,23 +399,45 @@ static int iMatrixDrawFrameHorizLineHighlight(Ihandle* ih, int lin, int col, int
 
 static int iMatrixDrawFrameHorizLineCell(Ihandle* ih, int lin, int col, int x1, int x2, int y, long framecolor)
 {
-  int transp = iMatrixDrawGetFrameHorizColor(ih, lin, col, &framecolor);
+  int transp = iMatrixDrawGetFrameHorizColor(ih, lin, col, &framecolor, 0);
   if (transp)
     return 1;
 
   cdCanvasForeground(ih->data->cd_canvas, framecolor);
-  iupMATRIX_LINE(ih, x1, y, x2, y);   /* bottom horizontal line */
+  iupMATRIX_LINE(ih, x1, y, x2, y);   /* horizontal line */
+  return 0;
+}
+
+static int iMatrixDrawFrameHorizLineTitle(Ihandle* ih, int col, int x1, int x2, int y, long framecolor)
+{
+  int transp = iMatrixDrawGetFrameHorizColor(ih, 0, col, &framecolor, 1);
+  if (transp)
+    return 1;
+
+  cdCanvasForeground(ih->data->cd_canvas, framecolor);
+  iupMATRIX_LINE(ih, x1, y, x2, y);   /* horizontal line */
+  return 0;
+}
+
+static int iMatrixDrawFrameVertLineTitle(Ihandle* ih, int lin, int x, int y1, int y2, long framecolor)
+{
+  int transp = iMatrixDrawGetFrameVertColor(ih, lin, 0, &framecolor, 1);
+  if (transp)
+    return 1;
+
+  cdCanvasForeground(ih->data->cd_canvas, framecolor);
+  iupMATRIX_LINE(ih, x, y1, x, y2);    /* vertical line */
   return 0;
 }
 
 static int iMatrixDrawFrameVertLineCell(Ihandle* ih, int lin, int col, int x, int y1, int y2, long framecolor)
 {
-  int transp = iMatrixDrawGetFrameVertColor(ih, lin, col, &framecolor);
+  int transp = iMatrixDrawGetFrameVertColor(ih, lin, col, &framecolor, 0);
   if (transp)
     return 1;
 
   cdCanvasForeground(ih->data->cd_canvas, framecolor);
-  iupMATRIX_LINE(ih, x, y1, x, y2);    /* right vertical line */
+  iupMATRIX_LINE(ih, x, y1, x, y2);    /* vertical line */
   return 0;
 }
 
@@ -420,7 +456,7 @@ static void iMatrixDrawFrameRectTitle(Ihandle* ih, int lin, int col, int x1, int
   if (col==0)
   {
     /* left vertical line */
-    iMatrixDrawFrameVertLineCell(ih, lin, col, x1, y1, y2, framecolor);  
+    iMatrixDrawFrameVertLineTitle(ih, lin, x1, y1, y2, framecolor);  
     x1++;
   }
   else if (col==1 && ih->data->columns.dt[0].size == 0)
@@ -443,7 +479,7 @@ static void iMatrixDrawFrameRectTitle(Ihandle* ih, int lin, int col, int x1, int
   if (lin==0)
   {
     /* top horizontal line */
-    iMatrixDrawFrameHorizLineCell(ih, lin, col, x1, x2, y1, framecolor);  
+    iMatrixDrawFrameHorizLineTitle(ih, col, x1, x2, y1, framecolor);  
     y1++;
   }
   else if (lin==1 && ih->data->lines.dt[0].size == 0)
@@ -455,7 +491,7 @@ static void iMatrixDrawFrameRectTitle(Ihandle* ih, int lin, int col, int x1, int
 
   /* Titles have a bright horizontal line near the frame, at top */
   if (framehighlight)
-    iMatrixDrawFrameHorizLineHighlight(ih, lin, col, x1, x2-1, y1, framecolor);
+    iMatrixDrawFrameHorizLineTitleHighlight(ih, lin, col, x1, x2-1, y1, framecolor);
 }
 
 static void iMatrixDrawFrameRectCell(Ihandle* ih, int lin, int col, int x1, int x2, int y1, int y2, long framecolor)
@@ -921,7 +957,7 @@ static void iMatrixDrawFocus(Ihandle* ih)
 /**************************************************************************/
 
 /* Color attenuation factor in a marked cell, 20% darker */
-#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*9)/10))
+#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*8)/10))
 
 void iupMatrixAddMarkedAttenuation(Ihandle* ih, unsigned char *r, unsigned char *g, unsigned char *b)
 {
@@ -1006,7 +1042,7 @@ void iupMatrixDrawTitleLines(Ihandle* ih, int lin1, int lin2)
   x1 = 0;
   x2 = ih->data->columns.dt[0].size;
 
-  iupMATRIX_CLIPAREA(ih, x1, x2, y1, ih->data->h-1);
+  iupMATRIX_CLIPAREA(ih, x1, x2, y1, iupMatrixGetHeight(ih) - 1);
   cdCanvasClip(ih->data->cd_canvas, CD_CLIPAREA);
 
   /* Find the initial position of the first line */
@@ -1090,7 +1126,7 @@ void iupMatrixDrawTitleColumns(Ihandle* ih, int col1, int col2)
   y1 = 0;
   y2 = ih->data->lines.dt[0].size;
 
-  iupMATRIX_CLIPAREA(ih, x1, ih->data->w-1, y1, y2);
+  iupMATRIX_CLIPAREA(ih, x1, iupMatrixGetWidth(ih) - 1, y1, y2);
   cdCanvasClip(ih->data->cd_canvas, CD_CLIPAREA);
 
   /* Find the initial position of the first column */
@@ -1150,8 +1186,8 @@ void iupMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2)
   IFnii dropcheck_cb;
   IFniiiiiiC draw_cb;
 
-  x2 = ih->data->w-1;
-  y2 = ih->data->h-1;
+  x2 = iupMatrixGetWidth(ih) - 1;
+  y2 = iupMatrixGetHeight(ih) - 1;
 
   old_x2 = x2;
   old_y1 = 0;
@@ -1374,9 +1410,12 @@ static void iMatrixDrawMatrix(Ihandle* ih)
     /* if vertical scrollbar is visible */
     if (!iupAttribGetBoolean(ih, "YHIDDEN"))
     {
-      float posy = IupGetFloat(ih, "POSY");
-      float dy = IupGetFloat(ih, "DY");
-      int width = ih->data->w;
+      int posy = IupGetInt(ih, "POSY");
+      int dy = IupGetInt(ih, "DY");
+      int ymax = IupGetInt(ih, "YMAX");
+      int height = iupMatrixGetHeight(ih);
+
+      int width = iupMatrixGetWidth(ih);
       if (width > ih->data->columns.total_size)
         width = ih->data->columns.total_size;
 
@@ -1385,16 +1424,19 @@ static void iMatrixDrawMatrix(Ihandle* ih)
         iupMATRIX_LINE(ih, 0, 0, width - 1, 0);  /* top horizontal line */
 
       /* if scrollbar at bottom, bottom line is not necessary */
-      if (posy < 1.0f - dy)
-        iupMATRIX_LINE(ih, 0, ih->data->h - 1, width - 1, ih->data->h - 1);  /* bottom horizontal line */
+      if (posy < ymax - dy)
+        iupMATRIX_LINE(ih, 0, height - 1, width - 1, height - 1);  /* bottom horizontal line */
     }
 
     /* if horizontal scrollbar is visible */
     if (!iupAttribGetBoolean(ih, "XHIDDEN"))
     {
-      float posx = IupGetFloat(ih, "POSX");
-      float dx = IupGetFloat(ih, "DX");
-      int height = ih->data->h;
+      int posx = IupGetInt(ih, "POSX");
+      int dx = IupGetInt(ih, "DX");
+      int xmax = IupGetInt(ih, "XMAX");
+      int width = iupMatrixGetWidth(ih);
+
+      int height = iupMatrixGetHeight(ih);
       if (height > ih->data->lines.total_size)
         height = ih->data->lines.total_size;
 
@@ -1403,8 +1445,8 @@ static void iMatrixDrawMatrix(Ihandle* ih)
         iupMATRIX_LINE(ih, 0, 0, 0, height - 1);  /* left vertical line */
 
       /* if scrollbar at right, right line is not necessary */
-      if (posx < 1.0f - dx)
-        iupMATRIX_LINE(ih, ih->data->w - 1, 0, ih->data->w - 1, height - 1);  /* right vertical line */
+      if (posx < xmax - dx)
+        iupMATRIX_LINE(ih, width - 1, 0, width - 1, height - 1);  /* right vertical line */
     }
   }
 }

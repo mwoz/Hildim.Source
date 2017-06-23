@@ -21,6 +21,7 @@
 #include "iup_attrib.h"
 #include "iup_str.h"
 #include "iup_stdcontrols.h"
+#include "iup_flatscrollbar.h"
 
 #include "iupmat_def.h"
 #include "iupmat_colres.h"
@@ -312,18 +313,20 @@ int iupMatrixMouseMove_CB(Ihandle* ih, int x, int y, char *status)
   if (!iupMatrixIsValid(ih, 0))
     return IUP_DEFAULT;
 
+  iupFlatScrollBarMotionUpdate(ih, x, y);
+
   has_lincol = iupMatrixGetCellFromXY(ih, x, y, &lin, &col);
 
   if (iup_isbutton1(status) && ih->data->mark_block && ih->data->mark_multiple && ih->data->mark_mode != IMAT_MARK_NO)
   {
     if ((x < ih->data->columns.dt[0].size || x < IMAT_DRAG_SCROLL_DELTA) && (ih->data->columns.first > ih->data->columns.num_noscroll))
       iupMATRIX_ScrollLeft(ih);
-    else if ((x > ih->data->w - IMAT_DRAG_SCROLL_DELTA) && (ih->data->columns.last < ih->data->columns.num-1))
+    else if ((x > iupMatrixGetWidth(ih) - IMAT_DRAG_SCROLL_DELTA) && (ih->data->columns.last < ih->data->columns.num - 1))
       iupMATRIX_ScrollRight(ih);
 
     if ((y < ih->data->lines.dt[0].size || y < IMAT_DRAG_SCROLL_DELTA) && (ih->data->lines.first > ih->data->lines.num_noscroll))
       iupMATRIX_ScrollUp(ih);
-    else if ((y > ih->data->h - IMAT_DRAG_SCROLL_DELTA) && (ih->data->lines.last < ih->data->lines.num-1))
+    else if ((y > iupMatrixGetHeight(ih) - IMAT_DRAG_SCROLL_DELTA) && (ih->data->lines.last < ih->data->lines.num - 1))
       iupMATRIX_ScrollDown(ih);
 
     if (has_lincol)

@@ -116,7 +116,7 @@ struct _IcontrolData
 
   /* State */
   int has_focus;
-  int w, h;         /* canvas size */
+  int old_w, old_h;
   int callback_mode;
   int need_calcsize;
   int need_redraw;
@@ -172,10 +172,15 @@ struct _IcontrolData
 int iupMatrixIsValid(Ihandle* ih, int check_cells);
 void iupMatrixRegisterEx(Iclass* ic);
 
-#define iupMATRIX_INVERTYAXIS(_ih, _y) ((_ih)->data->h-1 - (_y))
+#define iupMATRIX_INVERTYAXIS(_ih, _y) cdCanvasInvertYAxis((_ih)->data->cd_canvas, (_y))
 
 #define iupMATRIX_CHECK_COL(_ih, _col) ((_col >= 0) && (_col < (_ih)->data->columns.num))
 #define iupMATRIX_CHECK_LIN(_ih, _lin) ((_lin >= 0) && (_lin < (_ih)->data->lines.num))
+
+int iupMatrixGetScrollbar(Ihandle* ih);
+int iupMatrixGetScrollbarSize(Ihandle* ih);
+int iupMatrixGetWidth(Ihandle* ih);
+int iupMatrixGetHeight(Ihandle* ih);
 
 
 #ifdef __cplusplus

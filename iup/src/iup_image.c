@@ -162,7 +162,7 @@ int iupImageStockGetSize(void)
   }
   else
   {
-    int dpi = (int)(iupdrvGetScreenDpi() + 0.6);
+    int dpi = iupRound(iupdrvGetScreenDpi());
 
     if (dpi <= 96)
       return 16;
@@ -415,13 +415,14 @@ static Ihandle* iImageGetImageFromName(const char* name)
     if (!autoscale) autoscale = IupGetGlobal("IMAGEAUTOSCALE");
     if (autoscale && bpp > 8 && !iupAttribGet(ih, "SCALED"))
     {
-      float scale = 0;
+      double scale = 0;
 
       if (iupStrEqualNoCase(autoscale, "DPI"))
       {
-        int dpi = (int)(iupdrvGetScreenDpi() + 0.6);
-        int images_dpi = IupGetInt(NULL, "IMAGESDPI");
-        if (images_dpi == 0) images_dpi = 96;
+        int dpi = iupRound(iupdrvGetScreenDpi());
+        int image_dpi = IupGetInt(ih, "DPI");
+        if (image_dpi == 0) image_dpi = IupGetInt(NULL, "IMAGESDPI");
+        if (image_dpi == 0) image_dpi = 96;
 
         if (dpi <= 96)
           dpi = 96;
@@ -432,12 +433,12 @@ static Ihandle* iImageGetImageFromName(const char* name)
         else
           dpi = 288;
 
-        scale = (float)dpi / (float)images_dpi;
+        scale = (double)dpi / (double)image_dpi;
       }
       else
-        iupStrToFloat(autoscale, &scale);
+        iupStrToDouble(autoscale, &scale);
 
-      if (scale > 0 && (scale < 0.99f || scale > 1.01))
+      if (scale > 0 && (scale < 0.99 || scale > 1.01))
       {
         char* hotspot = iupAttribGet(ih, "HOTSPOT");
 
