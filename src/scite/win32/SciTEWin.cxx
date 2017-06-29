@@ -630,6 +630,8 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 	case IDM_SRCWIN:
 	case IDM_RUNWIN:
+	case IDM_COSRCWIN:
+	case IDM_FINDRESWIN:
 		if (HIWORD(wParam) == SCEN_SETFOCUS) {
 			wFocus = reinterpret_cast<HWND>(lParam);
 			CheckMenus();

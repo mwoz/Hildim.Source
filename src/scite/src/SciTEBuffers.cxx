@@ -310,6 +310,7 @@ void SciTEBase::CloneTab(){
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	wEditor.SetCoBuffPointer(&absPath);
 	wEditor.Switch();
 
 	buffers.SetCurrent(buffers.Add(d));
@@ -624,7 +625,8 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					buffers.CurrentBuffer()->Friend()->isDirty = true;
 				buffers.CurrentBuffer()->Friend()->pFriend = false;
 				buffers.CurrentBuffer()->pFriend = false;
-				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	 
+				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	
+				buffers.CurrentBuffer()->doc = 0;
 				sptr_t d = wEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
 				wEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 				wEditor.Call(SCI_SETDOCPOINTER, 0, d);

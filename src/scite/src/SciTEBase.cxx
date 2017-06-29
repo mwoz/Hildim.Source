@@ -686,6 +686,7 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call( unsigned int msg, uptr_t wParam, 
 //!-end-[OnSendEditor]
 
 void SciTEBase::ScintillaWindowSwitcher::Switch(){
+	FilePath f = buffer_L;
 	if (GetWindowIdm() == IDM_SRCWIN){
 		SetID(pBase->wEditorR.GetID());
 		coEditor.SetID(pBase->wEditorL.GetID());
@@ -694,6 +695,8 @@ void SciTEBase::ScintillaWindowSwitcher::Switch(){
 		SetID(pBase->wEditorL.GetID());
 		coEditor.SetID(pBase->wEditorR.GetID());
 	}
+	buffer_L = buffer_R;
+	buffer_R = f;
 }
 
 void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
@@ -705,7 +708,7 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 		if (pBuff){
 			buffer_L.Set(pBuff->AsInternal());
 		}
-		else if (buffer_L.AsInternal() != L"")
+		else if (lstrcmpW(buffer_L.AsInternal() ,L"") )
 		{
 			int id = pBase->buffers.GetDocumentByName(buffer_L, false, IDM_SRCWIN);
 			if (id > -1) {
@@ -721,7 +724,7 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 		if (pBuff){
 			buffer_R.Set(pBuff->AsInternal());
 		}
-		else if (buffer_R.AsInternal()!= L"")
+		else if (lstrcmpW(buffer_R.AsInternal(), L""))
 		{
 			int id = pBase->buffers.GetDocumentByName(buffer_R, false, IDM_COSRCWIN);
 			if (id > -1) {
