@@ -67,3 +67,6 @@
 /src/scite/Debug/lua.lib
 /src/scite/Debug/SciTERes.res
 /src/scite/Debug
+/iup/src/gtk
+/iup/src/mot
+/iup/src/haiku
