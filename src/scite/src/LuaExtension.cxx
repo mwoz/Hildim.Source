@@ -38,6 +38,7 @@ extern "C" {
 #include "..\..\iup\src\iup_key.h"
 #include "scite_detachbox.h"
 #include "scite_sbox.h"
+#include "scite_flattabs.h"
 }
 
 
@@ -1840,6 +1841,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iupsc_detachboxlua_open(luaState);
 	Iupsc_SBoxOpen();
 	iupsc_SBoxlua_open(luaState);
+	IupFlattabsCtrlOpen();
+	iupFlattabsCtrllua_open(luaState);
 	iupcontrolslua_open(luaState);
 
 
