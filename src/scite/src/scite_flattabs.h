@@ -7,7 +7,7 @@
 void IupFlattabsCtrlOpen(void);
 Iclass* iupFlattabsCtrlNewClass(void);
 
-Ihandle* IupFlattabsCtrl(Ihandle* first, ...);
+Ihandle* IupFlattabsCtrl(void);
 
 int iupFlattabsCtrllua_open(lua_State * L);
 typedef struct _ITabData

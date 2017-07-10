@@ -398,7 +398,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       if (!active)
         tab_active = active;
       else
-        tab_active = iupAttribGetBooleanId(ih, "TABACTIVE", pos);
+        tab_active = 1;
 
       iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, pos, &tab_w, &tab_h);  /* this will also set any id based font */
 
@@ -788,7 +788,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
     int inside_close;
     int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
     int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
-    if (tab_found > ITABS_NONE && iupAttribGetBooleanId(ih, "TABACTIVE", tab_found))
+    if (tab_found > ITABS_NONE)
     {
       if (show_close && inside_close)
       {
@@ -858,27 +858,18 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 
       iupAttribSetInt(ih, "_IUPFTABS_CLOSEPRESS", ITABS_NONE);
 
-      if (tab_found > ITABS_NONE && iupAttribGetBooleanId(ih, "TABACTIVE", tab_found) && inside_close && tab_close_press == tab_found)
+      if (tab_found > ITABS_NONE && inside_close && tab_close_press == tab_found)
       {
-        Ihandle *child = IupGetChild(ih, tab_found);
-        if (child)
-        {
           int ret = IUP_DEFAULT;
           IFni cb = (IFni)IupGetCallback(ih, "TABCLOSE_CB");
           if (cb)
             ret = cb(ih, tab_found);
-
-          if (ret == IUP_CONTINUE) /* destroy tab and children */
-          {
-            IupDestroy(child);
-            IupRefreshChildren(ih);
-          }
-          else if (ret == IUP_DEFAULT) /* hide tab and children */
-            IupSetAttributeId(ih, "TABVISIBLE", tab_found, "No");
+          if (ret == IUP_DEFAULT) /* hide tab and children */
+            //IupSetAttributeId(ih, "TABVISIBLE", tab_found, "No")
+			  ;
 		  //!!!TODO
           else
-            iupdrvPostRedraw(ih);
-        }
+            iupdrvPostRedraw(ih);        
       }
     }
 
@@ -913,7 +904,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
       int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
       int inside_close;
       int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
-      if (tab_found > ITABS_NONE && iupAttribGetBooleanId(ih, "TABACTIVE", tab_found))
+      if (tab_found > ITABS_NONE)
         cb(ih, tab_found);
     }
   }
@@ -963,7 +954,7 @@ static void iFlatTabsSetTip(Ihandle *ih, const char* tip)
 static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 {
   int tab_found, tab_highlighted, redraw = 0;
-  int inside_close, show_close, tab_active;
+  int inside_close, show_close;
 
   IFniis cb = (IFniis)IupGetCallback(ih, "FLAT_MOTION_CB");
   if (cb)
@@ -997,13 +988,6 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
         iFlatTabsResetTip(ih);
     }
   }
-
-  tab_active = 1;
-  if (tab_found > ITABS_NONE)
-    tab_active = iupAttribGetBooleanId(ih, "TABACTIVE", tab_found);
-
-  if (!tab_active)
-    return IUP_DEFAULT;
 
   if (tab_found != tab_highlighted && !inside_close)
   {
@@ -1087,7 +1071,7 @@ static int iFlatTabsLeaveWindow_CB(Ihandle* ih)
 static char* iFlatTabsGetCountAttrib(Ihandle* ih)
 {
   int pos = 0;
-  for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++)
+  for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++);
   return pos;
 }
 
@@ -1408,12 +1392,10 @@ static int iFlatTabsSetExpandButtonStateAttrib(Ihandle* ih, const char* value)
 
 /*********************************************************************************/
 
-#define ATTRIB_ID_COUNT 8
+#define ATTRIB_ID_COUNT 6
 const static char* attrib_id[ATTRIB_ID_COUNT] = {
   "TABTITLE",
   "TABIMAGE",
-  "TABVISIBLE",
-  "TABACTIVE",
   "TABFORECOLOR",
   "TABBACKCOLOR",
   "TABHIGHCOLOR",
@@ -1422,81 +1404,14 @@ const static char* attrib_id[ATTRIB_ID_COUNT] = {
 
 static void iFlatTabsComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
-  Ihandle* child;
-  int children_naturalwidth, children_naturalheight; 
-
-  /* calculate total children natural size (even for hidden children) */
-  children_naturalwidth = 0;
-  children_naturalheight = 0;
-
-  for (child = ih->firstchild; child; child = child->brother)
-  {
-    /* update child natural size first */
-    iupBaseComputeNaturalSize(child);
-
-    *children_expand |= child->expand;
-    children_naturalwidth = iupMAX(children_naturalwidth, child->naturalwidth);
-    children_naturalheight = iupMAX(children_naturalheight, child->naturalheight);
-  }
-
-  *w = children_naturalwidth;
-  *h = children_naturalheight + iFlatTabsGetTitleHeight(ih, NULL, 0);
+  *w = 0;
+  *h = iFlatTabsGetTitleHeight(ih, NULL, 0);
 
   if (iupAttribGetBoolean(ih, "SHOWLINES"))
   {
     *h += 1;
     *w += 2;
   }
-}
-
-static void iFlatTabsSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
-{
-  Ihandle* child;
-  int title_width;
-  int title_height = iFlatTabsGetTitleHeight(ih, &title_width, 0);
-  int width = ih->currentwidth;
-  int height = ih->currentheight - title_height;
-
-  if (iupAttribGetBoolean(ih, "SHOWLINES"))
-  {
-    width -= 2;
-    height -= 1;
-  }
-
-  if (width < 0) width = 0;
-  if (height < 0) height = 0;
-
-  for (child = ih->firstchild; child; child = child->brother)
-  {
-    child->currentwidth = width;
-    child->currentheight = height;
-
-    if (child->firstchild)
-      iupClassObjectSetChildrenCurrentSize(child, shrink);
-  }
-}
-
-static void iFlatTabsSetChildrenPositionMethod(Ihandle* ih, int x, int y)
-{
-  /* In all systems, each tab is a native window covering the client area.
-     Child coordinates are relative to client left-top corner of the tab page. */
-  Ihandle* child;
-  char* offset = iupAttribGet(ih, "CHILDOFFSET");
-  int title_width;
-
-  /* Native container, position is reset */
-  x = 0;
-  y = 0;
-
-  if (offset) iupStrToIntInt(offset, &x, &y, 'x');
-
-  y += iFlatTabsGetTitleHeight(ih, &title_width, 0);
-
-  if (iupAttribGetBoolean(ih, "SHOWLINES"))
-    x += 1;
-
-  for (child = ih->firstchild; child; child = child->brother)
-    iupBaseSetPosition(child, x, y);
 }
 
 static int iFlatTabsCreateMethod(Ihandle* ih, void **params)
@@ -1550,8 +1465,6 @@ Iclass* iupFlattabsCtrlNewClass(void)
   ic->Create = iFlatTabsCreateMethod;
 
   ic->ComputeNaturalSize = iFlatTabsComputeNaturalSizeMethod;
-  ic->SetChildrenCurrentSize = iFlatTabsSetChildrenCurrentSizeMethod;
-  ic->SetChildrenPosition = iFlatTabsSetChildrenPositionMethod;
 
   /* IupFlatTabs Callbacks */
   iupClassRegisterCallback(ic, "TABCHANGEPOS_CB", "ii");
@@ -1589,7 +1502,6 @@ Iclass* iupFlattabsCtrlNewClass(void)
   /* IupFlatTabs Child only */
   iupClassRegisterAttributeId(ic, "TABTITLE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABIMAGE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
-  iupClassRegisterAttributeId(ic, "TABACTIVE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABFORECOLOR", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABBACKCOLOR", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABHIGHCOLOR", NULL, NULL, IUPAF_NO_INHERIT);
@@ -1657,20 +1569,9 @@ Iclass* iupFlattabsCtrlNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlattabsCtrl(Ihandle* first, ...)
+Ihandle* IupFlattabsCtrl(void)
 {
-  Ihandle **children;
-  Ihandle *ih;
-
-  va_list arglist;
-  va_start(arglist, first);
-  children = (Ihandle**)iupObjectGetParamList(first, arglist);
-  va_end(arglist);
-
-  ih = IupCreatev("flattabs_ctrl", NULL);// (void**)children);
-  free(children);
-
-  return ih;
+  return IupCreatev("flattabs_ctrl", NULL);// (void**)children);
 }
 
 static int FlattabsCtrl(lua_State *L) {
