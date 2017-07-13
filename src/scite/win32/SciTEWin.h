@@ -145,6 +145,8 @@ public:
 	Ihandle* hMain;
 	void Fit();
 	void Close();
+	Ihandle *pLeftTab;
+	Ihandle *pRightTab;
 private:
 	SciTEWin *pSciteWin;
 	IupChildWnd ichFindRes;
@@ -328,6 +330,7 @@ public:
 //!	virtual void AddToPopUp(const char *label, int cmd=0, bool enabled=true);	//!-change-[ExtendedContextMenu]
 	LRESULT ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
+	int OnTab(Ihandle * ih, int new_pos, int old_pos);
 
 	virtual SString EncodeString(const SString &s);
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &wCurrent, int selStart, int selEnd);
@@ -353,7 +356,10 @@ public:
 	friend class SciTEBase; //!-add-[GetApplicationProps]
 	bool SwitchMouseHook(bool bSet);
 	void NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+	virtual Ihandle * IupTab(int id);
 };
+
+
 
 inline bool IsKeyDown(int key) {
 	return (::GetKeyState(key) & 0x80000000) != 0;
@@ -363,3 +369,4 @@ inline bool IsKeyDown(int key) {
 inline GUI::Point PointFromLong(long lPoint) {
 	return GUI::Point(static_cast<short>(LOWORD(lPoint)), static_cast<short>(HIWORD(lPoint)));
 }
+

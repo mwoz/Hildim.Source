@@ -80,6 +80,20 @@ IupLayoutWnd::~IupLayoutWnd()
 Ihandle* IupLayoutWnd::Create_dialog(void)
 {
 	Ihandle* containers[13];
+	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+		"NAME", "TabCtrlLeft",
+		"EXPAND", "HORIZONTAL",
+		"TABSPADDING", "10x3",
+		"SIZE", "x14",
+		"FORECOLOR", "",
+		NULL);
+	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+		"NAME", "TabCtrlRight",
+		"EXPAND", "HORIZONTAL",
+		"TABSPADDING", "10x3",
+		"SIZE", "x14",
+		"FORECOLOR", "",
+		NULL);
 
 	containers[3] = 
 	IupSetAtt(NULL, IupCreatep("split", 
@@ -285,6 +299,24 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"FONT", "::1",
 			"MINSIZE", "x0",
 		NULL),
+		IupSetAtt(NULL, IupCreatep("expander",
+				IupSetAtt(NULL, IupCreatep("split",
+					pLeftTab,
+					pRightTab,
+					NULL),
+					"ORIENTATION", "VERTICAL",
+					"NAME", "TabBarSplit",
+					"SHOWGRIP", "NO",
+					"BARSIZE", "3",
+					"LAYOUTDRAG", "NO",
+					NULL),
+			NULL),
+			"NAME", "TabbarMNEx",
+			"EXPAND", "HORIZONTAL",
+			"BARSIZE", "0",
+			"MINSIZE", "x0",
+		NULL),
+
 		IupSetAtt(NULL, IupCreatep("split", containers[2],
 			containers[4], NULL),
 			"ORIENTATION", "HORIZONTAL",

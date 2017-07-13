@@ -808,11 +808,100 @@ void SciTEBase::EndStackedTabbing() {
 	buffers.CommitStackSelection();
 }
 
+std::string ToAnsi(const GUI::gui_string &sWide) {
+
+	int cchMulti = ::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sWide.length(), NULL, 0, NULL, NULL);
+	char *pszMulti = new char[cchMulti + 1];
+	::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sWide.length(), pszMulti, cchMulti + 1, NULL, NULL);
+	pszMulti[cchMulti] = 0;
+	std::string ret(pszMulti);
+	delete[]pszMulti;
+	return ret;
+
+}
+
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
 	RemoveAllTabs();
 
 	int pos;
+	int oldLCount = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT");
+	int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
+	int posL = 0, posR = 0;
+	if (buffers.size > 1) {
+		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
+		for (pos = 0; pos < buffers.length; pos++) {
+			int itemID = bufferCmdID + pos;
+			GUI::gui_string entry;
+			GUI::gui_string titleTab;
+
+
+			if (pos < 10) {
+				GUI::gui_string sPos = GUI::StringFromInteger((pos + 1) % 10);
+				GUI::gui_string sHotKey = GUI_TEXT("&") + sPos + GUI_TEXT(" ");
+				entry = sHotKey;	// hotkey 1..0
+				titleTab = sHotKey; // add hotkey to the tabbar
+			}
+
+
+			if (buffers.buffers[pos].IsUntitled()) {
+				GUI::gui_string untitled = localiser.Text("Untitled");
+				entry += untitled;
+				titleTab += untitled;
+			} else {
+				GUI::gui_string path = buffers.buffers[pos].AsInternal();
+
+				// Handle '&' characters in path, since they are interpreted in
+				// menues and tab names.
+				size_t amp = 0;
+				while ((amp = path.find(GUI_TEXT("&"), amp)) != GUI::gui_string::npos) {
+					path.insert(amp, GUI_TEXT("&"));
+					amp += 2;
+				}
+
+				entry += path;
+
+				size_t dirEnd = entry.rfind(pathSepChar);
+				if (dirEnd != GUI::gui_string::npos) {
+					titleTab += entry.substr(dirEnd + 1);
+				} else {
+					titleTab += entry;
+				}
+				if (tabsTitleMaxLength > 0 && titleTab.length() > tabsTitleMaxLength + 3) {
+					titleTab.resize(tabsTitleMaxLength, L'\0');
+					titleTab.append(GUI_TEXT("..."));
+				}
+			}
+
+			if (buffers.buffers[pos].DocumentNotSaved()) { //-change-[OpenNonExistent]
+				entry += GUI_TEXT(" *");
+				titleTab += GUI_TEXT(" *");
+			}
+
+			if (buffers.buffers[pos].ROMarker != NULL) {
+				entry += buffers.buffers[pos].ROMarker;
+				titleTab += buffers.buffers[pos].ROMarker;
+			}
+			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
+				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
+				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+				if(pos == buffers.Current())
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
+			} else {
+				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
+				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+				if (pos == buffers.Current())
+					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
+			}
+			//TabInsert(pos, titleTab.c_str());
+		}
+		for (pos = oldLCount - 1; pos >= posL; pos--)
+			IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", pos, NULL);
+		for (pos = oldLCountR - 1; pos >= posR; pos--)
+			IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
+		IupSetAttribute(IupTab(IDM_SRCWIN), "REDRAW", "");
+		IupSetAttribute(IupTab(IDM_COSRCWIN), "REDRAW", "");
+	}
 
 	if (buffers.size > 1) {
 		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength",0); 

@@ -405,11 +405,35 @@ static LRESULT PASCAL TabWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM
 /**
  * Create all the needed windows.
  */
-void SciTEWin::Creation() {
+SciTEWin *pSciTE;
+int OnTabClick(Ihandle * ih, int new_pos, int old_pos) {
 
+	return pSciTE->OnTab(ih, new_pos, old_pos);;
+}
+
+int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
+	int side = (ih == IupTab(IDM_SRCWIN)) ? IDM_SRCWIN:IDM_COSRCWIN;
+	int cnt = 0;
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide == side) {
+			if (cnt == new_pos) {
+				SetDocumentAt(i);
+				break;
+			}
+			cnt++;
+		}
+	}
+	return IUP_DEFAULT;
+}
+
+void SciTEWin::Creation() {
+	pSciTE = this;
 	lua_State *L = (lua_State*)extender->GetLuaState();
 	
 	layout.CreateLayout(L, this);
+
+	IupSetCallback(IupTab(IDM_SRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
+	IupSetCallback(IupTab(IDM_COSRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
 
 	wEditorL.SetID(::CreateWindowEx(
 		0,
@@ -544,3 +568,10 @@ void SciTEWin::Creation() {
 	wTabBar.Show();
 
 }
+
+Ihandle * SciTEWin::IupTab(int id) {
+	if (id == IDM_SRCWIN)
+		return layout.pLeftTab;
+	return layout.pRightTab;
+}
+

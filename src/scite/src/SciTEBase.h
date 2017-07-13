@@ -26,6 +26,17 @@ extern const GUI::gui_char propAbbrevFileName[];
 #endif
 #include <regex>
 
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+#include "iup.h"
+#include "iuplua.h"
+#include "iupcontrols.h"
+#include "iupluacontrols.h"
+#include "scite_flattabs.h"
+}
+
 #define ELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
 inline int Minimum(int a, int b) {
@@ -886,7 +897,7 @@ public:
 //!-end-[GetApplicationProps]
 	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
 	OutputMode curOutMode = outNull;
-
+	virtual Ihandle * IupTab(int id) = 0;
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);
