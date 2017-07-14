@@ -85,6 +85,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"EXPAND", "HORIZONTAL",
 		"TABSPADDING", "10x3",
 		"SIZE", "x14",
+		"EXTRABUTTONS", "1",
 		"FORECOLOR", "",
 		NULL);
 	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
@@ -92,6 +93,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"EXPAND", "HORIZONTAL",
 		"TABSPADDING", "10x3",
 		"SIZE", "x14",
+		"EXTRABUTTONS", "1",
 		"FORECOLOR", "",
 		NULL);
 

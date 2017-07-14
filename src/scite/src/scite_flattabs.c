@@ -478,13 +478,18 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       }
 
       reset_clip = 0;
+	  int valuenotdraw = 0;
+	  //iupAttribSetIntId(ih, "_IUTABS_RIGHT", pos, tab_x + tab_w);
       if (title_width > ih->currentwidth - extra_width) /* has right scroll button */
       {
         int scroll_width = title_height / 2;
+
         if (tab_x + tab_w > ih->currentwidth - extra_width - scroll_width)
         {
           iupdrvDrawSetClipRect(dc, tab_x, 0, ih->currentwidth - extra_width - scroll_width, title_height);
           reset_clip = 1;
+		  if (pos == valuepos)
+			  valuenotdraw = 1;
         }
       }
 
@@ -538,7 +543,12 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
       if (reset_clip)
       {
-        iupdrvDrawResetClip(dc);
+		if ((pos < valuepos || valuenotdraw) & scroll_pos < valuepos) {
+	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
+		  iFlatTabsRedraw_CB(ih); 
+		}
+		else
+          iupdrvDrawResetClip(dc);
         break;
       }
     }
@@ -1105,6 +1115,11 @@ static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value)
 
   if (iFlatTabsGetCountAttrib(ih) <= pos)
 	  return 0;
+
+  int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
+  if(pos < scroll_pos)
+	  iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", pos);
+
 
   iupAttribSetInt(ih, "VALUEPOS", pos);
   iFlatTabsRedraw_CB(ih);
