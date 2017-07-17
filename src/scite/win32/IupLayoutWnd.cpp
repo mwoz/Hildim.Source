@@ -79,23 +79,57 @@ IupLayoutWnd::~IupLayoutWnd()
 
 Ihandle* IupLayoutWnd::Create_dialog(void)
 {
+	Ihandle* pTab;
 	Ihandle* containers[13];
-	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
-		"NAME", "TabCtrlLeft",
-		"EXPAND", "HORIZONTAL",
-		"TABSPADDING", "10x3",
-		"SIZE", "x14",
-		"EXTRABUTTONS", "1",
-		"FORECOLOR", "",
-		NULL);
-	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
-		"NAME", "TabCtrlRight",
-		"EXPAND", "HORIZONTAL",
-		"TABSPADDING", "10x3",
-		"SIZE", "x14",
-		"EXTRABUTTONS", "1",
-		"FORECOLOR", "",
-		NULL);
+	if (strcmp(pSciteWin->Property("tab.oldstile"), "")) {
+		pTab = IupSetAtt(NULL, IupCreate("canvas"),
+			//"MAXSIZE", "x20",
+			"EXPAND", "HORIZONTAL",
+			"NAME", "SciTeTabCtrl",
+			"MINSIZE", "x20",
+			NULL);
+	} else {
+		pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+			"NAME", "TabCtrlLeft",
+			"EXPAND", "HORIZONTAL",
+			"TABSPADDING", "10x3",
+			"SIZE", "x14",
+			"EXTRABUTTONS", "1",
+			"FORECOLOR", "",
+			NULL);
+		pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+			"NAME", "TabCtrlRight",
+			"EXPAND", "HORIZONTAL",
+			"TABSPADDING", "10x3",
+			//"SIZE", "x14",
+			"MAXSIZE", "x26",
+			"EXTRABUTTONS", "1",
+			"FORECOLOR", "",
+			NULL);
+
+		pTab = IupSetAtt(NULL, IupCreatep("split",
+			pLeftTab,
+			IupSetAtt(NULL, IupCreatep("expander",
+				pRightTab,
+				NULL),
+				"NAME", "RightTabExpander",
+				"BARSIZE", "0",
+				"EXPAND", "HORIZONTAL",
+				"MINSIZE", "x0",
+				"MAXSIZE", "x26",
+				"STATE", "CLOSE",
+				NULL),
+			NULL),
+			"ORIENTATION", "VERTICAL",
+			"NAME", "TabBarSplit",
+			"SHOWGRIP", "NO",
+			"BARSIZE", "0",
+			"LAYOUTDRAG", "NO",
+			"VALUE", "1000",
+			"HISTORIZED", "NO",
+			NULL);
+	}
+
 
 	containers[3] = 
 	IupSetAtt(NULL, IupCreatep("split", 
@@ -132,7 +166,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 									"NAME", "CoSourceExpander",
 									"BARSIZE", "0",
 									"BARPOSITION", "LEFT",
-									"FONT", "::1",
+									//"FONT", "::1",
 									"MINSIZE", "0x0",
 									NULL),
 							NULL), 
@@ -147,7 +181,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 								"NAME", "CoSourceExpanderBtm",
 								"BARSIZE", "0",
 								"BARPOSITION", "TOP",
-								"FONT", "::1",
+								//"FONT", "::1",
 								"MINSIZE", "0x0",
 							NULL),
 					NULL),
@@ -289,33 +323,11 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 
 	containers[1] = IupSetAtt(NULL, IupCreatep("vbox",
 		IupSetAtt(NULL, IupCreatep("expander",
-			IupSetAtt(NULL, IupCreate("canvas"),
-				//"MAXSIZE", "x20",
-				"EXPAND", "HORIZONTAL",
-				"NAME", "SciTeTabCtrl",
-				"MINSIZE", "x20",
-			NULL),
+			pTab,
 			NULL),
 			"NAME", "TabbarExpander",
 			"BARSIZE", "0",
-			"FONT", "::1",
-			"MINSIZE", "x0",
-		NULL),
-		IupSetAtt(NULL, IupCreatep("expander",
-				IupSetAtt(NULL, IupCreatep("split",
-					pLeftTab,
-					pRightTab,
-					NULL),
-					"ORIENTATION", "VERTICAL",
-					"NAME", "TabBarSplit",
-					"SHOWGRIP", "NO",
-					"BARSIZE", "3",
-					"LAYOUTDRAG", "NO",
-					NULL),
-			NULL),
-			"NAME", "TabbarMNEx",
 			"EXPAND", "HORIZONTAL",
-			"BARSIZE", "0",
 			"MINSIZE", "x0",
 		NULL),
 
@@ -365,8 +377,8 @@ void IupLayoutWnd::Close(){
 }
 
 void IupLayoutWnd::CreateLayout(lua_State *L, SciTEWin *pS){
-	hMain = Create_dialog();
 	pSciteWin = pS;
+	hMain = Create_dialog();
 	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)pS->GetID());
 	IupShowXY(hMain, 0, 0);
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");

@@ -9,6 +9,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <lua.h>
+#include "../../lua5.1/include/lauxlib.h"
 
 #include "iup.h"
 #include "iupcbs.h"
@@ -23,8 +25,10 @@
 #include "../../iup/src/iup_image.h"
 #include "../../iup/src/iup_register.h"
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/srclua5/il.h"
+#include "../../iup/src/win/iupwin_handle.h"
 #include "scite_flattabs.h"
-
+#include <windows.h>
 
 #define ITABS_CLOSE_SIZE 13
 #define ITABS_CLOSE_SPACING 12
@@ -84,6 +88,8 @@ static Ihandle* load_image_expand_up(void)
   Ihandle* image = IupImageRGBA(24, 16, imgdata);
   return image;
 }
+typedef int(*IFnniiiiis)(Ihandle*, Ihandle*, int, int, int, int, int, char*);
+typedef int(*IFnniiiiiis)(Ihandle*, Ihandle*, int, int, int, int, int, int, char*);
 
 static void iFlatTabsInitializeImages(void)
 {
@@ -123,9 +129,22 @@ static void iFlatTabsInitializeImages(void)
   IupSetHandle("IupFlatExpandUp", image);
 }
 
-static int flattab_tab_button_cb(Ihandle *self, int p0, int p1, int p2, int p3, int p4, int p5, char * p6) {
+static int flattab_tab_button_cb(Ihandle *self, Ihandle *p0, int p1, int p2, int p3, int p4, int p5, int p6, char * p7) {
 	lua_State *L = iuplua_call_start(self, "tab_button_cb");
-	lua_pushinteger(L, p0);
+	iuplua_pushihandle(L, p0);
+	lua_pushinteger(L, p1);
+	lua_pushinteger(L, p2);
+	lua_pushinteger(L, p3);
+	lua_pushinteger(L, p4);
+	lua_pushinteger(L, p5);
+	lua_pushinteger(L, p6);
+	lua_pushstring(L, p7);
+	return iuplua_call(L, 8);
+}
+
+static int flattab_tab_motion_cb(Ihandle *self, Ihandle* p0, int p1, int p2, int p3, int p4, int p5, char * p6) {
+	lua_State *L = iuplua_call_start(self, "tab_motion_cb");
+	iuplua_pushihandle(L, p0);
 	lua_pushinteger(L, p1);
 	lua_pushinteger(L, p2);
 	lua_pushinteger(L, p3);
@@ -133,15 +152,6 @@ static int flattab_tab_button_cb(Ihandle *self, int p0, int p1, int p2, int p3, 
 	lua_pushinteger(L, p5);
 	lua_pushstring(L, p6);
 	return iuplua_call(L, 7);
-}
-
-static int flattab_tab_motion_cb(Ihandle *self, int p0, int p1, int p2, char * p3) {
-	lua_State *L = iuplua_call_start(self, "tab_motion_cb");
-	lua_pushinteger(L, p0);
-	lua_pushinteger(L, p1);
-	lua_pushinteger(L, p2);
-	lua_pushstring(L, p3);
-	return iuplua_call(L, 4);
 }
 
 
@@ -543,7 +553,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
       if (reset_clip)
       {
-		if ((pos < valuepos || valuenotdraw) & scroll_pos < valuepos) {
+		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos) {
 	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
 		  iFlatTabsRedraw_CB(ih); 
 		}
@@ -936,12 +946,37 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
         cb(ih, tab_found);
     }
   }
-  IFniiiiiis cb = (IFniiiiiis)IupGetCallback(ih, "TAB_BUTTON_CB");
+  IFnniiiiiis cb = (IFnniiiiiis)IupGetCallback(ih, "TAB_BUTTON_CB");
   if (cb)
   {
-    if (cb(ih, button, pressed, x, y, tab_found, 0, status) == IUP_IGNORE)
+	Ihandle* ihTarget = NULL;
+	int dragTab = tab_found;
+	if (!pressed && ih->data->start) {//
+		if (x < 0 || y < 0 || ih->currentwidth < x || ih->currentheight < y) {
+			POINT p;
+			GetCursorPos(&p);
+			HWND hwnd = WindowFromPoint(p);
+			if (hwnd)
+				ihTarget = iupwinHandleGet(hwnd);
+		} else {
+			dragTab = ih->data->dragTab;
+		}
+	}
+  if (pressed) {
+	  ih->data->dragTab = tab_found;
+	  ih->data->xStart = x;
+	  ih->data->yStart = y;
+	  ih->data->start = 0;
+	  ih->data->xFreeMax = 0;
+  } else {
+	  ih->data->dragTab = ITABS_NONE;
+	  ih->data->start = 0;
+	  ih->data->xFreeMax = 0;
+  }
+    if (cb(ih, ihTarget, button, pressed, x, y, tab_found, dragTab, status) == IUP_IGNORE)
       return IUP_DEFAULT;
   }
+  
   return IUP_DEFAULT;
 }
 
@@ -991,11 +1026,64 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
   show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
   tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
 
-  IFniiis cb = (IFniiis)IupGetCallback(ih, "TAB_MOTION_CB");
+  IFnniiiiis cb = (IFnniiiiis)IupGetCallback(ih, "TAB_MOTION_CB");
+  IFnii cbS = (IFnii)IupGetCallback(ih, "TAB_SHIFT_CB");
   if (cb)
   {
-    if (cb(ih, x, y, tab_found, status) == IUP_IGNORE)
+	Ihandle* ihTarget = NULL;
+	int dragTab = tab_found;
+	int start = 0;
+
+	if (ih->data->xFreeMax && (ih->data->xFreeMax < x || ih->data->xFree > x))
+		ih->data->xFreeMax = 0;
+
+	if (iup_isbutton1(status)) { 
+		if (!ih->data->start && abs(x - ih->data->xStart) > 5 || abs(y - ih->data->yStart) > 5) {
+			ih->data->start = 1;
+			start++;
+		}
+		if (ih->data->start) {
+			dragTab = ih->data->dragTab;
+			start++;
+		}
+	}
+	if (x < 0 || y < 0 || y > ih->currentheight || x > ih->currentwidth) {
+		POINT p;
+		GetCursorPos(&p);
+		HWND hwnd = WindowFromPoint(p);
+		if(hwnd)
+			ihTarget = iupwinHandleGet(hwnd);
+	}
+    if (cb(ih, ihTarget, x, y, tab_found, dragTab, start, status) == IUP_IGNORE)
       return IUP_DEFAULT;
+	
+	if ((cbS) && start && (tab_found >= 0 || tab_found == -3 || tab_found == -2) && ih->data->dragTab != tab_found &&!ih->data->xFreeMax) {
+		if (tab_found == -3)
+			tab_found = ih->data->dragTab + 1;
+		else if (tab_found == -2)
+			tab_found = ih->data->dragTab - 1;
+		if (cbS(ih, ih->data->dragTab, tab_found) == IUP_IGNORE)
+			return IUP_DEFAULT;
+		int tab_found_new = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
+		if (tab_found != tab_found_new) {
+			int horiz_padding, vert_padding, tab_x = 0;
+			int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
+			iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
+			int tab_w, tab_w2, tab_h;
+			iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, tab_found, &tab_w, &tab_h);
+			iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, ih->data->dragTab, &tab_w2, &tab_h);
+			
+			if (tab_found > ih->data->dragTab) {
+				ih->data->xFree = x;
+				ih->data->xFreeMax = x - tab_w + tab_w2;
+			} else {
+				ih->data->xFree = x + tab_w - tab_w2;
+				ih->data->xFreeMax = x;
+			}
+		}
+		ih->data->dragTab = tab_found;
+			SetCapture((HWND)ih->handle);
+	}
   }
 
   tab_highlighted = iupAttribGetInt(ih, "_IUPFTABS_HIGHLIGHTED");
@@ -1095,13 +1183,13 @@ static int iFlatTabsLeaveWindow_CB(Ihandle* ih)
   if (redraw)
     iupdrvPostRedraw(ih);
 
-  return IUP_DEFAULT;
+  return IUP_DEFAULT; 
 }
 
 
 /*****************************************************************************************/
 
-static char* iFlatTabsGetCountAttrib(Ihandle* ih)
+static int iFlatTabsGetCountAttrib(Ihandle* ih)
 {
   int pos = 0;
   for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++);
@@ -1469,7 +1557,12 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params)
   IupSetCallback(ih, "MOTION_CB", (Icallback)iFlatTabsMotion_CB);
   IupSetCallback(ih, "LEAVEWINDOW_CB", (Icallback)iFlatTabsLeaveWindow_CB);
   IupSetCallback(ih, "RESIZE_CB", (Icallback)iFlatTabsResize_CB);
-
+  ih->data->dragTab = ITABS_NONE;
+  ih->data->xStart = -1;
+  ih->data->yStart = -1;
+  ih->data->start = 0;
+  ih->data->xFreeMax = 0;
+  ih->data->xFree = 0;
   return IUP_NOERROR;
 }
 
@@ -1486,7 +1579,7 @@ Iclass* iupFlattabsCtrlNewClass(void)
 
   ic->name = "flattabs_ctrl";
   ic->format = NULL; 
-  ic->nativetype = IUP_TYPECONTROL;
+  ic->nativetype = IUP_TYPECANVAS;
 
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
@@ -1504,8 +1597,9 @@ Iclass* iupFlattabsCtrlNewClass(void)
   iupClassRegisterCallback(ic, "TABCLOSE_CB", "i");
   iupClassRegisterCallback(ic, "EXTRABUTTON_CB", "ii");
 
-  iupClassRegisterCallback(ic, "TAB_BUTTON_CB", "iiiiiis");
-  iupClassRegisterCallback(ic, "TAB_MOTION_CB", "iiis");
+  iupClassRegisterCallback(ic, "TAB_BUTTON_CB", "niiiiiis");
+  iupClassRegisterCallback(ic, "TAB_MOTION_CB", "niiiiis");
+  iupClassRegisterCallback(ic, "TAB_SHIFT_CB", "ii");
   iupClassRegisterCallback(ic, "FLAT_LEAVEWINDOW_CB", "");
 
   /* Base Container */
@@ -1608,7 +1702,7 @@ Ihandle* IupFlattabsCtrl(void)
 }
 
 static int FlattabsCtrl(lua_State *L) {
-	Ihandle *ih = IupFlattabsCtrl(NULL);//iuplua_checkihandleornil(L, 1)
+	Ihandle *ih = IupFlattabsCtrl();//iuplua_checkihandleornil(L, 1)
 	iuplua_plugstate(L, ih);
 	iuplua_pushihandle_raw(L, ih);
 	return 1;

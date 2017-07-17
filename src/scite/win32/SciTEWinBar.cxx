@@ -411,6 +411,11 @@ int OnTabClick(Ihandle * ih, int new_pos, int old_pos) {
 	return pSciTE->OnTab(ih, new_pos, old_pos);;
 }
 
+int OnTabShift(Ihandle * ih, int old_tab, int new_tab) {
+
+	return pSciTE->OnShift(ih, old_tab, new_tab);
+}
+
 int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
 	int side = (ih == IupTab(IDM_SRCWIN)) ? IDM_SRCWIN:IDM_COSRCWIN;
 	int cnt = 0;
@@ -426,15 +431,43 @@ int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
 	return IUP_DEFAULT;
 }
 
+int SciTEWin::OnShift(Ihandle * ih, int old_tab, int new_tab) {
+//	new_tab--;
+//	old_tab--;
+	int side = (ih == IupTab(IDM_SRCWIN)) ? IDM_SRCWIN : IDM_COSRCWIN;
+	int iOld = 0;
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide == side) {
+			if (iOld == old_tab)
+				break;
+			iOld++;
+		}
+	}
+	int iNew = 0;
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide == side) {
+			if (iNew == new_tab)
+				break;
+			iNew++;
+		}
+	}
+	ShiftTab(iOld, iNew);
+	return IUP_DEFAULT;
+}
+
 void SciTEWin::Creation() {
 	pSciTE = this;
 	lua_State *L = (lua_State*)extender->GetLuaState();
 	
 	layout.CreateLayout(L, this);
 
-	IupSetCallback(IupTab(IDM_SRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
-	IupSetCallback(IupTab(IDM_COSRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
+	if (!props.GetInt("tab.oldstile")) {
+		IupSetCallback(IupTab(IDM_SRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
+		IupSetCallback(IupTab(IDM_COSRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
 
+		IupSetCallback(IupTab(IDM_SRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
+		IupSetCallback(IupTab(IDM_COSRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
+	}
 	wEditorL.SetID(::CreateWindowEx(
 		0,
 		TEXT("Scintilla"),
@@ -486,7 +519,7 @@ void SciTEWin::Creation() {
 		hInstance,
 		0));
 	if (!wOutput.CanCall())
-		exit(FALSE);
+		exit(FALSE); 
 	wOutput.Show();
 	// No selection margin on output window
 	wOutput.Call(SCI_SETMARGINWIDTHN, 1, 0);
@@ -531,42 +564,43 @@ void SciTEWin::Creation() {
 	if (RegisterClass(&wndClass) == 0)
 		exit(FALSE);
 
-	wTabBar = ::CreateWindowEx(
-		0,
-		TEXT("SciTeTabCtrl"),
-		TEXT("Tab"),
-		WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
-		TCS_FOCUSNEVER | TCS_TOOLTIPS,
-		0, 0,
-		100, heightTab,
-		layout.GetChildHWND("SciTeTabCtrl"),
-		reinterpret_cast<HMENU>(IDM_TABWIN),
-		hInstance,
-		0);
+	if (props.GetInt("tab.oldstile")) {
+		wTabBar = ::CreateWindowEx(
+			0,
+			TEXT("SciTeTabCtrl"),
+			TEXT("Tab"),
+			WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
+			TCS_FOCUSNEVER | TCS_TOOLTIPS,
+			0, 0,
+			100, heightTab,
+			layout.GetChildHWND("SciTeTabCtrl"),
+			reinterpret_cast<HMENU>(IDM_TABWIN),
+			hInstance,
+			0);
 
-	if (!wTabBar.Created())
-		exit(FALSE);
-	layout.SubclassChild("SciTeTabCtrl", &wTabBar);
+		if (!wTabBar.Created())
+			exit(FALSE);
+		layout.SubclassChild("SciTeTabCtrl", &wTabBar);
 
-	LOGFONT lfIconTitle;
-	ZeroMemory(&lfIconTitle, sizeof(lfIconTitle));
-	::SystemParametersInfo(SPI_GETICONTITLELOGFONT,sizeof(lfIconTitle),&lfIconTitle,FALSE);
-	int pt = props.GetInt("iup.defaultfontsize");
-	if (pt && pt > 4)
-		lfIconTitle.lfHeight = -MulDiv(pt, GetDeviceCaps(GetWindowDC(GetDesktopWindow()), LOGPIXELSY), 72);
-	fontTabs = ::CreateFontIndirect(&lfIconTitle);
-	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
-		WM_SETFONT,
-		reinterpret_cast<WPARAM>(fontTabs),      // handle to font
-		0);    // redraw option
-	if (pt && pt > 4)
-	    ::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
-			TCM_SETPADDING,
-			0,      // handle to font
-			5);    // redraw option
+		LOGFONT lfIconTitle;
+		ZeroMemory(&lfIconTitle, sizeof(lfIconTitle));
+		::SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lfIconTitle), &lfIconTitle, FALSE);
+		int pt = props.GetInt("iup.defaultfontsize");
+		if (pt && pt > 4)
+			lfIconTitle.lfHeight = -MulDiv(pt, GetDeviceCaps(GetWindowDC(GetDesktopWindow()), LOGPIXELSY), 72);
+		fontTabs = ::CreateFontIndirect(&lfIconTitle);
+		::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
+			WM_SETFONT,
+			reinterpret_cast<WPARAM>(fontTabs),      // handle to font
+			0);    // redraw option
+		if (pt && pt > 4)
+			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
+				TCM_SETPADDING,
+				0,      // handle to font
+				5);    // redraw option
 
-	wTabBar.Show();
-
+		wTabBar.Show();
+	}
 }
 
 Ihandle * SciTEWin::IupTab(int id) {

@@ -1884,7 +1884,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	push_pane_object(luaState, ExtensionAPI::paneOutput);
 	lua_setglobal(luaState, "output");
 
-	push_pane_object(luaState, ExtensionAPI::paneFindRes);
+	push_pane_object(luaState, ExtensionAPI::paneFindRes); 
 	lua_setglobal(luaState, "findres");
 
 	// scite

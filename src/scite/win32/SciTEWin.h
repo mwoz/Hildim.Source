@@ -331,6 +331,7 @@ public:
 	LRESULT ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	int OnTab(Ihandle * ih, int new_pos, int old_pos);
+	int OnShift(Ihandle * ih, int old_tab, int new_tab);
 
 	virtual SString EncodeString(const SString &s);
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &wCurrent, int selStart, int selEnd);
