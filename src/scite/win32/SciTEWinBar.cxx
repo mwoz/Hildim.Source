@@ -438,16 +438,20 @@ int SciTEWin::OnShift(Ihandle * ih, int old_tab, int new_tab) {
 	int iOld = 0;
 	for (int i = 0; i < buffers.length; i++) {
 		if (buffers.buffers[i].editorSide == side) {
-			if (iOld == old_tab)
+			if (iOld == old_tab){
+				iOld = i;
 				break;
+			}
 			iOld++;
 		}
 	}
 	int iNew = 0;
 	for (int i = 0; i < buffers.length; i++) {
 		if (buffers.buffers[i].editorSide == side) {
-			if (iNew == new_tab)
+			if (iNew == new_tab){
+				iNew = i;
 				break;
+			}
 			iNew++;
 		}
 	}

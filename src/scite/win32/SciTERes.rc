@@ -146,12 +146,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "scite.net.ru"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "1.0.4.1"
+            VALUE "FileVersion", "2.1.0"
             VALUE "InternalName", "HildiM"
-            VALUE "LegalCopyright", "Copyright 2016 Michel Voznesenskiy"
+            VALUE "LegalCopyright", "Copyright 2016-2017 Michel Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "1.0.4.1"
+            VALUE "ProductVersion", "2.1.0"
         END
     END
     BLOCK "VarFileInfo"

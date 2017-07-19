@@ -819,31 +819,50 @@ std::string ToAnsi(const GUI::gui_string &sWide) {
 	return ret;
 
 }
-
+static int Ext2HUI(GUI::gui_string ext) {
+	int r = 0;
+	size_t len = ext.length();
+	if(len > 0)
+	    r += (ext.c_str()[0] % 26) * 13;
+	if (len > 1)
+		r += (ext.c_str()[1] % 26) * 13 + 3;
+	if (len > 2)
+		r += (ext.c_str()[2] % 26) * 13 + 6;
+	if (len > 3)
+		r += (ext.c_str()[3] % 26) * 13 + 9;
+	return r % 360;
+}
+static char tabROColor[15];
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
 	RemoveAllTabs();
 
 	int pos;
 	if (!props.GetInt("tab.oldstile")) {
+		IupStoreAttribute(IupTab(IDM_COSRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
+		IupStoreAttribute(IupTab(IDM_COSRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
+		IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
+		IupStoreAttribute(IupTab(IDM_SRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
+
 		int oldLCount = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT");
 		int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
 		int posL = 0, posR = 0;
 		if (buffers.size > 1) {
 			unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
+			char* ReadOnlyColor;
+			if (props.GetInt("tabctrl.readonly.color")) {
+				strcpy(tabROColor, props.Get("tabctrl.readonly.color").c_str());
+				ReadOnlyColor = tabROColor;
+			}
+			else
+				ReadOnlyColor = "120 120 120";
+
 			for (pos = 0; pos < buffers.length; pos++) {
 				int itemID = bufferCmdID + pos;
 				GUI::gui_string entry;
 				GUI::gui_string titleTab;
-
-
-				if (pos < 10) {
-					GUI::gui_string sPos = GUI::StringFromInteger((pos + 1) % 10);
-					GUI::gui_string sHotKey = GUI_TEXT("&") + sPos + GUI_TEXT(" ");
-					entry = sHotKey;	// hotkey 1..0
-					titleTab = sHotKey; // add hotkey to the tabbar
-				}
-
+				char hui[15];
+				hui[0] = 0;
 
 				if (buffers.buffers[pos].IsUntitled()) {
 					GUI::gui_string untitled = localiser.Text("Untitled");
@@ -868,31 +887,56 @@ void SciTEBase::BuffersMenu() {
 					} else {
 						titleTab += entry;
 					}
-					if (tabsTitleMaxLength > 0 && titleTab.length() > tabsTitleMaxLength + 3) {
-						titleTab.resize(tabsTitleMaxLength, L'\0');
-						titleTab.append(GUI_TEXT("..."));
+
+					size_t nameEnd = titleTab.rfind('.');
+					if (props.GetInt("tabctrl.colorized")) {
+						GUI::gui_string ext;
+						if (nameEnd != GUI::gui_string::npos) {
+							ext += titleTab.substr(nameEnd + 1);
+						}
+						itoa(Ext2HUI(ext), hui, 10);
+					}
+					if (props.GetInt("tabctrl.cut.ext") && nameEnd != GUI::gui_string::npos && (pos != buffers.Current())) {
+						titleTab = titleTab.substr(0, nameEnd);
+						if (props.GetInt("tabctrl.cut.prefix")) {
+							size_t ttt = titleTab.find('^');
+							bool isTmp = (titleTab.find('^') == 0);
+							size_t prerEnd = titleTab.find('.');
+							if(prerEnd != GUI::gui_string::npos){
+								GUI::gui_string tmp;
+								if (isTmp) tmp += '^';
+								tmp += titleTab.substr(prerEnd + 1);
+								titleTab = tmp;
+							}
+						}
 					}
 				}
 
-				if (buffers.buffers[pos].DocumentNotSaved()) { //-change-[OpenNonExistent]
-					entry += GUI_TEXT(" *");
-					titleTab += GUI_TEXT(" *");
+				if (buffers.buffers[pos].DocumentNotSaved()) {
+					entry += GUI_TEXT("*");
+					titleTab += GUI_TEXT("*");
 				}
-
-				if (buffers.buffers[pos].ROMarker != NULL) {
-					entry += buffers.buffers[pos].ROMarker;
-					titleTab += buffers.buffers[pos].ROMarker;
-				}
+				bool ro = (buffers.buffers[pos].ROMarker != NULL);
 				if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
+					IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : "0 0 0");
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR, hui);
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
-					if (pos == buffers.Current())
+					
+					if (pos == buffers.Current()){
 						IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
+						IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
+					}
 				} else {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
+					IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : "0 0 0");
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL, hui);
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
-					if (pos == buffers.Current())
+					
+					if (pos == buffers.Current()){
 						IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
+						IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
+					}
 				}
 				//TabInsert(pos, titleTab.c_str());
 			}
@@ -902,6 +946,7 @@ void SciTEBase::BuffersMenu() {
 				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
 			IupSetAttribute(IupTab(IDM_SRCWIN), "REDRAW", "");
 			IupSetAttribute(IupTab(IDM_COSRCWIN), "REDRAW", "");
+
 		}
 	} else {
 		if (buffers.size > 1) {

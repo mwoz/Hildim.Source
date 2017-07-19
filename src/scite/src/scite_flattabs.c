@@ -27,6 +27,7 @@
 #include "../../iup/src/iup_drvdraw.h"
 #include "../../iup/srclua5/il.h"
 #include "../../iup/src/win/iupwin_handle.h"
+#include "../../iup/srccontrols/color/iup_colorhsi.h"
 #include "scite_flattabs.h"
 #include <windows.h>
 
@@ -709,7 +710,7 @@ static int iFlatTabsFindTab(Ihandle* ih, int cur_x, int cur_y, int show_close, i
 
   *inside_close = 0;
 
-  if (cur_y < title_height)
+  if (cur_y < title_height && cur_y > 0)
   {
     int pos, horiz_padding, vert_padding, tab_x = 0, scroll_pos;
     int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
@@ -1285,6 +1286,42 @@ static int iFlatTabsUpdateSetAttrib(Ihandle* ih, const char* value)
   return 1;
 }
 
+static int iupStrToHSI_Int(const char *str, int *h, int *s, int *i) {
+	int fh, fs, fi;
+	if (!str) return 0;
+	if (sscanf(str, "%d %d %d", &fh, &fs, &fi) != 3) return 0;
+	if (fh > 359 || fs > 100 || fi > 100) return 0;
+	if (fh < 0 || fs < 0 || fi < 0) return 0;
+	*h = fh;
+	*s = fs;
+	*i = fi;
+	return 1;
+}
+
+
+
+static int iFlatTabsSetHueBackColor(Ihandle* ih, int id, const char* value) {
+	if (!value[0]) {
+		IupStoreAttributeId(ih, "TABBACKCOLOR", id, NULL);
+		return 0;
+	}
+
+	int h, s, i;
+	iupStrToInt(value, &h);
+	iupStrToInt(IupGetAttribute(ih, "SATURATION"), &s);
+	iupStrToInt(IupGetAttribute(ih, "ILLUMINATION"), &i);
+	if (s < 1 || s > 99) s = 50;
+	if (i < 1 || i > 99) i = 90;
+
+	//iupStrToHSI_Int(value, &h, &s, &i);
+	unsigned char r, g, b;
+	//unsigned char	rgb[14];
+	//rgb[0] = 0;
+	iupColorHSI2RGB(h/1.0, s/100.0, i/100.0, &r, &g, &b);
+	IupStoreAttributeId(ih, "TABBACKCOLOR", id, iupStrReturnRGB(r, g, b));
+
+	return 0;
+}
 static int iFlatTabsSetTabFontStyleAttrib(Ihandle* ih, int id, const char* value)
 {
   int size = 0;
@@ -1631,6 +1668,7 @@ Iclass* iupFlattabsCtrlNewClass(void)
   iupClassRegisterAttributeId(ic, "TABIMAGE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABFORECOLOR", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABBACKCOLOR", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId(ic, "TABBACKCOLORHUE", NULL, iFlatTabsSetHueBackColor, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABHIGHCOLOR", NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABFONT", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "TABTIP", NULL, NULL, IUPAF_NO_INHERIT);
@@ -1647,6 +1685,8 @@ Iclass* iupFlattabsCtrlNewClass(void)
   iupClassRegisterAttribute(ic, "TABSFORECOLOR", NULL, iFlatTabsUpdateSetAttrib, IUPAF_SAMEASSYSTEM, "DLGFGCOLOR", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TABSBACKCOLOR", NULL, iFlatTabsUpdateSetAttrib, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TABSHIGHCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ILLUMINATION", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SATURATION", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   /* Visual for all TABS */
   iupClassRegisterAttribute(ic, "TABSFONT", NULL, iFlatTabsSetTabsFontAttrib, NULL, NULL, IUPAF_NO_INHERIT);
