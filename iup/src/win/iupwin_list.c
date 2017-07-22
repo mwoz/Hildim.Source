@@ -1558,7 +1558,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		HBRUSH hBrush = CreateSolidBrush(RGBbgcolor);
 		HBRUSH hBrushOld = SelectObject(hdc, hBrush);
 
-		Rectangle(hdc, 0, 0, w - 1, h - 1);
+		Rectangle(hdc, 0, 0, w , h );
 		
 		POINT line_poly[3];
 		SelectObject(hdc, hPenOld);

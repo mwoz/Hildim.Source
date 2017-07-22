@@ -509,13 +509,21 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
         iupFlatDrawBox(dc, tab_x, tab_x + tab_w, 0, title_height - 1, background_color, NULL, 1);
       else
         background_color = tabs_bgcolor;
-
-      if (show_lines && valuepos == pos)
-      {
-        iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab top horizontal */
-        iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab left vertical */
-        iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab right vertical */
-      }
+	  if (show_lines) {
+		  if (valuepos == pos)//
+		  {
+			  iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab top horizontal */
+			  iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab left vertical */
+			  iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab right vertical */
+		  } else if (tab_backcolor) {
+			  char * border_color = iupAttribGetId(ih, "_TABBORDERCOLOR", pos);
+			  unsigned char * c_r, *c_g, *c_b;
+			  iupStrToRGB(border_color, &c_r, &c_g, &c_b);
+			  iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab top horizontal */
+			  iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab left vertical */
+			  iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab right vertical */
+		  }
+	  }
 
       icon_width = tab_w;
       if (show_close && (valuepos == pos))
@@ -1313,12 +1321,13 @@ static int iFlatTabsSetHueBackColor(Ihandle* ih, int id, const char* value) {
 	if (s < 1 || s > 99) s = 50;
 	if (i < 1 || i > 99) i = 90;
 
-	//iupStrToHSI_Int(value, &h, &s, &i);
 	unsigned char r, g, b;
-	//unsigned char	rgb[14];
-	//rgb[0] = 0;
-	iupColorHSI2RGB(h/1.0, s/100.0, i/100.0, &r, &g, &b);
+
+	iupColorHSI2RGB(h / 1.0, s / 100.0, i / 100.0, &r, &g, &b);
 	IupStoreAttributeId(ih, "TABBACKCOLOR", id, iupStrReturnRGB(r, g, b));
+
+	iupColorHSI2RGB(h / 1.0, s / 100.0, pow((i / 100.0), 1.5), &r, &g, &b);
+	IupStoreAttributeId(ih, "_TABBORDERCOLOR", id, iupStrReturnRGB(r, g, b));
 
 	return 0;
 }
