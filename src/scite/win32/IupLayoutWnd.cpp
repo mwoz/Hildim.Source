@@ -81,6 +81,11 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 {
 	Ihandle* pTab;
 	Ihandle* containers[13];
+
+	char* fntSize = pSciteWin->Property("iup.defaultfontsize");
+	if (strcmp(fntSize, "")) 
+		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
+
 	if (strcmp(pSciteWin->Property("tab.oldstile"), "")) {
 		pTab = IupSetAtt(NULL, IupCreate("canvas"),
 			//"MAXSIZE", "x20",
@@ -93,7 +98,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"NAME", "TabCtrlLeft",
 			"EXPAND", "HORIZONTAL",
 			"TABSPADDING", "10x3",
-			"SIZE", "x14",
+			//"SIZE", "x14",
 			"EXTRABUTTONS", "1",
 			"FORECOLOR", "",
 			NULL);
@@ -102,7 +107,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"EXPAND", "HORIZONTAL",
 			"TABSPADDING", "10x3",
 			//"SIZE", "x14",
-			"MAXSIZE", "x26",
+			//"MAXSIZE", "x26",
 			"EXTRABUTTONS", "1",
 			"FORECOLOR", "",
 			NULL);
@@ -116,7 +121,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"BARSIZE", "0",
 				"EXPAND", "HORIZONTAL",
 				"MINSIZE", "x0",
-				"MAXSIZE", "x26",
+				//"MAXSIZE", "x26",
 				"STATE", "CLOSE",
 				NULL),
 			NULL),

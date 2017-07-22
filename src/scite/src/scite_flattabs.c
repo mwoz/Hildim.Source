@@ -1583,7 +1583,17 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params)
       iparams++;
     }
   }
+  int w, h;
+  int vert_padding, horiz_padding;
+  iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
 
+  iupFlatGetTextSize(ih, "AaBbCc", &w, &h);
+  char msz[10];
+  msz[0] = 'x';
+  h += 6;
+  _itoa(h, msz + 1, 10);
+  
+  iupAttribSet(ih, "MAXSIZE", msz); 
   iupAttribSetInt(ih, "_IUPFTABS_HIGHLIGHTED", ITABS_NONE);
   iupAttribSetInt(ih, "_IUPFTABS_CLOSEHIGH", ITABS_NONE);
   iupAttribSetInt(ih, "_IUPFTABS_CLOSEPRESS", ITABS_NONE);

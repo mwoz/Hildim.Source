@@ -735,9 +735,7 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 		}
 	}
 	else throw std::runtime_error("ScintillaWindowSwitcher: unknown idm");
-	//Call(SCI_SETFOCUS, true);
-	Call(SCI_GRABFOCUS, true);
-	
+	coEditor.Call(SCI_SETFOCUS, false);
 }
 void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf){
 	if (GetWindowIdm() == IDM_SRCWIN){
