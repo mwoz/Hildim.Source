@@ -88,7 +88,6 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 
 	if (strcmp(pSciteWin->Property("tab.oldstile"), "")) {
 		pTab = IupSetAtt(NULL, IupCreate("canvas"),
-			//"MAXSIZE", "x20",
 			"EXPAND", "HORIZONTAL",
 			"NAME", "SciTeTabCtrl",
 			"MINSIZE", "x20",
@@ -96,9 +95,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	} else {
 		pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 			"NAME", "TabCtrlLeft",
-			"EXPAND", "HORIZONTAL",
+			"EXPAND", "YES",
 			"TABSPADDING", "10x3",
-			//"SIZE", "x14",
 			"EXTRABUTTONS", "1",
 			"FORECOLOR", "",
 			NULL);
@@ -106,14 +104,17 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"NAME", "TabCtrlRight",
 			"EXPAND", "HORIZONTAL",
 			"TABSPADDING", "10x3",
-			//"SIZE", "x14",
-			//"MAXSIZE", "x26",
 			"EXTRABUTTONS", "1",
 			"FORECOLOR", "",
 			NULL);
 
 		pTab = IupSetAtt(NULL, IupCreatep("split",
-			pLeftTab,
+			IupSetAtt(NULL, IupCreatep("vbox",
+				pLeftTab,
+				NULL),
+				"EXPAND", "HORIZONTAL",
+				"EXPANDCHILDREN", "YES",
+				NULL),
 			IupSetAtt(NULL, IupCreatep("expander",
 				pRightTab,
 				NULL),
@@ -121,7 +122,6 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"BARSIZE", "0",
 				"EXPAND", "HORIZONTAL",
 				"MINSIZE", "x0",
-				//"MAXSIZE", "x26",
 				"STATE", "CLOSE",
 				NULL),
 			NULL),

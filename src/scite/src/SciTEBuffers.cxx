@@ -393,6 +393,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		DisplayAround(bufferNext);
 
 		CheckMenus();
+	} else {
+		ReadProperties();
 	}
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
@@ -596,6 +598,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		extender->OnClose(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close");
 	}
+	bBlockRedraw = true;
 
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
@@ -668,6 +671,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 	}
 
+	bBlockRedraw = false;
 	if (updateUI) {
 		BuffersMenu();
 	}
@@ -833,12 +837,17 @@ static int Ext2HUI(GUI::gui_string ext) {
 	return r % 360;
 }
 static char tabROColor[15];
+
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
 	RemoveAllTabs();
 
+	bool utf8mode = !strcmp(IupGetGlobal("UTF8MODE"), "YES");
+
 	int pos;
 	if (!props.GetInt("tab.oldstile")) {
+		if (bBlockRedraw || bBlockUIUpdate)
+			return;
 		IupStoreAttribute(IupTab(IDM_COSRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
 		IupStoreAttribute(IupTab(IDM_COSRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
 		IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
@@ -918,20 +927,31 @@ void SciTEBase::BuffersMenu() {
 				}
 				bool ro = (buffers.buffers[pos].ROMarker != NULL);
 				if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
-					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
+					if (utf8mode) {
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, buffers.buffers[pos].AsUTF8().c_str());
+					} else {
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					}
 					IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : "0 0 0");
-					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR, hui);
-					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, hui);
 					
 					if (pos == buffers.Current()){
 						IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
 						IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
 					}
 				} else {
-					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
+					if (utf8mode) {
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, GUI::UTF8FromString(titleTab).c_str());
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, buffers.buffers[pos].AsUTF8().c_str());
+
+					} else {
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					}
 					IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : "0 0 0");
-					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL, hui);
-					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL++, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
 					
 					if (pos == buffers.Current()){
 						IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
@@ -944,8 +964,13 @@ void SciTEBase::BuffersMenu() {
 				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", pos, NULL);
 			for (pos = oldLCountR - 1; pos >= posR; pos--)
 				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
-			IupSetAttribute(IupTab(IDM_SRCWIN), "REDRAW", "");
-			IupSetAttribute(IupTab(IDM_COSRCWIN), "REDRAW", "");
+			
+			IupRefreshChildren(IupGetParent(IupGetParent(IupGetParent(IupTab(IDM_SRCWIN)))));
+			//IupRefreshChildren(IupGetParent(IupTab(IDM_SRCWIN)));
+			IupRefreshChildren(IupGetParent(IupGetParent(IupTab(IDM_COSRCWIN))));
+
+			IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
+			IupRedraw(IupGetParent(IupTab(IDM_COSRCWIN)), 1);
 
 		}
 	} else {

@@ -179,7 +179,8 @@ void SciTEWin::ActivateWindow(const char *) {
  * Resize the sub-windows, ie. the toolbar, tab bar, status bar. And call @a SizeContentWindows.
  */
 void SciTEWin::SizeSubWindows() {
-	layout.AdjustTabBar();
+	if(props.GetInt("tab.oldstile"))
+		layout.AdjustTabBar();
 }
 
 void SciTEWin::CheckMenus() {

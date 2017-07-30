@@ -359,6 +359,19 @@ static void iFlatTabsDrawScrollRightButton(IdrawCanvas* dc, const char *tabs_bgc
 
 static int iFlatTabsRedraw_CB(Ihandle* ih)
 {
+
+	Ihandle* prnt = IupGetParent(ih);
+	
+	if ( (ih->currentwidth < 10) && (ih->currentwidth < prnt->currentwidth) && (iupAttribGetInt(ih, "_IUPFREDRAW")< 1000)) {
+		iupAttribSetInt(ih, "_IUPFREDRAW", iupAttribGetInt(ih, "_IUPFREDRAW") + 1);
+		IupRefreshChildren(prnt);
+		IupUpdateChildren(prnt);
+
+	 return IUP_DEFAULT; 
+	}
+	iupAttribSetInt(ih, "_IUPFREDRAW", 0);
+
+
   char* bgcolor = iupAttribGetStr(ih, "BGCOLOR");
   char* forecolor = iupAttribGetStr(ih, "FORECOLOR");
   char* highcolor = iupAttribGetStr(ih, "HIGHCOLOR");
@@ -383,6 +396,8 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   int extra_width;
   int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
   int valuepos = iupAttribGetInt(ih, "VALUEPOS");
+
+	  
 
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
@@ -560,7 +575,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       /* goto next tab area */
       tab_x += tab_w;
 
-      if (reset_clip)
+	  if (reset_clip)
       {
 		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos) {
 	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
@@ -1047,7 +1062,7 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 		ih->data->xFreeMax = 0;
 
 	if (iup_isbutton1(status)) { 
-		if (!ih->data->start && abs(x - ih->data->xStart) > 5 || abs(y - ih->data->yStart) > 5) {
+		if ((!ih->data->start && abs(x - ih->data->xStart) > 5 || abs(y - ih->data->yStart) > 5) && ih->data->dragTab > -1) {
 			ih->data->start = 1;
 			start++;
 		}
@@ -1219,7 +1234,6 @@ static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value)
 
 
   iupAttribSetInt(ih, "VALUEPOS", pos);
-  iFlatTabsRedraw_CB(ih);
   return 0;
 }
 

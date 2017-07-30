@@ -715,7 +715,8 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
 			}
-			throw std::runtime_error("Buffers Filed");
+			//throw std::runtime_error("Buffers Filed");
+			return;
 		}
 	}
 	else if (wndIdm == IDM_COSRCWIN){
@@ -731,7 +732,8 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
 			}
-			throw std::runtime_error("Buffers Filed");
+			//throw std::runtime_error("Buffers Filed");
+			return;
 		}
 	}
 	else throw std::runtime_error("ScintillaWindowSwitcher: unknown idm");

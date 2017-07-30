@@ -2013,6 +2013,13 @@ static int winListMapMethod(Ihandle* ih)
       IupSetCallback(ih, "_IUPWIN_EDITOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC));
       SetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)winListEditWndProc);
 
+	  if (!iupAttribGetBoolean(ih, "NOHIDESEL")) {
+		  HWND old_handle = ih->handle;
+		  ih->handle = (HWND)iupAttribGet(ih, "_IUPWIN_EDITBOX");
+		  iupwinMergeStyle(ih, ES_NOHIDESEL, 0);
+		  ih->handle = old_handle;
+	  }
+
       /* set defaults */
       SendMessage(ih->handle, CB_LIMITTEXT, 0, 0L);
     }else if(iupAttribGetBoolean(ih, "FLAT")){
@@ -2090,5 +2097,6 @@ void iupdrvListInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "200 225 245", IUPAF_DEFAULT);
   iupClassRegisterAttribute(ic, "BORDERHLCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);
   iupClassRegisterAttribute(ic, "FLAT", NULL, NULL, IUPAF_SAMEASSYSTEM, "NO", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "NOHIDESEL", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "EMPTYLISTTEXT", NULL, NULL, IUPAF_SAMEASSYSTEM, "<Empty>", IUPAF_NO_INHERIT);
 }

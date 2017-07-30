@@ -460,6 +460,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		}
 	}
 
+	bBlockRedraw = true;
 	if (buffers.size == buffers.length) {
 		AddFileToStack(filePath, GetSelection(), GetCurrentScrollPosition());
 		ClearDocument();
@@ -499,12 +500,13 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		SString atr = props.Get("FileAttr");
 		bool isReadOnly = atr.contains("H") || atr.contains("S") || atr.contains("R");
 		wEditor.Call(SCI_SETREADONLY, isReadOnly); 
-		BuffersMenu();
 	}
 	RemoveFileFromStack(filePath);
 	SetWindowName();
 	if (lineNumbers && lineNumbersExpand)
 		SetLineNumberWidth();
+	bBlockRedraw = false;
+	BuffersMenu();
 	if (extender)
 		extender->OnOpen(filePath.AsUTF8().c_str());
 	
