@@ -777,7 +777,7 @@ void SciTEBase::ReloadProperties() {
 	ReadAbbrevPropFile();
 	ReadProperties();
 	SetWindowName();
-	BuffersMenu();
+	//BuffersMenu();
 	Redraw();
 }
 
