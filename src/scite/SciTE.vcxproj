@@ -125,6 +125,8 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\scintilla\include\DBCS.h" />
+    <ClInclude Include="..\scintilla\lexlib\DefaultLexer.h" />
     <ClInclude Include="lua\include\lauxlib.h" />
     <ClInclude Include="lua\src\lapi.h" />
     <ClInclude Include="lua\src\lcode.h" />
@@ -196,6 +198,8 @@
     <Image Include="win32\word.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\scintilla\lexlib\DefaultLexer.cxx" />
+    <ClCompile Include="..\scintilla\src\DBCS.cxx" />
     <ClCompile Include="src\Exporters.cxx" />
     <ClCompile Include="src\FilePath.cxx" />
     <ClCompile Include="src\IFaceTable.cxx" />

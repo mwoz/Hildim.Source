@@ -50,6 +50,7 @@
 #include "CharacterSet.h"
 #include "LexerModule.h"
 #include "OptionSet.h"
+#include "DefaultLexer.h"
 
 #ifdef SCI_NAMESPACE
 using namespace Scintilla;
@@ -142,7 +143,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 	}
 };
 
-class LexerFormEngine : public ILexer {
+class LexerFormEngine : public DefaultLexer {
 	bool caseSensitive;
 	CharacterSet setFoldingWordsBegin;
 	WordList keywords[24];	//переданные нам вордлисты
@@ -173,7 +174,7 @@ public:
 		delete this;
 	}
 	int SCI_METHOD Version() const {
-		return lvOriginal;
+		return lvRelease4;
 	}
 	const char * SCI_METHOD PropertyNames() {
 		return osFM.PropertyNames();
@@ -200,10 +201,10 @@ public:
 		return 0;
 	}
 
-	static ILexer *LexerFactoryFM() {
+	static ILexer4 *LexerFactoryFM() {
 		return new LexerFormEngine(true);
 	}
-	static ILexer *LexerFactoryCPPInsensitive() {
+	static ILexer4 *LexerFactoryCPPInsensitive() {
 		return new LexerFormEngine(false);
 	}
 
