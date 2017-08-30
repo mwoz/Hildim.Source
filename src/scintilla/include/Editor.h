@@ -171,7 +171,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -425,22 +424,14 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
-	virtual void NotifyDoubleClick(Point pt, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotClicked(Sci::Position position, int modifiers);
-	void NotifyHotSpotClicked(Sci::Position position, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers);
-	void NotifyHotSpotDoubleClicked(Sci::Position position, bool shift, bool ctrl, bool alt);
 	void NotifyHotSpotReleaseClick(Sci::Position position, int modifiers);
-	void NotifyHotSpotReleaseClick(Sci::Position position, bool shift, bool ctrl, bool alt);
 	bool NotifyUpdateUI();
 	void NotifyPainted();
 	void NotifyIndicatorClick(bool click, Sci::Position position, int modifiers);
-	void NotifyIndicatorClick(bool click, Sci::Position position, bool shift, bool ctrl, bool alt);
 	bool NotifyMarginClick(Point pt, int modifiers);
-	bool NotifyMarginClick(Point pt, bool shift, bool ctrl, bool alt);
 	bool NotifyMarginRightClick(Point pt, int modifiers);
 	void NotifyNeedShown(Sci::Position pos, Sci::Position len);
 	void NotifyDwelling(Point pt, bool state);
@@ -455,9 +446,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, int status) override;
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
-
 
 	void ContainerNeedsUpdate(int flags);
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);
@@ -482,7 +470,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	virtual int KeyCommand(unsigned int iMessage);
 	virtual int KeyDefault(int /* key */, int /*modifiers*/);
 	int KeyDownWithModifiers(int key, int modifiers, bool *consumed);
-	int KeyDown(int key, bool shift, bool ctrl, bool alt, bool *consumed=0);
 
 	void Indent(bool forwards);
 
@@ -516,17 +503,12 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void MouseLeave();
 	virtual void ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifiers);
 	virtual void RightButtonDownWithModifiers(Point pt, unsigned int curTime, int modifiers);
-	virtual void ButtonDown(Point pt, unsigned int curTime, bool shift, bool ctrl, bool alt);
-	void ButtonMoveWithModifiers(Point pt, int modifiers);
-	void ButtonMove(Point pt);
-	void ButtonUp(Point pt, unsigned int curTime, bool ctrl);
+	void ButtonMoveWithModifiers(Point pt, unsigned int curTime, int modifiers);
+	void ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers);
 
-	void Tick();
 	bool Idle();
-	virtual void SetTicking(bool on);
 	enum TickReason { tickCaret, tickScroll, tickWiden, tickDwell, tickPlatform };
 	virtual void TickFor(TickReason reason);
-	virtual bool FineTickerAvailable();
 	virtual bool FineTickerRunning(TickReason reason);
 	virtual void FineTickerStart(TickReason reason, int millis, int tolerance);
 	virtual void FineTickerCancel(TickReason reason);
