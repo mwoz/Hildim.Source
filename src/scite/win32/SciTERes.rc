@@ -12,7 +12,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Russian (Russia) resources
+// Русский (Россия) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
@@ -26,8 +26,11 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 SCITE                   ICON                    "SciBall.ico"
+
 SCITEFILE               ICON                    "SciTE-file.ico"
+
 SCITESES                ICON                    "SciTE-ses.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -35,6 +38,7 @@ SCITESES                ICON                    "SciTE-ses.ico"
 //
 
 1                       RT_MANIFEST             "SciTE.exe.manifest"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -108,12 +112,19 @@ END
 //
 
 IDR_BUTTONS             BITMAP                  "buttons.bmp"
+
 IDBM_WORD               BITMAP                  "word.bmp"
+
 IDBM_CASE               BITMAP                  "case.bmp"
+
 IDBM_REGEX              BITMAP                  "regex.bmp"
+
 IDBM_BACKSLASH          BITMAP                  "backslash.bmp"
+
 IDBM_AROUND             BITMAP                  "around.bmp"
+
 IDBM_UP                 BITMAP                  "up.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -122,14 +133,15 @@ IDBM_UP                 BITMAP                  "up.bmp"
 
 IDC_DRAGDROP            CURSOR                  "DragDrop.cur"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,4,1
- PRODUCTVERSION 1,0,4,1
+ FILEVERSION 2,1,2,0
+ PRODUCTVERSION 2,1,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -146,12 +158,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "scite.net.ru"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "2.1.1"
+            VALUE "FileVersion", "2.1.2"
             VALUE "InternalName", "HildiM"
             VALUE "LegalCopyright", "Copyright 2016-2017 Michel Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "2.1.1"
+            VALUE "ProductVersion", "2.1.2"
         END
     END
     BLOCK "VarFileInfo"
@@ -199,7 +211,7 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Russian (Russia) resources
+#endif    // Русский (Россия) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
