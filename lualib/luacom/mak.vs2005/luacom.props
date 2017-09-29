@@ -3,7 +3,7 @@
   <PropertyGroup Label="UserMacros">
     <LUA_SUFFIX>5.1</LUA_SUFFIX>
     <LUACOM_VERSION>1.4</LUACOM_VERSION>
-    <LUA_BINDIR>..\..\lua5.1\bin</LUA_BINDIR>
+    <LUA_BINDIR>..\..\lua53\bin</LUA_BINDIR>
     <LUAC>$(LUA) ..\mak\luac.exe</LUAC>
     <BIN2C>$(LUA) ..\mak\bin2c.exe</BIN2C>
     <LUA>$(LUA_BINDIR)\lua$(LUA_SUFFIX).exe</LUA>

@@ -17,7 +17,7 @@
 #include <limits.h>
 
 #include "lua.h"
-
+#define LUA_VERSION_NUM		503
 
 #define VERSION         "1.0.0"
 

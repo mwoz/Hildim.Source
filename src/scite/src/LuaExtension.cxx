@@ -147,8 +147,10 @@ inline void raise_error(lua_State *L, const char *errMsg=NULL) {
 }
 
 inline int absolute_index(lua_State *L, int index) {
-	return ((index < 0) && (index != LUA_REGISTRYINDEX) && (index != LUA_GLOBALSINDEX))
-		? (lua_gettop(L) + index + 1) : index;
+	if (index > LUA_REGISTRYINDEX && index < 0)
+		return lua_gettop(L) + index + 1;
+	else
+		return index;
 }
 
 // copy the contents of one table into another returning the size
@@ -672,7 +674,7 @@ static int cf_match_replace(lua_State *L) {
 
 	host->Send(pmo->pane, SCI_SETTARGETSTART, pmo->startPos, 0);
 	host->Send(pmo->pane, SCI_SETTARGETEND, pmo->endPos, 0);
-	host->Send(pmo->pane, SCI_REPLACETARGET, lua_strlen(L, 2), reinterpret_cast<sptr_t>(replacement));
+	host->Send(pmo->pane, SCI_REPLACETARGET, lua_rawlen(L, 2), reinterpret_cast<sptr_t>(replacement));
 	pmo->endPos = host->Send(pmo->pane, SCI_GETTARGETEND, 0, 0);
 	return 0;
 }
@@ -1016,7 +1018,7 @@ static int cf_global_dostring(lua_State *L) {
 	int nargs = lua_gettop(L);
 	const char *code = luaL_checkstring(L, 1);
 	const char *name = luaL_optstring(L, 2, code);
-	if (0 == luaL_loadbuffer(L, code, lua_strlen(L, 1), name)) {
+	if (0 == luaL_loadbuffer(L, code, lua_rawlen(L, 1), name)) {
 		lua_call(L, 0, LUA_MULTRET);
 		return lua_gettop(L) - nargs;
 	} else {
@@ -1271,7 +1273,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func) {
 	int loopParamCount = 2;
 
 	if (func.paramType[0] == iface_length && func.paramType[1] == iface_string) {
-		params[0] = static_cast<long>(lua_strlen(L, arg));
+		params[0] = static_cast<long>(lua_rawlen(L, arg));
 		params[1] = reinterpret_cast<long>(params[0] ? lua_tostring(L, arg) : "");
 		loopParamCount = 0;
 	} else if ((func.paramType[1] == iface_stringresult) || (func.returnType == iface_stringresult)) {
@@ -1714,7 +1716,7 @@ void ContinueInit(void* h){
 	// Clone the initial state (including metatable) in the registry so that it can be restored.
 	// (If reset==1 this will not be used, but this is a shallow copy, not very expensive, and
 	// who knows what the value of reset will be the next time InitGlobalScope runs.)
-	clone_table(luaState, LUA_GLOBALSINDEX, true);
+	clone_table(luaState, -1, true);
 	lua_setfield(luaState, LUA_REGISTRYINDEX, "SciTE_InitialState");
 
 	// Clone loaded packages (package.loaded) state in the registry so that it can be restored.
@@ -1754,7 +1756,8 @@ void PublishGlobalBufferData() {
 		// for example, during startup, before any InitBuffer / ActivateBuffer
 		lua_pushnil(luaState);
 	}
-	lua_rawset(luaState, LUA_GLOBALSINDEX);
+	//lua_rawset(luaState, LUA_GLOBALSINDEX);
+	lua_setglobal(luaState, "buffer");
 }
 
 static int cf_editor_reload_startup_script(lua_State*); //!-add-[StartupScriptReload]
@@ -1779,8 +1782,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 		if (!reload) {
 			lua_getfield(luaState, LUA_REGISTRYINDEX, "SciTE_InitialState");
 			if (lua_istable(luaState, -1)) {
-				clear_table(luaState, LUA_GLOBALSINDEX, true);
-				merge_table(luaState, LUA_GLOBALSINDEX, -1, true);
+				clear_table(luaState, -2, true);
+				merge_table(luaState, -2, -1, true);
 				lua_pop(luaState, 1);
 
 				// restore initial package.loaded state
@@ -1811,7 +1814,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 		// Don't replace global scope using new_table, because then startup script is
 		// bound to a different copy of the globals than the extension script.
-		clear_table(luaState, LUA_GLOBALSINDEX, true);
+		clear_table(luaState, -1, true);
 
 		// Lua 5.1: _LOADED is in LUA_REGISTRYINDEX, so it must be cleared before
 		// loading libraries or they will not load because Lua's package system
@@ -1820,7 +1823,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 		lua_setfield(luaState, LUA_REGISTRYINDEX, "_LOADED");
 
 	} else if (!luaDisabled) {
-		luaState = lua_open();
+		luaState = luaL_newstate();
 		if (!luaState) {
 			luaDisabled = true;
 			host->Trace("> Lua: scripting engine failed to initalise\n");
@@ -2023,11 +2026,13 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 //!-end-[EncodingToLua]
 
 	// Metatable for global namespace, to publish iface constants
+	lua_pushglobaltable(luaState);
 	if (luaL_newmetatable(luaState, "SciTE_MT_GlobalScope")) {
 		lua_pushcfunction(luaState, cf_global_metatable_index);
 		lua_setfield(luaState, -2, "__index");
 	}
-	lua_setmetatable(luaState, LUA_GLOBALSINDEX);
+
+	lua_setmetatable(luaState, -2);
 
 	if (checkProperties && reload) {
 		CheckStartupScript();
@@ -2225,7 +2230,7 @@ bool LuaExtension::OnExecute(const char *s) {
 		int stackBase = lua_gettop(luaState);
 
 		lua_pushliteral(luaState, "string");
-		lua_rawget(luaState, LUA_GLOBALSINDEX);
+		lua_rawget(luaState, -2);
 		if (lua_istable(luaState, -1)) {
 			lua_pushliteral(luaState, "find");
 			lua_rawget(luaState, -2);
@@ -2235,7 +2240,7 @@ bool LuaExtension::OnExecute(const char *s) {
 				int status = lua_pcall(luaState, 2, 4, 0);
 				if (status==0) {
 					lua_insert(luaState, stackBase+1);
-					lua_gettable(luaState, LUA_GLOBALSINDEX);
+					lua_gettable(luaState, LUA_RIDX_GLOBALS);
 					if (!lua_isnil(luaState, -1)) {
 						if (lua_isfunction(luaState, -1)) {
 							// Try calling it and, even if it fails, short-circuit Filerx

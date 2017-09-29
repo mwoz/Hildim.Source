@@ -1244,7 +1244,7 @@ static int luacom_TryCatch(lua_State *L)
 		obj->tryCatch = idx;
 	}
 	else if (strcmp(c, "no value") && strcmp(c, "nil")){
-		luaL_typerror(L, 2, "function");
+		luaL_argerror(L, 2, "function");
 		return 0;
 	}
 	obj->bSkipCheckError = true;
@@ -2314,7 +2314,8 @@ LUACOM_API void luacom_open(lua_State *L)
 #ifdef LUA_DEBUGGING
   luaL_dofile(L, "luacom5.lua");
 #else
-#include "luacom5.loh"
+//#include "luacom5.loh"
+#include "luacom5.lh"
 #endif
   if (lua_gettop(L) > top1) lua_error(L); // failed loading
 

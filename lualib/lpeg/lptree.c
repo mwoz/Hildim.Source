@@ -1291,6 +1291,7 @@ int luaopen_lpeg (lua_State *L) {
   luaL_setfuncs(L, metareg, 0);
   luaL_newlib(L, pattreg);
   lua_pushvalue(L, -1);
+  //lua_setglobal(L, "lpeg");
   lua_setfield(L, -3, "__index");
   return 1;
 }

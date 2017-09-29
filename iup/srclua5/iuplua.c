@@ -17,7 +17,7 @@
 
 #include "iuplua.h"
 #include "il.h"
-
+#define LUA_VERSION_NUM		503
 
 static int StringCompare(lua_State *L)
 {

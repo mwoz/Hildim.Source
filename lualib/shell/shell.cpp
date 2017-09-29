@@ -1324,7 +1324,7 @@ extern int showinputbox( lua_State* );
 
 #pragma warning(pop)
 
-static const struct luaL_reg shell[] = 
+luaL_Reg shell[] = 
 {
 	{ "greateCuid", greateCuid },
 	{ "exec", exec },

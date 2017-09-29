@@ -28,6 +28,9 @@ CString m_strLan = "xxx";
 CString m_strNetwork = "xxx";
 CString m_strService = "xxx";
 
+
+
+
 //
 //TODO: If this DLL is dynamically linked against the MFC DLLs,
 //		any functions exported from this DLL which call into
@@ -528,7 +531,7 @@ int mesage_ExistsMessage(lua_State* L)
 	lua_pushboolean(L, (msg->GetMsg(subName)!=NULL));
 	return 1;
 }
-static const struct luaL_reg mblua[] = {
+luaL_Reg mblua[] = {
 	{"CreateMessage",do_CreateMessage},
 	{"RestoreMessage",do_RestoreMessage},
 	{"CreateMbTransport",do_CreateMbTransport},
@@ -540,7 +543,7 @@ static const struct luaL_reg mblua[] = {
 	{"CheckXML",do_CheckXML},
 	{NULL, NULL},
 };
-static const struct luaL_reg message_methods[] = {
+luaL_Reg message_methods[] = {
 	{"ToString",mesage_ToString},
 	{"Subjects",mesage_Subjects},//Send, replay -  и в аргументах и в результате
 	{"Counts",mesage_Counts},//FieldCount, MessageCount

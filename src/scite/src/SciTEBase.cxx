@@ -506,6 +506,7 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 }
 
 SciTEBase::~SciTEBase() {
+	bFinalise = true;
 	if (extender)
 		extender->Finalise();
 //!	popup.Destroy();	//!-remove-[ExtendedContextMenu]
@@ -4933,9 +4934,11 @@ void SciTEBase::Trace(const char *s) {
 		makeVisible = true;		  //Защищаемся от рекурсивного зацикливания - может возникнуть еще одна ошибка при попытке открытия окна!
 		MakeOutputVisible(wOutput);
 		makeVisible = false;
-	}
+	} 
+	
 	OutputAppendStringSynchronised(s);
-	EnsureVisible();
+	if(!bFinalise)
+		EnsureVisible();
 }
 
 char *SciTEBase::Property(const char *key) {

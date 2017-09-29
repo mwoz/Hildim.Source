@@ -1427,7 +1427,7 @@ static int cf_global_print(lua_State *L) {
 int SciTEBase::internalRunLuaThread(SString strCmd, SString strDesc)	{
 	lua_State  *L;
 	host = this;
-	L = lua_open();
+	L = luaL_newstate();
 	lua_atpanic(L, LuaPanicFunction);
 	luaL_openlibs(L);
 	lua_register(L, "print", cf_global_print);

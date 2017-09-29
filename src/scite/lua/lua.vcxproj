@@ -14,6 +14,7 @@
     <ProjectGuid>{651DBAB5-138E-4BCE-B0D1-EA7CB249DA89}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>lua</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -50,7 +51,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -66,7 +67,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -82,7 +83,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lapi.h" />
+    <ClInclude Include="src\lauxlib.h" />
     <ClInclude Include="src\lcode.h" />
+    <ClInclude Include="src\lctype.h" />
     <ClInclude Include="src\ldebug.h" />
     <ClInclude Include="src\ldo.h" />
     <ClInclude Include="src\lfunc.h" />
@@ -93,50 +96,53 @@
     <ClInclude Include="src\lobject.h" />
     <ClInclude Include="src\lopcodes.h" />
     <ClInclude Include="src\lparser.h" />
+    <ClInclude Include="src\lprefix.h" />
     <ClInclude Include="src\lstate.h" />
     <ClInclude Include="src\lstring.h" />
     <ClInclude Include="src\ltable.h" />
     <ClInclude Include="src\ltm.h" />
+    <ClInclude Include="src\lua.h" />
+    <ClInclude Include="src\lua.hpp" />
+    <ClInclude Include="src\luaconf.h" />
+    <ClInclude Include="src\lualib.h" />
     <ClInclude Include="src\lundump.h" />
     <ClInclude Include="src\lvm.h" />
     <ClInclude Include="src\lzio.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\lapi.c" />
+    <ClCompile Include="src\lauxlib.c" />
+    <ClCompile Include="src\lbaselib.c" />
+    <ClCompile Include="src\lbitlib.c" />
     <ClCompile Include="src\lcode.c" />
+    <ClCompile Include="src\lcorolib.c" />
+    <ClCompile Include="src\lctype.c" />
+    <ClCompile Include="src\ldblib.c" />
     <ClCompile Include="src\ldebug.c" />
     <ClCompile Include="src\ldo.c" />
     <ClCompile Include="src\ldump.c" />
     <ClCompile Include="src\lfunc.c" />
     <ClCompile Include="src\lgc.c" />
-    <ClCompile Include="src\lib\lauxlib.c" />
-    <ClCompile Include="src\lib\lbaselib.c" />
-    <ClCompile Include="src\lib\ldblib.c" />
-    <ClCompile Include="src\lib\linit.c" />
-    <ClCompile Include="src\lib\liolib.c" />
-    <ClCompile Include="src\lib\lmathlib.c" />
-    <ClCompile Include="src\lib\loadlib.c" />
-    <ClCompile Include="src\lib\loslib.c" />
-    <ClCompile Include="src\lib\lstrlib.c" />
-    <ClCompile Include="src\lib\ltablib.c" />
+    <ClCompile Include="src\linit.c" />
+    <ClCompile Include="src\liolib.c" />
     <ClCompile Include="src\llex.c" />
+    <ClCompile Include="src\lmathlib.c" />
     <ClCompile Include="src\lmem.c" />
+    <ClCompile Include="src\loadlib.c" />
     <ClCompile Include="src\lobject.c" />
     <ClCompile Include="src\lopcodes.c" />
+    <ClCompile Include="src\loslib.c" />
     <ClCompile Include="src\lparser.c" />
     <ClCompile Include="src\lstate.c" />
     <ClCompile Include="src\lstring.c" />
+    <ClCompile Include="src\lstrlib.c" />
     <ClCompile Include="src\ltable.c" />
+    <ClCompile Include="src\ltablib.c" />
     <ClCompile Include="src\ltm.c" />
     <ClCompile Include="src\lundump.c" />
+    <ClCompile Include="src\lutf8lib.c" />
     <ClCompile Include="src\lvm.c" />
     <ClCompile Include="src\lzio.c" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

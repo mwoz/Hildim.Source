@@ -898,6 +898,7 @@ public:
 	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
 	OutputMode curOutMode = outNull;
 	virtual Ihandle * IupTab(int id) = 0;
+	bool bFinalise = false;
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);

@@ -148,7 +148,7 @@ static int l_generate(lua_State *L) {
 		int n = sp->generate(&list, word, example);
 		RETURN_LIST;
 	} else if (lua_type(L, 3) == LUA_TTABLE) {
-		int howmany = lua_objlen(L, 3);
+		int howmany = lua_rawlen(L, 3);
 		char ** desc = (char**) calloc(howmany, sizeof(char*));
 		for (int i=0; i<howmany; i++) {
 			lua_rawgeti(L, 3, i+1);
@@ -238,8 +238,8 @@ static void createMetatable(lua_State *L, const char *name, luaL_Reg *methods) {
 	}
 }
 
-extern "C" {
-	LUA_API int luaopen_luahunspell(lua_State *L) {
+ 
+extern "C" __declspec(dllexport) int luaopen_luahunspell(lua_State *L) {
 		// copy locale from environment
 		//setlocale(LC_ALL, "");
 
@@ -248,4 +248,3 @@ extern "C" {
 		lua_pushcfunction(L, g_spell);
 		return 1;
 	}
-}

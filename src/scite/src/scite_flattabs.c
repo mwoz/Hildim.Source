@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 #include <lua.h>
-#include "../../lua5.1/include/lauxlib.h"
+#include "../../lua53/include/lauxlib.h"
 
 #include "iup.h"
 #include "iupcbs.h"
@@ -361,13 +361,13 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 {
 
 	Ihandle* prnt = IupGetParent(ih);
-	
+
 	if ( (ih->currentwidth < 10) && (ih->currentwidth < prnt->currentwidth) && (iupAttribGetInt(ih, "_IUPFREDRAW")< 1000)) {
 		iupAttribSetInt(ih, "_IUPFREDRAW", iupAttribGetInt(ih, "_IUPFREDRAW") + 1);
 		IupRefreshChildren(prnt);
 		IupUpdateChildren(prnt);
 
-	 return IUP_DEFAULT; 
+	 return IUP_DEFAULT;
 	}
 	iupAttribSetInt(ih, "_IUPFREDRAW", 0);
 
@@ -387,7 +387,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   int show_lines = iupAttribGetBoolean(ih, "SHOWLINES");
   int title_width;
   int title_height = iFlatTabsGetTitleHeight(ih, &title_width, 1);
- 
+
   int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
   int pos, horiz_alignment, vert_alignment, tab_x = 0;
   unsigned char line_r = 0, line_g = 0, line_b = 0;
@@ -397,7 +397,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
   int valuepos = iupAttribGetInt(ih, "VALUEPOS");
 
-	  
+
 
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
@@ -579,7 +579,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       {
 		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos) {
 	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
-		  iFlatTabsRedraw_CB(ih); 
+		  iFlatTabsRedraw_CB(ih);
 		}
 		else
           iupdrvDrawResetClip(dc);
@@ -630,7 +630,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       char* extra_forecolor = iupAttribGetId(ih, "EXTRAFORECOLOR", i);
       int extra_press = iupAttribGetInt(ih, "_IUPFTABS_EXTRAPRESS");
 
-      extra_horiz_alignment = horiz_alignment; 
+      extra_horiz_alignment = horiz_alignment;
       extra_vert_alignment = vert_alignment;
       iFlatTabsGetAlignment(extra_alignment, &extra_horiz_alignment, &extra_vert_alignment);
 
@@ -844,7 +844,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 {
 
     int inside_close;
-    int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");  
+    int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
 	int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
 
 
@@ -931,7 +931,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 			  ;
 		  //!!!TODO
           else
-            iupdrvPostRedraw(ih);        
+            iupdrvPostRedraw(ih);
       }
     }
 
@@ -1000,7 +1000,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
     if (cb(ih, ihTarget, button, pressed, x, y, tab_found, dragTab, status) == IUP_IGNORE)
       return IUP_DEFAULT;
   }
-  
+
   return IUP_DEFAULT;
 }
 
@@ -1061,7 +1061,7 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 	if (ih->data->xFreeMax && (ih->data->xFreeMax < x || ih->data->xFree > x))
 		ih->data->xFreeMax = 0;
 
-	if (iup_isbutton1(status)) { 
+	if (iup_isbutton1(status)) {
 		if ((!ih->data->start && abs(x - ih->data->xStart) > 5 || abs(y - ih->data->yStart) > 5) && ih->data->dragTab > -1) {
 			ih->data->start = 1;
 			start++;
@@ -1080,7 +1080,7 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 	}
     if (cb(ih, ihTarget, x, y, tab_found, dragTab, start, status) == IUP_IGNORE)
       return IUP_DEFAULT;
-	
+
 	if ((cbS) && start && (tab_found >= 0 || tab_found == -3 || tab_found == -2) && ih->data->dragTab != tab_found &&!ih->data->xFreeMax) {
 		if (tab_found == -3)
 			tab_found = ih->data->dragTab + 1;
@@ -1096,7 +1096,7 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 			int tab_w, tab_w2, tab_h;
 			iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, tab_found, &tab_w, &tab_h);
 			iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, ih->data->dragTab, &tab_w2, &tab_h);
-			
+
 			if (tab_found > ih->data->dragTab) {
 				ih->data->xFree = x;
 				ih->data->xFreeMax = x - tab_w + tab_w2;
@@ -1207,7 +1207,7 @@ static int iFlatTabsLeaveWindow_CB(Ihandle* ih)
   if (redraw)
     iupdrvPostRedraw(ih);
 
-  return IUP_DEFAULT; 
+  return IUP_DEFAULT;
 }
 
 
@@ -1303,8 +1303,8 @@ static int iFlatTabsUpdateSetAttrib(Ihandle* ih, const char* value)
   (void)value;
  // if (ih->handle)
 	 // iupdrvRedrawNow(ih);
-    //iupdrvPostRedraw(ih); 
-	
+    //iupdrvPostRedraw(ih);
+
   return 1;
 }
 
@@ -1615,8 +1615,8 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params)
   msz[0] = 'x';
   h += 6;
   _itoa(h, msz + 1, 10);
-  
-  iupAttribSet(ih, "MAXSIZE", msz); 
+
+  iupAttribSet(ih, "MAXSIZE", msz);
   iupAttribSetInt(ih, "_IUPFTABS_HIGHLIGHTED", ITABS_NONE);
   iupAttribSetInt(ih, "_IUPFTABS_CLOSEHIGH", ITABS_NONE);
   iupAttribSetInt(ih, "_IUPFTABS_CLOSEPRESS", ITABS_NONE);
@@ -1648,13 +1648,13 @@ Iclass* iupFlattabsCtrlNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "flattabs_ctrl";
-  ic->format = NULL; 
+  ic->format = NULL;
   ic->nativetype = IUP_TYPECANVAS;
 
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
   ic->has_attrib_id = 1;
- 
+
   /* Class functions */
   ic->New = iupFlattabsCtrlNewClass;
   ic->Create = iFlatTabsCreateMethod;
@@ -1760,7 +1760,7 @@ Iclass* iupFlattabsCtrlNewClass(void)
   iupClassRegisterAttribute(ic, "EXPANDBUTTON", NULL, iFlatTabsSetExpandButtonAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "EXPANDBUTTONPOS", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "EXPANDBUTTONSTATE", NULL, iFlatTabsSetExpandButtonStateAttrib, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  
+
 
   /* Default node images */
   if (!IupGetHandle("IMGFLATCLOSE"))
