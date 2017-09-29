@@ -817,6 +817,7 @@ bool SciTEBase::Save() {
 			}
 			return false;
 		}
+		BuffersMenu();
 		return true;
 	} else {
 		return SaveAsDialog();
