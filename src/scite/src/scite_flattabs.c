@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 #include <lua.h>
-#include "../../lua53/include/lauxlib.h"
+#include "lauxlib.h"
 
 #include "iup.h"
 #include "iupcbs.h"

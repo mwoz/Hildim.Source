@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level4</WarningLevel>
-      <AdditionalIncludeDirectories>../../lua53/include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDOWS;_USRDLL;SHELL_EXPORTS;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\shell.pch</PrecompiledHeaderOutputFile>
@@ -94,7 +94,7 @@
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDOWS;_USRDLL;SHELL_EXPORTS;_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../lua53/include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
     </ClCompile>

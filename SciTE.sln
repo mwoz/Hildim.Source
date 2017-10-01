@@ -8,12 +8,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SciTE", "src\scite\SciTE.vc
 		{1EBC7A53-4677-4C3A-8D4A-49D301F17D85} = {1EBC7A53-4677-4C3A-8D4A-49D301F17D85}
 		{5EEFE977-C56D-462F-BDEE-12A5452EB8CC} = {5EEFE977-C56D-462F-BDEE-12A5452EB8CC}
 		{00AAFF9A-F770-41B8-A27F-53BF47C329D0} = {00AAFF9A-F770-41B8-A27F-53BF47C329D0}
+		{651DBAB5-138E-4BCE-B0D1-EA7CB249DA89} = {651DBAB5-138E-4BCE-B0D1-EA7CB249DA89}
+		{2C7E83B9-7FE8-432A-97BA-FCF4D0728408} = {2C7E83B9-7FE8-432A-97BA-FCF4D0728408}
 		{0C80BBEE-1B00-4567-1234-067292C84EDB} = {0C80BBEE-1B00-4567-1234-067292C84EDB}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SciLexer", "src\scintilla\SciLexer.vcxproj", "{00AAFF9A-F770-41B8-A27F-53BF47C329D0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luahunspell", "lualib\luahunspell\luahunspell.vcxproj", "{91678D5A-9064-4E74-9DD2-ADDBD0430FEB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhunspell", "lualib\hunspell\src\win_api\libhunspell.vcxproj", "{53609BB3-D874-465C-AF7B-DF626DB0D89B}"
 EndProject
@@ -39,12 +44,18 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupcontrols", "iup\scitePr\iupcontrols.vcxproj", "{5EEFE977-C56D-462F-BDEE-12A5452EB8CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LuaXml", "lualib\luaxml\LuaXml\LuaXml.vcxproj", "{E4F20CD2-0E72-4264-8A7F-3669C8FBBF5F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iuplua", "iup\scitePr\iuplua\iuplua.vcxproj", "{1EBC7A53-4677-4C3A-8D4A-49D301F17D85}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupluacontrols", "iup\scitePr\iuplua\iupluacontrols.vcxproj", "{1EBC7A53-4677-75D7-8D4A-49D301F17D85}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lpeg", "lualib\lpeg\lpeg.vcxproj", "{EF1B9445-ECF9-420E-9FA9-C040A84F7322}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupweb", "iup\scitePr\iupweb.vcxproj", "{0A12BCDE-4F00-5637-8901-067292C84EDB}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -52,6 +63,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupweb", "iup\scitePr\iupwe
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luacom.dll", "lualib\luacom\mak.vs2005\luacom.dll.vcxproj", "{9B245550-2DC3-4A2E-870B-9E165EDC3916}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "iupole", "iup\scitePr\iupole.vcxproj", "{0C80BBEE-1B00-4567-1234-067292C84EDB}"
 EndProject

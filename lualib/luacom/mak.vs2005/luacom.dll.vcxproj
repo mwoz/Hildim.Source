@@ -59,7 +59,7 @@
     </PreBuildEvent>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../../../lua53/include;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../src/scite/lua/src;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;NLUA51;WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -71,7 +71,8 @@
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)/$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>../../lua53/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -80,7 +81,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>../../../lua53/include;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../src/scite/lua/src;../include;../src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;NLUA51;WIN32;NDEBUG;_WINDOWS;_USRDLL;MAKVS2005_EXPORTS;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader />
@@ -90,7 +91,8 @@
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)/$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>../../lua53/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

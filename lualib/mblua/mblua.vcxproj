@@ -126,7 +126,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../lua53/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../src/scite/lua/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;NDEBUG;_WINDOWS;_NOLOG;PROJECT_HILDIM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -168,7 +168,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../lua53/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../src/scite/lua/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_DEBUG;_WINDOWS;_NOLOG;PROJECT_HILDIM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -212,7 +212,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../lua53/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../src/scite/lua/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_DEBUG;_WINDOWS;_NOLOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -256,7 +256,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../lua53/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\Common_CPP;../../src/scite/lua/src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;NDEBUG;_WINDOWS;_NOLOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
