@@ -42,13 +42,13 @@
     <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>luacom</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>luacom</TargetName>
@@ -70,7 +70,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)/$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>../../lua53/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -89,7 +89,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)/$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>../../lua53/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

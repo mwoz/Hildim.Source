@@ -90,7 +90,8 @@ int CmbluaApp::ExitInstance()
 	if(mbTransport != NULL)
 	{
 		delete mbTransport;
-		::ExitProcess(0);
+		mbTransport = NULL;
+		//::ExitProcess(0);
 	}
 	return 0;
 }
