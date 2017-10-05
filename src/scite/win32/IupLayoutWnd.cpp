@@ -83,7 +83,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	Ihandle* containers[13];
 
 	char* fntSize = pSciteWin->Property("iup.defaultfontsize");
-	if (strcmp(fntSize, "")) 
+
+	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
 
 	if (strcmp(pSciteWin->Property("tab.oldstile"), "")) {
