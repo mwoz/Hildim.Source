@@ -70,3 +70,12 @@
 /iup/src/gtk
 /iup/src/mot
 /iup/src/haiku
+/.vs/SciTE/v15
+/lualib/luacom/src/library/luacom5.lh
+/lualib/luacom/src/library/luacom5.loh
+/src/scintilla/Release
+/src/scintilla/Release
+/src/scintilla/Release/ScintRes.res
+/src/scite/Release
+/src/scite/lua/.vs/lua/v15
+/iup/lib/Debug/Lua53

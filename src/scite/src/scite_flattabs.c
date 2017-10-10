@@ -362,11 +362,11 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
 	Ihandle* prnt = IupGetParent(ih);
 
-	if ( (ih->currentwidth < 10) && (ih->currentwidth < prnt->currentwidth) && (iupAttribGetInt(ih, "_IUPFREDRAW")< 1000)) {
+	if ( (ih->currentwidth < 20) && (ih->currentwidth < prnt->currentwidth) && (iupAttribGetInt(ih, "_IUPFREDRAW")< 1000)) {
 		iupAttribSetInt(ih, "_IUPFREDRAW", iupAttribGetInt(ih, "_IUPFREDRAW") + 1);
 		IupRefreshChildren(prnt);
 		IupUpdateChildren(prnt);
-
+	
 	 return IUP_DEFAULT;
 	}
 	iupAttribSetInt(ih, "_IUPFREDRAW", 0);
@@ -398,17 +398,17 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   int valuepos = iupAttribGetInt(ih, "VALUEPOS");
 
 
-
+  int iWidth = max(iupAttribGetInt(ih, "_IUPFWIDTH"), ih->currentwidth);
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
   if (!tabs_bgcolor)
     tabs_bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
 
   /* draw child area background */
-  iupFlatDrawBox(dc, 0, ih->currentwidth - 1, title_height, ih->currentheight - 1, bgcolor, NULL, 1);
+  iupFlatDrawBox(dc, 0, iWidth- 1, title_height, ih->currentheight - 1, bgcolor, NULL, 1);
 
   /* title area background */
-  iupFlatDrawBox(dc, 0, ih->currentwidth - 1, 0, title_height - 1, tabs_bgcolor, NULL, 1);
+  iupFlatDrawBox(dc, 0, iWidth- 1, 0, title_height - 1, tabs_bgcolor, NULL, 1);
 
   iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
   iFlatTabsGetAlignment(alignment, &horiz_alignment, &vert_alignment);
@@ -420,7 +420,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
     iupStrToRGB(title_line_color, &line_r, &line_g, &line_b);
 
     /* tab bottom horizontal and top children horizontal */
-    iupdrvDrawLine(dc, 0, title_height - 1, ih->currentwidth - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE);
+    iupdrvDrawLine(dc, 0, title_height - 1, iWidth- 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE);
   }
 
   scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
@@ -506,13 +506,13 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       reset_clip = 0;
 	  int valuenotdraw = 0;
 	  //iupAttribSetIntId(ih, "_IUTABS_RIGHT", pos, tab_x + tab_w);
-      if (title_width > ih->currentwidth - extra_width) /* has right scroll button */
+      if (title_width > iWidth- extra_width) /* has right scroll button */
       {
         int scroll_width = title_height / 2;
 
-        if (tab_x + tab_w > ih->currentwidth - extra_width - scroll_width)
+        if (tab_x + tab_w > iWidth- extra_width - scroll_width)
         {
-          iupdrvDrawSetClipRect(dc, tab_x, 0, ih->currentwidth - extra_width - scroll_width, title_height);
+          iupdrvDrawSetClipRect(dc, tab_x, 0, iWidth- extra_width - scroll_width, title_height);
           reset_clip = 1;
 		  if (pos == valuepos)
 			  valuenotdraw = 1;
@@ -602,7 +602,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
     iFlatTabsDrawScrollLeftButton(dc, tabs_bgcolor, foreground_color, active, title_height);
   }
 
-  if (title_width > ih->currentwidth - extra_width)
+  if (title_width > iWidth- extra_width)
   {
     char* foreground_color = tabs_forecolor;
     if (tab_highlighted == ITABS_SB_RIGHT)
@@ -613,7 +613,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
         foreground_color = forecolor;
     }
 
-    iFlatTabsDrawScrollRightButton(dc, tabs_bgcolor, foreground_color, active, title_height, ih->currentwidth - extra_width);
+    iFlatTabsDrawScrollRightButton(dc, tabs_bgcolor, foreground_color, active, title_height, iWidth- extra_width);
   }
 
   if (extra_buttons)
@@ -646,7 +646,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
       extra_w = iFlatTabsGetExtraWidthId(ih, i, img_position, horiz_padding);  /* this will also set any id based font */
 
-      extra_x = ih->currentwidth - right_extra_width - extra_w;
+      extra_x = iWidth- right_extra_width - extra_w;
 
       if (extra_press == extra_id)
       {
@@ -680,8 +680,8 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   if (show_lines)
   {
     iupdrvDrawLine(dc, 0, title_height, 0, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* left children vertical */
-    iupdrvDrawLine(dc, ih->currentwidth - 1, title_height, ih->currentwidth - 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* right children vertical */
-    iupdrvDrawLine(dc, 0, ih->currentheight - 1, ih->currentwidth - 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* bottom children horizontal */
+    iupdrvDrawLine(dc, iWidth- 1, title_height, iWidth- 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* right children vertical */
+    iupdrvDrawLine(dc, 0, ih->currentheight - 1, iWidth- 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* bottom children horizontal */
   }
 
   iupdrvDrawFlush(dc);
@@ -693,6 +693,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
 static int iFlatTabsResize_CB(Ihandle* ih, int width, int height)
 {
+  iupAttribSetInt(ih, "_IUPFWIDTH", width);
   int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
   if (scroll_pos)
   {

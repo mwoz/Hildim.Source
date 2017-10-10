@@ -1760,6 +1760,13 @@ void PublishGlobalBufferData() {
 	lua_setglobal(luaState, "buffer");
 }
 
+int OnParamKeyPress(int c, int press) {
+	if ((press == 1) && (c = K_F1)) {
+		return CallNamedFunction("OnParamKeyPress");
+	}
+	return 0;
+}
+
 static int cf_editor_reload_startup_script(lua_State*); //!-add-[StartupScriptReload]
 
 static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
@@ -1834,7 +1841,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	} else {
 		return false;
 	}
-
 	// ...register standard libraries
 	luaL_openlibs(luaState);
 	iuplua_open(luaState);
@@ -2034,9 +2040,11 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_setmetatable(luaState, -2);
 
+	IupSetFunction("GLOBALKEYPRESS_CB", (Icallback)OnParamKeyPress);
 	if (checkProperties && reload) {
 		CheckStartupScript();
 	}
+
 
 	//if (startupScript) {
 	//	// TODO: Should buffer be deactivated temporarily, so editor iface
@@ -2094,7 +2102,9 @@ bool LuaExtension::Finalise() {
 	if (luaState) {
 		CallNamedFunction("OnFinalise"); //!-add-[OnFinalise]
 		iuplua_close(luaState);
-		lua_close(luaState);
+		//try{
+			lua_close(luaState);
+		//} catch (...) {} // возникает ошибка ксли была перезагрузка скрипта
 	}
 
 	luaState = NULL;
@@ -2228,7 +2238,7 @@ bool LuaExtension::OnExecute(const char *s) {
 		// May as well use Lua's pattern matcher to parse the command.
 		// Scintilla's RESearch was the other option.
 		int stackBase = lua_gettop(luaState);
-
+		lua_pushglobaltable(luaState);
 		lua_pushliteral(luaState, "string");
 		lua_rawget(luaState, -2);
 		if (lua_istable(luaState, -1)) {
@@ -2239,13 +2249,21 @@ bool LuaExtension::OnExecute(const char *s) {
 				lua_pushliteral(luaState, "^%s*([%a_][%a%d_]*)%s*(.-)%s*$");
 				int status = lua_pcall(luaState, 2, 4, 0);
 				if (status==0) {
-					lua_insert(luaState, stackBase+1);
-					lua_gettable(luaState, LUA_RIDX_GLOBALS);
+					const char* fn = lua_tolstring(luaState, -2, 0);
+					const char* arg = lua_tolstring(luaState, -1, 0);
+					lua_pushglobaltable(luaState);
+					//lua_insert(luaState, stackBase+1);
+					//lua_pushliteral(luaState, fn);
+					lua_pushstring(luaState, fn);
+					lua_gettable(luaState, -2);
+					//lua_gettable(luaState, LUA_RIDX_GLOBALS);
 					if (!lua_isnil(luaState, -1)) {
 						if (lua_isfunction(luaState, -1)) {
 							// Try calling it and, even if it fails, short-circuit Filerx
 							handled = true;
 							lua_insert(luaState, stackBase+1);
+							lua_pushstring(luaState, arg);
+							lua_insert(luaState, stackBase + 2);
 							lua_settop(luaState, stackBase+2);
 							if (!call_function(luaState, 1, true)) {
 								host->Trace(">Lua: error occurred while processing command\n");
@@ -2865,10 +2883,20 @@ void LuaExtension::OnRightEditorVisibility(bool show) {
 }
 
 static int cf_editor_reload_startup_script(lua_State*) {
-	InitGlobalScope(false, true);
-	if (extensionScript.length()) {
-		reinterpret_cast<LuaExtension*>(host)->Load(extensionScript.c_str());
+
+	FilePath fpTest(GUI::StringFromUTF8(startupScript));
+	if (fpTest.Exists()) {
+		luaL_loadfile(luaState, startupScript);
+		if (!call_function(luaState, 0, true)) {
+			host->Trace(">Lua: error occurred while loading startup script\n");
+		}
 	}
+
+
+	//InitGlobalScope(false, true);
+	//if (extensionScript.length()) {
+	//	reinterpret_cast<LuaExtension*>(host)->Load(extensionScript.c_str());
+	//}
 	return 0;
 }
 
