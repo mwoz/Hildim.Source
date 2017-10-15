@@ -810,7 +810,8 @@ static int iExpanderExpandButtonButton_CB(Ihandle* expand_button, int button, in
   {
     /* expander -> bar -> box -> (expand_button, ...) */
     Ihandle* ih = IupGetParent(IupGetParent(IupGetParent(expand_button)));
-
+	//if (!iExpanderGetBarSize(ih))
+	//	return IUP_DEFAULT;
     if (ih->data->auto_show)
     {
       if (IupGetInt(ih->data->auto_show_timer, "RUN"))
@@ -931,6 +932,8 @@ static int iExpanderExtraButtonButton_CB(Ihandle* extra_button, int button, int 
 static int iExpanderBarRedraw_CB(Ihandle* bar)
 {
   Ihandle* ih = bar->parent;
+  //if(!iExpanderGetBarSize(ih))
+//	  return IUP_DEFAULT;
   char* backcolor = iupAttribGet(ih, "BACKCOLOR");
   int frame_width = 0;
   int frame = iupAttribGetBoolean(ih, "FRAME");
@@ -1020,6 +1023,10 @@ static int iExpanderSetBarSizeAttrib(Ihandle* ih, const char* value)
     ih->data->bar_size = -1;
   else
     iupStrToInt(value, &ih->data->bar_size);  /* must manually update layout */
+  if (!ih->data->bar_size) {
+	  Ihandle* expand_button = ih->firstchild;
+	  IupSetAttribute(expand_button, "VISIBLE", "NO");
+  }
   return 0; /* do not store value in hash table */
 }
 

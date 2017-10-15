@@ -435,5 +435,8 @@
     <ClInclude Include="..\src\iup_drvdraw.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\iup_varg.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

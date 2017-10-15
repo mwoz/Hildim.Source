@@ -849,7 +849,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.2.0\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.3.0\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -864,7 +864,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f));
 		AddStyledText(wsci, "Scintilla 4.0.0 code editing componen, Neil Hodgson\n", 3);
 		AddStyledText(wsci, "http://www.scintilla.org\n", 4);
-		AddStyledText(wsci, "UIP libraries 3.22 by TeCGraf, PUC-Rio\n", 3);
+		AddStyledText(wsci, "UIP libraries 3.23 by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://iup.sourceforge.net\n", 4);
 		AddStyledText(wsci, "Lua 5.3 scripting language by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://www.lua.org\n", 4);
