@@ -23,6 +23,7 @@
 #include "iup_image.h"
 #include "iup_register.h"
 #include "iup_drvdraw.h"
+#include "iup_varg.h"
 
 
 #define ITABS_CLOSE_SIZE 13
@@ -122,6 +123,69 @@ static void iFlatTabsInitializeImages(void)
   IupSetHandle("IupFlatExpandUp", image);
 }
 
+static int iFlatTabsGetExtraWidth(Ihandle* ih, int extra_buttons, int img_position, int horiz_padding);
+static void iFlatTabsGetTabSize(Ihandle* ih, int fixedwidth, int horiz_padding, int vert_padding, int show_close, int pos, int *tab_w, int *tab_h);
+
+static void iFlatTabsCheckVisibleTab(Ihandle* ih, Ihandle* child)
+{
+  int child_pos = IupGetChildPos(ih, child);
+  int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
+
+  if (child_pos == scroll_pos)
+    return; /* already visible */
+
+  if (child_pos < scroll_pos)
+  {
+    /* if before current scroll simply scroll to child */
+    iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", child_pos);
+    return;
+  }
+
+  if (child_pos > scroll_pos)
+  {
+    int extra_width, horiz_padding, vert_padding;
+    int tab_w, tab_h, pos;
+    int* visible_width, check_width;
+    int img_position = iupFlatGetImagePosition(iupAttribGetStr(ih, "TABSIMAGEPOSITION"));
+    int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
+    int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
+    int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
+    int count = IupGetChildCount(ih);
+    int old_scroll_pos = scroll_pos;
+
+    iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
+    extra_width = iFlatTabsGetExtraWidth(ih, extra_buttons, img_position, horiz_padding);
+
+    visible_width = calloc(count, sizeof(int));
+
+    check_width = 0;
+    for (pos = scroll_pos, child = ih->firstchild; child && pos <= child_pos; child = child->brother, pos++)
+    {
+      int tabvisible = iupAttribGetBooleanId(ih, "TABVISIBLE", pos);
+      if (tabvisible)
+      {
+        iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, pos, &tab_w, &tab_h);
+
+        visible_width[pos] = tab_w;
+        check_width += tab_w;
+      }
+    }
+
+    while (check_width > ih->currentwidth - extra_width && scroll_pos < child_pos)
+    {
+      scroll_pos++;
+
+      check_width = 0;
+      for (pos = scroll_pos; pos <= child_pos; pos++)
+        check_width += visible_width[pos];
+    }
+
+    if (old_scroll_pos != scroll_pos)
+      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos);
+
+    free(visible_width);
+  }
+}
 
 static Ihandle* iFlatTabsGetCurrentTab(Ihandle* ih)
 {
@@ -136,7 +200,11 @@ static void iFlatTabsSetCurrentTab(Ihandle* ih, Ihandle* child)
 
   iupAttribSet(ih, "_IUPFTABS_VALUE_HANDLE", (char*)child);
   if (child)
+  {
     IupSetAttribute(child, "VISIBLE", "Yes");
+
+    iFlatTabsCheckVisibleTab(ih, child);
+  }
 
   if (ih->handle)
     iupdrvPostRedraw(ih);
@@ -237,6 +305,13 @@ static int iFlatTabsGetTitleHeight(Ihandle* ih, int *title_width, int scrolled_w
       if (title_width)
         *title_width += tab_w;
     }
+  }
+
+  if (pos == 0) /* empty tabs, let the application define at least TABTITLE0 */
+  {
+    iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close, pos, &tab_w, &tab_h);
+    title_height = tab_h;
+    if (title_width) *title_width = tab_w;
   }
 
   return title_height;
@@ -697,54 +772,73 @@ static int iFlatTabsCallTabChange(Ihandle* ih, Ihandle* prev_child, int prev_pos
   return ret;
 }
 
-static int iFlatTabsCheckCurrentTab(Ihandle* ih, Ihandle* check_child, int pos, int removed)
+static void iFlatTabsCheckCurrentTab(Ihandle* ih, Ihandle* check_child, int check_pos, int removed)
 {
   Ihandle* current_child = iFlatTabsGetCurrentTab(ih);
   if (current_child == check_child)
   {
-    int p, v = 0;
+    int p;
     Ihandle* child;
 
     /* if given tab is the current tab,
     then the current tab must be changed to a visible tab */
 
-    /* this function is called after the child has being removed from the hierarchy,
+    /* this function is also called after the child has being removed from the hierarchy,
     but before the system tab being removed. */
 
-    p = 0;
-    if (removed && p == pos)
-      p++;  /* increment twice to compensate for child already removed */
-
-    for (child = ih->firstchild; child; child = child->brother)
+    /* look forward first */
+    child = IupGetChild(ih, check_pos);
+    if (child) /* could be the last */
     {
-      if (iupAttribGetBooleanId(ih, "TABVISIBLE", p))
+      p = check_pos;
+      if (removed)
+        p++;  /* increment to compensate for child already removed, but id based attributes are not updated yet */
+      else
       {
-        v++;
-
-        if (p != pos)
-        {
-          if (iupAttribGetBoolean(ih, "TABCHANGEONCHECK"))
-            iFlatTabsCallTabChange(ih, current_child, pos, child); /* ignore return value */
-
-          iFlatTabsSetCurrentTab(ih, child);
-          return 1;
-        }
+        child = child->brother;
+        p++; /* increment to get the next child */
       }
 
-      p++;
-      if (removed && p == pos)
-        p++;  /* increment twice to compensate for child already removed */
+      for (; child; child = child->brother, p++)
+      {
+        if (iupAttribGetBooleanId(ih, "TABVISIBLE", p))
+        {
+          /* found a new tab to be current */
+          if (iupAttribGetBoolean(ih, "TABCHANGEONCHECK"))
+            iFlatTabsCallTabChange(ih, check_child, check_pos, child); /* ignore return value */
+
+          iFlatTabsSetCurrentTab(ih, child);
+          return;
+        }
+      }
     }
 
-    if (v == 0 && ih->firstchild) /* all invisible but has at least 1 tab */
+    /* look backward */
+    child = IupGetChild(ih, check_pos - 1);
+    if (child) /* could be the first */
     {
-      /* make sure to hide the current child */
-      iFlatTabsSetCurrentTab(ih, NULL);
-      return 1;
-    }
-  }
+      p = check_pos - 1;
 
-  return 0;
+      while (p >= 0 && child)
+      {
+        if (iupAttribGetBooleanId(ih, "TABVISIBLE", p))
+        {
+          /* found a new tab to be current */
+          if (iupAttribGetBoolean(ih, "TABCHANGEONCHECK"))
+            iFlatTabsCallTabChange(ih, check_child, check_pos, child); /* ignore return value */
+
+          iFlatTabsSetCurrentTab(ih, child);
+          return;
+        }
+
+        p--;
+        child = IupGetChild(ih, p);
+      }
+    }
+
+    /* could NOT find a new tab to be current (empty or all invisible) */
+    iFlatTabsSetCurrentTab(ih, NULL);
+  }
 }
 
 static int iFlatTabsFindTab(Ihandle* ih, int cur_x, int cur_y, int show_close, int *inside_close)
@@ -1210,7 +1304,7 @@ static int iFlatTabsSetValueHandleAttrib(Ihandle* ih, const char* value)
 
 static char* iFlatTabsGetValueHandleAttrib(Ihandle* ih)
 {
-  return iupAttribGet(ih, "_IUPFTABS_VALUE_HANDLE");
+  return (char*)iFlatTabsGetCurrentTab(ih);
 }
 
 static char* iFlatTabsGetCountAttrib(Ihandle* ih)
@@ -1267,19 +1361,17 @@ static char* iFlatTabsGetValueAttrib(Ihandle* ih)
 
 static int iFlatTabsSetTabVisibleAttrib(Ihandle* ih, int pos, const char* value)
 {
-  int redraw = 0;
-
   Ihandle* child = IupGetChild(ih, pos);
   if (child)
   {
     if (!iupStrBoolean(value))
     {
       iupAttribSetStrId(ih, "TABVISIBLE", pos, value);
-      redraw = iFlatTabsCheckCurrentTab(ih, child, pos, 0);
+      iFlatTabsCheckCurrentTab(ih, child, pos, 0);
     }
   }
 
-  if (redraw && ih->handle)
+  if (ih->handle)
     iupdrvPostRedraw(ih);
 
   return 1;
@@ -1515,12 +1607,6 @@ static int iFlatTabsSetTabsFontStyleAttrib(Ihandle* ih, const char* value)
   return 0;
 }
 
-static int iFlatTabsSetTabsFontAttrib(Ihandle* ih, const char* value)
-{
-  iupdrvSetFontAttrib(ih, value);
-  return 1;
-}
-
 static int iFlatTabsSetExpandButtonAttrib(Ihandle* ih, const char* value)
 {
   if (iupStrBoolean(value) && !iupAttribGetBoolean(ih, "EXPANDBUTTON"))
@@ -1559,8 +1645,20 @@ static int iFlatTabsSetExpandButtonStateAttrib(Ihandle* ih, const char* value)
 
 /*********************************************************************************/
 
+
+static int iFlatTabsConvertXYToPos(Ihandle* ih, int x, int y)
+{
+  int inside_close;
+  int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
+  int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
+  if (tab_found > ITABS_NONE)
+    return tab_found;
+  else
+    return -1;
+}
+
 #define ATTRIB_ID_COUNT 8
-const static char* attrib_id[ATTRIB_ID_COUNT] = {
+const static char* flattabs_attrib_id[ATTRIB_ID_COUNT] = {
   "TABTITLE",
   "TABIMAGE",
   "TABVISIBLE",
@@ -1585,22 +1683,22 @@ static void iFlatTabsChildAddedMethod(Ihandle* ih, Ihandle* child)
   {
     for (i = 0; i < ATTRIB_ID_COUNT; i++)
     {
-      char* value = iupAttribGetId(ih, attrib_id[i], p - 1);
-      iupAttribSetStrId(ih, attrib_id[i], p, value);
-      iupAttribSetStrId(ih, attrib_id[i], p - 1, NULL);
+      char* value = iupAttribGetId(ih, flattabs_attrib_id[i], p - 1);
+      iupAttribSetStrId(ih, flattabs_attrib_id[i], p, value);
+      iupAttribSetStrId(ih, flattabs_attrib_id[i], p - 1, NULL);
     }
   }
 
   /* transfer form child to Id based attribute */
   for (i = 0; i < ATTRIB_ID_COUNT; i++)
   {
-    if (!iupAttribGetId(ih, attrib_id[i], pos))
+    if (!iupAttribGetId(ih, flattabs_attrib_id[i], pos))
     {
-      char* value = iupAttribGet(child, attrib_id[i]);
+      char* value = iupAttribGet(child, flattabs_attrib_id[i]);
       if (value)
-        iupAttribSetStrId(ih, attrib_id[i], pos, value);
-      else if (iupStrEqual(attrib_id[i], "TABVISIBLE") || iupStrEqual(attrib_id[i], "TABACTIVE"))
-        iupAttribSetStrId(ih, attrib_id[i], pos, "Yes");  /* ensure a default value */
+        iupAttribSetStrId(ih, flattabs_attrib_id[i], pos, value);
+      else if (iupStrEqual(flattabs_attrib_id[i], "TABVISIBLE") || iupStrEqual(flattabs_attrib_id[i], "TABACTIVE"))
+        iupAttribSetStrId(ih, flattabs_attrib_id[i], pos, "Yes");  /* ensure a default value */
     }
   }
 
@@ -1635,14 +1733,20 @@ static void iFlatTabsChildRemovedMethod(Ihandle* ih, Ihandle* child, int pos)
   {
     for (i = 0; i < ATTRIB_ID_COUNT; i++)
     {
-      char* value = iupAttribGetId(ih, attrib_id[i], p + 1);
-      iupAttribSetStrId(ih, attrib_id[i], p, value);
-      iupAttribSetStrId(ih, attrib_id[i], p + 1, NULL);
+      char* value = iupAttribGetId(ih, flattabs_attrib_id[i], p + 1);
+      iupAttribSetStrId(ih, flattabs_attrib_id[i], p, value);
+      iupAttribSetStrId(ih, flattabs_attrib_id[i], p + 1, NULL);
     }
   }
 
   if (ih->handle)
+  {
+    int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
+    if (scroll_pos >= count)
+      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", 0);
+
     iupdrvPostRedraw(ih);
+  }
 }
 
 static void iFlatTabsComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
@@ -1736,6 +1840,8 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params)
       iparams++;
     }
   }
+
+  IupSetCallback(ih, "_IUP_XY2POS_CB", (Icallback)iFlatTabsConvertXYToPos);
 
   iupAttribSetInt(ih, "_IUPFTABS_HIGHLIGHTED", ITABS_NONE);
   iupAttribSetInt(ih, "_IUPFTABS_CLOSEHIGH", ITABS_NONE);
@@ -1833,7 +1939,7 @@ Iclass* iupFlatTabsNewClass(void)
   iupClassRegisterAttribute(ic, "TABSHIGHCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   /* Visual for all TABS */
-  iupClassRegisterAttribute(ic, "TABSFONT", NULL, iFlatTabsSetTabsFontAttrib, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TABSFONT", NULL, iupdrvSetFontAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TABSFONTSTYLE", iFlatTabsGetTabsFontStyleAttrib, iFlatTabsSetTabsFontStyleAttrib, NULL, NULL, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TABSFONTSIZE", iFlatTabsGetTabsFontSizeAttrib, iFlatTabsSetTabsFontSizeAttrib, NULL, NULL, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
@@ -1880,23 +1986,24 @@ Iclass* iupFlatTabsNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlatTabs(Ihandle* first, ...)
-{
-  Ihandle **children;
-  Ihandle *ih;
-
-  va_list arglist;
-  va_start(arglist, first);
-  children = (Ihandle**)iupObjectGetParamList(first, arglist);
-  va_end(arglist);
-
-  ih = IupCreatev("flattabs", (void**)children);
-  free(children);
-
-  return ih;
-}
-
 Ihandle* IupFlatTabsv(Ihandle** params)
 {
   return IupCreatev("flattabs", (void**)params);
+}
+
+Ihandle*  IupFlatTabsV(Ihandle* child, va_list arglist)
+{
+  return IupCreateV("flattabs", child, arglist);
+}
+
+Ihandle* IupFlatTabs(Ihandle* child, ...)
+{
+  Ihandle *ih;
+
+  va_list arglist;
+  va_start(arglist, child);
+  ih = IupCreateV("flattabs", child, arglist);
+  va_end(arglist);
+
+  return ih;
 }

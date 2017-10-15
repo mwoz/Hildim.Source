@@ -207,7 +207,7 @@ int iupdrvSetFontAttrib(Ihandle* ih, const char* value)
 {
   IwinFont* winfont = winFontCreateNativeFont(ih, value);
   if (!winfont)
-    return 1;
+    return 0;
 
   /* If FONT is changed, must update the SIZE attribute */
   iupBaseUpdateAttribFromFont(ih);
@@ -297,13 +297,15 @@ static void winFontGetTextSize(Ihandle* ih, IwinFont* winfont, const char* str, 
 void iupdrvFontGetMultiLineStringSize(Ihandle* ih, const char* str, int *w, int *h)
 {
   IwinFont* winfont = winFontGet(ih);
-  winFontGetTextSize(ih, winfont, str, w, h);
+  if (winfont)
+    winFontGetTextSize(ih, winfont, str, w, h);
 }
 
 void iupdrvFontGetTextSize(const char* font, const char* str, int *w, int *h)
 {
   IwinFont* winfont = winFindFont(font);
-  winFontGetTextSize(NULL, winfont, str, w, h);
+  if (winfont)
+    winFontGetTextSize(NULL, winfont, str, w, h);
 }
 
 int iupdrvFontGetStringWidth(Ihandle* ih, const char* str)

@@ -55,6 +55,7 @@ namespace Iup
   inline int PlayInput(const char* filename) { return IupPlayInput(filename); }
 
   inline int Help(const char* url) { return IupHelp(url); }
+  inline void Log(const char* type, const char* str) { IupLog(type, "%s", str); }
   inline const char* Load(const char *filename) { return IupLoad(filename); }
   inline const char* LoadBuffer(const char *buffer) { return IupLoadBuffer(buffer); }
 
@@ -1081,6 +1082,8 @@ namespace Iup
     char* GetVariableStrIdDef(const char* group, const char* key, int id, const char* def) { return (char*)IupConfigGetVariableStrIdDef(ih, group, key, id, def); }
     int GetVariableIntIdDef(const char* group, const char* key, int id, int def) { return IupConfigGetVariableIntIdDef(ih, group, key, id, def); }
     double GetVariableDoubleIdDef(const char* group, const char* key, int id, double def) { return IupConfigGetVariableDoubleIdDef(ih, group, key, id, def); }
+
+    void Copy(const Config& config2, const char* exclude_prefix) { IupConfigCopy(ih, config2.GetHandle(), exclude_prefix); }
 
     void SetListVariable(const char *group, const char* key, const char* value, int add) { IupConfigSetListVariable(ih, group, key, value, add); }
 

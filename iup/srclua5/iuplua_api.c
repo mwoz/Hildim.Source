@@ -385,7 +385,15 @@ static int GetName(lua_State *L)
 static int Help(lua_State *L)
 {
   const char *url = luaL_checkstring(L,1);
-  IupHelp(url);
+  lua_pushinteger(L, IupHelp(url));
+  return 1;
+}
+
+static int Log(lua_State *L)
+{
+  const char *type = luaL_checkstring(L, 1);
+  const char *str = luaL_checkstring(L, 2);
+  IupLog(type, "%s", str);
   return 0;
 }
 
@@ -393,16 +401,16 @@ static int Execute(lua_State *L)
 {
   const char *filename = luaL_checkstring(L, 1);
   const char *parameters = luaL_optstring(L, 2, NULL);
-  IupExecute(filename, parameters);
-  return 0;
+  lua_pushinteger(L, IupExecute(filename, parameters));
+  return 1;
 }
 
 static int ExecuteWait(lua_State *L)
 {
   const char *filename = luaL_checkstring(L, 1);
   const char *parameters = luaL_optstring(L, 2, NULL);
-  IupExecuteWait(filename, parameters);
-  return 0;
+  lua_pushinteger(L, IupExecuteWait(filename, parameters));
+  return 1;
 }
 
 static int Hide(lua_State *L)
@@ -1070,6 +1078,7 @@ void iupluaapi_open(lua_State * L)
     {"GetLanguage", GetLanguage},
     {"GetName", GetName},
     {"Help", Help},
+    {"Log", Log},
     {"Execute", Execute},
     {"ExecuteWait", ExecuteWait},
     {"Hide", Hide},

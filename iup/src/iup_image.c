@@ -196,11 +196,12 @@ static void iImageStockGet(const char* name, Ihandle* *ih, const char* *native_n
 
       if (istock->image->currentheight != stock_size && bpp > 8)
       {
+        int new_height = stock_size;
         int new_width = stock_size;
         if (istock->image->currentwidth != istock->image->currentheight)
-          new_width = (stock_size * istock->image->currentwidth) / istock->image->currentheight;
+          new_width = (new_height * istock->image->currentwidth) / istock->image->currentheight;
 
-        iupImageResize(istock->image, new_width, stock_size);
+        iupImageResize(istock->image, new_width, new_height);
       }
     }
   }
@@ -919,6 +920,8 @@ static int iImageCreate(Ihandle* ih, void** params, int bpp)
   {
     if ((int)(params[2])!=-1)
       memcpy(imgdata, params[2], count);
+    else
+      memset(imgdata, 0, count);
   }
   else /* one param for each pixel/plane */
   {

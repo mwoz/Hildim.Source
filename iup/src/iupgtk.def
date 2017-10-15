@@ -36,6 +36,7 @@ IupGetLanguage
 IupGetName
 IupHbox
 IupHelp
+IupLog
 IupExecute
 IupExecuteWait
 IupImage
@@ -235,6 +236,25 @@ IupDrawResetClip
 IupDrawSelectRect
 IupDrawFocusRect
 IupDrawGetSize
+IupLogV
+IupSetAttV
+IupSetStrfV
+IupSetStrfIdV
+IupSetStrfId2V
+IupSetCallbacksV
+IupCreateV
+IupVboxV
+IupZboxV
+IupHboxV
+IupNormalizerV
+IupCboxV
+IupGridBoxV
+IupMenuV
+IupTabsV
+IupFlatTabsV
+IupMessageV
+IupGetParamV
+IupParamBoxV
 
 iupdrvSetVisible
 iupdrvSetFontAttrib
@@ -244,6 +264,8 @@ iupdrvScreenToClient
 iupdrvClientToScreen
 iupdrvReparent
 iupdrvLocaleInfo
+iupdrvSetCurrentDirectory
+iupdrvGetCurrentDirectory
 iupdrvIsVisible
 iupdrvIsActive
 iupdrvGetUserName
@@ -579,6 +601,7 @@ IupConfigGetVariableIntDef
 IupConfigGetVariableIntIdDef
 IupConfigGetVariableDoubleDef
 IupConfigGetVariableDoubleIdDef
+IupConfigCopy
 IupConfigRecentInit
 IupConfigRecentUpdate
 IupConfigDialogShow
