@@ -4306,12 +4306,12 @@ void SciTEBase::CheckMenus() {
 	props.SetInteger("wrap", wrap);
 
 	// Tab Bar
-	if (buffers.size > 0) {
-		if (wTabBar.GetID()) {
-			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DESELECTALL, (WPARAM)0, (LPARAM)0);
-			TabSelect(buffers.Current());
-		}
-	}
+	//if (buffers.size > 0) {
+	//	if (wTabBar.GetID()) {
+	//		::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DESELECTALL, (WPARAM)0, (LPARAM)0);
+	//		TabSelect(buffers.Current());
+	//	}
+	//}
 }
 
 void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {

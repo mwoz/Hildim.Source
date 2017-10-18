@@ -1342,8 +1342,11 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func) {
 	if (func.returnType == iface_bool) {
 		lua_pushboolean(L, result);
 		resultCount++;
+	}	if (func.returnType == iface_bool) {
+		lua_pushboolean(L, static_cast<int>(result));
+		resultCount++;
 	} else if (IFaceTypeIsNumeric(func.returnType)) {
-		lua_pushnumber(L, result);
+		lua_pushinteger(L, static_cast<int>(result));
 		resultCount++;
 	}
 

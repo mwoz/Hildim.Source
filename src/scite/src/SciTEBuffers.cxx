@@ -385,7 +385,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	if (!bExit) {
 		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
 		RestoreState(bufferNext, switchTab);
-		TabSelect(index);
+		//TabSelect(index);
 
 		if (lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
@@ -773,7 +773,7 @@ void SciTEBase::ShiftTab(int indexFrom, int indexTo) {
 	buffers.SetCurrent(indexTo);
 	BuffersMenu();
 
-	TabSelect(indexTo);
+	//TabSelect(indexTo);
 
 	DisplayAround(buffers.buffers[buffers.Current()]);
 }
@@ -965,10 +965,6 @@ void SciTEBase::BuffersMenu() {
 			for (pos = oldLCountR - 1; pos >= posR; pos--)
 				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
 			
-			IupRefreshChildren(IupGetParent(IupGetParent(IupGetParent(IupTab(IDM_SRCWIN)))));
-			//IupRefreshChildren(IupGetParent(IupTab(IDM_SRCWIN)));
-			IupRefreshChildren(IupGetParent(IupGetParent(IupTab(IDM_COSRCWIN))));
-
 			IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
 			IupRedraw(IupGetParent(IupTab(IDM_COSRCWIN)), 1);
 
