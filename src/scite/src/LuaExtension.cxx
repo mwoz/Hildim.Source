@@ -1764,7 +1764,7 @@ void PublishGlobalBufferData() {
 }
 
 int OnParamKeyPress(int c, int press) {
-	if ((press == 1) && (c = K_F1)) {
+	if ((press == 1) && (c == K_F1)) {
 		return CallNamedFunction("OnParamKeyPress");
 	}
 	return 0;
