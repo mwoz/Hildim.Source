@@ -32,6 +32,7 @@
 
 #include "Platform.h"
 
+#include "ILoader.h"
 #include "ILexer.h"
 #include "Scintilla.h"
 
@@ -51,9 +52,7 @@
 #include "UniConversion.h"
 #include "UnicodeFromUTF8.h"
 
-#ifdef SCI_NAMESPACE
 using namespace Scintilla;
-#endif
 
 void LexInterface::Colourise(Sci::Position start, Sci::Position end) {
 	if (pdoc && instance && !performingStyle) {
@@ -1845,7 +1844,6 @@ Document::CharacterExtracted Document::ExtractCharacter(Sci::Position position) 
  */
 long Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         int flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -2082,9 +2080,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			Sci::Line lineEndStyled = static_cast<Sci::Line>(LineFromPosition(GetEndStyled()));
 			Sci::Position endStyledTo = static_cast<Sci::Position>(LineStart(lineEndStyled));
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2092,9 +2090,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2595,7 +2590,7 @@ public:
 	~DocumentIndexer() override {
 	}
 
-	char CharAt(Sci::Position index) override {
+	char CharAt(Sci::Position index) const override {
 		if (index < 0 || index >= end)
 			return 0;
 		else
@@ -2946,11 +2941,9 @@ Sci::Position Cxx11RegexFindText(Document *doc, Sci::Position minPos, Sci::Posit
 		//double durSearch = et.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;
@@ -3015,7 +3008,7 @@ long BuiltinRegex::FindText(Document *doc, Sci::Position minPos, Sci::Position m
 			}
 		}
 
-		DocumentIndexer di(doc, endOfLine);
+		const DocumentIndexer di(doc, endOfLine);
 		int success = search.Execute(di, startOfLine, endOfLine);
 		if (success) {
 			pos = search.bopat[0];
@@ -3047,7 +3040,7 @@ long BuiltinRegex::FindText(Document *doc, Sci::Position minPos, Sci::Position m
 
 const char *BuiltinRegex::SubstituteByPosition(Document *doc, const char *text, Sci::Position *length) {
 	substituted.clear();
-	DocumentIndexer di(doc, static_cast<Sci::Position>(doc->Length()));
+	const DocumentIndexer di(doc, static_cast<Sci::Position>(doc->Length()));
 	search.GrabMatches(di);
 	for (int j = 0; j < *length; j++) {
 		if (text[j] == '\\') {
@@ -3099,18 +3092,8 @@ const char *BuiltinRegex::SubstituteByPosition(Document *doc, const char *text, 
 
 #ifndef SCI_OWNREGEX
 
-#ifdef SCI_NAMESPACE
-
 RegexSearchBase *Scintilla::CreateRegexSearch(CharClassify *charClassTable) {
 	return new BuiltinRegex(charClassTable);
 }
-
-#else
-
-RegexSearchBase *CreateRegexSearch(CharClassify *charClassTable) {
-	return new BuiltinRegex(charClassTable);
-}
-
-#endif
 
 #endif

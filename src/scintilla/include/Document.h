@@ -8,9 +8,7 @@
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
 
-#ifdef SCI_NAMESPACE
 namespace Scintilla {
-#endif
 
 enum EncodingFamily { efEightBit, efUnicode, efDBCS };
 
@@ -545,11 +543,8 @@ public:
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyLexerChanged(Document *doc, void *userData) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, int status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
-#ifdef SCI_NAMESPACE
 }
-#endif
 
 #endif

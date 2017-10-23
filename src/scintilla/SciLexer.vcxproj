@@ -177,6 +177,7 @@
     <ClInclude Include="include\ExternalLexer.h" />
     <ClInclude Include="include\FontQuality.h" />
     <ClInclude Include="include\ILexer.h" />
+    <ClInclude Include="include\ILoader.h" />
     <ClInclude Include="include\Indicator.h" />
     <ClInclude Include="include\KeyMap.h" />
     <ClInclude Include="include\LineMarker.h" />

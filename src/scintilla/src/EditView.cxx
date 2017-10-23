@@ -23,6 +23,7 @@
 
 #include "Platform.h"
 
+#include "ILoader.h"
 #include "ILexer.h"
 #include "Scintilla.h"
 
@@ -53,9 +54,7 @@
 #include "MarginView.h"
 #include "EditView.h"
 
-#ifdef SCI_NAMESPACE
 using namespace Scintilla;
-#endif
 
 static inline bool IsControlCharacter(int ch) {
 	// iscntrl returns true for lots of chars > 127 which are displayable
@@ -68,9 +67,7 @@ PrintParameters::PrintParameters() {
 	wrapState = eWrapWord;
 }
 
-#ifdef SCI_NAMESPACE
 namespace Scintilla {
-#endif
 
 bool ValidStyledText(const ViewStyle &vs, size_t styleOffset, const StyledText &st) {
 	if (st.multipleStyles) {
@@ -170,9 +167,7 @@ void DrawStyledText(Surface *surface, const ViewStyle &vs, int styleOffset, PRec
 	}
 }
 
-#ifdef SCI_NAMESPACE
 }
-#endif
 
 const XYPOSITION epsilon = 0.0001f;	// A small nudge to avoid floating point precision issues
 

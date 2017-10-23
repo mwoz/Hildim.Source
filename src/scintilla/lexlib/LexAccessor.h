@@ -8,9 +8,7 @@
 #ifndef LEXACCESSOR_H
 #define LEXACCESSOR_H
 
-#ifdef SCI_NAMESPACE
 namespace Scintilla {
-#endif
 
 enum EncodingType { enc8bit, encUnicode, encDBCS };
 
@@ -152,7 +150,7 @@ public:
 	void ColourTo(Sci_PositionU pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
-			//assert(pos >= startSeg);
+			assert(pos >= startSeg);
 			if (pos < startSeg) {
 				return;
 			}
@@ -191,8 +189,6 @@ struct LexicalClass {
 	const char *description;
 };
 
-#ifdef SCI_NAMESPACE
 }
-#endif
 
 #endif
