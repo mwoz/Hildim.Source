@@ -52,9 +52,7 @@
 #include "OptionSet.h"
 #include "DefaultLexer.h"
 
-#ifdef SCI_NAMESPACE
 using namespace Scintilla;
-#endif
 
 
 // Options used for LexerCPP
@@ -269,11 +267,11 @@ static inline int onStartNextLine(int initStyle)
 		initStyle = SCE_FM_VB_ERROR;
 		break;
 	case SCE_FM_VB_STRINGEOL:
-	case SCE_FM_VB_COMMENT: 
-	case SCE_FM_VB_ERROR: 
+	case SCE_FM_VB_COMMENT:
+	case SCE_FM_VB_ERROR:
 		initStyle = SCE_FM_VB_DEFAULT;
 		break;
-	case SCE_FM_VB_STRINGCONT: 
+	case SCE_FM_VB_STRINGCONT:
 		initStyle = SCE_FM_VB_AFTERSTRINGCONT;
 		break;
 	case SCE_FM_PREPROCESSOR:
@@ -348,7 +346,7 @@ void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc)
 		}
 		break;
 	}
-	  
+
 }
 void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 
@@ -433,7 +431,7 @@ void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 			sc.SetState(SCE_FM_SQL_VARIABLE);
 		}  else if (sc.ch == '{') {
 			sc.SetState(SCE_FM_SQL_FMPARAMETR);
-		} 
+		}
 	}
 
 	//////////////////////styler.ColourTo(lengthDoc - 1, state);
@@ -468,7 +466,7 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 				sc.SetState(SCE_FM_CDATA);
 			}else if(sc.chPrev != '>'){
 				sc.SetState(SCE_FM_X_ERROR);
-			}	
+			}
 		}else if(IsAWordChar(sc.ch) && isspacechar(sc.chPrev)){
 			sc.SetState(SCE_FM_X_UNKNOWNPROP);
 		}else if(IsAWordChar(sc.ch)){
@@ -493,7 +491,7 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 				sc.ForwardSetState(SCE_FM_X_ERROR);
 			}else{
 				sc.ForwardSetState(SCE_FM_X_TAG);
-			} 
+			}
 		}else if(sc.ch == '<'){
 			sc.SetState(SCE_FM_X_ERROR);
 		}
@@ -528,12 +526,12 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 				sc.ChangeState(SCE_FM_X_TAG);
 			}
 			sc.SetState(SCE_FM_X_TAG);
-		}		
+		}
 		if (sc.ch == '>'){
 			if (!sc.Match("><")){
 				sc.ForwardSetState(SCE_FM_X_DEFAULT);
 			}
-		} 
+		}
 	return;
 	}
 }
@@ -727,7 +725,7 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 }
 
 void SCI_METHOD LexerFormEngine::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
-	if(options.frozen) return;		
+	if(options.frozen) return;
 	LexAccessor styler(pAccess);
 	bool vbScriptSyntax = true;
 	//styler.StartAt(startPos);
@@ -864,7 +862,7 @@ public:
 			currentLevel = styler.LevelAt(currentLine) & SC_FOLDLEVELNUMBERMASK;
 			prevLevel = currentLevel;
 			foldCompact = bFoldCompact;
-	} 
+	}
 	bool More() const {
 		return currentPos < endPos;
 	}
@@ -878,7 +876,7 @@ public:
 		prevLevel = iLevel;
 	}
 	void SetCurLevel(int iLevel){
-		styler.SetLevel(currentLine, iLevel);	   
+		styler.SetLevel(currentLine, iLevel);
 		prevLevel = iLevel;
 	}
 	void Forward(int n);
@@ -887,7 +885,7 @@ public:
 	bool GetNextLowered(char *s,unsigned int len);
 	bool Skip();
 	void WalkToEOL();
-	
+
 };
 
 void FoldContext::Forward(int n){
@@ -914,7 +912,7 @@ void FoldContext::Forward(){
 		prevLevel = currentLevel;
 			//currentLevel = styler.LevelAt(currentLine);
 		}
-	}else if(visibleChars || !isspacechar(ch)) visibleChars++;		
+	}else if(visibleChars || !isspacechar(ch)) visibleChars++;
 	///////
 	if (currentPos < endPos) {
 
@@ -934,7 +932,7 @@ void FoldContext::Forward(){
 		styler.SetLevel(currentLine, prevLevel | flagsNext);
 	}
 	/////////
-	style = styler.StyleAt(currentPos);	
+	style = styler.StyleAt(currentPos);
 }
 void FoldContext::GetRangeLowered(unsigned int start,
 	unsigned int end,
@@ -953,7 +951,7 @@ bool FoldContext::GetNextLowered(char *s,unsigned int len){
 	s[0] = 0;
 	while ((i < len-1) && (startstyle == style ) && More()) {
 		s[i] = static_cast<char>(tolower(ch));
-		i++;		
+		i++;
 		if((chNext == '\n') || (chNext == '\r')) break;
 		Forward();
 	}
@@ -978,7 +976,7 @@ void FoldContext::WalkToEOL(){
 	}
 }
 bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler){
-	
+
 	FoldContext fc(startPos, length, styler, options.foldCompact);
 	int blockReFoldLine = -1;
 	int processComment = 0;
@@ -986,7 +984,7 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 		switch(GetSector(fc.style)){
 		case TYPE_SPACE:
 			if(fc.style == SCE_FM_CDATA && options.foldcdata){
-				switch (fc.ch){ 
+				switch (fc.ch){
 				case '>': //]]>
 				case '!': //<|![CDATA[
 					fc.SetPrevLevel(SC_FOLDLEVELBASE);
@@ -1106,7 +1104,7 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					if(!fc.startLineResolved)return false;
 					if(processComment==0) fc.currentLevel++;
 						//fc.SetPrevLevel(fc.currentLevel+1);
-				
+
 					//проверим, является ли следующая строка комментарием
 
 					if('\'' != styler.SafeGetCharAt(pAccess->GetLineIndentation(fc.currentLine + 1)+pAccess->LineStart(fc.currentLine + 1),'\0')){
@@ -1138,7 +1136,7 @@ void SCI_METHOD LexerFormEngine::Fold(unsigned int startPos, int length, int ini
 	while(!PlainFold(startPos, length, initStyle, pAccess, styler)){
 		//Возможно разрешить фолдинг начиная с данной строки не удасться, и тогда нам нужно перезапустить фолдинг со строчки выше
 		int prevLine = pAccess ->LineFromPosition(startPos) - 1;
-		if(prevLine < 0) return; //Хотя вообще-то процедура должна вернуть true для первой строки 
+		if(prevLine < 0) return; //Хотя вообще-то процедура должна вернуть true для первой строки
 		unsigned int startPosNew = pAccess->LineStart(prevLine);
 		length += (startPos - startPosNew);
 		startPos = startPosNew;

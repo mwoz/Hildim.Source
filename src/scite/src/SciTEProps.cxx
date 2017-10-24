@@ -66,6 +66,8 @@ const GUI::gui_char menuAccessIndicator[] = GUI_TEXT("&");
 #include "JobQueue.h"
 #include "SciTEBase.h"
 
+using namespace Scintilla;
+
 const GUI::gui_char propLocalFileName[] = GUI_TEXT("SciTE.properties");
 const GUI::gui_char propDirectoryFileName[] = GUI_TEXT("SciTEDirectory.properties");
 

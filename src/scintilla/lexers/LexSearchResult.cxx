@@ -39,6 +39,8 @@
 #include "CharacterSet.h"
 #include "LexerModule.h"
 
+using namespace Scintilla;
+
 // The following definitions are a copy of the ones in FindReplaceDlg.h
 static enum { searchHeaderLevel = SC_FOLDLEVELBASE + 1, fileHeaderLevel, resultLevel };
 struct SearchResultMarking {
@@ -55,7 +57,7 @@ static const char * const emptyWordListDesc[] = {
 	0
 };
 
-static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine, unsigned int startLine, unsigned int endPos, Accessor &styler, int linenum) 
+static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine, unsigned int startLine, unsigned int endPos, Accessor &styler, int linenum)
 {
 	// startLine and endPos are the absolute positions.
 
@@ -74,7 +76,7 @@ static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine,
 
 		for (currentPos = 0; currentPos < lengthLine + 1 && (lineBuffer[currentPos] != ':' || lineBuffer[currentPos + 1] != ' '); currentPos++);
 		if (lineBuffer[currentPos] == ':' && currentPos < lengthLine + 1 && lineBuffer[currentPos + 1] == ' ') styler.ColourTo(startLine + currentPos, SCE_SEARCHRESULT_LINE_NUMBER);
-		
+
 		int currentStat = SCE_SEARCHRESULT_CURRENT_LINE;
 
 		styler.ColourTo(endPos, currentStat);
@@ -125,11 +127,11 @@ static void FoldSearchResultDoc(unsigned int startPos, int length, int, WordList
 		styleNext = styler.StyleAt(i + 1);
 		bool atEOL = (ch == '\n') || (ch == '\r' && chNext != '\n');
 
-		if (style == SCE_SEARCHRESULT_FILE_HEADER) 
+		if (style == SCE_SEARCHRESULT_FILE_HEADER)
 		{
 			headerPoint = fileHeaderLevel;
 		}
-		else if (style == SCE_SEARCHRESULT_SEARCH_HEADER) 
+		else if (style == SCE_SEARCHRESULT_SEARCH_HEADER)
 		{
 			headerPoint = searchHeaderLevel;
 		}

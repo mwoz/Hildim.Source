@@ -21,13 +21,13 @@ using namespace Scintilla;
 
 static const char *NextField(const char *s) {
 	// In case there are leading spaces in the string
-	while (*s == ' ') {
+	while (*s && *s == ' ') {
 		s++;
 	}
 	while (*s && *s != ' ') {
 		s++;
 	}
-	while (*s == ' ') {
+	while (*s && *s == ' ') {
 		s++;
 	}
 	return s;
