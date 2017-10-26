@@ -248,6 +248,8 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 			if (indexFrom > stack[i] && stack[i] >= indexTo) stack[i] -= step;
 		}
 	}
+	if (indexTo >= current && current > indexFrom) current--;
+	if (indexTo <= current && current < indexFrom) current++;
 }
 
 void SciTEBase::ChangeTabWnd(){
@@ -359,6 +361,26 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 }
 
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
+	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !props.GetInt("tabctrl.alwayssavepos") ) {
+		int side = buffers.buffers[index].editorSide;
+		int realIndex = 0;
+		int firstSide;  
+		for (int pos = 0; pos < buffers.length; pos++) {
+			if (side == buffers.buffers[pos].editorSide) {
+				if (!realIndex)
+					firstSide = pos;
+				if (pos == index) {
+					if ((int)IupGetAttribute(IupTab(side), "LASTVISIBLE") <= realIndex && index != firstSide) {
+						buffers.ShiftTo(index, firstSide);
+						index = firstSide;
+					}
+					break;
+				}
+				realIndex++;
+			}
+		}
+	}
+	
 	int currentbuf = buffers.Current();
 	if (	index < 0 ||
 	        index >= buffers.length ||
@@ -954,6 +976,7 @@ void SciTEBase::BuffersMenu() {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
 					
 					if (pos == buffers.Current()){
+						int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
 						IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
 						IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
 					}

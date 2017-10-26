@@ -357,6 +357,41 @@ static void iFlatTabsDrawScrollRightButton(IdrawCanvas* dc, const char *tabs_bgc
   iupFlatDrawArrow(dc, x, y, arrow_size, tabs_forecolor, tabs_bgcolor, active, IUPDRAW_ARROW_RIGHT);
 }
 
+
+int iFlatTabsGetLastVisibleAttrib(Ihandle* ih) {
+	int pos = 0;
+	int tab_x = 0;
+	int valuepos = iupAttribGetInt(ih, "VALUEPOS");
+	int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
+	int horiz_padding, vert_padding;
+	iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
+	int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
+	int title_width;
+	int title_height = iFlatTabsGetTitleHeight(ih, &title_width, 1);
+	int iWidth = max(iupAttribGetInt(ih, "_IUPFWIDTH"), ih->currentwidth);
+	int img_position = iupFlatGetImagePosition(iupAttribGetStr(ih, "TABSIMAGEPOSITION"));
+	int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
+
+	int extra_width = iFlatTabsGetExtraWidth(ih, extra_buttons, img_position, horiz_padding);
+
+	for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++) {
+		int tab_w, tab_h;
+		iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close && (valuepos == pos), pos, &tab_w, &tab_h);  /* this will also set any id based font */
+
+		//if (title_width > iWidth - extra_width) /* has right scroll button */
+		//{
+			int scroll_width = title_height / 2;
+
+			if (tab_x + tab_w > iWidth - extra_width - scroll_width) {
+				break;
+			}
+			tab_x += tab_w;
+		//}
+	}
+	//return iupStrReturnInt(pos);
+	return pos;
+}
+
 static int iFlatTabsRedraw_CB(Ihandle* ih)
 {
 
@@ -532,7 +567,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 			  iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab right vertical */
 		  } else if (tab_backcolor) {
 			  char * border_color = iupAttribGetId(ih, "_TABBORDERCOLOR", pos);
-			  unsigned char * c_r, *c_g, *c_b;
+			  unsigned char c_r = 0, c_g = 0, c_b= 0;
 			  iupStrToRGB(border_color, &c_r, &c_g, &c_b);
 			  iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab top horizontal */
 			  iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab left vertical */
@@ -577,7 +612,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 
 	  if (reset_clip)
       {
-		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos) {
+		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos && !iupAttribGetBoolean(ih,"_SCIPAUTOSCROLL") ) {
 	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
 		  iFlatTabsRedraw_CB(ih);
 		}
@@ -694,6 +729,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
 static int iFlatTabsResize_CB(Ihandle* ih, int width, int height)
 {
   iupAttribSetInt(ih, "_IUPFWIDTH", width);
+  iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
   int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
   if (scroll_pos)
   {
@@ -853,6 +889,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
   {
     if (tab_found > ITABS_NONE)
     {
+	  iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
       if (show_close && inside_close)
       {
         iupAttribSetInt(ih, "_IUPFTABS_CLOSEPRESS", tab_found);  /* used for press feedback */
@@ -887,6 +924,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
       int pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
       pos--;
       iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", pos);
+	  iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 1);
       iupdrvPostRedraw(ih);
     }
     else if (tab_found == ITABS_SB_RIGHT)
@@ -895,6 +933,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
       pos++;
 
       iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", pos);
+	  iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 1);
       iupdrvPostRedraw(ih);
     }
     else if (tab_found <= ITABS_EXTRABUTTON1)
@@ -982,7 +1021,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 			GetCursorPos(&p);
 			HWND hwnd = WindowFromPoint(p);
 			if (hwnd)
-				ihTarget = iupwinHandleGet(hwnd);
+				ihTarget = iupwinHandleGet((InativeHandle*)hwnd);
 		} else {
 			dragTab = ih->data->dragTab;
 		}
@@ -1077,7 +1116,7 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status)
 		GetCursorPos(&p);
 		HWND hwnd = WindowFromPoint(p);
 		if(hwnd)
-			ihTarget = iupwinHandleGet(hwnd);
+			ihTarget = iupwinHandleGet((InativeHandle*)hwnd);
 	}
     if (cb(ih, ihTarget, x, y, tab_found, dragTab, start, status) == IUP_IGNORE)
       return IUP_DEFAULT;
@@ -1221,6 +1260,7 @@ static int iFlatTabsGetCountAttrib(Ihandle* ih)
   return pos;
 }
 
+
 static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value)
 {
   int pos = (int)value;
@@ -1233,7 +1273,7 @@ static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value)
   if(pos < scroll_pos)
 	  iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", pos);
 
-
+  iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
   iupAttribSetInt(ih, "VALUEPOS", pos);
   return 0;
 }
@@ -1692,10 +1732,11 @@ Iclass* iupFlattabsCtrlNewClass(void)
   /* IupFlatTabs only */
   iupClassRegisterAttribute(ic, "VALUE", iFlatTabsGetValueAttrib, iFlatTabsSetValueAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "VALUEPOS", iFlatTabsGetValuePosAttrib, iFlatTabsSetValuePosAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "COUNT", iFlatTabsGetCountAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "COUNT", (IattribGetFunc)iFlatTabsGetCountAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FIXEDWIDTH", NULL, iFlatTabsUpdateSetAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TABCHANGEONCHECK", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "REDRAW", NULL, iupFlatTabsDrawSetRedrawAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "LASTVISIBLE", (IattribGetFunc)iFlatTabsGetLastVisibleAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
 
   /* IupFlatTabs Child only */
   iupClassRegisterAttributeId(ic, "TABTITLE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
