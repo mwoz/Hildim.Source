@@ -925,7 +925,7 @@ void SciTEBase::BuffersMenu() {
 						if (nameEnd != GUI::gui_string::npos) {
 							ext += titleTab.substr(nameEnd + 1);
 						}
-						itoa(Ext2HUI(ext), hui, 10);
+						_itoa(Ext2HUI(ext), hui, 10);
 					}
 					if (props.GetInt("tabctrl.cut.ext") && nameEnd != GUI::gui_string::npos && (pos != buffers.Current())) {
 						titleTab = titleTab.substr(0, nameEnd);

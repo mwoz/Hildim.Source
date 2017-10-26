@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "lua.h"
+#include "lauxlib.h"
 #include "iup.h"
 #include "iuplua.h"
 #include "iupcbs.h"
@@ -22,6 +23,8 @@
 #include "../../iup/src/iup_stdcontrols.h"
 #include "../../iup/src/iup_layout.h"
 #include "../../iup/src/iup_childtree.h"
+#include "../../iup/src/iup_register.h"
+#include "../../iup/srclua5/il.h"
 #include "scite_sbox.h"
 
 #define ISBOX_THICK 5

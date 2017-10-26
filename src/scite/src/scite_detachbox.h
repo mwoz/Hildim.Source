@@ -7,7 +7,7 @@
 void Iupsc_DetachBoxOpen(void);
 Iclass* iupsc_DetachBoxNewClass(void);
 
-Ihandle* Iupsc_DetachBox(void);
+Ihandle* Iupsc_DetachBox(Ihandle* child);
 
 int iupsc_detachboxlua_open(lua_State * L);
 
