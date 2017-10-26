@@ -378,15 +378,12 @@ int iFlatTabsGetLastVisibleAttrib(Ihandle* ih) {
 		int tab_w, tab_h;
 		iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close && (valuepos == pos), pos, &tab_w, &tab_h);  /* this will also set any id based font */
 
-		//if (title_width > iWidth - extra_width) /* has right scroll button */
-		//{
 			int scroll_width = title_height / 2;
 
 			if (tab_x + tab_w > iWidth - extra_width - scroll_width) {
 				break;
 			}
 			tab_x += tab_w;
-		//}
 	}
 	//return iupStrReturnInt(pos);
 	return pos;
@@ -431,9 +428,32 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   int extra_width;
   int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
   int valuepos = iupAttribGetInt(ih, "VALUEPOS");
+  scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
 
 
+  iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');  
   int iWidth = max(iupAttribGetInt(ih, "_IUPFWIDTH"), ih->currentwidth);
+  extra_width = iFlatTabsGetExtraWidth(ih, extra_buttons, img_position, horiz_padding);
+
+  if (valuepos > 0 && !iupAttribGetBoolean(ih, "_SCIPAUTOSCROLL")) {
+	  int t_x = 0, p;
+	  for (p = valuepos; p >= 0; p--) {
+		  int tab_w, tab_h;
+		  iFlatTabsGetTabSize(ih, fixedwidth, horiz_padding, vert_padding, show_close && (valuepos == p), p, &tab_w, &tab_h);  /* this will also set any id based font */
+
+		  int scroll_width = title_height / 2;
+
+		  t_x += tab_w;
+		  if (t_x + tab_w > iWidth - extra_width - scroll_width) {
+			  break;
+		  }
+	  }
+	  if (p >= scroll_pos) {
+		  scroll_pos = p ;
+		  iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos);
+	  }
+  }
+
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
   if (!tabs_bgcolor)
@@ -445,9 +465,8 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
   /* title area background */
   iupFlatDrawBox(dc, 0, iWidth- 1, 0, title_height - 1, tabs_bgcolor, NULL, 1);
 
-  iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
+
   iFlatTabsGetAlignment(alignment, &horiz_alignment, &vert_alignment);
-  extra_width = iFlatTabsGetExtraWidth(ih, extra_buttons, img_position, horiz_padding);
 
   if (show_lines)
   {
@@ -458,7 +477,6 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
     iupdrvDrawLine(dc, 0, title_height - 1, iWidth- 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE);
   }
 
-  scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
   if (scroll_pos > 0)
   {
     int scroll_width = title_height / 2;
@@ -538,9 +556,9 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
         }
       }
 
-      reset_clip = 0;
+	  reset_clip = 0;
 	  int valuenotdraw = 0;
-	  //iupAttribSetIntId(ih, "_IUTABS_RIGHT", pos, tab_x + tab_w);
+
       if (title_width > iWidth- extra_width) /* has right scroll button */
       {
         int scroll_width = title_height / 2;
@@ -548,7 +566,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
         if (tab_x + tab_w > iWidth- extra_width - scroll_width)
         {
           iupdrvDrawSetClipRect(dc, tab_x, 0, iWidth- extra_width - scroll_width, title_height);
-          reset_clip = 1;
+          reset_clip = 1;		  
 		  if (pos == valuepos)
 			  valuenotdraw = 1;
         }
@@ -610,17 +628,10 @@ static int iFlatTabsRedraw_CB(Ihandle* ih)
       /* goto next tab area */
       tab_x += tab_w;
 
-	  if (reset_clip)
-      {
-		if ((pos < valuepos || valuenotdraw) && scroll_pos < valuepos && !iupAttribGetBoolean(ih,"_SCIPAUTOSCROLL") ) {
-	      iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", scroll_pos + 1);
-		  iFlatTabsRedraw_CB(ih);
-		}
-		else
+	 if (reset_clip){
           iupdrvDrawResetClip(dc);
-        break;
-      }
-    }
+      }    
+}
 
 
   if (scroll_pos > 0)

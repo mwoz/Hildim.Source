@@ -849,7 +849,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.4.0\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.4.1\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -4485,8 +4485,14 @@ void SciTEBase::PerformOne(char *action) {
 			}
 		} else if (isprefix(action, "extender:")) {
 			extender->OnExecute(arg);
-		} else if (isprefix(action, "focus:")) {
-			ActivateWindow(arg);
+		} else if (isprefix(action, "savepositions:")) {
+			WINDOWPLACEMENT wp;
+			::GetWindowPlacement((HWND)wSciTE.GetID(), &wp);
+			props.SetInteger("position.maximize", wp.showCmd == SW_SHOWMAXIMIZED);
+			props.SetInteger("position.height", wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
+			props.SetInteger("position.left", wp.rcNormalPosition.left);
+			props.SetInteger("position.top", wp.rcNormalPosition.top);
+			props.SetInteger("position.width", wp.rcNormalPosition.right - wp.rcNormalPosition.left);
 		}
 	}
 }
