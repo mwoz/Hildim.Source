@@ -849,7 +849,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.4.1\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.4.2\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -1677,7 +1677,6 @@ void SciTEBase::ToggleOutputVisible() {
 			heightOutput = NormaliseSplit(previousHeightOutput);
 		}
 	}
-	SizeSubWindows();
 	Redraw();
 }
 
@@ -4304,14 +4303,6 @@ void SciTEBase::CheckMenus() {
 	props.SetInteger("findres.wrap", wrapFindRes);
 	props.SetInteger("output.wrap", wrapOutput);
 	props.SetInteger("wrap", wrap);
-
-	// Tab Bar
-	//if (buffers.size > 0) {
-	//	if (wTabBar.GetID()) {
-	//		::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DESELECTALL, (WPARAM)0, (LPARAM)0);
-	//		TabSelect(buffers.Current());
-	//	}
-	//}
 }
 
 void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {

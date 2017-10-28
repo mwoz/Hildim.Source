@@ -66,73 +66,12 @@ void SciTEWin::SetFileProperties(
 	ps.Set("CurrentTime", temp);
 }
 
-void SciTEWin::TabInsert(int index, const GUI::gui_char *title) {
-	if (bBlockUIUpdate)
-		return;
-	TCITEMW tie;
-	tie.mask = TCIF_TEXT | TCIF_IMAGE;
-	tie.iImage = -1;
-	tie.pszText = const_cast<GUI::gui_char *>(title);
-	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_INSERTITEMW, (WPARAM)index, (LPARAM)&tie);
-}
-
-static bool _blockResetTabBar = false;
-void SciTEWin::TabSelect(int index) {
-	if (bBlockUIUpdate)
-		return;
-	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_SETCURSEL, (WPARAM)index, (LPARAM)0);
-}
-
-void SciTEWin::RemoveAllTabs() {
-	if (bBlockUIUpdate)
-		return;
-	::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()), TCM_DELETEALLITEMS, (WPARAM)0, (LPARAM)0);
-}
-
 /**
  * Manage Windows specific notifications.
  */
 WCHAR stat_tips[301];	  
 void SciTEWin::Notify(SCNotification *notification) {
 	switch (notification->nmhdr.code) {
-	case TCN_SELCHANGE:
-		// Change of tab
-		if (notification->nmhdr.idFrom == IDM_TABWIN) {
-			int index = ::SendMessage(static_cast<HWND>(wTabBar.GetID()), TCM_GETCURSEL, (WPARAM)0, (LPARAM)0);
-			extender->OnNavigation("Switch");
-			SetDocumentAt(index);
-			extender->OnNavigation("Switch-");
-
-			CheckReload();
-		}
-		break;
-
-	case NM_RCLICK:
-		// Right click on a control
-		if (notification->nmhdr.idFrom == IDM_TABWIN) {
-
-			GUI::Point ptCursor;
-			::GetCursorPos(reinterpret_cast<POINT *>(&ptCursor));
-			GUI::Point ptClient = ptCursor;
-			::ScreenToClient(reinterpret_cast<HWND>(wTabBar.GetID()),
-			                 reinterpret_cast<POINT *>(&ptClient));
-			TCHITTESTINFO info;
-			info.pt.x = ptClient.x;
-			info.pt.y = ptClient.y;
-
-			int tabbarHitLast = TabCtrl_HitTest(reinterpret_cast<HWND> (wTabBar.GetID()), &info);
-
-			if (buffers.Current() != tabbarHitLast) {
-				extender->OnNavigation("Switch");
-				SetDocumentAt(tabbarHitLast);
-				extender->OnNavigation("Switch-");
-
-				CheckReload();
-			}
-
-			extender->OnContextMenu(ptCursor.x, ptCursor.y, "TABBAR");
-		}
-		break;
 
 	case SCN_CHARADDED:
 		if ((notification->nmhdr.idFrom == IDM_RUNWIN) &&
@@ -170,18 +109,7 @@ void SciTEWin::ActivateWindow(const char *) {
 	// This does nothing as, on Windows, you can no longer activate yourself
 }
 
-/**
- * Resize the content windows, embedding the editor and output windows.
- */
 
-
-/**
- * Resize the sub-windows, ie. the toolbar, tab bar, status bar. And call @a SizeContentWindows.
- */
-void SciTEWin::SizeSubWindows() {
-	if(props.GetInt("tab.oldstile"))
-		layout.AdjustTabBar();
-}
 
 void SciTEWin::CheckMenus() {
 //	!!!TODO-  notify
@@ -466,13 +394,12 @@ void SciTEWin::Creation() {
 	
 	layout.CreateLayout(L, this);
 
-	if (!props.GetInt("tab.oldstile")) {
-		IupSetCallback(IupTab(IDM_SRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
-		IupSetCallback(IupTab(IDM_COSRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
+	IupSetCallback(IupTab(IDM_SRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
+	IupSetCallback(IupTab(IDM_COSRCWIN), "TABCHANGEPOS_CB", (Icallback)OnTabClick);
 
-		IupSetCallback(IupTab(IDM_SRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
-		IupSetCallback(IupTab(IDM_COSRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
-	}
+	IupSetCallback(IupTab(IDM_SRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
+	IupSetCallback(IupTab(IDM_COSRCWIN), "TAB_SHIFT_CB", (Icallback)OnTabShift);
+
 	wEditorL.SetID(::CreateWindowEx(
 		0,
 		TEXT("Scintilla"),
@@ -569,43 +496,6 @@ void SciTEWin::Creation() {
 	if (RegisterClass(&wndClass) == 0)
 		exit(FALSE);
 
-	if (props.GetInt("tab.oldstile")) {
-		wTabBar = ::CreateWindowEx(
-			0,
-			TEXT("SciTeTabCtrl"),
-			TEXT("Tab"),
-			WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
-			TCS_FOCUSNEVER | TCS_TOOLTIPS,
-			0, 0,
-			100, heightTab,
-			layout.GetChildHWND("SciTeTabCtrl"),
-			reinterpret_cast<HMENU>(IDM_TABWIN),
-			hInstance,
-			0);
-
-		if (!wTabBar.Created())
-			exit(FALSE);
-		layout.SubclassChild("SciTeTabCtrl", &wTabBar);
-
-		LOGFONT lfIconTitle;
-		ZeroMemory(&lfIconTitle, sizeof(lfIconTitle));
-		::SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lfIconTitle), &lfIconTitle, FALSE);
-		int pt = props.GetInt("iup.defaultfontsize");
-		if (pt && pt > 4)
-			lfIconTitle.lfHeight = -MulDiv(pt, GetDeviceCaps(GetWindowDC(GetDesktopWindow()), LOGPIXELSY), 72);
-		fontTabs = ::CreateFontIndirect(&lfIconTitle);
-		::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
-			WM_SETFONT,
-			reinterpret_cast<WPARAM>(fontTabs),      // handle to font
-			0);    // redraw option
-		if (pt && pt > 4)
-			::SendMessage(reinterpret_cast<HWND>(wTabBar.GetID()),
-				TCM_SETPADDING,
-				0,      // handle to font
-				5);    // redraw option
-
-		wTabBar.Show();
-	}
 }
 
 Ihandle * SciTEWin::IupTab(int id) {

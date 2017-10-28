@@ -360,7 +360,7 @@ protected:
 	StringList preprocCondMiddle;	///< List of preprocessor conditional middle keywords (in C: else elif)
 	StringList preprocCondEnd;	///< List of preprocessor conditional end keywords (in C: endif)
 
-	GUI::Window wSciTE;  ///< Contains wTabBar, wContent,wIupStatus, wIupBar
+	GUI::Window wSciTE;  
 
 //!	GUI::ScintillaWindow wEditor;
 //!-start-[OnSendEditor]
@@ -393,7 +393,6 @@ protected:
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
 	GUI::Window wIncrement;
-	GUI::Window wTabBar;
 	bool viewWs;
 	bool viewIndent;
 	bool tabMultiLine;
@@ -548,9 +547,6 @@ protected:
 	void PrevInStack();
 	void EndStackedTabbing();
 
-	virtual void TabInsert(int index, const GUI::gui_char *title) = 0;
-	virtual void TabSelect(int index) = 0;
-	virtual void RemoveAllTabs() = 0;
 	void ShiftTab(int indexFrom, int indexTo);
 	void MoveTabRight();
 	void MoveTabLeft();
@@ -759,7 +755,6 @@ protected:
 	void BookmarkToggle(int lineno = -1);
 	void BookmarkNext(bool forwardScan = true, bool select = false);
 	void ToggleOutputVisible();
-	virtual void SizeSubWindows() = 0;
 
 	virtual void CheckMenus();
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]

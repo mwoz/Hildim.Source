@@ -1162,9 +1162,6 @@
 #define IDM_ACTIVATE                    320
 #define IDM_SRCWIN                      350
 #define IDM_RUNWIN                      351
-#define IDM_TOOLWIN                     352
-#define IDM_STATUSWIN                   353
-#define IDM_TABWIN                      354
 #define IDM_FINDRESWIN                  355
 #define IDD_FIND                        400
 #define IDC_MARGIN                      400

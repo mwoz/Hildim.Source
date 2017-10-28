@@ -34,7 +34,6 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 	case WM_SIZE: 	{
 		::SetWindowPos(::GetWindow(hwnd, GW_CHILD), HWND_TOP, 0, 0, LOWORD(lParam), HIWORD(lParam), 0);
-		//pSciteWin->SizeSubWindows();
 						
 	}
 		break;
@@ -87,54 +86,47 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
 
-	if (strcmp(pSciteWin->Property("tab.oldstile"), "")) {
-		pTab = IupSetAtt(NULL, IupCreate("canvas"),
-			"EXPAND", "HORIZONTAL",
-			"NAME", "SciTeTabCtrl",
-			"MINSIZE", "x20",
-			NULL);
-	} else {
-		pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
-			"NAME", "TabCtrlLeft",
-			"EXPAND", "YES",
-			"TABSPADDING", "10x3",
-			"EXTRABUTTONS", "1",
-			"FORECOLOR", "",
-			NULL);
-		pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
-			"NAME", "TabCtrlRight",
-			"EXPAND", "HORIZONTAL",
-			"TABSPADDING", "10x3",
-			"EXTRABUTTONS", "1",
-			"FORECOLOR", "",
-			NULL);
+	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+		"NAME", "TabCtrlLeft",
+		"EXPAND", "YES",
+		"TABSPADDING", "10x3",
+		"EXTRABUTTONS", "1",
+		"FORECOLOR", "",
+		NULL);
+	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
+		"NAME", "TabCtrlRight",
+		"EXPAND", "HORIZONTAL",
+		"TABSPADDING", "10x3",
+		"EXTRABUTTONS", "1",
+		"FORECOLOR", "",
+		NULL);
 
-		pTab = IupSetAtt(NULL, IupCreatep("split",
-			IupSetAtt(NULL, IupCreatep("vbox",
-				pLeftTab,
-				NULL),
-				"EXPAND", "HORIZONTAL",
-				"EXPANDCHILDREN", "YES",
-				NULL),
-			IupSetAtt(NULL, IupCreatep("expander",
-				pRightTab,
-				NULL),
-				"NAME", "RightTabExpander",
-				"BARSIZE", "0",
-				"EXPAND", "HORIZONTAL",
-				"MINSIZE", "x0",
-				"STATE", "CLOSE",
-				NULL),
+	pTab = IupSetAtt(NULL, IupCreatep("split",
+		IupSetAtt(NULL, IupCreatep("vbox",
+			pLeftTab,
 			NULL),
-			"ORIENTATION", "VERTICAL",
-			"NAME", "TabBarSplit",
-			"SHOWGRIP", "NO",
+			"EXPAND", "HORIZONTAL",
+			"EXPANDCHILDREN", "YES",
+			NULL),
+		IupSetAtt(NULL, IupCreatep("expander",
+			pRightTab,
+			NULL),
+			"NAME", "RightTabExpander",
 			"BARSIZE", "0",
-			"LAYOUTDRAG", "NO",
-			"VALUE", "1000",
-			"HISTORIZED", "NO",
-			NULL);
-	}
+			"EXPAND", "HORIZONTAL",
+			"MINSIZE", "x0",
+			"STATE", "CLOSE",
+			NULL),
+		NULL),
+		"ORIENTATION", "VERTICAL",
+		"NAME", "TabBarSplit",
+		"SHOWGRIP", "NO",
+		"BARSIZE", "0",
+		"LAYOUTDRAG", "NO",
+		"VALUE", "1000",
+		"HISTORIZED", "NO",
+		NULL);
+
 
 
 	containers[3] = 

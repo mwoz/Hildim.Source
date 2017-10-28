@@ -118,6 +118,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Lib>
       <AdditionalDependencies>iupcore.lib;%(AdditionalDependencies)</AdditionalDependencies>

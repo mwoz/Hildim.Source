@@ -273,19 +273,16 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_SPLIT",249},
 	{"IDM_SPLITVERTICAL",401},
 	{"IDM_SRCWIN",350},
-	{"IDM_STATUSWIN",353},
 	{"IDM_STOPEXECUTE",304},
 	{"IDM_STREAM_COMMENT",244},
 	{"IDM_SWITCHPANE",421},
 	{"IDM_TABSIZE",440},
-	{"IDM_TABWIN",354},
 	{"IDM_TOGGLEOUTPUT",409},
 	{"IDM_TOGGLEPARAMETERS",412},
 	{"IDM_TOGGLE_FOLDALL",236},
 	{"IDM_TOGGLE_FOLDRECURSIVE",237},
 	{"IDM_TOOLS",9000},
 	{"IDM_TOOLSMAX",9300},
-	{"IDM_TOOLWIN",352},
 	{"IDM_UNDO",201},
 	{"IDM_UNSLASH",804},
 	{"IDM_UPRCASE",240},
@@ -3168,7 +3165,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2533,
+	ifaceConstantCount = 2530,
 	ifacePropertyCount = 209
 };
 

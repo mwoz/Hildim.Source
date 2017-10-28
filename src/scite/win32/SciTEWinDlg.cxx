@@ -818,7 +818,6 @@ public:
 void SciTEWin::UIClosed() {
 	SciTEBase::UIClosed();
 	props.Set("Replacements", "");
-	SizeSubWindows();
 	WindowSetFocus(wEditor);
 }
 

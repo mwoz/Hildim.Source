@@ -480,7 +480,6 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	SetIndentSettings();
 	SetEol();
 	UpdateBuffersCurrent();
-	SizeSubWindows();
 
 	if (!filePath.IsUntitled()) {
 		wEditor.Call(SCI_SETREADONLY, 0);
@@ -887,7 +886,6 @@ void SciTEBase::OpenFromStdin(bool UseOutputPane) {
 		} else {
 			heightOutput = 500;
 		}
-		SizeSubWindows();
 	} else {
 		wEditor.Call(SCI_ENDUNDOACTION);
 	}

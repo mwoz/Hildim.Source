@@ -278,7 +278,6 @@ void SciTEBase::ChangeTabWnd(){
 	SetIndentSettings();
 	SetEol();
 	UpdateBuffersCurrent();
-	SizeSubWindows();
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
@@ -325,7 +324,6 @@ void SciTEBase::CloneTab(){
 	SetIndentSettings();
 	SetEol();
 	UpdateBuffersCurrent();
-	SizeSubWindows();
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
@@ -408,7 +406,6 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	if (!bExit) {
 		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
 		RestoreState(bufferNext, switchTab);
-		//TabSelect(index);
 
 		if (lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
@@ -796,8 +793,6 @@ void SciTEBase::ShiftTab(int indexFrom, int indexTo) {
 	buffers.SetCurrent(indexTo);
 	BuffersMenu();
 
-	//TabSelect(indexTo);
-
 	DisplayAround(buffers.buffers[buffers.Current()]);
 }
 
@@ -863,208 +858,137 @@ static char tabROColor[15];
 
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
-	RemoveAllTabs();
 
 	bool utf8mode = !strcmp(IupGetGlobal("UTF8MODE"), "YES");
 
 	int pos;
-	if (!props.GetInt("tab.oldstile")) {
-		if (bBlockRedraw || bBlockUIUpdate)
-			return;
-		IupStoreAttribute(IupTab(IDM_COSRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
-		IupStoreAttribute(IupTab(IDM_COSRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
-		IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
-		IupStoreAttribute(IupTab(IDM_SRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
 
-		int oldLCount = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT");
-		int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
-		int posL = 0, posR = 0;
-		if (buffers.size > 1) {
-			unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
-			char* ReadOnlyColor;
-			if (props.GetInt("tabctrl.readonly.color")) {
-				strcpy(tabROColor, props.Get("tabctrl.readonly.color").c_str());
-				ReadOnlyColor = tabROColor;
-			}
-			else
-				ReadOnlyColor = "120 120 120";
+	if (bBlockRedraw || bBlockUIUpdate)
+		return;
+	IupStoreAttribute(IupTab(IDM_COSRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
+	IupStoreAttribute(IupTab(IDM_COSRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
+	IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
+	IupStoreAttribute(IupTab(IDM_SRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
 
-			for (pos = 0; pos < buffers.length; pos++) {
-				int itemID = bufferCmdID + pos;
-				GUI::gui_string entry;
-				GUI::gui_string titleTab;
-				char hui[15];
-				hui[0] = 0;
+	int oldLCount = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT");
+	int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
+	int posL = 0, posR = 0;
+	if (buffers.size > 1) {
+		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
+		char* ReadOnlyColor;
+		if (props.GetInt("tabctrl.readonly.color")) {
+			strcpy(tabROColor, props.Get("tabctrl.readonly.color").c_str());
+			ReadOnlyColor = tabROColor;
+		} else
+			ReadOnlyColor = "120 120 120";
 
-				if (buffers.buffers[pos].IsUntitled()) {
-					GUI::gui_string untitled = localiser.Text("Untitled");
-					entry += untitled;
-					titleTab += untitled;
+		for (pos = 0; pos < buffers.length; pos++) {
+			int itemID = bufferCmdID + pos;
+			GUI::gui_string entry;
+			GUI::gui_string titleTab;
+			char hui[15];
+			hui[0] = 0;
+
+			if (buffers.buffers[pos].IsUntitled()) {
+				GUI::gui_string untitled = localiser.Text("Untitled");
+				entry += untitled;
+				titleTab += untitled;
+			} else {
+				GUI::gui_string path = buffers.buffers[pos].AsInternal();
+
+				// Handle '&' characters in path, since they are interpreted in
+				// menues and tab names.
+				size_t amp = 0;
+				while ((amp = path.find(GUI_TEXT("&"), amp)) != GUI::gui_string::npos) {
+					path.insert(amp, GUI_TEXT("&"));
+					amp += 2;
+				}
+
+				entry += path;
+
+				size_t dirEnd = entry.rfind(pathSepChar);
+				if (dirEnd != GUI::gui_string::npos) {
+					titleTab += entry.substr(dirEnd + 1);
 				} else {
-					GUI::gui_string path = buffers.buffers[pos].AsInternal();
+					titleTab += entry;
+				}
 
-					// Handle '&' characters in path, since they are interpreted in
-					// menues and tab names.
-					size_t amp = 0;
-					while ((amp = path.find(GUI_TEXT("&"), amp)) != GUI::gui_string::npos) {
-						path.insert(amp, GUI_TEXT("&"));
-						amp += 2;
+				size_t nameEnd = titleTab.rfind('.');
+				if (props.GetInt("tabctrl.colorized")) {
+					GUI::gui_string ext;
+					if (nameEnd != GUI::gui_string::npos) {
+						ext += titleTab.substr(nameEnd + 1);
 					}
-
-					entry += path;
-
-					size_t dirEnd = entry.rfind(pathSepChar);
-					if (dirEnd != GUI::gui_string::npos) {
-						titleTab += entry.substr(dirEnd + 1);
-					} else {
-						titleTab += entry;
-					}
-
-					size_t nameEnd = titleTab.rfind('.');
-					if (props.GetInt("tabctrl.colorized")) {
-						GUI::gui_string ext;
-						if (nameEnd != GUI::gui_string::npos) {
-							ext += titleTab.substr(nameEnd + 1);
-						}
-						_itoa(Ext2HUI(ext), hui, 10);
-					}
-					if (props.GetInt("tabctrl.cut.ext") && nameEnd != GUI::gui_string::npos && (pos != buffers.Current())) {
-						titleTab = titleTab.substr(0, nameEnd);
-						if (props.GetInt("tabctrl.cut.prefix")) {
-							size_t ttt = titleTab.find('^');
-							bool isTmp = (titleTab.find('^') == 0);
-							size_t prerEnd = titleTab.find('.');
-							if(prerEnd != GUI::gui_string::npos){
-								GUI::gui_string tmp;
-								if (isTmp) tmp += '^';
-								tmp += titleTab.substr(prerEnd + 1);
-								titleTab = tmp;
-							}
+					_itoa(Ext2HUI(ext), hui, 10);
+				}
+				if (props.GetInt("tabctrl.cut.ext") && nameEnd != GUI::gui_string::npos && (pos != buffers.Current())) {
+					titleTab = titleTab.substr(0, nameEnd);
+					if (props.GetInt("tabctrl.cut.prefix")) {
+						size_t ttt = titleTab.find('^');
+						bool isTmp = (titleTab.find('^') == 0);
+						size_t prerEnd = titleTab.find('.');
+						if (prerEnd != GUI::gui_string::npos) {
+							GUI::gui_string tmp;
+							if (isTmp) tmp += '^';
+							tmp += titleTab.substr(prerEnd + 1);
+							titleTab = tmp;
 						}
 					}
 				}
-
-				if (buffers.buffers[pos].DocumentNotSaved()) {
-					entry += GUI_TEXT("*");
-					titleTab += GUI_TEXT("*");
-				}
-				bool ro = (buffers.buffers[pos].ROMarker != NULL);
-				if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
-					if (utf8mode) {
-						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
-						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, buffers.buffers[pos].AsUTF8().c_str());
-					} else {
-						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
-						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
-					}
-					IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : "0 0 0");
-					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, hui);
-					
-					if (pos == buffers.Current()){
-						IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
-						IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
-					}
-				} else {
-					if (utf8mode) {
-						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, GUI::UTF8FromString(titleTab).c_str());
-						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, buffers.buffers[pos].AsUTF8().c_str());
-
-					} else {
-						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
-						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
-					}
-					IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : "0 0 0");
-					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
-					
-					if (pos == buffers.Current()){
-						int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
-						IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
-						IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
-					}
-				}
-				//TabInsert(pos, titleTab.c_str());
 			}
-			for (pos = oldLCount - 1; pos >= posL; pos--)
-				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", pos, NULL);
-			for (pos = oldLCountR - 1; pos >= posR; pos--)
-				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
-			
-			IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
-			IupRedraw(IupGetParent(IupTab(IDM_COSRCWIN)), 1);
 
-		}
-	} else {
-		if (buffers.size > 1) {
-			unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
-			for (pos = 0; pos < buffers.length; pos++) {
-				int itemID = bufferCmdID + pos;
-				GUI::gui_string entry;
-				GUI::gui_string titleTab;
-#if !defined(GTK)
-
-				if (pos < 10) {
-					GUI::gui_string sPos = GUI::StringFromInteger((pos + 1) % 10);
-					GUI::gui_string sHotKey = GUI_TEXT("&") + sPos + GUI_TEXT(" ");
-					entry = sHotKey;	// hotkey 1..0
-					titleTab = sHotKey; // add hotkey to the tabbar
-				}
-#endif
-
-				if (buffers.buffers[pos].IsUntitled()) {
-					GUI::gui_string untitled = localiser.Text("Untitled");
-					entry += untitled;
-					titleTab += untitled;
+			if (buffers.buffers[pos].DocumentNotSaved()) {
+				entry += GUI_TEXT("*");
+				titleTab += GUI_TEXT("*");
+			}
+			bool ro = (buffers.buffers[pos].ROMarker != NULL);
+			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
+				if (utf8mode) {
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, buffers.buffers[pos].AsUTF8().c_str());
 				} else {
-					GUI::gui_string path = buffers.buffers[pos].AsInternal();
-#if !defined(GTK)
-					// Handle '&' characters in path, since they are interpreted in
-					// menues and tab names.
-					size_t amp = 0;
-					while ((amp = path.find(GUI_TEXT("&"), amp)) != GUI::gui_string::npos) {
-						path.insert(amp, GUI_TEXT("&"));
-						amp += 2;
-					}
-#endif
-					entry += path;
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
+					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+				}
+				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : "0 0 0");
+				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, hui);
 
-					size_t dirEnd = entry.rfind(pathSepChar);
-					if (dirEnd != GUI::gui_string::npos) {
-						titleTab += entry.substr(dirEnd + 1);
-					} else {
-						titleTab += entry;
-					}
-					if (tabsTitleMaxLength > 0 && titleTab.length() > tabsTitleMaxLength + 3) {
-						titleTab.resize(tabsTitleMaxLength, L'\0');
-						titleTab.append(GUI_TEXT("..."));
-					}
+				if (pos == buffers.Current()) {
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
 				}
+			} else {
+				if (utf8mode) {
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, GUI::UTF8FromString(titleTab).c_str());
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, buffers.buffers[pos].AsUTF8().c_str());
 
-				if (buffers.buffers[pos].DocumentNotSaved()) { //-change-[OpenNonExistent]
-					entry += GUI_TEXT(" *");
-					titleTab += GUI_TEXT(" *");
+				} else {
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
+					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
 				}
+				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : "0 0 0");
+				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
 
-				if (buffers.buffers[pos].ROMarker != NULL) {
-					entry += buffers.buffers[pos].ROMarker;
-					titleTab += buffers.buffers[pos].ROMarker;
+				if (pos == buffers.Current()) {
+					int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
+					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
+					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
 				}
-				if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
-					entry = GUI_TEXT("›") + entry;
-					titleTab = GUI_TEXT("›") + titleTab;
-				}
-				TabInsert(pos, titleTab.c_str());
 			}
 		}
+		for (pos = oldLCount - 1; pos >= posL; pos--)
+			IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", pos, NULL);
+		for (pos = oldLCountR - 1; pos >= posR; pos--)
+			IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
+
+		IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
+		IupRedraw(IupGetParent(IupTab(IDM_COSRCWIN)), 1);
+
 	}
+
 	CheckMenus();
 	CheckRightEditorVisible();
-#if !defined(GTK)
 
-	SizeSubWindows();
-#endif
-#if defined(GTK)
-	
-#endif
 }
 
 

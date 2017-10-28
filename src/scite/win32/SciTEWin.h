@@ -260,10 +260,6 @@ protected:
 
 	virtual void SetFileProperties(PropSetFile &ps);
 
-	virtual void TabInsert(int index, const GUI::gui_char *title);
-	virtual void TabSelect(int index);
-	virtual void RemoveAllTabs();
-
 	/// Warn the user, by means defined in its properties.
 //!	virtual void WarnUser(int warnID);
 	virtual void WarnUser(int warnID, const char *msg = NULL, bool isCanBeAlerted = true); //!-change-[WarningMessage]
@@ -335,7 +331,6 @@ public:
 
 	virtual SString EncodeString(const SString &s);
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &wCurrent, int selStart, int selEnd);
-	virtual void SizeSubWindows();
 
 	HACCEL GetAcceleratorTable() {
 		return hAccTable;

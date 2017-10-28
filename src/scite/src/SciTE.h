@@ -133,9 +133,6 @@
 #define IDM_SRCWIN			350
 #define IDM_COSRCWIN		356
 #define IDM_RUNWIN			351
-#define IDM_TOOLWIN			352
-#define IDM_STATUSWIN		353
-#define IDM_TABWIN			354
 #define IDM_FINDRESWIN      355
 
 // Options

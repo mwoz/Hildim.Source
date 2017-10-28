@@ -1422,7 +1422,6 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 
 	// OK, the instance will be displayed
-	SizeSubWindows();
 	//wSciTE.Show();
 	//if (cmdShow) {	// assume SW_MAXIMIZE only
 	//	::ShowWindow(MainHWND(), cmdShow);

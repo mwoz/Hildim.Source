@@ -1532,7 +1532,6 @@ void SciTEBase::ReadPropertiesInitial() {
 		previousHeightOutput = sizeVertical;
 		if (!hideOutput) {
 			heightOutput = NormaliseSplit(previousHeightOutput);
-			SizeSubWindows();
 			Redraw();
 		}
 	}
@@ -1548,14 +1547,6 @@ void SciTEBase::ReadPropertiesInitial() {
 	wOutput.Call(SCI_SETWRAPMODE, wrapOutput ? wrapStyle : SC_WRAP_NONE);
 	wFindRes.Call(SCI_SETWRAPMODE, wrapFindRes ? wrapStyle : SC_WRAP_NONE);
 
-
-#if !defined(GTK)
-
-	if (tabMultiLine) {	// Windows specific!
-		long wl = ::GetWindowLong(reinterpret_cast<HWND>(wTabBar.GetID()), GWL_STYLE);
-		::SetWindowLong(reinterpret_cast<HWND>(wTabBar.GetID()), GWL_STYLE, wl | TCS_MULTILINE);
-	}
-#endif
 
 	FilePath homepath = GetSciteDefaultHome();
 	props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
