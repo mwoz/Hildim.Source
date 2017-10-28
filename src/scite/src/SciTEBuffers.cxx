@@ -361,7 +361,8 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 }
 
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
-	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !props.GetInt("tabctrl.alwayssavepos") ) {
+	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate && 
+		(((!props.GetInt("tabctrl.alwayssavepos") && !(::GetAsyncKeyState(VK_SHIFT) & 0x8000))) || (props.GetInt("tabctrl.alwayssavepos") && (::GetAsyncKeyState(VK_SHIFT) & 0x8000)))  ){
 		int side = buffers.buffers[index].editorSide;
 		int realIndex = 0;
 		int firstSide;  

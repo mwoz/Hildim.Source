@@ -401,13 +401,14 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		}
 
 	} else if (!suppressMessage) {
-		if (props.GetInt("warning.couldnotopenfile.disable") != 1) { //!-add-[warning.couldnotopenfile.disable]
-		GUI::gui_string msg = LocaliseMessage("Could not open file '^0'.", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
-		} //!-add-[warning.couldnotopenfile.disable]
+		std::string cmd = "print[[";
+		cmd += "Could not open file ";
+		cmd += filePath.AsUTF8();
+		cmd += ".]]";
+		extender->DoLua(cmd.c_str());
 	}
 	if (!wEditor.Call(SCI_GETUNDOCOLLECTION)) {
-		wEditor.Call(SCI_SETUNDOCOLLECTION, 1);
+		wEditor.Call(SCI_SETUNDOCOLLECTION, 1); 
 	}
 	// Flick focus to the output window and back to
 	// ensure palette realised correctly.
