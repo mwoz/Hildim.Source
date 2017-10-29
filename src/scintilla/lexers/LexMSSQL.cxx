@@ -47,8 +47,8 @@ static bool isMSSQLOperator(char ch) {
 	return false;
 }
 
-static char classifyWordSQL(unsigned int start,
-                            unsigned int end,
+static char classifyWordSQL(Sci_PositionU start,
+                            Sci_PositionU end,
                             WordList *keywordlists[],
                             Accessor &styler,
                             unsigned int actualState,
@@ -65,7 +65,7 @@ static char classifyWordSQL(unsigned int start,
 	WordList &kwOperators			= *keywordlists[KW_MSSQL_OPERATORS];
 	WordList &kwM4Keys				= *keywordlists[KW_MSSQL_M4KEYS];
 
-	for (unsigned int i = 0; i < end - start + 1 && i < 128; i++) {
+	for (Sci_PositionU i = 0; i < end - start + 1 && i < 128; i++) {
 		s[i] = static_cast<char>(tolower(styler[start + i]));
 		s[i + 1] = '\0';
 	}
@@ -118,14 +118,14 @@ static char classifyWordSQL(unsigned int start,
 	return chAttr;
 }
 
-static void ColouriseMSSQLDoc(unsigned int startPos, int length,
+static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
                               int initStyle, WordList *keywordlists[], Accessor &styler) {
 
 	WordList &kwM4Keys = *keywordlists[KW_MSSQL_M4KEYS];
 	styler.StartAt(startPos);
 
 	bool fold = styler.GetPropertyInt("fold") != 0;
-	int lineCurrent = styler.GetLine(startPos);
+	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int spaceFlags = 0;
 
 	int state = initStyle;
@@ -133,8 +133,8 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 	char chPrev = ' ';
 	char chNext = styler[startPos];
 	styler.StartSegment(startPos);
-	unsigned int lengthDoc = startPos + length;
-	for (unsigned int i = startPos; i < lengthDoc; i++) {
+	Sci_PositionU lengthDoc = startPos + length;
+	for (Sci_PositionU i = startPos; i < lengthDoc; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 
@@ -161,7 +161,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 		}
 
 		// When the last char isn't part of the state (have to deal with it too)...
-		if ((state == SCE_MSSQL_IDENTIFIER) ||
+		if ( (state == SCE_MSSQL_IDENTIFIER) ||
 			(state == SCE_MSSQL_STORED_PROCEDURE) ||
 			(state == SCE_MSSQL_DATATYPE) ||
 			(state == SCE_MSSQL_M4KEYS) ||
@@ -175,8 +175,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 				if ((state == SCE_MSSQL_VARIABLE) || (state == SCE_MSSQL_COLUMN_NAME)) {
 					styler.ColourTo(i - 1, state);
 					stateTmp = state;
-				}
-				else
+				} else				
 					stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
 
 				prevState = state;
@@ -224,7 +223,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_COMMENT;
-			} else if ((ch == '-' && chNext == '-') ) {
+			} else if (ch == '-' && chNext == '-') {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_LINE_COMMENT;
@@ -260,6 +259,7 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
                 } else
                     state = SCE_MSSQL_VARIABLE;
 			}
+
 
 		// When the last char is part of the state...
 		} else if (state == SCE_MSSQL_COMMENT) {
@@ -314,18 +314,18 @@ static void ColouriseMSSQLDoc(unsigned int startPos, int length,
 	styler.ColourTo(lengthDoc - 1, state);
 }
 
-static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], Accessor &styler) {
+static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
 	bool foldComment = styler.GetPropertyInt("fold.comment") != 0;
 	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
-	unsigned int endPos = startPos + length;
+	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
-	int lineCurrent = styler.GetLine(startPos);
+	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
 	char chNext = styler[startPos];
 	bool inComment = (styler.StyleAt(startPos - 1) == SCE_MSSQL_COMMENT);
 	char s[15];
-	for (unsigned int i = startPos; i < endPos; i++) {
+	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 		int style = styler.StyleAt(i);
@@ -348,19 +348,19 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 			// Folding between begin or case and end
 			char c = static_cast<char>(tolower(ch));
 			if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
-				unsigned int j;
-				for (j = 0; j < 6; j++) {
+				Sci_PositionU j;
+                for (j = 0; j < 5; j++) {
 					if (!iswordchar(styler[i + j])) {
 						break;
 					}
 					s[j] = static_cast<char>(tolower(styler[i + j]));
 					s[j + 1] = '\0';
 				}
-				unsigned int ii = i + j;
+				Sci_PositionU ii = i + j;
 
 				if ((strcmp(s, "begin") == 0) || (strcmp(s, "case") == 0)) {
 					levelCurrent++;
-					unsigned int l;
+					Sci_PositionU l;
 					char sNext[200];
 					sNext[0] = '\0';
 					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
@@ -381,13 +381,13 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 					}
 				}
 				else if (strcmp(s, "create") == 0){
-					unsigned int l;
+					Sci_PositionU  l;
 					char sNext[200];
 					sNext[0] = '\0';
 					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
 					if (l < 200)
 					{
-						unsigned int k;
+						Sci_PositionU  k;
 						for (k = 0; k < 200; k++)
 						{
 							if (!iswordchar(styler[ii + k + l])) break;
@@ -412,7 +412,7 @@ static void FoldMSSQLDoc(unsigned int startPos, int length, int, WordList *[], A
 		}if (style == SCE_MSSQL_SYSMCONSTANTS) {
 			char c = static_cast<char>(tolower(ch));
 			if (c == '_' ) {
-				unsigned int j;
+				Sci_PositionU j;
 				for (j = 0; j < 13; j++) {
 					if (!iswordchar(styler[i + j])) {
 						break;

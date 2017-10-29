@@ -1297,17 +1297,7 @@ static int set_clipboard(lua_State* L)
 	}
 	return 0;
 }
-static int bit_and(lua_State* L)
-{
-	lua_pushinteger(L, luaL_checkinteger(L,1)&luaL_checkinteger(L,2));
-	return 1;
-}
-static int bit_or(lua_State* L)
-{
 
-	lua_pushinteger(L, luaL_checkinteger(L,1)|luaL_checkinteger(L,2));
-	return 1;
-}
 static int greateCuid(lua_State* L)
 {
 
@@ -1339,8 +1329,6 @@ luaL_Reg shell[] =
 	{ "from_utf8", from_utf8 },
 	{ "get_clipboard", get_clipboard },
 	{ "set_clipboard", set_clipboard },
-	{ "bit_or", bit_or },
-	{ "bit_and", bit_and },
 	{ "delete_file", delete_file },
 	{ "rename_file", rename_file },
 	{ "activate_proc_wnd", activate_proc_wnd },

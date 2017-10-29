@@ -179,15 +179,29 @@ void tLuaCOMTypeHandler::com2lua(lua_State* L, VARIANTARG varg_orig, bool is_var
         }
         else lua_pushnil(L);
         break;
-      case VT_CY:
       case VT_UI1:
       case VT_UI2:
-      case VT_UI4:
+	  case VT_UI4:
+	  case VT_UI8:
       case VT_INT:
       case VT_UINT:
       case VT_I1:
       case VT_I2:
-      case VT_I4:
+	  case VT_I4:
+	  case VT_INT_PTR:
+	  case VT_UINT_PTR:
+	  {
+		  new_varg.vt = VT_R8;
+		  HRESULT hr = VariantChangeType(&new_varg, &varg, 0, VT_R8);
+		  CHK_COM_CODE(hr);
+
+		  if (is_variant && table_variants)
+			  pushTableVarNumber(L, varg.vt, new_varg.dblVal);
+		  else
+			  lua_pushinteger(L, new_varg.dblVal);
+		  break;
+	  }
+      case VT_CY:
       case VT_R4:
       case VT_DECIMAL:
       case VT_R8:
@@ -199,7 +213,7 @@ void tLuaCOMTypeHandler::com2lua(lua_State* L, VARIANTARG varg_orig, bool is_var
           if(is_variant && table_variants)
             pushTableVarNumber(L, varg.vt, new_varg.dblVal);
           else
-            lua_pushnumber(L, new_varg.dblVal);
+		    lua_pushnumber(L, new_varg.dblVal);
           break;
         }
 
@@ -223,28 +237,28 @@ void tLuaCOMTypeHandler::com2lua(lua_State* L, VARIANTARG varg_orig, bool is_var
             VariantTimeToSystemTime(varg.date,&date);
             lua_newtable(L);
             lua_pushstring(L, "Day");
-            lua_pushnumber(L, date.wDay);
+			lua_pushinteger(L, date.wDay);
             lua_settable(L, -3);
             lua_pushstring(L, "DayOfWeek");
-            lua_pushnumber(L, date.wDayOfWeek);
+			lua_pushinteger(L, date.wDayOfWeek);
             lua_settable(L, -3);
             lua_pushstring(L, "Month");
-            lua_pushnumber(L, date.wMonth);
+			lua_pushinteger(L, date.wMonth);
             lua_settable(L, -3);
             lua_pushstring(L, "Year");
-            lua_pushnumber(L, date.wYear);
+			lua_pushinteger(L, date.wYear);
             lua_settable(L, -3);
             lua_pushstring(L, "Hour");
-            lua_pushnumber(L, date.wHour);
+			lua_pushinteger(L, date.wHour);
             lua_settable(L, -3);
             lua_pushstring(L, "Minute");
-            lua_pushnumber(L, date.wMinute);
+			lua_pushinteger(L, date.wMinute);
             lua_settable(L, -3);
             lua_pushstring(L, "Second");
-            lua_pushnumber(L, date.wSecond);
+			lua_pushinteger(L, date.wSecond);
             lua_settable(L, -3);
             lua_pushstring(L, "Milliseconds");
-            lua_pushnumber(L, date.wMilliseconds);
+			lua_pushinteger(L, date.wMilliseconds);
             lua_settable(L, -3);
           }
 

@@ -862,7 +862,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		SetAboutStyle(wsci, 3, ColourRGB(0, 0, 0));
 		AddStyledText(wsci, "December 1998-December 2010.\n", 3);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f));
-		AddStyledText(wsci, "Scintilla 4.0.1 code editing componen, Neil Hodgson\n", 3);
+		AddStyledText(wsci, "Scintilla 4.0.2 code editing componen, Neil Hodgson\n", 3);
 		AddStyledText(wsci, "http://www.scintilla.org\n", 4);
 		AddStyledText(wsci, "UIP libraries 3.23 by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://iup.sourceforge.net\n", 4);

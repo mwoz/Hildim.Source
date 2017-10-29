@@ -399,12 +399,11 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		if (props.GetInt("indent.auto")) {
 			DiscoverIndentSetting();
 		}
-
-	} else if (!suppressMessage) {
-		std::string cmd = "print[[";
+	} else if (!suppressMessage&& !props.GetInt("warning.couldnotopenfile.disable")) {
+		std::string cmd = "print(([[";
 		cmd += "Could not open file ";
 		cmd += filePath.AsUTF8();
-		cmd += ".]]";
+		cmd += ".]]):from_utf8(1251))";
 		extender->DoLua(cmd.c_str());
 	}
 	if (!wEditor.Call(SCI_GETUNDOCOLLECTION)) {
