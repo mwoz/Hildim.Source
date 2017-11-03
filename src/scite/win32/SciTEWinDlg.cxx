@@ -289,6 +289,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 
 FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter, const char *ext, int *nFilter) {
 	FilePath path;
+	int curBuff = buffers.Current();
 	if (0 == dialogsOnScreen) {
 		GUI::gui_char saveName[MAX_PATH] = GUI_TEXT("");
 		FilePath savePath = SaveName(ext);
@@ -336,6 +337,11 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 			if (nFilter) *nFilter = ofn.nFilterIndex;
 		}
 		dialogsOnScreen--;
+	}
+	if (curBuff != buffers.Current()) {
+		extender->DoLua("print'The current buffer was switched during the pop-up dialog. Operation canceled'");
+		FilePath p;
+		return p;
 	}
 	return path;
 }

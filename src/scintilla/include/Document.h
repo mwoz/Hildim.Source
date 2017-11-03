@@ -326,7 +326,7 @@ public:
 	}
 	bool IsCollectingUndo() const { return cb.IsCollectingUndo(); }
 	void BeginUndoAction() { cb.BeginUndoAction(); }
-	void EndUndoAction() { cb.EndUndoAction(); }
+	int EndUndoAction() { return cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const { return cb.IsSavePoint(); }

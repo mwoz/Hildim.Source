@@ -728,10 +728,10 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 	if (props.GetInt("ensure.consistent.line.ends"))
 		wEditor.Call(SCI_CONVERTEOLS, wEditor.Call(SCI_GETEOLMODE));
 
+	wEditor.Call(SCI_ENDUNDOACTION);
+
 	if (extender)
 		retVal = extender->OnBeforeSave(saveName.AsUTF8().c_str());
-
-	wEditor.Call(SCI_ENDUNDOACTION);
 
 	if (!retVal) {
 		Utf8_16_Write convert;

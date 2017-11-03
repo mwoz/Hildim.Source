@@ -1051,10 +1051,10 @@ static int findfiles( lua_State* L )
 			lua_pushboolean( L, findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY );
 			lua_setfield( L, -2, "isdirectory" );
 
-			lua_pushnumber( L, findFileData.dwFileAttributes );
+			lua_pushinteger( L, findFileData.dwFileAttributes );
 			lua_setfield( L, -2, "attributes" );
 
-			lua_pushnumber( L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
+			lua_pushinteger( L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
 							   findFileData.nFileSizeLow );
 			lua_setfield( L, -2, "size" );
 

@@ -849,7 +849,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.4.2\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.4.3\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -862,7 +862,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 		SetAboutStyle(wsci, 3, ColourRGB(0, 0, 0));
 		AddStyledText(wsci, "December 1998-December 2010.\n", 3);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f));
-		AddStyledText(wsci, "Scintilla 4.0.2 code editing componen, Neil Hodgson\n", 3);
+		AddStyledText(wsci, "Scintilla 4.0.2.1 code editing componen, Neil Hodgson\n", 3);
 		AddStyledText(wsci, "http://www.scintilla.org\n", 4);
 		AddStyledText(wsci, "UIP libraries 3.23 by TeCGraf, PUC-Rio\n", 3);
 		AddStyledText(wsci, "    http://iup.sourceforge.net\n", 4);
@@ -4934,8 +4934,13 @@ void SciTEBase::Trace(const char *s) {
 	} 
 	
 	OutputAppendStringSynchronised(s);
+	for (int i = 0; wEditor.Call(SCI_ENDUNDOACTION) > 0;)//
+	{
+		OutputAppendStringSynchronised("\n!!!Warning!!! ENDUNDOACTION by Trace");
+	}	
 	if(!bFinalise)
 		EnsureVisible();
+
 }
 
 char *SciTEBase::Property(const char *key) {

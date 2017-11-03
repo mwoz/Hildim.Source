@@ -2747,7 +2747,7 @@ static IFaceFunction ifaceFunctions[] = {
 	{"EditToggleOvertype", 2324, iface_void, {iface_void, iface_void}},
 	{"EmptyUndoBuffer", 2175, iface_void, {iface_void, iface_void}},
 	{"EncodedFromUTF8", 2449, iface_int, {iface_string, iface_stringresult}},
-	{"EndUndoAction", 2079, iface_void, {iface_void, iface_void}},
+	{"EndUndoAction", 2079, iface_int, {iface_void, iface_void}},
 	{"EnsureVisible", 2232, iface_void, {iface_int, iface_void}},
 	{"EnsureVisibleEnforcePolicy", 2234, iface_void, {iface_int, iface_void}},
 	{"ExpandChildren", 2239, iface_void, {iface_int, iface_int}},

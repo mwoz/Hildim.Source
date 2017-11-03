@@ -6184,8 +6184,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return 0;
 
 	case SCI_ENDUNDOACTION:
-		pdoc->EndUndoAction();
-		return 0;
+		return pdoc->EndUndoAction();
 
 	case SCI_GETCARETPERIOD:
 		return caret.period;
