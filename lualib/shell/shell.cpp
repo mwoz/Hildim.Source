@@ -547,10 +547,20 @@ static int setfileattr( lua_State* L )
 	return 1;
 }
 
-static int fileexists( lua_State* L )
-{
-	const char* FN = luaL_checkstring( L, 1 );
-	lua_pushboolean( L, CPath::IsPathExist( FN ) );
+static int fileexists(lua_State* L) {
+	const char* FN = luaL_checkstring(L, 1);
+	lua_pushboolean(L, CPath::IsPathExist(FN));
+	return 1;
+}
+
+static int greate_directory(lua_State* L) {
+	const char* FN = luaL_checkstring(L, 1);
+	if (CPath::IsPathExist(FN)) {
+		lua_pushboolean(L, true);
+		return 1;
+	}
+	CPath p(FN);
+	lua_pushboolean(L, ::CreateDirectory(FN, NULL));
 	return 1;
 }
 
@@ -1336,6 +1346,7 @@ luaL_Reg shell[] =
 	{ "datetime", datetime },
 	{ "async_mouse_state", async_mouse_state },
 	{ "load_kb_layout", load_kb_layout },
+	{ "greateDirectory", greate_directory },
 	{ NULL, NULL }
 };
 
