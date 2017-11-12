@@ -955,7 +955,7 @@ void SciTEBase::BuffersMenu() {
 
 				if (pos == buffers.Current()) {
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
-					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? "120 120 255" : "0 0 255");
 				}
 			} else {
 				if (utf8mode) {
@@ -972,7 +972,7 @@ void SciTEBase::BuffersMenu() {
 				if (pos == buffers.Current()) {
 					int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
 					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
-					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? ReadOnlyColor : "0 0 0");
+					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? "120 120 255" : "0 0 255");
 				}
 			}
 		}

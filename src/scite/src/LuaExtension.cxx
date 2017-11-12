@@ -16,6 +16,7 @@
 #include "GUI.h"
 #include "SString.h"
 #include "FilePath.h"
+#include "Utf8_16.h"
 #include "StyleWriter.h"
 #include "Extender.h"
 #include "LuaExtension.h"
@@ -302,6 +303,43 @@ static int cf_scite_menu_command(lua_State *L) {
 static int cf_scite_get_editor(lua_State *L) {
 	lua_pushinteger(L, host->ActiveEditor());
 	return 1;
+}
+
+static int cf_scite_save_encoding_file(lua_State *L) {
+	const char *path = luaL_checkstring(L, 1);
+	const char *body = luaL_checkstring(L, 2);
+	int encoding = lua_tointeger(L, 3);
+
+
+	FilePath fPath = GUI::StringFromUTF8(path);
+	std::string err;
+	if (!fPath.Directory().IsDirectory()) {
+		err = "SaveEncodingFile: Not found directory ";
+		err += fPath.Directory().AsUTF8();
+		goto errr;
+	}
+	FILE *f = fPath.Open(fileWrite);
+
+	if (f) {
+		Utf8_16_Write convert;
+		convert.setEncoding(static_cast<Utf8_16::encodingType>(encoding));
+		convert.setfile(f);
+		size_t written = convert.fwrite(body, lstrlenA(body));
+		convert.fclose();
+		if (written) {
+			lua_pushboolean(L, true);
+			return 1;
+		}
+		err = "SaveEncodingFile: Error when save ";
+		err += fPath.AsUTF8();
+	}
+	err = "SaveEncodingFile: Can't open ";
+	err += fPath.AsUTF8();
+errr:
+	lua_pushboolean(L, false);
+	lua_pushstring(L, "Error....");
+	return 2;
+
 }
 
 //!-start-[Perform]
@@ -1984,6 +2022,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_scite_get_editor);
 	lua_setfield(luaState, -2, "ActiveEditor");
 
+	lua_pushcfunction(luaState, cf_scite_save_encoding_file);
+	lua_setfield(luaState, -2, "SaveEncodingFile");
+
 	// buffers
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
@@ -2470,10 +2511,10 @@ struct StylingContext {
 		currentPos = startPos;
 		atLineStart = true;
 		atLineEnd = false;
-		state = initStyle;
+		state = initStyle; 
 		cursorPos = 0;
 		lenCurrent = 0;
-		lenNext = 0;
+		lenNext = 0; 
 		memcpy(cursor[0], "\0\0\0\0\0\0\0\0", 8);
 		memcpy(cursor[1], "\0\0\0\0\0\0\0\0", 8);
 		memcpy(cursor[2], "\0\0\0\0\0\0\0\0", 8);
