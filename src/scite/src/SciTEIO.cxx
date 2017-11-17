@@ -1120,9 +1120,11 @@ bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFla
 		if (!(gf & grepWholeWord)) return match ? true : false;
 
 		size_t searchLength = strlen(sub);
+		bool bLeft = !IsWordCharacter(sub[0], props.GetExpanded("chars.accented").c_str());
+		bool bRight = !IsWordCharacter(sub[lstrlenA(sub) - 1], props.GetExpanded("chars.accented").c_str());
 		while (match) {
-			if (((match == text) || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str()) &&
-				((match + searchLength == (lineEnd)) || !IsWordCharacter(match[searchLength], props.GetExpanded("chars.accented").c_str())))) {
+			if (((match == text) || (bLeft || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str())) &&
+				((match + searchLength == (lineEnd)) || (bRight || !IsWordCharacter(match[searchLength], props.GetExpanded("chars.accented").c_str()))))) {
 				return true;
 			}
 			match = strstr(match + 1, sub);

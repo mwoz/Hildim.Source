@@ -9,6 +9,9 @@
 #include "mblua_util.h"
 #include "tlx_lib/syslog.h"
 #include "msxml2.h"
+#include <string>
+#include <io.h>  
+#include <fcntl.h>  
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -82,7 +85,7 @@ BOOL CmbluaApp::InitInstance()
 {
 	CWinApp::InitInstance();
 	mbTransport = new CmbTransport();
-	return TRUE;
+	return TRUE; 
 }
 int CmbluaApp::ExitInstance()
 {
@@ -101,6 +104,13 @@ int do_CreateMessage(lua_State* L)
 {
 	CMessage *msg = new CMessage();
 	wrap_cmsg(L, msg);
+	return 1;
+}
+
+int do_GetGuid(lua_State* L) 	{
+	CString s = mbTransport->mbCreateInbox();
+	s.Replace("_INBOX.", "");
+	lua_pushfstring(L, s);
 	return 1;
 }
 int do_RestoreMessage(lua_State* L)
@@ -517,14 +527,131 @@ int mesage_AttachMessage(lua_State* L)
 	msg->AttachMsg(subMsg);
 	return 0;
 }
-int mesage_CopyFrom(lua_State* L)
-{	
-	CMessage* msg = cmessage_arg(L,"mesage_CopyFrom");
-	CMessage* subMsg = cmessage_arg(L,"mesage_CopyFrom",2);
+
+int mesage_CopyFrom(lua_State* L) {
+	CMessage* msg = cmessage_arg(L, "mesage_CopyFrom");
+	CMessage* subMsg = cmessage_arg(L, "mesage_CopyFrom", 2);
 
 	msg->AddContentFrom(subMsg);
 	return 0;
 }
+
+int mesage_SaveFieldBinary(lua_State* L) {
+	int err = 0;
+	char *b = NULL;
+	CMessage* msg = cmessage_arg(L, "mesage_AddFieldBinary");
+	CString fldName = luaL_checkstring(L, 2);
+	CString path = luaL_checkstring(L, 3);
+	char *description;
+	DWORD l;
+
+	CDatum *d = msg->GetDatum(fldName);
+	if (d->GetVarType() != (VT_ARRAY | VT_UI1) ) {
+		err = -1;
+		description = "Not Binary Data";
+		goto err;
+	}
+	{
+		l = d->GetDataSize();
+		b = new char[l];
+
+
+		SAFEARRAY* pArray = d->value().parray;
+		ASSERT(pArray->cDims == 1); // check we have 1 dimension array
+		ASSERT(l == pArray->rgsabound[0].cElements * pArray->cbElements); // get size of array
+		memcpy(b, (BYTE*)pArray->pvData, l);
+
+		int charsLen = ::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), NULL, 0);
+		std::wstring characters(charsLen, '\0');
+		::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), &characters[0], charsLen);
+
+		int pf;
+
+		err = _wsopen_s(&pf, characters.c_str(), _O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _SH_DENYRW, _S_IWRITE);
+		if (err) {
+			description = "Open File Error";
+			goto err;
+		}
+		if (l != _write(pf, (b), l)) {
+			err = -2;
+			description = "Write File Error";
+			goto err;
+		}
+
+		err = _close(pf);
+		if (err){
+			description = "Close File Error";
+			goto err;
+		}
+	}
+err:
+	if (b)
+		delete[]b;
+	lua_pushinteger(L, err);
+	if (err)
+		lua_pushstring(L, description);
+	else
+		lua_pushinteger(L, l);
+	return 2;
+}
+
+int mesage_AddFieldBinary(lua_State* L) {
+	CMessage* msg = cmessage_arg(L, "mesage_AddFieldBinary");
+	CString fldName = luaL_checkstring(L, 2);
+	CString path = luaL_checkstring(L, 3); 
+	int err;
+	char *description;
+
+	int charsLen = ::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), NULL, 0);
+	std::wstring characters(charsLen, '\0');
+	::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), &characters[0], charsLen);
+
+	int pf;
+	char *b = NULL;
+	err = _wsopen_s(&pf, characters.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+	if (err) {
+		description = "Open File error";
+		goto err;
+	}
+
+	DWORD l = _filelength(pf);
+
+	b = new char[l];
+
+
+	if (l != _read(pf, b, l)) {
+		err = -1;
+		description = "Read File error";
+		goto err;
+	}
+	err = _close(pf);
+	if (err) {
+		description = "Close File error";
+		goto err;
+	}
+	{
+		COleSafeArray arr;
+		arr.Create(VT_UI1, 1, &l);
+
+		for (DWORD i = 0; i < l; i++) {
+
+			arr.PutElement((long*)&i, &b[i]);
+		}
+
+		msg->AddDatum(fldName, arr);
+	}
+
+err:
+	if (b)
+		delete []b;
+	lua_pushinteger(L, err);
+	if (err)
+		lua_pushstring(L, description);
+	else
+		lua_pushinteger(L, l);
+	return 2;
+}
+
 int mesage_ExistsMessage(lua_State* L)
 {	
 	CMessage* msg = cmessage_arg(L,"mesage_ExistsMessage");
@@ -541,7 +668,8 @@ luaL_Reg mblua[] = {
 	{"UnSubscribe", do_UnSubscribe},
 	{"Request", do_Request},
 	{"Destroy",do_Destroy},
-	{"CheckXML",do_CheckXML},
+	{ "CheckXML",do_CheckXML },
+	{"GetGuid",do_GetGuid },
 	{NULL, NULL},
 };
 luaL_Reg message_methods[] = {
@@ -563,6 +691,8 @@ luaL_Reg message_methods[] = {
 	{"ExistsMessage",mesage_ExistsMessage},
 	{ "Name", mesage_GetName },
 	{ "CopyFrom", mesage_CopyFrom },
+	{ "AddFieldBinary", mesage_AddFieldBinary },
+	{ "SaveFieldBinary", mesage_SaveFieldBinary },
 	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},
 };
