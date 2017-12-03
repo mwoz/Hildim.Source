@@ -116,7 +116,7 @@ LuaExtension &LuaExtension::Instance() {
 // Forward declarations
 static ExtensionAPI::Pane check_pane_object(lua_State *L, int index);
 static void push_pane_object(lua_State *L, ExtensionAPI::Pane p);
-static int iface_function_helper(lua_State *L, const IFaceFunction &func);
+static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool bSetter = false);
 
 inline bool IFaceTypeIsScriptable(IFaceType t, int index) {
 	return t < iface_stringresult || (index==1 && t == iface_stringresult);
@@ -1298,7 +1298,7 @@ static const char *CallNamedFunction(const char *name, unsigned int numberArg, u
 }
 //!-end-[OnSendEditor]
 
-static int iface_function_helper(lua_State *L, const IFaceFunction &func) {
+static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool bSetter) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 
 	int arg = 2;
@@ -1321,12 +1321,15 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func) {
 		if (func.paramType[0] == iface_length) {
 			loopParamCount = 0;
 		} else {
-			loopParamCount = 1;
+			if (!bSetter)
+				loopParamCount = 1;
+			else
+				needStringResult = false;
 		}
 	}
 
 	for (int i=0; i<loopParamCount; ++i) {
-		if (func.paramType[i] == iface_string) {
+		if (func.paramType[i] == iface_string || func.paramType[i] == iface_stringresult) {
 			const char *s = lua_tostring(L, arg++);
 			params[i] = reinterpret_cast<long>(s ? s : "");
 		} else if (func.paramType[i] == iface_keymod) {
@@ -1434,7 +1437,7 @@ static int cf_ifaceprop_metatable_newindex(lua_State *L) {
 	push_pane_object(L, ipb->pane);
 	lua_replace(L, 1);
 	lua_settop(L, 3);
-	return iface_function_helper(L, func);
+	return iface_function_helper(L, func, true);
 }
 
 static int cf_pane_iface_function(lua_State *L) {
@@ -1565,7 +1568,7 @@ static int cf_pane_metatable_newindex(lua_State *L) {
 					lua_remove(L, 2);
 
 					if (prop.paramType == iface_void) {
-						return iface_function_helper(L, prop.SetterFunction());
+						return iface_function_helper(L, prop.SetterFunction(), true);
 
 					} else if ((prop.paramType == iface_bool)) {
 						if (!lua_isnil(L, 3)) {
@@ -1576,7 +1579,7 @@ static int cf_pane_metatable_newindex(lua_State *L) {
 							// just push an arbitrary numeric value that Scintilla will ignore
 							lua_pushinteger(L, 0);
 						}
-						return iface_function_helper(L, prop.SetterFunction());
+						return iface_function_helper(L, prop.SetterFunction(), true);
 
 					} else {
 						raise_error(L, "Error - (pane object) cannot assign directly to indexed property");
