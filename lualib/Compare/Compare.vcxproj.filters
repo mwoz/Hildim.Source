@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\MBA">
+      <UniqueIdentifier>{99792b91-df3b-4f38-b7b5-da6210d79761}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\MBA">
+      <UniqueIdentifier>{25b14f10-2359-4811-8602-1e8dd86f08e6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="targetver.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Compare.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\allocator.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\dbug.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\diff.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\hashmap.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\iterator.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\msgno.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\suba.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="mba\varray.h">
+      <Filter>Файлы заголовков\MBA</Filter>
+    </ClInclude>
+    <ClInclude Include="NPPHelpers.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="icon_add_16.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="icon_moved_16.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="icon_sub_16.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="icon_warning_16.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Compare.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\allocator.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\dbug.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\diff.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\hashmap.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\msgno.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\suba.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="mba\varray.c">
+      <Filter>Исходные файлы\MBA</Filter>
+    </ClCompile>
+    <ClCompile Include="NPPHelpers.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Compare.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
