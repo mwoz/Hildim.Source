@@ -253,7 +253,15 @@ bool MultiplexExtension::OnMouseButtonUp(int modifiers) {
 bool MultiplexExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag) {
 	bool handled = false;
 	for (int i = 0; i < extensionCount && !handled; ++i)
-	if (extensions[i]->OnUpdateUI(bModified, bSelChange, flag))
+		if (extensions[i]->OnUpdateUI(bModified, bSelChange, flag))
+			handled = true;
+	return handled;
+}
+
+bool MultiplexExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
+	bool handled = false;
+	for (int i = 0; i < extensionCount && !handled; ++i)
+		if (extensions[i]->CoOnUpdateUI(bModified, bSelChange, flag))
 			handled = true;
 	return handled;
 }

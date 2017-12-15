@@ -375,73 +375,102 @@ char *getAllText(HWND window,int *length){
 	return text;
 
 }
-
-void addEmptyLines(HWND hSci, int offset, int length){
-	if(length<=0){return;}
-	::SendMessageA(hSci, SCI_SETUNDOCOLLECTION, FALSE, 0);
-	int posAdd=0;
-	UINT EOLtype = ::SendMessageA(hSci,SCI_GETEOLMODE,0,0);
-
-
-	if(offset!=0){
-		int docLines=SendMessageA(hSci, SCI_GETLINECOUNT, 0, (LPARAM)0);
-		posAdd= ::SendMessageA(hSci, SCI_POSITIONFROMLINE, offset-1, 0);
-		
-		
-		posAdd+=::SendMessageA(hSci, SCI_LINELENGTH,offset-1,  (LPARAM)0)-lenEOL[EOLtype];
-		if(offset==docLines){
-			posAdd=SendMessageA(hSci, SCI_GETLENGTH, 0, (LPARAM)0);
-		}
-		if(posAdd!=0){
-			posAdd--;
-		}else{
-			posAdd=lenEOL[EOLtype]-1;
-		}
-	}
-
-	::SendMessageA(hSci, SCI_SETTARGETSTART, posAdd, 0);	
-	::SendMessageA(hSci, SCI_SETTARGETEND, posAdd+1, 0);
-
-	int blankLinesLength = lenEOL[EOLtype] * length + 1;
-	int off = 0;
-	char *buff = new char[blankLinesLength];
-	int marker = 0;
-
-	if(offset == 0)
-    {
-		marker = ::SendMessageA(hSci, SCI_MARKERGET, 0, 0);
-		::SendMessageA(hSci, SCI_MARKERDELETE, 0, (LPARAM)-1);
-		buff[blankLinesLength-1] = (char)SendMessageA(hSci, SCI_GETCHARAT, posAdd, (LPARAM)0);
-		off = 0;
-	}
-    else
-    {
-		buff[0] = (char)SendMessageA(hSci, SCI_GETCHARAT, posAdd, (LPARAM)0);
-		off = 1;
-	}
-
-	for(int j = 0; j < length; j++)
-    {
-		for(unsigned int i = 0; i < lenEOL[EOLtype]; i++)
-        {
-			buff[j * lenEOL[EOLtype] + i + off] = strEOL[EOLtype][i];
-		}
-	}
-
-	::SendMessageA(hSci, SCI_REPLACETARGET, blankLinesLength, (LPARAM)buff);
-
-	for (int i = 0; i < length; i++)
-    {
-	    markAsBlank(hSci, offset + i);
-	}
-	
-    if(offset == 0)
-    {
-		SendMessageA(hSci, SCI_MARKERADDSET, length, marker);		
-	}
-
-#if CLEANUP
-	delete[] buff;
-#endif
-	::SendMessageA(hSci, SCI_SETUNDOCOLLECTION, TRUE, 0);
+static int prev_offset;
+void resetPrevOffset() {
+	prev_offset = -2;
 }
+
+void addEmptyLines(HWND hSci, int offset, int length) {
+	static int prev_length;
+
+	if (offset == -1) {
+		offset = 0;
+		prev_offset = -1;
+	} else if(offset == 0 && prev_offset == -1) {
+		length += prev_length;
+		prev_offset = offset;
+	} else {
+		prev_offset = offset;
+	}
+	prev_length = length;
+
+	char *buff = new char[length];
+	for (int i = 0; i < length - 1; i++)
+		buff[i] = '\n';
+	buff[length - 1] = 0;
+
+
+
+	::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)buff);
+	::SendMessage(hSci, SCI_ANNOTATIONSETSTYLE, offset, 0);
+	delete[] buff;
+}
+//void addEmptyLines(HWND hSci, int offset, int length){
+//	if(length<=0){return;}
+//	::SendMessageA(hSci, SCI_SETUNDOCOLLECTION, FALSE, 0);
+//	int posAdd=0;
+//	UINT EOLtype = ::SendMessageA(hSci,SCI_GETEOLMODE,0,0);
+//
+//
+//	if(offset!=0){
+//		int docLines=SendMessageA(hSci, SCI_GETLINECOUNT, 0, (LPARAM)0);
+//		posAdd= ::SendMessageA(hSci, SCI_POSITIONFROMLINE, offset-1, 0);
+//		
+//		
+//		posAdd+=::SendMessageA(hSci, SCI_LINELENGTH,offset-1,  (LPARAM)0)-lenEOL[EOLtype];
+//		if(offset==docLines){
+//			posAdd=SendMessageA(hSci, SCI_GETLENGTH, 0, (LPARAM)0);
+//		}
+//		if(posAdd!=0){
+//			posAdd--;
+//		}else{
+//			posAdd=lenEOL[EOLtype]-1;
+//		}
+//	}
+//
+//	::SendMessageA(hSci, SCI_SETTARGETSTART, posAdd, 0);	
+//	::SendMessageA(hSci, SCI_SETTARGETEND, posAdd+1, 0);
+//
+//	int blankLinesLength = lenEOL[EOLtype] * length + 1;
+//	int off = 0;
+//	char *buff = new char[blankLinesLength];
+//	int marker = 0;
+//
+//	if(offset == 0)
+//    {
+//		marker = ::SendMessageA(hSci, SCI_MARKERGET, 0, 0);
+//		::SendMessageA(hSci, SCI_MARKERDELETE, 0, (LPARAM)-1);
+//		buff[blankLinesLength-1] = (char)SendMessageA(hSci, SCI_GETCHARAT, posAdd, (LPARAM)0);
+//		off = 0;
+//	}
+//    else
+//    {
+//		buff[0] = (char)SendMessageA(hSci, SCI_GETCHARAT, posAdd, (LPARAM)0);
+//		off = 1;
+//	}
+//
+//	for(int j = 0; j < length; j++)
+//    {
+//		for(unsigned int i = 0; i < lenEOL[EOLtype]; i++)
+//        {
+//			buff[j * lenEOL[EOLtype] + i + off] = strEOL[EOLtype][i];
+//		}
+//	}
+//
+//	::SendMessageA(hSci, SCI_REPLACETARGET, blankLinesLength, (LPARAM)buff);
+//
+//	for (int i = 0; i < length; i++)
+//    {
+//	    markAsBlank(hSci, offset + i);
+//	}
+//	
+//    if(offset == 0)
+//    {
+//		SendMessageA(hSci, SCI_MARKERADDSET, length, marker);		
+//	}
+//
+//#if CLEANUP
+//	delete[] buff;
+//#endif
+//	::SendMessageA(hSci, SCI_SETUNDOCOLLECTION, TRUE, 0);
+//}

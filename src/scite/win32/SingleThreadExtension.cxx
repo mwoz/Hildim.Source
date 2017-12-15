@@ -168,6 +168,10 @@ bool SingleThreadExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag
 	return ext->OnUpdateUI(bModified, bSelChange, flag);
 }
 
+bool SingleThreadExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
+	return ext->CoOnUpdateUI(bModified, bSelChange, flag);
+}
+
 bool SingleThreadExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
 	return ext->OnMarginClick(margin, modif, line);
 }
