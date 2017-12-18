@@ -758,6 +758,14 @@ void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
 	}
 }
 
+FilePath SciTEBase::ScintillaWindowSwitcher::GetCoBuffPointer() {
+	if (GetWindowIdm() == IDM_SRCWIN) {
+		return buffer_R;
+	} else {
+		return buffer_L;
+	}
+}
+
 int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
 	if (GetID() == pBase->wEditorL.GetID())	return IDM_SRCWIN;
 	return IDM_COSRCWIN;
@@ -4095,7 +4103,18 @@ void SciTEBase::Notify(SCNotification *notification) {
 			if (extender)
 				handled = extender->OnSavePointLeft();
 			if (!handled) {
-				CurrentBuffer()->isDirty = true;
+				if(wEditor.GetWindowIdm() == notification->nmhdr.idFrom)
+					CurrentBuffer()->isDirty = true;
+				else {
+					FilePath fp = wEditor.GetCoBuffPointer(); 
+					if (fp.IsSet()) {
+						int coCur = buffers.GetDocumentByName(fp, false, notification->nmhdr.idFrom);
+						if (coCur > -1)
+							buffers.buffers[coCur].isDirty = true;
+						else
+							extender->DoLua("print'ERROR: Can not find coEditor fo cet is modify'");
+					}
+				}
 				jobQueue.isBuilt = false;
 			}
 		}

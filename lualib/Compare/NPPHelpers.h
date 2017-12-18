@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NPPHELPERS_H
 #define NPPHELPERS_H
 
-void markTextAsChanged(HWND window,int start,int length);
-void markAsMoved(HWND window,int line);
-void markAsRemoved(HWND window,int line);
-void markAsChanged(HWND window,int line);
-void markAsAdded(HWND window,int line);
+void markTextAsChanged(HWND window,int start,int length, bool symbol);
+void markAsMoved(HWND window,int line, bool symbol);
+void markAsRemoved(HWND window,int line, bool symbol);
+void markAsChanged(HWND window,int line, bool symbol);
+void markAsAdded(HWND window,int line, bool symbol);
 void markAsBlank(HWND window,int line);
 void setStyles(sUserSettings Settings);
 void setBlank(HWND window,int color);

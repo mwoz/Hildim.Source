@@ -376,6 +376,7 @@ protected:
 		virtual int GetWindowIdm();
 		virtual void SetBuffPointer(FilePath* pBuf);
 		virtual void SetCoBuffPointer(FilePath* pBuf);
+		FilePath GetCoBuffPointer();
 		void Switch();
 		ScintillaWindowEditor coEditor;
 	private:

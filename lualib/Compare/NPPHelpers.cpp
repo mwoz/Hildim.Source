@@ -108,12 +108,6 @@ void setStyles(sUserSettings Settings)
                      (1 << MARKER_ADDED_SYMBOL) | 
                      (1 << MARKER_REMOVED_SYMBOL) | 
                      (1 << MARKER_MOVED_SYMBOL);
-
-   // ::SendMessage(nppData._scintillaMainHandle, SCI_SETMARGINMASKN, (WPARAM)4, (LPARAM)MarginMask);
-   // ::SendMessage(nppData._scintillaSecondHandle, SCI_SETMARGINMASKN, (WPARAM)4, (LPARAM)MarginMask);
-   //
-   // ::SendMessage(nppData._scintillaMainHandle, SCI_SETMARGINWIDTHN, (WPARAM)4, (LPARAM)16);
-   // ::SendMessage(nppData._scintillaSecondHandle, SCI_SETMARGINWIDTHN, (WPARAM)4, (LPARAM)16);
         
     setBlank(nppData._scintillaMainHandle, Settings.ColorSettings.blank);
 	setBlank(nppData._scintillaSecondHandle, Settings.ColorSettings.blank);
@@ -123,14 +117,7 @@ void setStyles(sUserSettings Settings)
     defineColor(MARKER_MOVED_LINE,   Settings.ColorSettings.moved);
     defineColor(MARKER_REMOVED_LINE, Settings.ColorSettings.deleted);
 
-    if (Settings.OldSymbols == TRUE)
-    {
-	    defineSymbol(MARKER_ADDED_SYMBOL,   SC_MARK_PLUS);  
-	    defineSymbol(MARKER_REMOVED_SYMBOL, SC_MARK_MINUS);
-        defineSymbol(MARKER_CHANGED_SYMBOL, SC_MARK_ARROWS);
-        defineSymbol(MARKER_MOVED_SYMBOL,   SC_MARK_ARROWDOWN);
-    }
-    else
+    if (Settings.UseSymbols == TRUE)
     {
         DefineXpmSymbol(MARKER_ADDED_SYMBOL,   &icon_add_16_xpm[0]);
         DefineXpmSymbol(MARKER_REMOVED_SYMBOL, &icon_sub_16_xpm[0]);
@@ -146,33 +133,38 @@ void markAsBlank(HWND window,int line)
 	::SendMessageA(window, SCI_MARKERADD, line, MARKER_BLANK_LINE);
 }
 
-void markAsAdded(HWND window,int line)
+void markAsAdded(HWND window,int line, bool symbol)
 {
-    ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_ADDED_SYMBOL);
+	if(symbol)
+		::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_ADDED_SYMBOL);
     ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_ADDED_LINE);
 }
-void markAsChanged(HWND window,int line)
+void markAsChanged(HWND window,int line, bool symbol)
 {
-    ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_CHANGED_SYMBOL);
+	if (symbol)
+		::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_CHANGED_SYMBOL);
     ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_CHANGED_LINE);
 }
-void markAsRemoved(HWND window,int line)
+void markAsRemoved(HWND window,int line, bool symbol)
 {
-    ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_REMOVED_SYMBOL);
+	if (symbol)
+		::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_REMOVED_SYMBOL);
     ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_REMOVED_LINE);
 }
 
-void markAsMoved(HWND window,int line)
+void markAsMoved(HWND window,int line, bool symbol)
 {
-    ::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_MOVED_SYMBOL);
+	if (symbol)
+		::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_MOVED_SYMBOL);
 	::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_MOVED_LINE);
 }
 
-void markTextAsChanged(HWND window,int start,int length)
+void markTextAsChanged(HWND window,int start,int length, bool symbol)
 {
 	if(length!=0)
     {
-		::SendMessageA(window, SCI_STARTSTYLING, start, (LPARAM)INDICS_MASK);
+		if (symbol)
+		    ::SendMessageA(window, SCI_STARTSTYLING, start, (LPARAM)INDICS_MASK);
 		::SendMessageA(window, SCI_SETSTYLING, length , (LPARAM)INDIC1_MASK);
 	}
 }
