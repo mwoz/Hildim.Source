@@ -522,37 +522,12 @@ void SciTEBase::Revert() {
 void SciTEBase::CheckReload() {
 	if (props.GetInt("load.on.activate")) {
 		// Make a copy of fullPath as otherwise it gets aliased in Open
+		std::string fp = filePath.AsUTF8();
+		
+		if(fp.substr(0, 2) == "\\\\")
+			return;
 		time_t newModTime = filePath.ModifiedTime();
-/*!
-		if ((newModTime != 0) && (newModTime != CurrentBuffer()->fileModTime)) {
-			RecentFile rf = GetFilePosition();
-			OpenFlags of = props.GetInt("reload.preserves.undo") ? ofPreserveUndo : ofNone;
-			if (CurrentBuffer()->isDirty || props.GetInt("are.you.sure.on.reload") != 0) {
-				if ((0 == dialogsOnScreen) && (newModTime != CurrentBuffer()->fileModLastAsk)) {
-					GUI::gui_string msg;
-					if (CurrentBuffer()->isDirty) {
-						msg = LocaliseMessage(
-						          "The file '^0' has been modified. Should it be reloaded?",
-						          filePath.AsInternal());
-					} else {
-						msg = LocaliseMessage(
-						          "The file '^0' has been modified outside SciTE. Should it be reloaded?",
-						          FileNameExt().AsInternal());
-					}
-					int decision = WindowMessageBox(wSciTE, msg, MB_YESNO);
-					if (decision == IDYES) {
-						Open(filePath, static_cast<OpenFlags>(of | ofForceLoad));
-						DisplayAround(rf);
-					}
-					CurrentBuffer()->fileModLastAsk = newModTime;
-				}
-			} else {
-				Open(filePath, static_cast<OpenFlags>(of | ofForceLoad));
-				DisplayAround(rf);
-			}
-		}
-*/
-//!-start-[CheckFileExist]
+
 		if (newModTime != CurrentBuffer()->fileModTime) {
 			if (newModTime != 0) {
 				RecentFile rf = GetFilePosition();
@@ -596,7 +571,7 @@ void SciTEBase::CheckReload() {
 					}
 			}
 		}
-//!-end-[CheckFileExist]
+
 	}
 }
 

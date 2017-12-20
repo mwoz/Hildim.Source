@@ -117,13 +117,10 @@ void setStyles(sUserSettings Settings)
     defineColor(MARKER_MOVED_LINE,   Settings.ColorSettings.moved);
     defineColor(MARKER_REMOVED_LINE, Settings.ColorSettings.deleted);
 
-    if (Settings.UseSymbols == TRUE)
-    {
-        DefineXpmSymbol(MARKER_ADDED_SYMBOL,   &icon_add_16_xpm[0]);
-        DefineXpmSymbol(MARKER_REMOVED_SYMBOL, &icon_sub_16_xpm[0]);
-        DefineXpmSymbol(MARKER_CHANGED_SYMBOL, &icon_warning_16_xpm[0]);
-        DefineXpmSymbol(MARKER_MOVED_SYMBOL,   &icon_moved_16_xpm[0]);
-    }   
+    DefineXpmSymbol(MARKER_ADDED_SYMBOL,   &icon_add_16_xpm[0]);
+    DefineXpmSymbol(MARKER_REMOVED_SYMBOL, &icon_sub_16_xpm[0]);
+    DefineXpmSymbol(MARKER_CHANGED_SYMBOL, &icon_warning_16_xpm[0]);
+    DefineXpmSymbol(MARKER_MOVED_SYMBOL,   &icon_moved_16_xpm[0]);   
 
     setTextStyles(Settings.ColorSettings);
 }
@@ -159,14 +156,10 @@ void markAsMoved(HWND window,int line, bool symbol)
 	::SendMessageA(window, SCI_MARKERADD, line, (LPARAM)MARKER_MOVED_LINE);
 }
 
-void markTextAsChanged(HWND window,int start,int length, bool symbol)
+void markTextAsChanged(HWND window,int start,int length)
 {
 	if(length!=0)
-    {
-		if (symbol)
-		    ::SendMessageA(window, SCI_STARTSTYLING, start, (LPARAM)INDICS_MASK);
-		::SendMessageA(window, SCI_SETSTYLING, length , (LPARAM)INDIC1_MASK);
-	}
+		::SendMessageA(window, SCI_INDICATORFILLRANGE, start, length);
 }
 
 char **getAllLines(HWND window,int *length, int **lineNum){

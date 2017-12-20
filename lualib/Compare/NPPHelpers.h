@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NPPHELPERS_H
 #define NPPHELPERS_H
 
-void markTextAsChanged(HWND window,int start,int length, bool symbol);
+void markTextAsChanged(HWND window,int start,int length);
 void markAsMoved(HWND window,int line, bool symbol);
 void markAsRemoved(HWND window,int line, bool symbol);
 void markAsChanged(HWND window,int line, bool symbol);
