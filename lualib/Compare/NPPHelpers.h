@@ -41,7 +41,7 @@ blankLineList *removeEmptyLines(HWND window,bool saveList);
 int deleteLine(HWND window,int line);
 char **getAllLines(HWND window,int *length, int **lineNum);
 void addBlankLines(HWND window,blankLineList *list);
-void addEmptyLines(HWND hSci, int offset, int length);
+void addEmptyLines(HWND hSci, int offset, int length, const char *lines);
 void resetPrevOffset();
 
 #endif

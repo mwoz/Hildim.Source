@@ -345,7 +345,7 @@ void clearWindow(HWND window,bool clearUndo)
 void addBlankLines(HWND window,blankLineList *list){
 	::SendMessageA(window, SCI_SETUNDOCOLLECTION, FALSE, 0);
 	while(list!=NULL){
-		addEmptyLines(window,list->line,list->length);
+		addEmptyLines(window,list->line,list->length, NULL);
 		list=list->next;
 	}
 	::SendMessageA(window, SCI_SETUNDOCOLLECTION, TRUE, 0);
@@ -365,7 +365,7 @@ void resetPrevOffset() {
 	prev_offset = -2;
 }
 
-void addEmptyLines(HWND hSci, int offset, int length) {
+void addEmptyLines(HWND hSci, int offset, int length, const char *lines) {
 	static int prev_length;
 
 	if (offset == -1) {
@@ -379,14 +379,16 @@ void addEmptyLines(HWND hSci, int offset, int length) {
 	}
 	prev_length = length;
 
-	char *buff = new char[length];
-	for (int i = 0; i < length - 1; i++)
-		buff[i] = '\n';
-	buff[length - 1] = 0;
+	char  *buff = NULL;
+	if(true) {
+		buff = new char[length];
+		for (int i = 0; i < length - 1; i++)
+			buff[i] = '\n';
+		buff[length - 1] = 0;
+	}
 
 
-
-	::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)buff);
+	::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)(lines? lines:buff));
 	::SendMessage(hSci, SCI_ANNOTATIONSETSTYLE, offset, 0);
 	delete[] buff;
 }

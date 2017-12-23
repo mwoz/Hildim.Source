@@ -349,7 +349,7 @@ static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordL
 			char c = static_cast<char>(tolower(ch));
 			if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
 				Sci_PositionU j;
-                for (j = 0; j < 5; j++) {
+                for (j = 0; j < 6; j++) {
 					if (!iswordchar(styler[i + j])) {
 						break;
 					}

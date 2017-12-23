@@ -841,7 +841,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 	int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
 
 
-	if ((button == IUP_BUTTON1 || button == IUP_BUTTON3) && pressed) {
+	if ((button == IUP_BUTTON1 || button == IUP_BUTTON2 || button == IUP_BUTTON3) && pressed) {
 		if (tab_found > ITABS_NONE) {
 			iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
 			if (show_close && inside_close) {

@@ -272,7 +272,7 @@ void SciTEBase::ChangeTabWnd(){
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
 	sptr_t d = bPrev->doc;
 
-	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide);
+	int iNext = buffers.NextByIdm(buffers.CurrentBuffer()->editorSide);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
