@@ -884,7 +884,7 @@ void SciTEBase::BuffersMenu() {
 	int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
 	int posL = 0, posR = 0;
 	if (buffers.size > 1) {
-		unsigned tabsTitleMaxLength = props.GetInt("tabbar.title.maxlength", 0);
+
 		char* ReadOnlyColor;
 		if (props.GetInt("tabctrl.readonly.color")) {
 			strcpy(tabROColor, props.Get("tabctrl.readonly.color").c_str());
@@ -951,7 +951,7 @@ void SciTEBase::BuffersMenu() {
 				entry += GUI_TEXT("*");
 				titleTab += GUI_TEXT("*");
 			}
-			bool ro = (buffers.buffers[pos].ROMarker != NULL);
+			bool ro = buffers.buffers[pos].ROMarker;
 			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
 				if (utf8mode) {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());

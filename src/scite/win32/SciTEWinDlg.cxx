@@ -435,7 +435,6 @@ static void DeleteFontObject(HFONT &font) {
 void SciTEWin::Print(
     bool showDialog) {	///< false if must print silently (using default settings).
 
-	RemoveFindMarks();
 	PRINTDLG pdlg = {
 	                    sizeof(PRINTDLG), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	                };
@@ -880,69 +879,6 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 		Execute();
 	}
 	return 1;
-}
-
-BOOL SciTEWin::TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam) {
-	switch (message) {
-
-	case WM_INITDIALOG: {
-			LocaliseDialog(hDlg);
-			::SendDlgItemMessage(hDlg, IDTABSIZE, EM_LIMITTEXT, 2, 1);
-			int tabSize = wEditor.Call(SCI_GETTABWIDTH);
-			if (tabSize > 99)
-				tabSize = 99;
-			char tmp[3];
-			sprintf(tmp, "%d", tabSize);
-			::SetDlgItemTextA(hDlg, IDTABSIZE, tmp);
-
-			::SendDlgItemMessage(hDlg, IDINDENTSIZE, EM_LIMITTEXT, 2, 1);
-			int indentSize = wEditor.Call(SCI_GETINDENT);
-			if (indentSize > 99)
-				indentSize = 99;
-			sprintf(tmp, "%d", indentSize);
-			::SetDlgItemTextA(hDlg, IDINDENTSIZE, tmp);
-
-			::CheckDlgButton(hDlg, IDUSETABS, wEditor.Call(SCI_GETUSETABS));
-			return TRUE;
-		}
-
-	case WM_CLOSE:
-		::SendMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
-		break;
-
-	case WM_COMMAND:
-		if (ControlIDOfCommand(wParam) == IDCANCEL) {
-			::EndDialog(hDlg, IDCANCEL);
-			return FALSE;
-		} else if ((ControlIDOfCommand(wParam) == IDCONVERT) ||
-			(ControlIDOfCommand(wParam) == IDOK)) {
-			BOOL bOK;
-			int tabSize = static_cast<int>(::GetDlgItemInt(hDlg, IDTABSIZE, &bOK, FALSE));
-			if (tabSize > 0)
-				wEditor.Call(SCI_SETTABWIDTH, tabSize);
-			int indentSize = static_cast<int>(::GetDlgItemInt(hDlg, IDINDENTSIZE, &bOK, FALSE));
-			if (indentSize > 0)
-				wEditor.Call(SCI_SETINDENT, indentSize);
-			bool useTabs = static_cast<bool>(::IsDlgButtonChecked(hDlg, IDUSETABS));
-			wEditor.Call(SCI_SETUSETABS, useTabs);
-			if (ControlIDOfCommand(wParam) == IDCONVERT) {
-				ConvertIndentation(tabSize, useTabs);
-			}
-			::EndDialog(hDlg, ControlIDOfCommand(wParam));
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-BOOL CALLBACK SciTEWin::TabSizeDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	return Caller(hDlg, message, lParam)->TabSizeMessage(hDlg, message, wParam);
-}
-
-void SciTEWin::TabSizeDialog() {
-	DoDialog(hInstance, TEXT("TabSize"), MainHWND(), reinterpret_cast<DLGPROC>(TabSizeDlg));
-	WindowSetFocus(wEditor);
 }
 
 bool SciTEWin::ParametersOpen() {

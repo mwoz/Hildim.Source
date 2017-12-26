@@ -136,7 +136,6 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 	int lengthDoc = LengthDocument();
 	if (end < 0)
 		end = lengthDoc;
-	RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 
 	// Read the default settings
@@ -322,7 +321,6 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 //---------- Save to HTML ----------
 
 void SciTEBase::SaveToHTML(FilePath saveName) {
-	RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
@@ -1025,7 +1023,6 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	};
 	PDFRender pr;
 
-	RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	// read exporter flags
 	int tabSize = props.GetInt("tabsize", PDF_TAB_DEFAULT);
@@ -1227,7 +1224,6 @@ static void defineTexStyle(StyleDefinition &style, FILE* fp, int istyle) {
 }
 
 void SciTEBase::SaveToTEX(FilePath saveName) {
-	RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
@@ -1382,7 +1378,6 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 	// We don't use entities, but empty elements for special characters
 	// but will eventually use utf-8 (once i know how to get them out).
 
-	RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 
 	int tabSize = props.GetInt("tabsize");

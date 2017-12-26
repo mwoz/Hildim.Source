@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by SciTERes.rc
+// Включаемый файл, созданный в Microsoft Visual C++.
+// Используется SciTERes.rc
 //
 #define SW_HIDE                         0
 #define HIDE_WINDOW                     0
@@ -542,7 +542,6 @@
 #define VK_MENU                         0x12
 #define WM_QUIT                         0x0012
 #define HTBORDER                        18
-//#define CF_MAX                          18
 #define LANG_KOREAN                     0x12
 #define SUBLANG_ENGLISH_SINGAPORE       0x12
 #define SUBLANG_SPANISH_HONDURAS        0x12
@@ -952,11 +951,8 @@
 #define VK_ICO_HELP                     0xE3
 #define IDEXTEND                        227
 #define VK_ICO_00                       0xE4
-#define IDTABSIZE                       228
 #define VK_PROCESSKEY                   0xE5
-#define IDINDENTSIZE                    229
 #define VK_ICO_CLEAR                    0xE6
-#define IDUSETABS                       230
 #define VK_PACKET                       0xE7
 #define VK_OEM_RESET                    0xE9
 #define VK_OEM_JUMP                     0xEA
@@ -990,7 +986,6 @@
 #define VK_PLAY                         0xFA
 #define VK_ZOOM                         0xFB
 #define VK_NONAME                       0xFC
-#define IDCONVERT                       252
 #define VK_PA1                          0xFD
 #define IDC_INCFINDTEXT                 253
 #define VK_OEM_CLEAR                    0xFE
@@ -1528,10 +1523,7 @@
 #define SC_CONTEXTHELP                  0xF180
 #define LVS_TYPESTYLEMASK               0xfc00
 #define SPVERSION_MASK                  0x0000FF00
-//#define HTERROR                         -2
-//#define PWR_FAIL                        -1
 #define UNICODE_NOCHAR                  0xFFFF
-//#define HTTRANSPARENT                   -1
 
 // Next default values for new objects
 // 

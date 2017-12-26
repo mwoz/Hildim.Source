@@ -413,7 +413,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	statementLookback = 10;
 	preprocessorSymbol = '\0';
 
-	tabMultiLine = false;
 	iuptbVisible = false;
 	sbNum = 1;
 	visHeightTools = 0;
@@ -660,27 +659,9 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call( unsigned int msg, uptr_t wParam, 
 		}
 		return reinterpret_cast<sptr_t>(result);
 	} else {
-//!-start-[ReadOnlyTabMarker]
 		if (msg == SCI_SETREADONLY) {
-			if (pBase->buffers.buffers[pBase->buffers.Current()].ROMarker != NULL) {
-				delete[] pBase->buffers.buffers[pBase->buffers.Current()].ROMarker;
-				pBase->buffers.buffers[pBase->buffers.Current()].ROMarker = NULL;
-			}
-			if (wParam) {
-				GUI::gui_string mark = GUI::StringFromUTF8( pBase->props.Get("tabbar.readonly.marker").c_str() );
-				if (mark.length())
-				{
-					int len = mark.length() + 1;
-					GUI::gui_char *ROMarker = new GUI::gui_char[ len ];
-					GUI::gui_char *cp = ROMarker;
-					const GUI::gui_char *src = mark.c_str();
-					while (len-- > 0)
-						*cp++ = *src++;
-					pBase->buffers.buffers[pBase->buffers.Current()].ROMarker = ROMarker;
-				}
-			}
+			pBase->buffers.buffers[pBase->buffers.Current()].ROMarker = wParam ? true : false;
 		}
-//!-end-[ReadOnlyTabMarker]
 		return ScintillaWindow::Call( msg, wParam, lParam);
 	}
 }
@@ -1519,15 +1500,6 @@ static int UnSlashAsNeeded(SString &s, bool escapes, bool regularExpression) {
 	}
 }
 
-void SciTEBase::RemoveFindMarks() {
-	if (CurrentBuffer()->findMarks != Buffer::fmNone) {
-		wEditor.Call(SCI_SETINDICATORCURRENT, indicatorMatch);
-		wEditor.Call(SCI_INDICATORCLEARRANGE, 0, LengthDocument());
-		CurrentBuffer()->findMarks = Buffer::fmNone;
-	}
-}
-
-
 int SciTEBase::FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition) {
 	wEditor.Call(SCI_SETTARGETSTART, startPosition);
 	wEditor.Call(SCI_SETTARGETEND, endPosition);
@@ -2056,6 +2028,8 @@ bool SciTEBase::StartAutoComplete() {
 }
 
 bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
+	if (props.GetInt("autocompleteword.automatic.blocked"))
+		return true;
 	SString line = GetLine();
 	int current = GetCaretInLine();
 	autoCompleteIncremental = (props.GetInt("autocompleteword.incremental") == 1);
@@ -2790,7 +2764,9 @@ void SciTEBase::AutomaticIndentation(char ch) {
  * Upon a character being added, SciTE may decide to perform some action
  * such as displaying a completion list or auto-indentation.
  */
+
 void SciTEBase::CharAdded(char ch) {
+	static int prevAutoCHooseSingle = 0;
 	if (recording)
 		return;
 	Sci_CharacterRange crange = GetSelection();
@@ -2829,6 +2805,10 @@ void SciTEBase::CharAdded(char ch) {
 		} else if (HandleXml(ch)) {
 			// Handled in the routine
 		} else {
+			if (prevAutoCHooseSingle) {
+				prevAutoCHooseSingle = 0;
+				wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, 1);
+			}
 			if (calltipParametersStart.contains(ch)) {
 				braceCount = 1;
 //!				StartCallTip();
@@ -2842,8 +2822,9 @@ void SciTEBase::CharAdded(char ch) {
 				if (autoCompleteStartCharacters.contains(ch)) {
 					StartAutoComplete();
 				} else if (props.GetInt("autocompleteword.automatic") && wordCharacters.contains(ch)) {
-//!					StartAutoCompleteWord(true);
-					StartAutoCompleteWord(!props.GetInt("autocompleteword.incremental")); //!-change-[autocompleteword.incremental]
+					prevAutoCHooseSingle = wEditor.Call(SCI_AUTOCGETCHOOSESINGLE);
+					wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, 0);
+					StartAutoCompleteWord(!props.GetInt("autocompleteword.incremental")); 
 					autoCCausedByOnlyOne = wEditor.Call(SCI_AUTOCACTIVE);
 				}
 			}
@@ -3658,11 +3639,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_BOOKMARK_CLEARALL:
 		wEditor.Call(SCI_MARKERDELETEALL, markerBookmark);
-		RemoveFindMarks();
-		break;
-
-	case IDM_TABSIZE:
-		TabSizeDialog();
 		break;
 
 	case IDM_MONOFONT:
@@ -4186,21 +4162,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 			if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			}
 		}
-		if (CurrentBuffer()->findMarks == Buffer::fmModified) {
-			RemoveFindMarks();
-		}
 		break;
 
 	case SCN_MODIFIED:
-		if (notification->modificationType & SC_LASTSTEPINUNDOREDO) {
-			//when the user hits undo or redo, several normal insert/delete
-			//notifications may fire, but we will end up here in the end
-		} else if (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) {
-			//this will be called a lot, and usually means "typing".
-			if (CurrentBuffer()->findMarks == Buffer::fmMarked) {
-				CurrentBuffer()->findMarks = Buffer::fmModified;
-			}
-		}
 
 		if (notification->linesAdded && lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();

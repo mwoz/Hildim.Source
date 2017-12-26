@@ -877,12 +877,6 @@ void SciTEBase::ReadProperties() {
 	wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
 //!-end-[output.caret]
 
-	SString findMark = props.Get("find.mark");
-	if (findMark.length()) {
-		wEditor.Call(SCI_INDICSETSTYLE, indicatorMatch, INDIC_ROUNDBOX);
-		wEditor.Call(SCI_INDICSETFORE, indicatorMatch, ColourFromString(findMark));
-	}
-
 	SString controlCharSymbol = props.Get("control.char.symbol");
 	if (controlCharSymbol.length()) {
 		wEditor.Call(SCI_SETCONTROLCHARSYMBOL, static_cast<unsigned char>(controlCharSymbol[0]));
@@ -1434,7 +1428,6 @@ void SciTEBase::SetPropertiesInitial() {
 	wrapFindRes = props.GetInt("findres.wrap");
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
 
-	tabMultiLine = props.GetInt("tabbar.multiline");
 	lineNumbers = props.GetInt("line.margin.visible");	
 	viewIndent = props. GetInt("view.indentation.guides");
 	viewWs = props.GetInt("view.whitespace");

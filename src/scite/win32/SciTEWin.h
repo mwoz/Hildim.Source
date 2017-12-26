@@ -278,10 +278,6 @@ protected:
 	virtual void UIClosed();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
 
-	BOOL TabSizeMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK TabSizeDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual void TabSizeDialog();
-
 	virtual bool ParametersOpen();
 	void ParamGrab();
 	virtual bool ParametersDialog(bool modal);

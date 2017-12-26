@@ -1196,7 +1196,6 @@
 #define IDM_EOL_CR                      431
 #define IDM_EOL_LF                      432
 #define IDM_EOL_CONVERT                 433
-#define IDM_TABSIZE                     440
 #define IDM_MONOFONT                    450
 #define IDM_OPENLOCALPROPERTIES         460
 #define IDM_OPENUSERPROPERTIES          461

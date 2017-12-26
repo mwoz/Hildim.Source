@@ -99,7 +99,7 @@ class Buffer : public RecentFile {
 public:
 	sptr_t doc;
 	bool isDirty;
-	GUI::gui_char *ROMarker; //!-add-[ReadOnlyTabMarker]
+	bool ROMarker; 
 	bool useMonoFont;
 	UniMode unicodeMode;
 	time_t fileModTime;
@@ -122,13 +122,13 @@ public:
 	}
 	Buffer() :
 //!			RecentFile(), doc(0), isDirty(false), useMonoFont(false),
-			RecentFile(), doc(0), isDirty(false), ROMarker(0), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
+			RecentFile(), doc(0), isDirty(false), ROMarker(false), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
 			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(IDM_SRCWIN), foldState(), pFriend(false){}
 
 	void Init(BufferListAPI* pB) {
 		RecentFile::Init();
 		isDirty = false;
-		ROMarker = NULL; //!-add-[ReadOnlyTabMarker]
+		ROMarker = false; //!-add-[ReadOnlyTabMarker]
 		useMonoFont = false;
 		unicodeMode = uni8Bit;
 		fileModTime = 0;
@@ -397,7 +397,6 @@ protected:
 	GUI::Window wIncrement;
 	bool viewWs;
 	bool viewIndent;
-	bool tabMultiLine;
 	bool iuptbVisible;
 	SString sbValue;	///< Status bar text.
 	int sbNum;	///< Number of the currenly displayed status bar information.
@@ -672,7 +671,6 @@ protected:
 	virtual void ScrollEditorIfNeeded();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
-	virtual void TabSizeDialog() = 0;
 	virtual bool ParametersOpen() = 0;
 	virtual void ParamGrab() = 0;
 	virtual bool ParametersDialog(bool modal) = 0;
@@ -748,8 +746,6 @@ protected:
 	virtual void Notify(SCNotification *notification);
 
 	virtual void ActivateWindow(const char *timestamp) = 0;
-
-	void RemoveFindMarks();
 
 	void BookmarkAdd(int lineno = -1);
 	void BookmarkDelete(int lineno = -1);
