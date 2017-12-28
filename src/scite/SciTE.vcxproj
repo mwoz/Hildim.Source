@@ -160,6 +160,7 @@
     <ClInclude Include="src\SciTEKeys.h" />
     <ClInclude Include="src\scite_detachbox.h" />
     <ClInclude Include="src\scite_flattabs.h" />
+    <ClInclude Include="src\scite_images.h" />
     <ClInclude Include="src\scite_lua_win.h" />
     <ClInclude Include="src\scite_sbox.h" />
     <ClInclude Include="src\SString.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="src\SciTEProps.cxx" />
     <ClCompile Include="src\scite_detachbox.c" />
     <ClCompile Include="src\scite_flattabs.c" />
+    <ClCompile Include="src\scite_images.c" />
     <ClCompile Include="src\scite_sbox.c" />
     <ClCompile Include="src\StringHelpers.cxx" />
     <ClCompile Include="src\StringList.cxx" />
