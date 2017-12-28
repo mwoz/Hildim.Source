@@ -357,6 +357,7 @@ int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
 			cnt++;
 		}
 	}
+	CheckReload();
 	return IUP_DEFAULT;
 }
 

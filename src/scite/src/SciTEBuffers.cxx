@@ -864,10 +864,24 @@ static int Ext2HUI(GUI::gui_string ext) {
 		r += (ext.c_str()[3] % 26) * 13 + 9;
 	return r % 360;
 }
-static char tabROColor[15];
+//static char tabROColor[15];
+
+const char* SciTEBase::GetPropClr(const char* propName, char* buff, const char* def) {
+	if (lstrcmpA(props.Get(propName).c_str(), "")) {
+		return strcpy(buff, props.Get(propName).c_str());
+	} else
+		return def;
+}
+
+
 
 void SciTEBase::BuffersMenu() {
 	UpdateBuffersCurrent();
+	static char tabForeColor[16];
+	static char tabROColor[16];
+	static char tabActBackColor[16];
+	static char tabActForeColor[16];
+	static char tabActForeROColor[16];
 
 	bool utf8mode = !strcmp(IupGetGlobal("UTF8MODE"), "YES");
 
@@ -885,12 +899,14 @@ void SciTEBase::BuffersMenu() {
 	int posL = 0, posR = 0;
 	if (buffers.size > 1) {
 
-		char* ReadOnlyColor;
-		if (props.GetInt("tabctrl.readonly.color")) {
-			strcpy(tabROColor, props.Get("tabctrl.readonly.color").c_str());
-			ReadOnlyColor = tabROColor;
-		} else
-			ReadOnlyColor = "120 120 120";
+		const char* chtabForeColor = GetPropClr("tabctrl.forecolor", tabForeColor, "0 0 0");
+		const char* ReadOnlyColor = GetPropClr("tabctrl.readonly.color", tabROColor, "120 120 120");
+		const char* chtabActBackColor = GetPropClr("tabctrl.active.bakcolor", tabActBackColor, "250 250 250");
+		const char* chtabActForeColor = GetPropClr("tabctrl.active.forecolor", tabActForeColor, "0 0 250");
+		const char* chtabActForeROColor = GetPropClr("tabctrl.active.readonly.forecolor", tabActForeROColor, "120 120 250");
+		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLOR", chtabActBackColor);
+		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLOR", chtabActBackColor);
+
 
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;
@@ -960,12 +976,12 @@ void SciTEBase::BuffersMenu() {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
 				}
-				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : "0 0 0");
+				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : chtabForeColor);
 				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, hui);
 
 				if (pos == buffers.Current()) {
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
-					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? "120 120 255" : "0 0 255");
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? chtabActForeROColor : chtabActForeColor);
 				}
 			} else {
 				if (utf8mode) {
@@ -976,13 +992,13 @@ void SciTEBase::BuffersMenu() {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
 				}
-				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : "0 0 0");
+				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : chtabForeColor);
 				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
 
 				if (pos == buffers.Current()) {
 					int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
 					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
-					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? "120 120 255" : "0 0 255");
+					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? chtabActForeROColor : chtabActForeColor);
 				}
 			}
 		}

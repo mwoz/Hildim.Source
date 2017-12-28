@@ -542,6 +542,7 @@ protected:
 		return buffers.CurrentBuffer();
 	}
 	void BuffersMenu();
+	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
 	void NextInStack();
@@ -857,7 +858,6 @@ protected:
 	void Perform(const char *actions);
 	void DoMenuCommand(int cmdID);
 	virtual int ActiveEditor();
-	bool ShowParametersDialog(const char *msg); //!-add-[ParametersDialogFromLua]
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
 	virtual int RunLuaThread(const char *s, const char *desc);
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;

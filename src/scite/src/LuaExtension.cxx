@@ -352,14 +352,6 @@ static int cf_scite_perform(lua_State *L) {
 }
 //!-end-[Perform]
 
-//!-start-[ParametersDialogFromLua]
-static int cf_scite_show_parameters_dialog(lua_State *L) {
-	const char *s = luaL_checkstring(L, 1);
-	lua_pushboolean(L, host->ShowParametersDialog(s));
-	return 1;
-}
-//!-end-[ParametersDialogFromLua]
-
 //!-start-[LocalizationFromLua]
 static int cf_editor_get_translation(lua_State *L) {
 	const char *s = luaL_checkstring(L, 1);
@@ -1973,11 +1965,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_scite_perform);
 	lua_setfield(luaState, -2, "Perform");
 //!-end-[Perform]
-
-//!-start-[ParametersDialogFromLua]
-	lua_pushcfunction(luaState, cf_scite_show_parameters_dialog);
-	lua_setfield(luaState, -2, "ShowParametersDialog");
-//!-end-[ParametersDialogFromLua]
 
 //!-start-[ReloadStartupScript]
 	lua_pushcfunction(luaState, cf_editor_reload_startup_script);

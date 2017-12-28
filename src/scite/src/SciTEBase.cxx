@@ -3192,6 +3192,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		if (buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
 			NextInStack(); // next most recently selected buffer
 			WindowSetFocus(wEditor);
+			CheckReload();
 			break;
 		}
 		// else fall through and do NEXTFILE behaviour...
@@ -3209,6 +3210,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		if (buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
 			PrevInStack(); // next least recently selected buffer
 			WindowSetFocus(wEditor);
+			CheckReload();
 			break;
 		}
 		// else fall through and do PREVFILE behaviour...
@@ -3438,11 +3440,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_TOGGLEOUTPUT:
 		ToggleOutputVisible();
-		CheckMenus();
-		break;
-
-	case IDM_TOGGLEPARAMETERS:
-		ParametersDialog(false);
 		CheckMenus();
 		break;
 
@@ -3968,7 +3965,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 	switch (notification->nmhdr.code) {
 	case SCN_FOCUSIN:
 		if ((notification->nmhdr.idFrom == IDM_SRCWIN) || (notification->nmhdr.idFrom == IDM_COSRCWIN)){
-			wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
+			if (wEditor.GetWindowIdm() != notification->nmhdr.idFrom) {
+				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
+				CheckReload();
+			}
 		}
 		break;
 	case SCEN_SETFOCUS:
@@ -4993,13 +4993,6 @@ void SciTEBase::DoMenuCommand(int cmdID) {
 int SciTEBase::ActiveEditor() {
 	return buffers.pEditor->GetWindowIdm() == IDM_SRCWIN ? 0 : 1;
 }
-
-//!-start-[ParametersDialogFromLua]
-bool SciTEBase::ShowParametersDialog(const char *msg) {
-	parameterisedCommand = msg;
-	return ParametersDialog(true);
-}
-//!-end-[ParametersDialogFromLua]
 
 //!-start-[LocalizationFromLua]
 // TODO: переделать всё на utf8, это вызывается только из луа
