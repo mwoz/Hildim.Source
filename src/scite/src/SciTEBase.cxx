@@ -3644,12 +3644,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		Redraw();
 		break;
 
-	case IDM_MACROLIST:
-		AskMacroList();
-		break;
-	case IDM_MACROPLAY:
-		StartPlayMacro();
-		break;
 	case IDM_MACRORECORD:
 		StartRecordMacro();
 		break;
@@ -4208,10 +4202,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_USERLISTSELECTION: {
-			if (notification->wParam == 2)
-				ContinueMacroList(notification->text);
-			else if (extender && notification->wParam > 2)
-//!				extender->OnUserListSelection(notification->wParam, notification->text);
+			if (extender && notification->wParam > 2)
 				extender->OnUserListSelection(notification->wParam, notification->text, notification->position+1); //!-change-[UserListItemID]
 		}
 		break;
@@ -4383,11 +4374,7 @@ void SciTEBase::PerformOne(char *action) {
 	char *arg = strchr(action, ':');
 	if (arg) {
 		arg++;
-		if (isprefix(action, "askfilename:")) {
-			extender->OnMacro("filename", filePath.AsUTF8().c_str());
-		} else if (isprefix(action, "askproperty:")) {
-			PropertyToDirector(arg);
-		} else if (isprefix(action, "blockuiupdate:")) {
+		if (isprefix(action, "blockuiupdate:")) {
 			bBlockUIUpdate = (*arg == 'y'); 
 			if (*arg == 'u'){
 				SetWindowName();
@@ -4437,12 +4424,8 @@ void SciTEBase::PerformOne(char *action) {
 			}
 		} else if (isprefix(action, "insert:") && wEditor.Created()) {
 			wEditor.CallString(SCI_REPLACESEL, 0, arg);
-		} else if (isprefix(action, "macrocommand:")) {
-			ExecuteMacroCommand(arg);
 		} else if (isprefix(action, "macroenable:")) {
 			macrosEnabled = atoi(arg);
-		} else if (isprefix(action, "macrolist:")) {
-			StartMacroList(arg);
 		} else if (isprefix(action, "menucommand:")) {
 			MenuCommand(atoi(arg));
 		} else if (isprefix(action, "open:")) {
@@ -4534,13 +4517,6 @@ void SciTEBase::PropertyFromDirector(const char *arg) {
 	props.Set(arg);
 }
 
-void SciTEBase::PropertyToDirector(const char *arg) {
-	if (!extender)
-		return;
-	SelectionIntoProperties();
-	SString gotprop = props.Get(arg);
-	extender->OnMacro("macro:stringinfo", gotprop.c_str());
-}
 void SciTEBase::WideChrToMyltiBate(SString strIn, SString &strOut){
 	GUI::gui_string gFind = GUI::StringFromUTF8(strIn.c_str()) ;
 
@@ -4560,33 +4536,20 @@ void SciTEBase::StartRecordMacro() {
 	recording = true;
 	CheckMenus();
 	wEditor.Call(SCI_STARTRECORD);
-//!-start-[macro]
-	if (extender)
-		extender->OnMacro("macro:startrecord", "");
-//!-end-[macro]
 }
 
-/**
- * Received a SCN_MACRORECORD from Scintilla: send it to director.
- */
 bool SciTEBase::RecordMacroCommand(SCNotification *notification) {
-//!	if (extender) {
 	if (extender && static_iOnSendEditorCallsCount == 0) { //!-add-[OnSendEditor]
-		char *szMessage;
-		char *t;
+		char *sParam;
 		bool handled;
-		t = (char*)(notification->lParam);
-		if (t != NULL) {
-			//format : "<message>;<wParam>;1;<text>"
-			szMessage = new char[50 + strlen(t) + 4];
-			sprintf(szMessage, "%d;%ld;1;%s", notification->message, notification->wParam, t);
+		sParam = (char*)(notification->lParam);
+
+		const char * fName = IFaceTable::FindFunctionByConstantId(notification->message);
+		if (sParam != NULL) {
+			handled = extender->OnMacro(fName, notification->wParam, NULL, sParam);
 		} else {
-			//format : "<message>;<wParam>;0;"
-			szMessage = new char[50];
-			sprintf(szMessage, "%d;%ld;0;", notification->message, notification->wParam);
+			handled = extender->OnMacro(fName, notification->wParam, notification->lParam, NULL);
 		}
-		handled = extender->OnMacro("macro:record", szMessage);
-		delete []szMessage;
 		return handled;
 	}
 	return true;
@@ -4597,49 +4560,10 @@ bool SciTEBase::RecordMacroCommand(SCNotification *notification) {
  */
 void SciTEBase::StopRecordMacro() {
 	wEditor.Call(SCI_STOPRECORD);
-	if (extender)
-		extender->OnMacro("macro:stoprecord", "");
 	recording = false;
 	CheckMenus();
 }
 
-/**
- * Menu/Toolbar command "Play macro...": tell director to build list of Macro names
- * Through this call, user has access to all macros in Filerx.
- */
-void SciTEBase::AskMacroList() {
-	if (extender)
-		extender->OnMacro("macro:getlist", "");
-}
-
-/**
- * List of Macro names has been created. Ask Scintilla to show it.
- */
-bool SciTEBase::StartMacroList(const char *words) {
-	if (words) {
-		wEditor.CallString(SCI_USERLISTSHOW, 2, words); //listtype=2
-	}
-
-	return true;
-}
-
-/**
- * User has chosen a macro in the list. Ask director to execute it.
- */
-void SciTEBase::ContinueMacroList(const char *stext) {
-	if ((extender) && (*stext != '\0')) {
-		currentMacro = stext;
-		StartPlayMacro();
-	}
-}
-
-/**
- * Menu/Toolbar command "Play current macro" (or called from ContinueMacroList).
- */
-void SciTEBase::StartPlayMacro() {
-	if (extender)
-		extender->OnMacro("macro:run", currentMacro.c_str());
-}
 
 /*
 SciTE received a macro command from director : execute it.
@@ -4653,93 +4577,6 @@ static uptr_t ReadNum(const char *&t) {
 		v = atoi(t);					// read value
 	t = argend + 1;					// update pointer
 	return v;						// return value
-}
-
-void SciTEBase::ExecuteMacroCommand(const char *command) {
-	const char *nextarg = command;
-	uptr_t wParam;
-	sptr_t lParam = 0;
-	int rep = 0;				//Scintilla's answer
-	const char *answercmd;
-	int l;
-	char *string1 = NULL;
-	char params[4];
-	//params describe types of return values and of arguments
-	//0 : void or no param
-	//I : integer
-	//S : string
-	//R : return string (for lParam only)
-
-	//extract message,wParam ,lParam
-
-	uptr_t message = ReadNum(nextarg);
-	strncpy(params, nextarg, 3);
-	nextarg += 4;
-	if (*(params + 1) == 'R') {
-		// in one function wParam is a string  : void SetProperty(string key,string name)
-		const char *s1 = nextarg;
-		while (*nextarg != ';')
-			nextarg++;
-		int lstring1 = nextarg - s1;
-		string1 = new char[lstring1 + 1];
-		if (lstring1 > 0)
-			strncpy(string1, s1, lstring1);
-		*(string1 + lstring1) = '\0';
-		wParam = reinterpret_cast<uptr_t>(string1);
-		nextarg++;
-	} else {
-		wParam = ReadNum(nextarg);
-	}
-
-	if (*(params + 2) == 'S')
-		lParam = reinterpret_cast<sptr_t>(nextarg);
-	else if (*(params + 2) == 'I')
-		lParam = atoi(nextarg);
-
-	if (*params == '0') {
-		// no answer ...
-		wEditor.Call(message, wParam, lParam);
-		delete []string1;
-		return;
-	}
-
-	if (*params == 'S') {
-		// string answer
-		if (message == SCI_GETSELTEXT) {
-			l = wEditor.Call(SCI_GETSELTEXT, 0, 0);
-			wParam = 0;
-		} else if (message == SCI_GETCURLINE) {
-			int line = wEditor.Call(SCI_LINEFROMPOSITION, wEditor.Call(SCI_GETCURRENTPOS));
-			l = wEditor.Call(SCI_LINELENGTH, line);
-			wParam = l;
-		} else if (message == SCI_GETTEXT) {
-			l = wEditor.Call(SCI_GETLENGTH);
-			wParam = l;
-		} else if (message == SCI_GETLINE) {
-			l = wEditor.Call(SCI_LINELENGTH, wParam);
-		} else {
-			l = 0; //unsupported calls EM
-		}
-		answercmd = "stringinfo:";
-
-	} else {
-		//int answer
-		answercmd = "intinfo:";
-		l = 30;
-	}
-
-	size_t alen = strlen(answercmd);
-	char *tbuff = new char[l + alen + 1];
-	strcpy(tbuff, answercmd);
-	if (*params == 'S')
-		lParam = reinterpret_cast<sptr_t>(tbuff + alen);
-
-	if (l > 0)
-		rep = wEditor.Call(message, wParam, lParam);
-	if (*params == 'I')
-		sprintf(tbuff + alen, "%0d", rep);
-	extender->OnMacro("macro", tbuff);
-	delete []tbuff;
 }
 
 std::vector<GUI::gui_string> ListFromString(const GUI::gui_string &args) {

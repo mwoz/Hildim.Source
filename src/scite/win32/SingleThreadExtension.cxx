@@ -176,8 +176,8 @@ bool SingleThreadExtension::OnMarginClick(unsigned int margin, unsigned int modi
 	return ext->OnMarginClick(margin, modif, line);
 }
 
-bool SingleThreadExtension::OnMacro(const char *p, const char *q) {
-	return ext->OnMacro(p,q);
+bool SingleThreadExtension::OnMacro(const char *func, unsigned int w, unsigned int l, const char *s) {
+	return ext->OnMacro(func, w, l, s);
 }
 
 /*!

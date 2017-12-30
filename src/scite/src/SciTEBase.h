@@ -813,12 +813,9 @@ protected:
 	void PerformOne(char *action);
 	void StartRecordMacro();
 	void StopRecordMacro();
-	void StartPlayMacro();
+
 	bool RecordMacroCommand(SCNotification *notification);
-	void ExecuteMacroCommand(const char * command);
-	void AskMacroList();
-	bool StartMacroList(const char *words);
-	void ContinueMacroList(const char *stxt);
+
 	bool ProcessCommandLine(GUI::gui_string &args, int phase);
 	virtual bool IsStdinBlocked();
 	void OpenFromStdin(bool UseOutputPane);
@@ -840,7 +837,6 @@ protected:
 	void EnumProperties(const char *action);
 	void SendOneProperty(const char *kind, const char *key, const char *val);
 	void PropertyFromDirector(const char *arg);
-	void PropertyToDirector(const char *arg);
 	void WideChrToMyltiBate(SString strIn, SString &strOut);//ѕерекодировка дл€ последующего вывода в консоль
 	int internalRunLuaThread(SString strCmd, SString strDesc);
 

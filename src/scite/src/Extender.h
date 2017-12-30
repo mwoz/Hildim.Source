@@ -93,7 +93,7 @@ public:
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line) { return false; }
-	virtual bool OnMacro(const char *, const char *) { return false; }
+	virtual bool OnMacro(const char *, unsigned int, unsigned int, const char *) { return false; }
 //!	virtual bool OnUserListSelection(int, const char *) { return false; }
 	virtual bool OnUserListSelection(int, const char *,int) { return false; } //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item) { return false; }

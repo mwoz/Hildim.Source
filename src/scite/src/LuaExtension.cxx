@@ -2860,8 +2860,22 @@ bool LuaExtension::OnClose(const char *filename) {
 }
 
 //!-start-[macro]
-bool LuaExtension::OnMacro(const char *p, const char *q) {
-	return CallNamedFunction("OnMacro", p, q);
+bool LuaExtension::OnMacro(const char *func, unsigned int w, unsigned int l, const char *s){
+	const char *handled = NULL;
+	if (luaState) {
+		lua_getglobal(luaState, "OnMacro");
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushstring(luaState, "F");
+			lua_pushstring(luaState, func);
+			lua_pushinteger(luaState, w);
+			lua_pushinteger(luaState, l);
+			lua_pushstring(luaState, s);
+			handled = call_sfunction(luaState, 5);
+		} else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return handled;
 }
 //!-end-[macro]
 

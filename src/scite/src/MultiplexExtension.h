@@ -73,7 +73,7 @@ public:
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line);
-	virtual bool OnMacro(const char *, const char *);
+	virtual bool OnMacro(const char *func, unsigned int w, unsigned int l, const char *s);
 //!	virtual bool OnUserListSelection(int, const char *);
 	virtual bool OnUserListSelection(int, const char *, int); //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *);

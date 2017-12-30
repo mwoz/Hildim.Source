@@ -50,7 +50,7 @@ public:
 	virtual bool OnKey(int keyval, int modifiers, char ch); //!-change-[OnKey]
 	virtual bool OnDwellStart(int pos, const char *word);
 	virtual bool OnClose(const char *filename);
-	virtual bool OnMacro(const char *p, const char *q); //!-add-[macro]
+	virtual bool OnMacro(const char *func, unsigned int w, unsigned int l, const char *s); //!-add-[macro]
 	virtual bool OnMenuCommand(int, int); //!-add-[OnMenuCommand]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, const char *); //!-add-[OnSendEditor]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, long); //!-add-[OnSendEditor]

@@ -45,6 +45,14 @@ int IFaceTable::FindFunction(const char *name) {
 
 	return -1;
 }
+const char* IFaceTable::FindFunctionByConstantId(int id) {
+	for (int idx = 0; idx < functionCount; ++idx) {
+		if (IFaceTable::functions[idx].value == id) {
+			return functions[idx].name;
+		}
+	}
+	return NULL;
+}
 
 int IFaceTable::FindFunctionByConstantName(const char *name) {
 	if (strncmp(name, "SCI_", 4)==0) {

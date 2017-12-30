@@ -274,10 +274,10 @@ bool MultiplexExtension::OnMarginClick(unsigned int margin, unsigned int modif, 
 	return handled;
 }
 
-bool MultiplexExtension::OnMacro(const char *p, const char *q) {
+bool MultiplexExtension::OnMacro(const char *func, unsigned int w, unsigned int l, const char *s) {
 	bool handled = false;
 	for (int i = 0; i < extensionCount && !handled; ++i)
-		if (extensions[i]->OnMacro(p, q))
+		if (extensions[i]->OnMacro(func, w, l, s))
 			handled = true;
 	return handled;
 }
