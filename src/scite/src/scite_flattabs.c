@@ -1265,13 +1265,14 @@ static int iupStrToHSI_Int(const char *str, int *h, int *s, int *i) {
 
 
 static int iFlatTabsSetHueBackColor(Ihandle* ih, int id, const char* value) {
-	if (!value[0]) {
+	int h, s, i;
+	iupStrToInt(value, &h);	
+	if (h == -1) {
 		IupStoreAttributeId(ih, "TABBACKCOLOR", id, NULL);
 		return 0;
 	}
 
-	int h, s, i;
-	iupStrToInt(value, &h);
+
 	iupStrToInt(IupGetAttribute(ih, "SATURATION"), &s);
 	iupStrToInt(IupGetAttribute(ih, "ILLUMINATION"), &i);
 	if (s < 1 || s > 99) s = 50;
@@ -1626,6 +1627,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttributeId(ic, "TABHIGHCOLOR", NULL, NULL, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABFONT", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABTIP", NULL, NULL, IUPAF_NO_INHERIT);
+	iupClassRegisterAttributeId(ic, "TABBUFFERID", NULL, NULL, IUPAF_NO_INHERIT);
 
 	iupClassRegisterAttributeId(ic, "TABFONTSTYLE", iFlatTabsGetTabFontStyleAttrib, iFlatTabsSetTabFontStyleAttrib, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABFONTSIZE", iFlatTabsGetTabFontSizeAttrib, iFlatTabsSetTabFontSizeAttrib, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -1669,7 +1671,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttributeId(ic, "EXTRAACTIVE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "EXTRAFORECOLOR", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "EXTRAPRESSCOLOR", NULL, NULL, IUPAF_NO_INHERIT);
-	iupClassRegisterAttributeId(ic, "EXTRAHIGHCOLOR", NULL, NULL, IUPAF_NO_INHERIT);
+	iupClassRegisterAttributeId(ic, "EXTRAHIGHCOLOR", NULL, NULL, IUPAF_NO_INHERIT); 
 	iupClassRegisterAttributeId(ic, "EXTRAFONT", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "EXTRAALIGNMENT", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "EXTRAIMAGE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);

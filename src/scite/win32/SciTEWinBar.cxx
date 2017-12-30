@@ -346,46 +346,14 @@ int OnTabShift(Ihandle * ih, int old_tab, int new_tab) {
 }
 
 int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
-	int side = (ih == IupTab(IDM_SRCWIN)) ? IDM_SRCWIN:IDM_COSRCWIN;
-	int cnt = 0;
-	for (int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].editorSide == side) {
-			if (cnt == new_pos) {
-				SetDocumentAt(i);
-				break;
-			}
-			cnt++;
-		}
-	}
+	SetDocumentAt(IupGetIntId(ih, "TABBUFFERID", new_pos));
 	CheckReload();
 	return IUP_DEFAULT;
 }
 
 int SciTEWin::OnShift(Ihandle * ih, int old_tab, int new_tab) {
-//	new_tab--;
-//	old_tab--;
-	int side = (ih == IupTab(IDM_SRCWIN)) ? IDM_SRCWIN : IDM_COSRCWIN;
-	int iOld = 0;
-	for (int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].editorSide == side) {
-			if (iOld == old_tab){
-				iOld = i;
-				break;
-			}
-			iOld++;
-		}
-	}
-	int iNew = 0;
-	for (int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].editorSide == side) {
-			if (iNew == new_tab){
-				iNew = i;
-				break;
-			}
-			iNew++;
-		}
-	}
-	ShiftTab(iOld, iNew);
+
+	ShiftTab(IupGetIntId(ih, "TABBUFFERID", old_tab), IupGetIntId(ih, "TABBUFFERID", new_tab));
 	return IUP_DEFAULT;
 }
 

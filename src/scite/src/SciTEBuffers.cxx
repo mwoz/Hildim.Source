@@ -912,8 +912,7 @@ void SciTEBase::BuffersMenu() {
 			int itemID = bufferCmdID + pos;
 			GUI::gui_string entry;
 			GUI::gui_string titleTab;
-			char hui[15];
-			hui[0] = 0;
+			int ihui = -1;
 
 			if (buffers.buffers[pos].IsUntitled()) {
 				GUI::gui_string untitled = localiser.Text("Untitled");
@@ -945,7 +944,7 @@ void SciTEBase::BuffersMenu() {
 					if (nameEnd != GUI::gui_string::npos) {
 						ext += titleTab.substr(nameEnd + 1);
 					}
-					_itoa(Ext2HUI(ext), hui, 10);
+					ihui = Ext2HUI(ext);
 				}
 				if (props.GetInt("tabctrl.cut.ext") && nameEnd != GUI::gui_string::npos && (pos != buffers.Current())) {
 					titleTab = titleTab.substr(0, nameEnd);
@@ -968,6 +967,7 @@ void SciTEBase::BuffersMenu() {
 				titleTab += GUI_TEXT("*");
 			}
 			bool ro = buffers.buffers[pos].ROMarker;
+
 			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
 				if (utf8mode) {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
@@ -976,8 +976,9 @@ void SciTEBase::BuffersMenu() {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
 				}
+				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBUFFERID", posR, pos);
 				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : chtabForeColor);
-				IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, hui);
+				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, ihui);
 
 				if (pos == buffers.Current()) {
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
@@ -992,8 +993,9 @@ void SciTEBase::BuffersMenu() {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
 				}
+				IupSetIntId(IupTab(IDM_SRCWIN), "TABBUFFERID", posL, pos);
 				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : chtabForeColor);
-				IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, hui);
+				IupSetIntId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, ihui);
 
 				if (pos == buffers.Current()) {
 					int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
