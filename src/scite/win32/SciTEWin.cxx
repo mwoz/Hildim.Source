@@ -54,6 +54,7 @@ const GUI::gui_char appName[] = GUI_TEXT("HildiM.Jit");
 #endif
 
 int bIsPopUpMenuItem = 0;
+HHOOK macroHook = NULL;
 HHOOK mouseHook = NULL;
 HHOOK keyBoardHook = NULL;
 HMENU topLevelPopUp = NULL;
@@ -2274,6 +2275,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	return result;
 }
 
+LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	LRESULT r = pSciTEWin->NotifyGetMsgProc(nCode, wParam, lParam);
+	return CallNextHookEx(mouseHook, nCode, wParam, lParam) || r;
+}
+
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	pSciTEWin->NotifyMouseHook(nCode, wParam, lParam);
@@ -2288,6 +2294,17 @@ LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
 	}
 	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+}
+bool SciTEWin::SwitchMacroHook(bool bSet) {
+	bool result = false;
+	if (bSet && !macroHook) {
+		macroHook = SetWindowsHookEx(WH_GETMESSAGE, GetMsgProc, hInstance, GetCurrentThreadId());
+		result = (macroHook != NULL);
+	} else if (!bSet && macroHook) {
+		result = UnhookWindowsHookEx(macroHook);
+		macroHook = NULL;
+	}
+	return result;
 }
 bool SciTEWin::SwitchMouseHook(bool bSet){
 	bool result = false;
@@ -2307,6 +2324,26 @@ bool SciTEWin::SwitchMouseHook(bool bSet){
 		mouseHook = NULL;
 	}
 	return result;
+}
+LRESULT SciTEWin::NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	MSG * pMessage = (MSG*)lParam;
+	if (pMessage->hwnd == wEditor.GetID()) {
+		switch (pMessage->message) {
+		case WM_LBUTTONDBLCLK:
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONDBLCLK:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONDBLCLK:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+			if(extender->OnMacroBlocked(pMessage->message, (int)pMessage - wParam, (int)pMessage->lParam))
+				pMessage->message = 0;
+			break;
+		}
+	}
+	return 0;
 }
 void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 	

@@ -425,6 +425,13 @@ void MultiplexExtension::OnMouseHook(int x, int y){
 		extensions[i]->OnMouseHook(x,y);
 	}
 }
+
+bool MultiplexExtension::OnMacroBlocked(int msg, int wParam, int lParam) {
+	for (int i = 0; i<extensionCount; ++i) {
+		if(extensions[i]->OnMacroBlocked(msg, wParam, lParam)) return true;
+	}
+	return false;
+}
 bool MultiplexExtension::OnDrawClipboard(int flag) {
 	for (int i = 0; i<extensionCount; ++i) {
 		if (extensions[i]->OnDrawClipboard(flag)) return true;

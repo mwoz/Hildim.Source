@@ -45,13 +45,13 @@ int IFaceTable::FindFunction(const char *name) {
 
 	return -1;
 }
-const char* IFaceTable::FindFunctionByConstantId(int id) {
+int IFaceTable::FindFunctionByConstantId(int id) {
 	for (int idx = 0; idx < functionCount; ++idx) {
 		if (IFaceTable::functions[idx].value == id) {
-			return functions[idx].name;
+			return idx;
 		}
 	}
-	return NULL;
+	return -1;
 }
 
 int IFaceTable::FindFunctionByConstantName(const char *name) {

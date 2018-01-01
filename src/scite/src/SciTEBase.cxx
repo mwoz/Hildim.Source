@@ -3645,11 +3645,15 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_MACRORECORD:
+		SwitchMacroHook(true);
 		StartRecordMacro();
 		break;
+
 	case IDM_MACROSTOPRECORD:
+		SwitchMacroHook(false);
 		StopRecordMacro();
 		break;
+
 	case IDM_REBOOT:
 		extender->DoReboot();
 		break;
@@ -4544,13 +4548,23 @@ bool SciTEBase::RecordMacroCommand(SCNotification *notification) {
 		bool handled;
 		sParam = (char*)(notification->lParam);
 
-		const char * fName = IFaceTable::FindFunctionByConstantId(notification->message);
-		if (sParam != NULL) {
-			handled = extender->OnMacro(fName, notification->wParam, NULL, sParam);
-		} else {
-			handled = extender->OnMacro(fName, notification->wParam, notification->lParam, NULL);
+		int fIdx = IFaceTable::FindFunctionByConstantId(notification->message);
+		if (fIdx >= 0) {
+			const char* fName = IFaceTable::functions[fIdx].name;
+			unsigned int wp = notification->wParam + 1;
+			unsigned int lp = notification->lParam + 1;
+
+			if (IFaceTable::functions[fIdx].paramType[0] == IFaceType::iface_void)
+				wp = 0;
+			if (IFaceTable::functions[fIdx].paramType[1] == IFaceType::iface_void)
+				lp = 0;
+			if (sParam != NULL) {
+				handled = extender->OnMacro(fName, wp, NULL, sParam);
+			} else {
+				handled = extender->OnMacro(fName, wp, lp, NULL);
+			}
+			return handled;
 		}
-		return handled;
 	}
 	return true;
 }

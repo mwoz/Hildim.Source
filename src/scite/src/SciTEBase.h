@@ -731,7 +731,7 @@ protected:
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
 	void FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w);
-	void FoldChanged(int position);
+	//void FoldChanged(int position);
 	void Expand(int &line, bool doExpand, bool force = false,
 		int visLevels = 0, int level = -1);
 	void Expand(GUI::ScintillaWindow *w, int &line, bool doExpand, bool force = false,
@@ -777,8 +777,8 @@ protected:
 	void AssignKey(int key, int mods, int cmd);
 	void ViewWhitespace(bool view);
 	void SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle);
-	void ImportMenu(int pos);
-	void SetLanguageMenu();
+	//void ImportMenu(int pos);
+	//void SetLanguageMenu();
 	void SetPropertiesInitial();
 	GUI::gui_string LocaliseMessage(const char *s,
 		const GUI::gui_char *param0 = 0, const GUI::gui_char *param1 = 0, const GUI::gui_char *param2 = 0);
@@ -865,6 +865,7 @@ protected:
 	bool isfilenamecharforsel(char ch);
 	bool islexerwordcharforsel(char ch);
 	int OnMenuCommandCallsCount; //!-add-[OnMenuCommand]
+	virtual bool SwitchMacroHook(bool bSet) = 0;
 public:
 	char *Property(const char *key);
 

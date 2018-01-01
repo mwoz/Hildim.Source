@@ -347,7 +347,9 @@ public:
 	friend class UniqueInstance;
 	friend class SciTEBase; //!-add-[GetApplicationProps]
 	bool SwitchMouseHook(bool bSet);
+	bool SwitchMacroHook(bool bSet);
 	void NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+	LRESULT NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam);
 	virtual Ihandle * IupTab(int id);
 };
 

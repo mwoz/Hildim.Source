@@ -118,6 +118,7 @@ public:
 	virtual void DoReboot(){ return; };
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
+	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
 };

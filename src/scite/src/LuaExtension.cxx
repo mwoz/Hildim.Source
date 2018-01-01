@@ -2867,8 +2867,19 @@ bool LuaExtension::OnMacro(const char *func, unsigned int w, unsigned int l, con
 		if (lua_isfunction(luaState, -1)) {
 			lua_pushstring(luaState, "F");
 			lua_pushstring(luaState, func);
-			lua_pushinteger(luaState, w);
-			lua_pushinteger(luaState, l);
+
+			if (w) {
+				lua_pushinteger(luaState, w - 1);
+			} else {
+				lua_pushnil(luaState);
+			}
+
+			if (l) {
+				lua_pushinteger(luaState, l - 1);
+			} else {
+				lua_pushnil(luaState);
+			}
+
 			lua_pushstring(luaState, s);
 			handled = call_sfunction(luaState, 5);
 		} else {
@@ -2926,6 +2937,9 @@ void LuaExtension::DoLua(const char *c) {
 	CallNamedFunction("dostring", c);
 }
 
+bool LuaExtension::OnMacroBlocked(int msg, int wParam, int lParam) {
+	return CallNamedFunction("OnMacroBlockedEvents", msg, wParam, lParam);
+}
 void LuaExtension::OnMouseHook(int x, int y){
 	CallNamedFunction("event_MenuMouseHook", x, y);
 }

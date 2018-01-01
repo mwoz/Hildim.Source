@@ -271,7 +271,10 @@ void SingleThreadExtension::DoLua(const char * c){
 void SingleThreadExtension::OnMouseHook(int x, int y){
 	ext->OnMouseHook(x, y);
 }
-bool SingleThreadExtension::OnDrawClipboard(int flag){
+bool SingleThreadExtension::OnMacroBlocked(int msg, int wParam, int lParam){
+	return ext->OnMacroBlocked(msg, wParam, lParam);
+}
+bool SingleThreadExtension::OnDrawClipboard(int flag) {
 	return ext->OnDrawClipboard(flag);
 }
 void SingleThreadExtension::OnRightEditorVisibility(bool show) {
