@@ -33,9 +33,6 @@
     <ClCompile Include="src\LuaExtension.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\MultiplexExtension.cxx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\PropSetFile.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -73,9 +70,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\SciTEWinDlg.cxx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="win32\SingleThreadExtension.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\UniqueInstance.cxx">
@@ -122,9 +116,6 @@
     <ClInclude Include="src\LuaExtension.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\MultiplexExtension.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Mutex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -162,9 +153,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win32\SciTEWin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="win32\SingleThreadExtension.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win32\UniqueInstance.h">

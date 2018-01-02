@@ -4,14 +4,10 @@
 // The License.txt file describes the conditions under which this software may be distributed.
 
 class LuaExtension : public Extension {
-private:
-	LuaExtension(); // Singleton
-	LuaExtension(const LuaExtension &);   // Disable copy ctor
-	void operator=(const LuaExtension &); // Disable operator=
 
 public:
-	static LuaExtension &Instance();
 
+	LuaExtension();
 	virtual ~LuaExtension();
 
 	virtual bool Initialise(ExtensionAPI *host_);

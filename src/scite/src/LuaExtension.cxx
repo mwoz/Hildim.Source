@@ -109,11 +109,6 @@ LuaExtension::LuaExtension() {}
 
 LuaExtension::~LuaExtension() {}
 
-LuaExtension &LuaExtension::Instance() {
-	static LuaExtension singleton;
-	return singleton;
-}
-
 // Forward declarations
 static ExtensionAPI::Pane check_pane_object(lua_State *L, int index);
 static void push_pane_object(lua_State *L, ExtensionAPI::Pane p);

@@ -154,7 +154,6 @@
     <ClInclude Include="src\IFaceTable.h" />
     <ClInclude Include="src\JobQueue.h" />
     <ClInclude Include="src\LuaExtension.h" />
-    <ClInclude Include="src\MultiplexExtension.h" />
     <ClInclude Include="src\Mutex.h" />
     <ClInclude Include="src\PropSetFile.h" />
     <ClInclude Include="src\SciTE.h" />
@@ -172,7 +171,6 @@
     <ClInclude Include="src\Utf8_16.h" />
     <ClInclude Include="win32\resource.h" />
     <ClInclude Include="win32\SciTEWin.h" />
-    <ClInclude Include="win32\SingleThreadExtension.h" />
     <ClInclude Include="win32\UniqueInstance.h" />
   </ItemGroup>
   <ItemGroup>
@@ -204,7 +202,6 @@
     <ClCompile Include="src\IFaceTable.cxx" />
     <ClCompile Include="src\JobQueue.cxx" />
     <ClCompile Include="src\LuaExtension.cxx" />
-    <ClCompile Include="src\MultiplexExtension.cxx" />
     <ClCompile Include="src\PropSetFile.cxx" />
     <ClCompile Include="src\SciTEBase.cxx" />
     <ClCompile Include="src\SciTEBuffers.cxx" />
@@ -223,7 +220,6 @@
     <ClCompile Include="win32\SciTEWin.cxx" />
     <ClCompile Include="win32\SciTEWinBar.cxx" />
     <ClCompile Include="win32\SciTEWinDlg.cxx" />
-    <ClCompile Include="win32\SingleThreadExtension.cxx" />
     <ClCompile Include="win32\UniqueInstance.cxx" />
     <ClCompile Include="win32\WinMutex.cxx" />
   </ItemGroup>

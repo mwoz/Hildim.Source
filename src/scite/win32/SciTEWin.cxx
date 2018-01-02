@@ -37,15 +37,8 @@
 #define UIS_SET 1
 #endif
 
-#ifndef NO_EXTENSIONS
-#include "MultiplexExtension.h"
-
-#ifndef NO_LUA
-#include "SingleThreadExtension.h"
 #include "LuaExtension.h"
-#endif
 
-#endif
 
 #ifdef STATIC_BUILD
 const GUI::gui_char appName[] = GUI_TEXT("Sc1");
@@ -2220,12 +2213,12 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 #ifdef NO_EXTENSIONS
 	Extension *extender = 0;
 #else
-	MultiplexExtension multiExtender;
+	LuaExtension multiExtender;
 	Extension *extender = &multiExtender;
 
 #ifndef NO_LUA
-	SingleThreadExtension luaAdapter(LuaExtension::Instance());
-	multiExtender.RegisterExtension(luaAdapter);
+	//SingleThreadExtension luaAdapter(LuaExtension::Instance());
+	//multiExtender.RegisterExtension(luaAdapter);
 #endif
 
 
