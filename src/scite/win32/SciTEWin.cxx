@@ -1241,15 +1241,6 @@ void SciTEWin::AddCommand(const SString &cmd, const SString &dir, JobSubsystem j
 		if ((jobType == jobShell) && ((flags & jobForceQueue) == 0)) {
 			SString pCmd = cmd;
 			parameterisedCommand = "";
-			if (pCmd[0] == '*') {
-				pCmd.remove(0, 1);
-				parameterisedCommand = pCmd;
-				if (!ParametersDialog(true)) {
-					return;
-				}
-			} else {
-				ParamGrab();
-			}
 			pCmd = props.Expand(pCmd.c_str());
 			ShellExec(pCmd, dir.c_str());
 		} else {
@@ -2184,7 +2175,7 @@ int SciTEWin::EventLoop() {
 		{
 			if (msg.message != WM_QUIT)
 			{
-				if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
+				if ((!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessageW(&msg);

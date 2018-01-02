@@ -55,41 +55,6 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,26,222,322,20
 END
 
-PARAMETERS DIALOGEX 26, 41, 130, 100
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Parameters"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "",IDCMD,5,5,120,8
-    LTEXT           "&1:",-1,5,20,8,8
-    EDITTEXT        300,15,18,110,12,ES_AUTOHSCROLL
-    LTEXT           "&2:",-1,5,35,8,8
-    EDITTEXT        301,15,33,110,12,ES_AUTOHSCROLL
-    LTEXT           "&3:",-1,5,50,8,8
-    EDITTEXT        302,15,48,110,12,ES_AUTOHSCROLL
-    LTEXT           "&4:",-1,5,65,8,8
-    EDITTEXT        303,15,63,110,12,ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "&Execute",IDOK,6,80,55,14
-    PUSHBUTTON      "Cancel",IDCANCEL,70,80,55,14
-END
-
-PARAMETERSNONMODAL DIALOGEX 26, 41, 130, 85
-STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Parameters"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "&1:",-1,5,5,8,8
-    EDITTEXT        300,15,3,110,12,ES_AUTOHSCROLL
-    LTEXT           "&2:",-1,5,20,8,8
-    EDITTEXT        301,15,18,110,12,ES_AUTOHSCROLL
-    LTEXT           "&3:",-1,5,35,8,8
-    EDITTEXT        302,15,33,110,12,ES_AUTOHSCROLL
-    LTEXT           "&4:",-1,5,50,8,8
-    EDITTEXT        303,15,48,110,12,ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "&Set",IDOK,6,65,55,14
-    PUSHBUTTON      "Cancel",IDCANCEL,70,65,55,14
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -179,21 +144,6 @@ BEGIN
     "#include ""afxres.h""\r\0"
 END
 
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
-BEGIN
-    "PARAMETERSNONMODAL", DIALOG
-    BEGIN
-    END
-END
 #endif    // APSTUDIO_INVOKED
 
 #endif    // Русский (Россия) resources

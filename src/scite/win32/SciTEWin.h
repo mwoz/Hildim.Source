@@ -210,9 +210,6 @@ protected:
 	HWND wFocus;
 	HWND wActive;
 
-	GUI::Window wFindInFiles;
-	GUI::Window wFindReplace;
-	GUI::Window wParameters;
 	//GUI::Rectangle rFindReplace;//позиция окна поиска\замены
 
 	IupLayoutWnd layout;
@@ -246,7 +243,6 @@ protected:
 	virtual void PrintSetup();
 
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style);
-	virtual void FindMessageBox(const SString &msg, const SString *findItem=0);
 	virtual void AboutDialog();
 	void DropFiles(HDROP hdrop);
 	void MinimizeToTray();
@@ -278,12 +274,6 @@ protected:
 	virtual void UIClosed();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
 
-	virtual bool ParametersOpen();
-	void ParamGrab();
-	virtual bool ParametersDialog(bool modal);
-	BOOL ParametersMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK ParametersDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-
 	BOOL AboutMessage(HWND hDlg, UINT message, WPARAM wParam);
 	static BOOL CALLBACK AboutDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void AboutDialogWithBuild(int staticBuild);
@@ -302,7 +292,6 @@ public:
 	~SciTEWin();
 
 	bool DialogHandled(GUI::WindowID id, MSG *pmsg);
-	bool ModelessHandler(MSG *pmsg);
 
 	void CreateUI();
 	/// Management of the command line parameters.

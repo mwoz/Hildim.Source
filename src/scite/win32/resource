@@ -229,7 +229,6 @@
 #define TME_LEAVE                       0x00000002
 #define CS_HREDRAW                      0x0002
 #define CF_BITMAP                       2
-#define IDCANCEL                        2
 #define BN_HILITE                       2
 #define BST_INDETERMINATE               0x0002
 #define HDS_BUTTONS                     0x0002
@@ -969,7 +968,6 @@
 #define BM_SETCHECK                     0x00F1
 #define VK_OEM_COPY                     0xF2
 #define BM_GETSTATE                     0x00F2
-#define IDCMD                           242
 #define VK_OEM_AUTO                     0xF3
 #define BM_SETSTATE                     0x00F3
 #define VK_OEM_ENLW                     0xF4

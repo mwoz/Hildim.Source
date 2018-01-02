@@ -152,32 +152,6 @@ bool SciTEWin::DialogHandled(GUI::WindowID id, MSG *pmsg) {
 	return false;
 }
 
-bool SciTEWin::ModelessHandler(MSG *pmsg) {
-	if (wFindReplace.GetID() || wFindInFiles.GetID() || wParameters.GetID()) {
-		//Пропускаем в основное окно все клавиатурные команды
-		bool menuKey = (pmsg->message == WM_KEYDOWN || pmsg->message == WM_SYSKEYDOWN) &&
-			(pmsg->wParam != VK_TAB) &&
-			(pmsg->wParam != VK_ESCAPE) &&
-			(pmsg->wParam != VK_RETURN);  
-
-		if (!menuKey && wFindReplace.GetID() && DialogHandled(wFindReplace.GetID(), pmsg))
-			return true;
-		if (!menuKey && wFindInFiles.GetID() && DialogHandled(wFindInFiles.GetID(), pmsg))
-			return true;
-		if (!menuKey && DialogHandled(wParameters.GetID(), pmsg))
-			return true;
-	}
-	if (pmsg->message == WM_KEYDOWN || pmsg->message == WM_SYSKEYDOWN) {
-		if (KeyDown(pmsg->wParam))
-			return true;
-	} else if (pmsg->message == WM_KEYUP) {
-		if (KeyUp(pmsg->wParam))
-			return true;
-	}
-
-	return false;
-}
-
 //  DoDialog is a bit like something in PC Magazine May 28, 1991, page 357
 int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc) {
 	int result = ::DialogBoxParam(hInst, resName, hWnd, lpProc, reinterpret_cast<LPARAM>(this));
@@ -829,12 +803,6 @@ void SciTEWin::UIClosed() {
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp
 
-static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pData) {
-	if (uMsg == BFFM_INITIALIZED) {
-		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, pData);
-	}
-	return 0;
-}
 int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter){
 	SelectionIntoProperties();
 	CollapseOutput();
@@ -881,99 +849,6 @@ int SciTEWin::PerformGrepEx(const char *sParams, const char *findWhat, const cha
 	return 1;
 }
 
-bool SciTEWin::ParametersOpen() {
-	return wParameters.Created();
-}
-
-void SciTEWin::ParamGrab() {
-	if (wParameters.Created()) {
-		HWND hDlg = reinterpret_cast<HWND>(wParameters.GetID());
-		Dialog dlg(hDlg);
-		for (int param = 0; param < maxParam; param++) {
-			std::string paramVal = GUI::UTF8FromString(dlg.ItemTextG(IDPARAMSTART + param));
-			SString paramText(param + 1);
-			props.Set(paramText.c_str(), paramVal.c_str());
-		}
-	}
-}
-
-BOOL SciTEWin::ParametersMessage(HWND hDlg, UINT message, WPARAM wParam) {
-	switch (message) {
-
-	case WM_INITDIALOG: {
-			LocaliseDialog(hDlg);
-			wParameters = hDlg;
-			Dialog dlg(hDlg);
-			if (modalParameters) {
-				GUI::gui_string sCommand = GUI::StringFromUTF8(parameterisedCommand.c_str());
-				dlg.SetItemText(IDCMD, sCommand.c_str());
-			}
-			for (int param = 0; param < maxParam; param++) {
-				SString paramText(param + 1);
-				SString paramTextVal = props.Get(paramText.c_str());
-				GUI::gui_string sVal = GUI::StringFromUTF8(paramTextVal.c_str());
-				dlg.SetItemText(IDPARAMSTART + param, sVal.c_str());
-			}
-		}
-		return TRUE;
-
-	case WM_CLOSE:
-		::SendMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
-		break;
-
-	case WM_COMMAND:
-		if (ControlIDOfCommand(wParam) == IDCANCEL) {
-			::EndDialog(hDlg, IDCANCEL);
-			if (!modalParameters) {
-				wParameters.Destroy();
-			}
-			return FALSE;
-		} else if (ControlIDOfCommand(wParam) == IDOK) {
-			ParamGrab();
-			::EndDialog(hDlg, IDOK);
-			if (!modalParameters) {
-				wParameters.Destroy();
-			}
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-BOOL CALLBACK SciTEWin::ParametersDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	return Caller(hDlg, message, lParam)->ParametersMessage(hDlg, message, wParam);
-}
-
-bool SciTEWin::ParametersDialog(bool modal) {
-	if (wParameters.Created()) {
-		ParamGrab();
-		if (!modal) {
-			wParameters.Destroy();
-		}
-		return true;
-	}
-	bool success = false;
-	modalParameters = modal;
-	if (modal) {
-		success = DoDialog(hInstance,
-		                   TEXT("PARAMETERS"),
-		                   MainHWND(),
-		                   reinterpret_cast<DLGPROC>(ParametersDlg)) == IDOK;
-		wParameters = 0;
-		WindowSetFocus(wEditor);
-	} else {
-		::CreateDialogParam(hInstance,
-		                    TEXT("PARAMETERSNONMODAL"),
-		                    MainHWND(),
-		                    reinterpret_cast<DLGPROC>(ParametersDlg),
-		                    reinterpret_cast<LPARAM>(this));
-		wParameters.Show();
-	}
-
-	return success;
-}
-
 int SciTEWin::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) {
 	dialogsOnScreen++;
 	int ret = ::MessageBoxW(reinterpret_cast<HWND>(w.GetID()), msg.c_str(), appName, style | MB_SETFOREGROUND);
@@ -981,16 +856,6 @@ int SciTEWin::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 	return ret;
 }
 
-void SciTEWin::FindMessageBox(const SString &msg, const SString *findItem) {
-	if (findItem == 0) {
-		GUI::gui_string msgBuf = LocaliseMessage(msg.c_str());
-		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf, MB_OK | MB_ICONWARNING);
-	} else {
-		GUI::gui_string findThing = GUI::StringFromUTF8(findItem->c_str());
-		GUI::gui_string msgBuf = LocaliseMessage(msg.c_str(), findThing.c_str());
-		WindowMessageBox(wFindReplace.Created() ? wFindReplace : wSciTE, msgBuf, MB_OK | MB_ICONWARNING);
-	}
-}
 
 LRESULT CALLBACK CreditsWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	if (uMsg == WM_GETDLGCODE)

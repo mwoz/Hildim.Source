@@ -665,16 +665,12 @@ protected:
 	void SelectionIntoProperties();
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
-	virtual void FindMessageBox(const SString &msg, const SString *findItem = 0) = 0;
 	int FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition);
 	virtual bool FindHasText() const;
 	virtual void MoveBack(int distance);
 	virtual void ScrollEditorIfNeeded();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
-	virtual bool ParametersOpen() = 0;
-	virtual void ParamGrab() = 0;
-	virtual bool ParametersDialog(bool modal) = 0;
 	bool HandleXml(char ch);
 	SString FindOpenXmlTag(const char sel[], int nSize);
 	void GoMatchingBrace(bool select);

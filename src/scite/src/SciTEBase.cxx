@@ -1602,27 +1602,15 @@ void SciTEBase::ClearJobQueue() {
 void SciTEBase::Execute() {
 	props.Set("CurrentMessage", "");
 	dirNameForExecute = FilePath();
-	bool displayParameterDialog = false;
+
 	int ic;
 	parameterisedCommand = "";
 	for (ic = 0; ic < jobQueue.commandMax; ic++) {
-		if (jobQueue.jobQueue[ic].command[0] == '*') {
-			displayParameterDialog = true;
-			jobQueue.jobQueue[ic].command.remove(0, 1);
-			parameterisedCommand = jobQueue.jobQueue[ic].command;
-		}
 		if (jobQueue.jobQueue[ic].directory.IsSet()) {
 			dirNameForExecute = jobQueue.jobQueue[ic].directory;
 		}
 	}
-	if (displayParameterDialog) {
-		if (!ParametersDialog(true)) {
-			ClearJobQueue();
-			return;
-		}
-	} else {
-		ParamGrab();
-	}
+
 	for (ic = 0; ic < jobQueue.commandMax; ic++) {
 		jobQueue.jobQueue[ic].command = props.Expand(jobQueue.jobQueue[ic].command.c_str());
 	}
