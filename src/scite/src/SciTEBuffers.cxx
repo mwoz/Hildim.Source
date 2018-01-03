@@ -901,7 +901,13 @@ void SciTEBase::BuffersMenu() {
 
 		const char* chtabForeColor = GetPropClr("tabctrl.forecolor", tabForeColor, "0 0 0");
 		const char* ReadOnlyColor = GetPropClr("tabctrl.readonly.color", tabROColor, "120 120 120");
-		const char* chtabActBackColor = GetPropClr("tabctrl.active.bakcolor", tabActBackColor, "250 250 250");
+		
+		const char* chtabActBackColor;
+		if(lstrcmpA(props.Get("tabctrl.active.bakcolor_tmp").c_str(), ""))
+			chtabActBackColor = GetPropClr("tabctrl.active.bakcolor_tmp", tabActBackColor, "250 250 250");
+		else
+			chtabActBackColor = GetPropClr("tabctrl.active.bakcolor", tabActBackColor, "250 250 250");
+
 		const char* chtabActForeColor = GetPropClr("tabctrl.active.forecolor", tabActForeColor, "0 0 250");
 		const char* chtabActForeROColor = GetPropClr("tabctrl.active.readonly.forecolor", tabActForeROColor, "120 120 250");
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLOR", chtabActBackColor);

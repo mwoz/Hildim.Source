@@ -365,6 +365,8 @@ void IupLayoutWnd::Fit(){
 	RECT r;
 	::GetClientRect((HWND)pSciteWin->GetID(), &r);
 	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, r.right, r.bottom, 0);
+	IupRefresh(pLeftTab);
+	IupRefresh(pRightTab);
 }
 
 void IupLayoutWnd::Close(){

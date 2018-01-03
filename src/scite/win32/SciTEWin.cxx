@@ -1752,9 +1752,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		{
 			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 			layout.Fit();
-			return r; 
+			return r;
 		}
-			break;
+		break;
 		case WM_COMMAND:
 			Command(wParam, lParam);
 			break;
@@ -2175,7 +2175,7 @@ int SciTEWin::EventLoop() {
 		{
 			if (msg.message != WM_QUIT)
 			{
-				if ((!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
+				if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessageW(&msg);

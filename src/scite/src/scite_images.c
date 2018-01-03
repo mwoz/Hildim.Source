@@ -3956,6 +3956,88 @@ static Ihandle* load_image_scissors_WW(void)
   return image;
 }
 
+static Ihandle * load_image_control_record_WW(void) {
+	unsigned char imgdata[] = {
+		13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+		13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+		13, 13, 13, 13, 7, 10, 12, 4, 12, 10, 7, 13, 13, 13, 13, 13,
+		13, 13, 13, 1, 15, 6, 6, 6, 6, 6, 15, 1, 13, 13, 13, 13,
+		13, 13, 7, 12, 6, 6, 6, 6, 6, 6, 6, 12, 7, 13, 13, 13,
+		13, 13, 9, 15, 15, 15, 15, 15, 15, 15, 15, 15, 9, 13, 13, 13,
+		13, 13, 12, 15, 4, 4, 4, 5, 0, 0, 0, 5, 12, 13, 13, 13,
+		13, 13, 4, 15, 5, 3, 0, 0, 0, 0, 0, 3, 4, 13, 13, 13,
+		13, 13, 12, 4, 3, 3, 3, 3, 3, 3, 3, 3, 12, 13, 13, 13,
+		13, 13, 9, 5, 8, 3, 3, 3, 3, 3, 3, 5, 9, 13, 13, 13,
+		13, 13, 7, 14, 5, 8, 8, 8, 8, 8, 3, 14, 7, 13, 13, 13,
+		13, 13, 13, 1, 14, 5, 8, 8, 8, 5, 14, 1, 13, 13, 13, 13,
+		13, 13, 13, 7, 1, 2, 11, 11, 11, 2, 1, 7, 13, 13, 13, 13,
+		13, 13, 13, 13, 7, 7, 7, 7, 7, 7, 7, 7, 13, 13, 13, 13,
+		13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+		13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", "163 20 21");
+	IupSetAttribute(image, "1", "212 186 185");
+	IupSetAttribute(image, "2", "148 102 100");
+	IupSetAttribute(image, "3", "182 21 22");
+	IupSetAttribute(image, "4", "184 58 56");
+	IupSetAttribute(image, "5", "182 39 39");
+	IupSetAttribute(image, "6", "223 88 88");
+	IupSetAttribute(image, "7", "233 227 225");
+	IupSetAttribute(image, "8", "204 19 20");
+	IupSetAttribute(image, "9", "196 130 132");
+	IupSetAttribute(image, "10", "215 125 127");
+	IupSetAttribute(image, "11", "127 57 55");
+	IupSetAttribute(image, "12", "188 78 76");
+	IupSetAttribute(image, "13", "BGCOLOR");
+	IupSetAttribute(image, "14", "160 66 68");
+	IupSetAttribute(image, "15", "204 70 69");
+
+	return image;
+}
+
+static Ihandle * load_image_control_stop_square_WW(void) {
+	unsigned char imgdata[] = {
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 1, 8, 8, 8, 8, 8, 8, 8, 8, 8, 1, 12, 12, 12,
+		12, 12, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 8, 12, 12, 12,
+		12, 12, 3, 11, 5, 5, 5, 5, 5, 5, 5, 1, 3, 12, 12, 12,
+		12, 12, 3, 1, 8, 8, 8, 8, 8, 3, 3, 5, 3, 12, 12, 12,
+		12, 12, 10, 1, 8, 3, 10, 10, 10, 10, 10, 3, 10, 12, 12, 12,
+		12, 12, 10, 5, 10, 4, 4, 4, 4, 4, 4, 3, 10, 12, 12, 12,
+		12, 12, 10, 8, 4, 4, 4, 4, 4, 4, 4, 7, 10, 12, 12, 12,
+		12, 12, 15, 13, 2, 2, 2, 2, 2, 2, 2, 7, 15, 12, 12, 12,
+		12, 12, 15, 13, 2, 2, 2, 2, 2, 2, 2, 14, 15, 12, 12, 12,
+		12, 12, 0, 13, 14, 14, 14, 14, 14, 14, 14, 14, 0, 12, 12, 12,
+		12, 12, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 12, 12, 12,
+		12, 12, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", "53 115 173");
+	IupSetAttribute(image, "1", "136 203 248");
+	IupSetAttribute(image, "2", "16 170 244");
+	IupSetAttribute(image, "3", "91 166 224");
+	IupSetAttribute(image, "4", "51 152 216");
+	IupSetAttribute(image, "5", "119 194 247");
+	IupSetAttribute(image, "6", "229 231 229");
+	IupSetAttribute(image, "7", "48 172 236");
+	IupSetAttribute(image, "8", "99 178 235");
+	IupSetAttribute(image, "9", "100 132 164");
+	IupSetAttribute(image, "10", "74 147 205");
+	IupSetAttribute(image, "11", "142 219 252");
+	IupSetAttribute(image, "12", "BGCOLOR");
+	IupSetAttribute(image, "13", "44 186 249");
+	IupSetAttribute(image, "14", "15 183 252");
+	IupSetAttribute(image, "15", "64 128 188");
+
+	return image;
+}
+
 void load_all_images_Images(void)
 {
   IupSetHandle("disk_µ", load_image_disk_WW());
@@ -4053,5 +4135,7 @@ void load_all_images_Images(void)
   IupSetHandle("Tree_Bool_µ", load_image_Tree_Bool_WW());
   IupSetHandle("IMAGE_search", load_image_IMAGE_search());
   IupSetHandle("scissors_µ", load_image_scissors_WW());
+  IupSetHandle("control_record_µ", load_image_control_record_WW());
+  IupSetHandle("control_stop_square_µ", load_image_control_stop_square_WW());
 }
 

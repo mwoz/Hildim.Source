@@ -292,6 +292,7 @@ public:
 	~SciTEWin();
 
 	bool DialogHandled(GUI::WindowID id, MSG *pmsg);
+	bool ModelessHandler(MSG *pmsg);
 
 	void CreateUI();
 	/// Management of the command line parameters.

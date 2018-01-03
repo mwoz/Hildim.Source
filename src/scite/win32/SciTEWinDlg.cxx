@@ -152,6 +152,18 @@ bool SciTEWin::DialogHandled(GUI::WindowID id, MSG *pmsg) {
 	return false;
 }
 
+bool SciTEWin::ModelessHandler(MSG *pmsg) {
+	if (pmsg->message == WM_KEYDOWN || pmsg->message == WM_SYSKEYDOWN) {
+		if (KeyDown(pmsg->wParam))
+			return true;
+	} else if (pmsg->message == WM_KEYUP) {
+		if (KeyUp(pmsg->wParam))
+			return true;
+	}
+
+	return false;
+}
+
 //  DoDialog is a bit like something in PC Magazine May 28, 1991, page 357
 int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc) {
 	int result = ::DialogBoxParam(hInst, resName, hWnd, lpProc, reinterpret_cast<LPARAM>(this));
