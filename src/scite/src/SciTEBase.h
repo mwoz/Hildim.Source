@@ -332,7 +332,7 @@ protected:
 	enum { importCmdID = IDM_IMPORT };
 
 	enum { indicatorMatch = INDIC_CONTAINER };
-	enum { markerBookmark = 1 };
+	enum { markerBookmark = 1, markerSaved, markerNotSaved };
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 

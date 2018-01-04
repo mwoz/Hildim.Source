@@ -4161,6 +4161,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 			FoldChanged(notification->line,
 			        notification->foldLevelNow, notification->foldLevelPrev, w);
 		}
+		if(0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
+			(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
+			extender->OnTextChanged(notification->position, notification->length, notification->text, notification->linesAdded);
+		}
 		break;
 
 	case SCN_MARGINCLICK: {
