@@ -1659,13 +1659,9 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 				if (extender) extender->OnNavigation("Go");
 				WindowSetFocus(wEditor);
 
-				wEditor.Call(SCI_MARKERDELETEALL, 0);
-				wEditor.Call(SCI_MARKERDEFINE, 0, SC_MARK_CIRCLE);
-				wEditor.Call(SCI_MARKERSETFORE, 0, ColourOfProperty(props,
-				        "error.marker.fore", ColourRGB(0x7f, 0, 0)));
-				wEditor.Call(SCI_MARKERSETBACK, 0, ColourOfProperty(props,
-				        "error.marker.back", ColourRGB(0xff, 0xff, 0)));
-				wEditor.Call(SCI_MARKERADD, sourceLine, 0);
+				wEditor.Call(SCI_MARKERDELETEALL, markerError);
+
+				wEditor.Call(SCI_MARKERADD, sourceLine, markerError);
 				int startSourceLine = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine, 0);
 				int endSourceline = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine + 1, 0);
 				if (column >= 0) {

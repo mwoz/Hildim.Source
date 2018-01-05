@@ -1620,7 +1620,7 @@ void SciTEBase::Execute() {
 	}
 
 	wOutput.Call(SCI_MARKERDELETEALL, static_cast<uptr_t>(-1));
-	wEditor.Call(SCI_MARKERDELETEALL, 0);
+	wEditor.Call(SCI_MARKERDELETEALL, markerError);
 	// Ensure the output pane is visible
 	if (jobQueue.ShowOutputPane()) {
 		MakeOutputVisible(wOutput);
@@ -2032,8 +2032,11 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 			allNumber = false;
 		}
 	}
-	if (startword == current || allNumber)
+	if (startword == current || allNumber) {
+		if (wEditor.Call(SCI_AUTOCACTIVE))
+			wEditor.Call(SCI_AUTOCCANCEL);
 		return true;
+	}
 	SString root = line.substr(startword, current - startword);
 	int doclen = LengthDocument();
 	Sci_TextToFind ft = {{0, 0}, 0, {0, 0}};
@@ -2092,8 +2095,12 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		acText.substitute(' ', '\n');
 		// Return spaces from \001
 		acText.substitute('\001', ' ');
-		wEditor.Call(SCI_AUTOCSETSEPARATOR, '\n');
-		wEditor.CallString(SCI_AUTOCSHOW, root.length(), acText.c_str());
+		if (wEditor.Call(SCI_AUTOCACTIVE)) {
+			wEditor.CallString(SCI_AUTOCSELECT, NULL, root.c_str());
+		} else {
+			wEditor.Call(SCI_AUTOCSETSEPARATOR, '\n');
+			wEditor.CallString(SCI_AUTOCSHOW, root.length(), acText.c_str());
+		}
 		delete []words;
 	} else {
 		wEditor.Call(SCI_AUTOCCANCEL);
@@ -4163,7 +4170,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		if(0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
 			(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
-			extender->OnTextChanged(notification->position, notification->length, notification->text, notification->linesAdded);
+			extender->OnTextChanged(notification->position, notification->length, notification->text, notification->linesAdded, notification->modificationType);
 		}
 		break;
 

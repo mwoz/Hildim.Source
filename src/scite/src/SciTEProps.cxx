@@ -1281,6 +1281,14 @@ void SciTEBase::ReadProperties() {
 		ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
 	wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
 
+	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
+	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
+		"error.marker.fore", ColourRGB(0x7f, 0, 0)));
+	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
+		"error.marker.back", ColourRGB(0xff, 0xff, 0)));
+
+	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
+
 	wEditor.Call(SCI_SETSCROLLWIDTH, props.GetInt("horizontal.scroll.width", 2000));
 	wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, props.GetInt("horizontal.scroll.width.tracking", 1));
 	wOutput.Call(SCI_SETSCROLLWIDTH, props.GetInt("output.horizontal.scroll.width", 2000));

@@ -2947,8 +2947,8 @@ void LuaExtension::OnRightEditorVisibility(bool show) {
 	CallNamedFunction("OnRightEditorVisibility", show, 0);
 }
 
-void LuaExtension::OnTextChanged(int position, int length, const char* text, int linesAdded) {
-	CallNamedFunction("OnTextChanged", position, length, linesAdded);
+void LuaExtension::OnTextChanged(int position, int length, const char* text, int linesAdded, int flag) {
+	CallNamedFunction("OnTextChanged", position, flag, linesAdded);
 }
 
 static int cf_editor_reload_startup_script(lua_State*) {
