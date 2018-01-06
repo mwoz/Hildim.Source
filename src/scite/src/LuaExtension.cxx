@@ -1020,6 +1020,19 @@ static int bf_get_buffer_saved(lua_State *L){
 	return 1;
 }
 
+static int bf_get_buffer_encoding(lua_State *L) {
+	int i = luaL_checkint(L, 1);
+	lua_pushinteger(L, host->GetBufferEncoding(i));
+	return 1;
+}
+
+static int bf_set_buffer_encoding(lua_State *L) {
+	int i = luaL_checkint(L, 1);
+	int e = luaL_checkint(L, 2);
+	host->SetBufferEncoding(i, e);
+	return 0;
+}
+
 static int cf_set_document_at(lua_State *L){
 	int index = luaL_checkint(L, 1);
 	int updateStack = 1;
@@ -1053,7 +1066,7 @@ static int cf_global_dostring(lua_State *L) {
 	return 0;
 }
 
-static bool call_function(lua_State *L, int nargs, bool ignoreFunctionReturnValue=false) {
+static bool call_function(lua_State *L, int nargs, int nresult = 1) {
 	bool handled = false;
 	if (L) {
 		int traceback = 0;
@@ -1069,16 +1082,15 @@ static bool call_function(lua_State *L, int nargs, bool ignoreFunctionReturnValu
 			}
 		}
 
-		int result = lua_pcall(L, nargs, ignoreFunctionReturnValue ? 0 : 1, traceback);
-
+		int result = lua_pcall(L, nargs, nresult, traceback);
 		if (traceback) {
 			lua_remove(L, traceback);
 		}
 
 		if (0 == result) {
-			if (ignoreFunctionReturnValue) {
+			if (!nresult) {
 				handled = true;
-			} else {
+			} else if (nresult == 1){
 				handled = (0 != lua_toboolean(L, -1));
 				lua_pop(L, 1);
 			}
@@ -1739,7 +1751,7 @@ void ContinueInit(void* h){
 		FilePath fpTest(GUI::StringFromUTF8(startupScript));
 		if (fpTest.Exists()) {
 			luaL_loadfile(luaState, startupScript);
-			if (!call_function(luaState, 0, true)) {
+			if (!call_function(luaState, 0, 0)) {
 				host->Trace(">Lua: error occurred while loading startup script\n");
 			}
 		}
@@ -2023,6 +2035,10 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "NameAt");
 	lua_pushcfunction(luaState, bf_get_buffer_saved);
 	lua_setfield(luaState, -2, "SavedAt");
+	lua_pushcfunction(luaState, bf_get_buffer_encoding);
+	lua_setfield(luaState, -2, "EncodingAt");
+	lua_pushcfunction(luaState, bf_set_buffer_encoding);
+	lua_setfield(luaState, -2, "SetEncodingAt");
 	//lua_pushcfunction(luaState, bf_set_current);
 	//lua_setfield(luaState, -2, "SetCurrent");
 	lua_pushcfunction(luaState, bf_current);
@@ -2088,7 +2104,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	//	FilePath fpTest(GUI::StringFromUTF8(startupScript));
 	//	if (fpTest.Exists()) {
 	//		luaL_loadfile(luaState, startupScript);
-	//		if (!call_function(luaState, 0, true)) {
+	//		if (!call_function(luaState, 0, 0)) {
 	//			host->Trace(">Lua: error occurred while loading startup script\n");
 	//		}
 	//	}
@@ -2173,7 +2189,7 @@ bool LuaExtension::Load(const char *filename) {
 			if (luaState || InitGlobalScope(false)) {
 				extensionScript = filename;
 				luaL_loadfile(luaState, filename);
-				if (!call_function(luaState, 0, true)) {
+				if (!call_function(luaState, 0, 0)) {
 					host->Trace(">Lua: error occurred while loading extension script\n");
 				}
 				loaded = true;
@@ -2297,7 +2313,7 @@ bool LuaExtension::OnExecute(const char *s) {
 							lua_pushstring(luaState, arg);
 							lua_insert(luaState, stackBase + 2);
 							lua_settop(luaState, stackBase+2);
-							if (!call_function(luaState, 1, true)) {
+							if (!call_function(luaState, 1, 0)) {
 								host->Trace(">Lua: error occurred while processing command\n");
 							}
 						}
@@ -2328,8 +2344,32 @@ bool LuaExtension::OnBeforeSave(const char *filename) {
 	return CallNamedFunction("OnBeforeSave", filename);
 }
 
-bool LuaExtension::OnBeforeOpen(const char *filename, const char *extension) {
-	return CallNamedFunction("OnBeforeOpen", filename, extension);
+bool LuaExtension::OnBeforeOpen(const char *filename, const char *extension, int& encoding) {
+	//bool handled = CallNamedFunction("OnBeforeOpen", filename, extension);
+	//if (!handled) {
+	//	if(lua_isinteger(luaState, -1))
+	//		encoding = lua_tointeger(luaState, -1);
+	//}
+	//return handled;
+	bool handled = false;
+	if (luaState) {
+		lua_getglobal(luaState, "OnBeforeOpen");
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushstring(luaState, filename);
+			lua_pushstring(luaState, extension);
+			call_function(luaState, 2, 2);
+
+			if (lua_isinteger(luaState, -2)) {
+				encoding = lua_tointeger(luaState, -2);
+			} else {
+				handled = lua_toboolean(luaState, -2);
+			}
+			lua_pop(luaState, 2);
+		} else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return handled;
 }
 
 bool LuaExtension::OnSave(const char *filename) {
@@ -2956,7 +2996,7 @@ static int cf_editor_reload_startup_script(lua_State*) {
 	FilePath fpTest(GUI::StringFromUTF8(startupScript));
 	if (fpTest.Exists()) {
 		luaL_loadfile(luaState, startupScript);
-		if (!call_function(luaState, 0, true)) {
+		if (!call_function(luaState, 0, 0)) {
 			host->Trace(">Lua: error occurred while loading startup script\n");
 		}
 	}

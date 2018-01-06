@@ -148,6 +148,7 @@
     <ClInclude Include="lua\src\lvm.h" />
     <ClInclude Include="lua\src\lzio.h" />
     <ClInclude Include="src\Containers.h" />
+    <ClInclude Include="src\Encoding.h" />
     <ClInclude Include="src\Extender.h" />
     <ClInclude Include="src\FilePath.h" />
     <ClInclude Include="src\GUI.h" />
@@ -197,6 +198,7 @@
     <Image Include="win32\word.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Encoding.cpp" />
     <ClCompile Include="src\Exporters.cxx" />
     <ClCompile Include="src\FilePath.cxx" />
     <ClCompile Include="src\IFaceTable.cxx" />

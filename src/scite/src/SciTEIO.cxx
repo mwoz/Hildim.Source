@@ -357,6 +357,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 			}
 		}
 		Utf8_16_Read convert(codingCookie==uni8Bit && check_utf8==1);
+		convert._encoding = filePath._encoding;
 //!-end-[utf8.auto.check]
 
 		wEditor.Call(SCI_ALLOCATE, fileSize + 1000);
@@ -427,8 +428,10 @@ bool SciTEBase::PreOpenCheck(const GUI::gui_char *) {
 
 bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	FilePath absPath = file.AbsolutePath();
-	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str())) return false;
-
+	int encoding = 0;
+	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
+	
+	absPath._encoding = encoding;
 	InitialiseBuffers();
 
 	int index = buffers.GetDocumentByName(absPath);
@@ -718,6 +721,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 		FILE *fp = saveName.Open(fileWrite);
 		if (fp) {
 			convert.setfile(fp);
+			convert._encoding = saveName._encoding;
 			char data[blockSize + 1];
 			int lengthDoc = LengthDocument();
 			retVal = true;

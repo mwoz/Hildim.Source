@@ -164,6 +164,7 @@ public:
 	virtual void SwitchTo(int wndIdm, FilePath* pBuf) = 0;
 	virtual int GetWindowIdm() = 0;
 	virtual void SetBuffPointer(FilePath* pBuf) = 0;
+	virtual void SetBuffEncoding(int e) = 0;
 };
 
 class BufferList: public BufferListAPI {
@@ -377,6 +378,7 @@ protected:
 		virtual int GetWindowIdm();
 		virtual void SetBuffPointer(FilePath* pBuf);
 		virtual void SetCoBuffPointer(FilePath* pBuf);
+		virtual void SetBuffEncoding(int e);
 		FilePath GetCoBuffPointer();
 		void Switch();
 		ScintillaWindowEditor coEditor;
@@ -518,6 +520,11 @@ protected:
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
+	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
+	void SetBufferEncoding(int i, int e) { 
+		buffers.buffers[i]._encoding = e;
+		if (buffers.Current() == i) wEditor.SetBuffEncoding(e);
+	};
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
 	int GetCurrentBufer(){ return buffers.Current(); };	

@@ -1045,6 +1045,7 @@ void SciTEBase::ReadProperties() {
 
 	if (firstPropertiesRead) {
 		ReadPropertiesInitial();
+		props.SetInteger("system.code.page", ::GetACP());
 	}
 
 	ReadFontProperties();

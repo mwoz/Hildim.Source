@@ -37,6 +37,8 @@ public:
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
 	virtual void GetBufferName(int i, char* c) = 0;
+	virtual void SetBufferEncoding(int i, int e) = 0;
+	virtual int GetBufferEncoding(int i) = 0;
 	virtual bool GetBuffersSavedState(int i) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
@@ -76,7 +78,7 @@ public:
 	virtual bool OnOpen(const char *) { return false; }
 	virtual bool OnSwitchFile(const char *) { return false; }
 	virtual bool OnBeforeSave(const char *) { return false; }
-	virtual bool OnBeforeOpen(const char *filename, const char *extension) { return false; }
+	virtual bool OnBeforeOpen(const char *filename, const char *extension, int& encoding) { return false; }
 	virtual bool OnSave(const char *) { return false; }
 	virtual bool OnChar(char) { return false; }
 	virtual bool OnExecute(const char *) { return false; }

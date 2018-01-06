@@ -721,12 +721,19 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(int wndIdm, FilePath* pBuff){
 	else throw std::runtime_error("ScintillaWindowSwitcher: unknown idm");
 	coEditor.Call(SCI_SETFOCUS, false);
 }
-void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf){
-	if (GetWindowIdm() == IDM_SRCWIN){
+void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf) {
+	if (GetWindowIdm() == IDM_SRCWIN) {
 		buffer_L.Set(pBuf ? pBuf->AsInternal() : L"");
-	}
-	else{
+	} else {
 		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
+	}
+}
+
+void SciTEBase::ScintillaWindowSwitcher::SetBuffEncoding(int e) {
+	if (GetWindowIdm() == IDM_SRCWIN) {
+		buffer_L._encoding = e;
+	} else {
+		buffer_R._encoding = e;
 	}
 }
 

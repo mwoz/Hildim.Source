@@ -24,7 +24,7 @@ public:
 	virtual bool OnOpen(const char *filename);
 	virtual bool OnSwitchFile(const char *filename);
 	virtual bool OnBeforeSave(const char *filename);
-	virtual bool OnBeforeOpen(const char *filename, const char *extension);
+	virtual bool OnBeforeOpen(const char *filename, const char *extension, int& encoding);
 	virtual bool OnSave(const char *filename);
 	virtual bool OnChar(char ch);
 	virtual bool OnExecute(const char *s);

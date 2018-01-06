@@ -282,8 +282,9 @@ void SciTEBase::ChangeTabWnd(){
 	
 	wEditor.Switch();
 
-	SetFileName(bPrev->AbsolutePath());
+	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
+
 	ReadProperties();
 	SetIndentSettings();
 	SetEol();
@@ -328,7 +329,7 @@ void SciTEBase::CloneTab(){
 	bPrev->pFriend = true;
 	CurrentBuffer()->pFriend = true;
 
-	SetFileName(bPrev->AbsolutePath());
+	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
 	ReadProperties();
 	SetIndentSettings();

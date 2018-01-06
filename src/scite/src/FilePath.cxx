@@ -96,6 +96,7 @@ void FilePath::Set(const GUI::gui_char *fileName_) {
 
 void FilePath::Set(FilePath const &other) {
 	fileName = other.fileName;
+	_encoding = other._encoding;
 }
 
 void FilePath::Set(FilePath const &directory, FilePath const &name) {
@@ -116,6 +117,7 @@ void FilePath::SetDirectory(FilePath directory) {
 
 void FilePath::Init() {
 	fileName = GUI_TEXT("");
+	_encoding = 0;
 }
 
 bool FilePath::SameNameAs(const GUI::gui_char *other) const {

@@ -12,6 +12,7 @@
 #include "Utf8_16.h"
 
 #include <stdio.h>
+#include "Encoding.h"
 
 const Utf8_16::utf8 Utf8_16::k_Boms[][3] = {
 	{0x00, 0x00, 0x00},  // Unknown
@@ -66,10 +67,19 @@ size_t Utf8_16_Read::convert(char* buf, size_t len, bool reset) {
 	}
 
 	if (m_eEncoding == eUnknown) {
+		if (_encoding) {
+			WcharMbcsConvertor* wmc = WcharMbcsConvertor::getInstance();
+			int newDataLen = 0;
+			int incompleteMultibyteChar = 0;
+			m_pNewBuf = reinterpret_cast<ubyte*>(wmc->encode(_encoding, 0, buf, static_cast<int32_t>(len), &newDataLen, &incompleteMultibyteChar));
+			int ttt = 12;
+			return len;
+		} else {
 		// Do nothing, pass through
-		m_nBufSize = 0;
-		m_pNewBuf = m_pBuf;
-		return len;
+			m_nBufSize = 0;
+			m_pNewBuf = m_pBuf;
+			return len;
+		}
 	}
 
 	if (m_eEncoding == eUtf8) {
@@ -209,8 +219,17 @@ size_t Utf8_16_Write::fwrite(const void* p, size_t _size) {
 	}
 
 	if (m_eEncoding == eUnknown) {
-		// Normal write
-		return ::fwrite(p, _size, 1, m_pFile);
+		if (_encoding) {
+			WcharMbcsConvertor* wmc = WcharMbcsConvertor::getInstance();
+			int newDataLen = 0;
+			int incompleteMultibyteChar = 0;
+			char *newData = wmc->encode(0, _encoding, (char*)p, _size, &newDataLen, &incompleteMultibyteChar);
+			_size -= incompleteMultibyteChar;
+			return ::fwrite(newData, _size, 1, m_pFile);
+		} else {
+			// Normal write
+			return ::fwrite(p, _size, 1, m_pFile);
+		}
 	}
 
 	if (m_eEncoding == eUtf8) {

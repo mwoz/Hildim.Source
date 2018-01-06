@@ -107,6 +107,7 @@ public:
 	char* getNewBuf() { return reinterpret_cast<char*>(m_pNewBuf); }
 
 	encodingType getEncoding() const { return m_eEncoding; }
+	int _encoding = 0;
 protected:
 	int determineEncoding();
 private:
@@ -131,6 +132,7 @@ public:
 	void setfile(FILE *pFile);
 	size_t fwrite(const void* p, size_t _size);
 	void fclose();
+	int _encoding = 0;
 protected:
 	encodingType m_eEncoding;
 	FILE* m_pFile;

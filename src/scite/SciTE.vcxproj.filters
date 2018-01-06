@@ -93,6 +93,9 @@
     <ClCompile Include="src\scite_images.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Encoding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Containers.h">
@@ -228,6 +231,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\scite_images.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Encoding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

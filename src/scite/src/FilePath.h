@@ -77,6 +77,7 @@ public:
 	bool Exists() const;
 	bool IsDirectory() const;
 	bool Matches(const GUI::gui_char *pattern) const;
+	int _encoding = 0;
 };
 
 class FilePathSet {

@@ -129,7 +129,7 @@ struct VarChain {
 			|| (link && link->contains(testVar));
 	}
 
-	const char *var;
+	const char *var; 
 	const VarChain *link;
 };
 
