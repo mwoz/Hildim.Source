@@ -2677,6 +2677,9 @@ static IFaceConstant ifaceConstants[] = {
 	{"STYLE_LINENUMBER",33},
 	{"STYLE_MAX",255},
 	{"UNDO_MAY_COALESCE",1},
+	{"UPDATE_BLOCK",0},
+	{"UPDATE_FORCE",2},
+	{"UPDATE_UNBLOCK",1},
 	{"VISIBLE_SLOP",0x01},
 	{"VISIBLE_STRICT",0x04}
 };
@@ -3185,7 +3188,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2541,
+	ifaceConstantCount = 2544,
 	ifacePropertyCount = 210
 };
 

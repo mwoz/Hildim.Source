@@ -3045,6 +3045,11 @@ void WindowSetFocus(GUI::ScintillaWindow &w) {
 	w.Send(SCI_GRABFOCUS, 0, 0);
 }
 
+void SciTEBase::Close_script() { 
+	Close(); 
+	WindowSetFocus(wEditor); 
+}
+
 void SciTEBase::SetLineNumberWidth() {
 	if (lineNumbers) {
 		int lineNumWidth = lineNumbersWidth;
@@ -4367,106 +4372,47 @@ void SciTEBase::UIAvailable() {
 	}
 }
 
-/**
- * Find the character following a name which is made up of characters from
- * the set [a-zA-Z.]
- */
-static GUI::gui_char AfterName(const GUI::gui_char *s) {
-	while (*s && ((*s == '.') ||
-	        (*s >= 'a' && *s <= 'z') ||
-	        (*s >= 'A' && *s <= 'Z')))
-		s++;
-	return *s;
+void SciTEBase::SetBufferEncoding(int i, int e) {
+	buffers.buffers[i]._encoding = e;
+	buffers.buffers[i].isDirty = true;
+	if (buffers.Current() == i) {
+		filePath._encoding = e; wEditor.SetBuffEncoding(e);
+		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+	}
+	BuffersMenu();
+
 }
 
-void SciTEBase::PerformOne(char *action) {
-	unsigned int len = UnSlash(action);
-	char *arg = strchr(action, ':');
-	if (arg) {
-		arg++;
-		if (isprefix(action, "blockuiupdate:")) {
-			bBlockUIUpdate = (*arg == 'y'); 
-			if (*arg == 'u'){
-				SetWindowName();
-				BuffersMenu();
-				CheckMenus();
-			}
-		} else if (isprefix(action, "close:")) {
-			Close();
-			//bBlockUIUpdate = (*arg == 'n');
-			//Close(!bBlockUIUpdate);
-			//if (!bBlockUIUpdate)
-				WindowSetFocus(wEditor);
-		} else if (isprefix(action, "currentmacro:")) {
-			currentMacro = arg;
-		} else if (isprefix(action, "cwd:")) {
-			FilePath dirTarget(GUI::StringFromUTF8(arg));
-			if (!dirTarget.SetWorkingDirectory()) {
-				GUI::gui_string msg = LocaliseMessage("Invalid directory '^0'.", dirTarget.AsInternal());
-				WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
-			}
-		} else if (isprefix(action, "enumproperties:")) {
-			EnumProperties(arg);
-		} else if (isprefix(action, "exportashtml:")) {
-			SaveToHTML(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "exportasrtf:")) {
-			SaveToRTF(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "exportaspdf:")) {
-			SaveToPDF(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "exportaslatex:")) {
-			SaveToTEX(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "exportasxml:")) {
-			SaveToXML(GUI::StringFromUTF8(arg));
-		} else if (isprefix(action, "goto:") && wEditor.Created()) {
-			int line = atoi(arg) - 1;
-			GotoLineEnsureVisible(line);
-			// jump to column if given and greater than 0
-			char *colstr = strchr(arg, ',');
-			if (colstr != NULL) {
-				int col = atoi(colstr + 1);
-				if (col > 0) {
-					int pos = wEditor.Call(SCI_GETCURRENTPOS) + col;
-					// select the word you have found there
-					int wordStart = wEditor.Call(SCI_WORDSTARTPOSITION, pos, true);
-					int wordEnd = wEditor.Call(SCI_WORDENDPOSITION, pos, true);
-					wEditor.Call(SCI_SETSEL, wordStart, wordEnd);
-				}
-			}
-		} else if (isprefix(action, "insert:") && wEditor.Created()) {
-			wEditor.CallString(SCI_REPLACESEL, 0, arg);
-		} else if (isprefix(action, "macroenable:")) {
-			macrosEnabled = atoi(arg);
-		} else if (isprefix(action, "menucommand:")) {
-			MenuCommand(atoi(arg));
-		} else if (isprefix(action, "open:")) {
-			extender->OnNavigation("Open");
-			Open(GUI::StringFromUTF8(arg));
-			extender->OnNavigation("Open-");
-		} else if (isprefix(action, "output:") && wOutput.Created()) {
-			wOutput.Call(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(arg));
-		} else if (isprefix(action, "property:")) {
-			PropertyFromDirector(arg);
-		} else if (isprefix(action, "reloadproperties:")) {
-			ReloadProperties();
-		} else if (isprefix(action, "quit:")) {
-			QuitProgram();
-		} else if (isprefix(action, "saveas:")) {
-			if (*arg) {
-				SaveAs(GUI::StringFromUTF8(arg).c_str(), true);
-			} else {
-				SaveAsDialog();
-			}
-		} else if (isprefix(action, "extender:")) {
-			extender->OnExecute(arg);
-		} else if (isprefix(action, "savepositions:")) {
-			WINDOWPLACEMENT wp;
-			::GetWindowPlacement((HWND)wSciTE.GetID(), &wp);
-			props.SetInteger("position.maximize", wp.showCmd == SW_SHOWMAXIMIZED);
-			props.SetInteger("position.height", wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
-			props.SetInteger("position.left", wp.rcNormalPosition.left);
-			props.SetInteger("position.top", wp.rcNormalPosition.top);
-			props.SetInteger("position.width", wp.rcNormalPosition.right - wp.rcNormalPosition.left);
-		}
+int  SciTEBase::SecondEditorActive() {
+	for (int i = 0; i < buffers.length; i++) {
+		if (buffers.buffers[i].editorSide == IDM_COSRCWIN)
+			return true;
+	}
+	return false;
+}
+
+void SciTEBase::Open_script(const char* path) {
+	extender->OnNavigation("Open");
+	Open(GUI::StringFromUTF8(path));
+	extender->OnNavigation("Open-");
+}
+
+void SciTEBase::SavePositions() {
+	WINDOWPLACEMENT wp;
+	::GetWindowPlacement((HWND)wSciTE.GetID(), &wp);
+	props.SetInteger("position.maximize", wp.showCmd == SW_SHOWMAXIMIZED);
+	props.SetInteger("position.height", wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
+	props.SetInteger("position.left", wp.rcNormalPosition.left);
+	props.SetInteger("position.top", wp.rcNormalPosition.top);
+	props.SetInteger("position.width", wp.rcNormalPosition.right - wp.rcNormalPosition.left);
+}
+
+void SciTEBase::BlockUpdate(int cmd) {
+	bBlockUIUpdate = !cmd;
+	if (cmd == UPDATE_FORCE) {
+		SetWindowName();
+		BuffersMenu();
+		CheckMenus();
 	}
 }
 
@@ -4476,39 +4422,6 @@ static bool IsSwitchCharacter(GUI::gui_char ch) {
 #else
 	return (ch == '-') || (ch == '/');
 #endif
-}
-
-// Called by SciTEBase::PerformOne when action="enumproperties:"
-void SciTEBase::EnumProperties(const char *propkind) {
-	const char *key = NULL;
-	const char *val = NULL;
-	PropSetFile *pf = NULL;
-
-	if (!extender)
-		return;
-	if (!strcmp(propkind, "dyn")) {
-		SelectionIntoProperties(); // Refresh properties ...
-		pf = &props;
-	} else if (!strcmp(propkind, "local"))
-		pf = &propsLocal;
-	else if (!strcmp(propkind, "directory"))
-		pf = &propsDirectory;
-	else if (!strcmp(propkind, "user"))
-		pf = &propsUser;
-	else if (!strcmp(propkind, "base"))
-		pf = &propsBase;
-	else if (!strcmp(propkind, "embed"))
-		pf = &propsEmbed;
-	else if (!strcmp(propkind, "abbrev"))
-		pf = &propsAbbrev;
-
-	if (pf != NULL) {
-		bool b = pf->GetFirst(key, val);
-		while (b) {
-			SendOneProperty(propkind, key, val);
-			b = pf->GetNext(key, val);
-		}
-	}
 }
 
 void SciTEBase::SendOneProperty(const char *kind, const char *key, const char *val) {
@@ -4648,40 +4561,9 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 				}
 			} else if ((tolower(arg[0]) == 'p') && (arg[1] == 0)) {
 				performPrint = true;
-			} else if (GUI::gui_string(arg) == GUI_TEXT("grep") && (wlArgs.size() - i >= 4)) {
-				// in form -grep [w~][c~][d~][b~] "<file-patterns>" "<search-string>"
-				GrepFlags gf = grepStdOut;
-				if (wlArgs[i+1][0] == 'w')
-					gf = static_cast<GrepFlags>(gf | grepWholeWord);
-				if (wlArgs[i+1][1] == 'c')
-					gf = static_cast<GrepFlags>(gf | grepMatchCase);
-				if (wlArgs[i+1][2] == 'd')
-					gf = static_cast<GrepFlags>(gf | grepDot);
-				if (wlArgs[i+1][3] == 'b')
-					gf = static_cast<GrepFlags>(gf | grepBinary);
-				char unquoted[1000];
-				strcpy(unquoted, GUI::UTF8FromString(wlArgs[i+3].c_str()).c_str());
-				UnSlash(unquoted);
-				InternalGrep(gf, FilePath::GetWorkingDirectory().AsInternal(), wlArgs[i+2].c_str(), unquoted);
-				exit(0);
 			} else {
-				if (AfterName(arg) == ':') {
-					if (StartsWith(arg, GUI_TEXT("open:")) || StartsWith(arg, GUI_TEXT("loadsession:"))) {
-						if (phase == 0)
-							return performPrint;
-						else
-							evaluate = true;
-					}
-					if (evaluate) {
-						const std::string sArg = GUI::UTF8FromString(arg);
-						std::vector<char> vcArg(sArg.size() + 1);
-						std::copy(sArg.begin(), sArg.end(), vcArg.begin());
-						PerformOne(&vcArg[0]);
-					}
-				} else {
-					if (evaluate) {
-						props.ReadLine(GUI::UTF8FromString(arg).c_str(), true, FilePath::GetWorkingDirectory());
-					}
+				if (evaluate) {
+					props.ReadLine(GUI::UTF8FromString(arg).c_str(), true, FilePath::GetWorkingDirectory());
 				}
 			}
 		} else {	// Not a switch: it is a file name
@@ -4829,19 +4711,6 @@ uptr_t SciTEBase::GetInstance() {
 
 void SciTEBase::ShutDown() {
 	QuitProgram();
-}
-
-void SciTEBase::Perform(const char *actionList) {
-	char *actionsDup = StringDup(actionList);
-	char *actions = actionsDup;
-	char *nextAct;
-	while ((nextAct = strchr(actions, '\n')) != NULL) {
-		*nextAct = '\0';
-		PerformOne(actions);
-		actions = nextAct + 1;
-	}
-	PerformOne(actions);
-	delete []actionsDup;
 }
 
 void SciTEBase::DoMenuCommand(int cmdID) {

@@ -27,7 +27,6 @@ public:
 	virtual void UnsetProperty(const char *key)=0;
 	virtual uptr_t GetInstance()=0;
 	virtual void ShutDown()=0;
-	virtual void Perform(const char *actions)=0;
 	virtual void DoMenuCommand(int cmdID)=0;
 	virtual void CheckMenus()=0; //!-add-[CheckMenus]
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
@@ -54,6 +53,12 @@ public:
 	virtual int Cloned(int index) = 0;
 	virtual int IndexOfClone(int index) = 0;
 	virtual int BufferByName(const char* c) = 0;
+	virtual void Open_script(const char* path) = 0;
+	virtual void ReloadProperties() = 0;
+	virtual void Close_script() = 0;
+	virtual void SavePositions() = 0;
+	virtual void BlockUpdate(int cmd) = 0;
+
 };
 
 /**

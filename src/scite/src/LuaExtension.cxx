@@ -265,26 +265,8 @@ static int cf_scite_send(lua_State *L) {
 	}
 }
 
-static int cf_scite_constname(lua_State *L) {
-	char constName[100] = "";
-	int message = luaL_checkint(L, 1);
-	if (IFaceTable::GetConstantName(message, constName, 100) > 0) {
-		lua_pushstring(L, constName);
-		return 1;
-	} else {
-		raise_error(L, "Argument does not match any Scintilla / SciTE constant");
-		return 0;
-	}
-}
-
 static int cf_scite_open(lua_State *L) {
-	const char *s = luaL_checkstring(L, 1);
-	if (s) {
-		SString cmd = "open:";
-		cmd += s;
-		cmd.substitute("\\", "\\\\");
-		host->Perform(cmd.c_str());
-	}
+	host->Open_script(luaL_checkstring(L, 1));
 	return 0;
 }
 
@@ -337,16 +319,6 @@ errr:
 	return 2;
 
 }
-
-//!-start-[Perform]
-static int cf_scite_perform(lua_State *L) {
-	const char *s = luaL_checkstring(L, 1);
-	if (s) {
-		host->Perform(s);
-	}
-	return 0;
-}
-//!-end-[Perform]
 
 //!-start-[LocalizationFromLua]
 static int cf_editor_get_translation(lua_State *L) {
@@ -402,26 +374,33 @@ static int cf_pane_get_codepage(lua_State *L) {
 }
 
 static int lua_string_from_utf8(lua_State *L) {
-	if(lua_gettop(L) != 2) raise_error(L, "Wrong arguments count for scite.ConvertFromUTF8");
-	const char *s = luaL_checkstring(L, 1);
 	int cp = 0;
-	if(!lua_isnumber(L, 2))
-		cp = GUI::CodePageFromName(lua_tostring(L, 2));
-	else
-		cp = lua_tointeger(L, 2);
+	if (lua_gettop(L) == 1)
+		cp = ::GetACP();
+	const char *s = luaL_checkstring(L, 1);
+
+	if (!cp) {
+		if (!lua_isnumber(L, 2))
+			cp = GUI::CodePageFromName(lua_tostring(L, 2));
+		else
+			cp = lua_tointeger(L, 2);
+	}
 	std::string ss = GUI::ConvertFromUTF8(s, cp);
 	lua_pushstring(L, ss.c_str());
 	return 1;
 }
 
 static int lua_string_to_utf8(lua_State *L) {
-	if(lua_gettop(L) != 2) raise_error(L, "Wrong arguments count for scite.ConvertToUTF8");
-	const char *s = luaL_checkstring(L, 1);
 	int cp = 0;
-	if(!lua_isnumber(L, 2))
-		cp = GUI::CodePageFromName(lua_tostring(L, 2));
-	else
-		cp = lua_tointeger(L, 2);
+	if (lua_gettop(L) == 1)
+		cp = ::GetACP();
+	const char *s = luaL_checkstring(L, 1);
+	if (!cp) {
+		if (!lua_isnumber(L, 2))
+			cp = GUI::CodePageFromName(lua_tostring(L, 2));
+		else
+			cp = lua_tointeger(L, 2);
+	}
 	std::string ss = GUI::ConvertToUTF8(s, cp);
 	lua_pushstring(L, ss.c_str());
 	return 1;
@@ -624,8 +603,29 @@ static int sf_SwitchMouseHook(lua_State* L){
 	return 1;
 }
 
-static int sf_RunInConcole(lua_State* L){
+static int sf_RunInConcole(lua_State* L) {
 	host->RunInConcole();
+	return 0;
+}
+
+static int sf_ReloadProperties(lua_State* L) {
+	host->ReloadProperties();
+	return 0;
+}
+
+static int sf_Close(lua_State* L) {
+	host->Close_script();
+	return 0;
+}
+
+static int sf_SavePosition(lua_State* L) {
+	host->SavePositions();
+	return 0;
+}
+
+static int sf_BlockUpdate(lua_State* L) {
+	int cmd = luaL_checkint(L, 1);
+	host->BlockUpdate(cmd);
 	return 0;
 }
 
@@ -1957,9 +1957,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcclosure(luaState, cf_scite_send, 1);
 	lua_setfield(luaState, -2, "SendFindRes");
 
-	lua_pushcfunction(luaState, cf_scite_constname);
-	lua_setfield(luaState, -2, "ConstantName");
-
 	lua_pushcfunction(luaState, cf_scite_open);
 	lua_setfield(luaState, -2, "Open");
 
@@ -1970,11 +1967,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_scite_check_menus);
 	lua_setfield(luaState, -2, "CheckMenus");
 	//!-end-[CheckMenus]
-
-//!-start-[Perform]
-	lua_pushcfunction(luaState, cf_scite_perform);
-	lua_setfield(luaState, -2, "Perform");
-//!-end-[Perform]
 
 //!-start-[ReloadStartupScript]
 	lua_pushcfunction(luaState, cf_editor_reload_startup_script);
@@ -2024,6 +2016,18 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_scite_save_encoding_file);
 	lua_setfield(luaState, -2, "SaveEncodingFile");
+
+	lua_pushcfunction(luaState, sf_ReloadProperties);
+	lua_setfield(luaState, -2, "ReloadProperties");
+
+	lua_pushcfunction(luaState, sf_Close);
+	lua_setfield(luaState, -2, "Close");
+
+	lua_pushcfunction(luaState, sf_SavePosition);
+	lua_setfield(luaState, -2, "SavePosition");
+
+	lua_pushcfunction(luaState, sf_BlockUpdate);
+	lua_setfield(luaState, -2, "BlockUpdate");
 
 	// buffers
 	lua_newtable(luaState);

@@ -109,8 +109,6 @@ void SciTEBase::SetFileName(FilePath openName, bool fixCase, bool setCaption) {
 		filePath.FixName();
 	}
 
-	ReadLocalPropFile();
-
 	props.Set("FilePath", filePath.AsUTF8().c_str());
 	props.Set("FileDir", filePath.Directory().AsUTF8().c_str());
 	props.Set("FileName", filePath.BaseName().AsUTF8().c_str());
@@ -751,8 +749,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 
 void SciTEBase::ReloadProperties() {
 	ReadGlobalPropFile();
-	ReadLocalPropFile();
-	ReadAbbrevPropFile();
+
 	ReadProperties();
 	SetWindowName();
 	//BuffersMenu();

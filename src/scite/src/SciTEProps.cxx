@@ -118,45 +118,6 @@ void SciTEBase::ReadGlobalPropFile() {
 	}
 }
 
-void SciTEBase::ReadAbbrevPropFile() {
-	propsAbbrev.Clear();
-	propsAbbrev.Read(pathAbbreviations, pathAbbreviations.Directory(), importFiles, importMax);
-}
-
-/**
-Reads the directory properties file depending on the variable
-"properties.directory.enable". Also sets the variable $(SciteDirectoryHome) to the path
-where this property file is found. If it is not found $(SciteDirectoryHome) will
-be set to $(FilePath).
-*/
-void SciTEBase::ReadDirectoryPropFile() {
-	propsDirectory.Clear();
-
-	if (props.GetInt("properties.directory.enable") != 0) {
-		FilePath propfile = GetDirectoryPropertiesFileName();
-		props.Set("SciteDirectoryHome", propfile.Directory().AsUTF8().c_str());
-
-		propsDirectory.Read(propfile, propfile.Directory());
-	}
-}
-
-/**
-Read local and directory properties file.
-*/
-void SciTEBase::ReadLocalPropFile() {
-	// The directory properties acts like a base local properties file.
-	// Therefore it must be read always before reading the local prop file.
-	ReadDirectoryPropFile();
-
-	FilePath propfile = GetLocalPropertiesFileName();
-
-	propsLocal.Clear();
-	propsLocal.Read(propfile, propfile.Directory());
-
-	props.Set("Chrome", "#C0C0C0");
-	props.Set("ChromeHighlight", "#FFFFFF");
-}
-
 int IntFromHexDigit(int ch) {
 	if ((ch >= '0') && (ch <= '9')) {
 		return ch - '0';
@@ -462,47 +423,6 @@ static int FileLength(const char *path) {
 	return len;
 }
 
-void SciTEBase::ReadAPI(const SString &fileNameForExtension) {
-	SString apisFileNames = props.GetNewExpand("api.",
-	                        fileNameForExtension.c_str());
-	size_t nameLength = apisFileNames.length();
-	if (nameLength) {
-		apisFileNames.substitute(';', '\0');
-		const char *apiFileName = apisFileNames.c_str();
-		const char *nameEnd = apiFileName + nameLength;
-
-		int tlen = 0;    // total api length
-
-		// Calculate total length
-		while (apiFileName < nameEnd) {
-			tlen += FileLength(apiFileName);
-			apiFileName += strlen(apiFileName) + 1;
-		}
-
-		// Load files
-		if (tlen > 0) {
-			char *buffer = apis.Allocate(tlen);
-			if (buffer) {
-				apiFileName = apisFileNames.c_str();
-				tlen = 0;
-				while (apiFileName < nameEnd) {
-					FILE *fp = fopen(apiFileName, "rb");
-					if (fp) {
-						fseek(fp, 0, SEEK_END);
-						int len = ftell(fp);
-						fseek(fp, 0, SEEK_SET);
-						size_t readBytes = fread(buffer + tlen, 1, len, fp);
-						tlen += readBytes;
-						fclose(fp);
-					}
-					apiFileName += strlen(apiFileName) + 1;
-				}
-				apis.SetFromAllocated();
-			}
-		}
-	}
-}
-
 SString SciTEBase::FindLanguageProperty(const char *pattern, const char *defaultValue) {
 	SString key = pattern;
 	key.substitute("*", language.c_str());
@@ -763,23 +683,8 @@ void SciTEBase::ReadProperties() {
 		ForwardPropertyToEditor(propertiesToForward[i]);
 	}
 
-	if (apisFileNames != props.GetNewExpand("api.",	fileNameForExtension.c_str())) {
-		apis.Clear();
-		ReadAPI(fileNameForExtension);
-		apisFileNames = props.GetNewExpand("api.", fileNameForExtension.c_str());
-	}
-
-	props.Set("APIPath", apisFileNames.c_str());
-
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
-	if (!fileAbbrev.IsSet())
-		fileAbbrev = GetAbbrevPropertiesFileName();
-	if (!pathAbbreviations.SameNameAs(fileAbbrev)) {
-		pathAbbreviations = fileAbbrev;
-		ReadAbbrevPropFile();
-	}
-
-	props.Set("AbbrevPath", pathAbbreviations.AsUTF8().c_str());
+	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
 
 	wEditor.Call(SCI_SETOVERTYPE, props.GetInt("change.overwrite.enable", 1) + 2); //-add-[ignore_overstrike_change]
 

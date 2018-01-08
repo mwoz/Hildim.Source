@@ -499,8 +499,6 @@ protected:
 	PropSetFile propsLocal;
 	PropSetFile props;
 
-	PropSetFile propsAbbrev;
-
 	PropSetFile propsSession;
 
 	FilePath pathAbbreviations;
@@ -521,21 +519,17 @@ protected:
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
-	void SetBufferEncoding(int i, int e) { 
-		buffers.buffers[i]._encoding = e;
-		if (buffers.Current() == i) wEditor.SetBuffEncoding(e);
-	};
+	void SetBufferEncoding(int i, int e);
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
 	int GetCurrentBufer(){ return buffers.Current(); };	
 	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
-	virtual int SecondEditorActive() {
-		for (int i = 0; i < buffers.length; i++) {
-			if (buffers.buffers[i].editorSide == IDM_COSRCWIN)
-				return true;
-		}
-		return false;
-	}
+	virtual int SecondEditorActive();
+	virtual void Open_script(const char* path);
+	virtual void SavePositions();
+	virtual void BlockUpdate(int cmd);
+	virtual void Close_script();
+		
 	virtual int Cloned(int index) {
 		return buffers.buffers[index].pFriend;
 	}
@@ -565,9 +559,6 @@ protected:
 	bool m_bRightEditorVisible = false;
 
 	void ReadGlobalPropFile();
-	void ReadAbbrevPropFile();
-	void ReadLocalPropFile();
-	void ReadDirectoryPropFile();
 
 	sptr_t CallFocused(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
@@ -795,7 +786,6 @@ protected:
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
 	void ForwardPropertyToEditor(const char *key);
 	void DefineMarker(int marker, int markerType, Colour fore, Colour back);
-	void ReadAPI(const SString &fileNameForExtension);
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
 	virtual void ReadProperties();
@@ -813,7 +803,6 @@ protected:
 	void MoveSplit(GUI::Point ptNewDrag, int movedSplitter);
 
 	void UIAvailable();
-	void PerformOne(char *action);
 	void StartRecordMacro();
 	void StopRecordMacro();
 
@@ -837,7 +826,7 @@ protected:
 	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);
 	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
-	void EnumProperties(const char *action);
+
 	void SendOneProperty(const char *kind, const char *key, const char *val);
 	void PropertyFromDirector(const char *arg);
 	void WideChrToMyltiBate(SString strIn, SString &strOut);//ѕерекодировка дл€ последующего вывода в консоль
@@ -854,7 +843,6 @@ protected:
 	void UnsetProperty(const char *key);
 	uptr_t GetInstance();
 	void ShutDown();
-	void Perform(const char *actions);
 	void DoMenuCommand(int cmdID);
 	virtual int ActiveEditor();
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]

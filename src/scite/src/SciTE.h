@@ -275,6 +275,9 @@
 #define IDBM_AROUND 105
 #define IDBM_UP 106
 #endif
+#define UPDATE_BLOCK 0
+#define UPDATE_FORCE 2
+#define UPDATE_UNBLOCK 1
 
 #define SCITE_TRAY 0x8000
 #define SCITE_DROP 0x8001
