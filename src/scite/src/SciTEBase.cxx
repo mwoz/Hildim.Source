@@ -2796,9 +2796,11 @@ void SciTEBase::CharAdded(char ch) {
 			} else if (calltipParametersEnd.contains(ch)) {
 				braceCount--;
 			} else if (!wordCharacters.contains(ch)) {
-				wEditor.Call(SCI_AUTOCCANCEL);
-				if (autoCompleteStartCharacters.contains(ch)) {
-					StartAutoComplete();
+				if (!props.GetInt("autocompleteword.automatic.blocked")) {
+					wEditor.Call(SCI_AUTOCCANCEL);
+					if (autoCompleteStartCharacters.contains(ch)) {
+						StartAutoComplete();
+					}
 				}
 			} else if (autoCCausedByOnlyOne) {
 //!				StartAutoCompleteWord(true);
