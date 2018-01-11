@@ -1427,8 +1427,23 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 void SciTEWin::EnsureVisible(){
 	if (cmdShow) {	// assume SW_MAXIMIZE only
-		::ShowWindow(MainHWND(), cmdShow);			 
-		cmdShow = 0;
+		if (cmdShow != SW_MAXIMIZE) {
+			RECT rcw;
+			MONITORINFO mi;
+			::GetWindowRect(MainHWND(), &rcw);
+			HMONITOR hMonitor = MonitorFromRect(&rcw, MONITOR_DEFAULTTONEAREST);
+			mi.cbSize = sizeof(mi);
+			GetMonitorInfo(hMonitor, &mi);
+			if (rcw.right < mi.rcMonitor.left || rcw.left > mi.rcMonitor.right || rcw.top < mi.rcMonitor.top || rcw.top > mi.rcMonitor.bottom) {
+				rcw.left = mi.rcMonitor.left + 20;
+				rcw.right = mi.rcMonitor.right - 20;
+				rcw.top = mi.rcMonitor.top + 20;
+				rcw.bottom = mi.rcMonitor.bottom - 20;
+				::MoveWindow(MainHWND(), rcw.left, rcw.top, rcw.right - rcw.left, rcw.bottom - rcw.top, false);
+			}
+		}
+		::ShowWindow(MainHWND(), cmdShow);	
+		cmdShow = 0;	
 		Redraw();	 
 	}
 }
