@@ -2026,6 +2026,10 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	if (props.GetInt("autocompleteword.automatic.blocked"))
 		return true;
 	SString line = GetLine();
+//	if (CurrentBuffer()->unicodeMode) {
+//		std::string enc = GUI::ConvertFromUTF8(line.c_str(), ::GetACP());
+//		line = enc.c_str();
+//	}
 	int current = GetCaretInLine();
 	autoCompleteIncremental = (props.GetInt("autocompleteword.incremental") == 1);
 
@@ -4182,7 +4186,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			FoldChanged(notification->line,
 			        notification->foldLevelNow, notification->foldLevelPrev, w);
 		}
-		if(0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
+		if(!bBlockTextChangeNotify && 0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
 			(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
 			extender->OnTextChanged(notification->position, notification->length, notification->text, notification->linesAdded, notification->modificationType);
 		}

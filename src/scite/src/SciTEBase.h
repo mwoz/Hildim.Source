@@ -594,6 +594,7 @@ protected:
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
 	bool bBlockUIUpdate = false;
 	bool bBlockRedraw = false;
+	bool bBlockTextChangeNotify = false;
 	bool Exists(const GUI::gui_char *dir, const GUI::gui_char *path, FilePath *resultPath);
 	void DiscoverEOLSetting();
 	void DiscoverIndentSetting();

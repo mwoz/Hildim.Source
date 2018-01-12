@@ -361,6 +361,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		wEditor.Call(SCI_ALLOCATE, fileSize + 1000);
 		SString languageOverride;
 		bool firstBlock = true;
+		bBlockTextChangeNotify = true;
 		while (lenFile > 0) {
 			lenFile = convert.convert(data, lenFile);
 			char *dataBlock = convert.getNewBuf();
@@ -371,6 +372,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 			wEditor.CallString(SCI_ADDTEXT, lenFile, dataBlock);
 			lenFile = fread(data, 1, sizeof(data), fp);
 		}
+		bBlockTextChangeNotify = false;
 		fclose(fp);
 		wEditor.Call(SCI_ENDUNDOACTION);
 		if (languageOverride.length()) {
