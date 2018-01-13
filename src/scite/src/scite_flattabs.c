@@ -377,6 +377,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 
 	char* bgcolor = iupAttribGetStr(ih, "BGCOLOR");
+	char* bgcolormovied = iupAttribGetStr(ih, "BGCOLORMOVIED");
 	char* forecolor = iupAttribGetStr(ih, "FORECOLOR");
 	char* highcolor = iupAttribGetStr(ih, "HIGHCOLOR");
 	char* tabs_bgcolor = iupAttribGet(ih, "TABSBACKCOLOR");
@@ -494,7 +495,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 		if (valuepos == pos) {
 			/* current tab is always drawn with these colors */
-			background_color = bgcolor;
+			background_color = ih->data->start? bgcolormovied :bgcolor;
 			foreground_color = forecolor;
 		} else {
 			/* other tabs are drawn with these colors */
@@ -840,7 +841,6 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 	int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
 	int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
 
-
 	if ((button == IUP_BUTTON1 || button == IUP_BUTTON2 || button == IUP_BUTTON3) && pressed) {
 		if (tab_found > ITABS_NONE) {
 			iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
@@ -961,7 +961,7 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 			}
 		}
 		if (pressed) {
-			ih->data->dragTab = tab_found;
+			ih->data->dragTab = iupAttribGetInt(ih, "VALUEPOS");
 			ih->data->xStart = x;
 			ih->data->yStart = y;
 			ih->data->start = 0;
@@ -1633,6 +1633,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttributeId(ic, "TABFONTSIZE", iFlatTabsGetTabFontSizeAttrib, iFlatTabsSetTabFontSizeAttrib, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
 	/* Visual for current TAB */
+	iupClassRegisterAttribute(ic, "BGCOLORMOVIED", iFlatTabsGetBgColorAttrib, iFlatTabsUpdateSetAttrib, IUPAF_SAMEASSYSTEM, "255 255 255", IUPAF_DEFAULT);   /* inherited */
 	iupClassRegisterAttribute(ic, "BGCOLOR", iFlatTabsGetBgColorAttrib, iFlatTabsUpdateSetAttrib, IUPAF_SAMEASSYSTEM, "255 255 255", IUPAF_DEFAULT);   /* inherited */
 	iupClassRegisterAttribute(ic, "FORECOLOR", NULL, iFlatTabsUpdateSetAttrib, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "HIGHCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);

@@ -380,7 +380,7 @@ protected:
 		virtual void SetCoBuffPointer(FilePath* pBuf);
 		virtual void SetBuffEncoding(int e);
 		FilePath GetCoBuffPointer();
-		void Switch();
+		void Switch(bool ignorebuff = false);
 		ScintillaWindowEditor coEditor;
 	private:
 		FilePath buffer_L;

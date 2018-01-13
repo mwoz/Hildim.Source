@@ -281,7 +281,7 @@ void SciTEBase::ChangeTabWnd(){
 	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
 	
 	wEditor.Switch();
-
+	bBlockRedraw = true;
 	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
 
@@ -292,10 +292,8 @@ void SciTEBase::ChangeTabWnd(){
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-
-	BuffersMenu();
 	if (iNext > -1){
-		wEditor.Switch();
+		wEditor.Switch(true);
 		SetDocumentAt(iNext);
 	}
 	else {
@@ -303,12 +301,17 @@ void SciTEBase::ChangeTabWnd(){
 		wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 		wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
 		wEditor.SetCoBuffPointer(NULL);
+			wEditor.Switch(true);
 		if (iPrevSide == IDM_SRCWIN) {
-			wEditor.Switch();
 			New();
 		}
 	}
+	bBlockRedraw = false;
+	int p = props.GetInt("tabctrl.alwayssavepos");
+	props.SetInteger("tabctrl.alwayssavepos", 1);
 	SetDocumentAt(iPrev);
+	props.SetInteger("tabctrl.alwayssavepos", p);
+	//BuffersMenu();
 }
 
 void SciTEBase::CloneTab(){
@@ -370,7 +373,7 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 }
 
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
-	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate && 
+	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate &&
 		(((!props.GetInt("tabctrl.alwayssavepos") && !(::GetAsyncKeyState(VK_SHIFT) & 0x8000))) || (props.GetInt("tabctrl.alwayssavepos") && (::GetAsyncKeyState(VK_SHIFT) & 0x8000)))  ){
 		int side = buffers.buffers[index].editorSide;
 		int realIndex = 0;
@@ -883,6 +886,7 @@ void SciTEBase::BuffersMenu() {
 	static char tabActBackColor[16];
 	static char tabActForeColor[16];
 	static char tabActForeROColor[16];
+	static char tabActForeMoviedColor[16];
 
 	bool utf8mode = !strcmp(IupGetGlobal("UTF8MODE"), "YES");
 
@@ -904,15 +908,17 @@ void SciTEBase::BuffersMenu() {
 		const char* ReadOnlyColor = GetPropClr("tabctrl.readonly.color", tabROColor, "120 120 120");
 		
 		const char* chtabActBackColor;
-		if(lstrcmpA(props.Get("tabctrl.active.bakcolor_tmp").c_str(), ""))
-			chtabActBackColor = GetPropClr("tabctrl.active.bakcolor_tmp", tabActBackColor, "250 250 250");
-		else
-			chtabActBackColor = GetPropClr("tabctrl.active.bakcolor", tabActBackColor, "250 250 250");
+
+		chtabActBackColor = GetPropClr("tabctrl.active.bakcolor", tabActBackColor, "250 250 250");
 
 		const char* chtabActForeColor = GetPropClr("tabctrl.active.forecolor", tabActForeColor, "0 0 250");
 		const char* chtabActForeROColor = GetPropClr("tabctrl.active.readonly.forecolor", tabActForeROColor, "120 120 250");
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLOR", chtabActBackColor);
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLOR", chtabActBackColor);
+		
+		const char* chtabActForeMoviedColor = GetPropClr("tabctrl.moved.color", tabActForeMoviedColor, "120 120 255");
+		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
+		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
 
 		for (pos = 0; pos < buffers.length; pos++) {

@@ -667,7 +667,7 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call( unsigned int msg, uptr_t wParam, 
 }
 //!-end-[OnSendEditor]
 
-void SciTEBase::ScintillaWindowSwitcher::Switch(){
+void SciTEBase::ScintillaWindowSwitcher::Switch(bool ignorebuff){
 	FilePath f = buffer_L;
 	if (GetWindowIdm() == IDM_SRCWIN){
 		SetID(pBase->wEditorR.GetID());
@@ -677,6 +677,8 @@ void SciTEBase::ScintillaWindowSwitcher::Switch(){
 		SetID(pBase->wEditorL.GetID());
 		coEditor.SetID(pBase->wEditorR.GetID());
 	}
+	if (ignorebuff)
+		return;
 	buffer_L = buffer_R;
 	buffer_R = f;
 }
