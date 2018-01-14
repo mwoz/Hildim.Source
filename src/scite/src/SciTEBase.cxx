@@ -2027,12 +2027,28 @@ bool SciTEBase::StartAutoComplete() {
 bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	if (props.GetInt("autocompleteword.automatic.blocked"))
 		return true;
-	SString line = GetLine();
-//	if (CurrentBuffer()->unicodeMode) {
-//		std::string enc = GUI::ConvertFromUTF8(line.c_str(), ::GetACP());
-//		line = enc.c_str();
-//	}
-	int current = GetCaretInLine();
+	int len;
+	// Get needed buffer size
+	int curr_position = wEditor.Call(SCI_GETCURRENTPOS);
+	int linestart = wEditor.Call(SCI_POSITIONFROMLINE, wEditor.Call(SCI_LINEFROMPOSITION, curr_position));
+	len = curr_position - linestart + 1;
+	char* text = new char[len];
+
+	Sci_TextRange tr;
+	tr.chrg.cpMin = linestart;
+	tr.chrg.cpMax = curr_position;
+	tr.lpstrText = text;
+
+	wEditor.SendPointer(SCI_GETTEXTRANGE, 0, &tr);
+
+	SString line = text;
+	delete[] text;
+
+	if (CurrentBuffer()->unicodeMode) {
+		std::string enc = GUI::ConvertFromUTF8(line.c_str(), ::GetACP());
+		line = enc.c_str();
+	}
+	int current = line.length();
 	autoCompleteIncremental = (props.GetInt("autocompleteword.incremental") == 1);
 
 	if (!current) wEditor.Call(SCI_AUTOCCANCEL); //!-add-[autocompleteword.incremental]
@@ -2043,6 +2059,7 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		startword--;
 		if (line[startword] < '0' || line[startword] > '9') {
 			allNumber = false;
+			break;
 		}
 	}
 	if (startword == current || allNumber) {
@@ -2051,6 +2068,11 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		return true;
 	}
 	SString root = line.substr(startword, current - startword);
+	SString rootU = root;
+	if (CurrentBuffer()->unicodeMode) {
+		std::string enc = GUI::ConvertToUTF8(root.c_str(), ::GetACP());
+		root = enc.c_str();
+	}
 	int doclen = LengthDocument();
 	Sci_TextToFind ft = {{0, 0}, 0, {0, 0}};
 	ft.lpstrText = const_cast<char*>(root.c_str());
@@ -2059,6 +2081,21 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	ft.chrgText.cpMin = 0;
 	ft.chrgText.cpMax = 0;
 	const int flags = SCFIND_WORDSTART | (autoCompleteIgnoreCase ? 0 : SCFIND_MATCHCASE);
+
+	SString templateEnd = "[^" + wordCharacters + "]";
+	if (CurrentBuffer()->unicodeMode) {
+		std::string enc = GUI::ConvertToUTF8(templateEnd.c_str(), ::GetACP());
+		templateEnd = enc.c_str();
+	}
+	Sci_TextToFind ftE = { { 0, 0 }, 0,{ 0, 0 } };
+	ftE.lpstrText = const_cast<char*>(templateEnd.c_str());
+	ftE.chrg.cpMin = 0;
+	ftE.chrg.cpMax = doclen;
+	ftE.chrgText.cpMin = 0;
+	ftE.chrgText.cpMax = 0;
+	const int flagsE = SCFIND_REGEXP | SCFIND_CXX11REGEX;
+
+
 	int posCurrentWord = wEditor.Call(SCI_GETCURRENTPOS) - root.length();
 	unsigned int minWordLength = 0;
 	unsigned int nwords = 0;
@@ -2068,17 +2105,20 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	SString wordsNear;
 	wordsNear.setsizegrowth(1000);
 	wordsNear.append("\n");
+	char buff[1001];
 
 	int posFind = wEditor.CallString(SCI_FINDTEXT, flags, reinterpret_cast<char *>(&ft));
 	TextReader acc(wEditor);
 	while (posFind >= 0 && posFind < doclen) {	// search all the document
-		int wordEnd = posFind + root.length();
-		if (posFind != posCurrentWord) {
-			while (wordCharacters.contains(acc.SafeGetCharAt(wordEnd)))
-				wordEnd++;
-			size_t wordLength = wordEnd - posFind;
-			if (wordLength > root.length()) {
-				SString word = GetRange(wEditor, posFind, wordEnd);
+		ftE.chrg.cpMin = ft.chrgText.cpMax;
+		int wordEnd = wEditor.CallString(SCI_FINDTEXT, flagsE, reinterpret_cast<char *>(&ftE));
+		
+		size_t wordLength = wordEnd - posFind;
+		if (wordLength > root.length()) {
+			SString word = GetRange(wEditor, posFind, wordEnd);
+			word.substitute("\n", "");
+			word.substitute("\r", "");
+			if (word.length() > root.length()) {
 				word.insert(0, "\n");
 				word.append("\n");
 				if (!wordsNear.contains(word.c_str())) {	// add a new entry
@@ -2096,6 +2136,7 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		ft.chrg.cpMin = wordEnd;
 		posFind = wEditor.CallString(SCI_FINDTEXT, flags, reinterpret_cast<char *>(&ft));
 	}
+
 	size_t length = wordsNear.length();
 	if ((length > 2) && (!onlyOneWord || (minWordLength > root.length()))) {
 		// Protect spaces by temporrily transforming to \001
@@ -2776,7 +2817,7 @@ void SciTEBase::AutomaticIndentation(char ch) {
 void SciTEBase::CharAdded(char ch) {
 	static int prevAutoCHooseSingle = 0;
 	if (recording)
-		return;
+		return;	
 	Sci_CharacterRange crange = GetSelection();
 	int selStart = crange.cpMin;
 	int selEnd = crange.cpMax;
@@ -4023,22 +4064,23 @@ void SciTEBase::Notify(SCNotification *notification) {
 //!-end-[autocompleteword.incremental]
 
 	case SCN_CHARADDED:
-		if (extender){
-			if (notification->ch > 255){
-			    wchar_t c = static_cast<wchar_t>(notification->ch);
-				char cc;
-				WideCharToMultiByte(CP_ACP, 0, &c, 1, &cc, 1, NULL, NULL);
-				handled = extender->OnChar(cc);
+		{
+			char cc = notification->ch;
+			if (extender) {
+				if (notification->ch > 255) {
+					wchar_t c = static_cast<wchar_t>(notification->ch);
+					WideCharToMultiByte(CP_ACP, 0, &c, 1, &cc, 1, NULL, NULL);
+					handled = extender->OnChar(cc);
+				} else {
+					handled = extender->OnChar(static_cast<char>(notification->ch));
+				}
 			}
-			else {
- 				handled = extender->OnChar(static_cast<char>(notification->ch));
-			}
-		}
-		if (!handled) {
-			if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
-				CharAdded(static_cast<char>(notification->ch));
-			} else if (notification->nmhdr.idFrom == IDM_RUNWIN){
-				CharAddedOutput(notification->ch);
+			if (!handled) {
+				if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
+					CharAdded(cc);
+				} else if (notification->nmhdr.idFrom == IDM_RUNWIN) {
+					CharAddedOutput(notification->ch);
+				}
 			}
 		}
 		break;
