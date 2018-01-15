@@ -847,7 +847,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 2.4.9\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 2.4.10\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -2057,9 +2057,8 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	bool allNumber = true;
 	while (startword > 0 && wordCharacters.contains(line[startword - 1])) {
 		startword--;
-		if (line[startword] < '0' || line[startword] > '9') {
+		if (allNumber && (line[startword] < '0' || line[startword] > '9')) {
 			allNumber = false;
-			break;
 		}
 	}
 	if (startword == current || allNumber) {
@@ -2118,7 +2117,7 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 			SString word = GetRange(wEditor, posFind, wordEnd);
 			word.substitute("\n", "");
 			word.substitute("\r", "");
-			if (word.length() > root.length()) {
+			if (word.length() > root.length() && !(posFind < curr_position && curr_position <= wordEnd)) {
 				word.insert(0, "\n");
 				word.append("\n");
 				if (!wordsNear.contains(word.c_str())) {	// add a new entry
@@ -4052,6 +4051,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 //!-start-[autocompleteword.incremental]
 	case SCN_AUTOCSELECTION:
+		autoCompleteIncremental = false;
+		extender->OnAutocSelection(notification->listCompletionMethod, notification->position);
+		break;
 	case SCN_AUTOCCANCELLED:
 		autoCompleteIncremental = false;
 		break;

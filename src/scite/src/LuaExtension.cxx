@@ -2995,6 +2995,10 @@ void LuaExtension::OnTextChanged(int position, int length, const char* text, int
 	CallNamedFunction("OnTextChanged", position, flag, linesAdded);
 }
 
+bool LuaExtension::OnAutocSelection(int method, int firstPos) {
+	return CallNamedFunction("OnAutocSelection", method, firstPos);
+}
+
 static int cf_editor_reload_startup_script(lua_State*) {
 
 	FilePath fpTest(GUI::StringFromUTF8(startupScript));
