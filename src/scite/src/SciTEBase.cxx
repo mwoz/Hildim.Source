@@ -2104,7 +2104,6 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	SString wordsNear;
 	wordsNear.setsizegrowth(1000);
 	wordsNear.append("\n");
-	char buff[1001];
 
 	int posFind = wEditor.CallString(SCI_FINDTEXT, flags, reinterpret_cast<char *>(&ft));
 	TextReader acc(wEditor);
@@ -3402,6 +3401,8 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_COMPLETEWORD:
 		autoCCausedByOnlyOne = false;
 		StartAutoCompleteWord(false);
+		if(!props.GetInt("autocompleteword.automatic.blocked") && wEditor.Call(SCI_AUTOCACTIVE))
+			props.SetInteger("autocomleted.from.menu", 1);
 		break;
 
 	case IDM_ABBREV:
@@ -4053,9 +4054,11 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_AUTOCSELECTION:
 		autoCompleteIncremental = false;
 		extender->OnAutocSelection(notification->listCompletionMethod, notification->position);
+		props.SetInteger("autocomleted.from.menu", 0);
 		break;
 	case SCN_AUTOCCANCELLED:
 		autoCompleteIncremental = false;
+		props.SetInteger("autocomleted.from.menu", 0);
 		break;
 	case SCN_AUTOCUPDATED:
 		if (autoCompleteIncremental)
