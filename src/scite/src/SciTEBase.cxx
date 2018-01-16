@@ -2110,7 +2110,8 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	while (posFind >= 0 && posFind < doclen) {	// search all the document
 		ftE.chrg.cpMin = ft.chrgText.cpMax;
 		int wordEnd = wEditor.CallString(SCI_FINDTEXT, flagsE, reinterpret_cast<char *>(&ftE));
-		
+		if (wordEnd < 0)
+			break;
 		size_t wordLength = wordEnd - posFind;
 		if (wordLength > root.length()) {
 			SString word = GetRange(wEditor, posFind, wordEnd);

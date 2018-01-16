@@ -696,6 +696,7 @@ void SciTEBase::EnsureFinalNewLine() {
  */
 bool SciTEBase::SaveBuffer(FilePath saveName) {
 	bool retVal = false;
+	bBlockTextChangeNotify = true;
 	// Perform clean ups on text before saving
 	SetFileProperties(props);	//!-add-[FileAttr in PROPS]
 	wEditor.Call(SCI_BEGINUNDOACTION);
@@ -746,6 +747,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 			extender->OnSave(saveName.AsUTF8().c_str());
 		}	
 	}
+	bBlockTextChangeNotify = false;
 	return retVal;
 }
 

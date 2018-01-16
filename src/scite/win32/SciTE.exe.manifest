@@ -25,15 +25,5 @@
         />
     </dependentAssembly>
 </dependency>
-<!-- Identify the application security requirements. -->
-<!-- level can be "asInvoker", "highestAvailable", or "requireAdministrator" -->
-   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-      <security>
-      <requestedPrivileges>
-        <requestedExecutionLevel
-          level="highestAvailable"
-          uiAccess="false"/>
-      </requestedPrivileges>
-    </security>
-   </trustInfo>
+
 </assembly>
