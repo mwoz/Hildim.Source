@@ -395,7 +395,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 	int fixedwidth = iupAttribGetInt(ih, "FIXEDWIDTH");
 	int pos, horiz_alignment, vert_alignment, tab_x = 0;
-	unsigned char line_r = 0, line_g = 0, line_b = 0;
+	long line_color = 0;
 	int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
 	int tab_highlighted = iupAttribGetInt(ih, "_IUPFTABS_HIGHLIGHTED");
 	int extra_width;
@@ -463,10 +463,10 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 	if (show_lines) {
 		char* title_line_color = iupAttribGetStr(ih, "TABSLINECOLOR");
-		iupStrToRGB(title_line_color, &line_r, &line_g, &line_b);
+		line_color = iupDrawStrToColor(title_line_color, line_color);
 
 		/* tab bottom horizontal and top children horizontal */
-		iupdrvDrawLine(dc, 0, title_height - 1, iWidth - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE);
+		iupdrvDrawLine(dc, 0, title_height - 1, iWidth - 1, title_height - 1, line_color, IUP_DRAW_STROKE, -1);
 	}
 
 	if (scroll_pos > 0) {
@@ -560,16 +560,18 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 		if (show_lines) {
 			if (valuepos == pos)//
 			{
-				iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab top horizontal */
-				iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab left vertical */
-				iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* tab right vertical */
+				iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, line_color, IUP_DRAW_STROKE, -1); /* tab top horizontal */
+				iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, line_color, IUP_DRAW_STROKE, -1); /* tab left vertical */
+				iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, line_color, IUP_DRAW_STROKE, -1); /* tab right vertical */
 			} else if (tab_backcolor) {
 				char * border_color = iupAttribGetId(ih, "_TABBORDERCOLOR", pos);
 				unsigned char c_r = 0, c_g = 0, c_b = 0;
 				iupStrToRGB(border_color, &c_r, &c_g, &c_b);
-				iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab top horizontal */
-				iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab left vertical */
-				iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, c_r, c_g, c_b, IUP_DRAW_STROKE); /* tab right vertical */
+				long border_linecolor = 0;
+				border_linecolor = iupDrawStrToColor(border_color, border_linecolor);
+				iupdrvDrawLine(dc, tab_x, 0, tab_x + tab_w - 1, 0, border_linecolor, IUP_DRAW_STROKE, -1); /* tab top horizontal */
+				iupdrvDrawLine(dc, tab_x, 0, tab_x, title_height - 1, border_linecolor, IUP_DRAW_STROKE, -1); /* tab left vertical */
+				iupdrvDrawLine(dc, tab_x + tab_w - 1, 0, tab_x + tab_w - 1, title_height - 1, border_linecolor, IUP_DRAW_STROKE, -1); /* tab right vertical */
 			}
 		}
 
@@ -667,7 +669,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			if (extra_press == extra_id) {
 				char* extra_presscolor = iupAttribGetId(ih, "EXTRAPRESSCOLOR", i);
 				if (!extra_presscolor)
-					extra_presscolor = iupAttribGetStr(ih, "CLOSEPRESSCOLOR");
+					extra_presscolor = iupAttribGetStr(ih, "CLOSEPRESSCOLOR"); 
 
 				iupFlatDrawBox(dc, extra_x + horiz_padding / 2, extra_x + extra_w - horiz_padding / 2, vert_padding / 2, title_height - 1 - vert_padding / 2, extra_presscolor, NULL, 1);
 			} else if (tab_highlighted == extra_id) {
@@ -691,9 +693,9 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 	/* lines around children */
 	if (show_lines) {
-		iupdrvDrawLine(dc, 0, title_height, 0, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* left children vertical */
-		iupdrvDrawLine(dc, iWidth - 1, title_height, iWidth - 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* right children vertical */
-		iupdrvDrawLine(dc, 0, ih->currentheight - 1, iWidth - 1, ih->currentheight - 1, line_r, line_g, line_b, IUP_DRAW_STROKE); /* bottom children horizontal */
+		iupdrvDrawLine(dc, 0, title_height, 0, ih->currentheight - 1, line_color, IUP_DRAW_STROKE, -1); /* left children vertical */
+		iupdrvDrawLine(dc, iWidth - 1, title_height, iWidth - 1, ih->currentheight - 1, line_color, IUP_DRAW_STROKE, -1); /* right children vertical */
+		iupdrvDrawLine(dc, 0, ih->currentheight - 1, iWidth - 1, ih->currentheight - 1, line_color, IUP_DRAW_STROKE, -1); /* bottom children horizontal */
 	}
 
 	iupdrvDrawFlush(dc);
