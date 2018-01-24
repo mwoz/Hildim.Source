@@ -1078,6 +1078,7 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
     IupSetStrf(colordlg_data->color_browser, "RASTERSIZE", "%dx", colordlg_data->color_browser->currentheight);
     IupSetAttribute(ih, "RASTERSIZE", NULL);
   }
+  IupSetAttribute(ih, "RESIZE", "NO");
 
   iColorDlgInit_Defaults(colordlg_data);
 
