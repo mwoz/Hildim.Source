@@ -4622,7 +4622,7 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 					props.ReadLine(GUI::UTF8FromString(arg).c_str(), true, FilePath::GetWorkingDirectory());
 				}
 			}
-		} else {	// Not a switch: it is a file name
+		} else if(phase != 2) {	// Not a switch: it is a file name
 			if (phase == 0)
 				return performPrint;
 			else
@@ -4647,6 +4647,14 @@ bool SciTEBase::ProcessCommandLine(GUI::gui_string &args, int phase) {
 		if (filePath.IsUntitled() && buffers.length == 1 && !buffers.buffers[0].isDirty) {
 			Open(GUI_TEXT(""));
 		}
+	} else if (phase == 2) {
+		const int len = ::WideCharToMultiByte(CP_ACP, 0, args.c_str(), static_cast<int>(args.length()), NULL, 0, 0, 0);
+		char *text = new char[len + 1];
+		::WideCharToMultiByte(CP_ACP, 0, args.c_str(), static_cast<int>(args.length()), text, len, 0, 0);
+		text[len] = '\0';
+		
+		props.Set("hildim.command.line", text);
+		delete text;
 	}
 	return performPrint;
 }

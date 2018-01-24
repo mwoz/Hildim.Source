@@ -1415,7 +1415,7 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// The filenames containing spaces must be enquoted.
 	// In case of not using buffers they get closed immediately except
 	// the last one, but they move to the MRU file list
-	ProcessCommandLine(args, 1);
+	ProcessCommandLine(args, 2);
 	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
 	hNextCBWnd = ::SetClipboardViewer(MainHWND());
 	//Redraw();
