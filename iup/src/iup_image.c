@@ -78,9 +78,9 @@ static void iDataResize(int src_width, int src_height, unsigned char *src_map, i
   free(T);
 }
 
-static void iupImageResize(Ihandle* ih, int width, int height)
+static void iImageResize(Ihandle* ih, int width, int height)
 {
-  unsigned char* imgdata = (unsigned char*)iupAttribGetStr(ih, "WID");
+  unsigned char* imgdata = (unsigned char*)iupAttribGet(ih, "WID");
   int channels = iupAttribGetInt(ih, "CHANNELS");
   int count = width*height*channels;
   unsigned char* new_imgdata = (unsigned char *)malloc(count);
@@ -201,7 +201,7 @@ static void iImageStockGet(const char* name, Ihandle* *ih, const char* *native_n
         if (istock->image->currentwidth != istock->image->currentheight)
           new_width = (new_height * istock->image->currentwidth) / istock->image->currentheight;
 
-        iupImageResize(istock->image, new_width, new_height);
+        iImageResize(istock->image, new_width, new_height);
       }
     }
   }
@@ -446,7 +446,7 @@ static Ihandle* iImageGetImageFromName(const char* name)
         int new_width = iupRound(scale*ih->currentwidth);
         int new_height = iupRound(scale*ih->currentheight);
 
-        iupImageResize(ih, new_width, new_height);
+        iImageResize(ih, new_width, new_height);
         iupAttribSet(ih, "SCALED", "1");
 
         if (hotspot)
@@ -714,7 +714,7 @@ static Ihandle* iImageGetHandleFromImage(void* handle)
         IupSetRGBId(ih, "", i, colors[i].r, colors[i].g, colors[i].b);
     }
 
-    imgdata = (unsigned char*)iupAttribGetStr(ih, "WID");
+    imgdata = (unsigned char*)iupAttribGet(ih, "WID");
     iupdrvImageGetData(handle, imgdata);
 
     iupdrvImageDestroy(handle, IUPIMAGE_IMAGE);
@@ -875,6 +875,46 @@ static void iImageClearCache(Ihandle* ih)
 
 /******************************************************************************/
 
+static int iImageSetClearCacheAttrib(Ihandle *ih, const char* value)
+{
+  iImageClearCache(ih);
+  (void)value;
+  return 0;
+}
+
+static int iImageSetReshapeAttrib(Ihandle *ih, const char* value)
+{
+  int w, h;
+  if (iupStrToIntInt(value, &w, &h, 'x') == 2)
+  {
+    int old_w = ih->currentwidth;
+    int old_h = ih->currentheight;
+
+    if (w*h > old_w*old_h)
+    {
+      /* must allocate more memory */
+      unsigned char* imgdata = (unsigned char*)iupAttribGet(ih, "WID");
+      imgdata = (unsigned char *)realloc(imgdata, sizeof(unsigned char)*w*h*3);
+      iupAttribSet(ih, "WID", (char*)imgdata);
+    }
+
+    ih->currentwidth = w;
+    ih->currentheight = h;
+  }
+  return 0;
+}
+
+static int iImageSetResizeAttrib(Ihandle *ih, const char* value)
+{
+  int w, h;
+  if (iupStrToIntInt(value, &w, &h, 'x') == 2)
+  {
+    int bpp = IupGetInt(ih, "BPP");
+    if (bpp > 8)
+      iImageResize(ih, w, h);
+  }
+  return 0;
+}
 
 static char* iImageGetWidthAttrib(Ihandle *ih)
 {
@@ -958,7 +998,7 @@ static void iImageDestroyMethod(Ihandle* ih)
 {
   char* stock_name;
 
-  unsigned char* imgdata = (unsigned char*)iupAttribGetStr(ih, "WID");
+  unsigned char* imgdata = (unsigned char*)iupAttribGet(ih, "WID");
   if (imgdata)
   {
     iupAttribSet(ih, "WID", NULL);
@@ -1031,6 +1071,10 @@ static Iclass* iImageNewClassBase(char* name)
 
   iupClassRegisterAttribute(ic, "HOTSPOT", NULL, NULL, "0:0", NULL, IUPAF_NO_INHERIT);
 
+  iupClassRegisterAttribute(ic, "CLEARCACHE", NULL, iImageSetClearCacheAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "RESHAPE", NULL, iImageSetReshapeAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "RESIZE", NULL, iImageSetResizeAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+
   return ic;
 }
 
@@ -1085,7 +1129,7 @@ static int SaveImageC(const char* file_name, Ihandle* ih, const char* name, FILE
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
 
-  data = (unsigned char*)IupGetAttribute(ih, "WID");
+  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (fprintf(file, "static Ihandle* load_image_%s(void)\n", name)<0)
   {
@@ -1160,7 +1204,7 @@ static int SaveImageC(const char* file_name, Ihandle* ih, const char* name, FILE
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
 
-  data = (unsigned char*)IupGetAttribute(ih, "WID");
+  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (fprintf(file, "static Ihandle* load_image_%s(void)\n", name)<0)
   {
@@ -1241,7 +1285,7 @@ static int SaveImageLua(const char* file_name, Ihandle* ih, const char* name, FI
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
 
-  data = (unsigned char*)IupGetAttribute(ih, "WID");
+  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (fprintf(file, "function load_image_%s()\n", name)<0)
   {
@@ -1331,7 +1375,7 @@ static int SaveImageLED(const char* file_name, Ihandle* ih, const char* name, FI
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
 
-  data = (unsigned char*)IupGetAttribute(ih, "WID");
+  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (channels == 1)
   {

@@ -750,6 +750,20 @@ static int iMatrixSetNumLinNoScrollAttrib(Ihandle* ih, const char* value)
   return 0;
 }
 
+static int iMatrixSetNoScrollAsTitleAttrib(Ihandle* ih, const char* value)
+{
+  if (iupStrBoolean(value))
+    ih->data->noscroll_as_title = 1;
+  else
+    ih->data->noscroll_as_title = 0;
+  return 0;
+}
+
+static char* iMatrixGetNoScrollAsTitleAttrib(Ihandle* ih)
+{
+  return iupStrReturnBoolean(ih->data->noscroll_as_title);
+}
+
 static char* iMatrixGetNumColNoScrollAttrib(Ihandle* ih)
 {
   return iupStrReturnInt(ih->data->columns.num_noscroll - 1);  /* the attribute does not include the title */
@@ -1689,13 +1703,13 @@ static int iMatrixFocus_CB(Ihandle* ih, int focus)
 
 static int iMatrixResize_CB(Ihandle* ih)
 {
-  int old_w = ih->data->old_w,
-    old_h = ih->data->old_h;
+  int old_w = ih->data->w,
+      old_h = ih->data->h;
 
   cdCanvasActivate(ih->data->cd_canvas);
-  cdCanvasGetSize(ih->data->cd_canvas, &(ih->data->old_w), &(ih->data->old_h), NULL, NULL);
+  cdCanvasGetSize(ih->data->cd_canvas, &(ih->data->w), &(ih->data->h), NULL, NULL);
 
-  if (old_w != ih->data->old_w || old_h != ih->data->old_h)
+  if (old_w != ih->data->w || old_h != ih->data->h)
   {
     ih->data->need_calcsize = 1;
 
@@ -1710,7 +1724,7 @@ static int iMatrixResize_CB(Ihandle* ih)
   if (ih->data->columns.num > 0 && ih->data->lines.num > 0)
   {
     IFnii cb = (IFnii)IupGetCallback(ih, "RESIZEMATRIX_CB");
-    if (cb) cb(ih, ih->data->old_w, ih->data->old_h);
+    if (cb) cb(ih, ih->data->w, ih->data->h);
   }
 
   return IUP_DEFAULT;
@@ -1771,6 +1785,7 @@ static int iMatrixCreateMethod(Ihandle* ih, void **params)
   ih->data->lines.num = 1;
   ih->data->columns.num_noscroll = 1;
   ih->data->lines.num_noscroll = 1;
+  ih->data->noscroll_as_title = 0;
   ih->data->need_calcsize = 1;
   ih->data->need_redraw = 1;
   ih->data->lines.first = 1;
@@ -1901,8 +1916,7 @@ static int iMatrixGetNaturalHeight(Ihandle* ih, int *full_height)
 
 int iupMatrixGetWidth(Ihandle* ih)
 {
-  int w;
-  cdCanvasGetSize(ih->data->cd_canvas, &w, NULL, NULL, NULL);
+  int w = ih->data->w;
 
   if (iupFlatScrollBarGet(ih) & IUP_SB_VERT && !iupAttribGetBoolean(ih, "YHIDDEN"))
   {
@@ -1918,8 +1932,7 @@ int iupMatrixGetWidth(Ihandle* ih)
 
 int iupMatrixGetHeight(Ihandle* ih)
 {
-  int h;
-  cdCanvasGetSize(ih->data->cd_canvas, NULL, &h, NULL, NULL);
+  int h = ih->data->h;
 
   if (iupFlatScrollBarGet(ih) & IUP_SB_HORIZ && !iupAttribGetBoolean(ih, "XHIDDEN"))
   {
@@ -2203,6 +2216,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttribute(ic, "NUMCOL", iMatrixGetNumColAttrib, iupMatrixSetNumColAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMLIN_NOSCROLL", iMatrixGetNumLinNoScrollAttrib, iMatrixSetNumLinNoScrollAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMCOL_NOSCROLL", iMatrixGetNumColNoScrollAttrib, iMatrixSetNumColNoScrollAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "NOSCROLLASTITLE", iMatrixGetNoScrollAsTitleAttrib, iMatrixSetNoScrollAsTitleAttrib, IUPAF_SAMEASSYSTEM, "NO", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMLIN_VISIBLE", iMatrixGetNumLinVisibleAttrib, NULL, IUPAF_SAMEASSYSTEM, "3", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMCOL_VISIBLE", iMatrixGetNumColVisibleAttrib, NULL, IUPAF_SAMEASSYSTEM, "4", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMLIN_VISIBLE_LAST", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

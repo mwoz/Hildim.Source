@@ -67,7 +67,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
   int make_inactive = 0;
 
-  iupdrvDrawParentBackground(dc, ih);
+  iupDrawParentBackground(dc, ih);
 
   if (!bgcolor)
     bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
@@ -154,7 +154,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
 
 
   if (ih->data->has_focus)
-    iupdrvDrawFocusRect(dc, border_width, border_width, ih->currentwidth - border_width, ih->currentheight - border_width);
+    iupdrvDrawFocusRect(dc, border_width, border_width, ih->currentwidth - 1 - border_width, ih->currentheight - 1 - border_width);
 
   iupdrvDrawFlush(dc);
 
@@ -247,7 +247,7 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       ih->data->pressed = pressed;
       iupdrvRedrawNow(ih);
 
-	  if (!pressed && (!iup_isbutton1(status) || (x >= 0 && y >= 0 && x <= ih->currentwidth && y <= ih->currentheight))) 
+      if (!pressed)
         iFlatButtonNotify(ih, 0);
     }
   }

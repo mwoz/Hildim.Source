@@ -363,7 +363,7 @@ static Ihandle* iLayoutTreeGetFirstChild(Ihandle* ih)
 {
   Ihandle* firstchild = ih->parent->firstchild;
 
-  while (firstchild && firstchild->flags & IUP_INTERNAL) //
+  while (firstchild && firstchild->flags & IUP_INTERNAL)
     firstchild = firstchild->brother;
 
   return firstchild;
@@ -409,7 +409,7 @@ static void iLayoutTreeAddChildren(Ihandle* tree, int parent_id, Ihandle* parent
 
   for (child = parent->firstchild; child; child = child->brother)
   {
-    if (!(child->flags & IUP_INTERNAL)) //
+    if (!(child->flags & IUP_INTERNAL))
     {
       last_child_id = iLayoutTreeAddNode(tree, last_child_id, child);
 
@@ -1064,8 +1064,8 @@ static int iLayoutMenuShowInternal_CB(Ihandle* ih)
     iupAttribSet(dlg, "SHOWINTERNAL", "No");
   else
     iupAttribSet(dlg, "SHOWINTERNAL", "Yes");
-  /* redraw canvas */
-  IupUpdate(IupGetBrother(layoutdlg->tree));
+  /* rebuild tree and redraw canvas */
+  iLayoutTreeRebuild(layoutdlg);
   return IUP_DEFAULT;
 }
 
@@ -1084,8 +1084,8 @@ static int iLayoutMenuUpdate_CB(Ihandle* ih)
 {
   Ihandle* dlg = IupGetDialog(ih);
   iLayoutDialog* layoutdlg = (iLayoutDialog*)iupAttribGet(dlg, "_IUP_LAYOUTDIALOG");
-  /* redraw canvas */
-  IupUpdate(IupGetBrother(layoutdlg->tree));
+  /* rebuild tree and redraw canvas */
+  iLayoutTreeRebuild(layoutdlg);
   return IUP_DEFAULT;
 }
 
@@ -1262,16 +1262,12 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
 {
   int x, y, w, h;
   char *bgcolor;
-  unsigned char r, g, b;
-  unsigned char br, bg, bb,
-    fr, fg, fb,
-    fmr, fmg, fmb,
-    fvr, fvg, fvb;
+  long color, fg, fg_void, bg, fg_max;
 
-  br = 255, bg = 255, bb = 255;  /* background color */
-  fr = 0, fg = 0, fb = 0;        /* foreground color */
-  fvr = 164, fvg = 164, fvb = 164;  /* foreground color for void elements */
-  fmr = 255, fmg = 0, fmb = 0;      /* foreground color for elements that are maximizing parent size */
+  bg = iupDrawColor(255, 255, 255, 255);  /* background color */
+  fg = iupDrawColor(0, 0, 0, 255);        /* foreground color */
+  fg_void = iupDrawColor(164, 164, 164, 255);  /* foreground color for void elements */
+  fg_max = iupDrawColor(255, 0, 0, 255);      /* foreground color for elements that are maximizing parent size */
 
   x = ih->x + native_parent_x;
   y = ih->y + native_parent_y;
@@ -1283,15 +1279,14 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
   bgcolor = IupGetAttribute(ih, "BGCOLOR");
   if (bgcolor && ih->iclass->nativetype != IUP_TYPEVOID)
   {
-    r = br, g = bg, b = bb;
-    iupStrToRGB(bgcolor, &r, &g, &b);
-    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, r, g, b, IUP_DRAW_FILL);
+    color = iupDrawStrToColor(bgcolor, bg);
+    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, color, IUP_DRAW_FILL, 1);
   }
 
   if (ih->iclass->nativetype == IUP_TYPEVOID)
-    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, fvr, fvg, fvb, IUP_DRAW_STROKE_DASH);
+    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, fg_void, IUP_DRAW_STROKE_DASH, 1);
   else
-    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, fr, fg, fb, IUP_DRAW_STROKE);
+    iupdrvDrawRectangle(dc, x, y, x + w - 1, y + h - 1, fg, IUP_DRAW_STROKE, 1);
 
   iupdrvDrawSetClipRect(dc, x, y, x + w - 1, y + h - 1);
 
@@ -1302,14 +1297,14 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
 
     if (ih->currentwidth == pw && ih->currentwidth == ih->naturalwidth)
     {
-      iupdrvDrawLine(dc, x + 1, y + 1, x + w - 2, y + 1, fmr, fmg, fmb, IUP_DRAW_STROKE);
-      iupdrvDrawLine(dc, x + 1, y + h - 2, x + w - 2, y + h - 2, fmr, fmg, fmb, IUP_DRAW_STROKE);
+      iupdrvDrawLine(dc, x + 1, y + 1, x + w - 2, y + 1, fg_max, IUP_DRAW_STROKE, 1);
+      iupdrvDrawLine(dc, x + 1, y + h - 2, x + w - 2, y + h - 2, fg_max, IUP_DRAW_STROKE, 1);
     }
 
     if (ih->currentheight == ph && ih->currentheight == ih->naturalheight)
     {
-      iupdrvDrawLine(dc, x + 1, y + 1, x + 1, y + h - 2, fmr, fmg, fmb, IUP_DRAW_STROKE);
-      iupdrvDrawLine(dc, x + w - 2, y + 1, x + w - 2, y + h - 2, fmr, fmg, fmb, IUP_DRAW_STROKE);
+      iupdrvDrawLine(dc, x + 1, y + 1, x + 1, y + h - 2, fg_max, IUP_DRAW_STROKE, 1);
+      iupdrvDrawLine(dc, x + w - 2, y + 1, x + w - 2, y + h - 2, fg_max, IUP_DRAW_STROKE, 1);
     }
   }
   else if (ih->iclass->nativetype != IUP_TYPEVOID)
@@ -1389,30 +1384,28 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
     {
       int len;
       iupStrNextLine(title, &len);  /* get the size of the first line */
-      r = fr, g = fg, b = fb;
-      iupStrToRGB(IupGetAttribute(ih, "FGCOLOR"), &r, &g, &b);
-      iupdrvDrawText(dc, title, len, x + 1, y + 1, w, h, r, g, b, IupGetAttribute(ih, "FONT"), IUP_ALIGN_ALEFT);
+      color = iupDrawStrToColor(IupGetAttribute(ih, "FGCOLOR"), fg);
+      iupdrvDrawText(dc, title, len, x + 1, y + 1, w, h, color, IupGetAttribute(ih, "FONT"), IUP_ALIGN_ALEFT);
     }
 
     if (ih->iclass->childtype == IUP_CHILDNONE &&
         !title && !image)
     {
-      if (IupClassMatch(ih, "progressbar"))
+      if (IupClassMatch(ih, "progressbar") || IupClassMatch(ih, "gauge"))
       {
         double min = IupGetDouble(ih, "MIN");
         double max = IupGetDouble(ih, "MAX");
         double val = IupGetDouble(ih, "VALUE");
-        r = fr, g = fg, b = fb;
-        iupStrToRGB(IupGetAttribute(ih, "FGCOLOR"), &r, &g, &b);
+        color = iupDrawStrToColor(IupGetAttribute(ih, "FGCOLOR"), fg);
         if (iupStrEqualNoCase(IupGetAttribute(ih, "ORIENTATION"), "VERTICAL"))
         {
           int ph = (int)(((max - val)*(h - 5)) / (max - min));
-          iupdrvDrawRectangle(dc, x + 2, y + 2, x + w - 3, y + ph, r, g, b, IUP_DRAW_FILL);
+          iupdrvDrawRectangle(dc, x + 2, y + 2, x + w - 3, y + ph, color, IUP_DRAW_FILL, 1);
         }
         else
         {
           int pw = (int)(((val - min)*(w - 5)) / (max - min));
-          iupdrvDrawRectangle(dc, x + 2, y + 2, x + pw, y + h - 3, r, g, b, IUP_DRAW_FILL);
+          iupdrvDrawRectangle(dc, x + 2, y + 2, x + pw, y + h - 3, color, IUP_DRAW_FILL, 1);
         }
       }
       else if (IupClassMatch(ih, "val"))
@@ -1420,17 +1413,16 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
         double min = IupGetDouble(ih, "MIN");
         double max = IupGetDouble(ih, "MAX");
         double val = IupGetDouble(ih, "VALUE");
-        r = fr, g = fg, b = fb;
-        iupStrToRGB(IupGetAttribute(ih, "FGCOLOR"), &r, &g, &b);
+        color = iupDrawStrToColor(IupGetAttribute(ih, "FGCOLOR"), fg);
         if (iupStrEqualNoCase(IupGetAttribute(ih, "ORIENTATION"), "VERTICAL"))
         {
           int ph = (int)(((max - val)*(h - 5)) / (max - min));
-          iupdrvDrawRectangle(dc, x + 2, y + ph - 1, x + w - 3, y + ph + 1, r, g, b, IUP_DRAW_FILL);
+          iupdrvDrawRectangle(dc, x + 2, y + ph - 1, x + w - 3, y + ph + 1, color, IUP_DRAW_FILL, 1);
         }
         else
         {
           int pw = (int)(((val - min)*(w - 5)) / (max - min));
-          iupdrvDrawRectangle(dc, x + pw - 1, y + 2, x + pw + 1, y + h - 3, r, g, b, IUP_DRAW_FILL);
+          iupdrvDrawRectangle(dc, x + pw - 1, y + 2, x + pw + 1, y + h - 3, color, IUP_DRAW_FILL, 1);
         }
       }
     }
@@ -1488,7 +1480,7 @@ static void iLayoutDrawElementTree(IdrawCanvas* dc, int showhidden, int dlgvisib
         native_parent_y += ih->y + dy;
 
         /* if ih is a Tabs, then draw only the active child */
-        if (IupClassMatch(ih, "tabs"))
+        if (IupClassMatch(ih, "tabs") || IupClassMatch(ih, "flattabs"))
         {
           child = (Ihandle*)IupGetAttribute(ih, "VALUE_HANDLE");
           if (child)
@@ -1512,11 +1504,11 @@ static void iLayoutDrawDialog(iLayoutDialog* layoutdlg, int showhidden, int show
   int w, h;
 
   iupdrvDrawGetSize(dc, &w, &h);
-  iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, 255, 255, 255, IUP_DRAW_FILL);
+  iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, iupDrawColor(255, 255, 255, 255), IUP_DRAW_FILL, 1);
 
   /* draw the dialog */
   IupGetIntInt(layoutdlg->dialog, "CLIENTSIZE", &w, &h);
-  iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, 0, 0, 0, IUP_DRAW_STROKE);
+  iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, iupDrawColor(0, 0, 0, 255), IUP_DRAW_STROKE, 1);
 
   if (layoutdlg->dialog->firstchild)
   {
@@ -1870,9 +1862,9 @@ static int iLayoutPropertiesList1_CB(Ihandle *list1, char *name, int item, int s
       IupSetAttribute(setbut, "ACTIVE", "Yes");
       IupSetAttribute(txt1, "READONLY", "No");
 
-      if (strstr(name, "COLOR") != NULL)
+      if (strstr(name, "COLOR") != NULL) /* if COLOR in attribute name, show the color selection button */
       {
-        IupStoreAttribute(colorbut, "BGCOLOR", value);
+        IupStoreAttribute(colorbut, "BGCOLOR", value);  /* set it even if it is NULL */
         IupSetAttribute(colorbut, "VISIBLE", "Yes");
       }
       else
@@ -2652,7 +2644,7 @@ static Ihandle* iLayoutGetElementByPos(Ihandle* ih, int native_parent_x, int nat
           native_parent_y += ih->y + dy;
 
           /* if ih is a Tabs, then find only the active child */
-          if (IupClassMatch(ih, "tabs"))
+          if (IupClassMatch(ih, "tabs") || IupClassMatch(ih, "flattabs"))
           {
             child = (Ihandle*)IupGetAttribute(ih, "VALUE_HANDLE");
             if (child)
@@ -3023,8 +3015,8 @@ Ihandle* IupLayoutDialog(Ihandle* dialog)
     IupSubmenu("&Layout", IupMenu(
     IupSetCallbacks(IupSetAttributes(IupItem("&Hierarchy", NULL), "AUTOTOGGLE=YES, VALUE=ON"), "ACTION", iLayoutMenuHierarchy_CB, NULL),
     IupSeparator(),
-    IupSetCallbacks(IupItem("Update\tF5", NULL), "ACTION", iLayoutMenuUpdate_CB, NULL),
-    IupSetCallbacks(IupSetAttributes(IupItem("Auto Update", NULL), "AUTOTOGGLE=YES, VALUE=OFF"), "ACTION", iLayoutMenuAutoUpdate_CB, NULL),
+    IupSetCallbacks(IupItem("Update (Tree and Draw)\tF5", NULL), "ACTION", iLayoutMenuUpdate_CB, NULL),
+    IupSetCallbacks(IupSetAttributes(IupItem("Auto Update (Draw Only)", NULL), "AUTOTOGGLE=YES, VALUE=OFF"), "ACTION", iLayoutMenuAutoUpdate_CB, NULL),
     IupSetCallbacks(IupSetAttributes(IupItem("Show Hidden", NULL), "AUTOTOGGLE=YES, VALUE=OFF"), "ACTION", iLayoutMenuShowHidden_CB, NULL),
     IupSetCallbacks(IupSetAttributes(IupItem("Show Internal", NULL), "AUTOTOGGLE=YES, VALUE=OFF"), "ACTION", iLayoutMenuShowInternal_CB, NULL),
     IupSeparator(),

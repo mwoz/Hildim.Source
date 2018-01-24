@@ -148,4 +148,8 @@ void iupRegisterInternalClasses(void)
   iupRegisterClass(iupFlatFrameNewClass());
   iupRegisterClass(iupFlatTabsNewClass());
   iupRegisterClass(iupFlatScrollBoxNewClass());
+  iupRegisterClass(iupDialNewClass());
+  iupRegisterClass(iupGaugeNewClass());
+  iupRegisterClass(iupColorbarNewClass());
+  iupRegisterClass(iupColorBrowserNewClass());
 }

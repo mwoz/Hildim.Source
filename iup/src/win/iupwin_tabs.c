@@ -1230,6 +1230,8 @@ static void winTabsDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
   COLORREF fgcolor;
   COLORREF bgcolor;
 
+  /* called only when SHOWCLOSE=Yes */
+
   /* If there are no tab items, skip this message */
   if (drawitem->itemID == -1)
     return;
@@ -1391,8 +1393,18 @@ static int winTabsMapMethod(Ihandle* ih)
   if (ih->firstchild)
   {
     Ihandle* child;
+    Ihandle* current_child = (Ihandle*)iupAttribGet(ih, "_IUPTABS_VALUE_HANDLE");
+
     for (child = ih->firstchild; child; child = child->brother)
       winTabsChildAddedMethod(ih, child);
+
+    if (current_child)
+    {
+      IupSetAttribute(ih, "VALUE_HANDLE", (char*)current_child);
+
+      /* current value is now given by the native system */
+      iupAttribSet(ih, "_IUPTABS_VALUE_HANDLE", NULL);
+    }
   }
 
   return IUP_NOERROR;

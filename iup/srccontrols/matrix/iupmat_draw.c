@@ -155,6 +155,8 @@ static void iMatrixDrawSetCellClipping(Ihandle* ih, int x1, int x2, int y1, int 
     if (x2 > ih->data->clip_x2) x2 = ih->data->clip_x2;
     if (y1 < ih->data->clip_y1) y1 = ih->data->clip_y1;
     if (y2 > ih->data->clip_y2) y2 = ih->data->clip_y2;
+    if (x1 > x2) x2 = x1;
+    if (y1 > y2) y2 = y1;
     cdCanvasClipArea(ih->data->cd_canvas, x1, x2, y1, y2);
     cdCanvasClip(ih->data->cd_canvas, CD_CLIPAREA);
   }
@@ -170,23 +172,23 @@ static void iMatrixDrawResetCellClipping(Ihandle* ih)
 static int iMatrixDrawCallDrawCB(Ihandle* ih, int lin, int col, int x1, int x2, int y1, int y2, IFniiiiiiC draw_cb)
 {
   int ret;
-  //cdCanvas* old_cnv;
+  cdCanvas* old_cnv;
 
   iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
 
-  //old_cnv = cdActiveCanvas();
-  //if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-  //  cdActivate(ih->data->cd_canvas);
+  old_cnv = cdActiveCanvas();
+  if (old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+    cdActivate(ih->data->cd_canvas);
 
   ret = draw_cb(ih, lin, col, x1, x2, iupMATRIX_INVERTYAXIS(ih, y1), iupMATRIX_INVERTYAXIS(ih, y2), ih->data->cd_canvas);
 
   iMatrixDrawResetCellClipping(ih);
 
-  //if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
-  //{
-  //  cdActivate(old_cnv);
-  //  cdCanvasActivate(ih->data->cd_canvas);
-  //}
+  if (old_cnv && old_cnv != ih->data->cd_canvas) /* backward compatibility code */
+  {
+    cdActivate(old_cnv);
+    cdCanvasActivate(ih->data->cd_canvas);
+  }
 
   if (ret == IUP_DEFAULT)
     return 0;
@@ -527,7 +529,11 @@ static void iMatrixDrawText(Ihandle* ih, int x1, int x2, int y1, int y2, int col
     iMatrixDrawSetCellClipping(ih, x1, x2 - crop, y1, y2);
   }
   else
+  {
+    if (lin == 3 && col == 2)
+      lin = lin;
     iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
+  }
 
   IupCdSetFont(ih, ih->data->cd_canvas, iupMatrixGetFont(ih, lin, col));
 
@@ -825,7 +831,7 @@ static void iMatrixDrawFocus(Ihandle* ih)
 /**************************************************************************/
 
 /* Color attenuation factor in a marked cell, 20% darker */
-#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*9)/10))
+#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*8)/10))
 
 void iupMatrixAddMarkedAttenuation(Ihandle* ih, unsigned char *r, unsigned char *g, unsigned char *b)
 {
@@ -1166,7 +1172,7 @@ void iupMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2)
   int x1, y1, x2, y2, old_x2, old_y1, old_y2, toggle_centered;
   int col_alignment, lin, col, active, first_col, first_lin;
   int i, adjust_merged_col = 0, adjust_merged_lin = 0;
-  long framecolor, emptyarea_color = -1;
+  long framecolor, framehighlight, emptyarea_color = -1;
   IFnii mark_cb;
   IFnii dropcheck_cb;
   IFniiiiiiC draw_cb;
@@ -1294,6 +1300,7 @@ void iupMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2)
   /***** Draw the cell values and frame */
   old_y1 = y1;
   framecolor = cdIupConvertColor(iupAttribGetStr(ih, "FRAMECOLOR"));
+  framehighlight = iupAttribGetInt(ih, "FRAMETITLEHIGHLIGHT");
   active = iupdrvIsActive(ih);
 
   mark_cb = (IFnii)IupGetCallback(ih, "MARK_CB");
@@ -1355,30 +1362,38 @@ void iupMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2)
       /* If the cell is marked, then draw it with attenuation color */
       marked = iupMatrixGetMark(ih, lin, col, mark_cb);
 
-      iMatrixDrawBackground(ih, x1, x2, y1, y2, marked, active, lin, col);
-
-      iMatrixDrawFrameRectCell(ih, lin, col, x1, x2, y1, y2, framecolor);
-
-      if (dropcheck_cb)
+      if (ih->data->noscroll_as_title && lin < ih->data->lines.num_noscroll || col < ih->data->columns.num_noscroll)
       {
-        int ret = dropcheck_cb(ih, lin, col);
-        if (ret == IUP_DEFAULT)
-        {
-          iMatrixDrawDropdownButton(ih, x2, y1, y2, lin, col, marked, active);
+        iMatrixDrawBackground(ih, x1, x2, y1, y2, marked, active, lin, 0);
+        iMatrixDrawFrameRectTitle(ih, lin, col, x1, x2, y1, y2, framecolor, framehighlight);
+      }
+      else
+      {
+        iMatrixDrawBackground(ih, x1, x2, y1, y2, marked, active, lin, col);
 
-          drop = IMAT_PADDING_W / 2 + IMAT_FEEDBACK_SIZE + IMAT_PADDING_W / 2;
-        }
-        else if (ret == IUP_CONTINUE)
-        {
-          iMatrixDrawToggle(ih, x1, x2, y1, y2, lin, col, marked, active, toggle_centered);
+        iMatrixDrawFrameRectCell(ih, lin, col, x1, x2, y1, y2, framecolor);
 
-          if (toggle_centered)
+        if (dropcheck_cb)
+        {
+          int ret = dropcheck_cb(ih, lin, col);
+          if (ret == IUP_DEFAULT)
           {
-            y1 = last_y2;
-            continue; /* do not draw the cell contents */
-          }
+            iMatrixDrawDropdownButton(ih, x2, y1, y2, lin, col, marked, active);
 
-          drop = IMAT_PADDING_W / 2 + IMAT_FEEDBACK_SIZE + IMAT_PADDING_W / 2;
+            drop = IMAT_PADDING_W / 2 + IMAT_FEEDBACK_SIZE + IMAT_PADDING_W / 2;
+          }
+          else if (ret == IUP_CONTINUE)
+          {
+            iMatrixDrawToggle(ih, x1, x2, y1, y2, lin, col, marked, active, toggle_centered);
+
+            if (toggle_centered)
+            {
+              y1 = last_y2;
+              continue; /* do not draw the cell contents */
+            }
+
+            drop = IMAT_PADDING_W / 2 + IMAT_FEEDBACK_SIZE + IMAT_PADDING_W / 2;
+          }
         }
       }
 

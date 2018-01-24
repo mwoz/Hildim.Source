@@ -33,7 +33,16 @@ static void iScrollBoxUpdateChildPos(Ihandle *ih)
   {
     ih->iclass->SetChildrenPosition(ih, 0, 0);
 
-    iupLayoutUpdate(ih->firstchild);
+    if (ih->firstchild->handle)
+    {
+      Icallback cb;
+
+      iupLayoutUpdate(ih->firstchild);
+
+      cb = IupGetCallback(ih, "LAYOUTUPDATE_CB");
+      if (cb)
+        cb(ih);
+    }
   }
 }
 
@@ -101,10 +110,16 @@ static int iScrollBoxGetChildPosition(Ihandle* ih, Ihandle* child, int *posx, in
 {
   while (child->parent && child != ih)
   {
+    int off_x, off_y;
+
     *posx += child->x;
     *posy += child->y;
 
     child = iupChildTreeGetNativeParent(child);
+
+    IupGetIntInt(child, "CLIENTOFFSET", &off_x, &off_y);
+    *posx += off_x;
+    *posy += off_y;
   }
 
   if (!child->parent)
@@ -118,7 +133,8 @@ static int iScrollBoxSetScrollToChildHandleAttrib(Ihandle* ih, const char* value
   Ihandle* child = (Ihandle*)value;
   if (iupObjectCheck(child))
   {
-    int posx = 0, posy = 0;
+    int posx = iupAttribGetInt(ih, "POSX");
+    int posy = iupAttribGetInt(ih, "POSY");
     if (iScrollBoxGetChildPosition(ih, child, &posx, &posy))
       iScrollBoxSetPos(ih, posx, posy);
   }
@@ -379,6 +395,8 @@ Iclass* iupScrollBoxNewClass(void)
   ic->ComputeNaturalSize = iScrollBoxComputeNaturalSizeMethod;
   ic->SetChildrenCurrentSize = iScrollBoxSetChildrenCurrentSizeMethod;
   ic->SetChildrenPosition = iScrollBoxSetChildrenPositionMethod;
+
+  iupClassRegisterCallback(ic, "LAYOUTUPDATE_CB", "");
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "EXPAND", iScrollBoxGetExpandAttrib, iScrollBoxSetExpandAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

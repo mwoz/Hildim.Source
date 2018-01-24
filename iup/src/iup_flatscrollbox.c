@@ -61,6 +61,20 @@ static void iFlatScrollBoxUpdateChildPos(Ihandle *ih, Ihandle* child)
   iupBaseSetPosition(child, x, y);
 }
 
+static void iFlatScrollBoxUpdateLayout(Ihandle *ih, Ihandle *child)
+{
+  if (child->handle)
+  {
+    Icallback cb;
+
+    iupLayoutUpdate(child);
+
+    cb = IupGetCallback(ih, "LAYOUTUPDATE_CB");
+    if (cb)
+      cb(ih);
+  }
+}
+
 static int iFlatScrollBoxScroll_CB(Ihandle *ih, int op, float posx, float posy)
 {
   Ihandle* child = iFlatScrollBoxGetChild(ih);
@@ -73,7 +87,7 @@ static int iFlatScrollBoxScroll_CB(Ihandle *ih, int op, float posx, float posy)
   {
     iFlatScrollBoxUpdateChildPos(ih, child);
 
-    iupLayoutUpdate(child);
+    iFlatScrollBoxUpdateLayout(ih, child);
   }
 
   (void)posx;
@@ -90,7 +104,7 @@ static int iFlatScrollBoxFlatScroll_CB(Ihandle *ih)
   {
     iFlatScrollBoxUpdateChildPos(ih, child);
 
-    iupLayoutUpdate(child);
+    iFlatScrollBoxUpdateLayout(ih, child);
   }
 
   return IUP_DEFAULT;
@@ -152,10 +166,16 @@ static int iFlatScrollBoxGetChildPosition(Ihandle* ih, Ihandle* child, int *posx
 {
   while (child->parent && child != ih)
   {
+    int off_x, off_y;
+
     *posx += child->x;
     *posy += child->y;
 
     child = iupChildTreeGetNativeParent(child);
+
+    IupGetIntInt(child, "CLIENTOFFSET", &off_x, &off_y);
+    *posx += off_x;
+    *posy += off_y;
   }
 
   if (!child->parent)
@@ -169,7 +189,8 @@ static int iFlatScrollBoxSetScrollToChildHandleAttrib(Ihandle* ih, const char* v
   Ihandle* child = (Ihandle*)value;
   if (iupObjectCheck(child))
   {
-    int posx = 0, posy = 0;
+    int posx = iupAttribGetInt(ih, "POSX");
+    int posy = iupAttribGetInt(ih, "POSY");
     if (iFlatScrollBoxGetChildPosition(ih, child, &posx, &posy))
       iupFlatScrollBarSetPos(ih, posx, posy);
   }
@@ -416,6 +437,8 @@ Iclass* iupFlatScrollBoxNewClass(void)
   ic->ComputeNaturalSize = iFlatScrollBoxComputeNaturalSizeMethod;
   ic->SetChildrenCurrentSize = iFlatScrollBoxSetChildrenCurrentSizeMethod;
   ic->SetChildrenPosition = iFlatScrollBoxSetChildrenPositionMethod;
+
+  iupClassRegisterCallback(ic, "LAYOUTUPDATE_CB", "");
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "EXPAND", iFlatScrollBoxGetExpandAttrib, iFlatScrollBoxSetExpandAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

@@ -168,7 +168,7 @@ static void iFlatTabsGetIconSize(Ihandle* ih, int pos, int *w, int *h) {
 			int spacing = iupAttribGetInt(ih, "TABSIMAGESPACING");
 			int text_w, text_h;
 
-			iupFlatGetTextSize(ih, title, &text_w, &text_h);
+			iupDrawGetTextSize(ih, title, &text_w, &text_h);
 
 			if (img_position == IUP_IMGPOS_RIGHT ||
 				img_position == IUP_IMGPOS_LEFT) {
@@ -180,7 +180,7 @@ static void iFlatTabsGetIconSize(Ihandle* ih, int pos, int *w, int *h) {
 			}
 		}
 	} else if (title)
-		iupFlatGetTextSize(ih, title, w, h);
+		iupDrawGetTextSize(ih, title, w, h);
 }
 
 static void iFlatTabsSetTabFont(Ihandle* ih, int pos) {
@@ -261,7 +261,7 @@ static int iFlatTabsGetExtraWidthId(Ihandle* ih, int i, int img_position, int ho
 			int spacing = iupAttribGetInt(ih, "TABSIMAGESPACING");
 			int text_w, text_h;
 
-			iupFlatGetTextSize(ih, title, &text_w, &text_h);
+			iupDrawGetTextSize(ih, title, &text_w, &text_h);
 
 			if (img_position == IUP_IMGPOS_RIGHT ||
 				img_position == IUP_IMGPOS_LEFT)
@@ -270,7 +270,7 @@ static int iFlatTabsGetExtraWidthId(Ihandle* ih, int i, int img_position, int ho
 				w = iupMAX(w, text_w);
 		}
 	} else if (title)
-		iupFlatGetTextSize(ih, title, &w, NULL);
+		iupDrawGetTextSize(ih, title, &w, NULL);
 
 	w += 2 * horiz_padding;
 
@@ -1532,7 +1532,7 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params) {
 	int vert_padding, horiz_padding;
 	iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
 
-	iupFlatGetTextSize(ih, "AaBbCc", &w, &h);
+	iupDrawGetTextSize(ih, "AaBbCc", &w, &h);
 	char msz[10];
 	msz[0] = 'x';
 	h += 6;

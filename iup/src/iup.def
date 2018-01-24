@@ -255,6 +255,10 @@ IupFlatTabsV
 IupMessageV
 IupGetParamV
 IupParamBoxV
+IupDial
+IupGauge
+IupColorbar
+IupColorBrowser
 
 iupdrvSetVisible
 iupdrvSetFontAttrib
@@ -558,7 +562,6 @@ iupdrvDrawCreateCanvas
 iupdrvDrawKillCanvas
 iupdrvDrawFlush
 iupdrvDrawGetSize
-iupdrvDrawParentBackground
 iupdrvDrawRectangle
 iupdrvDrawLine
 iupdrvDrawArc
@@ -570,6 +573,17 @@ iupdrvDrawUpdateSize
 iupdrvDrawImage
 iupdrvDrawSelectRect
 iupdrvDrawFocusRect
+iupDrawParentBackground
+iupDrawStrToColor
+iupDrawColor
+iupDrawCalcShadows
+iupDrawSetColor
+iupDrawRaiseRect
+iupDrawVertSunkenMark
+iupDrawHorizSunkenMark
+iupDrawSunkenRect
+iupDrawGetTextSize
+iupDrawColorMakeInactive
 iupGetFontInfo
 iupRadioFindToggleParent
 iupLayoutApplyMinMaxSize
