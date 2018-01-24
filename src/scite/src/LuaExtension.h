@@ -65,4 +65,5 @@ public:
 	virtual void OnRightEditorVisibility(bool show);
 	virtual void OnTextChanged(int position, int length, const char* text, int linesAdded, int flag);
 	virtual bool OnAutocSelection(int method, int firstPos);
+	virtual void OnCommandLine(const char* line);
 };

@@ -93,8 +93,9 @@ LRESULT UniqueInstance::CopyData(COPYDATASTRUCT *pcds) {
 		const char *text = static_cast<char *>(pcds->lpData);
 		if (text && strlen(text) > 0) {
 			GUI::gui_string args = stw->ProcessArgs(GUI::StringFromUTF8(text).c_str());
-			stw->ProcessCommandLine(args, 0);
-			stw->ProcessCommandLine(args, 1);
+			//stw->ProcessCommandLine(args, 1);
+			//stw->ProcessCommandLine(args, 0);
+			stw->extender->OnCommandLine(GUI::UTF8FromString(args).c_str());
 		}
 		::FlashWindow(stw->MainHWND(), FALSE);
 	}
@@ -192,21 +193,21 @@ void UniqueInstance::SendCommands(const char *cmdLine) {
 	// (Restoring the cwd could be done,
 	// but keeping it to the last file opened can also
 	// be useful)
-	char cwdCmd[MAX_PATH + 7]; // 7 for "-cwd:" and 2x'"'
-	strcpy(cwdCmd, "\"-cwd:");
-	FilePath cwd = FilePath::GetWorkingDirectory();
-	strncpy(cwdCmd + strlen(cwdCmd), cwd.AsUTF8().c_str(), MAX_PATH);
-	strcat(cwdCmd, "\"");
-	// Defeat the "\" mangling - convert "\" to "/"
-	for (char *temp = cwdCmd; *temp; temp++) {
-		if (*temp == '\\') {
-			*temp = '/';
-		}
-	}
-	cds.cbData = static_cast<DWORD>(strlen(cwdCmd) + 1);
-	cds.lpData = static_cast<void *>(cwdCmd);
-	::SendMessage(hOtherWindow, WM_COPYDATA, 0,
-	              reinterpret_cast<LPARAM>(&cds));
+	//char cwdCmd[MAX_PATH + 7]; // 7 for "-cwd:" and 2x'"'
+	//strcpy(cwdCmd, "\"-cwd:");
+	//FilePath cwd = FilePath::GetWorkingDirectory();
+	//strncpy(cwdCmd + strlen(cwdCmd), cwd.AsUTF8().c_str(), MAX_PATH);
+	//strcat(cwdCmd, "\"");
+	//// Defeat the "\" mangling - convert "\" to "/"
+	//for (char *temp = cwdCmd; *temp; temp++) {
+	//	if (*temp == '\\') {
+	//		*temp = '/';
+	//	}
+	//}
+	//cds.cbData = static_cast<DWORD>(strlen(cwdCmd) + 1);
+	//cds.lpData = static_cast<void *>(cwdCmd);
+	//::SendMessage(hOtherWindow, WM_COPYDATA, 0,
+	//              reinterpret_cast<LPARAM>(&cds));
 	// Now the command line itself.
 	cds.cbData = static_cast<DWORD>(strlen(cmdLine) + 1);
 	cds.lpData = static_cast<void *>(const_cast<char *>(cmdLine));

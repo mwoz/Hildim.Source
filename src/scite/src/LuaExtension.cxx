@@ -2999,6 +2999,10 @@ bool LuaExtension::OnAutocSelection(int method, int firstPos) {
 	return CallNamedFunction("OnAutocSelection", method, firstPos);
 }
 
+void LuaExtension::OnCommandLine(const char* line) {
+	CallNamedFunction("OnCommandLine", line);
+}
+
 static int cf_editor_reload_startup_script(lua_State*) {
 
 	FilePath fpTest(GUI::StringFromUTF8(startupScript));

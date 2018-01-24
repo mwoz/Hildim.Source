@@ -130,6 +130,7 @@ public:
 	virtual void OnRightEditorVisibility(bool) {}
 	virtual void OnTextChanged(int position, int length, const char* text, int linesAdded, int flag) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
+	virtual void OnCommandLine(const char* line) { };
 };
 
 #endif

@@ -809,7 +809,6 @@ protected:
 
 	bool RecordMacroCommand(SCNotification *notification);
 
-	bool ProcessCommandLine(GUI::gui_string &args, int phase);
 	virtual bool IsStdinBlocked();
 	void OpenFromStdin(bool UseOutputPane);
 	void OpenFilesFromStdin();

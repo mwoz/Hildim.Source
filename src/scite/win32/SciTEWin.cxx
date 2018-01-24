@@ -1370,11 +1370,11 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// we still get a last chance to force checking or to open a separate instance;
 	// Check if the user just want to print the file(s).
 	// Don't process files yet.
-	bool bBatchProcessing = ProcessCommandLine(args, 0);
+	//bool bBatchProcessing = ProcessCommandLine(args, 0);
 #ifndef _DEBUG
 	// No need to check for other instances when doing a batch job:
 	// perform some tasks and exit immediately.
-	if (!bBatchProcessing && props.GetInt("check.if.already.open") != 0) {
+	if (props.GetInt("check.if.already.open") != 0) {
 		uniqueInstance.CheckOtherInstance();
 		
 		//При нажатом CTRL всегда разрешаем открывать новый инстанс - иногда открывается и при нажаотм почему-то - отменили...&& !::GetAsyncKeyState(VK_CONTROL)
@@ -1394,15 +1394,15 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// not flash on the taskbar or on the display.
 	CreateUI();
 
-	if (bBatchProcessing) {
-		// Reprocess the command line and read the files
-		ProcessCommandLine(args, 1);
-		Print(false);	// Don't ask user for print parameters
-		// Done, we exit the program
-		::PostQuitMessage(0);
-		wSciTE.Destroy();
-		return;
-	}
+	//if (bBatchProcessing) {
+	//	// Reprocess the command line and read the files
+	//	ProcessCommandLine(args, 1);
+	//	Print(false);	// Don't ask user for print parameters
+	//	// Done, we exit the program
+	//	::PostQuitMessage(0);
+	//	wSciTE.Destroy();
+	//	return;
+	//}
 
 
 	// OK, the instance will be displayed
@@ -1415,7 +1415,8 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// The filenames containing spaces must be enquoted.
 	// In case of not using buffers they get closed immediately except
 	// the last one, but they move to the MRU file list
-	ProcessCommandLine(args, 2);
+	//ProcessCommandLine(args, 2);
+	props.Set("hildim.command.line", GUI::UTF8FromString(args).c_str());
 	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
 	hNextCBWnd = ::SetClipboardViewer(MainHWND());
 	//Redraw();
