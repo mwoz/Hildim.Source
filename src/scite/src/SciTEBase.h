@@ -170,9 +170,9 @@ public:
 class BufferList: public BufferListAPI {
 protected:
 	int current;
-	int stackcurrent;
 	int *stack;
 public:
+	int stackcurrent;
 	Buffer *buffers;
 	EditSwitcher * pEditor;
 	int size;

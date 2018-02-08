@@ -91,8 +91,8 @@ IDC_DRAGDROP            CURSOR                  "DragDrop.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,0,0
- PRODUCTVERSION 2,5,0,0
+ FILEVERSION 2,5,1,0
+ PRODUCTVERSION 2,5,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -109,12 +109,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "mwoz"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "2.5.0"
+            VALUE "FileVersion", "2.5.1"
             VALUE "InternalName", "HildiM"
             VALUE "LegalCopyright", "Copyright 2016-2017 Michel Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "2.5.0"
+            VALUE "ProductVersion", "2.5.1"
         END
     END
     BLOCK "VarFileInfo"

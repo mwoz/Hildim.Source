@@ -263,23 +263,23 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	if (indexTo <= current && current < indexFrom) current++;
 }
 
-void SciTEBase::ChangeTabWnd(){
+void SciTEBase::ChangeTabWnd() {
 	if (buffers.CurrentBuffer()->pFriend)
 		return;
-
+	int origStackCur = buffers.stackcurrent;
 	Buffer* bPrev = buffers.CurrentBuffer();
 	int iPrev = buffers.Current();
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
 	sptr_t d = bPrev->doc;
 
-	int iNext = buffers.NextByIdm(buffers.CurrentBuffer()->editorSide);
+	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
-	
+
 	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
-	
+
 	wEditor.Switch();
 	bBlockRedraw = true;
 	SetFileName((FilePath)(*bPrev));
@@ -292,9 +292,12 @@ void SciTEBase::ChangeTabWnd(){
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	if (iNext > -1){
+	if (iNext > -1) {
 		wEditor.Switch(true);
 		SetDocumentAt(iNext);
+		bBlockRedraw = false;
+		BuffersMenu();
+		bBlockRedraw = true;
 	}
 	else {
 		sptr_t d = wEditor.coEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
@@ -311,7 +314,7 @@ void SciTEBase::ChangeTabWnd(){
 	props.SetInteger("tabctrl.alwayssavepos", 1);
 	SetDocumentAt(iPrev);
 	props.SetInteger("tabctrl.alwayssavepos", p);
-	//BuffersMenu();
+	buffers.stackcurrent = origStackCur;
 }
 
 void SciTEBase::CloneTab(){
