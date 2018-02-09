@@ -85,12 +85,19 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
+	static char minSz[10];
+	::ZeroMemory((void*)minSz, sizeof(char) * 10);
+	minSz[0] = '0';
+	minSz[1] = 'x';
+	lstrcatA(minSz, fntSize);
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
 		"EXPAND", "YES",
 		"TABSPADDING", "10x3",
 		"EXTRABUTTONS", "1",
+		"MAXSIZE", "65535x65535",
+		"MINSIZE", minSz,
 		"FORECOLOR", "",
 		NULL);
 	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
@@ -98,6 +105,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"EXPAND", "HORIZONTAL",
 		"TABSPADDING", "10x3",
 		"EXTRABUTTONS", "1",
+		"MAXSIZE", "65535x65535",
+		"MINSIZE", minSz,
 		"FORECOLOR", "",
 		NULL);
 
@@ -109,7 +118,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"NAME", "RightTabExpander",
 			"BARSIZE", "0",
 			"EXPAND", "HORIZONTAL",
-			"MINSIZE", "x8",
+			"MINSIZE", minSz,
 			"STATE", "CLOSE",
 			NULL),
 		NULL),
@@ -119,6 +128,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"BARSIZE", "0",
 		"LAYOUTDRAG", "NO",
 		"VALUE", "1000",
+		"MINSIZE", minSz,
 		"HISTORIZED", "NO",
 		NULL);
 
@@ -341,6 +351,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	containers[0] = IupSetAtt(NULL, IupCreatep("dialog",
 		containers[1],
 		NULL),
+		"NAME", "LAYOUT",
 		"CONTROL", "YES",
 		"MINSIZE", "200x200",
 		"SIZE", "200x200",
@@ -382,7 +393,9 @@ void IupLayoutWnd::CreateLayout(lua_State *L, SciTEWin *pS){
 }
 
 HWND IupLayoutWnd::GetChildHWND(const char* name){
-	return (HWND)IupGetAttribute(IupGetDialogChild(hMain, name), "HWND");
+	if(name)
+		return (HWND)IupGetAttribute(IupGetDialogChild(hMain, name), "HWND");
+	return (HWND)IupGetAttribute(IupGetDialogChild(hMain, "LAYOUT"), "HWND");
 }
 
 

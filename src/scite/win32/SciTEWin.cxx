@@ -1781,7 +1781,10 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if (!wParam){
 				menuSource = 0;
 				::EndMenu();
-				if (!wParam) extender->OnMouseHook(-70000, -70000);
+				POINT cp;
+				::GetCursorPos(&cp);
+				::MapWindowPoints(HWND_DESKTOP, layout.GetChildHWND(NULL), &cp, 1);
+				if (!wParam && cp.y > 0) extender->OnMouseHook(-70000, -70000);
 			}
 			break;
 
@@ -2345,8 +2348,8 @@ LRESULT SciTEWin::NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
-	
-	if (wParam == WM_MOUSEMOVE){	 
+
+	if (wParam == WM_MOUSEMOVE){
 		LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
 		RECT area;
 		SystemParametersInfoA(SPI_GETWORKAREA, 0, &area, 0);
@@ -2356,4 +2359,5 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 		extender->OnMouseHook(-70000, lParam);
 	}
 }
+
 
