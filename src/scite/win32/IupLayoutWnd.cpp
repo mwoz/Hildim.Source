@@ -102,12 +102,6 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		NULL);
 
 	pTab = IupSetAtt(NULL, IupCreatep("split",
-		//IupSetAtt(NULL, IupCreatep("hbox",
-		//	pLeftTab,
-		//	NULL),
-		//	"EXPAND", "YES",
-		//	"EXPANDCHILDREN", "YES",
-		//	NULL),
 		pLeftTab,
 		IupSetAtt(NULL, IupCreatep("expander",
 			pRightTab,
@@ -115,7 +109,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			"NAME", "RightTabExpander",
 			"BARSIZE", "0",
 			"EXPAND", "HORIZONTAL",
-			"MINSIZE", "x0",
+			"MINSIZE", "x8",
 			"STATE", "CLOSE",
 			NULL),
 		NULL),
