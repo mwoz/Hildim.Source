@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <vector>
 #include <map>
+#include <algorithm>
+#include <iterator>
 #include <memory>
 
 #include "Platform.h"
@@ -21,13 +23,13 @@ using namespace Scintilla;
 
 static const char *NextField(const char *s) {
 	// In case there are leading spaces in the string
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	while (*s && *s != ' ') {
 		s++;
 	}
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	return s;
@@ -87,7 +89,7 @@ void XPM::Init(const char *const *linesForm) {
 	if (!linesForm)
 		return;
 
-	std::fill(colourCodeTable, colourCodeTable+256, 0);
+	std::fill(colourCodeTable, std::end(colourCodeTable), 0);
 	const char *line0 = linesForm[0];
 	width = atoi(line0);
 	line0 = NextField(line0);

@@ -24,7 +24,7 @@ public:
  */
 class LineVector {
 
-	Partitioning starts;
+	Partitioning<int> starts;
 	PerLine *perLine;
 
 public:
@@ -99,7 +99,7 @@ public:
 	const char *AppendAction(actionType at, Sci::Position position, const char *data, Sci::Position lengthData, bool &startSequence, bool mayCoalesce=true);
 
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void DropUndoSequence();
 	void DeleteUndoHistory();
 
@@ -133,6 +133,7 @@ public:
  */
 class CellBuffer {
 private:
+	bool hasStyles;
 	SplitVector<char> substance;
 	SplitVector<char> style;
 	bool readOnly;
@@ -151,7 +152,7 @@ private:
 
 public:
 
-	CellBuffer();
+	CellBuffer(bool hasStyles_);
 	// Deleted so CellBuffer objects can not be copied.
 	CellBuffer(const CellBuffer &) = delete;
 	void operator=(const CellBuffer &) = delete;
@@ -202,7 +203,7 @@ public:
 	bool SetUndoCollection(bool collectUndo);
 	bool IsCollectingUndo() const;
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory();
 
