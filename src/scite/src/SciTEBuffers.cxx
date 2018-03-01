@@ -194,13 +194,15 @@ void BufferList::PopStack() {
 		stack[i] = index;
 	}
 }
-int BufferList::StackNextBySide(int side){
+int BufferList::StackNextBySide(int side, int curr){
 	int stmp = stackcurrent;
+	int res;
 	for (int i = 0; i < length; i++) {
 		if (++stackcurrent >= length)
 			stackcurrent = 0;
-		if(buffers->editorSide == side)
-			return stack[stackcurrent];
+		res = stack[stackcurrent];
+		if(buffers[res].editorSide == side && curr != res)
+			return res;
 	}
 	stackcurrent = stmp;
 	return - 1;
@@ -272,7 +274,7 @@ void SciTEBase::ChangeTabWnd() {
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
 	sptr_t d = bPrev->doc;
 
-	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide);
+	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);

@@ -189,7 +189,7 @@ public:
 	Buffer *CurrentBuffer();
 	void SetCurrent(int index);
 	int StackNext();
-	int StackNextBySide(int side);
+	int StackNextBySide(int side, int curr);
 	int StackPrev();
 	void CommitStackSelection();
 	void MoveToStackTop(int index);
