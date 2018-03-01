@@ -121,7 +121,7 @@
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;./$(Configuration)/lua.lib;$(SolutionDir)\iup\cdlib\cd.lib;$(SolutionDir)\iup\cdlib\freetype6.lib;$(SolutionDir)\iup\cdlib\cdlua53.lib;$(SolutionDir)\iup\cdlib\cdcontextplus.lib;$(SolutionDir)\iup\cdlib\zlib1.lib;$(SolutionDir)\iup\lib\Release\Lua53\iupluacontrols53.lib;$(SolutionDir)\iup\lib\Release\Lua53\iuplua53.lib;$(SolutionDir)\iup\lib\Release\iup.lib;$(SolutionDir)\iup\lib\Release\iupcontrols.lib;$(SolutionDir)\iup\lib\Release\iupcore.lib;$(SolutionDir)\iup\lib\Release\Lua53\iupluacd53.lib;$(SolutionDir)\iup\lib\Release\iupcd.lib;$(SolutionDir)\iup\lib\Release\iupweb.lib;$(SolutionDir)\iup\lib\Release\Lua53\iupluaweb53.lib;$(SolutionDir)\iup\lib\Release\Lua53\iupluaole53.lib;$(SolutionDir)\iup\lib\Release\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
-      <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
