@@ -396,7 +396,7 @@ static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordL
 							sNext[k + 1] = '\0';
 						}
 						_strlwr_s(sNext, 200);
-						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0)){//не фолдим начало транзакции
+						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0) || (strcmp(sNext, "function") == 0)){//не фолдим начало транзакции
 							levelCurrent++;	   //if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK))
 						}
 

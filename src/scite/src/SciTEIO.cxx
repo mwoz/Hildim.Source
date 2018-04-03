@@ -708,6 +708,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 		wEditor.Call(SCI_CONVERTEOLS, wEditor.Call(SCI_GETEOLMODE));
 
 	wEditor.Call(SCI_ENDUNDOACTION);
+	bool bNotSaved = buffers.CurrentBuffer()->DocumentNotSaved();
 
 	if (extender)
 		retVal = extender->OnBeforeSave(saveName.AsUTF8().c_str());
@@ -719,28 +720,37 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 				    static_cast<int>(CurrentBuffer()->unicodeMode)));
 		}
 
-		FILE *fp = saveName.Open(fileWrite);
-		if (fp) {
-			convert.setfile(fp);
-			convert._encoding = saveName._encoding;
-			char data[blockSize + 1];
-			int lengthDoc = LengthDocument();
-			retVal = true;
-			int grabSize;
-			for (int i = 0; i < lengthDoc; i += grabSize) {
-				grabSize = lengthDoc - i;
-				if (grabSize > blockSize)
-					grabSize = blockSize;
-				// Round down so only whole characters retrieved.
-				grabSize = wEditor.Call(SCI_POSITIONBEFORE, i + grabSize + 1) - i;
-				GetRange(wEditor, i, i + grabSize, data);
-				size_t written = convert.fwrite(data, grabSize);
-				if (written == 0) {
-					retVal = false;
-					break;
+		if (bNotSaved) {
+			FILE *fp = saveName.Open(fileWrite);
+			if (fp) {
+				convert.setfile(fp);
+				convert._encoding = saveName._encoding;
+				char data[blockSize + 1];
+				int lengthDoc = LengthDocument();
+				retVal = true;
+				int grabSize;
+				for (int i = 0; i < lengthDoc; i += grabSize) {
+					grabSize = lengthDoc - i;
+					if (grabSize > blockSize)
+						grabSize = blockSize;
+					// Round down so only whole characters retrieved.
+					grabSize = wEditor.Call(SCI_POSITIONBEFORE, i + grabSize + 1) - i;
+					GetRange(wEditor, i, i + grabSize, data);
+					size_t written = convert.fwrite(data, grabSize);
+					if (written == 0) {
+						retVal = false;
+						break;
+					}
 				}
+				convert.fclose();
 			}
-			convert.fclose();
+		} else {
+			retVal = true; //Не смогли сохранить несохраненный - наплюем
+			std::string cmd = "print(([[";
+			//cmd += "File ";
+			cmd += saveName.AsUTF8();
+			cmd += "]]):from_utf8(1251)..' is not changed')";
+			extender->DoLua(cmd.c_str());
 		}
 
 		if (retVal && extender) {

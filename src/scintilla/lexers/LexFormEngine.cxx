@@ -689,6 +689,12 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 						if(IsASpace(sc.ch)){
 							sc.ChangeState(SCE_FM_PREPROCESSOR);
 							sc.SetState(SCE_FM_VB_DEFAULT);
+						} else if (sc.ch == '-') {
+							sc.Forward();
+							while(IsAWordChar(sc.ch))
+								sc.Forward();
+								sc.ChangeState(SCE_FM_PREPROCESSOR);
+								sc.SetState(SCE_FM_VB_DEFAULT);
 						}
 					}
 				}
