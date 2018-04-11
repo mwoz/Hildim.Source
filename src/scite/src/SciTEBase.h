@@ -619,13 +619,13 @@ protected:
 	int SaveIfUnsure(bool forceQuestion = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
-	bool Save();
+	bool Save(bool bNotSaveNotChanged = false);
 	void SaveAs(const GUI::gui_char *file, bool fixCase);
 	virtual void SaveACopy() = 0;
 	void SaveToHTML(FilePath saveName);
 	void StripTrailingSpaces();
 	void EnsureFinalNewLine();
-	bool SaveBuffer(FilePath saveName);
+	bool SaveBuffer(FilePath saveName, bool bNotSaveNotChanged = false);
 	virtual void SaveAsHTML() = 0;
 	void SaveToRTF(FilePath saveName, int start = 0, int end = -1);
 	virtual void SaveAsRTF() = 0;

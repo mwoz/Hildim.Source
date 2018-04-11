@@ -694,7 +694,7 @@ void SciTEBase::EnsureFinalNewLine() {
 /**
  * Writes the buffer to the given filename.
  */
-bool SciTEBase::SaveBuffer(FilePath saveName) {
+bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 	bool retVal = false;
 	bBlockTextChangeNotify = true;
 	// Perform clean ups on text before saving
@@ -720,7 +720,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName) {
 				    static_cast<int>(CurrentBuffer()->unicodeMode)));
 		}
 
-		if (bNotSaved) {
+		if (bNotSaved || !bNotSaveNotChanged) {
 			FILE *fp = saveName.Open(fileWrite);
 			if (fp) {
 				convert.setfile(fp);
@@ -771,7 +771,7 @@ void SciTEBase::ReloadProperties() {
 }
 
 // Returns false if cancelled or failed to save
-bool SciTEBase::Save() {
+bool SciTEBase::Save(bool bNotSaveNotChanged) {
 	if (!filePath.IsUntitled()) {
 		GUI::gui_string msg;
 		int decision;
@@ -791,7 +791,7 @@ bool SciTEBase::Save() {
 			}
 		}
 
-		if (SaveBuffer(filePath)) {
+		if (SaveBuffer(filePath, bNotSaveNotChanged)) {
 			CurrentBuffer()->SetTimeFromFile();
 			wEditor.Call(SCI_SETSAVEPOINT);
 			if (IsPropertiesFile(filePath)) {
