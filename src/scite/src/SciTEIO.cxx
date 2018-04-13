@@ -530,6 +530,13 @@ void SciTEBase::CheckReload() {
 		if(fp.substr(0, 2) == "\\\\")
 			return;
 		time_t newModTime = filePath.ModifiedTime();
+		DWORD attr = ::GetFileAttributesW(filePath.AsInternal());
+		bool isRO = (attr & FILE_ATTRIBUTE_READONLY) || (attr & FILE_ATTRIBUTE_SYSTEM) || (attr & FILE_ATTRIBUTE_HIDDEN);
+
+		if (buffers.CurrentBuffer()->ROMarker != isRO) {
+			wEditor.Call(SCI_SETREADONLY, isRO);
+			BuffersMenu();
+		}
 
 		if (newModTime != CurrentBuffer()->fileModTime) {
 			if (newModTime != 0) {
@@ -574,16 +581,6 @@ void SciTEBase::CheckReload() {
 					}
 			}
 		}
-		else {
-			DWORD attr = ::GetFileAttributesW(filePath.AsInternal());
-			bool isRO = (attr & FILE_ATTRIBUTE_READONLY) || (attr & FILE_ATTRIBUTE_SYSTEM) || (attr & FILE_ATTRIBUTE_HIDDEN);
-
-			if (buffers.CurrentBuffer()->ROMarker != isRO) {
-				wEditor.Call(SCI_SETREADONLY, isRO);
-				BuffersMenu();
-			}
-		}
-
 	}
 }
 
