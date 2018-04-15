@@ -5,7 +5,7 @@
  **/
 // Copyright 1998-2007 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-#include <vector>
+
 #ifndef SPLITVECTOR_H
 #define SPLITVECTOR_H
 
@@ -78,7 +78,7 @@ public:
 	ptrdiff_t GetGrowSize() const {
 		return growSize;
 	}
-	
+
 	void SetGrowSize(ptrdiff_t growSize_) {
 		growSize = growSize_;
 	}
