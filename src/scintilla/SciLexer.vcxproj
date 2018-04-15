@@ -66,6 +66,7 @@
     <ClCompile Include="lexers\LexMake.cxx" />
     <ClCompile Include="lexers\LexMarkdown.cxx" />
     <ClCompile Include="lexers\LexMatlab.cxx" />
+    <ClCompile Include="lexers\LexMaxima.cxx" />
     <ClCompile Include="lexers\LexMetapost.cxx" />
     <ClCompile Include="lexers\LexMMIXAL.cxx" />
     <ClCompile Include="lexers\LexModula.cxx" />
@@ -157,6 +158,7 @@
     <ClCompile Include="win32\CheckD2D.cxx" />
     <ClCompile Include="win32\HanjaDic.cxx" />
     <ClCompile Include="win32\PlatWin.cxx" />
+    <ClCompile Include="win32\ScintillaDLL.cxx" />
     <ClCompile Include="win32\ScintillaWin.cxx" />
   </ItemGroup>
   <ItemGroup>
@@ -221,6 +223,7 @@
     <ClInclude Include="lexlib\WordList.h" />
     <ClInclude Include="win32\HanjaDic.h" />
     <ClInclude Include="win32\PlatWin.h" />
+    <ClInclude Include="win32\ScintillaWin.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="win32\ScintRes.rc" />

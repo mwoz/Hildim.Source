@@ -459,6 +459,12 @@
     <ClCompile Include="src\DBCS.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="win32\ScintillaDLL.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lexers\LexMaxima.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -642,6 +648,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ILoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\ScintillaWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
