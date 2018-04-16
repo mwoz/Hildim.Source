@@ -533,7 +533,7 @@ void SciTEBase::CheckReload() {
 		DWORD attr = ::GetFileAttributesW(filePath.AsInternal());
 		bool isRO = (attr & FILE_ATTRIBUTE_READONLY) || (attr & FILE_ATTRIBUTE_SYSTEM) || (attr & FILE_ATTRIBUTE_HIDDEN);
 
-		if (buffers.CurrentBuffer()->ROMarker != isRO) {
+		if (filePath.Exists() && buffers.CurrentBuffer()->ROMarker != isRO) {
 			wEditor.Call(SCI_SETREADONLY, isRO);
 			BuffersMenu();
 		}
