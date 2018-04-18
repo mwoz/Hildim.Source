@@ -1124,6 +1124,9 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), reinterpret_cast<void *>(lParam)));
 
+	case SCI_H_TEXTRECTWIDTH:
+		return GetTextRectangle().Width();
+
 #ifdef INCLUDE_DEPRECATED_FEATURES
 	case SCI_GETSTYLEBITSNEEDED:
 		return 8;

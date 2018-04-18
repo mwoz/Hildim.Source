@@ -121,7 +121,7 @@ class IupChildWnd
 public:
 	IupChildWnd();
 	~IupChildWnd();
-	void Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM);
+	void Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
 private:
 	char name[16];
 	HWND hMainWnd;
@@ -129,6 +129,8 @@ private:
 	WNDPROC subclassedProc;
     LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	GUI::ScintillaWindow *pScintilla;
+	Ihandle *pContainer;
 };
 typedef std::map<const char*, IupChildWnd*> mapsICW;
 class IupLayoutWnd
@@ -138,7 +140,7 @@ public:
 	~IupLayoutWnd();
 	void CreateLayout(lua_State *L, SciTEWin *pS);
 	HWND GetChildHWND(const char* name);
-	void SubclassChild(const char* name, const GUI::Window *pW);
+	void SubclassChild(const char* name, GUI::ScintillaWindow *pW);
 	void GetPaneRect(const char *name, LPRECT pRc);
 	void SetPaneHeight(const char *name, int Height);
 	void AdjustTabBar();

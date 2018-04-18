@@ -1202,11 +1202,6 @@ void SciTEBase::ReadProperties() {
 	wFindRes.Call(SCI_SETSCROLLWIDTH, props.GetInt("output.horizontal.scroll.width", 2000));
 	wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, props.GetInt("output.horizontal.scroll.width.tracking", 1));
 
-	// Do these last as they force a style refresh
-	wEditor.Call(SCI_SETHSCROLLBAR, props.GetInt("horizontal.scrollbar", 1));
-	wOutput.Call(SCI_SETHSCROLLBAR, props.GetInt("output.horizontal.scrollbar", 1));
-	wFindRes.Call(SCI_SETHSCROLLBAR, props.GetInt("output.horizontal.scrollbar", 1));
-
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 

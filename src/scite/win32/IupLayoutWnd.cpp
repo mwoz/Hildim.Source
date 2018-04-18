@@ -9,7 +9,7 @@ IupChildWnd::~IupChildWnd()
 {
 }
 
-void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM)
+void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
 {
 	hMainWnd = hM;
 	pSciteWin = pS;
@@ -17,6 +17,10 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM)
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);
 	lstrcpynA(name, pName, 15);
+	pScintilla = pW;
+	pScintilla->Call(SCI_SETVSCROLLBAR, false);
+	pScintilla->Call(SCI_SETHSCROLLBAR, false);
+	pContainer = pCnt;
 }
 
 LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
@@ -28,12 +32,40 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	}
 		return 0;
 	case WM_NOTIFY:
+		if (::IsWindowVisible(hMainWnd)) {
+			SCNotification *notification = reinterpret_cast<SCNotification *>(lParam);
+			if (notification->nmhdr.code == SCN_UPDATEUI) {
+				if (notification->updated & SC_UPDATE_V_SCROLL) {
+					int dy = pScintilla->Call(SCI_LINESONSCREEN);
+
+					IupSetInt(pContainer, "YMAX", pScintilla->Call(SCI_GETLINECOUNT) + (pScintilla->Call(SCI_GETENDATLASTLINE) ? 0 : dy));
+					IupSetInt(pContainer, "DY", dy);
+					IupSetInt(pContainer, "POSY", pScintilla->Call(SCI_GETFIRSTVISIBLELINE));
+				}
+				if (notification->updated & SC_UPDATE_H_SCROLL) {
+
+					//pScintilla->Call(SCI_SETHSCROLLBAR, false);
+					RECT rc;
+					int xm = pScintilla->Call(SCI_GETSCROLLWIDTH);
+					int dx = pScintilla->Call(SCI_H_TEXTRECTWIDTH);
+					int px = pScintilla->Call(SCI_GETXOFFSET);
+					::GetWindowRect(hwnd, &rc);
+					IupSetInt(pContainer, "XMAX", pScintilla->Call(SCI_GETSCROLLWIDTH));
+					IupSetInt(pContainer, "DX", pScintilla->Call(SCI_H_TEXTRECTWIDTH));
+					IupSetInt(pContainer, "POSX", pScintilla->Call(SCI_GETXOFFSET));
+
+				}
+			}
+			if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
+			return pSciteWin->WndProc(uMsg, wParam, lParam);
+		}
+		break;
 	case WM_COMMAND:
 	case WM_CONTEXTMENU:
 		if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
 		break;
 	case WM_SIZE: 	{
-		::SetWindowPos(::GetWindow(hwnd, GW_CHILD), HWND_TOP, 0, 0, LOWORD(lParam), HIWORD(lParam), 0);
+		::SetWindowPos(::GetWindow(hwnd, GW_CHILD), HWND_TOP, 0, 0, LOWORD(lParam) - 20, HIWORD(lParam) - 20, 0);
 						
 	}
 		break;
@@ -153,13 +185,13 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		IupSetAtt(NULL, IupCreatep("split",
 			IupSetAtt(NULL, IupCreatep("split",
 						IupSetAtt(NULL, IupCreatep("split",
-								IupSetAtt(NULL, IupCreate("canvas"),
+								IupSetAtt(NULL, IupCreate("scrollcanvas"),
 									"NAME", "Source",
 									"EXPAND", "YES",
 								NULL),
 								IupSetAtt(NULL, IupCreatep("expander",
 									IupSetAtt(NULL, IupCreatep("sc_detachbox",
-										IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("canvas"),
+										IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 										"NAME", "CoSource",
 										"EXPAND", "YES",
 										NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
@@ -238,7 +270,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	containers[7] = 
 	IupSetAtt(NULL, IupCreatep("expander", 
 		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
-			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("canvas"),
+			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 				"NAME", "Run",
 				"MINSIZE", "x20",
 				NULL),
@@ -257,7 +289,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	containers[10] = 
 	IupSetAtt(NULL, IupCreatep("expander", 
 		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
-			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("canvas"),
+			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 				"NAME", "FindRes",
 				"MINSIZE", "x20",
 				NULL),
@@ -399,10 +431,10 @@ HWND IupLayoutWnd::GetChildHWND(const char* name){
 }
 
 
-void IupLayoutWnd::SubclassChild(const char* name, const GUI::Window *pW){
+void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	IupChildWnd *pICH = new IupChildWnd();
 	::SetProp(GetChildHWND(name), L"iPw", (HANDLE)pW);
-	pICH->Attach(GetChildHWND(name), pSciteWin, name, (HWND)IupGetAttribute(hMain, "HWND"));
+	pICH->Attach(GetChildHWND(name), pSciteWin, name, (HWND)IupGetAttribute(hMain, "HWND"), pW, IupGetDialogChild(hMain, name));
 	childMap[name] = pICH;
 	RECT rc;
 	::GetWindowRect(GetChildHWND(name), &rc);
