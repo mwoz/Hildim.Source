@@ -122,6 +122,7 @@ public:
 	IupChildWnd();
 	~IupChildWnd();
 	void Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
+	void Scroll_CB(int op, float posx, float posy);
 private:
 	char name[16];
 	HWND hMainWnd;
@@ -129,8 +130,15 @@ private:
 	WNDPROC subclassedProc;
     LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void RecetHScrollBar();
+	void RecetVScrollBar();
 	GUI::ScintillaWindow *pScintilla;
 	Ihandle *pContainer;
+	void SizeEditor();
+	bool blockV = false;
+	bool blockH = false;
+	int hPx = 0;
+	int vPx = 0;
 };
 typedef std::map<const char*, IupChildWnd*> mapsICW;
 class IupLayoutWnd

@@ -1,5 +1,12 @@
 #include "SciTEWin.h"
 
+std::map<std::string, IupChildWnd*> classList;
+
+static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
+	classList[IupGetAttribute(ih, "NAME")]->Scroll_CB(op, posx, posy);
+	return IUP_DEFAULT;
+}
+
 IupChildWnd::IupChildWnd()
 {
 }
@@ -8,7 +15,30 @@ IupChildWnd::IupChildWnd()
 IupChildWnd::~IupChildWnd()
 {
 }
-
+void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
+	switch (op) {
+	case IUP_SBUP:
+	case IUP_SBDN:
+	case IUP_SBPGUP:
+	case IUP_SBPGDN:
+	case IUP_SBPOSV:
+	case IUP_SBDRAGV:
+		blockV = true;
+		pScintilla->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
+		blockV = false;
+		break;
+	case IUP_SBLEFT:
+	case IUP_SBRIGHT:
+	case IUP_SBPGLEFT:
+	case IUP_SBPGRIGHT:
+	case IUP_SBPOSH:
+	case IUP_SBDRAGH:
+		blockH = true;
+		pScintilla->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
+		blockH = false;
+		break;
+	}
+}
 void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
 {
 	hMainWnd = hM;
@@ -21,6 +51,37 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::
 	pScintilla->Call(SCI_SETVSCROLLBAR, false);
 	pScintilla->Call(SCI_SETHSCROLLBAR, false);
 	pContainer = pCnt;
+	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
+}
+
+void IupChildWnd::SizeEditor() {
+	int x, y;
+	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
+	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
+}
+
+void IupChildWnd::RecetHScrollBar() {
+	IupSetDouble(pContainer, "XMAX", pScintilla->Call(SCI_GETSCROLLWIDTH));
+	IupSetDouble(pContainer, "DX", pScintilla->Call(SCI_H_TEXTRECTWIDTH));
+	IupSetDouble(pContainer, "POSX", pScintilla->Call(SCI_GETXOFFSET));
+	int newSize = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+	if (newSize != hPx) {
+		hPx = newSize;
+		SizeEditor();
+	}
+}
+
+void IupChildWnd::RecetVScrollBar() {
+	int dy = pScintilla->Call(SCI_LINESONSCREEN);
+
+	IupSetDouble(pContainer, "YMAX", pScintilla->Call(SCI_VISIBLEFROMDOCLINE, pScintilla->Call(SCI_GETLINECOUNT) + 1) - 1 + (pScintilla->Call(SCI_GETENDATLASTLINE) ? 0 : dy));
+	IupSetDouble(pContainer, "DY", dy);
+	IupSetDouble(pContainer, "POSY", pScintilla->Call(SCI_GETFIRSTVISIBLELINE));
+	int newSize = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+	if (newSize != vPx) {
+		vPx = newSize;
+		SizeEditor();
+	}
 }
 
 LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
@@ -34,29 +95,26 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_NOTIFY:
 		if (::IsWindowVisible(hMainWnd)) {
 			SCNotification *notification = reinterpret_cast<SCNotification *>(lParam);
-			if (notification->nmhdr.code == SCN_UPDATEUI) {
+			switch(notification->nmhdr.code){
+			case SCN_UPDATEUI: 
 				if (notification->updated & SC_UPDATE_V_SCROLL) {
-					int dy = pScintilla->Call(SCI_LINESONSCREEN);
-
-					IupSetInt(pContainer, "YMAX", pScintilla->Call(SCI_GETLINECOUNT) + (pScintilla->Call(SCI_GETENDATLASTLINE) ? 0 : dy));
-					IupSetInt(pContainer, "DY", dy);
-					IupSetInt(pContainer, "POSY", pScintilla->Call(SCI_GETFIRSTVISIBLELINE));
+					if (pScintilla->Call(SCI_GETVSCROLLBAR))
+						pScintilla->Call(SCI_SETVSCROLLBAR, false);
+					if (blockV)
+						break;
+					RecetVScrollBar();
 				}
-				if (notification->updated & SC_UPDATE_H_SCROLL) {
-
-					//pScintilla->Call(SCI_SETHSCROLLBAR, false);
-					RECT rc;
-					int xm = pScintilla->Call(SCI_GETSCROLLWIDTH);
-					int dx = pScintilla->Call(SCI_H_TEXTRECTWIDTH);
-					int px = pScintilla->Call(SCI_GETXOFFSET);
-					::GetWindowRect(hwnd, &rc);
-					IupSetInt(pContainer, "XMAX", pScintilla->Call(SCI_GETSCROLLWIDTH));
-					IupSetInt(pContainer, "DX", pScintilla->Call(SCI_H_TEXTRECTWIDTH));
-					IupSetInt(pContainer, "POSX", pScintilla->Call(SCI_GETXOFFSET));
+				if (notification->updated & (SC_UPDATE_H_SCROLL)) {
+					//if (pScintilla->Call(SCI_GETHSCROLLBAR))
+					//	pScintilla->Call(SCI_SETHSCROLLBAR, false);
+					if (blockH)
+						break;
+					RecetHScrollBar();
 
 				}
+				break;
 			}
-			if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
+			//if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
 			return pSciteWin->WndProc(uMsg, wParam, lParam);
 		}
 		break;
@@ -64,24 +122,13 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_CONTEXTMENU:
 		if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
 		break;
-	case WM_SIZE: 	{
-		::SetWindowPos(::GetWindow(hwnd, GW_CHILD), HWND_TOP, 0, 0, LOWORD(lParam) - 20, HIWORD(lParam) - 20, 0);
-						
-	}
-		break;
-	case WM_LBUTTONDBLCLK:
-	{
-		if (!strcmp(pSciteWin->Property("tabbar.tab.close.on.doubleclick"),"1") )
-			pSciteWin->WndProc(WM_COMMAND, IDM_NEW, 0);
-	}
+	case WM_SIZE: 	
+		SizeEditor();
 		break;
 	case WM_CLOSE:
 		LRESULT r = subclassedProc(hwnd, uMsg, wParam, lParam);
 		delete(this);
 		return r;
-	//case WM_SIZE:
-	//	subclassedProc(hwnd, uMsg, wParam, lParam);
-	//	pSciteWin->WndProc(uMsg, wParam, lParam);
 	}
 
 	return subclassedProc(hwnd, uMsg, wParam, lParam);
@@ -434,7 +481,10 @@ HWND IupLayoutWnd::GetChildHWND(const char* name){
 void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	IupChildWnd *pICH = new IupChildWnd();
 	::SetProp(GetChildHWND(name), L"iPw", (HANDLE)pW);
-	pICH->Attach(GetChildHWND(name), pSciteWin, name, (HWND)IupGetAttribute(hMain, "HWND"), pW, IupGetDialogChild(hMain, name));
+	Ihandle *pCnt = IupGetDialogChild(hMain, name);
+
+	classList[name] = pICH;
+	pICH->Attach(GetChildHWND(name), pSciteWin, name, (HWND)IupGetAttribute(hMain, "HWND"), pW, pCnt);
 	childMap[name] = pICH;
 	RECT rc;
 	::GetWindowRect(GetChildHWND(name), &rc);

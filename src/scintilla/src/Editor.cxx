@@ -1772,8 +1772,9 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 	}
 
 	view.PaintText(surfaceWindow, *this, rcArea, rcClient, vs);
-	if ( trackLineWidth && (view.lineWidthMaxSeen > scrollWidth)) {
+	if ( trackLineWidth && (view.lineWidthMaxSeen != scrollWidth)) {
 		scrollWidth = view.lineWidthMaxSeen;
+		ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
 		if (horizontalScrollBarVisible && !FineTickerRunning(tickWiden)) {
 			FineTickerStart(tickWiden, 50, 5);
 		}
@@ -5396,6 +5397,7 @@ void Editor::FoldExpand(Sci::Line line, int action, int level) {
 		line++;
 	}
 	SetScrollBars();
+	ContainerNeedsUpdate(SC_UPDATE_V_SCROLL | SC_UPDATE_H_SCROLL);
 	Redraw();
 }
 
