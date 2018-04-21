@@ -130,10 +130,8 @@ private:
 	WNDPROC subclassedProc;
     LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void RecetHScrollBar();
-	void RecetVScrollBar();
 	GUI::ScintillaWindow *pScintilla;
-	Ihandle *pContainer;
+	Ihandle *pContainer = 0;
 	void SizeEditor();
 	bool blockV = false;
 	bool blockH = false;

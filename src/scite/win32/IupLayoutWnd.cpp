@@ -48,8 +48,6 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);
 	lstrcpynA(name, pName, 15);
 	pScintilla = pW;
-	pScintilla->Call(SCI_SETVSCROLLBAR, false);
-	pScintilla->Call(SCI_SETHSCROLLBAR, false);
 	pContainer = pCnt;
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
 }
@@ -60,29 +58,6 @@ void IupChildWnd::SizeEditor() {
 	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
 }
 
-void IupChildWnd::RecetHScrollBar() {
-	IupSetDouble(pContainer, "XMAX", pScintilla->Call(SCI_GETSCROLLWIDTH));
-	IupSetDouble(pContainer, "DX", pScintilla->Call(SCI_H_TEXTRECTWIDTH));
-	IupSetDouble(pContainer, "POSX", pScintilla->Call(SCI_GETXOFFSET));
-	int newSize = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-	if (newSize != hPx) {
-		hPx = newSize;
-		SizeEditor();
-	}
-}
-
-void IupChildWnd::RecetVScrollBar() {
-	int dy = pScintilla->Call(SCI_LINESONSCREEN);
-
-	IupSetDouble(pContainer, "YMAX", pScintilla->Call(SCI_VISIBLEFROMDOCLINE, pScintilla->Call(SCI_GETLINECOUNT) + 1) - 1 + (pScintilla->Call(SCI_GETENDATLASTLINE) ? 0 : dy));
-	IupSetDouble(pContainer, "DY", dy);
-	IupSetDouble(pContainer, "POSY", pScintilla->Call(SCI_GETFIRSTVISIBLELINE));
-	int newSize = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-	if (newSize != vPx) {
-		vPx = newSize;
-		SizeEditor();
-	}
-}
 
 LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
 	switch (uMsg){
@@ -92,32 +67,89 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		::SetFocus(h);
 	}
 		return 0;
-	case WM_NOTIFY:
-		if (::IsWindowVisible(hMainWnd)) {
-			SCNotification *notification = reinterpret_cast<SCNotification *>(lParam);
-			switch(notification->nmhdr.code){
-			case SCN_UPDATEUI: 
-				if (notification->updated & SC_UPDATE_V_SCROLL) {
-					if (pScintilla->Call(SCI_GETVSCROLLBAR))
-						pScintilla->Call(SCI_SETVSCROLLBAR, false);
-					if (blockV)
-						break;
-					RecetVScrollBar();
-				}
-				if (notification->updated & (SC_UPDATE_H_SCROLL)) {
-					//if (pScintilla->Call(SCI_GETHSCROLLBAR))
-					//	pScintilla->Call(SCI_SETHSCROLLBAR, false);
-					if (blockH)
-						break;
-					RecetHScrollBar();
-
-				}
-				break;
+	case SCI_GETSCROLLINFO:
+	{
+		if (!pContainer) return false;
+		LPSCROLLINFO lpsi = (LPSCROLLINFO)lParam;
+		if (wParam == SB_VERT) {
+			if (lpsi->fMask & SIF_PAGE) {
+				lpsi->nPage = IupGetInt(pContainer, "DY");
 			}
-			//if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
-			return pSciteWin->WndProc(uMsg, wParam, lParam);
-		}
+			if (lpsi->fMask & (SIF_POS | SIF_TRACKPOS)) {
+				lpsi->nPos = IupGetInt(pContainer, "POSY");
+				lpsi->nTrackPos = lpsi->nPos;
+			}
+
+			if (lpsi->fMask & SIF_RANGE) {
+				lpsi->nMin = IupGetInt(pContainer, "YMIN");
+				lpsi->nMax = IupGetInt(pContainer, "YMAX");
+			}
+		} else if (wParam == SB_HORZ) {
+			if (lpsi->fMask & SIF_PAGE) {
+				lpsi->nPage = IupGetInt(pContainer, "DX");
+			}
+			if (lpsi->fMask & (SIF_POS | SIF_TRACKPOS)) {
+				lpsi->nPos = IupGetInt(pContainer, "POSX");
+				lpsi->nTrackPos = lpsi->nPos;
+			}
+
+			if (lpsi->fMask & SIF_RANGE) {
+				lpsi->nMin = IupGetInt(pContainer, "XMIN");
+				lpsi->nMax = IupGetInt(pContainer, "XMAX");
+			}
+		} else
+			return false;
+	}
+		return true;
 		break;
+	case SCI_SETSCROLLINFO:
+	{
+		if (!pContainer) return false;
+		LPSCROLLINFO lpsi = (LPSCROLLINFO)lParam; 
+		if (wParam == SB_VERT) {
+			if (lpsi->fMask & SIF_RANGE ) {
+				IupSetInt(pContainer, "YMIN", lpsi->nMin);
+				IupSetInt(pContainer, "YMAX", lpsi->nMax);
+			}
+			if (lpsi->fMask & SIF_PAGE) {
+				IupSetInt(pContainer, "DY", lpsi->nPage);
+				
+			}
+			if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
+				vPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+			}
+			if (lpsi->fMask & SIF_POS ) {
+				IupSetInt(pContainer, "POSY", lpsi->nPos);
+			}
+			if (lpsi->fMask & SIF_TRACKPOS) {
+				IupSetInt(pContainer, "POSY", lpsi->nTrackPos);
+			}
+
+
+		} else if(wParam == SB_HORZ) {
+			if (lpsi->fMask & SIF_RANGE) {
+				IupSetInt(pContainer, "XMIN", lpsi->nMin);
+				IupSetInt(pContainer, "XMAX", lpsi->nMax);
+			}
+			if (lpsi->fMask & SIF_PAGE) {
+				IupSetInt(pContainer, "DX", lpsi->nPage);
+			}
+			if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
+				hPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+			}
+			if (lpsi->fMask & SIF_POS) {
+				IupSetInt(pContainer, "POSX", lpsi->nPos);
+			}
+			if (lpsi->fMask & SIF_TRACKPOS) {
+				IupSetInt(pContainer, "POSX", lpsi->nTrackPos);
+			}
+
+		} else
+			return false;
+	}
+		return true;
+		break;
+	case WM_NOTIFY:
 	case WM_COMMAND:
 	case WM_CONTEXTMENU:
 		if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
@@ -169,6 +201,30 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	minSz[0] = '0';
 	minSz[1] = 'x';
 	lstrcatA(minSz, fntSize);
+
+	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14];
+
+	char* clr = pSciteWin->Property("iup.scroll.forecolor");
+	if (!strcmp(clr, "")) {
+		clr = "220 220 220";
+		pSciteWin->SetProperty("iup.scroll.forecolor", clr);
+	}
+	lstrcpynA(scrFORECOLOR, clr, 12);
+
+	clr = pSciteWin->Property("iup.scroll.presscolor");
+	if (!strcmp(clr, "")) {
+		clr = "190 190 190";
+		pSciteWin->SetProperty("iup.scroll.presscolor", clr);
+	}
+	lstrcpynA(scrPRESSCOLOR, clr, 12);
+
+	clr = pSciteWin->Property("iup.scroll.highcolor");
+	if (!strcmp(clr, "")) {
+		clr = "200 200 200";
+		pSciteWin->SetProperty("iup.scroll.highcolor", clr);
+	}
+	lstrcpynA(scrHIGHCOLOR, clr, 12);
+
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -235,12 +291,18 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 								IupSetAtt(NULL, IupCreate("scrollcanvas"),
 									"NAME", "Source",
 									"EXPAND", "YES",
+									"HIGHCOLOR", scrHIGHCOLOR,
+									"PRESSCOLOR", scrPRESSCOLOR,
+									"FORECOLOR", scrFORECOLOR,
 								NULL),
 								IupSetAtt(NULL, IupCreatep("expander",
 									IupSetAtt(NULL, IupCreatep("sc_detachbox",
 										IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 										"NAME", "CoSource",
 										"EXPAND", "YES",
+										"HIGHCOLOR", scrHIGHCOLOR,
+										"PRESSCOLOR", scrPRESSCOLOR,
+										"FORECOLOR", scrFORECOLOR,
 										NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
 									"NAME", "SourceExDetach",
 									"ORIENTATION", "HORIZONTAL",
@@ -320,6 +382,9 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 				"NAME", "Run",
 				"MINSIZE", "x20",
+				"HIGHCOLOR", scrHIGHCOLOR,
+				"PRESSCOLOR", scrPRESSCOLOR,
+				"FORECOLOR", scrFORECOLOR,
 				NULL),
 				NULL), "NAME", "concolebar_vbox", NULL), NULL),
 			"NAME", "ConsoleDetach",
@@ -339,6 +404,9 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
 				"NAME", "FindRes",
 				"MINSIZE", "x20",
+				"HIGHCOLOR", scrHIGHCOLOR,
+				"PRESSCOLOR", scrPRESSCOLOR,
+				"FORECOLOR", scrFORECOLOR,
 				NULL),
 				NULL), "NAME", "findresbar_vbox", NULL), NULL),
 			"NAME", "FindResDetach",

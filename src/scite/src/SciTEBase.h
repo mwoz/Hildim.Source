@@ -839,7 +839,6 @@ protected:
 	void Remove(Pane p, int start, int end);
 	void Insert(Pane p, int pos, const char *s);
 	void Trace(const char *s);
-	void SetProperty(const char *key, const char *val);
 	void UnsetProperty(const char *key);
 	uptr_t GetInstance();
 	void ShutDown();
@@ -865,7 +864,8 @@ public:
 	SciTEBase(Extension *ext = 0);
 	virtual ~SciTEBase();
 
-	void ProcessExecute();
+	void SetProperty(const char *key, const char *val);
+	
 	GUI::WindowID GetID() { return wSciTE.GetID(); }
 
 //!-start-[GetApplicationProps]

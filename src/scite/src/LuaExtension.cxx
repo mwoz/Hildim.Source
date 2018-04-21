@@ -630,6 +630,13 @@ static int sf_BlockUpdate(lua_State* L) {
 	return 0;
 }
 
+static int cf_editor_set_foreground(lua_State* L) {
+	HWND hChild = NULL;
+	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
+	::SwitchToThisWindow(hChild, false);
+	return 0;
+}
+
 static int sf_SetOverrideLanguage(lua_State* L){
 	const char * lexer = luaL_checkstring(L, 1);
 	host->SetOverrideLanguage(lexer, true);
@@ -2031,6 +2038,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_BlockUpdate);
 	lua_setfield(luaState, -2, "BlockUpdate");
+
+	lua_pushcfunction(luaState, cf_editor_set_foreground);
+	lua_setfield(luaState, -2, "SetForeground");
 
 	// buffers
 	lua_newtable(luaState);

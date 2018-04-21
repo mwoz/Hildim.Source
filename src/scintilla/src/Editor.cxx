@@ -1389,10 +1389,10 @@ void Editor::SetXYScroll(XYScrollPosition newXY) {
 			ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
 			if (newXY.xOffset > 0) {
 				const PRectangle rcText = GetTextRectangle();
-				if (rcText.Width() + xOffset > scrollWidth) {
+				if (horizontalScrollBarVisible &&
+					rcText.Width() + xOffset > scrollWidth) {
 					scrollWidth = xOffset + static_cast<int>(rcText.Width());
-					if (horizontalScrollBarVisible)
-						SetScrollBars();
+					SetScrollBars();
 				}
 			}
 			SetHorizontalScrollPos();
@@ -1772,10 +1772,10 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 	}
 
 	view.PaintText(surfaceWindow, *this, rcArea, rcClient, vs);
-	if ( trackLineWidth && (view.lineWidthMaxSeen != scrollWidth)) {
+
+	if (horizontalScrollBarVisible && trackLineWidth && (view.lineWidthMaxSeen > scrollWidth)) {
 		scrollWidth = view.lineWidthMaxSeen;
-		ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
-		if (horizontalScrollBarVisible && !FineTickerRunning(tickWiden)) {
+		if (!FineTickerRunning(tickWiden)) {
 			FineTickerStart(tickWiden, 50, 5);
 		}
 	}
@@ -5397,7 +5397,6 @@ void Editor::FoldExpand(Sci::Line line, int action, int level) {
 		line++;
 	}
 	SetScrollBars();
-	ContainerNeedsUpdate(SC_UPDATE_V_SCROLL | SC_UPDATE_H_SCROLL);
 	Redraw();
 }
 
