@@ -1890,7 +1890,7 @@ void ScintillaWin::UpdateSystemCaret() {
 
 int ScintillaWin::SetScrollInfo(int nBar, LPCSCROLLINFO lpsi, BOOL bRedraw) {
 	//return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
-	return ::SendMessage(::GetParent(MainHWND()), SCI_SETSCROLLINFO, nBar, (WPARAM)lpsi); ? true : false;
+	return ::SendMessage(::GetParent(MainHWND()), SCI_SETSCROLLINFO, nBar, (WPARAM)lpsi) ? true : false;
 }
 
 bool ScintillaWin::GetScrollInfo(int nBar, LPSCROLLINFO lpsi) {
