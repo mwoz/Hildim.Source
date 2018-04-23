@@ -535,7 +535,7 @@ void IupLayoutWnd::CreateLayout(lua_State *L, SciTEWin *pS){
 	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)pS->GetID());
 	IupShowXY(hMain, 0, 0);
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
-	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
+	//subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 }
 

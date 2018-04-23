@@ -41,6 +41,7 @@ extern "C" {
 #include "scite_sbox.h"
 #include "scite_flattabs.h"
 #include "scite_scrollcanvas.h"
+#include "scite_tree.h"
 #include "scite_images.h"
 }
 
@@ -1906,6 +1907,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iupFlattabsCtrllua_open(luaState);
 	IupScrollCanvasOpen();
 	iupIupScrollCanvaslua_open(luaState);
+	Iupsc_TreeOpen();
+	iupsc_Treelua_open(luaState);
 	iupcontrolslua_open(luaState);
 
 	load_all_images_Images();
