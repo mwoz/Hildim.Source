@@ -58,14 +58,8 @@ static int sctree_branchopen_cb(Ihandle *self, int p0) {
 static int winTreeProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
 	case WM_HSCROLL:
-	{
-
-	}
 		break;
 	case WM_VSCROLL:
-	{
-		int i = 11;
-	}
 		break;
 	case WM_MOUSEWHEEL:
 	{
@@ -111,12 +105,10 @@ static LRESULT CALLBACK winTreeWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 }
 
 static int isc_SetNoScrollSize_recr(Ihandle* ih, HDC hdc, int item, long *pWidth, int level, int h, int iAct, int bOpen) {
-
 	SIZE size;
 	int dLevel = SendMessage(ih->handle, TVM_GETINDENT, 0, 0) + 1;
 	for (; ; ) {
 		char *str = IupGetAttributeId(ih, "TITLE", item);
-
 		GetTextExtentPoint32A(hdc, str, _tcslen(str), &size);
 		
 		h++;
@@ -127,8 +119,7 @@ static int isc_SetNoScrollSize_recr(Ihandle* ih, HDC hdc, int item, long *pWidth
 			h = isc_SetNoScrollSize_recr(ih, hdc, item + 1, pWidth, level + dLevel, h, iAct, bOpen);
 		}
 		int next;
-		iupStrToInt(IupGetAttributeId(ih, "NEXT", item), &next);
-		if (next <= item)
+		if (!iupStrToInt(IupGetAttributeId(ih, "NEXT", item), &next))
 			break;
 		item = next;
 	}
@@ -196,6 +187,8 @@ static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOO
 			break;
 		item = next;
 	}
+	*bFind = 0;
+	return y;
 }
 
 static int iscTreeFlatTopitemAttrib(Ihandle* ih, const char* value) {
@@ -210,11 +203,12 @@ static int iscTreeFlatTopitemAttrib(Ihandle* ih, const char* value) {
 		if (bFound) {
 			int posy = IupGetInt(ih->parent, "POSY");
 			int dy = IupGetInt(ih->parent, "DY");
+			int iH = SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
 			if (curY < posy) {
 				IupSetInt(ih->parent, "POSY", curY);
 
-			} else if (curY > posy + dy) {
-				IupSetInt(ih->parent, "POSY", curY + SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0) - dy);
+			} else if (curY + iH > posy + dy) {
+				IupSetInt(ih->parent, "POSY", curY + iH - dy);
 			}
 		}
 	}
@@ -294,7 +288,7 @@ int iupsc_Treelua_open(lua_State * L)
 	iuplua_register_cb(L, "FLAT_BRANCHOPEN_CB", (lua_CFunction)sctree_branchopen_cb, NULL);
 	iuplua_dostring(L,
 		"local ctrl = { nick = 'sc_tree', parent = iup.BOX, subdir = 'elem', creation = 'I',  funcname = 'sc_Tree', }; function ctrl.createElement(class, param) return iup.sc_Tree() end iup.RegisterWidget(ctrl); iup.SetClass(ctrl, 'iupWidget')",
-		"sc_SBox.lua");
+		"sc_tree.lua");
 	run = 1;
 	return 0;
 }
