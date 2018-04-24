@@ -55,7 +55,9 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::
 void IupChildWnd::SizeEditor() {
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
-	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
+	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - (IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE")), y - hPx, 0);
+	//::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - (IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE")), y - hPx, 0);
+
 }
 
 
@@ -115,9 +117,10 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				IupSetInt(pContainer, "DY", lpsi->nPage);
 				
 			}
-			if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
-				vPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-			}
+			//if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
+				//vPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				//vPx = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+			//}
 			if (lpsi->fMask & SIF_POS ) {
 				IupSetInt(pContainer, "POSY", lpsi->nPos);
 			}
@@ -135,7 +138,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				IupSetInt(pContainer, "DX", lpsi->nPage);
 			}
 			if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
-				hPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				//hPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				hPx = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
 			}
 			if (lpsi->fMask & SIF_POS) {
 				IupSetInt(pContainer, "POSX", lpsi->nPos);

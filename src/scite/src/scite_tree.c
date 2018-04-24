@@ -109,6 +109,8 @@ static int isc_SetNoScrollSize_recr(Ihandle* ih, HDC hdc, int item, long *pWidth
 	int dLevel = SendMessage(ih->handle, TVM_GETINDENT, 0, 0) + 1;
 	for (; ; ) {
 		char *str = IupGetAttributeId(ih, "TITLE", item);
+		if (!str)
+			return h;
 		GetTextExtentPoint32A(hdc, str, _tcslen(str), &size);
 		
 		h++;
@@ -228,7 +230,7 @@ static int isc_TreeCreateMethod(Ihandle* ih, void** params) {
 
 
 static int isc_TreeMapMethod(Ihandle* ih, void** params) {
-
+	SetWindowLongPtr(ih->handle, GWL_STYLE, GetWindowLongPtr(ih->handle, GWL_STYLE) - WS_BORDER);
 	IupSetCallback(ih, "_IUPWIN_TREEOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(ih->handle, GWLP_WNDPROC));
 	SetWindowLongPtr(ih->handle, GWLP_WNDPROC, (LONG_PTR)winTreeWndProc);
 	return IUP_NOERROR;
