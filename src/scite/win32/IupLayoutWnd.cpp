@@ -55,13 +55,14 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::
 void IupChildWnd::SizeEditor() {
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
-	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - (IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE")), y - hPx, 0);
 	//::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - (IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE")), y - hPx, 0);
+	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
 
 }
 
 
 LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
+	LRESULT ret;
 	switch (uMsg){
 	case WM_SETFOCUS:
 	{
@@ -117,18 +118,18 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				IupSetInt(pContainer, "DY", lpsi->nPage);
 				
 			}
-			//if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
-				//vPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-				//vPx = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-			//}
 			if (lpsi->fMask & SIF_POS ) {
 				IupSetInt(pContainer, "POSY", lpsi->nPos);
 			}
 			if (lpsi->fMask & SIF_TRACKPOS) {
 				IupSetInt(pContainer, "POSY", lpsi->nTrackPos);
 			}
-
-
+			int v = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+			if (v != vPx) {
+				vPx = v;
+				hPx = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				SizeEditor();
+			}
 		} else if(wParam == SB_HORZ) {
 			if (lpsi->fMask & SIF_RANGE) {
 				IupSetInt(pContainer, "XMIN", lpsi->nMin);
@@ -137,17 +138,18 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (lpsi->fMask & SIF_PAGE) {
 				IupSetInt(pContainer, "DX", lpsi->nPage);
 			}
-			if (lpsi->fMask & (SIF_PAGE | SIF_RANGE)) {
-				//hPx = lpsi->nPage > lpsi->nMax ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-				hPx = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
-			}
 			if (lpsi->fMask & SIF_POS) {
 				IupSetInt(pContainer, "POSX", lpsi->nPos);
 			}
 			if (lpsi->fMask & SIF_TRACKPOS) {
 				IupSetInt(pContainer, "POSX", lpsi->nTrackPos);
 			}
-
+			int h = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+			if (h != hPx) {
+				hPx = h;
+				vPx = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				SizeEditor();
+			}
 		} else
 			return false;
 	}
@@ -162,9 +164,10 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		SizeEditor();
 		break;
 	case WM_CLOSE:
-		LRESULT r = subclassedProc(hwnd, uMsg, wParam, lParam);
+		ret = subclassedProc(hwnd, uMsg, wParam, lParam);
 		delete(this);
-		return r;
+		return ret;
+		break;
 	}
 
 	return subclassedProc(hwnd, uMsg, wParam, lParam);
@@ -229,6 +232,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	}
 	lstrcpynA(scrHIGHCOLOR, clr, 12);
 
+	static char * scrollsize = "17";
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -298,6 +302,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 									"HIGHCOLOR", scrHIGHCOLOR,
 									"PRESSCOLOR", scrPRESSCOLOR,
 									"FORECOLOR", scrFORECOLOR,
+									"SCROLLBARSIZE", scrollsize,
 								NULL),
 								IupSetAtt(NULL, IupCreatep("expander",
 									IupSetAtt(NULL, IupCreatep("sc_detachbox",
@@ -307,6 +312,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 										"HIGHCOLOR", scrHIGHCOLOR,
 										"PRESSCOLOR", scrPRESSCOLOR,
 										"FORECOLOR", scrFORECOLOR,
+										"SCROLLBARSIZE", scrollsize,
 										NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
 									"NAME", "SourceExDetach",
 									"ORIENTATION", "HORIZONTAL",
@@ -389,6 +395,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"HIGHCOLOR", scrHIGHCOLOR,
 				"PRESSCOLOR", scrPRESSCOLOR,
 				"FORECOLOR", scrFORECOLOR,
+				"SCROLLBARSIZE", scrollsize,
 				NULL),
 				NULL), "NAME", "concolebar_vbox", NULL), NULL),
 			"NAME", "ConsoleDetach",
@@ -411,6 +418,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"HIGHCOLOR", scrHIGHCOLOR,
 				"PRESSCOLOR", scrPRESSCOLOR,
 				"FORECOLOR", scrFORECOLOR,
+				"SCROLLBARSIZE", scrollsize,
 				NULL),
 				NULL), "NAME", "findresbar_vbox", NULL), NULL),
 			"NAME", "FindResDetach",
