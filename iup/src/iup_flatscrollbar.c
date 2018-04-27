@@ -55,6 +55,22 @@ static void iFlatScrollBarNormalizePos(int *pos, int max, int d)
   if (*pos > max - d) *pos = max - d;
 }
 
+static void iFlatScrollBarSetMinD(int *pos, int *d, int max, int sb_size) 
+{
+  int sz_min = sb_size / 2;
+  if (*d < sz_min)
+  {
+	int d_up = (sz_min - *d) / 2;
+	if (*pos >= d_up)
+		*pos -= d_up;
+
+	if (*pos + sz_min > max)
+		*d = max - *pos;
+	else
+		*d = sz_min;
+  }
+}
+
 static int iFlatScrollBarGetLineY(Ihandle* ih, int dy)
 {
   int liney = dy / 10;
@@ -190,6 +206,7 @@ static void iFlatScrollBarDrawVertical(Ihandle* sb_ih, IdrawCanvas* dc, int acti
     }
   }
 
+  iFlatScrollBarSetMinD(&pos, &d, ymax, sb_size);
   /* draw handler */
   iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
 }
@@ -356,6 +373,8 @@ static int iFlatScrollBarGetHandler(Ihandle* sb_ih, int x, int y)
     d = (dy * range) / ymax;
     pos = (posy * range) / ymax;
     pos += arrow_size;
+
+	iFlatScrollBarSetMinD(&pos, &d, ymax, sb_size);
 
     if (y < arrow_size)
       return IUP_SBUP;
