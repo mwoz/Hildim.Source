@@ -123,6 +123,7 @@ public:
 	~IupChildWnd();
 	void Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
 	void Scroll_CB(int op, float posx, float posy);
+	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
 private:
 	char name[16];
 	HWND hMainWnd;

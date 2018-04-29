@@ -27,6 +27,7 @@
 static int iScrollCanvasCreateMethod(Ihandle* ih, void** params)
 {
 	/* must be first */
+	IupSetAttribute(ih, "BORDER", "NO");
 	iupFlatScrollBarCreate(ih);
   return IUP_NOERROR;
 }

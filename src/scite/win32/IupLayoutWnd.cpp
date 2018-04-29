@@ -1,4 +1,5 @@
 #include "SciTEWin.h"
+#include "../../iup/src/iup_drvdraw.h"
 
 std::map<std::string, IupChildWnd*> classList;
 
@@ -6,6 +7,13 @@ static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	classList[IupGetAttribute(ih, "NAME")]->Scroll_CB(op, posx, posy);
 	return IUP_DEFAULT;
 }
+
+static int iVScrollFraw_CB(Ihandle*ih, IdrawCanvas* dc, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
+	classList[IupGetAttribute(ih, "NAME")]->VScrollFraw_CB(ih, (void*)dc, sb_size, ymax, pos, d, active, fgcolor_drag, bgcolor);
+	return IUP_DEFAULT;
+}
+
+
 
 IupChildWnd::IupChildWnd()
 {
@@ -15,6 +23,11 @@ IupChildWnd::IupChildWnd()
 IupChildWnd::~IupChildWnd()
 {
 }
+void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
+	IdrawCanvas* dc = (IdrawCanvas*)c;
+	iupFlatDrawBox(dc, 2, sb_size - 3, pos, pos + d, fgcolor_drag, bgcolor, active);
+}
+
 void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	switch (op) {
 	case IUP_SBUP:
@@ -50,6 +63,8 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::
 	pScintilla = pW;
 	pContainer = pCnt;
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
+	IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB);
+	//IupSetCallback(pCnt, "HSCROLLDRAW_CB", (Icallback)iHScrollFraw_CB);
 }
 
 void IupChildWnd::SizeEditor() {
@@ -232,7 +247,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	}
 	lstrcpynA(scrHIGHCOLOR, clr, 12);
 
-	static char * scrollsize = "17";
+	static char * scrollsize = "15";
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -268,6 +283,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"ORIENTATION", "VERTICAL",
 		"NAME", "TabBarSplit",
 		"SHOWGRIP", "NO",
+		"COLOR", scrFORECOLOR,
 		"BARSIZE", "0",
 		"LAYOUTDRAG", "NO",
 		"VALUE", "1000",
@@ -287,7 +303,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				NULL),
 			NULL),
 			"NAME", "LeftBarExpander",
-			"BARSIZE", "3",
+			"BARSIZE", "5",
 			"BARPOSITION", "LEFT",
 			"LAYOUTDRAG", "NO",
 			"MINSIZE", "x1",
@@ -325,7 +341,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 									NULL),
 							NULL), 
 							"NAME", "SourceSplitMiddle",
-							"SHOWGRIP", "NO",
+						 	"SHOWGRIP", "NO",
+							"COLOR", scrFORECOLOR,
 							"BARSIZE", "0",
 							"VALUE", "1000",
 							"LAYOUTDRAG", "NO",
@@ -341,7 +358,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 					NULL),
 					"ORIENTATION", "HORIZONTAL",
 					"NAME", "SourceSplitBtm",
-					"SHOWGRIP", "NO",
+				 	"SHOWGRIP", "NO",
+				    "COLOR", scrFORECOLOR,
 					"BARSIZE", "0",
 					"VALUE", "1000",
 					"LAYOUTDRAG", "NO",
@@ -364,8 +382,9 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			NULL),
 			"DIRECTION", "EAST",
 			"NAME", "SourceSplitRight",
-			"SHOWGRIP", "NO",
-			"BARSIZE", "3",
+		 	"SHOWGRIP", "NO",
+			"COLOR", scrFORECOLOR,
+			"BARSIZE", "5",
 			"VALUE", "1000",
 			"LAYOUTDRAG", "NO",
 			"MINSIZE", "x1",
@@ -373,7 +392,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		NULL),
 		"DIRECTION", "WEST",
 		"NAME", "SourceSplitLeft",
-		"SHOWGRIP", "NO",
+	 	"SHOWGRIP", "NO",
+		"COLOR", scrFORECOLOR,
 		"BARSIZE", "0",
 		"VALUE", "0",
 		"LAYOUTDRAG", "NO",
@@ -439,8 +459,9 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		containers[10],
 		NULL),
 		"NAME", "BottomSplit",
-		"SHOWGRIP", "NO",
-		"BARSIZE", "3",
+	 	"SHOWGRIP", "NO",
+		"COLOR", scrFORECOLOR,
+		"BARSIZE", "5",
 		"LAYOUTDRAG", "NO",
 	NULL);
 
@@ -456,7 +477,8 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		containers[9],
 		NULL),
 		"NAME", "BottomSplit2",
-		"SHOWGRIP", "NO",
+	 	"SHOWGRIP", "NO",
+		"COLOR", scrFORECOLOR,
 		"BARSIZE", "0",
 		"LAYOUTDRAG", "NO",
 		"BGCOLOR", "255 255 255",
@@ -497,8 +519,9 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 			containers[4], NULL),
 			"ORIENTATION", "HORIZONTAL",
 			"NAME", "BottomBarSplit",
-			"SHOWGRIP", "NO",
-			"BARSIZE", "3",
+	 		"SHOWGRIP", "NO",
+			"COLOR", scrFORECOLOR,
+			"BARSIZE", "5",
 			"LAYOUTDRAG", "NO",
 		NULL),
 	NULL),

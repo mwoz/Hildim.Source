@@ -208,7 +208,11 @@ static void iFlatScrollBarDrawVertical(Ihandle* sb_ih, IdrawCanvas* dc, int acti
 
   iFlatScrollBarSetMinD(&pos, &d, ymax, sb_size);
   /* draw handler */
-  iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
+  IFnCiiiiiss cb = IupGetCallback(sb_ih->parent, "VSCROLLDRAW_CB");
+  if (cb) {
+	  cb(sb_ih->parent, dc, sb_size, ymax , pos, d, active, fgcolor_drag, bgcolor);
+  }else
+	iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
 }
 
 static void iFlatScrollBarDrawHorizontal(Ihandle* sb_ih, IdrawCanvas* dc, int active, const char* fgcolor, const char* bgcolor, int pressed,
@@ -1079,6 +1083,7 @@ int iupFlatScrollBarCreate(Ihandle* ih)
 void iupFlatScrollBarRegister(Iclass* ic)
 {
   iupClassRegisterCallback(ic, "FLATSCROLL_CB", "");
+  iupClassRegisterCallback(ic, "VSCROLLDRAW_CB", "iiiiiiv");
 
   iupClassRegisterGetAttribute(ic, "DX", NULL, &iupCanvasSetDXAttrib, NULL, NULL, NULL);
   iupClassRegisterGetAttribute(ic, "DY", NULL, &iupCanvasSetDYAttrib, NULL, NULL, NULL);
