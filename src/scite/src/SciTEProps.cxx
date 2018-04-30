@@ -1092,7 +1092,7 @@ void SciTEBase::ReadProperties() {
 		// Trap for insert/delete notifications (also fired by undo
 		// and redo) so that the buttons can be enabled if needed.
 		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | wEditor.Call(SCI_GETMODEVENTMASK, 0));
+			| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | wEditor.Call(SCI_GETMODEVENTMASK, 0));
 		wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
 			| SC_LASTSTEPINUNDOREDO | wOutput.Call(SCI_GETMODEVENTMASK, 0));
 		wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT

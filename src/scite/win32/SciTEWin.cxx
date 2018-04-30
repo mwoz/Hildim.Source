@@ -2202,6 +2202,7 @@ int SciTEWin::EventLoop() {
 			}
 			else goto BRK;
 		}
+		layout.OnIdle();
 		extender->OnIdle();
 		WaitMessage();
 	}

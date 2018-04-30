@@ -116,14 +116,16 @@ public:
 	    HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 };
 
+typedef struct sb_colors { int left; int right; } sb_colors;
 class IupChildWnd
 {
 public:
 	IupChildWnd();
 	~IupChildWnd();
-	void Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
+	void Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
 	void Scroll_CB(int op, float posx, float posy);
 	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
+	void OnIdle();
 private:
 	char name[16];
 	HWND hMainWnd;
@@ -131,13 +133,20 @@ private:
 	WNDPROC subclassedProc;
     LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	GUI::ScintillaWindow *pScintilla;
+	GUI::ScintillaWindow *pS;
 	Ihandle *pContainer = 0;
 	void SizeEditor();
 	bool blockV = false;
 	bool blockH = false;
-	int hPx = 0;
-	int vPx = 0;
+	int hPx = 0; //высота горизонтального бара
+	int vPx = 0;  //ширина вертикального бара
+	UINT vHeight = 0; //текущая высота вертикального бара
+	bool colodizedSB = false;
+	int lineResetFrom = -1;
+	int lineResetTo = -1;
+	std::vector<sb_colors> pixelMap;
+	
+	void resetPixelMap();
 };
 typedef std::map<const char*, IupChildWnd*> mapsICW;
 class IupLayoutWnd
@@ -154,6 +163,7 @@ public:
 	Ihandle* hMain;
 	void Fit();
 	void Close();
+	void OnIdle();
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
 private:

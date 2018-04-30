@@ -26,6 +26,41 @@ IupChildWnd::~IupChildWnd()
 void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 	iupFlatDrawBox(dc, 2, sb_size - 3, pos, pos + d, fgcolor_drag, bgcolor, active);
+
+	int size = pixelMap.size();
+	long color = color = iupDrawStrToColor("0 0 255", 0);
+
+	for (int i = 0; i < size; i++) {
+		if (pixelMap[i].left) {
+			iupdrvDrawRectangle(dc, 0, sb_size + i, 5, sb_size + i + 1, color, IUP_DRAW_FILL, 1);
+		}
+	}
+
+	///iupdrvDrawRectangle(dc, xmin, ymin, xmax, ymax, color, IUP_DRAW_FILL, 1);
+}
+
+void IupChildWnd::resetPixelMap() {
+	if (!vPx || !colodizedSB)
+		return;
+	
+	pixelMap.assign(vHeight + 1, { 0, 0 });
+	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, pS->Call(SCI_GETLINECOUNT)) + pS->Call(SCI_LINESONSCREEN);
+	if (!count)
+		return;
+
+	float lineheightPx = (float)vHeight / (float)count;
+	
+	int vLine;
+	for (int line = pS->Call(SCI_MARKERNEXT, 0, 31); line != -1; line = pS->Call(SCI_MARKERNEXT,line + 1, 31)) {
+		if (pS->Call(SCI_GETLINEVISIBLE, line)) {
+			vLine = pS->Call(SCI_DOCLINEFROMVISIBLE, line);
+			int pFirst = round(line * lineheightPx);
+			int pLast = max(pFirst, round((line + 1) * lineheightPx));
+			for (int i = pFirst; i <= pLast; i++) {
+				pixelMap[i].left = 1;
+			}
+		}
+	}
 }
 
 void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
@@ -37,7 +72,7 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	case IUP_SBPOSV:
 	case IUP_SBDRAGV:
 		blockV = true;
-		pScintilla->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
+		pS->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
 		blockV = false;
 		break;
 	case IUP_SBLEFT:
@@ -47,32 +82,40 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	case IUP_SBPOSH:
 	case IUP_SBDRAGH:
 		blockH = true;
-		pScintilla->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
+		pS->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
 		blockH = false;
 		break;
 	}
 }
-void IupChildWnd::Attach(HWND h, SciTEWin *pS, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
+void IupChildWnd::Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
 {
 	hMainWnd = hM;
-	pSciteWin = pS;
+	pSciteWin = pScite;
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);
 	lstrcpynA(name, pName, 15);
-	pScintilla = pW;
+	colodizedSB = !strcmp(name, "Source") || !strcmp(name, "CoSource");
+	pS = pW;
 	pContainer = pCnt;
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
-	IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB);
-	//IupSetCallback(pCnt, "HSCROLLDRAW_CB", (Icallback)iHScrollFraw_CB);
+	if(colodizedSB)
+		IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB);
 }
 
 void IupChildWnd::SizeEditor() {
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
-	//::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - (IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE")), y - hPx, 0);
-	::SetWindowPos((HWND)pScintilla->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
+	::SetWindowPos((HWND)pS->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
 
+}
+
+void IupChildWnd::OnIdle() {
+	if (lineResetFrom < 0)
+		return;
+	resetPixelMap();
+	IupSetAttribute(pContainer, "REDRAWVSCROLL", "");
+	lineResetFrom = -1;
 }
 
 
@@ -171,18 +214,37 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		return true;
 		break;
 	case WM_NOTIFY:
+	{
+		SCNotification *notification = (SCNotification*)(lParam);
+		switch (notification->nmhdr.code) {
+		case SCN_MODIFIED:
+			if (notification->modificationType & SC_MOD_CHANGEMARKER) {
+				lineResetFrom = notification->line;
+			}
+		}
+	}
+		if (::IsWindowVisible(hMainWnd))return pSciteWin->WndProc(uMsg, wParam, lParam);
+		break;
 	case WM_COMMAND:
 	case WM_CONTEXTMENU:
 		if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
 		break;
-	case WM_SIZE: 	
+	case WM_SIZE:
+	{
+		int newVHeight = HIWORD(lParam) - 2 * vPx - hPx;
+		if (vPx && (vHeight != newVHeight)) {
+			vHeight = newVHeight;
+			resetPixelMap();
+		}
 		SizeEditor();
+	}
 		break;
 	case WM_CLOSE:
 		ret = subclassedProc(hwnd, uMsg, wParam, lParam);
 		delete(this);
 		return ret;
 		break;
+
 	}
 
 	return subclassedProc(hwnd, uMsg, wParam, lParam);
@@ -551,6 +613,8 @@ static int cf_iup_get_layout(lua_State *L){
 void IupLayoutWnd::Fit(){
 	RECT r;
 	::GetClientRect((HWND)pSciteWin->GetID(), &r);
+	if (!r.right && !r.bottom)
+		return;
 	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, r.right, r.bottom, 0);
 	IupRefresh(pLeftTab);
 	IupRefresh(pRightTab);
@@ -592,6 +656,10 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	RECT rc;
 	::GetWindowRect(GetChildHWND(name), &rc);
 	if(pW) ::SetWindowPos((HWND)pW->GetID(), HWND_TOP, 0, 0, rc.right, rc.bottom, 0);
+}
+void IupLayoutWnd::OnIdle() {
+	classList["Source"]->OnIdle();
+	classList["CoSource"]->OnIdle();
 }
 
 void IupLayoutWnd::GetPaneRect(const char *name, LPRECT pRc){
