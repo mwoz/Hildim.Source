@@ -116,7 +116,13 @@ public:
 	    HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 };
 
-typedef struct sb_colors { int left; int right; } sb_colors;
+typedef struct sb_colors { long left; long right; } sb_colors;
+struct sb_colorsetting {
+	int size;
+	int id[10];
+	long clr[10];
+	DWORD mask;
+};
 class IupChildWnd
 {
 public:
@@ -125,6 +131,7 @@ public:
 	void Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
 	void Scroll_CB(int op, float posx, float posy);
 	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
+	void ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value);
 	void OnIdle();
 private:
 	char name[16];
@@ -142,11 +149,14 @@ private:
 	int vPx = 0;  //ширина вертикального бара
 	UINT vHeight = 0; //текущая высота вертикального бара
 	bool colodizedSB = false;
-	int lineResetFrom = -1;
-	int lineResetTo = -1;
+	int resetmap = false;
 	std::vector<sb_colors> pixelMap;
 	
 	void resetPixelMap();
+	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+	DWORD markerMaskAll = 0;
+
 };
 typedef std::map<const char*, IupChildWnd*> mapsICW;
 class IupLayoutWnd

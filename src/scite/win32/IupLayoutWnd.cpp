@@ -1,5 +1,7 @@
 #include "SciTEWin.h"
+#include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/srccontrols/color/iup_colorhsi.h"
 
 std::map<std::string, IupChildWnd*> classList;
 
@@ -13,6 +15,11 @@ static int iVScrollFraw_CB(Ihandle*ih, IdrawCanvas* dc, int sb_size, int ymax, i
 	return IUP_DEFAULT;
 }
 
+static int iColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value) {
+	classList[IupGetAttribute(ih, "NAME")]->ColorSettings_CB(ih, side, markerid, value);
+	return IUP_DEFAULT;
+}
+
 
 
 IupChildWnd::IupChildWnd()
@@ -23,18 +30,96 @@ IupChildWnd::IupChildWnd()
 IupChildWnd::~IupChildWnd()
 {
 }
+
+void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value) {
+	sb_colorsetting *cs;
+	if (side == 1)
+		cs = &leftClr;
+	else
+		cs = &rightClr;
+	if (markerid < 0) {
+		cs->size = 0;
+		cs->mask = 0;
+	} else if (cs->size < 10) {
+		long d = iupDrawStrToColor(value, 0);;
+		unsigned char r =iupDrawRed(d);
+		unsigned char g = iupDrawGreen(d);
+		unsigned char b = iupDrawBlue(d);
+		double h, s, i;
+
+		iupColorRGB2HSI(r, g, b, &h, &s, &i);
+
+		i = 0.5; s = 0.75;
+
+		iupColorHSI2RGB(h, s, i, &r, &g, &b);
+
+		d = (r << 16) | (g << 8) | b;
+		cs->id[cs->size] = markerid;
+		cs->clr[cs->size] = d;
+		cs->size++;
+		cs->mask |= 1 << markerid;
+	}
+	markerMaskAll = leftClr.mask | rightClr.mask;
+}
+
 void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
-	iupFlatDrawBox(dc, 2, sb_size - 3, pos, pos + d, fgcolor_drag, bgcolor, active);
 
 	int size = pixelMap.size();
-	long color = color = iupDrawStrToColor("0 0 255", 0);
 
+	int clrId, lineFrom;
+	int clrNew, lineFromNew;
+	clrId = 0; lineFrom = 0;
 	for (int i = 0; i < size; i++) {
-		if (pixelMap[i].left) {
-			iupdrvDrawRectangle(dc, 0, sb_size + i, 5, sb_size + i + 1, color, IUP_DRAW_FILL, 1);
+		bool nedDraw = false;
+		clrNew = pixelMap[i].left;
+		lineFromNew = lineFrom;
+		if (clrNew) {
+			if (clrId == clrNew) {
+				//nothing todo
+			} else {
+				if (clrId)
+					nedDraw = true;
+				lineFromNew = sb_size + i;
+
+			}
+		} else {
+			if (clrId)
+				nedDraw = true;
 		}
+		if (nedDraw) {
+			iupdrvDrawRectangle(dc, 0, lineFrom, 5, sb_size + i - 1, leftClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+		}
+		clrId = clrNew;
+		lineFrom = lineFromNew;
 	}
+
+	clrId = 0; lineFrom = 0;
+	for (int i = 0; i < size; i++) {
+		bool nedDraw = false;
+		clrNew = pixelMap[i].right;
+		lineFromNew = lineFrom;
+		if (clrNew) {
+			if (clrId == clrNew) {
+				//nothing todo
+			} else {
+				if (clrId)
+					nedDraw = true;
+				lineFromNew = sb_size + i;
+
+			}
+		} else {
+			if (clrId)
+				nedDraw = true;
+		}
+		if (nedDraw) {
+			iupdrvDrawRectangle(dc, 6, lineFrom, sb_size-1, sb_size + i - 1, rightClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+		}
+		clrId = clrNew;
+		lineFrom = lineFromNew;
+	}
+
+	//iupFlatDrawBox(dc, 2, sb_size - 3, pos, pos + d, fgcolor_drag, bgcolor, active);
 
 	///iupdrvDrawRectangle(dc, xmin, ymin, xmax, ymax, color, IUP_DRAW_FILL, 1);
 }
@@ -42,7 +127,7 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 void IupChildWnd::resetPixelMap() {
 	if (!vPx || !colodizedSB)
 		return;
-	
+	pixelMap.clear();
 	pixelMap.assign(vHeight + 1, { 0, 0 });
 	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, pS->Call(SCI_GETLINECOUNT)) + pS->Call(SCI_LINESONSCREEN);
 	if (!count)
@@ -50,14 +135,43 @@ void IupChildWnd::resetPixelMap() {
 
 	float lineheightPx = (float)vHeight / (float)count;
 	
-	int vLine;
-	for (int line = pS->Call(SCI_MARKERNEXT, 0, 31); line != -1; line = pS->Call(SCI_MARKERNEXT,line + 1, 31)) {
+	int vLine, curMark;
+	for (int line = pS->Call(SCI_MARKERNEXT, 0, markerMaskAll); line != -1; line = pS->Call(SCI_MARKERNEXT,line + 1, markerMaskAll)) {
 		if (pS->Call(SCI_GETLINEVISIBLE, line)) {
-			vLine = pS->Call(SCI_DOCLINEFROMVISIBLE, line);
-			int pFirst = round(line * lineheightPx);
-			int pLast = max(pFirst, round((line + 1) * lineheightPx));
-			for (int i = pFirst; i <= pLast; i++) {
-				pixelMap[i].left = 1;
+			curMark = pS->Call(SCI_MARKERGET, line);
+			vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+
+			if (curMark & leftClr.mask) {
+				int id = -1;
+				for (int i = 0; i < leftClr.size; i++) {
+					if (curMark & (1 << leftClr.id[i])) {
+						id = i;
+						break;
+					}
+				}
+				assert(id > -1);
+
+				int pFirst = round(vLine * lineheightPx);
+				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				for (int i = pFirst; i <= pLast; i++) {
+					pixelMap[i].left = id + 1;
+				}
+			}
+			if (curMark & rightClr.mask) {
+				int id = -1;
+				for (int i = 0; i < rightClr.size; i++) {
+					if (curMark & (1 << rightClr.id[i])) {  
+						id = i;
+						break;
+					}
+				}
+				assert(id > -1);
+
+				int pFirst = round(vLine * lineheightPx);
+				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				for (int i = pFirst; i <= pLast; i++) {
+					pixelMap[i].right = id + 1;
+				}
 			}
 		}
 	}
@@ -99,8 +213,10 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, G
 	pS = pW;
 	pContainer = pCnt;
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
+	IupSetCallback(pCnt, "_COLORSETTINGS_CB", (Icallback)iColorSettings_CB);
 	if(colodizedSB)
-		IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB);
+		IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB); 
+
 }
 
 void IupChildWnd::SizeEditor() {
@@ -111,11 +227,11 @@ void IupChildWnd::SizeEditor() {
 }
 
 void IupChildWnd::OnIdle() {
-	if (lineResetFrom < 0)
+	if (!resetmap)
 		return;
 	resetPixelMap();
 	IupSetAttribute(pContainer, "REDRAWVSCROLL", "");
-	lineResetFrom = -1;
+	resetmap = false;
 }
 
 
@@ -219,7 +335,10 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		switch (notification->nmhdr.code) {
 		case SCN_MODIFIED:
 			if (notification->modificationType & SC_MOD_CHANGEMARKER) {
-				lineResetFrom = notification->line;
+				resetmap = true;
+			}
+			if ((notification->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)) && notification->linesAdded) {
+				resetmap = true;
 			}
 		}
 	}

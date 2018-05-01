@@ -208,11 +208,11 @@ static void iFlatScrollBarDrawVertical(Ihandle* sb_ih, IdrawCanvas* dc, int acti
 
   iFlatScrollBarSetMinD(&pos, &d, ymax, sb_size);
   /* draw handler */
-  IFnCiiiiiss cb = IupGetCallback(sb_ih->parent, "VSCROLLDRAW_CB");
+  IFnCiiiiiss cb = (IFnCiiiiiss)IupGetCallback(sb_ih->parent, "VSCROLLDRAW_CB");
   if (cb) {
-	  cb(sb_ih->parent, dc, sb_size, ymax , pos, d, active, fgcolor_drag, bgcolor);
-  }else
-	iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
+	  cb(sb_ih->parent, (void*)dc, sb_size, ymax , pos, d, active, fgcolor_drag, bgcolor);
+  }
+  iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
 }
 
 static void iFlatScrollBarDrawHorizontal(Ihandle* sb_ih, IdrawCanvas* dc, int active, const char* fgcolor, const char* bgcolor, int pressed,
@@ -221,7 +221,7 @@ static void iFlatScrollBarDrawHorizontal(Ihandle* sb_ih, IdrawCanvas* dc, int ac
   int width = sb_ih->currentwidth;
   int pos, d, range;
   int posx = iupAttribGetInt(sb_ih->parent, "POSX");
-  int show_arrows = iupAttribGetInt(sb_ih->parent, "SHOWARROWS");
+  int show_arrows = iupAttribGetInt(sb_ih->parent, "SHOWARROWS");   
   int arrow_size = sb_size;
 
   const char *fgcolor_inc = fgcolor,
@@ -755,6 +755,7 @@ static IattribGetFunc iupCanvasGetPosXAttrib = NULL;
 static IattribGetFunc iupCanvasGetPosYAttrib = NULL;
 
 static int iFlatScrollBarSetRedrawVScrollAttrib(Ihandle* ih, const char *value) {
+	(void)value;
 	int xmax = iupAttribGetInt(ih, "XMAX");
 	IupSetInt(ih, "XMAX", -1);
 	iFlatScrollBarAction_CB(ih->firstchild);
@@ -962,7 +963,7 @@ void iupFlatScrollBarSetChildrenCurrentSize(Ihandle* ih, int shrink)
 void iupFlatScrollBarSetChildrenPosition(Ihandle* ih)
 {
   Ihandle* sb_vert = iFlatScrollBarGetVertical(ih);
-  Ihandle* sb_horiz = iFlatScrollBarGetHorizontal(ih);
+  Ihandle* sb_horiz = iFlatScrollBarGetHorizontal(ih); 
   int sb_size = iupAttribGetInt(ih, "SCROLLBARSIZE");
 
   iupBaseSetPosition(sb_vert, ih->currentwidth - sb_size, 0);

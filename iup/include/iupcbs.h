@@ -71,7 +71,7 @@ typedef char* (*sIFniis)(Ihandle*, int, int, char*);  /* translatevalue_cb */
 typedef double (*dIFnii)(Ihandle*, int, int);  /* numericgetvalue_cb */
 typedef int    (*IFniid)(Ihandle*, int, int, double);  /* numericsetvalue_cb */
 
-typedef int(*IFnCiiiiiss)(Ihandle*, struct _cdCanvas*, int, int, int, int, char*, char*);  /* draw_cb */
+typedef int(*IFnCiiiiiss)(Ihandle*, struct _cdCanvas*, int, int, int, int, int, const char*,const char*);  /* draw_cb */
 
 
 #endif

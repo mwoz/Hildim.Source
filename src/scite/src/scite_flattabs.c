@@ -132,7 +132,7 @@ static int flattab_tab_button_cb(Ihandle *self, Ihandle *p0, int p1, int p2, int
 	iuplua_pushihandle(L, p0);
 	lua_pushinteger(L, p1);
 	lua_pushinteger(L, p2);
-	lua_pushinteger(L, p3);
+	lua_pushinteger(L, p3); 
 	lua_pushinteger(L, p4);
 	lua_pushinteger(L, p5);
 	lua_pushinteger(L, p6);

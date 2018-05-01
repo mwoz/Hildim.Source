@@ -20,9 +20,18 @@
 #include "../../iup/src/iup_drvfont.h"
 #include "../../iup/src/iup_stdcontrols.h"
 #include "../../iup/src/iup_layout.h"
+#include "../../iup/src/iup_layout.h"
+#include "../../iup/src/iup_flatscrollbar.h"
+#include "../../iup/src/iup_register.h"
+#include "../../iup/srclua5/il.h"
+#include "../../iup/include/iuplua.h"
 #include "scite_scrollcanvas.h"
 
-
+static int iScrollCanvasSetColorIdAttrib(Ihandle* ih, int side, int markerid, const char* value) {
+	IFniis cb = (IFniis)IupGetCallback(ih, "_COLORSETTINGS_CB");
+	cb(ih, side, markerid, (char*)value);
+	return 0;
+}
 
 static int iScrollCanvasCreateMethod(Ihandle* ih, void** params)
 {
@@ -48,12 +57,6 @@ static void iScrollCanvasSetChildrenPositionMethod(Ihandle* ih, int x, int y) {
 /******************************************************************************/
 
 
-void IupScrollCanvasOpen(void) {
-	static int run = 0;
-	if (run) return;
-	run = 1;
-	iupRegisterClass(iupScrollCanvasNewClass());
-}
 
 Iclass* iupScrollCanvasNewClass(void)
 {
@@ -65,7 +68,7 @@ Iclass* iupScrollCanvasNewClass(void)
 
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
-  ic->has_attrib_id = 1;
+  ic->has_attrib_id = 2;
 
   /* Class functions */
   ic->New = iupScrollCanvasNewClass;
@@ -76,9 +79,19 @@ Iclass* iupScrollCanvasNewClass(void)
   /* Flat Scrollbar */
   iupFlatScrollBarRegister(ic);
 
+  iupClassRegisterAttributeId2(ic, "COLORID", NULL, iScrollCanvasSetColorIdAttrib, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+
+  iupClassRegisterCallback(ic, "_COLORSETTINGS_CB", "iis");
   iupClassRegisterAttribute(ic, "FLATSCROLLBAR", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   return ic;
+}
+
+void IupScrollCanvasOpen(void) {
+	static int run = 0;
+	if (run) return;
+	run = 1;
+	iupRegisterClass(iupScrollCanvasNewClass());
 }
 
 Ihandle* IupScrollCanvas(void) {
