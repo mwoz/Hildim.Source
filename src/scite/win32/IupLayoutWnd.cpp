@@ -88,7 +88,16 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 				nedDraw = true;
 		}
 		if (nedDraw) {
-			iupdrvDrawRectangle(dc, 0, lineFrom, 5, sb_size + i - 1, leftClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+			int lineTo = sb_size + i - 1;
+			if (lineTo - lineFrom < 3) {
+				int idStart = lineFrom - sb_size;
+				if ((idStart > 0) && !pixelMap[idStart - 1].left)
+					lineFrom--;
+				if ((lineTo - lineFrom < 3) && (i < size - 1) && !pixelMap[i].left)
+					lineTo++;
+			}
+
+			iupdrvDrawRectangle(dc, 0, lineFrom, 5, lineTo, leftClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
 		}
 		clrId = clrNew;
 		lineFrom = lineFromNew;
@@ -113,7 +122,15 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 				nedDraw = true;
 		}
 		if (nedDraw) {
-			iupdrvDrawRectangle(dc, 6, lineFrom, sb_size-1, sb_size + i - 1, rightClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+			int lineTo = sb_size + i - 1;
+			if (lineTo - lineFrom < 3) {
+				int idStart = lineFrom - sb_size;
+				if ((idStart > 0) && !pixelMap[idStart - 1].right)
+					lineFrom--;
+				if ((lineTo - lineFrom < 3) && (i < size - 1) && !pixelMap[i].right)
+					lineTo++;
+			}
+			iupdrvDrawRectangle(dc, 6, lineFrom, sb_size-1, lineTo, rightClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
 		}
 		clrId = clrNew;
 		lineFrom = lineFromNew;
@@ -127,7 +144,7 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 void IupChildWnd::resetPixelMap() {
 	if (!vPx || !colodizedSB)
 		return;
-	pixelMap.clear();
+	
 	pixelMap.assign(vHeight + 1, { 0, 0 });
 	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, pS->Call(SCI_GETLINECOUNT)) + pS->Call(SCI_LINESONSCREEN);
 	if (!count)
@@ -154,7 +171,8 @@ void IupChildWnd::resetPixelMap() {
 				int pFirst = round(vLine * lineheightPx);
 				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
 				for (int i = pFirst; i <= pLast; i++) {
-					pixelMap[i].left = id + 1;
+					if(!pixelMap[i].left || pixelMap[i].left > id + 1) //от первых по списку цветов всегда что-то останетс€
+						pixelMap[i].left = id + 1;
 				}
 			}
 			if (curMark & rightClr.mask) {
@@ -170,7 +188,8 @@ void IupChildWnd::resetPixelMap() {
 				int pFirst = round(vLine * lineheightPx);
 				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
 				for (int i = pFirst; i <= pLast; i++) {
-					pixelMap[i].right = id + 1;
+					if (!pixelMap[i].right || pixelMap[i].right > id + 1)
+						pixelMap[i].right = id + 1;
 				}
 			}
 		}
@@ -302,6 +321,13 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (v != vPx) {
 				vPx = v;
 				hPx = IupGetInt(pContainer, "XHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				RECT r;
+				::GetWindowRect((HWND)IupGetAttribute(pContainer, "HWND"), &r);
+				int newVHeight = r.bottom - r.top - 2 * vPx - hPx;
+				if (vPx && (vHeight != newVHeight)) {
+					vHeight = newVHeight;
+					resetmap = true;
+				}
 				SizeEditor();
 			}
 		} else if(wParam == SB_HORZ) {
@@ -322,6 +348,13 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (h != hPx) {
 				hPx = h;
 				vPx = IupGetInt(pContainer, "YHIDDEN") ? 0 : IupGetInt(pContainer, "SCROLLBARSIZE");
+				RECT r;
+				::GetWindowRect((HWND)IupGetAttribute(pContainer, "HWND"), &r);
+				int newVHeight = r.bottom - r.top - 2 * vPx - hPx;
+				if (vPx && (vHeight != newVHeight)) {
+					vHeight = newVHeight;
+					resetmap = true;
+				}
 				SizeEditor();
 			}
 		} else
@@ -353,7 +386,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		int newVHeight = HIWORD(lParam) - 2 * vPx - hPx;
 		if (vPx && (vHeight != newVHeight)) {
 			vHeight = newVHeight;
-			resetPixelMap();
+			resetmap = true;
+			//resetPixelMap();
 		}
 		SizeEditor();
 	}
