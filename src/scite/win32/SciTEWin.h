@@ -122,6 +122,7 @@ struct sb_colorsetting {
 	int id[10];
 	long clr[10];
 	DWORD mask;
+	long annotation;
 };
 class IupChildWnd
 {
@@ -153,8 +154,8 @@ private:
 	std::vector<sb_colors> pixelMap;
 	
 	void resetPixelMap();
-	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
-	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0 };
+	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
+	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
 	DWORD markerMaskAll = 0;
 
 };

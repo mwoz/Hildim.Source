@@ -33,6 +33,14 @@ static int iScrollCanvasSetColorIdAttrib(Ihandle* ih, int side, int markerid, co
 	return 0;
 }
 
+static int iScrollCanvasSetRedrawVScrollAttrib(Ihandle* ih, const char *value) {
+	(void)value;
+	Icallback cb = IupGetCallback(ih->firstchild, "ACTION");
+	if (cb)
+		cb(ih->firstchild);
+	return 0;
+}
+
 static int iScrollCanvasCreateMethod(Ihandle* ih, void** params)
 {
 	/* must be first */
@@ -84,7 +92,8 @@ Iclass* iupScrollCanvasNewClass(void)
   iupClassRegisterCallback(ic, "_COLORSETTINGS_CB", "iis");
   iupClassRegisterAttribute(ic, "FLATSCROLLBAR", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
-  return ic;
+  iupClassRegisterAttribute(ic, "REDRAWVSCROLL", NULL, iScrollCanvasSetRedrawVScrollAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_WRITEONLY | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
+ return ic;
 }
 
 void IupScrollCanvasOpen(void) {
@@ -92,6 +101,8 @@ void IupScrollCanvasOpen(void) {
 	if (run) return;
 	run = 1;
 	iupRegisterClass(iupScrollCanvasNewClass());
+
+
 }
 
 Ihandle* IupScrollCanvas(void) {

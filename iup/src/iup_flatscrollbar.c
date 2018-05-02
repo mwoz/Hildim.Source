@@ -754,14 +754,6 @@ static IattribSetFunc iupCanvasSetPosYAttrib = NULL;
 static IattribGetFunc iupCanvasGetPosXAttrib = NULL;
 static IattribGetFunc iupCanvasGetPosYAttrib = NULL;
 
-static int iFlatScrollBarSetRedrawVScrollAttrib(Ihandle* ih, const char *value) {
-	(void)value;
-	int xmax = iupAttribGetInt(ih, "XMAX");
-	IupSetInt(ih, "XMAX", -1);
-	iFlatScrollBarAction_CB(ih->firstchild);
-	IupSetInt(ih, "XMAX", xmax);
-	return 0;
-}
 
 static int iFlatScrollBarSetDXAttrib(Ihandle* ih, const char *value)
 {
@@ -1135,6 +1127,4 @@ void iupFlatScrollBarRegister(Iclass* ic)
   iupClassRegisterAttribute(ic, "IMAGEBOTTOMPRESS", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IMAGEBOTTOMHIGHLIGHT", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IMAGEBOTTOMINACTIVE", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
-  
-  iupClassRegisterAttribute(ic, "REDRAWVSCROLL", NULL, iFlatScrollBarSetRedrawVScrollAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_WRITEONLY | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
 }

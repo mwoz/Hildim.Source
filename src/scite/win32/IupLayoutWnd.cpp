@@ -1,6 +1,7 @@
 #include "SciTEWin.h"
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/src/iup_str.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
 
 std::map<std::string, IupChildWnd*> classList;
@@ -40,24 +41,32 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	if (markerid < 0) {
 		cs->size = 0;
 		cs->mask = 0;
+		cs->annotation = 0;
 	} else if (cs->size < 10) {
-		long d = iupDrawStrToColor(value, 0);;
-		unsigned char r =iupDrawRed(d);
-		unsigned char g = iupDrawGreen(d);
-		unsigned char b = iupDrawBlue(d);
-		double h, s, i;
+		if (markerid > MARKER_MAX) {
+			int i = 0;
+			iupStrToInt(value, &i);
+			cs->annotation = i;
+		} else {
+			long d = iupDrawStrToColor(value, 0);;
+			unsigned char r = iupDrawRed(d);
+			unsigned char g = iupDrawGreen(d);
+			unsigned char b = iupDrawBlue(d);
+			double h, s, i;
 
-		iupColorRGB2HSI(r, g, b, &h, &s, &i);
+			iupColorRGB2HSI(r, g, b, &h, &s, &i);
 
-		i = 0.5; s = 0.75;
+			i = 0.5; s = 0.75;
 
-		iupColorHSI2RGB(h, s, i, &r, &g, &b);
+			iupColorHSI2RGB(h, s, i, &r, &g, &b);
 
-		d = (r << 16) | (g << 8) | b;
-		cs->id[cs->size] = markerid;
-		cs->clr[cs->size] = d;
-		cs->size++;
-		cs->mask |= 1 << markerid;
+			d = (r << 16) | (g << 8) | b;
+
+			cs->id[cs->size] = markerid;
+			cs->clr[cs->size] = d;
+			cs->size++;
+			cs->mask |= 1 << markerid;
+		}
 	}
 	markerMaskAll = leftClr.mask | rightClr.mask;
 }
@@ -146,19 +155,19 @@ void IupChildWnd::resetPixelMap() {
 		return;
 	
 	pixelMap.assign(vHeight + 1, { 0, 0 });
-	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, pS->Call(SCI_GETLINECOUNT)) + pS->Call(SCI_LINESONSCREEN);
+	int docCount = pS->Call(SCI_GETLINECOUNT);
+	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, docCount) + pS->Call(SCI_LINESONSCREEN);
 	if (!count)
 		return;
 
 	float lineheightPx = (float)vHeight / (float)count;
 	
 	int vLine, curMark;
-	for (int line = pS->Call(SCI_MARKERNEXT, 0, markerMaskAll); line != -1; line = pS->Call(SCI_MARKERNEXT,line + 1, markerMaskAll)) {
+	for(int line = 0; line <= docCount; line ++){
 		if (pS->Call(SCI_GETLINEVISIBLE, line)) {
 			curMark = pS->Call(SCI_MARKERGET, line);
-			vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
-
 			if (curMark & leftClr.mask) {
+				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int id = -1;
 				for (int i = 0; i < leftClr.size; i++) {
 					if (curMark & (1 << leftClr.id[i])) {
@@ -176,6 +185,7 @@ void IupChildWnd::resetPixelMap() {
 				}
 			}
 			if (curMark & rightClr.mask) {
+				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int id = -1;
 				for (int i = 0; i < rightClr.size; i++) {
 					if (curMark & (1 << rightClr.id[i])) {  
@@ -191,6 +201,19 @@ void IupChildWnd::resetPixelMap() {
 					if (!pixelMap[i].right || pixelMap[i].right > id + 1)
 						pixelMap[i].right = id + 1;
 				}
+			}
+			int annotLines;
+			if ((rightClr.annotation || leftClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
+				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+				int pFirst = round((vLine + 1) * lineheightPx);
+				int pLast = max(pFirst, round((vLine + annotLines + 1) * lineheightPx));
+				for (int i = pFirst; i <= pLast; i++) {
+					if (rightClr.annotation && (!pixelMap[i].right || pixelMap[i].right > rightClr.annotation))
+						pixelMap[i].right = rightClr.annotation;
+					if (leftClr.annotation && (!pixelMap[i].left || pixelMap[i].left > leftClr.annotation))
+						pixelMap[i].left = leftClr.annotation;
+				}
+
 			}
 		}
 	}
@@ -241,7 +264,10 @@ void IupChildWnd::Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, G
 void IupChildWnd::SizeEditor() {
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
-	::SetWindowPos((HWND)pS->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
+	RECT r;
+	::GetWindowRect((HWND)pS->GetID(), &r);
+	if((r.right - r.left != x - vPx) || (r.bottom - r.top != y - hPx))
+		::SetWindowPos((HWND)pS->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
 
 }
 
@@ -312,6 +338,7 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				
 			}
 			if (lpsi->fMask & SIF_POS ) {
+
 				IupSetInt(pContainer, "POSY", lpsi->nPos);
 			}
 			if (lpsi->fMask & SIF_TRACKPOS) {
