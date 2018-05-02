@@ -71,7 +71,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	markerMaskAll = leftClr.mask | rightClr.mask;
 }
 
-void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
+void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int highlight, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 
 	int size = pixelMap.size();
@@ -145,9 +145,26 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 		lineFrom = lineFromNew;
 	}
 
-	//iupFlatDrawBox(dc, 2, sb_size - 3, pos, pos + d, fgcolor_drag, bgcolor, active);
+	int dL, dR;
+	dL = 0, dR = 0;
+	if (highlight == -1) {
+		for (int i = pos - sb_size; i <= pos + d - sb_size; i++) {
+			if (pixelMap[i].left) {
+				dL = 1;
+				break;
+			}
+		}
+		for (int i = pos - sb_size; i <= pos + d - sb_size; i++) {
+			if (pixelMap[i].right) {
+				dR = 1;
+				break;
+			}
+		}
 
-	///iupdrvDrawRectangle(dc, xmin, ymin, xmax, ymax, color, IUP_DRAW_FILL, 1);
+	}
+
+	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos + d, fgcolor_drag, bgcolor, 1);
+
 }
 
 void IupChildWnd::resetPixelMap() {

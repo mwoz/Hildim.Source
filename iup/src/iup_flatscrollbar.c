@@ -210,9 +210,9 @@ static void iFlatScrollBarDrawVertical(Ihandle* sb_ih, IdrawCanvas* dc, int acti
   /* draw handler */
   IFnCiiiiiss cb = (IFnCiiiiiss)IupGetCallback(sb_ih->parent, "VSCROLLDRAW_CB");
   if (cb) {
-	  cb(sb_ih->parent, (void*)dc, sb_size, ymax , pos, d, active, fgcolor_drag, bgcolor);
-  }
-  iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
+	  cb(sb_ih->parent, (void*)dc, sb_size, ymax , pos, d, highlight, fgcolor_drag, bgcolor);
+  } else
+	iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos, pos + d, fgcolor_drag, bgcolor, active);
 }
 
 static void iFlatScrollBarDrawHorizontal(Ihandle* sb_ih, IdrawCanvas* dc, int active, const char* fgcolor, const char* bgcolor, int pressed,
