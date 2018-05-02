@@ -147,20 +147,22 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 
 	int dL, dR;
 	dL = 0, dR = 0;
-	if (highlight == -1) {
-		for (int i = pos - sb_size; i <= pos + d - sb_size; i++) {
+	if (highlight < 4) {
+		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
 			if (pixelMap[i].left) {
 				dL = 1;
 				break;
 			}
 		}
-		for (int i = pos - sb_size; i <= pos + d - sb_size; i++) {
+		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
 			if (pixelMap[i].right) {
 				dR = 1;
 				break;
 			}
 		}
 
+	} else 		{
+		int uuu = 0;
 	}
 
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos + d, fgcolor_drag, bgcolor, 1);
@@ -482,7 +484,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	minSz[0] = '0';
 	minSz[1] = 'x';
 	lstrcatA(minSz, fntSize);
-
+	
 	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14];
 
 	char* clr = pSciteWin->Property("iup.scroll.forecolor");

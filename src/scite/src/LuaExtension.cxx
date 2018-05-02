@@ -1290,6 +1290,23 @@ static const char *CallNamedFunction(const char *name, unsigned int numberArg, c
 	return handled;
 }
 
+static const char *CallNamedFunction(const char *name, unsigned int numberArg, unsigned int numberArg2, long numberArg3, unsigned int numberArg4) {
+	const char *handled = NULL;
+	if (luaState) {
+		lua_getglobal(luaState, name);
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushinteger(luaState, numberArg);
+			lua_pushinteger(luaState, numberArg2);
+			lua_pushinteger(luaState, numberArg3);
+			lua_pushinteger(luaState, numberArg4);
+			handled = call_sfunction(luaState, 4);
+		} else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return handled;
+}
+
 static const char *CallNamedFunction(const char *name, unsigned int numberArg, unsigned int numberArg2, long numberArg3) {
 	const char *handled = NULL;
 	if (luaState) {
@@ -3007,8 +3024,8 @@ void LuaExtension::OnRightEditorVisibility(bool show) {
 	CallNamedFunction("OnRightEditorVisibility", show, 0);
 }
 
-void LuaExtension::OnTextChanged(int position, int length, const char* text, int linesAdded, int flag) {
-	CallNamedFunction("OnTextChanged", position, flag, linesAdded);
+void LuaExtension::OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) {
+	CallNamedFunction("OnTextChanged", position, flag, linesAdded, leg);
 }
 
 bool LuaExtension::OnAutocSelection(int method, int firstPos) {

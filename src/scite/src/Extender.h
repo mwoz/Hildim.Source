@@ -128,7 +128,7 @@ public:
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
-	virtual void OnTextChanged(int position, int length, const char* text, int linesAdded, int flag) { return; };
+	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
 };

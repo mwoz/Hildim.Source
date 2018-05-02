@@ -4240,7 +4240,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		if(!bBlockTextChangeNotify && 0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
 			(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
-			extender->OnTextChanged(notification->position, notification->length, notification->text, notification->linesAdded, notification->modificationType);
+			extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+				notification->text, notification->linesAdded, notification->modificationType);
 		}
 		break;
 
