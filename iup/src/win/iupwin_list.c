@@ -1547,27 +1547,48 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 		SetBkColor(hdc, RGBbgcolor);
 
+		HPEN hPen, hPenOld;
+		HBRUSH hBrush, hBrushOld;
+		POINT line_poly[3];		
 		if (higlight) {
 			bordercolor = IupGetAttribute(ih, "BORDERHLCOLOR");
 			iupStrToRGB(bordercolor, &r, &g, &b);
 			RGBbordercolor = RGB(r, g, b);
+
+			hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
+			hPenOld = SelectObject(hdc, hPen);
+			hBrush = CreateSolidBrush(RGBbgcolor);
+			hBrushOld = SelectObject(hdc, hBrush);
+
+			Rectangle(hdc, 0, 0, w, h);
+
+			SelectObject(hdc, hPenOld);
+			DeleteObject(hPen);
+			SelectObject(hdc, hBrushOld);
+			DeleteObject(hBrush);
+
 		} else {
 			r -= 30, g -= 30, b -= 30;
 			RGBbordercolor = RGB(r, g, b);
+
+			hBrush = CreateSolidBrush(RGBbgcolor);
+			RECT r;
+			r.bottom = h; r.right = w; r.top = 0; r.left = 0;
+
+			FillRect(hdc, &r, hBrush); DeleteObject(hBrush);
+
+			hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
+			hPenOld = SelectObject(hdc, hPen);
+
+			line_poly[0].x = 0;
+			line_poly[0].y = h - 2;
+			line_poly[1].x = w - 17;
+			line_poly[1].y = h - 2;
+			BOOL b = Polyline(hdc, line_poly, 2);
+			
+			SelectObject(hdc, hPenOld);
+			DeleteObject(hPen);
 		}
-
-		HPEN hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
-		HPEN hPenOld = SelectObject(hdc, hPen);
-		HBRUSH hBrush = CreateSolidBrush(RGBbgcolor);
-		HBRUSH hBrushOld = SelectObject(hdc, hBrush);
-
-		Rectangle(hdc, 0, 0, w , h );
-		
-		POINT line_poly[3];
-		SelectObject(hdc, hPenOld);
-		DeleteObject(hPen);
-		SelectObject(hdc, hBrushOld);
-		DeleteObject(hBrush);
 
 		char * text, *font;
 		int cnt = 0;
@@ -1603,6 +1624,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		FillPath(hdc);
 		SelectObject(hdc, hBrushOld);
 		DeleteObject(hBrush);
+
 
 		EndPaint(ih->handle, &ps);
 	}
