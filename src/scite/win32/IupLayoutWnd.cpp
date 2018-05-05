@@ -799,6 +799,11 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"MINSIZE", "200x200",
 		"SIZE", "200x200",
 		"SHRINK", "YES", 
+		"FLAT", "YES",
+		"HLCOLOR", "200 225 245",
+		"BORDERHLCOLOR", "50 150 255",
+		"BORDERCOLOR", "200 200 200",
+		"BORDERCOLORDARK", "190 190 190",
 		NULL);
 
 	return containers[0];

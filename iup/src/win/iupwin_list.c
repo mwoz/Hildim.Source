@@ -1474,6 +1474,64 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   case WM_IUPCARET:
     winListCallCaretCb(ih, cbedit);
     break;
+  case WM_NCPAINT:
+	  if (iupAttribGetBoolean(ih, "FLAT")) {
+
+		  RECT rect;
+		  GetWindowRect(ih->handle, &rect);
+		  HDC hdc = GetWindowDC(ih->handle);
+
+		  POINT line_poly[5];
+		  line_poly[0].x = 0;
+		  line_poly[0].y = 0;
+		  line_poly[1].x = rect.right - rect.left - 1;
+		  line_poly[1].y = 0;
+		  line_poly[2].x = rect.right - rect.left - 1;
+		  line_poly[2].y = rect.bottom - rect.top - 1;
+		  line_poly[3].x = 0;
+		  line_poly[3].y = rect.bottom - rect.top - 1;
+		  line_poly[4].x = 0;
+		  line_poly[4].y = 0;
+
+		  COLORREF RGBbordercolor, RGBbgcolor;
+		  unsigned char r, g, b;
+		  iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
+		  RGBbgcolor = RGB(r, g, b);
+
+		  r = 200, g = 200, b = 200;
+		  RGBbordercolor = RGB(r, g, b);
+
+		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
+		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
+		  HPEN hPenOld = SelectObject(hdc, hPen);
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPen2);
+		  DeleteObject(hPen);
+
+		  line_poly[0].x++;
+		  line_poly[0].y++;
+		  line_poly[1].x--;
+		  line_poly[1].y++;
+		  line_poly[2].x--;
+		  line_poly[2].y--;
+		  line_poly[3].x++;
+		  line_poly[3].y--;
+		  line_poly[4].x++;
+		  line_poly[4].y++;
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPenOld);
+		  DeleteObject(hPen2);
+
+		  ReleaseDC(ih->handle, hdc);
+
+		  *result = 0;
+		  return 1;
+	  }
+	  break;
   }
 
   if (ret)       /* if abort processing, then the result is 0 */
@@ -1517,6 +1575,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 	switch (msg) {
 	case WM_PAINT:
 	{
+		BOOL bEdit = ih->data->has_editbox;
+
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(ih->handle, &ps);
 	
@@ -1539,6 +1599,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 		if (higlight)
 			bgcolor = IupGetAttribute(ih, "HLCOLOR");
+		else if (bEdit)
+			bgcolor = IupGetAttribute(ih, "BGCOLOR");
 		else
 			bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
  
@@ -1590,30 +1652,32 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			DeleteObject(hPen);
 		}
 
-		char * text, *font;
-		int cnt = 0;
-		iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
-		if (cnt) {
-			text = IupGetAttribute(ih, "VALUESTRING");
-		} else {
-			text = IupGetAttribute(ih, "EMPTYLISTTEXT");
-			SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		if (!bEdit) {
+			char * text, *font;
+			int cnt = 0;
+			iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
+			if (cnt) {
+				text = IupGetAttribute(ih, "VALUESTRING");
+			} else {
+				text = IupGetAttribute(ih, "EMPTYLISTTEXT");
+				SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+			}
+			font = iupDrawGetTextSize(ih, text, &w1, &h1);
+
+			int len = text ? strlen(text) : 0;
+
+			HFONT hFont = (HFONT)iupwinGetHFont(font);
+			SelectObject(hdc, hFont);
+			TCHAR * wtext = iupwinStrToSystemLen(text, &len);
+			SetRect(&rect, 5, (h - h1) / 2, w - 17, h);
+			DrawText(hdc, wtext, len, &rect, 0);
 		}
-		font = iupDrawGetTextSize(ih, text, &w1, &h1);
 
-		int len = text ? strlen(text) : 0;
-
-		HFONT hFont = (HFONT)iupwinGetHFont(font);
-		SelectObject(hdc, hFont);
-		TCHAR * wtext = iupwinStrToSystemLen(text, &len);
-		SetRect(&rect, 5, (h - h1)/2, w - 17, h);
-		DrawText(hdc, wtext, len, &rect, 0);
-
-		line_poly[0].x = w - 12;
+		line_poly[0].x = w - 12-2;
 		line_poly[0].y = h/2 - 1;
-		line_poly[1].x = w - 5;
+		line_poly[1].x = w - 5-2;
 		line_poly[1].y = h / 2 - 1;
-		line_poly[2].x = w - 9;
+		line_poly[2].x = w - 9-2;
 		line_poly[2].y = h / 2 + 3;
 
 		hBrush = CreateSolidBrush(RGB(0, 0, 0));
@@ -2047,10 +2111,14 @@ static int winListMapMethod(Ihandle* ih)
 
       /* set defaults */
       SendMessage(ih->handle, CB_LIMITTEXT, 0, 0L);
+	  if (iupAttribGetBoolean(ih, "FLAT")) {
+		  IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC));
+		  SetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
+	  }
+
     }else if(iupAttribGetBoolean(ih, "FLAT")){
 	  IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC));
 	  SetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
-
     }
   }
 

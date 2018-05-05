@@ -1930,6 +1930,75 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       }
       break;
     }
+
+  case WM_NCPAINT:
+	  if (iupAttribGetBoolean(ih, "FLAT") && iupAttribGetBoolean(ih, "BORDER")) {
+		
+		  RECT rect;
+		  GetWindowRect(ih->handle, &rect);
+		  HDC hdc = GetWindowDC(ih->handle);
+
+		  //POINT cursor;
+		  //GetCursorPos(&cursor);
+
+		  //BOOL higlight = PtInRect(&rect, cursor);
+
+		  POINT line_poly[5];
+		  line_poly[0].x = 0;
+		  line_poly[0].y = 0;
+		  line_poly[1].x = rect.right - rect.left - 1;
+		  line_poly[1].y = 0;					 
+		  line_poly[2].x = rect.right - rect.left - 1;
+		  line_poly[2].y = rect.bottom - rect.top - 1;
+		  line_poly[3].x = 0;					 
+		  line_poly[3].y = rect.bottom - rect.top - 1;
+		  line_poly[4].x = 0;
+		  line_poly[4].y = 0;
+
+		  COLORREF RGBbordercolor, RGBbgcolor;
+		  unsigned char r, g , b ;
+		 // if(higlight)
+			//iupStrToRGB(IupGetAttribute(ih, "HLCOLOR"), &r, &g, &b);
+		 // else
+			iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
+
+		  RGBbgcolor = RGB(r, g, b);
+
+		  r = 200, g = 200, b = 200;
+		  RGBbordercolor = RGB(r, g, b);
+
+		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
+		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
+		  HPEN hPenOld = SelectObject(hdc, hPen);
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPen2);
+		  DeleteObject(hPen);
+
+		  line_poly[0].x++;
+		  line_poly[0].y++;
+		  line_poly[1].x--;
+		  line_poly[1].y++;
+		  line_poly[2].x--;
+		  line_poly[2].y--;
+		  line_poly[3].x++;
+		  line_poly[3].y--;
+		  line_poly[4].x++;
+		  line_poly[4].y++;
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPenOld);
+		  DeleteObject(hPen2);
+
+		  ReleaseDC(ih->handle, hdc);
+
+		  *result = 0;
+		  return 1;
+	  }
+	  break;
+
   }
 
   if (ret)       /* if abort processing, then the result is 0 */
@@ -2130,9 +2199,9 @@ static int winTextMapMethod(Ihandle* ih)
   if (iupAttribGetBoolean(ih, "NOHIDESEL"))
     dwStyle |= ES_NOHIDESEL;
 
-  if (iupAttribGetBoolean(ih, "BORDER"))
-    dwExStyle |= WS_EX_CLIENTEDGE;
-
+  if (iupAttribGetBoolean(ih, "BORDER")) {
+	  dwExStyle |= WS_EX_CLIENTEDGE;
+  }
   if (!iupwinCreateWindow(ih, winclass, dwExStyle, dwStyle, NULL))
     return IUP_ERROR;
 
