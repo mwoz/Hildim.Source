@@ -1624,10 +1624,10 @@ static int winTextCtlColor(Ihandle* ih, HDC hdc, LRESULT *result)
 {
   COLORREF cr;
 
-  if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTFGCOLOR", &cr) || iupwinGetColorRef(ih, "FGCOLOR", &cr))
     SetTextColor(hdc, cr);
 
-  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
+  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTBGCOLOR", &cr) || iupwinGetColorRef(ih, "BGCOLOR", &cr))
   {
     SetBkColor(hdc, cr);
     SetDCBrushColor(hdc, cr);

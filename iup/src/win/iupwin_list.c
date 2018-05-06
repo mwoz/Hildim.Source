@@ -1143,10 +1143,10 @@ static int winListCtlColor(Ihandle* ih, HDC hdc, LRESULT *result)
 {
   COLORREF cr;
 
-  if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTFGCOLOR", &cr) || iupwinGetColorRef(ih, "FGCOLOR", &cr))
     SetTextColor(hdc, cr);
 
-  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
+  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTBGCOLOR", &cr) || iupwinGetColorRef(ih, "BGCOLOR", &cr))
   {
     SetBkColor(hdc, cr);
     SetDCBrushColor(hdc, cr);
@@ -1592,7 +1592,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		
 		BOOL higlight = PtInRect(&rect, cursor);
 			
-		char* bgcolor, * fgcolor, * bordercolor;
+		char* bgcolor;
 		COLORREF RGBbgcolor, RGBfgcolor, RGBbordercolor;
 		
 		unsigned char r = 0, g = 0, b = 0;
@@ -1600,7 +1600,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		if (higlight)
 			bgcolor = IupGetAttribute(ih, "HLCOLOR");
 		else if (bEdit)
-			bgcolor = IupGetAttribute(ih, "BGCOLOR");
+			bgcolor = IupGetAttribute(ih, "TXTBGCOLOR");
 		else
 			bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
  
@@ -1613,8 +1613,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		HBRUSH hBrush, hBrushOld;
 		POINT line_poly[3];		
 		if (higlight) {
-			bordercolor = IupGetAttribute(ih, "BORDERHLCOLOR");
-			iupStrToRGB(bordercolor, &r, &g, &b);
+			iupStrToRGB(IupGetAttribute(ih, "BORDERHLCOLOR"), &r, &g, &b);
 			RGBbordercolor = RGB(r, g, b);
 
 			hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
@@ -1630,7 +1629,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			DeleteObject(hBrush);
 
 		} else {
-			r -= 30, g -= 30, b -= 30;
+			iupStrToRGB(IupGetAttribute(ih, "BORDERCOLOR"), &r, &g, &b);
 			RGBbordercolor = RGB(r, g, b);
 
 			hBrush = CreateSolidBrush(RGBbgcolor);
@@ -1657,6 +1656,10 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			int cnt = 0;
 			iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
 			if (cnt) {
+				COLORREF cr;
+				if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+					SetTextColor(hdc, cr);
+
 				text = IupGetAttribute(ih, "VALUESTRING");
 			} else {
 				text = IupGetAttribute(ih, "EMPTYLISTTEXT");
@@ -1680,7 +1683,9 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		line_poly[2].x = w - 9-2;
 		line_poly[2].y = h / 2 + 3;
 
-		hBrush = CreateSolidBrush(RGB(0, 0, 0));
+		iupwinGetColorRef(ih, bEdit ? "TXTFGCOLOR" : "FGCOLOR", &RGBbgcolor);
+
+		hBrush = CreateSolidBrush(RGBbgcolor);
 		hBrushOld = SelectObject(hdc, hBrush);
 		BeginPath(hdc);
 		Polygon(hdc, line_poly, 3);

@@ -564,7 +564,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				NULL),
 			NULL),
 			"NAME", "LeftBarExpander",
-			"BARSIZE", "5",
+			"BARSIZE", "0",
 			"BARPOSITION", "LEFT",
 			"LAYOUTDRAG", "NO",
 			"MINSIZE", "x1",
@@ -803,9 +803,13 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"HLCOLOR", "200 225 245",
 		"BORDERHLCOLOR", "50 150 255",
 		"BORDERCOLOR", "200 200 200",
-		"BORDERCOLORDARK", "190 190 190",
+		"BGCOLOR", "240 240 240",
+		"TXTBGCOLOR", "255 255 255",
+		"FGCOLOR", "0 0 0",
+		"TXTFGCOLOR", "0 0 0",
 		NULL);
-
+	//IupSetGlobal("DLGBGCOLOR", "0 0 250");
+	//IupSetGlobal("MENUBGCOLOR", "0 255 255");
 	return containers[0];
 }
 
