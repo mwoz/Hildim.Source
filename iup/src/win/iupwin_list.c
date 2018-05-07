@@ -1495,11 +1495,9 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
 
 		  COLORREF RGBbordercolor, RGBbgcolor;
 		  unsigned char r, g, b;
+		  iupwinGetColorRef(ih, "BORDERCOLOR", &RGBbordercolor);
 		  iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
 		  RGBbgcolor = RGB(r, g, b);
-
-		  r = 200, g = 200, b = 200;
-		  RGBbordercolor = RGB(r, g, b);
 
 		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
 		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
