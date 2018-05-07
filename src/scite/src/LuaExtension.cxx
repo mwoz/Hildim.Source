@@ -1121,9 +1121,15 @@ static bool call_function(lua_State *L, int nargs, int nresult = 1) {
 	return handled;
 }
 
-static int sf_RunAsync(lua_State* L){
+static int sf_RunAsync(lua_State* L) {
 	int idx = luaL_ref(L, LUA_REGISTRYINDEX);
 	host->RunAsync(idx);
+	return 0;
+}
+
+static int sf_SetRestart(lua_State* L) {
+	const char *cmdline = luaL_checkstring(L, 1);
+	host->SetRestart(cmdline);
 	return 0;
 }
 
@@ -2061,6 +2067,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_editor_set_foreground);
 	lua_setfield(luaState, -2, "SetForeground");
+
+	lua_pushcfunction(luaState, sf_SetRestart);
+	lua_setfield(luaState, -2, "SetRestart");
 
 	// buffers
 	lua_newtable(luaState);

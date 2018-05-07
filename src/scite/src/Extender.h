@@ -58,6 +58,7 @@ public:
 	virtual void Close_script() = 0;
 	virtual void SavePositions() = 0;
 	virtual void BlockUpdate(int cmd) = 0;
+	virtual void SetRestart(const char* cmdLine)=0;
 
 };
 

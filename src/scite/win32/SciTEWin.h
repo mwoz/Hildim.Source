@@ -116,77 +116,7 @@ public:
 	    HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 };
 
-typedef struct sb_colors { long left; long right; } sb_colors;
-struct sb_colorsetting {
-	int size;
-	int id[10];
-	long clr[10];
-	DWORD mask;
-	long annotation;
-};
-class IupChildWnd
-{
-public:
-	IupChildWnd();
-	~IupChildWnd();
-	void Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt );
-	void Scroll_CB(int op, float posx, float posy);
-	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
-	void ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value);
-	void OnIdle();
-private:
-	char name[16];
-	HWND hMainWnd;
-	SciTEWin *pSciteWin;
-	WNDPROC subclassedProc;
-    LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	GUI::ScintillaWindow *pS;
-	Ihandle *pContainer = 0;
-	void SizeEditor();
-	bool blockV = false;
-	bool blockH = false;
-	int hPx = 0; //высота горизонтального бара
-	int vPx = 0;  //ширина вертикального бара
-	UINT vHeight = 0; //текущая высота вертикального бара
-	bool colodizedSB = false;
-	int resetmap = false;
-	std::vector<sb_colors> pixelMap;
-	
-	void resetPixelMap();
-	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
-	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
-	DWORD markerMaskAll = 0;
 
-};
-typedef std::map<const char*, IupChildWnd*> mapsICW;
-class IupLayoutWnd
-{
-public:
-	IupLayoutWnd();
-	~IupLayoutWnd();
-	void CreateLayout(lua_State *L, SciTEWin *pS);
-	HWND GetChildHWND(const char* name);
-	void SubclassChild(const char* name, GUI::ScintillaWindow *pW);
-	void GetPaneRect(const char *name, LPRECT pRc);
-	void SetPaneHeight(const char *name, int Height);
-	void AdjustTabBar();
-	Ihandle* hMain;
-	void Fit();
-	void Close();
-	void OnIdle();
-	Ihandle *pLeftTab;
-	Ihandle *pRightTab;
-private:
-	SciTEWin *pSciteWin;
-	IupChildWnd ichFindRes;
-	Ihandle* Create_dialog();
-	mapsICW childMap;
-	WNDPROC subclassedProc;
-	LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-};
 
 
 /** Windows specific stuff.
@@ -241,8 +171,6 @@ protected:
 	HWND wActive;
 
 	//GUI::Rectangle rFindReplace;//позиция окна поиска\замены
-
-	IupLayoutWnd layout;
 
 	virtual void ReadLocalization();
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
@@ -312,6 +240,8 @@ protected:
 	void EnsureVisible();
 	virtual void HideForeReolad();
 	virtual void RunAsync(int idx);
+	virtual void SetRestart(const char* cmdLine);
+	SString restartCmdLine = "-";
 	LRESULT		OnChangeCBChain(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
 	HWND hNextCBWnd;

@@ -936,7 +936,11 @@ void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	Redraw();
 	DisplayAround(rf);
-	if (bFireEvent) extender->OnSwitchFile(props.GetString("FilePath"));
+	if (bFireEvent) {
+		extender->OnSwitchFile(props.GetString("FilePath"));
+		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
+	}
+
 }
 
 
@@ -4437,6 +4441,7 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 	if (buffers.Current() == i) {
 		filePath._encoding = e; wEditor.SetBuffEncoding(e);
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+		layout.OnSwitchFile(buffers.buffers[i].editorSide);
 	}
 	BuffersMenu();
 

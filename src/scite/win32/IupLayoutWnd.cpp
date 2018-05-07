@@ -262,10 +262,10 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 		break;
 	}
 }
-void IupChildWnd::Attach(HWND h, SciTEWin *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
+void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
 {
 	hMainWnd = hM;
-	pSciteWin = pScite;
+	pSciteWin = (SciTEWin*)pScite;
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);
@@ -421,11 +421,11 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 		}
 	}
-		if (::IsWindowVisible(hMainWnd))return pSciteWin->WndProc(uMsg, wParam, lParam);
+		if (::IsWindowVisible(hMainWnd))return ((SciTEWin*)pSciteWin)->WndProc(uMsg, wParam, lParam);
 		break;
 	case WM_COMMAND:
 	case WM_CONTEXTMENU:
-		if(::IsWindowVisible(hMainWnd) )return pSciteWin->WndProc(uMsg, wParam, lParam);
+		if(::IsWindowVisible(hMainWnd) )return ((SciTEWin*)pSciteWin)->WndProc(uMsg, wParam, lParam);
 		break;
 	case WM_SIZE:
 	{
@@ -470,12 +470,21 @@ IupLayoutWnd::~IupLayoutWnd()
 {
 }
 
-Ihandle* IupLayoutWnd::Create_dialog(void)
+void IupLayoutWnd::PropGet(const char *name, const char *defoult, char* buff) {
+	const char* clr = ((SciTEWin*)pSciteWin)->Property(name);
+	if (!strcmp(clr, "")) {
+		clr = defoult;
+		((SciTEWin*)pSciteWin)->SetProperty(name, clr);
+	}
+	lstrcpynA(buff, clr, 12);
+}
+
+Ihandle* IupLayoutWnd::Create_dialog()
 {
 	Ihandle* pTab;
 	Ihandle* containers[13];
 
-	char* fntSize = pSciteWin->Property("iup.defaultfontsize");
+	char* fntSize = ((SciTEWin*)pSciteWin)->Property("iup.defaultfontsize");
 
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
@@ -485,28 +494,25 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 	minSz[1] = 'x';
 	lstrcatA(minSz, fntSize);
 	
-	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14];
+	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
+		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
+		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14],
+		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14];
 
-	char* clr = pSciteWin->Property("iup.scroll.forecolor");
-	if (!strcmp(clr, "")) {
-		clr = "220 220 220";
-		pSciteWin->SetProperty("iup.scroll.forecolor", clr);
-	}
-	lstrcpynA(scrFORECOLOR, clr, 12);
+	PropGet("layout.scroll.forecolor", "220 220 220", scrFORECOLOR);
+	PropGet("layout.scroll.presscolor", "190 190 190", scrPRESSCOLOR);
+	PropGet("layout.scroll.highcolor", "200 200 200", scrHIGHCOLOR);
+	PropGet("layout.scroll.backcolor", "240 240 240", scrBACKCOLOR);
 
-	clr = pSciteWin->Property("iup.scroll.presscolor");
-	if (!strcmp(clr, "")) {
-		clr = "190 190 190";
-		pSciteWin->SetProperty("iup.scroll.presscolor", clr);
-	}
-	lstrcpynA(scrPRESSCOLOR, clr, 12);
-
-	clr = pSciteWin->Property("iup.scroll.highcolor");
-	if (!strcmp(clr, "")) {
-		clr = "200 200 200";
-		pSciteWin->SetProperty("iup.scroll.highcolor", clr);
-	}
-	lstrcpynA(scrHIGHCOLOR, clr, 12);
+	PropGet("layout.hlcolor", "200 225 245", scrHLCOLOR);
+	PropGet("layout.borderhlcolor", "50 150 255", scrBORDERHLCOLOR);
+	PropGet("layout.bordercolor", "200 200 200", scrBORDERCOLOR);
+	PropGet("layout.bgcolor", "240 240 240", scrBGCOLOR);
+	PropGet("layout.txtbgcolor", "255 255 255", scrTXTBGCOLOR);
+	PropGet("layout.fgcolor", "0 0 0", scrFGCOLOR);
+	PropGet("layout.txtfgcolor", "0 0 0", scrTXTFGCOLOR);
+	PropGet("layout.txthlcolor", "15 60 195", scrTXTHLCOLOR);
+	PropGet("layout.txtinactivcolor", "70 70 t0", scrTXTINACTIVCOLOR);
 
 	static char * scrollsize = "15";
 
@@ -579,6 +585,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 									"HIGHCOLOR", scrHIGHCOLOR,
 									"PRESSCOLOR", scrPRESSCOLOR,
 									"FORECOLOR", scrFORECOLOR,
+									"BACKCOLOR", scrBACKCOLOR,
 									"SCROLLBARSIZE", scrollsize,
 								NULL),
 								IupSetAtt(NULL, IupCreatep("expander",
@@ -589,6 +596,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 										"HIGHCOLOR", scrHIGHCOLOR,
 										"PRESSCOLOR", scrPRESSCOLOR,
 										"FORECOLOR", scrFORECOLOR,
+										"BACKCOLOR", scrBACKCOLOR,
 										"SCROLLBARSIZE", scrollsize,
 										NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
 									"NAME", "SourceExDetach",
@@ -676,6 +684,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"HIGHCOLOR", scrHIGHCOLOR,
 				"PRESSCOLOR", scrPRESSCOLOR,
 				"FORECOLOR", scrFORECOLOR,
+				"BACKCOLOR", scrBACKCOLOR,
 				"SCROLLBARSIZE", scrollsize,
 				NULL),
 				NULL), "NAME", "concolebar_vbox", NULL), NULL),
@@ -699,6 +708,7 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 				"HIGHCOLOR", scrHIGHCOLOR,
 				"PRESSCOLOR", scrPRESSCOLOR,
 				"FORECOLOR", scrFORECOLOR,
+				"BACKCOLOR", scrBACKCOLOR,
 				"SCROLLBARSIZE", scrollsize,
 				NULL),
 				NULL), "NAME", "findresbar_vbox", NULL), NULL),
@@ -800,16 +810,19 @@ Ihandle* IupLayoutWnd::Create_dialog(void)
 		"SIZE", "200x200",
 		"SHRINK", "YES", 
 		"FLAT", "YES",
-		"HLCOLOR", "200 225 245",
-		"BORDERHLCOLOR", "50 150 255",
-		"BORDERCOLOR", "200 200 200",
-		"BGCOLOR", "240 240 240",
-		"TXTBGCOLOR", "255 255 255",
-		"FGCOLOR", "0 0 0",
-		"TXTFGCOLOR", "0 0 0",
+		"HLCOLOR", scrHLCOLOR,
+		"BORDERHLCOLOR", scrBORDERHLCOLOR,
+		"BORDERCOLOR", scrBORDERCOLOR,
+		"BGCOLOR", scrBGCOLOR,
+		"TXTBGCOLOR", scrTXTBGCOLOR,
+		"FGCOLOR", scrFGCOLOR,
+		"TXTFGCOLOR", scrTXTFGCOLOR,
+		"TXTHLCOLOR", scrTXTHLCOLOR,
+		"TXTINACTIVCOLOR", scrTXTINACTIVCOLOR,
 		NULL);
 	//IupSetGlobal("DLGBGCOLOR", "0 0 250");
 	//IupSetGlobal("MENUBGCOLOR", "0 255 255");
+	
 	return containers[0];
 }
 
@@ -820,7 +833,7 @@ static int cf_iup_get_layout(lua_State *L){
 
 void IupLayoutWnd::Fit(){
 	RECT r;
-	::GetClientRect((HWND)pSciteWin->GetID(), &r);
+	::GetClientRect((HWND)((SciTEWin*)pSciteWin)->GetID(), &r);
 	if (!r.right && !r.bottom)
 		return;
 	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, r.right, r.bottom, 0);
@@ -836,10 +849,10 @@ void IupLayoutWnd::Close(){
 	IupClose();
 }
 
-void IupLayoutWnd::CreateLayout(lua_State *L, SciTEWin *pS){
-	pSciteWin = pS;
+void IupLayoutWnd::CreateLayout(lua_State *L, void *pS){
+	pSciteWin = (SciTEBase*)pS;
 	hMain = Create_dialog();
-	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)pS->GetID());
+	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)((SciTEWin*)pSciteWin)->GetID());
 	IupShowXY(hMain, 0, 0);
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
 	//subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
@@ -865,9 +878,18 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	::GetWindowRect(GetChildHWND(name), &rc);
 	if(pW) ::SetWindowPos((HWND)pW->GetID(), HWND_TOP, 0, 0, rc.right, rc.bottom, 0);
 }
+
+
 void IupLayoutWnd::OnIdle() {
 	classList["Source"]->OnIdle();
 	classList["CoSource"]->OnIdle();
+}
+
+void IupLayoutWnd::OnSwitchFile(int editorSide) {
+	if (editorSide == IDM_SRCWIN)
+		classList["Source"]->resetPixelMap();
+	else
+		classList["CoSource"]->resetPixelMap();
 }
 
 void IupLayoutWnd::GetPaneRect(const char *name, LPRECT pRc){

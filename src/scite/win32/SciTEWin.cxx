@@ -1364,7 +1364,7 @@ GUI::gui_string SciTEWin::ProcessArgs(const GUI::gui_char *cmdLine) {
 void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
 	// Break up the command line into individual arguments
-	GUI::gui_string args = ProcessArgs(cmdLine);
+	//GUI::gui_string args = ProcessArgs(cmdLine);
 	// Read the command line parameters:
 	// In case the check.if.already.open property has been set or reset on the command line,
 	// we still get a last chance to force checking or to open a separate instance;
@@ -1416,7 +1416,7 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 	// In case of not using buffers they get closed immediately except
 	// the last one, but they move to the MRU file list
 	//ProcessCommandLine(args, 2);
-	props.Set("hildim.command.line", GUI::UTF8FromString(args).c_str());
+	props.Set("hildim.command.line", GUI::UTF8FromString(cmdLine).c_str());
 	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
 	hNextCBWnd = ::SetClipboardViewer(MainHWND());
 	//Redraw();
@@ -1459,6 +1459,10 @@ void SciTEWin::HideForeReolad(){
 
 void SciTEWin::RunAsync(int idx)	{
 	PostMessage((HWND)GetID(), SCI_POSTCALBACK, idx, 0);
+}
+
+void SciTEWin::SetRestart(const char* cmdLine) {
+	restartCmdLine = cmdLine;
 }
 
 
@@ -2207,6 +2211,33 @@ int SciTEWin::EventLoop() {
 		WaitMessage();
 	}
 BRK:
+	if (restartCmdLine != "-") {
+		hWriteSubProcess = NULL;
+		subProcessGroupId = 0;
+
+		// Make child process use hPipeWrite as standard out, and make
+		// sure it does not show on screen.
+		STARTUPINFOW si = {
+			sizeof(STARTUPINFO), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		};
+		si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+
+		si.wShowWindow = SW_SHOW;
+		WCHAR fName[500]; 
+		::GetModuleFileNameW(NULL, fName, 499);
+
+		PROCESS_INFORMATION pi = { 0, 0, 0, 0 };
+
+		::CreateProcessW(
+			fName,
+			const_cast<wchar_t *>(restartCmdLine == "" ? NULL: GUI::StringFromUTF8(restartCmdLine.c_str()).c_str()),
+			NULL, NULL,
+			TRUE, CREATE_NEW_PROCESS_GROUP,
+			NULL,
+			NULL,
+			&si, &pi);
+
+	}
 	return msg.wParam;
 }
 

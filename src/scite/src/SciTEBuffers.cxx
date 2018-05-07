@@ -437,6 +437,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
 }
 
@@ -718,6 +719,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (extender && !closingLast && !makingRoomForNew) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close-");
+		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
 	if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
 		wEditor.Switch();
