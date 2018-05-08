@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
 #include "../../iup/src/iup_str.h"
+#include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
 
 std::map<std::string, IupChildWnd*> classList;
@@ -821,6 +822,10 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"TXTFGCOLOR", scrTXTFGCOLOR,
 		"TXTHLCOLOR", scrTXTHLCOLOR,
 		"TXTINACTIVCOLOR", scrTXTINACTIVCOLOR,
+		"SCR_FORECOLOR", scrFORECOLOR,
+		"SCR_PRESSCOLOR", scrPRESSCOLOR,
+		"SCR_HIGHCOLOR", scrHIGHCOLOR,
+		"SCR_BACKCOLOR", scrBACKCOLOR,
 		NULL);
 	//IupSetGlobal("DLGBGCOLOR", "0 0 250");
 	//IupSetGlobal("MENUBGCOLOR", "0 255 255");
@@ -943,8 +948,12 @@ LRESULT PASCAL IupLayoutWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 
 	}
 	}
-	return subclassedProc(hwnd, uMsg, wParam, lParam);
+	return subclassedProc(hwnd, uMsg, wParam, lParam); 
 	
+}
+
+char* IupLayoutWnd::Prop2ColorColorRef(static char* name) {
+	return NULL;
 }
 
 LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){

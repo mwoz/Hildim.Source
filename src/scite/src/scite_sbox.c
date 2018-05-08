@@ -78,6 +78,17 @@ static int iSBoxSetValueAttribute(Ihandle* ih, const char* value)
 	return 0;
 }
 
+static int isc_SBoxMapMethod(Ihandle* ih)
+{
+	/* must be first */
+	
+	char *clr = IupGetAttribute(ih, "SCR_BACKCOLOR");
+	if(clr)
+		IupSetAttribute(ih, "BGCOLOR", clr);
+
+	return IUP_NOERROR;
+}
+
 void Iupsc_SBoxOpen(void)
 {
 	static int run = 0;
@@ -89,6 +100,7 @@ void Iupsc_SBoxOpen(void)
 Iclass* iupsc_SBoxNewClass(void)
 {
     Iclass* ic = iupClassNew(iupRegisterFindClass("sbox"));
+	ic->Map = isc_SBoxMapMethod;
     
     ic->name   = "sc_sbox";
     ic->format = "h";   /* one Ihandle* */
