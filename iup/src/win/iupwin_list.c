@@ -1652,16 +1652,19 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		if (!bEdit) {
 			char * text, *font;
 			int cnt = 0;
+			COLORREF cr;
 			iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
 			if (cnt) {
-				COLORREF cr;
 				if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
 					SetTextColor(hdc, cr);
 
 				text = IupGetAttribute(ih, "VALUESTRING");
 			} else {
 				text = IupGetAttribute(ih, "EMPTYLISTTEXT");
-				SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+				if (iupwinGetColorRef(ih, "TXTINACTIVCOLOR", &cr))
+					SetTextColor(hdc, cr);
+				else
+					SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 			}
 			font = iupDrawGetTextSize(ih, text, &w1, &h1);
 

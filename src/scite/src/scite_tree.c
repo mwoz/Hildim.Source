@@ -225,6 +225,7 @@ static int iscTreeSetResetScrollAttrib(Ihandle* ih, const char* value) {
 static int isc_TreeCreateMethod(Ihandle* ih, void** params) {
 	IupSetCallback(ih, "BRANCHOPEN_CB", (Icallback)isc_TreeBranchOpen_CB);
 	IupSetCallback(ih, "BRANCHCLOSE_CB", (Icallback)isc_TreeBranchClose_CB);
+	return IUP_NOERROR;
 }
 
 
@@ -233,6 +234,8 @@ static int isc_TreeMapMethod(Ihandle* ih, void** params) {
 	SetWindowLongPtr(ih->handle, GWL_STYLE, GetWindowLongPtr(ih->handle, GWL_STYLE) - WS_BORDER);
 	IupSetCallback(ih, "_IUPWIN_TREEOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(ih->handle, GWLP_WNDPROC));
 	SetWindowLongPtr(ih->handle, GWLP_WNDPROC, (LONG_PTR)winTreeWndProc);
+	IupSetAttribute(ih, "FGCOLOR", IupGetAttribute(ih, "TXTFGCOLOR"));
+	IupSetAttribute(ih, "BGCOLOR", IupGetAttribute(ih, "TXTBGCOLOR"));
 	return IUP_NOERROR;
 }
 
