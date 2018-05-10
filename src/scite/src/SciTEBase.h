@@ -375,7 +375,7 @@ public:
 	void Close();
 	void OnIdle();
 	void OnSwitchFile(int editorSide);
-	char* Prop2ColorColorRef(static char* name);
+	COLORREF GetColorRef(char* name);
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
 private:

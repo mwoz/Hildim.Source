@@ -82,9 +82,9 @@ static int isc_SBoxMapMethod(Ihandle* ih)
 {
 	/* must be first */
 	
-	char *clr = IupGetAttribute(ih, "SCR_BACKCOLOR");
+	char *clr = IupGetAttribute(ih, "SCR_FORECOLOR");
 	if(clr)
-		IupSetAttribute(ih, "BGCOLOR", clr);
+		IupSetAttribute(ih, "COLOR", clr);
 
 	return IUP_NOERROR;
 }

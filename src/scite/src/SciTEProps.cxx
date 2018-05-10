@@ -316,6 +316,23 @@ long StyleDefinition::BackAsLong() const {
 }
 
 void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd) {
+	if (style == STYLE_LINENUMBER) {
+		if (!(sd.specified & StyleDefinition::sdFore)) {
+			COLORREF cr = layout.GetColorRef("TXTFGCOLOR");
+			if (cr)
+				win.Send(SCI_STYLESETFORE, style, cr);
+		}
+		if (!(sd.specified & StyleDefinition::sdBack)) {
+			COLORREF cr = layout.GetColorRef("SCR_BACKCOLOR");
+			if(cr)
+				win.Send(SCI_STYLESETBACK, style, cr);
+			int iMrg = win.Call(SCI_GETMARGINS);
+			for (int i = 1; i < iMrg; i++) {
+				win.Call(SCI_SETMARGINBACKN, i, cr);
+			}
+		}
+	}
+	
 	if (sd.specified & StyleDefinition::sdItalics)
 		win.Send(SCI_STYLESETITALIC, style, sd.italics ? 1 : 0);
 	if (sd.specified & StyleDefinition::sdBold)

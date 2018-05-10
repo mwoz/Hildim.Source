@@ -352,10 +352,11 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			if (lpsi->fMask & SIF_RANGE ) {
 				IupSetInt(pContainer, "YMIN", lpsi->nMin);
 				IupSetInt(pContainer, "YMAX", lpsi->nMax);
+				resetmap = true;
 			}
 			if (lpsi->fMask & SIF_PAGE) {
 				IupSetInt(pContainer, "DY", lpsi->nPage);
-				
+				resetmap = true;
 			}
 			if (lpsi->fMask & SIF_POS ) {
 
@@ -413,13 +414,10 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		SCNotification *notification = (SCNotification*)(lParam);
 		switch (notification->nmhdr.code) {
+		case SCN_MARGINCLICK:
 		case SCN_MODIFIED:
-			if (notification->modificationType & SC_MOD_CHANGEMARKER) {
 				resetmap = true;
-			}
-			if ((notification->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)) && notification->linesAdded) {
-				resetmap = true;
-			}
+			break;
 		}
 	}
 		if (::IsWindowVisible(hMainWnd))return ((SciTEWin*)pSciteWin)->WndProc(uMsg, wParam, lParam);
@@ -952,15 +950,17 @@ LRESULT PASCAL IupLayoutWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 	
 }
 
-char* IupLayoutWnd::Prop2ColorColorRef(static char* name) {
-	return NULL;
+COLORREF IupLayoutWnd::GetColorRef(char* name) {
+	COLORREF cr;
+	iupwinGetColorRef(hMain, name, &cr);
+	return cr;
 }
 
 LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
 
 	IupLayoutWnd* lpIupLayoutWnd = reinterpret_cast<IupLayoutWnd*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 	if (lpIupLayoutWnd)
-		return lpIupLayoutWnd->WndProc(hwnd, uMsg, wParam, lParam);
+		return lpIupLayoutWnd->WndProc(hwnd, uMsg, wParam, lParam); 
 
 	return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
