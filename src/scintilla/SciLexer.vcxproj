@@ -176,11 +176,13 @@
     <ClInclude Include="include\EditModel.h" />
     <ClInclude Include="include\Editor.h" />
     <ClInclude Include="include\EditView.h" />
+    <ClInclude Include="include\ElapsedPeriod.h" />
     <ClInclude Include="include\ExternalLexer.h" />
     <ClInclude Include="include\FontQuality.h" />
     <ClInclude Include="include\ILexer.h" />
     <ClInclude Include="include\ILoader.h" />
     <ClInclude Include="include\Indicator.h" />
+    <ClInclude Include="include\IntegerRectangle.h" />
     <ClInclude Include="include\KeyMap.h" />
     <ClInclude Include="include\LineMarker.h" />
     <ClInclude Include="include\MarginView.h" />

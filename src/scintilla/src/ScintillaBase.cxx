@@ -168,7 +168,6 @@ int ScintillaBase::KeyCommand(unsigned int iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case SCI_TAB:
-		case SCI_BACKTAB:
 			AutoCompleteCompleted(0, SC_AC_TAB);
 			return 0;
 		case SCI_NEWLINE:
@@ -248,7 +247,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 		if (list && !strchr(list, ac.GetSeparator())) {
 			const char *typeSep = strchr(list, ac.GetTypesep());
 			const Sci::Position lenInsert = typeSep ?
-				static_cast<Sci::Position>(typeSep-list) : static_cast<Sci::Position>(strlen(list));
+				(typeSep-list) : strlen(list);
 			if (ac.ignoreCase) {
 				// May need to convert the case before invocation, so remove lenEntered characters
 				AutoCompleteInsert(sel.MainCaret() - lenEntered, lenEntered, list, lenInsert);
@@ -381,13 +380,6 @@ void ScintillaBase::AutoCompleteCharacterDeleted() {
 		AutoCompleteCancel();
 	} else {
 		AutoCompleteMoveToCurrentWord();
-//!-start-[autocompleteword.incremental]
-		SCNotification scn = {0};
-		scn.nmhdr.code = SCN_AUTOCUPDATED;
-		scn.wParam = 0;
-		scn.listType = 0;
-		NotifyParent(scn);
-//!-end-[autocompleteword.incremental]
 	}
 	SCNotification scn = {};
 	scn.nmhdr.code = SCN_AUTOCCHARDELETED;
@@ -417,7 +409,6 @@ void ScintillaBase::AutoCompleteCompleted(char ch, unsigned int completionMethod
 	scn.position = firstPos;
 	scn.lParam = firstPos;
 	scn.text = selected.c_str();
-	scn.position = item; //!-add-[UserListItemID]
 	NotifyParent(scn);
 
 	if (!ac.Active())
@@ -432,7 +423,7 @@ void ScintillaBase::AutoCompleteCompleted(char ch, unsigned int completionMethod
 		endPos = pdoc->ExtendWordSelect(endPos, 1, true);
 	if (endPos < firstPos)
 		return;
-	AutoCompleteInsert(firstPos, endPos - firstPos, selected.c_str(), static_cast<Sci::Position>(selected.length()));
+	AutoCompleteInsert(firstPos, endPos - firstPos, selected.c_str(), selected.length());
 	SetLastXChosen();
 
 	scn.nmhdr.code = SCN_AUTOCCOMPLETED;
@@ -498,13 +489,6 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 		rc.top += offset;
 		rc.bottom += offset;
 	}
-//!-start-[BetterCalltips]
-	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
-//!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, wMain);
@@ -569,6 +553,11 @@ public:
 	int lexLanguage;
 
 	explicit LexState(Document *pdoc_);
+	// Deleted so LexState objects can not be copied.
+	LexState(const LexState &) = delete;
+	LexState(LexState &&) = delete;
+	LexState &operator=(const LexState &) = delete;
+	LexState &operator=(LexState &&) = delete;
 	~LexState() override;
 	void SetLexer(uptr_t wParam);
 	void SetLexerLanguage(const char *languageName);
@@ -672,7 +661,7 @@ void LexState::SetWordList(int n, const char *wl) {
 	if (instance) {
 		const Sci_Position firstModification = instance->WordListSet(n, wl);
 		if (firstModification >= 0) {
-			pdoc->ModifiedAt(static_cast<Sci::Position>(firstModification));
+			pdoc->ModifiedAt(firstModification);
 		}
 	}
 }
@@ -714,11 +703,11 @@ const char *LexState::DescribeProperty(const char *name) {
 }
 
 void LexState::PropSet(const char *key, const char *val) {
-	props.Set(key, val);
+	props.Set(key, val, strlen(key), strlen(val));
 	if (instance) {
 		const Sci_Position firstModification = instance->PropertySet(key, val);
 		if (firstModification >= 0) {
-			pdoc->ModifiedAt(static_cast<Sci::Position>(firstModification));
+			pdoc->ModifiedAt(firstModification);
 		}
 	}
 }
@@ -841,10 +830,10 @@ const char *LexState::DescriptionOfStyle(int style) {
 void ScintillaBase::NotifyStyleToNeeded(Sci::Position endStyleNeeded) {
 #ifdef SCI_LEXER
 	if (DocumentLexState()->lexLanguage != SCLEX_CONTAINER) {
-		const Sci::Line lineEndStyled = static_cast<Sci::Line>(
-			pdoc->LineFromPosition(pdoc->GetEndStyled()));
-		const Sci::Position endStyled = static_cast<Sci::Position>(
-			pdoc->LineStart(lineEndStyled));
+		const Sci::Line lineEndStyled =
+			pdoc->SciLineFromPosition(pdoc->GetEndStyled());
+		const Sci::Position endStyled =
+			pdoc->LineStart(lineEndStyled);
 		DocumentLexState()->Colourise(endStyled, endStyleNeeded);
 		return;
 	}
@@ -862,12 +851,9 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 	switch (iMessage) {
 	case SCI_AUTOCSHOW:
 		listType = 0;
-		AutoCompleteStart(static_cast<Sci::Position>(wParam), reinterpret_cast<const char *>(lParam));
+		AutoCompleteStart(static_cast<Sci::Position>(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
-	case SCI_PASTE:
-		ac.Cancel();
-		return Editor::WndProc(iMessage, wParam, lParam);
 	case SCI_AUTOCCANCEL:
 		ac.Cancel();
 		break;
@@ -890,18 +876,18 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return ac.GetSeparator();
 
 	case SCI_AUTOCSTOPS:
-		ac.SetStopChars(reinterpret_cast<char *>(lParam));
+		ac.SetStopChars(ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_AUTOCSELECT:
-		ac.Select(reinterpret_cast<char *>(lParam));
+		ac.Select(ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_AUTOCGETCURRENT:
 		return AutoCompleteGetCurrent();
 
 	case SCI_AUTOCGETCURRENTTEXT:
-		return AutoCompleteGetCurrentText(reinterpret_cast<char *>(lParam));
+		return AutoCompleteGetCurrentText(CharPtrFromSPtr(lParam));
 
 	case SCI_AUTOCSETCANCELATSTART:
 		ac.cancelAtStartPos = wParam != 0;
@@ -911,7 +897,7 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return ac.cancelAtStartPos;
 
 	case SCI_AUTOCSETFILLUPS:
-		ac.SetFillUpChars(reinterpret_cast<char *>(lParam));
+		ac.SetFillUpChars(ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_AUTOCSETCHOOSESINGLE:
@@ -951,7 +937,7 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 
 	case SCI_USERLISTSHOW:
 		listType = static_cast<int>(wParam);
-		AutoCompleteStart(0, reinterpret_cast<const char *>(lParam));
+		AutoCompleteStart(0, ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_AUTOCSETAUTOHIDE:
@@ -983,12 +969,12 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return maxListWidth;
 
 	case SCI_REGISTERIMAGE:
-		ac.lb->RegisterImage(static_cast<int>(wParam), reinterpret_cast<const char *>(lParam));
+		ac.lb->RegisterImage(static_cast<int>(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_REGISTERRGBAIMAGE:
 		ac.lb->RegisterRGBAImage(static_cast<int>(wParam), static_cast<int>(sizeRGBAImage.x), static_cast<int>(sizeRGBAImage.y),
-			reinterpret_cast<unsigned char *>(lParam));
+			ConstUCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_CLEARREGISTEREDIMAGES:
@@ -1003,8 +989,8 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return ac.GetTypesep();
 
 	case SCI_CALLTIPSHOW:
-		CallTipShow(LocationFromPosition(static_cast<int>(wParam)),
-			reinterpret_cast<const char *>(lParam));
+		CallTipShow(LocationFromPosition(static_cast<Sci::Position>(wParam)),
+			ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_CALLTIPCANCEL:
@@ -1018,25 +1004,12 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return ct.posStartCallTip;
 
 	case SCI_CALLTIPSETPOSSTART:
-		ct.posStartCallTip = static_cast<int>(wParam);
+		ct.posStartCallTip = static_cast<Sci::Position>(wParam);
 		break;
 
 	case SCI_CALLTIPSETHLT:
 		ct.SetHighlight(static_cast<int>(wParam), static_cast<int>(lParam));
 		break;
-//!-start-[BetterCalltips]
-	case SCI_CALLTIPADDHLT:
-		ct.AddHighlight(wParam, lParam);
-		break;
-
-	case SCI_CALLTIPCLEARHLT:
-		ct.ClearHighlight();
-		break;
-
-	case SCI_CALLTIPUPDATEHLT:
-		ct.UpdateHighlight();
-		break;
-//!-end-[BetterCalltips]
 
 	case SCI_CALLTIPSETBACK:
 		ct.colourBG = ColourDesired(static_cast<long>(wParam));
@@ -1059,10 +1032,6 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		ct.SetTabSize(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
-//!-start-[BetterCalltips]
-	case SCI_CALLTIPSETWORDWRAP:
-		ct.SetWrapBound((int)wParam);
-//!-end-[BetterCalltips]
 
 	case SCI_CALLTIPSETPOSITION:
 		ct.SetPosition(wParam != 0);
@@ -1084,43 +1053,40 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 	case SCI_COLOURISE:
 		if (DocumentLexState()->lexLanguage == SCLEX_CONTAINER) {
 			pdoc->ModifiedAt(static_cast<Sci::Position>(wParam));
-			NotifyStyleToNeeded((lParam == -1) ? static_cast<Sci::Position>(pdoc->Length()) :
-					    static_cast<Sci::Position>(lParam));
+			NotifyStyleToNeeded((lParam == -1) ? pdoc->Length() : lParam);
 		} else {
-			DocumentLexState()->Colourise(static_cast<Sci::Position>(wParam), static_cast<Sci::Position>(lParam));
+			DocumentLexState()->Colourise(static_cast<Sci::Position>(wParam), lParam);
 		}
-		NotifyColorized(wParam, lParam);
 		Redraw();
 		break;
 
 	case SCI_SETPROPERTY:
-		DocumentLexState()->PropSet(reinterpret_cast<const char *>(wParam),
-		          reinterpret_cast<const char *>(lParam));
+		DocumentLexState()->PropSet(ConstCharPtrFromUPtr(wParam),
+		          ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_GETPROPERTY:
-		return StringResult(lParam, DocumentLexState()->PropGet(reinterpret_cast<const char *>(wParam)));
+		return StringResult(lParam, DocumentLexState()->PropGet(ConstCharPtrFromUPtr(wParam)));
 
 	case SCI_GETPROPERTYEXPANDED:
-		return DocumentLexState()->PropGetExpanded(reinterpret_cast<const char *>(wParam),
-			reinterpret_cast<char *>(lParam));
+		return DocumentLexState()->PropGetExpanded(ConstCharPtrFromUPtr(wParam),
+			CharPtrFromSPtr(lParam));
 
 	case SCI_GETPROPERTYINT:
-		return DocumentLexState()->PropGetInt(reinterpret_cast<const char *>(wParam), static_cast<int>(lParam));
+		return DocumentLexState()->PropGetInt(ConstCharPtrFromUPtr(wParam), static_cast<int>(lParam));
 
 	case SCI_SETKEYWORDS:
-		DocumentLexState()->SetWordList(static_cast<int>(wParam), reinterpret_cast<const char *>(lParam));
+		DocumentLexState()->SetWordList(static_cast<int>(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_SETLEXERLANGUAGE:
-		DocumentLexState()->SetLexerLanguage(reinterpret_cast<const char *>(lParam));
+		DocumentLexState()->SetLexerLanguage(ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_GETLEXERLANGUAGE:
 		return StringResult(lParam, DocumentLexState()->GetName());
 
 	case SCI_PRIVATELEXERCALL:
-	case SCI_PRIVATELEXERCALLSTR:
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), reinterpret_cast<void *>(lParam)));
 
@@ -1133,11 +1099,11 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return StringResult(lParam, DocumentLexState()->PropertyNames());
 
 	case SCI_PROPERTYTYPE:
-		return DocumentLexState()->PropertyType(reinterpret_cast<const char *>(wParam));
+		return DocumentLexState()->PropertyType(ConstCharPtrFromUPtr(wParam));
 
 	case SCI_DESCRIBEPROPERTY:
 		return StringResult(lParam,
-				    DocumentLexState()->DescribeProperty(reinterpret_cast<const char *>(wParam)));
+				    DocumentLexState()->DescribeProperty(ConstCharPtrFromUPtr(wParam)));
 
 	case SCI_DESCRIBEKEYWORDSETS:
 		return StringResult(lParam, DocumentLexState()->DescribeWordListSets());
@@ -1166,7 +1132,7 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 
 	case SCI_SETIDENTIFIERS:
 		DocumentLexState()->SetIdentifiers(static_cast<int>(wParam),
-						   reinterpret_cast<const char *>(lParam));
+						   ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case SCI_DISTANCETOSECONDARYSTYLES:
@@ -1195,5 +1161,5 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 	default:
 		return Editor::WndProc(iMessage, wParam, lParam);
 	}
-	return 0l;
+	return 0;
 }

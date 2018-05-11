@@ -653,6 +653,12 @@
     <ClInclude Include="win32\ScintillaWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\ElapsedPeriod.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IntegerRectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="win32\ScintRes.rc">

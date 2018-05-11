@@ -113,7 +113,7 @@ static int cmpWords(const void *a, const void *b) {
 }
 
 static void SortWordList(char **words, unsigned int len) {
-	qsort(static_cast<void *>(words), len, sizeof(*words), cmpWords);
+	qsort(words, len, sizeof(*words), cmpWords);
 }
 
 #endif
@@ -147,7 +147,7 @@ bool WordList::InList(const char *s) const {
 	const unsigned char firstChar = s[0];
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (static_cast<unsigned char>(words[j][0]) == firstChar) {
+		while (words[j][0] == firstChar) {
 			if (s[1] == words[j][1]) {
 				const char *a = words[j] + 1;
 				const char *b = s + 1;
@@ -189,7 +189,7 @@ bool WordList::InListAbbreviated(const char *s, const char marker) const {
 	const unsigned char firstChar = s[0];
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (static_cast<unsigned char>(words[j][0]) == firstChar) {
+		while (words[j][0] == firstChar) {
 			bool isSubword = false;
 			int start = 1;
 			if (words[j][1] == marker) {
@@ -243,7 +243,7 @@ bool WordList::InListAbridged(const char *s, const char marker) const {
 	const unsigned char firstChar = s[0];
 	int j = starts[firstChar];
 	if (j >= 0) {
-		while (static_cast<unsigned char>(words[j][0]) == firstChar) {
+		while (words[j][0] == firstChar) {
 			const char *a = words[j];
 			const char *b = s;
 			while (*a && *a == *b) {
@@ -294,141 +294,3 @@ const char *WordList::WordAt(int n) const {
 	return words[n];
 }
 
-//!-start-[InMultiWordsList]
-/** like InList, but string can be a part of multi words keyword expresion.
-* eg. the keyword "begin of" is defined as "begin~of". If input string is
-* "begin of" then return true, eq = true and begin = false, if input string
-* is "begin" then return true, eq = false and begin = true.
-* The marker is ~ in this case.
-*/
-bool WordList::InMultiWordsList(
-	const char *s,
-	const char marker,
-	bool &eq,
-	bool &begin) {
-	eq = begin = false;
-	if (0 == words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-/** like InList, but string can be a part of multi words keyword expresion.
-* eg. the keyword "begin of" is defined as "begin~of". If input string is
-* "begin of" then return true, eq = true and begin = false, if input string
-* is "begin" then return true, eq = false and begin = true.
-* The marker is ~ in this case.
-*/
-bool WordList::InMultiWordsList(
-	const char *s,
-	const char marker,
-	bool &eq,
-	bool &begin,
-	const char* &keyword_end) {
-	eq = begin = false;
-	if (0 == words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-					keyword_end = a + 1;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-/** similar to InList, but keyword can be a substring of word s.
-* eg. the keyword define is defined as def~ or def~e. This means the word must
-* start with def and finished with e to be a keyword, but also may have any
-* symbols instead of marker.
-* The marker is ~ in this case.
-* Returns in mainLen - the length of starting part and in finLen - final part.
-*/
-bool WordList::InListPartly(const char *s, const char marker, int &mainLen, int &finLen) {
-	if (0 == words || !*s) {
-		mainLen = finLen = 0;
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar) {
-			if (s[1] == words[j][1]) {
-				const char *a = words[j] + 1;
-				const char *b = s + 1;
-				mainLen = finLen = 0;
-				while (*a && *a != marker && *a == *b) {
-					a++;
-					b++;
-					mainLen++;
-				}
-				if (!*a && !*b)
-					return true;
-				if (*a == marker) {
-					while (*a) a++;
-					while (*b) b++;
-					finLen = -1;
-					while (*a != marker && *a == *b) {
-						a--;
-						b--;
-						finLen++;
-					}
-					if (*a == marker)
-						return true;
-				}
-			}
-			j++;
-		}
-	}
-	j = starts['^'];
-	if (j >= 0) {
-		while (words[j][0] == '^') {
-			const char *a = words[j] + 1;
-			const char *b = s;
-			mainLen = finLen = 0;
-			while (*a && *a == *b) {
-				a++;
-				b++;
-				mainLen++;
-			}
-			if (!*a)
-				return true;
-			j++;
-		}
-	}
-	mainLen = finLen = 0;
-	return false;
-}
-//!-end-[InMultiWordsList]
