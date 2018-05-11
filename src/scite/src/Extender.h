@@ -58,6 +58,7 @@ public:
 	virtual void Close_script() = 0;
 	virtual void SavePositions() = 0;
 	virtual void BlockUpdate(int cmd) = 0;
+	virtual void SetRestart(const char* cmdLine)=0;
 
 };
 
@@ -128,7 +129,7 @@ public:
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
-	virtual void OnTextChanged(int position, int length, const char* text, int linesAdded, int flag) { return; };
+	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
 };

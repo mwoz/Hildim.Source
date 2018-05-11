@@ -63,7 +63,7 @@ public:
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam);
 	virtual bool OnDrawClipboard(int flag);
 	virtual void OnRightEditorVisibility(bool show);
-	virtual void OnTextChanged(int position, int length, const char* text, int linesAdded, int flag);
+	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag);
 	virtual bool OnAutocSelection(int method, int firstPos);
 	virtual void OnCommandLine(const char* line);
 };
