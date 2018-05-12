@@ -205,7 +205,6 @@ protected:
 	void DropFiles(HDROP hdrop);
 	void MinimizeToTray();
 	void RestoreFromTray();
-	GUI::gui_string ProcessArgs(const GUI::gui_char *cmdLine);
 	virtual void QuitProgram();
 
 	virtual FilePath GetDefaultDirectory();

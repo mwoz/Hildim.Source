@@ -28,6 +28,8 @@
 #include "../../iup/src/iup_childtree.h"
 #include "../../iup/src/iup_register.h"
 #include "../../iup/srclua5/il.h"
+#include "../../iup/src/win/iupwin_handle.h"
+#include "../../iup/src/win/iupwin_drv.h"
 #include "scite_tree.h"
 
 #define ISBOX_THICK 5
@@ -101,6 +103,7 @@ static LRESULT CALLBACK winTreeWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 		bRefresh = FALSE;
 		IupRefresh(ih);
 	}
+	return ret;
 
 }
 
@@ -111,7 +114,7 @@ static int isc_SetNoScrollSize_recr(Ihandle* ih, HDC hdc, int item, long *pWidth
 		char *str = IupGetAttributeId(ih, "TITLE", item);
 		if (!str)
 			return h;
-		GetTextExtentPoint32A(hdc, str, _tcslen(str), &size);
+		GetTextExtentPoint32A(hdc, str, strlen(str), &size);
 		
 		h++;
 		if (*pWidth < size.cx + level)
@@ -130,7 +133,6 @@ static int isc_SetNoScrollSize_recr(Ihandle* ih, HDC hdc, int item, long *pWidth
 
 static void isc_SetNoScrollSize(Ihandle* ih, int iAct, int bOpen) {
 	int cnt = IupGetInt(ih, "COUNT");
-	RECT rc;
 	int w = 0;
 	HDC hdc = GetDC(ih->handle);
 	int iH = SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
@@ -230,7 +232,7 @@ static int isc_TreeCreateMethod(Ihandle* ih, void** params) {
 
 
 
-static int isc_TreeMapMethod(Ihandle* ih, void** params) {
+static int isc_TreeMapMethod(Ihandle* ih) {
 	SetWindowLongPtr(ih->handle, GWL_STYLE, GetWindowLongPtr(ih->handle, GWL_STYLE) - WS_BORDER);
 	IupSetCallback(ih, "_IUPWIN_TREEOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(ih->handle, GWLP_WNDPROC));
 	SetWindowLongPtr(ih->handle, GWLP_WNDPROC, (LONG_PTR)winTreeWndProc);

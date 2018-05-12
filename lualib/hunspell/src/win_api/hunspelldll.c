@@ -82,6 +82,7 @@ LIBHUNSPELL_DLL_EXPORTED void hunspell_free_list(Hunspell *pMS, char ***slst, in
 // deprecated (use hunspell_free_list)
 LIBHUNSPELL_DLL_EXPORTED void hunspell_suggest_free(Hunspell *pMS, char **slst, int len)
 {
+	(void)pMS;
     for (int i = 0; i < len; i++) {
         free(slst[i]);
     }
@@ -106,6 +107,7 @@ BOOL APIENTRY DllMain (HINSTANCE hInst     /* Library instance handle. */ ,
                        DWORD reason        /* Reason this function is being called. */ ,
                        LPVOID reserved     /* Not used. */ )
 {
+	(void)reserved; (void)hInst;
     switch (reason)
     {
       case DLL_PROCESS_ATTACH:

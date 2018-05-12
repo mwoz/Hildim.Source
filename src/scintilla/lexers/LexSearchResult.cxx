@@ -42,7 +42,7 @@
 using namespace Scintilla;
 
 // The following definitions are a copy of the ones in FindReplaceDlg.h
-static enum { searchHeaderLevel = SC_FOLDLEVELBASE + 1, fileHeaderLevel, resultLevel };
+enum { searchHeaderLevel = SC_FOLDLEVELBASE + 1, fileHeaderLevel, resultLevel };
 struct SearchResultMarking {
 	long _start;
 	long _end;

@@ -362,6 +362,12 @@ int iFlatTabsGetLastVisibleAttrib(Ihandle* ih) {
 	return pos;
 }
 
+static int iFlatTabsGetCountAttrib(Ihandle* ih) {
+	int pos = 0;
+	for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++);
+	return pos;
+}
+
 static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 	Ihandle* prnt = IupGetParent(ih);
@@ -1167,11 +1173,6 @@ static int iFlatTabsLeaveWindow_CB(Ihandle* ih) {
 
 /*****************************************************************************************/
 
-static int iFlatTabsGetCountAttrib(Ihandle* ih) {
-	int pos = 0;
-	for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++);
-	return pos;
-}
 
 
 static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value) {

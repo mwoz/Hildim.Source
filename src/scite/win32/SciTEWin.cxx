@@ -1314,47 +1314,6 @@ static bool IsASpace(int ch) {
 	return (ch == ' ') || (ch == '\t');
 }
 
-/**
- * Break up the command line into individual arguments and strip double quotes
- * from each argument.
- * @return A string with each argument separated by '\n'.
- */
-GUI::gui_string SciTEWin::ProcessArgs(const GUI::gui_char *cmdLine) {
-	GUI::gui_string args;
-	const GUI::gui_char *startArg = cmdLine;
-	while (*startArg) {
-		while (IsASpace(*startArg)) {
-			startArg++;
-		}
-//!-start-[cmdline.spaces.fix]
-		if (!*startArg) {
-			break;
-		}
-//!-end-[cmdline.spaces.fix]
-		const GUI::gui_char *endArg = startArg;
-		if (*startArg == '"') {	// Opening double-quote
-			startArg++;
-			endArg = startArg;
-			while (*endArg && *endArg != '\"') {
-				endArg++;
-			}
-		} else {	// No double-quote, end of argument on first space
-			while (*endArg && !IsASpace(*endArg)) {
-				endArg++;
-			}
-		}
-		GUI::gui_string arg(startArg, 0, endArg - startArg);
-		if (args.size() > 0)
-			args += GUI_TEXT("\n");
-		args += arg;
-		startArg = endArg;	// On a space or a double-quote, or on the end of the command line
-		if (*startArg) {
-			startArg++;
-		}
-	}
-
-	return args;
-}
 
 /**
  * Process the command line, check for other instance wanting to open files,
@@ -1363,14 +1322,7 @@ GUI::gui_string SciTEWin::ProcessArgs(const GUI::gui_char *cmdLine) {
  */
 void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 
-	// Break up the command line into individual arguments
-	//GUI::gui_string args = ProcessArgs(cmdLine);
-	// Read the command line parameters:
-	// In case the check.if.already.open property has been set or reset on the command line,
-	// we still get a last chance to force checking or to open a separate instance;
-	// Check if the user just want to print the file(s).
-	// Don't process files yet.
-	//bool bBatchProcessing = ProcessCommandLine(args, 0);
+
 #ifndef _DEBUG
 	// No need to check for other instances when doing a batch job:
 	// perform some tasks and exit immediately.
@@ -1388,34 +1340,9 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 		}
 	}
 #endif /* DEBUG */
-	// We create the window, so it can be found by EnumWindows below,
-	// and the Scintilla control is thus created, allowing to print the file(s).
-	// We don't show it yet, so if it is destroyed (duplicate instance), it will
-	// not flash on the taskbar or on the display.
+
 	CreateUI();
 
-	//if (bBatchProcessing) {
-	//	// Reprocess the command line and read the files
-	//	ProcessCommandLine(args, 1);
-	//	Print(false);	// Don't ask user for print parameters
-	//	// Done, we exit the program
-	//	::PostQuitMessage(0);
-	//	wSciTE.Destroy();
-	//	return;
-	//}
-
-
-	// OK, the instance will be displayed
-	//wSciTE.Show();
-	//if (cmdShow) {	// assume SW_MAXIMIZE only
-	//	::ShowWindow(MainHWND(), cmdShow);
-	//}
-
-	// Open all files given on command line.
-	// The filenames containing spaces must be enquoted.
-	// In case of not using buffers they get closed immediately except
-	// the last one, but they move to the MRU file list
-	//ProcessCommandLine(args, 2);
 	props.Set("hildim.command.line", GUI::UTF8FromString(cmdLine).c_str());
 	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
 	hNextCBWnd = ::SetClipboardViewer(MainHWND());

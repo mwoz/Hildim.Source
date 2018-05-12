@@ -270,7 +270,7 @@ PRectangle CallTip::PaintContents(Surface *surfaceWindow, bool draw) {
 		int chunkLength = static_cast<int>(chunkEnd - chunkVal);
 		int chunkEndOffset = chunkOffset + chunkLength;
 
-		rcClient.top = ytext - ascent - 1;
+		rcClient.top = static_cast<XYPOSITION>(ytext - ascent - 1);
 
 		int x = insetX;     // start each line at this inset
 
@@ -335,7 +335,8 @@ PRectangle CallTip::PaintContents(Surface *surfaceWindow, bool draw) {
 		maxWidth = std::max(maxWidth, x);
 		numLines++;
 	}
-	return PRectangle(0, 0, maxWidth + insetX, lineHeight * numLines - surfaceWindow->InternalLeading(font) + 2 + 2);
+	return PRectangle(0, 0, static_cast<XYPOSITION>(maxWidth + insetX), 
+		static_cast<XYPOSITION>(lineHeight * numLines - surfaceWindow->InternalLeading(font) + 2 + 2));
 }
 //!-end-[BetterCalltips]
 
@@ -430,7 +431,7 @@ PRectangle CallTip::CallTipStart(Sci::Position pos, Point pt, int textHeight, co
 	ClearHighlight();
 	inCallTipMode = true;
 	posStartCallTip = pos;
-	int deviceHeight = surfaceMeasure->DeviceHeightFont(size);
+	const XYPOSITION deviceHeight = static_cast<XYPOSITION>(surfaceMeasure->DeviceHeightFont(size));
 	FontParameters fp(faceName, deviceHeight / SC_FONT_SIZE_MULTIPLIER, SC_WEIGHT_NORMAL, false, 0, technology, characterSet);
 	font.Create(fp);
 	// Look for multiple lines in the text
@@ -438,7 +439,7 @@ PRectangle CallTip::CallTipStart(Sci::Position pos, Point pt, int textHeight, co
 	rectUp = PRectangle(0,0,0,0);
 	rectDown = PRectangle(0,0,0,0);
 	offsetMain = insetX;            // changed to right edge of any arrows
-	lineHeight = surfaceMeasure->Height(font);
+	lineHeight = static_cast<int>(surfaceMeasure->Height(font));
 	PRectangle rcSize = PaintContents(surfaceMeasure, false);
 	delete surfaceMeasure;
 
