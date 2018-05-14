@@ -7,6 +7,33 @@
 
 std::map<std::string, IupChildWnd*> classList;
 
+static Ihandle* load_image_property_WW(const char *fore) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", fore);
+	IupSetAttribute(image, "1", "BGCOLOR");
+
+	return image;
+}
+
 static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	classList[IupGetAttribute(ih, "NAME")]->Scroll_CB(op, posx, posy);
 	return IUP_DEFAULT;
@@ -21,8 +48,6 @@ static int iColorSettings_CB(Ihandle* ih, int side, int markerid, const char* va
 	classList[IupGetAttribute(ih, "NAME")]->ColorSettings_CB(ih, side, markerid, value);
 	return IUP_DEFAULT;
 }
-
-
 
 IupChildWnd::IupChildWnd()
 {
@@ -511,7 +536,9 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	PropGet("layout.fgcolor", "0 0 0", scrFGCOLOR);
 	PropGet("layout.txtfgcolor", "0 0 0", scrTXTFGCOLOR);
 	PropGet("layout.txthlcolor", "15 60 195", scrTXTHLCOLOR);
-	PropGet("layout.txtinactivcolor", "70 70 t0", scrTXTINACTIVCOLOR);
+	PropGet("layout.txtinactivcolor", "70 70 70", scrTXTINACTIVCOLOR);
+
+	IupSetHandle("property_µ", load_image_property_WW(scrFGCOLOR));
 
 	static char * scrollsize = "15";
 
