@@ -1627,7 +1627,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			DeleteObject(hBrush);
 
 		} else {
-			iupStrToRGB(IupGetAttribute(ih, "BORDERCOLOR"), &r, &g, &b);
+			if (!iupStrToRGB(IupGetAttribute(ih, "BORDERCOLOR"), &r, &g, &b))
+				iupStrToRGB("200 200 200", &r, &g, &b);
 			RGBbordercolor = RGB(r, g, b);
 
 			hBrush = CreateSolidBrush(RGBbgcolor);
