@@ -3220,34 +3220,6 @@ static Ihandle* load_image_Tree_DateTime_WW(void)
   return image;
 }
 
-static Ihandle* load_image_property_WW(void)
-{
-  unsigned char imgdata[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-
-  Ihandle* image = IupImage(16, 16, imgdata);
-
-  IupSetAttribute(image, "0", "0 0 0");
-  IupSetAttribute(image, "1", "BGCOLOR");
-
-  return image;
-}
-
 static Ihandle* load_image_marker_WW(void)
 {
   unsigned char imgdata[] = {
@@ -4117,7 +4089,6 @@ void load_all_images_Images(void)
   IupSetHandle("tag__arrow_µ", load_image_tag__arrow_WW());
   IupSetHandle("IMAGE_Frame", load_image_IMAGE_Frame());
   IupSetHandle("Tree_DateTime_µ", load_image_Tree_DateTime_WW());
-  IupSetHandle("property_µ", load_image_property_WW());
   IupSetHandle("marker_µ", load_image_marker_WW());
   IupSetHandle("control_µ", load_image_control_WW());
   IupSetHandle("edit_µ", load_image_edit_WW());
