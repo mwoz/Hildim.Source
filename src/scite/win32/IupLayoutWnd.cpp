@@ -34,6 +34,55 @@ static Ihandle* load_image_property_WW(const char *fore) {
 	return image;
 }
 
+static Ihandle* load_image_uncheck(const char *back, const char *border) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(13, 13, imgdata);
+
+	IupSetAttribute(image, "0", back);
+	IupSetAttribute(image, "1", border);
+
+	return image;
+}
+
+static Ihandle* load_image_check(const char *back, const char *border, const char* forward) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1,
+		1, 0, 2, 0, 0, 0, 0, 0, 2, 2, 2, 0, 1,
+		1, 0, 2, 2, 0, 0, 0, 2, 2, 2, 0, 0, 1,
+		1, 0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 1,
+		1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(13, 13, imgdata);
+
+	IupSetAttribute(image, "0", back);
+	IupSetAttribute(image, "1", border);
+	IupSetAttribute(image, "2", forward);
+
+	return image;
+}
+
 static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	classList[IupGetAttribute(ih, "NAME")]->Scroll_CB(op, posx, posy);
 	return IUP_DEFAULT;
@@ -539,6 +588,11 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	PropGet("layout.txtinactivcolor", "70 70 70", scrTXTINACTIVCOLOR);
 
 	IupSetHandle("property_µ", load_image_property_WW(scrFGCOLOR));
+	IupSetHandle("check_µ", load_image_check(scrBGCOLOR, scrBORDERCOLOR, scrFGCOLOR));
+	IupSetHandle("uncheck_µ", load_image_uncheck(scrBGCOLOR, scrBORDERCOLOR));
+	IupSetHandle("check_t_µ", load_image_check(scrTXTBGCOLOR, scrBORDERCOLOR, scrTXTFGCOLOR));
+	IupSetHandle("uncheck_t_µ", load_image_uncheck(scrTXTBGCOLOR, scrBORDERCOLOR));
+	IupSetHandle("uncheck_inactive_µ", load_image_uncheck(scrTXTINACTIVCOLOR, scrBORDERCOLOR));
 
 	static char * scrollsize = "15";
 
