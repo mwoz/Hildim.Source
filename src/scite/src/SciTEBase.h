@@ -332,10 +332,12 @@ public:
 	void Scroll_CB(int op, float posx, float posy);
 	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
 	void ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value);
+	void HideScrolls();
 	void OnIdle();
 	void resetPixelMap();
 private:
 	char name[16];
+	bool bNeedSize = false;
 	HWND hMainWnd;
 	void *pSciteWin;
 	WNDPROC subclassedProc;
@@ -375,6 +377,7 @@ public:
 	void Close();
 	void OnIdle();
 	void OnSwitchFile(int editorSide);
+	void OnOpenClose(int editorSide);
 	COLORREF GetColorRef(char* name);
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;

@@ -356,6 +356,7 @@ void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::
 }
 
 void IupChildWnd::SizeEditor() {
+	bNeedSize = false;
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
 	RECT r;
@@ -365,12 +366,21 @@ void IupChildWnd::SizeEditor() {
 
 }
 
+void IupChildWnd::HideScrolls() {
+	vPx = 0;
+	hPx = 0;
+    SizeEditor();
+	return;
+}
+
 void IupChildWnd::OnIdle() {
-	if (!resetmap)
-		return;
-	resetPixelMap();
-	IupSetAttribute(pContainer, "REDRAWVSCROLL", "");
+	if (resetmap) {
+		resetPixelMap();
+		IupSetAttribute(pContainer, "REDRAWVSCROLL", "");
+	}
 	resetmap = false;
+	if (bNeedSize)
+		SizeEditor();
 }
 
 
@@ -450,7 +460,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					vHeight = newVHeight;
 					resetmap = true;
 				}
-				SizeEditor();
+				//SizeEditor();
+				bNeedSize = false;
 			}
 		} else if(wParam == SB_HORZ) {
 			if (lpsi->fMask & SIF_RANGE) {
@@ -477,7 +488,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					vHeight = newVHeight;
 					resetmap = true;
 				}
-				SizeEditor();
+				//SizeEditor();
+				bNeedSize = true;
 			}
 		} else
 			return false;
@@ -976,6 +988,13 @@ void IupLayoutWnd::OnSwitchFile(int editorSide) {
 		classList["Source"]->resetPixelMap();
 	else
 		classList["CoSource"]->resetPixelMap();
+}
+
+void IupLayoutWnd::OnOpenClose(int editorSide) {
+	if (editorSide == IDM_SRCWIN)
+		classList["Source"]->HideScrolls();
+	else
+		classList["CoSource"]->HideScrolls();
 }
 
 void IupLayoutWnd::GetPaneRect(const char *name, LPRECT pRc){
