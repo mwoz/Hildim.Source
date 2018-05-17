@@ -407,6 +407,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	        currentbuf >= buffers.length) {
 		return;
 	}
+	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
+
 	UpdateBuffersCurrent();
 	buffers.SetCurrent(index);
 	if (updateStack) {
@@ -634,6 +636,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	bool closingLast = false;
 	int nextFriend = -2;
 	int prevIdm = -2;
+	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 	if (extender) {
 		extender->OnClose(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close");

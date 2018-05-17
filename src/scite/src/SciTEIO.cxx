@@ -462,6 +462,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 			}
 		}
 	}
+	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 
 	bBlockRedraw = true;
 	if (buffers.size == buffers.length) {
