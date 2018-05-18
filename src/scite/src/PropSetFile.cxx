@@ -68,6 +68,90 @@ void PropSetFile::Set(const char *key, const char *val, int lenKey, int lenVal) 
 	props[std::string(key, lenKey)] = std::string(val, lenVal);
 }
 
+/**
+* Get a line of input. If end of line escaped with '\\' then continue reading.
+*/
+static bool GetFullLine(const char *&fpc, int &lenData, char *s, int len, bool newVal) {
+	bool continuation = true;
+	if(newVal)
+		s[0] = '\0';
+	while ((len > 1) && lenData > 0) {
+		char ch = *fpc;
+		fpc++;
+		lenData--;
+		if ((ch == '\r') || (ch == '\n')) {
+			if (!continuation) {
+				if ((lenData > 0) && (ch == '\r') && ((*fpc) == '\n')) {
+					// munch the second half of a crlf
+					fpc++;
+					lenData--;
+				}
+				if (newVal)
+					*s = '\0';
+				return true;
+			}
+		}
+		else if ((ch == '\\') && (lenData > 0) && ((*fpc == '\r') || (*fpc == '\n'))) {
+			continuation = true;
+			if ((lenData > 1) && (((*fpc == '\r') && (*(fpc + 1) == '\r')) || ((*fpc == '\n') && (*(fpc + 1) == '\n'))))
+				continuation = false;
+			else if ((lenData > 2) && ((*fpc == '\r') && (*(fpc + 1) == '\n') && (*(fpc + 2) == '\n' || *(fpc + 2) == '\r')))
+				continuation = false;
+		}
+		else {
+			continuation = false;
+			*s++ = ch;
+			if (newVal)
+				*s = '\0';
+			len--;
+		}
+	}
+	return false;
+}
+
+void PropSetFile::SetEx(char *keyVal, const char * &data, int &len) {
+	while (IsASpace(*keyVal))
+		keyVal++;
+	const char *endVal = keyVal;
+	while (*endVal && (*endVal != '\n'))
+		endVal++;
+	const char *eqAt = strchr(keyVal, '=');
+	if (eqAt) {
+		if (*(eqAt + 1) == '{' && *(eqAt + 2) == '{' && *(eqAt + 3) == '{') {
+			endVal = data;
+			const char * dtEnd = NULL;
+			while (len > 0) {
+				data++;
+				len--;
+				if (*(data - 2) == '}' && *(data - 1) == '}' && *(data) == '}') {
+					dtEnd = data;
+					while (len > 0) {
+						len--;
+						data++;
+						if (*data == '\n' || *data == '\r') {
+							while (len > 0) {
+								if (*data != '\n' && *data != '\r')
+									break;
+								len--;
+								data++;
+							}
+							break;
+						}
+					}
+					break;
+				}
+			}
+			if (!dtEnd)
+				dtEnd = data;
+			Set(keyVal, endVal, eqAt - keyVal, dtEnd - endVal - 2);
+		} else
+		    Set(keyVal, eqAt + 1, eqAt - keyVal, endVal - eqAt - 1);
+	}
+	else if (*keyVal) {	// No '=' so assume '=1'
+		Set(keyVal, "1", endVal - keyVal, 1);
+	}
+}
+
 void PropSetFile::Set(const char *keyVal) {
 	while (IsASpace(*keyVal))
 		keyVal++;
@@ -218,42 +302,6 @@ char *PropSetFile::ToString() const {
 	return ret;
 }
 
-/**
- * Get a line of input. If end of line escaped with '\\' then continue reading.
- */
-static bool GetFullLine(const char *&fpc, int &lenData, char *s, int len) {
-	bool continuation = true;
-	s[0] = '\0';
-	while ((len > 1) && lenData > 0) {
-		char ch = *fpc;
-		fpc++;
-		lenData--;
-		if ((ch == '\r') || (ch == '\n')) {
-			if (!continuation) {
-				if ((lenData > 0) && (ch == '\r') && ((*fpc) == '\n')) {
-					// munch the second half of a crlf
-					fpc++;
-					lenData--;
-				}
-				*s = '\0';
-				return true;
-			}
-		} else if ((ch == '\\') && (lenData > 0) && ((*fpc == '\r') || (*fpc == '\n'))) {
-			continuation = true;
-			if ((lenData > 1) && (((*fpc == '\r') && (*(fpc+1) == '\r')) || ((*fpc == '\n') && (*(fpc+1) == '\n'))))
-				continuation = false;
-			else if ((lenData > 2) && ((*fpc == '\r') && (*(fpc+1) == '\n') && (*(fpc+2) == '\n' || *(fpc+2) == '\r')))
-				continuation = false;
-		} else {
-			continuation = false;
-			*s++ = ch;
-			*s = '\0';
-			len--;
-		}
-	}
-	return false;
-}
-
 static bool IsSpaceOrTab(char ch) {
 	return (ch == ' ') || (ch == '\t');
 }
@@ -263,8 +311,8 @@ static bool IsCommentLine(const char *line) {
 	return (*line == '#');
 }
 
-bool PropSetFile::ReadLine(const char *lineBuffer, bool ifIsTrue, FilePath directoryForImports,
-                           FilePath imports[], int sizeImports) {
+bool PropSetFile::ReadLine(char *lineBuffer, bool ifIsTrue, FilePath directoryForImports,
+                           FilePath imports[], int sizeImports, const char * &dataAll, int &len) {
 	//UnSlash(lineBuffer);
 	if (!IsSpaceOrTab(lineBuffer[0]))    // If clause ends with first non-indented line
 		ifIsTrue = true;
@@ -303,7 +351,7 @@ bool PropSetFile::ReadLine(const char *lineBuffer, bool ifIsTrue, FilePath direc
 			}
 		}
 	} else if (ifIsTrue && !IsCommentLine(lineBuffer)) {
-		Set(lineBuffer);
+		SetEx(lineBuffer, dataAll, len);
 	}
 	return ifIsTrue;
 }
@@ -314,7 +362,7 @@ void PropSetFile::ReadFromMemory(const char *data, int len, FilePath directoryFo
 	char lineBuffer[60000];
 	bool ifIsTrue = true;
 	while (len > 0) {
-		GetFullLine(pd, len, lineBuffer, sizeof(lineBuffer));
+		GetFullLine(pd, len, lineBuffer, sizeof(lineBuffer), true);
 		if (lowerKeys) {
 			for (int i=0; lineBuffer[i] && (lineBuffer[i] != '='); i++) {
 				if ((lineBuffer[i] >= 'A') && (lineBuffer[i] <= 'Z')) {
@@ -322,7 +370,7 @@ void PropSetFile::ReadFromMemory(const char *data, int len, FilePath directoryFo
 				}
 			}
 		}
-		ifIsTrue = ReadLine(lineBuffer, ifIsTrue, directoryForImports, imports, sizeImports);
+		ifIsTrue = ReadLine(lineBuffer, ifIsTrue, directoryForImports, imports, sizeImports, pd, len);
 	}
 }
 bool PropSetFile::Read(const char *sciteDefaultHome, FilePath filename, FilePath directoryForImports,

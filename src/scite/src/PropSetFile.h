@@ -22,6 +22,7 @@ public:
 	virtual ~PropSetFile();
 	void Set(const char *key, const char *val, int lenKey=-1, int lenVal=-1);
 	void Set(const char *keyVal);
+	void SetEx(char *keyVal, const char * &data, int &len);
 	void Unset(const char *key, int lenKey=-1);
 	void SetMultiple(const char *s);
 	SString Get(const char *key) const;
@@ -32,7 +33,7 @@ public:
 	void Clear();
 	char *ToString() const;	// Caller must delete[] the return value
 
-	bool ReadLine(const char *data, bool ifIsTrue, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
+	bool ReadLine(char *data, bool ifIsTrue, FilePath directoryForImports, FilePath imports[], int sizeImports , const char * &dataAll, int &len);
 	void ReadFromMemory(const char *data, int len, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
 	bool Read(FilePath filename, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
 	bool Read(const char *sciteDefaultHome, FilePath filename, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
