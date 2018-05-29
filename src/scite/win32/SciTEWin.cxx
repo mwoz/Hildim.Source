@@ -640,8 +640,8 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 	case IDM_FINISHEDEXECUTE: {
 			jobQueue.SetExecuting(false);
-			if (needReadProperties)
-				ReadProperties();
+			//if (needReadProperties) !!TODO - видимо переменную needReadProperties можно удалить
+			//	ReadProperties();
 			CheckMenus();
 			for (int icmd = 0; icmd < jobQueue.commandMax; icmd++) {
 				jobQueue.jobQueue[icmd].Clear();
@@ -1767,8 +1767,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				if (file.Exists()) {
 					Open(file.AsInternal());
 				} else {
-					GUI::gui_string msg = LocaliseMessage("Could not open file '^0'.", file.AsInternal());
-					WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+					extender->HildiAlarm("Could not open file '%1'.",
+						MB_OK | MB_ICONWARNING, file.AsInternal());
 				}
 			} 
 			extender->OnNavigation("_-openSet");

@@ -1423,17 +1423,6 @@ GUI::gui_string Localization::Text(const char *s, bool retainIfNotFound) {
 	return GUI::StringFromUTF8(s);
 }
 
-GUI::gui_string SciTEBase::LocaliseMessage(const char *s, const GUI::gui_char *param0, const GUI::gui_char *param1, const GUI::gui_char *param2) {
-	GUI::gui_string translation = localiser.Text(s);
-	if (param0)
-		Substitute(translation, GUI_TEXT("^0"), param0);
-	if (param1)
-		Substitute(translation, GUI_TEXT("^1"), param1);
-	if (param2)
-		Substitute(translation, GUI_TEXT("^2"), param2);
-	return translation;
-}
-
 void SciTEBase::ReadLocalization() {
 	localiser.Clear();
 	GUI::gui_string title = GUI_TEXT("locale.properties");

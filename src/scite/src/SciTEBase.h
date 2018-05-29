@@ -854,8 +854,6 @@ protected:
 	//void ImportMenu(int pos);
 	//void SetLanguageMenu();
 	void SetPropertiesInitial();
-	GUI::gui_string LocaliseMessage(const char *s,
-		const GUI::gui_char *param0 = 0, const GUI::gui_char *param1 = 0, const GUI::gui_char *param2 = 0);
 	virtual void ReadLocalization();
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();

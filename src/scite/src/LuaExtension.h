@@ -66,4 +66,5 @@ public:
 	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag);
 	virtual bool OnAutocSelection(int method, int firstPos);
 	virtual void OnCommandLine(const char* line);
+	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
 };

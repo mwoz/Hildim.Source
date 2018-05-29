@@ -170,8 +170,9 @@ int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC
 
 	if (result == -1) {
 		GUI::gui_string errorNum = GUI::StringFromInteger(::GetLastError());
-		GUI::gui_string msg = LocaliseMessage("Failed to create dialog box: ^0.", errorNum.c_str());
-		::MessageBoxW(hWnd, msg.c_str(), appName, MB_OK | MB_SETFOREGROUND);
+		extender->HildiAlarm("Failed to create dialog box: %1.",
+			MB_OK, errorNum.c_str());
+
 	}
 
 	return result;
@@ -589,8 +590,8 @@ void SciTEWin::Print(
 		::DeleteDC(hdc);
 		DeleteFontObject(fontHeader);
 		DeleteFontObject(fontFooter);
-		GUI::gui_string msg = LocaliseMessage("Can not start printer document.");
-		WindowMessageBox(wSciTE, msg, MB_OK);
+		extender->HildiAlarm("Can not start printer document.",
+			MB_OK);
 		return;
 	}
 
