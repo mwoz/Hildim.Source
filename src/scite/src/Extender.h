@@ -59,6 +59,7 @@ public:
 	virtual void SavePositions() = 0;
 	virtual void BlockUpdate(int cmd) = 0;
 	virtual void SetRestart(const char* cmdLine)=0;
+	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3)=0;
 
 };
 
@@ -132,6 +133,8 @@ public:
 	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
+	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) { return 0; }
+	virtual GUI::gui_string LocalizeText(const char* msg) { GUI::gui_string s; return s; }
 };
 
 #endif

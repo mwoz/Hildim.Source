@@ -113,9 +113,6 @@ void SciTEBase::ReadGlobalPropFile() {
 	FilePath propfileUser = GetUserPropertiesFileName();
 	propsUser.Read(propfileUser, propfileUser.Directory(), importFiles, importMax);
 
-	if (!localiser.read) {
-		ReadLocalization();
-	}
 }
 
 int IntFromHexDigit(int ch) {
@@ -1383,69 +1380,6 @@ void SciTEBase::SetPropertiesInitial() {
 	wrapFind = props.GetInt("find.replace.wrap", 1);
 	focusOnReplace = props.GetInt("find.replacewith.focus", 1);
 	subDirSearch = props.GetInt("find.in.subfolders", 1);
-}
-
-GUI::gui_string Localization::Text(const char *s, bool retainIfNotFound) {
-	SString translation = s;
-	int ellipseIndicator = translation.remove("...");
-	char menuAccessIndicatorChar[2] = "!";
-	menuAccessIndicatorChar[0] = static_cast<char>(menuAccessIndicator[0]);
-	int accessKeyPresent = translation.remove(menuAccessIndicatorChar);
-	translation.lowercase();
-	translation.substitute("\n", "\\n");
-	translation = Get(translation.c_str());
-	if (translation.length()) {
-		if (ellipseIndicator)
-			translation += "...";
-		if (0 == accessKeyPresent) {
-#if !defined(GTK)
-			// Following codes are required because accelerator is not always
-			// part of alphabetical word in several language. In these cases,
-			// accelerator is written like "(&O)".
-			int posOpenParenAnd = translation.search("(&");
-			if (posOpenParenAnd > 0 && translation.search(")", posOpenParenAnd) == posOpenParenAnd+3) {
-				translation.remove(posOpenParenAnd, 4);
-			} else {
-				translation.remove("&");
-			}
-#else
-			translation.remove("&");
-#endif
-		}
-		translation.substitute("&", menuAccessIndicatorChar);
-		translation.substitute("\\n", "\n");
-	} else {
-		translation = missing;
-	}
-	if ((translation.length() > 0) || !retainIfNotFound) {
-		return GUI::StringFromUTF8(translation.c_str());
-	}
-	return GUI::StringFromUTF8(s);
-}
-
-GUI::gui_string SciTEBase::LocaliseMessage(const char *s, const GUI::gui_char *param0, const GUI::gui_char *param1, const GUI::gui_char *param2) {
-	GUI::gui_string translation = localiser.Text(s);
-	if (param0)
-		Substitute(translation, GUI_TEXT("^0"), param0);
-	if (param1)
-		Substitute(translation, GUI_TEXT("^1"), param1);
-	if (param2)
-		Substitute(translation, GUI_TEXT("^2"), param2);
-	return translation;
-}
-
-void SciTEBase::ReadLocalization() {
-	localiser.Clear();
-	GUI::gui_string title = GUI_TEXT("locale.properties");
-	SString localeProps = props.GetExpanded("locale.properties");
-	if (localeProps.length()) {
-		title = GUI::StringFromUTF8(localeProps.c_str());
-	}
-	FilePath propdir = GetSciteDefaultHome();
-	FilePath localePath(propdir, title);
-	localiser.Read(localePath, propdir, importFiles, importMax);
-	localiser.SetMissing(props.Get("translation.missing"));
-	localiser.read = true;
 }
 
 void SciTEBase::ReadPropertiesInitial() {

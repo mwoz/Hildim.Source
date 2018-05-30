@@ -452,11 +452,8 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 		if (maxSize > 0 && size > maxSize) {
 			GUI::gui_string sSize = GUI::StringFromInteger(size);
 			GUI::gui_string sMaxSize = GUI::StringFromInteger(maxSize);
-			GUI::gui_string msg = LocaliseMessage("File '^0' is ^1 bytes long,\n"
-			        "larger than the ^2 bytes limit set in the properties.\n"
-			        "Do you still want to open it?",
-			        absPath.AsInternal(), sSize.c_str(), sMaxSize.c_str());
-			int answer = WindowMessageBox(wSciTE, msg, MB_YESNO | MB_ICONWARNING);
+			int answer = extender->HildiAlarm("File '%1' is %2 bytes long,\nlarger than the %3 bytes limit set in the properties.\nDo you still want to open it?",
+				MB_YESNO | MB_ICONWARNING, absPath.AsInternal(), sSize.c_str(), sMaxSize.c_str());
 			if (answer != IDYES) {
 				return false;
 			}
@@ -546,16 +543,14 @@ void SciTEBase::CheckReload() {
 				if (CurrentBuffer()->isDirty || props.GetInt("are.you.sure.on.reload") != 0) {
 					if ((0 == dialogsOnScreen) && (newModTime != CurrentBuffer()->fileModLastAsk)) {
 						GUI::gui_string msg;
+						int decision;
 						if (CurrentBuffer()->isDirty) {
-							msg = LocaliseMessage(
-									"The file '^0' has been modified. Should it be reloaded?",
-									filePath.AsInternal());
+							decision = extender->HildiAlarm("The file '%1' has been modified. Should it be reloaded?",
+								MB_YESNO, filePath.AsInternal());
 						} else {
-							msg = LocaliseMessage(
-									"The file '^0' has been modified outside SciTE. Should it be reloaded?",
-									FileNameExt().AsInternal());
+							decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be reloaded?",
+								MB_YESNO, filePath.AsInternal());
 						}
-						int decision = WindowMessageBox(wSciTE, msg, MB_YESNO);
 						if (decision == IDYES) {
 							Open(filePath, static_cast<OpenFlags>(of | ofForceLoad));
 							DisplayAround(rf);
@@ -571,11 +566,8 @@ void SciTEBase::CheckReload() {
 				SetWindowName();
 				BuffersMenu();
 				if (0 == dialogsOnScreen) {
-						GUI::gui_string msg;
-						msg = LocaliseMessage(
-								"File '^0' is missing or not available.\nDo you wish to keep the file open in the editor?",
-								filePath.AsInternal());
-						int decision = WindowMessageBox(wSciTE, msg, MB_YESNO);
+						int decision = extender->HildiAlarm("File '%1' is missing or not available.\nDo you wish to keep the file open in the editor?",
+							MB_YESNO, filePath.AsInternal());
 						if (decision == IDNO) {
 							Close();
 						}
@@ -623,13 +615,14 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion) {
 		if ((props.GetInt("are.you.sure", 1) && props.GetInt("are.you.sure.close", 1)) ||
 		        filePath.IsUntitled() ||
 		        forceQuestion) {
-					GUI::gui_string msg;
+			int decision;
 			if (!filePath.IsUntitled()) {
-				msg = LocaliseMessage("Save changes to '^0'?", filePath.AsInternal());
+				decision = extender->HildiAlarm("Save changes to '%1'?",
+					MB_YESNOCANCEL, filePath.AsInternal());
 			} else {
-				msg = LocaliseMessage("Save changes to (Untitled)?");
+				decision = extender->HildiAlarm("Save changes to (Untitled)?",
+					MB_YESNOCANCEL, filePath.AsInternal());
 			}
-			int decision = WindowMessageBox(wSciTE, msg, MB_YESNOCANCEL | MB_ICONQUESTION);
 			if (decision == IDYES) {
 				if (!Save())
 					decision = IDCANCEL;
@@ -780,7 +773,6 @@ void SciTEBase::ReloadProperties() {
 // Returns false if cancelled or failed to save
 bool SciTEBase::Save(bool bNotSaveNotChanged) {
 	if (!filePath.IsUntitled()) {
-		GUI::gui_string msg;
 		int decision;
 
 		if (props.GetInt("save.deletes.first")) {
@@ -789,9 +781,8 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 			time_t newModTime = filePath.ModifiedTime();
 			if ((newModTime != 0) && (CurrentBuffer()->fileModTime != 0) &&
 				(newModTime != CurrentBuffer()->fileModTime)) {
-				msg = LocaliseMessage("The file '^0' has been modified outside SciTE. Should it be saved?",
-					filePath.AsInternal());
-				decision = WindowMessageBox(wSciTE, msg, MB_YESNO | MB_ICONWARNING);
+				decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be saved?",
+					MB_YESNO | MB_ICONWARNING,  filePath.AsInternal());
 				if (decision == IDNO) {
 					return false;
 				}
@@ -805,9 +796,8 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 				ReloadProperties();
 			}
 		} else {
-			msg = LocaliseMessage(
-			            "Could not save file '^0'. Save under a different name?", filePath.AsInternal());
-			decision = WindowMessageBox(wSciTE, msg, MB_YESNO | MB_ICONWARNING);
+			decision = extender->HildiAlarm("Could not save file '%1'. Save under a different name?",
+				MB_YESNO | MB_ICONWARNING, filePath.AsInternal());
 			if (decision == IDYES) {
 				return SaveAsDialog();
 			}
@@ -836,9 +826,8 @@ bool SciTEBase::SaveIfNotOpen(const FilePath &destFile, bool fixCase) {
 	FilePath absPath = destFile.AbsolutePath();
 	int index = buffers.GetDocumentByName(absPath, true /* excludeCurrent */);
 	if (index >= 0) {
-		GUI::gui_string msg = LocaliseMessage(
-			    "File '^0' is already open in another buffer.", destFile.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("File '%1' is already open in another buffer.",
+			MB_OK | MB_ICONWARNING, destFile.AsInternal());
 		return false;
 	} else {
 		SaveAs(absPath.AsInternal(), fixCase);

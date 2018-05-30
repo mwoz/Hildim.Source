@@ -43,7 +43,7 @@
 #ifdef STATIC_BUILD
 const GUI::gui_char appName[] = GUI_TEXT("Sc1");
 #else
-const GUI::gui_char appName[] = GUI_TEXT("HildiM.Jit");
+const GUI::gui_char appName[] = GUI_TEXT("HildiM");
 #endif
 
 int bIsPopUpMenuItem = 0;
@@ -379,28 +379,6 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 		exit(FALSE);
 }
 
-void SciTEWin::ReadLocalization() {
-	SciTEBase::ReadLocalization();
-	SString encoding = localiser.Get("translation.encoding");
-	encoding.lowercase();
-	if (encoding.length()) {
-//!		int codePage = CodePageFromName(encoding);
-		int codePage = GUI::CodePageFromName(encoding.c_str()); //!-change-[FixEncoding]
-		const char *key = NULL;
-		const char *val = NULL;
-		// Get encoding
-		bool more = localiser.GetFirst(key, val);
-		while (more) {
-//!			std::string converted = ConvertEncoding(val, codePage);
-			std::string converted = GUI::ConvertToUTF8(val, codePage); //!-change-[FixEncoding]
-			if (converted != "") {
-				localiser.Set(key, converted.c_str());
-			}
-			more = localiser.GetNext(key, val);
-		}
-	}
-}
-
 void SciTEWin::GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize) {
 	winPlace.length = sizeof(winPlace);
 	::GetWindowPlacement(MainHWND(), &winPlace);
@@ -640,8 +618,8 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 	case IDM_FINISHEDEXECUTE: {
 			jobQueue.SetExecuting(false);
-			if (needReadProperties)
-				ReadProperties();
+			//if (needReadProperties) !!TODO - видимо переменную needReadProperties можно удалить
+			//	ReadProperties();
 			CheckMenus();
 			for (int icmd = 0; icmd < jobQueue.commandMax; icmd++) {
 				jobQueue.jobQueue[icmd].Clear();
@@ -1767,8 +1745,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				if (file.Exists()) {
 					Open(file.AsInternal());
 				} else {
-					GUI::gui_string msg = LocaliseMessage("Could not open file '^0'.", file.AsInternal());
-					WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+					extender->HildiAlarm("Could not open file '%1'.",
+						MB_OK | MB_ICONWARNING, file.AsInternal());
 				}
 			} 
 			extender->OnNavigation("_-openSet");

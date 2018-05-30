@@ -261,18 +261,6 @@ struct StyleAndWords {
 	bool IsSingleChar() { return words.length() == 1; }
 };
 
-class Localization : public PropSetFile, public ILocalize {
-	SString missing;
-public:
-	bool read;
-	Localization() : PropSetFile(true), read(false) {
-	}
-	GUI::gui_string Text(const char *s, bool retainIfNotFound=true);
-	void SetMissing(const SString &missing_) {
-		missing = missing_;
-	}
-};
-
 // Interface between SciTE and dialogs and strips for find and replace
 class Searcher {
 public:
@@ -580,8 +568,6 @@ protected:
 
 	FilePath pathAbbreviations;
 
-	Localization localiser;
-
 	IupLayoutWnd layout;
 
 	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
@@ -743,6 +729,7 @@ protected:
 	void SelectionIntoProperties();
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
+	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
 	int FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition);
 	virtual bool FindHasText() const;
 	virtual void MoveBack(int distance);
@@ -854,9 +841,6 @@ protected:
 	//void ImportMenu(int pos);
 	//void SetLanguageMenu();
 	void SetPropertiesInitial();
-	GUI::gui_string LocaliseMessage(const char *s,
-		const GUI::gui_char *param0 = 0, const GUI::gui_char *param1 = 0, const GUI::gui_char *param2 = 0);
-	virtual void ReadLocalization();
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();
 	void ReadFontProperties();

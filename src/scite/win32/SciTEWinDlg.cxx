@@ -132,11 +132,11 @@ void SciTEWin::WarnUser(int warnID, const char *msg /* = NULL */, bool isCanBeAl
 	PlayThisSound(sound, atoi(soundDuration), hMM);
 //!-start-[WarningMessage]
 	if (warning_msg.length() > 0 && isCanBeAlerted) {
-		warning_msg = GUI::UTF8FromString(localiser.Text(warning_msg.c_str())).c_str();
+		warning_msg = GUI::UTF8FromString(extender->LocalizeText(warning_msg.c_str())).c_str();
 		warning_msg += "     ";
 		if (msg != NULL) {
 			warning_msg += "\n";
-			warning_msg += GUI::UTF8FromString(localiser.Text(msg)).c_str();
+			warning_msg += GUI::UTF8FromString(extender->LocalizeText(msg)).c_str();
 			warning_msg += "     ";
 		}
 		WindowMessageBox(wEditor, GUI::StringFromUTF8(warning_msg.c_str()), MB_OK | MB_ICONWARNING);
@@ -170,8 +170,9 @@ int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC
 
 	if (result == -1) {
 		GUI::gui_string errorNum = GUI::StringFromInteger(::GetLastError());
-		GUI::gui_string msg = LocaliseMessage("Failed to create dialog box: ^0.", errorNum.c_str());
-		::MessageBoxW(hWnd, msg.c_str(), appName, MB_OK | MB_SETFOREGROUND);
+		extender->HildiAlarm("Failed to create dialog box: %1.",
+			MB_OK, errorNum.c_str());
+
 	}
 
 	return result;
@@ -191,7 +192,7 @@ GUI::gui_string SciTEWin::DialogFilterFromProperty(const GUI::gui_char *filterPr
 				next += wcslen(filter.c_str() + next) + 1;
 				filter.erase(start, next - start);
 			} else {
-				GUI::gui_string localised = localiser.Text(GUI::UTF8FromString(filterName).c_str(), false);
+				GUI::gui_string localised = extender->LocalizeText(GUI::UTF8FromString(filterName).c_str());
 				if (localised.size()) {
 					filter.erase(start, wcslen(filterName));
 					filter.insert(start, localised.c_str());
@@ -210,7 +211,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	GUI::gui_string openFilter = DialogFilterFromProperty(filter);
 
 	if (!openWhat[0]) {
-		wcscpy(openWhat, localiser.Text("Custom Filter").c_str());
+		wcscpy(openWhat, extender->LocalizeText("Custom Filter").c_str());
 		openWhat[wcslen(openWhat) + 1] = '\0';
 	}
 
@@ -237,7 +238,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	ofn.lpstrCustomFilter = openWhat;
 	ofn.nMaxCustFilter = ELEMENTS(openWhat);
 	ofn.nFilterIndex = filterDefault;
-	GUI::gui_string translatedTitle = localiser.Text("Open File");
+	GUI::gui_string translatedTitle = extender->LocalizeText("Open File");
 	ofn.lpstrTitle = translatedTitle.c_str();
 	if (props.GetInt("open.dialog.in.file.directory")) {
 		ofn.lpstrInitialDir = directory.AsInternal();
@@ -303,7 +304,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		ofn.hInstance = hInstance;
 		ofn.lpstrFile = saveName;
 		ofn.nMaxFile = ELEMENTS(saveName);
-		GUI::gui_string translatedTitle = localiser.Text(title);
+		GUI::gui_string translatedTitle = extender->LocalizeText(title);
 		ofn.lpstrTitle = translatedTitle.c_str();
 		ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
 		ofn.lpstrFilter = filter;
@@ -589,8 +590,8 @@ void SciTEWin::Print(
 		::DeleteDC(hdc);
 		DeleteFontObject(fontHeader);
 		DeleteFontObject(fontFooter);
-		GUI::gui_string msg = LocaliseMessage("Can not start printer document.");
-		WindowMessageBox(wSciTE, msg, MB_OK);
+		extender->HildiAlarm("Can not start printer document.",
+			MB_OK);
 		return;
 	}
 
@@ -866,6 +867,17 @@ int SciTEWin::WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int s
 	int ret = ::MessageBoxW(reinterpret_cast<HWND>(w.GetID()), msg.c_str(), appName, style | MB_SETFOREGROUND);
 	dialogsOnScreen--;
 	return ret;
+}
+
+int SciTEWin::WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) {
+	GUI::gui_string translation = GUI::StringFromUTF8(msg);
+	if (p1)
+		Substitute(translation, GUI_TEXT("%1"), p1);
+	if (p2)
+		Substitute(translation, GUI_TEXT("%2"), p2);
+	if (p3)
+		Substitute(translation, GUI_TEXT("%3"), p3);
+	return SciTEWin::WindowMessageBox(wSciTE, translation,  flag);
 }
 
 

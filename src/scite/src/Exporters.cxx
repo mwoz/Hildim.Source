@@ -312,8 +312,8 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 		fputs(RTF_BODYCLOSE, fp);
 		fclose(fp);
 	} else {
-		GUI::gui_string msg = LocaliseMessage("Could not save file '^0'.", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("Could not save file '%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
 }
 
@@ -658,9 +658,8 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 		fputs("\n</body>\n</html>\n", fp);
 		fclose(fp);
 	} else {
-		GUI::gui_string msg = LocaliseMessage(
-		            "Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("Could not save file '%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
 }
 
@@ -1121,8 +1120,8 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	FILE *fp = saveName.Open(GUI_TEXT("wb"));
 	if (!fp) {
 		// couldn't open the file for saving, issue an error message
-		GUI::gui_string msg = LocaliseMessage("Could not save file '^0'.", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("Could not save file '%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 		return;
 	}
 	// initialise PDF rendering
@@ -1339,9 +1338,8 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 		fputs("}\n} %end small\n\n\\end{document}\n", fp); //close last empty style macros and document too
 		fclose(fp);
 	} else {
-		GUI::gui_string msg = LocaliseMessage(
-		            "Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("Could not save file '%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
 }
 
@@ -1518,7 +1516,7 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 
 		fclose(fp);
 	} else {
-		GUI::gui_string msg = LocaliseMessage("Could not save file \"^0\".", filePath.AsInternal());
-		WindowMessageBox(wSciTE, msg, MB_OK | MB_ICONWARNING);
+		extender->HildiAlarm("Could not save file '%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
 }

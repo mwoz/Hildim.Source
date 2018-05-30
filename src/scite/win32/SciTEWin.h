@@ -100,14 +100,7 @@ inline HWND HwndOf(GUI::Window w) {
 }
 
 class BaseWin : public GUI::Window {
-protected:
-	ILocalize *localiser;
 public:
-	BaseWin() : localiser(0) {
-	}
-	void SetLocalizer(ILocalize *localiser_) {
-		localiser = localiser_;
-	}
 	HWND Hwnd() const {
 		return reinterpret_cast<HWND>(GetID());
 	}
@@ -172,7 +165,6 @@ protected:
 
 	//GUI::Rectangle rFindReplace;//позиция окна поиска\замены
 
-	virtual void ReadLocalization();
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
 	virtual void ReadProperties();
@@ -201,6 +193,7 @@ protected:
 	virtual void PrintSetup();
 
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style);
+	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
 	virtual void AboutDialog();
 	void DropFiles(HDROP hdrop);
 	void MinimizeToTray();
