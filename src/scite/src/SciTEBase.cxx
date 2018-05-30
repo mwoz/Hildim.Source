@@ -450,7 +450,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	ptStartDrag.y = 0;
 	capturedMouse = false;
 	firstPropertiesRead = true;
-	localiser.read = false;
 	bufferedDraw = true;
 	twoPhaseDraw = true;
 	bracesCheck = true;
@@ -799,12 +798,7 @@ void SciTEBase::CallChildren(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 }
 
 SString SciTEBase::GetTranslationToAbout(const char * const propname, bool retainIfNotFound) {
-#if !defined(GTK)
-	return SString(GUI::UTF8FromString(localiser.Text(propname, retainIfNotFound)).c_str());
-#else
-	// On GTK+, localiser.Text always converts to UTF-8.
-	return SString(localiser.Text(propname, retainIfNotFound).c_str());
-#endif
+	return SString(GUI::UTF8FromString(extender->LocalizeText(propname)).c_str());
 }
 
 void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle) {
@@ -849,7 +843,7 @@ void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle
 #endif
 		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
         AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 3.1.3\n", 1); //!-change-[SciTE-Ru]
+		AddStyledText(wsci, " 3.1.4\n", 1); //!-change-[SciTE-Ru]
 		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
 		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
 		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
@@ -1250,13 +1244,13 @@ void SciTEBase::SetWindowName() {
 	if (bBlockUIUpdate)
 		return;
 	if (filePath.IsUntitled()) {
-		windowName = localiser.Text("Untitled");
+		windowName = extender->LocalizeText("Untitled");
 		windowName.insert(0, GUI_TEXT("("));
 		windowName += GUI_TEXT(")");
 	} else if (props.GetInt("title.full.path") == 2) {
 		windowName = FileNameExt().AsInternal();
 		windowName += GUI_TEXT(" ");
-		windowName += localiser.Text("in");
+		windowName += extender->LocalizeText("in");
 		windowName += GUI_TEXT(" ");
 		windowName += filePath.Directory().AsInternal();
 	} else if (props.GetInt("title.full.path") == 1) {
@@ -1275,7 +1269,7 @@ void SciTEBase::SetWindowName() {
 		windowName += GUI_TEXT(" [");
 		windowName += GUI::StringFromInteger(buffers.Current() + 1);
 		windowName += GUI_TEXT(" ");
-		windowName += localiser.Text("of");
+		windowName += extender->LocalizeText("of");
 		windowName += GUI_TEXT(" ");
 		windowName += GUI::StringFromInteger(buffers.length);
 		windowName += GUI_TEXT("]");
@@ -2490,7 +2484,7 @@ void SciTEBase::SetTextProperties(
 	const int TEMP_LEN = 100;
 	char temp[TEMP_LEN];
 
-	std::string ro = GUI::UTF8FromString(localiser.Text("READ"));
+	std::string ro = GUI::UTF8FromString(extender->LocalizeText("READ"));
 	ps.Set("ReadOnly", isReadOnly ? ro.c_str() : "");
 
 	int eolMode = wEditor.Call(SCI_GETEOLMODE);
@@ -4723,7 +4717,7 @@ char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
     //TODO: add get translation
     return NULL;
 #else
-	GUI::gui_string sValue = localiser.Text(s, retainIfNotFound);
+	GUI::gui_string sValue = extender->LocalizeText(s);
 	const wchar_t *lpw = sValue.c_str();
 	int _convert = (lstrlenW(lpw)+1)*2;
 	LPSTR lpa = (LPSTR)malloc(_convert);

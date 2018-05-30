@@ -938,7 +938,7 @@ void SciTEBase::BuffersMenu() {
 			int ihui = -1;
 
 			if (buffers.buffers[pos].IsUntitled()) {
-				GUI::gui_string untitled = localiser.Text("Untitled");
+				GUI::gui_string untitled = extender->LocalizeText("Untitled");
 				entry += untitled;
 				titleTab += untitled;
 			} else {

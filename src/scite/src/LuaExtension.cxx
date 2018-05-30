@@ -3045,10 +3045,23 @@ void LuaExtension::OnCommandLine(const char* line) {
 	CallNamedFunction("OnCommandLine", line);
 }
 
+GUI::gui_string LuaExtension::LocalizeText(const char* msg) {
+	if (luaState) {
+		lua_getglobal(luaState, "_LocalizeText");
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushstring(luaState, msg);
+			const char* handled = call_sfunction(luaState, 1);
+			if(handled)
+				return GUI::StringFromUTF8(handled);
+		}
+	} 
+	return GUI::StringFromUTF8(msg);
+}
+
 int LuaExtension::HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) {
 	int handled = NULL; 
 	if (luaState) {
-		lua_getglobal(luaState, "HildiAlarm");
+		lua_getglobal(luaState, "_HildiAlarm");
 		if (lua_isfunction(luaState, -1)) {
 			//GUI::ConvertToUTF8(p1.c_str(), CP_ACP);
 			std::string ps1, ps2, ps3;
@@ -3076,12 +3089,14 @@ int LuaExtension::HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 
 			if (!lua_pcall(luaState, cnt, 1, 0)) {
 				handled = lua_tointeger(luaState, -1);
 				lua_pop(luaState, 1);
+				return handled;
 			}
 		} else {
 			lua_pop(luaState, 1);
 		}
 	}
-	return handled;
+
+	return host->WindowMessageBox(msg, flag, p1, p2, p3);
 }
 
 static int cf_editor_reload_startup_script(lua_State*) {

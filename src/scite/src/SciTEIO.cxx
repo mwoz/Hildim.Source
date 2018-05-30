@@ -548,7 +548,7 @@ void SciTEBase::CheckReload() {
 							decision = extender->HildiAlarm("The file '%1' has been modified. Should it be reloaded?",
 								MB_YESNO, filePath.AsInternal());
 						} else {
-							decision = extender->HildiAlarm("The file '%1' has been modified outside SciTE. Should it be reloaded?",
+							decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be reloaded?",
 								MB_YESNO, filePath.AsInternal());
 						}
 						if (decision == IDYES) {
@@ -566,7 +566,7 @@ void SciTEBase::CheckReload() {
 				SetWindowName();
 				BuffersMenu();
 				if (0 == dialogsOnScreen) {
-						int decision = extender->HildiAlarm("File '^1' is missing or not available.\nDo you wish to keep the file open in the editor?",
+						int decision = extender->HildiAlarm("File '%1' is missing or not available.\nDo you wish to keep the file open in the editor?",
 							MB_YESNO, filePath.AsInternal());
 						if (decision == IDNO) {
 							Close();
@@ -781,7 +781,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 			time_t newModTime = filePath.ModifiedTime();
 			if ((newModTime != 0) && (CurrentBuffer()->fileModTime != 0) &&
 				(newModTime != CurrentBuffer()->fileModTime)) {
-				decision = extender->HildiAlarm("The file '%1' has been modified outside SciTE. Should it be saved?",
+				decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be saved?",
 					MB_YESNO | MB_ICONWARNING,  filePath.AsInternal());
 				if (decision == IDNO) {
 					return false;
