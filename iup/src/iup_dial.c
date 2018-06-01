@@ -15,6 +15,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -805,6 +806,7 @@ static char* iDialGetFlatAttrib(Ihandle* ih)
 static int iDialSetFlatColorAttrib(Ihandle* ih, const char* value)
 {
   ih->data->flatcolor = iupDrawStrToColor(value, ih->data->flatcolor);
+  IupUpdate(ih);
   return 1;
 }
 

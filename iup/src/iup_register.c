@@ -43,7 +43,7 @@ int IupGetAllClasses(char** list, int n)
   int i = 0;
   char* name = iupTableFirst(iregister_table);
 
-  if (!list || !n)
+  if (!list || n==0 || n==-1)
     return iupTableCount(iregister_table);
 
   while (name)
@@ -130,9 +130,14 @@ void iupRegisterInternalClasses(void)
   iupRegisterClass(iupTextNewClass());
   iupRegisterClass(iupMultilineNewClass());
   iupRegisterClass(iupListNewClass());
+  iupRegisterClass(iupFlatLabelNewClass());
   iupRegisterClass(iupFlatButtonNewClass());
+  iupRegisterClass(iupFlatToggleNewClass());
+  iupRegisterClass(iupFlatSeparatorNewClass());
+  iupRegisterClass(iupDropButtonNewClass());
   iupRegisterClass(iupCalendarNewClass());
   iupRegisterClass(iupDatePickNewClass());
+  iupRegisterClass(iupSpaceNewClass());
 
   iupRegisterClass(iupProgressBarNewClass());
   iupRegisterClass(iupValNewClass());

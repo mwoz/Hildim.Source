@@ -14,6 +14,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -473,6 +474,7 @@ static int iColorbarSetShowSecondaryAttrib(Ihandle* ih, const char* value)
 static int iColorbarSetFlatColorAttrib(Ihandle* ih, const char* value)
 {
   ih->data->flatcolor = iupDrawStrToColor(value, ih->data->flatcolor);
+  IupUpdate(ih);
   return 1;
 }
 
@@ -641,20 +643,15 @@ static void iColorbarCallSelectCb(Ihandle* ih, int idx, int type)
 
 static void iColorbarCallCellCb(Ihandle* ih, int idx)
 {
-  char* returned;
+  char* ret;
   sIFni cell_cb = (sIFni)IupGetCallback(ih, "CELL_CB");
   if (!cell_cb)
     return;
 
-  returned = cell_cb(ih, idx);  /* the application can change the color */
-  if (returned) 
+  ret = cell_cb(ih, idx);  /* the application can change the color */
+  if (ret) 
   {
-    int preview = 0;
-    /* check if the preview area should be rendered */
-    if (idx == ih->data->fgcolor_idx || idx == ih->data->bgcolor_idx)
-      preview = 1;
-
-    ih->data->colors[idx] = iupDrawStrToColor(returned, ih->data->colors[idx]);
+    ih->data->colors[idx] = iupDrawStrToColor(ret, ih->data->colors[idx]);
     IupUpdate(ih);
   }
 }

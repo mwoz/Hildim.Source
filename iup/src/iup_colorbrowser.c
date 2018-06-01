@@ -15,6 +15,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -538,7 +539,7 @@ static int iColorBrowserRedraw_CB(Ihandle* ih)
   IupDrawParentBackground(ih);
 
   name = IupGetAttribute(ih, "ICB_IMAGE");
-  IupDrawImage(ih, name, 0, 0, 0);
+  IupDrawImage(ih, name, 0, 0, -1, -1);
 
   if (active)
   {

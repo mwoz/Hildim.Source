@@ -248,7 +248,7 @@ UINT tOleHandler::Create(LPVOID pvType)
         return CREATE_FAILED;
         }
 
-    //SIZEL   szl;
+    SIZEL   szl;
 
     hr=ResultFromScode(E_FAIL);
 
@@ -360,11 +360,11 @@ BOOL tOleHandler::ObjectInitialize(LPUNKNOWN pObj)
 
 BOOL tOleHandler::Open(LPSTORAGE pIStorage)
     {
-    //HRESULT     hr=NOERROR;
-    //DWORD       dwMode=STGM_TRANSACTED | STGM_READWRITE
-    //                | STGM_SHARE_EXCLUSIVE;
+    HRESULT     hr=NOERROR;
+    DWORD       dwMode=STGM_TRANSACTED | STGM_READWRITE
+                    | STGM_SHARE_EXCLUSIVE;
 
-	pIStorage; 
+
     //Create these if we don't have them already.
     if (NULL==m_pImpIOleClientSite)
         {
@@ -385,9 +385,6 @@ BOOL tOleHandler::Open(LPSTORAGE pIStorage)
     return TRUE;
     }
 
-void tOleHandler::ResetInvokeFlag(int flag){
-	if (m_pImpIDispatch) m_pImpIDispatch->m_DLCONTROL_Flag = flag;
-}
 
 
 
@@ -414,7 +411,6 @@ void tOleHandler::Close(BOOL fCommit)
          * We can't use a zero reference count to know when to NULL
          * this since other things might have AddRef'd the storage.
          */
-	fCommit;
             //OnInPlaceDeactivate releases this pointer.
             if (NULL!=m_pIOleIPObject)
                 m_pIOleIPObject->InPlaceDeactivate();
@@ -912,7 +908,7 @@ HWND tOleHandler::ObjectWindow(void)
 BOOL tOleHandler::ControlInitialize(void)
     {
     HRESULT         hr;
-    //BOOL            fEvents;
+    BOOL            fEvents;
 
     if (NULL==m_pObj)
         return FALSE;

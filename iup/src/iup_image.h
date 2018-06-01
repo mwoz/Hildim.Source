@@ -1,5 +1,5 @@
 /** \file
- * \brief Image Resource Private Declarations
+ * \brief Image Resources (not exported API)
  *
  * See Copyright Notice in "iup.h"
  */
@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-void* iupdrvImageCreateMask(Ihandle *ih);
 void* iupdrvImageCreateIcon(Ihandle *ih);
 void* iupdrvImageCreateCursor(Ihandle *ih);
 void* iupdrvImageCreateImage(Ihandle *ih, const char* bgcolor, int make_inactive);
@@ -22,13 +21,11 @@ void  iupdrvImageDestroy(void* handle, int type);
 int   iupdrvImageGetInfo(void* handle, int *w, int *h, int *bpp);  /* only for IUPIMAGE_IMAGE */
 void  iupdrvImageGetData(void* handle, unsigned char* imgdata);   /* only for IUPIMAGE_IMAGE */
 
-void* iupImageGetMask(const char* name);
 void* iupImageGetIcon(const char* name);
 void* iupImageGetCursor(const char* name);
-void* iupImageGetImage(const char* name, Ihandle* parent, int make_inactive);
+void* iupImageGetImage(const char* name, Ihandle* parent, int make_inactive, const char* bgcolor);
 void iupImageGetInfo(const char* name, int *w, int *h, int *bpp);
-void iupImageUpdateParent(Ihandle *parent);
-void iupImageClearFromCache(Ihandle* ih, void* handle);
+void iupImageRemoveFromCache(Ihandle* ih, void* handle);
 
 Ihandle* iupImageGetHandle(const char* name);
 
@@ -51,12 +48,17 @@ void* iupdrvImageCreateImageRaw(int width, int height, int bpp, iupColor* colors
 int iupdrvImageGetRawInfo(void* handle, int *w, int *h, int *bpp, iupColor* colors, int *colors_count);
 void iupdrvImageGetRawData(void* handle, unsigned char* imgdata);
 
+void iupImageSetHandleFromLoaded(const char* name, void* handle);
+Ihandle* iupImageGetImageFromName(const char* name);
+
 void iupImageStockInit(void);
 void iupImageStockFinish(void);
 typedef Ihandle* (*iupImageStockCreateFunc)(void);
 void iupImageStockSet(const char *name, iupImageStockCreateFunc func, const char* native_name);
+void iupImageStockSetNoResize(const char *name, iupImageStockCreateFunc func, const char* native_name);
 void iupImageStockLoadAll(void);  /* Used only in IupView */
 int iupImageStockGetSize(void);
+void iupImageStockGet(const char* name, Ihandle* *ih, const char* *native_name);
 
 
 #ifdef __cplusplus

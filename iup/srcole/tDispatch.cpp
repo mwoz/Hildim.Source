@@ -4,7 +4,6 @@
 
 #include "tDispatch.h"
 #include "tOleHandler.h"
-#include <mshtmdid.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -25,7 +24,6 @@ tDispatch::tDispatch(tOleHandler *pTen, LPUNKNOWN pUnkOuter)
     m_cRef=0;
     m_pTen=pTen;
     m_pUnkOuter=pUnkOuter;
-	m_DLCONTROL_Flag = 0;
     return;
     }
 
@@ -80,7 +78,6 @@ STDMETHODIMP tDispatch::GetTypeInfoCount(UINT *pctInfo)
 STDMETHODIMP tDispatch::GetTypeInfo(UINT itinfo
     , LCID lcid, ITypeInfo **pptInfo)
     {
-	lcid; itinfo;
     *pptInfo=NULL;
     return ResultFromScode(E_NOTIMPL);
     }
@@ -88,7 +85,6 @@ STDMETHODIMP tDispatch::GetTypeInfo(UINT itinfo
 STDMETHODIMP tDispatch::GetIDsOfNames(REFIID riid
     , OLECHAR **rgszNames, UINT cNames, LCID lcid, DISPID *rgDispID)
     {
-	cNames; lcid; riid;
     *rgszNames=NULL;
     *rgDispID=NULL;
     return ResultFromScode(E_NOTIMPL);
@@ -126,8 +122,6 @@ STDMETHODIMP tDispatch::Invoke(DISPID dispIDMember, REFIID riid
     , LCID lcid, unsigned short wFlags, DISPPARAMS *pDispParams
     , VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
     {
-	puArgErr; pExcepInfo; pDispParams; lcid;
-
     HRESULT     hr;
     VARIANT     varResult;
 
@@ -232,16 +226,6 @@ STDMETHODIMP tDispatch::Invoke(DISPID dispIDMember, REFIID riid
           V_BOOL(pVarResult)=FALSE;
           V_VT(pVarResult) = VT_BOOL;
           break;
-		case DISPID_AMBIENT_DLCONTROL:
-			if (m_DLCONTROL_Flag){
-				pVarResult->vt = VT_I4;
-				pVarResult->lVal = m_DLCONTROL_Flag; // DLCTL_DLIMAGES | DLCTL_VIDEOS | DLCTL_NO_SCRIPTS;
-			}
-			else
-			{
-				hr = ResultFromScode(DISP_E_MEMBERNOTFOUND);
-			}
-			break;
 
         default:
             hr=ResultFromScode(DISP_E_MEMBERNOTFOUND);

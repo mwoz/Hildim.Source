@@ -369,18 +369,19 @@ namespace Iup
     void DrawBegin() { IupDrawBegin(ih); }
     void DrawEnd() { IupDrawEnd(ih); }
     void DrawSetClipRect(int x1, int y1, int x2, int y2) { IupDrawSetClipRect(ih, x1, y1, x2, y2); }
+    void DrawGetClipRect(int *x1, int *y1, int *x2, int *y2) { IupDrawGetClipRect(ih, x1, y1, x2, y2); }
     void DrawResetClip() { IupDrawResetClip(ih); }
     void DrawParentBackground() { IupDrawParentBackground(ih); }
     void DrawLine(int x1, int y1, int x2, int y2) { IupDrawLine(ih, x1, y1, x2, y2); }
     void DrawRectangle(int x1, int y1, int x2, int y2) { IupDrawRectangle(ih, x1, y1, x2, y2); }
     void DrawArc(int x1, int y1, int x2, int y2, double a1, double a2) { IupDrawArc(ih, x1, y1, x2, y2, a1, a2); }
     void DrawPolygon(int* points, int count) { IupDrawPolygon(ih, points, count); }
-    void DrawText(const char* text, int len, int x, int y) { IupDrawText(ih, text, len, x, y); }
-    void DrawImage(const char* name, int make_inactive, int x, int y) { IupDrawImage(ih, name, make_inactive, x, y); }
+    void DrawText(const char* text, int len, int x, int y, int w, int h) { IupDrawText(ih, text, len, x, y, w, h); }
+    void DrawImage(const char* name, int x, int y, int w, int h) { IupDrawImage(ih, name, x, y, h, h); }
     void DrawSelectRect(int x1, int y1, int x2, int y2) { IupDrawSelectRect(ih, x1, y1, x2, y2); }
     void DrawFocusRect(int x1, int y1, int x2, int y2) { IupDrawFocusRect(ih, x1, y1, x2, y2); }
     void DrawGetSize(int &w, int &h) { IupDrawGetSize(ih, &w, &h); }
-    void DrawGetTextSize(const char* str, int &w, int &h) { IupDrawGetTextSize(ih, str, &w, &h); }
+    void DrawGetTextSize(const char* str, int len, int &w, int &h) { IupDrawGetTextSize(ih, str, len, &w, &h); }
     void DrawGetImageInfo(const char* name, int &w, int &h, int &bpp) { IupDrawGetImageInfo(name, &w, &h, &bpp); }
   };
   class Link : public Control
@@ -411,6 +412,42 @@ namespace Iup
     FlatButton(const char* title = 0) : Control(IupFlatButton(title)) {}
     FlatButton(Ihandle* _ih) : Control(_ih) {}
     FlatButton(const Element& elem) : Control(elem.GetHandle()) {}
+  };
+  class FlatToggle : public Control
+  {
+  public:
+    FlatToggle(const char* title = 0) : Control(IupFlatToggle(title)) {}
+    FlatToggle(Ihandle* _ih) : Control(_ih) {}
+    FlatToggle(const Element& elem) : Control(elem.GetHandle()) {}
+  };
+  class FlatSeparator : public Control
+  {
+  public:
+    FlatSeparator() : Control(IupFlatSeparator()) {}
+    FlatSeparator(Ihandle* _ih) : Control(_ih) {}
+    FlatSeparator(const Element& elem) : Control(elem.GetHandle()) {}
+  };
+  class Space : public Control
+  {
+  public:
+    Space() : Control(IupSpace()) {}
+    Space(Ihandle* _ih) : Control(_ih) {}
+    Space(const Element& elem) : Control(elem.GetHandle()) {}
+  };
+  class DropButton : public Control
+  {
+  public:
+    DropButton() : Control(IupDropButton(0)) {}
+    DropButton(Control child) : Control(IupDropButton(child.GetHandle())) {}
+    DropButton(Ihandle* _ih) : Control(_ih) {}
+    DropButton(const Element& elem) : Control(elem.GetHandle()) {}
+  };
+  class FlatLabel : public Control
+  {
+  public:
+    FlatLabel(const char* title = 0) : Control(IupFlatLabel(title)) {}
+    FlatLabel(Ihandle* _ih) : Control(_ih) {}
+    FlatLabel(const Element& elem) : Control(elem.GetHandle()) {}
   };
   class AnimatedLabel : public Control
   {
@@ -556,18 +593,19 @@ namespace Iup
     void DrawBegin() { IupDrawBegin(ih); }
     void DrawEnd() { IupDrawEnd(ih); }
     void DrawSetClipRect(int x1, int y1, int x2, int y2) { IupDrawSetClipRect(ih, x1, y1, x2, y2); }
+    void DrawGetClipRect(int *x1, int *y1, int *x2, int *y2) { IupDrawGetClipRect(ih, x1, y1, x2, y2); }
     void DrawResetClip() { IupDrawResetClip(ih); }
     void DrawParentBackground() { IupDrawParentBackground(ih); }
     void DrawLine(int x1, int y1, int x2, int y2) { IupDrawLine(ih, x1, y1, x2, y2); }
     void DrawRectangle(int x1, int y1, int x2, int y2) { IupDrawRectangle(ih, x1, y1, x2, y2); }
     void DrawArc(int x1, int y1, int x2, int y2, double a1, double a2) { IupDrawArc(ih, x1, y1, x2, y2, a1, a2); }
     void DrawPolygon(int* points, int count) { IupDrawPolygon(ih, points, count); }
-    void DrawText(const char* text, int len, int x, int y) { IupDrawText(ih, text, len, x, y); }
-    void DrawImage(const char* name, int make_inactive, int x, int y) { IupDrawImage(ih, name, make_inactive, x, y); }
+    void DrawText(const char* text, int len, int x, int y, int w, int h) { IupDrawText(ih, text, len, x, y, w, h); }
+    void DrawImage(const char* name, int x, int y, int w, int h) { IupDrawImage(ih, name, x, y, h, h); }
     void DrawSelectRect(int x1, int y1, int x2, int y2) { IupDrawSelectRect(ih, x1, y1, x2, y2); }
     void DrawFocusRect(int x1, int y1, int x2, int y2) { IupDrawFocusRect(ih, x1, y1, x2, y2); }
     void DrawGetSize(int &w, int &h) { IupDrawGetSize(ih, &w, &h); }
-    void DrawGetTextSize(const char* str, int &w, int &h) { IupDrawGetTextSize(ih, str, &w, &h); }
+    void DrawGetTextSize(const char* str, int len, int &w, int &h) { IupDrawGetTextSize(ih, str, len, &w, &h); }
     void DrawGetImageInfo(const char* name, int &w, int &h, int &bpp) { IupDrawGetImageInfo(name, &w, &h, &bpp); }
   };
 

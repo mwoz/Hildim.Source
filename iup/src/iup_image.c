@@ -78,17 +78,52 @@ static void iDataResize(int src_width, int src_height, unsigned char *src_map, i
   free(T);
 }
 
-static void iImageResize(Ihandle* ih, int width, int height)
+static void iDataStretch(int src_width, int src_height, unsigned char *src_map, int dst_width, int dst_height, unsigned char *dst_map)
+{
+  int x, y, offset;
+  double factor;
+  unsigned char *line_map;
+  int* XTab = (int*)malloc(dst_width*sizeof(int));
+
+  /* initialize conversion tables to speed up the stretch process */
+  factor = (double)(src_width - 1) / (double)(dst_width - 1);
+  for (x = 0; x < dst_width; x++)
+    XTab[x] = (int)(factor * x + 0.5);
+
+  factor = (double)(src_height - 1) / (double)(dst_height - 1);
+
+  line_map = src_map;
+
+  for (y = 0; y < dst_height; y++)
+  {
+    for (x = 0; x < dst_width; x++)
+    {
+      offset = XTab[x];
+      *(dst_map++) = line_map[offset];
+    }
+
+    offset = ((int)(factor * y + 0.5)) * src_width;
+    line_map = src_map + offset;
+  }
+
+  free(XTab);
+}
+
+static void iImageResize(Ihandle* ih, int new_width, int new_height)
 {
   unsigned char* imgdata = (unsigned char*)iupAttribGet(ih, "WID");
   int channels = iupAttribGetInt(ih, "CHANNELS");
-  int count = width*height*channels;
+  int bpp = iupAttribGetInt(ih, "BPP");
+  int count = new_width*new_height*channels;
   unsigned char* new_imgdata = (unsigned char *)malloc(count);
 
-  iDataResize(ih->currentwidth, ih->currentheight, imgdata, width, height, new_imgdata, channels);
+  if (bpp == 8)
+    iDataStretch(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata);
+  else
+    iDataResize(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata, channels);
 
-  ih->currentwidth = width;
-  ih->currentheight = height;
+  ih->currentwidth = new_width;
+  ih->currentheight = new_height;
 
   free(imgdata);
   iupAttribSet(ih, "WID", (char*)new_imgdata);
@@ -103,6 +138,7 @@ typedef struct _IimageStock
   iupImageStockCreateFunc func;
   Ihandle* image;            /* cache image */
   const char* native_name;   /* used to map to GTK stock images */
+  int can_resize;
 } IimageStock;
 
 static Itable *istock_table = NULL;   /* the image hash table indexed by the name string */
@@ -110,6 +146,8 @@ static Itable *istock_table = NULL;   /* the image hash table indexed by the nam
 void iupImageStockInit(void)
 {
   istock_table = iupTableCreate(IUPTABLE_STRINGINDEXED);
+
+  IupSetGlobal("IMAGESTOCKAUTOSCALE", "Yes");
 }
 
 void iupImageStockFinish(void)
@@ -139,6 +177,25 @@ void iupImageStockSet(const char *name, iupImageStockCreateFunc func, const char
   istock->func = func;
   istock->image = NULL;
   istock->native_name = native_name;
+  istock->can_resize = 1;
+
+  if (iupStrEqualNoCasePartial(name, "IUP_Logo") || iupStrEqualNoCasePartial(name, "IUP_Icon"))
+    istock->can_resize = 0;
+
+  iupTableSet(istock_table, name, (void*)istock, IUPTABLE_POINTER);
+}
+
+void iupImageStockSetNoResize(const char *name, iupImageStockCreateFunc func, const char* native_name)
+{
+  IimageStock* istock = (IimageStock*)iupTableGet(istock_table, name);
+  if (istock)
+    free(istock);  /* overwrite a previous registration */
+
+  istock = (IimageStock*)malloc(sizeof(IimageStock));
+  istock->func = func;
+  istock->image = NULL;
+  istock->native_name = native_name;
+  istock->can_resize = 0;
 
   iupTableSet(istock_table, name, (void*)istock, IUPTABLE_POINTER);
 }
@@ -175,7 +232,7 @@ int iupImageStockGetSize(void)
   }
 }
 
-static void iImageStockGet(const char* name, Ihandle* *ih, const char* *native_name)
+void iupImageStockGet(const char* name, Ihandle* *ih, const char* *native_name)
 {
   IimageStock* istock = (IimageStock*)iupTableGet(istock_table, name);
   if (istock)
@@ -183,23 +240,26 @@ static void iImageStockGet(const char* name, Ihandle* *ih, const char* *native_n
     if (istock->image)
       *ih = istock->image;
     else if (istock->native_name)
-        *native_name = istock->native_name;
+      *native_name = istock->native_name;
     else if (istock->func)
     {
-      int stock_size, bpp;
+      int stock_size;
+      int autoscale = IupGetInt(NULL, "IMAGESTOCKAUTOSCALE");
 
       istock->image = istock->func();
       *ih = istock->image;
 
       stock_size = iupImageStockGetSize();
-      bpp = IupGetInt(istock->image, "BPP");
 
-      if (istock->image->currentheight != stock_size && bpp > 8)
+      if (autoscale && istock->can_resize && istock->image->currentheight != stock_size)
       {
         int new_height = stock_size;
         int new_width = stock_size;
         if (istock->image->currentwidth != istock->image->currentheight)
           new_width = (new_height * istock->image->currentwidth) / istock->image->currentheight;
+
+        iupAttribSet(istock->image, "SCALED", "Yes");
+        iupAttribSetStrf(istock->image, "ORIGINALSCALE", "%dx%d", istock->image->currentwidth, istock->image->currentheight);
 
         iImageResize(istock->image, new_width, new_height);
       }
@@ -219,27 +279,18 @@ static void iImageStockLoad(const char *name)
   /* Used only in iupImageStockLoadAll */
   const char* native_name = NULL;
   Ihandle* ih = NULL;
-  iImageStockGet(name, &ih, &native_name);
+  iupImageStockGet(name, &ih, &native_name);
   if (ih)
   {
     IupSetHandle(name, ih);
-    iupAttribSetStr(ih, "_IUPSTOCK_LOAD", name);
+    iupAttribSetStr(ih, "_IUPIMAGE_STOCK", name);
   }
   else if (native_name)
   {
     /* dummy image to save the GTK stock name */
     void* handle = iupdrvImageLoad(native_name, IUPIMAGE_IMAGE);
     if (handle)
-    {
-      int w, h, bpp;
-      iupdrvImageGetInfo(handle, &w, &h, &bpp);
-      if (bpp == 32)
-        ih = IupImageRGBA(w,h,NULL);
-      else
-        ih = IupImageRGB(w,h,NULL);
-      iupAttribSet(ih, "_IUPSTOCK_LOAD_HANDLE", (char*)handle);
-      IupSetHandle(name, ih);
-    }
+      iupImageSetHandleFromLoaded(native_name, handle);  /* next time iupImageGetImageFromName will return the new handle */
   }
 }
 
@@ -287,7 +338,7 @@ int iupImageInitColorTable(Ihandle *ih, iupColor* colors, int *colors_count)
   char *value;
   unsigned char red, green, blue;
   int i, has_alpha = 0;
-  static iupColor default_colors[] = {
+  static iupColor default_colors[16] = {
     { 0,0,0,255 }, { 128,0,0,255 }, { 0,128,0,255 }, { 128,128,0,255 },    
     { 0,0,128,255 }, { 128,0,128,255 }, { 0,128,128,255 }, { 192,192,192,255 },    
     { 128,128,128,255 }, { 255,0,0,255 }, { 0,255,0,255 }, { 255,255,0,255 },
@@ -406,15 +457,37 @@ void iupImageColorMakeInactive(unsigned char *r, unsigned char *g, unsigned char
 /**************************************************************************************************/
 
 
-static Ihandle* iImageGetImageFromName(const char* name)
+void iupImageSetHandleFromLoaded(const char* name, void* handle)
+{
+  int w, h, bpp;
+  unsigned char* imgdata;
+  Ihandle* ih;
+
+  iupdrvImageGetInfo(handle, &w, &h, &bpp);
+
+  if (bpp == 32)
+    ih = IupImageRGBA(w, h, NULL);
+  else if (bpp > 8)
+    ih = IupImageRGB(w, h, NULL);
+  else
+    ih = IupImage(w, h, NULL);
+
+  imgdata = (unsigned char*)iupAttribGet(ih, "WID");
+  free(imgdata);
+  iupAttribSet(ih, "WID", NULL);
+
+  iupAttribSet(ih, "_IUPIMAGE_LOADED_HANDLE", (char*)handle);
+  IupSetHandle(name, ih);
+}
+
+Ihandle* iupImageGetImageFromName(const char* name)
 {
   Ihandle* ih = IupGetHandle(name);
-  if (ih)
+  if (ih && !iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE") && !iupAttribGet(ih, "_IUPIMAGE_LOADED_WD_HANDLE"))
   {
-    int bpp = IupGetInt(ih, "BPP");
     char* autoscale = iupAttribGet(ih, "AUTOSCALE");
     if (!autoscale) autoscale = IupGetGlobal("IMAGEAUTOSCALE");
-    if (autoscale && bpp > 8 && !iupAttribGet(ih, "SCALED"))
+    if (autoscale && !iupAttribGet(ih, "SCALED"))
     {
       double scale = 0;
 
@@ -446,8 +519,10 @@ static Ihandle* iImageGetImageFromName(const char* name)
         int new_width = iupRound(scale*ih->currentwidth);
         int new_height = iupRound(scale*ih->currentheight);
 
+        iupAttribSet(ih, "SCALED", "Yes");
+        iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
+
         iImageResize(ih, new_width, new_height);
-        iupAttribSet(ih, "SCALED", "1");
 
         if (hotspot)
         {
@@ -466,32 +541,6 @@ static Ihandle* iImageGetImageFromName(const char* name)
   return ih;
 }
 
-void* iupImageGetMask(const char* name)
-{
-  void* mask;
-  Ihandle *ih;
-
-  if (!name)
-    return NULL;
-
-  ih = iImageGetImageFromName(name);
-  if (!ih)
-    return NULL;
-  
-  /* Check for an already created icon */
-  mask = iupAttribGet(ih, "_IUPIMAGE_MASK");
-  if (mask)
-    return mask;
-
-  /* Not created, tries to create the mask */
-  mask = iupdrvImageCreateMask(ih);
-
-  /* save the mask */
-  iupAttribSet(ih, "_IUPIMAGE_MASK", (char*)mask);
-
-  return mask;
-}
-
 void* iupImageGetIcon(const char* name)
 {
   void* icon;
@@ -500,18 +549,18 @@ void* iupImageGetIcon(const char* name)
   if (!name)
     return NULL;
 
-  ih = iImageGetImageFromName(name);
+  ih = iupImageGetImageFromName(name);
   if (!ih)
   {
     const char* native_name = NULL;
 
     /* Check in the system resources. */
     icon = iupdrvImageLoad(name, IUPIMAGE_ICON);
-    if (icon) 
+    if (icon)
       return icon;
 
     /* Check in the stock images. */
-    iImageStockGet(name, &ih, &native_name);
+    iupImageStockGet(name, &ih, &native_name);
     if (native_name)
     {
       icon = iupdrvImageLoad(native_name, IUPIMAGE_ICON);
@@ -544,12 +593,12 @@ void* iupImageGetCursor(const char* name)
   if (!name)
     return NULL;
 
-  ih = iImageGetImageFromName(name);
+  ih = iupImageGetImageFromName(name);
   if (!ih)
   {
     /* Check in the system resources. */
     cursor = iupdrvImageLoad(name, IUPIMAGE_CURSOR);
-    if (cursor) 
+    if (cursor)
       return cursor;
 
     return NULL;
@@ -569,15 +618,18 @@ void* iupImageGetCursor(const char* name)
   return cursor;
 }
 
-void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
+void* iupImageGetImage(const char* name, Ihandle* ih_parent, int make_inactive, const char* bgcolor)
 {
+  char cache_name[100] = "_IUPIMAGE_IMAGE";
+  char* img_bgcolor;
   void* handle;
   Ihandle *ih;
+  int bg_concat = 0;
 
   if (!name)
-    return;
+    return NULL;
 
-  ih = iImageGetImageFromName(name);
+  ih = iupImageGetImageFromName(name);
   if (!ih)
   {
     const char* native_name = NULL;
@@ -586,72 +638,38 @@ void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
     handle = iupdrvImageLoad(name, IUPIMAGE_IMAGE);
     if (handle)
     {
-      iupdrvImageGetInfo(handle, w, h, bpp);
-      return;
-    }
-
-    /* Check in the stock images. */
-    iImageStockGet(name, &ih, &native_name);
-    if (native_name) 
-    {
-      handle = iupdrvImageLoad(native_name, IUPIMAGE_IMAGE);
-      if (handle) 
-      {
-        iupdrvImageGetInfo(handle, w, h, bpp);
-        return;
-      }
-    }
-
-    if (!ih)
-      return;
-  }
-
-  if (w) *w = ih->currentwidth;
-  if (h) *h = ih->currentheight;
-  if (bpp) *bpp = IupGetInt(ih, "BPP");
-}
-
-void* iupImageGetImage(const char* name, Ihandle* ih_parent, int make_inactive)
-{
-  char cache_name[100] = "_IUPIMAGE_IMAGE";
-  char* bgcolor;
-  void* handle;
-  Ihandle *ih;
-  int bg_concat = 0;
-
-  if (!name)
-    return NULL;
-
-  ih = iImageGetImageFromName(name);
-  if (!ih)
-  {
-    const char* native_name = NULL;
-
-    /* Check in the system resources. */
-    handle = iupdrvImageLoad(name, IUPIMAGE_IMAGE);
-    if (handle) 
+      iupImageSetHandleFromLoaded(name, handle);  /* next time iupImageGetImageFromName will return the new handle */
       return handle;
+    }
 
     /* Check in the stock images. */
-    iImageStockGet(name, &ih, &native_name);
+    iupImageStockGet(name, &ih, &native_name);
     if (native_name) 
     {
       handle = iupdrvImageLoad(native_name, IUPIMAGE_IMAGE);
-      if (handle) 
+      if (handle)
+      {
+        iupImageSetHandleFromLoaded(name, handle);  /* next time iupImageGetImageFromName will return the new handle */
         return handle;
+      }
     }
 
     if (!ih)
       return NULL;
   }
 
-  handle = iupAttribGet(ih, "_IUPSTOCK_LOAD_HANDLE");
+  handle = iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE");
   if (handle)
     return handle;
 
-  bgcolor = iupAttribGet(ih, "BGCOLOR");
-  if (ih_parent && !bgcolor)
-    bgcolor = IupGetAttribute(ih_parent, "BGCOLOR"); /* Use IupGetAttribute to use inheritance and native implementation */
+  img_bgcolor = iupAttribGet(ih, "BGCOLOR");
+  if (ih_parent && !img_bgcolor)
+  {
+    if (!bgcolor)
+      bgcolor = IupGetAttribute(ih_parent, "BGCOLOR"); /* Use IupGetAttribute to use inheritance and native implementation */
+  }
+  else
+    bgcolor = img_bgcolor;
 
   if (make_inactive)
     strcat(cache_name, "_INACTIVE");
@@ -691,6 +709,50 @@ void* iupImageGetImage(const char* name, Ihandle* ih_parent, int make_inactive)
   return handle;
 }
 
+void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
+{
+  void* handle;
+  Ihandle *ih;
+
+  if (!name)
+    return;
+
+  ih = iupImageGetImageFromName(name);
+  if (!ih)
+  {
+    const char* native_name = NULL;
+
+    /* Check in the system resources. */
+    handle = iupdrvImageLoad(name, IUPIMAGE_IMAGE);
+    if (handle)
+    {
+      iupdrvImageGetInfo(handle, w, h, bpp);
+      iupImageSetHandleFromLoaded(name, handle);  /* next time iupImageGetImageFromName will return the new handle */
+      return;
+    }
+
+    /* Check in the stock images. */
+    iupImageStockGet(name, &ih, &native_name);
+    if (native_name)
+    {
+      handle = iupdrvImageLoad(native_name, IUPIMAGE_IMAGE);
+      if (handle)
+      {
+        iupdrvImageGetInfo(handle, w, h, bpp);
+        iupImageSetHandleFromLoaded(name, handle);  /* next time iupImageGetImageFromName will return the new handle */
+        return;
+      }
+    }
+
+    if (!ih)
+      return;
+  }
+
+  if (w) *w = ih->currentwidth;
+  if (h) *h = ih->currentheight;
+  if (bpp) *bpp = IupGetInt(ih, "BPP");
+}
+
 static Ihandle* iImageGetHandleFromImage(void* handle)
 {
   Ihandle* ih = NULL;
@@ -716,8 +778,6 @@ static Ihandle* iImageGetHandleFromImage(void* handle)
 
     imgdata = (unsigned char*)iupAttribGet(ih, "WID");
     iupdrvImageGetData(handle, imgdata);
-
-    iupdrvImageDestroy(handle, IUPIMAGE_IMAGE);
   }
 
   return ih;
@@ -725,6 +785,7 @@ static Ihandle* iImageGetHandleFromImage(void* handle)
 
 Ihandle* iupImageGetHandle(const char* name)
 {
+  /* Used in CD or OpenGL based controls where WID is mandatory - IupMatrix, IupGLControls and IupPlot */
   Ihandle *ih;
   const char* native_name = NULL;
   void* handle;
@@ -732,7 +793,7 @@ Ihandle* iupImageGetHandle(const char* name)
   if (!name)
     return NULL;
 
-  ih = iImageGetImageFromName(name);
+  ih = iupImageGetImageFromName(name);
   if (ih)
     return ih;
 
@@ -740,16 +801,20 @@ Ihandle* iupImageGetHandle(const char* name)
   handle = iupdrvImageLoad(name, IUPIMAGE_IMAGE);
   if (handle)
   {
+    /* the loaded image is converted and destroyed */
+
     ih = iImageGetHandleFromImage(handle);
     if (ih)
     {
       IupSetHandle(name, ih);
       return ih;
     }
+
+    iupdrvImageDestroy(handle, IUPIMAGE_IMAGE);
   }
 
   /* Check in the stock images. */
-  iImageStockGet(name, &ih, &native_name);
+  iupImageStockGet(name, &ih, &native_name);
   if (ih)
   {
     IupSetHandle(name, ih);
@@ -761,37 +826,23 @@ Ihandle* iupImageGetHandle(const char* name)
     handle = iupdrvImageLoad(native_name, IUPIMAGE_IMAGE);
     if (handle)
     {
+      /* the loaded image is converted and destroyed */
+
       ih = iImageGetHandleFromImage(handle);
       if (ih)
       {
         IupSetHandle(name, ih);
         return ih;
       }
+
+      iupdrvImageDestroy(handle, IUPIMAGE_IMAGE);
     }
   }
 
   return NULL;
 }
 
-void iupImageUpdateParent(Ihandle *ih)  /* ih here is the element that contains images */
-{
-  /* Called when BGCOLOR is changed */
-  /* it will re-create the image, if the case */
-
-  char* value = iupAttribGet(ih, "IMAGE");
-  if (value) 
-    iupAttribSetClassObject(ih, "IMAGE", value);
-
-  value = iupAttribGet(ih, "IMINACTIVE");
-  if (value) 
-    iupAttribSetClassObject(ih, "IMINACTIVE", value);
-
-  value = iupAttribGet(ih, "IMPRESS");
-  if (value) 
-    iupAttribSetClassObject(ih, "IMPRESS", value);
-}
-
-void iupImageClearFromCache(Ihandle* ih, void* handle)
+void iupImageRemoveFromCache(Ihandle* ih, void* handle)
 {
   char *name;
   void* cur_handle;
@@ -856,6 +907,38 @@ static void iImageClearCache(Ihandle* ih)
     name = iupTableNext(ih->attrib);
   }
 
+  name = iupTableFirst(ih->attrib);
+  while (name)
+  {
+    if (iupStrEqualPartial(name, "_IUPIMAGE_WD_IMAGE"))
+    {
+      handle = iupTableGetCurr(ih->attrib);
+      if (handle)
+      {
+        Icallback wdImageDestroy = IupGetFunction("_IUPIMAGE_WD_IMAGEDESTROY");
+        if (wdImageDestroy) wdImageDestroy((Ihandle*)handle);
+        iupTableSetCurr(ih->attrib, NULL, IUPTABLE_POINTER);
+      }
+    }
+
+    name = iupTableNext(ih->attrib);
+  }
+
+  handle = iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE");
+  if (handle)
+  {
+    iupdrvImageDestroy(handle, IUPIMAGE_IMAGE);
+    iupAttribSet(ih, "_IUPIMAGE_LOADED_HANDLE", NULL);
+  }
+
+  handle = iupAttribGet(ih, "_IUPIMAGE_LOADED_WD_HANDLE");
+  if (handle)
+  {
+    Icallback wdImageDestroy = IupGetFunction("_IUPIMAGE_WD_IMAGEDESTROY");
+    if (wdImageDestroy) wdImageDestroy((Ihandle*)handle);
+    iupAttribSet(ih, "_IUPIMAGE_LOADED_WD_HANDLE", NULL);
+  }
+
   /* additional image buffer when an IupImage is converted to one (CD, OpenGL, etc) */
   handle = iupAttribGet(ih, "_IUPIMAGE_BUFFER");
   if (handle)
@@ -885,6 +968,10 @@ static int iImageSetClearCacheAttrib(Ihandle *ih, const char* value)
 static int iImageSetReshapeAttrib(Ihandle *ih, const char* value)
 {
   int w, h;
+
+  if (iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE") || iupAttribGet(ih, "_IUPIMAGE_LOADED_WD_HANDLE"))
+    return 0;
+
   if (iupStrToIntInt(value, &w, &h, 'x') == 2)
   {
     int old_w = ih->currentwidth;
@@ -907,11 +994,16 @@ static int iImageSetReshapeAttrib(Ihandle *ih, const char* value)
 static int iImageSetResizeAttrib(Ihandle *ih, const char* value)
 {
   int w, h;
+
+  if (iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE") || iupAttribGet(ih, "_IUPIMAGE_LOADED_WD_HANDLE"))
+    return 0;
+
   if (iupStrToIntInt(value, &w, &h, 'x') == 2)
   {
-    int bpp = IupGetInt(ih, "BPP");
-    if (bpp > 8)
-      iImageResize(ih, w, h);
+    iupAttribSet(ih, "SCALED", "Yes");
+    iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
+
+    iImageResize(ih, w, h);
   }
   return 0;
 }
@@ -956,7 +1048,7 @@ static int iImageCreate(Ihandle* ih, void** params, int bpp)
   count = width*height*channels;
   imgdata = (unsigned char *)malloc(count);
 
-  if (((int)(params[2])==-1) || ((int)(params[3])==-1)) /* compacted in one pointer */
+  if (((int)(params[2])==-1) || ((int)(params[3])==-1)) /* NULL or compacted in one pointer */
   {
     if ((int)(params[2])!=-1)
       memcpy(imgdata, params[2], count);
@@ -1005,7 +1097,7 @@ static void iImageDestroyMethod(Ihandle* ih)
     free(imgdata);
   }
 
-  stock_name = iupAttribGet(ih, "_IUPSTOCK_LOAD");
+  stock_name = iupAttribGet(ih, "_IUPIMAGE_STOCK");
   if (stock_name)
     iImageStockUnload(stock_name);
 
@@ -1074,6 +1166,8 @@ static Iclass* iImageNewClassBase(char* name)
   iupClassRegisterAttribute(ic, "CLEARCACHE", NULL, iImageSetClearCacheAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RESHAPE", NULL, iImageSetReshapeAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RESIZE", NULL, iImageSetResizeAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SCALED", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ORIGINALSCALE", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
 
   return ic;
 }
@@ -1191,6 +1285,10 @@ static int SaveImageC(const char* file_name, Ihandle* ih, const char* name, FILE
   unsigned char* data;
   FILE* file;
 
+  data = (unsigned char*)iupAttribGet(ih, "WID");
+  if (!data)
+    return 0;
+
   if (packfile)
     file = packfile;
   else
@@ -1203,8 +1301,6 @@ static int SaveImageC(const char* file_name, Ihandle* ih, const char* name, FILE
   height = IupGetInt(ih, "HEIGHT");
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
-
-  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (fprintf(file, "static Ihandle* load_image_%s(void)\n", name)<0)
   {
@@ -1272,6 +1368,10 @@ static int SaveImageLua(const char* file_name, Ihandle* ih, const char* name, FI
   unsigned char* data;
   FILE* file;
 
+  data = (unsigned char*)iupAttribGet(ih, "WID");
+  if (!data)
+    return 0;
+
   if (packfile)
     file = packfile;
   else
@@ -1284,8 +1384,6 @@ static int SaveImageLua(const char* file_name, Ihandle* ih, const char* name, FI
   height = IupGetInt(ih, "HEIGHT");
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
-
-  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (fprintf(file, "function load_image_%s()\n", name)<0)
   {
@@ -1362,6 +1460,10 @@ static int SaveImageLED(const char* file_name, Ihandle* ih, const char* name, FI
   unsigned char* data;
   FILE* file;
 
+  data = (unsigned char*)iupAttribGet(ih, "WID");
+  if (!data)
+    return 0;
+
   if (packfile)
     file = packfile;
   else
@@ -1374,8 +1476,6 @@ static int SaveImageLED(const char* file_name, Ihandle* ih, const char* name, FI
   height = IupGetInt(ih, "HEIGHT");
   channels = IupGetInt(ih, "CHANNELS");
   linesize = width*channels;
-
-  data = (unsigned char*)iupAttribGet(ih, "WID");
 
   if (channels == 1)
   {

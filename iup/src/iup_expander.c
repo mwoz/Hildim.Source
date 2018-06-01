@@ -24,6 +24,7 @@
 #include "iup_childtree.h"
 #include "iup_image.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 
 static Ihandle* load_image_arrowup_highlight(void)
@@ -1025,10 +1026,6 @@ static int iExpanderSetBarSizeAttrib(Ihandle* ih, const char* value)
     ih->data->bar_size = -1;
   else
     iupStrToInt(value, &ih->data->bar_size);  /* must manually update layout */
-  if (!ih->data->bar_size) {
-	  Ihandle* expand_button = ih->firstchild;
-	  IupSetAttribute(expand_button, "VISIBLE", "NO");
-  }
   return 0; /* do not store value in hash table */
 }
 

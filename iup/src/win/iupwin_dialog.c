@@ -899,7 +899,7 @@ static LRESULT CALLBACK winDialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM 
 {   
   LRESULT result;
   Ihandle *ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
   {
     /* the first time WM_GETMINMAXINFO is called, Ihandle is not associated yet */
     if (msg == WM_GETMINMAXINFO && winMinMaxHandle)
@@ -921,7 +921,7 @@ static LRESULT CALLBACK winDialogMDIChildWndProc(HWND hwnd, UINT msg, WPARAM wp,
 {   
   LRESULT result;
   Ihandle *ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
   {
     /* the first time WM_GETMINMAXINFO is called, Ihandle is not associated yet */
     if (msg == WM_GETMINMAXINFO && winMinMaxHandle)
@@ -954,7 +954,7 @@ static LRESULT CALLBACK winDialogMDIFrameWndProc(HWND hwnd, UINT msg, WPARAM wp,
   LRESULT result;
   HWND hWndClient = NULL;
   Ihandle *ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
   {
     /* the first time WM_GETMINMAXINFO is called, Ihandle is not associated yet */
     if (msg == WM_GETMINMAXINFO && winMinMaxHandle)
@@ -1405,7 +1405,7 @@ static int winDialogSetBackgroundAttrib(Ihandle* ih, const char* value)
     return 1;
   else
   {
-    HBITMAP hBitmap = iupImageGetImage(value, ih, 0);
+    HBITMAP hBitmap = iupImageGetImage(value, ih, 0, NULL);
     if (hBitmap)
     {
       iupAttribSet(ih, "_IUPWIN_BACKGROUND_COLOR", NULL);
@@ -1428,7 +1428,7 @@ static char* winDialogGetMdiActiveAttrib(Ihandle *ih)
   {
     HWND hchild = (HWND)SendMessage(client->handle, WM_MDIGETACTIVE, 0, 0);
     Ihandle* child = iupwinHandleGet(hchild); 
-    if (child)
+    if (iupObjectCheck(child))
     {
       iupwin_mdinext = NULL;
       iupwin_mdifirst = hchild;
@@ -1460,7 +1460,7 @@ static char* winDialogGetMdiNextAttrib(Ihandle *ih)
     }
 
     child = iupwinHandleGet(hchild); 
-    if (child)
+    if (iupObjectCheck(child))
     {
       iupwin_mdinext = hchild;
       return IupGetName(child);
@@ -1484,7 +1484,7 @@ static int winDialogSetOpacityAttrib(Ihandle *ih, const char *value)
 
 static int winDialogSetOpacityImageAttrib(Ihandle *ih, const char *value)
 {
-  HBITMAP hBitmap = (HBITMAP)iupImageGetImage(value, ih, 0);
+  HBITMAP hBitmap = (HBITMAP)iupImageGetImage(value, ih, 0, NULL);
   if (!hBitmap)
     return 0;
   else

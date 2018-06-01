@@ -15,6 +15,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -239,7 +240,7 @@ static void iColorDrawTransparentRectangle(Ihandle* color_cnv, int xmin, int ymi
     }
 
     iupAttribSetHandleName(image);
-    IupDrawImage(color_cnv, iupAttribGetHandleName(image), 0, xmin, ymin);
+    IupDrawImage(color_cnv, iupAttribGetHandleName(image), xmin, ymin, -1, -1);
 
     IupDestroy(image);
   }
@@ -879,7 +880,6 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
   IupSetAttribute(colordlg_data->color_browser, "EXPAND", "YES");  
   IupSetCallback(colordlg_data->color_browser, "DRAG_CB",   (Icallback)iColorDlgColorSelDrag_CB);
   IupSetCallback(colordlg_data->color_browser, "CHANGE_CB", (Icallback)iColorDlgColorSelDrag_CB);
-  IupSetAttribute(colordlg_data->color_browser, "MINSIZE", "200x200");
 
   colordlg_data->color_cnv = IupCanvas(NULL);  /* Canvas of the color */
   IupSetAttribute(colordlg_data->color_cnv, "SIZE", "x12");
@@ -1078,7 +1078,6 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
     IupSetStrf(colordlg_data->color_browser, "RASTERSIZE", "%dx", colordlg_data->color_browser->currentheight);
     IupSetAttribute(ih, "RASTERSIZE", NULL);
   }
-  IupSetAttribute(ih, "RESIZE", "NO");
 
   iColorDlgInit_Defaults(colordlg_data);
 

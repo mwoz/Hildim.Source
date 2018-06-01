@@ -209,7 +209,7 @@ int iupdrvMenuPopup(Ihandle* ih, int x, int y)
   {
     /* search for a valid handle */
     Ihandle* dlg = iupDlgListFirst();
-    do 
+    while (dlg)
     {
       if (dlg->handle)
       {
@@ -220,14 +220,14 @@ int iupdrvMenuPopup(Ihandle* ih, int x, int y)
           break;
       }
       dlg = iupDlgListNext();
-    } while (dlg);
+    } 
   }
 
   /* Necessary to avoid tray dialogs to lock popup menus (they get sticky after the 1st time) */
   if (hWndActive)
   {
     Ihandle* dlg = iupwinHandleGet(hWndActive);
-    if (dlg && iupAttribGetBoolean(dlg, "TRAY"))
+    if (iupObjectCheck(dlg) && iupAttribGetBoolean(dlg, "TRAY"))
     {
       /* To display a context menu for a notification icon, 
          the current window must be the foreground window. */
@@ -422,11 +422,11 @@ static int winItemSetImageAttrib(Ihandle* ih, const char* value)
   if (ih->handle == (InativeHandle*)-1) 
     return 1;
 
-  hBitmapUnchecked = iupImageGetImage(value, ih, 0);
+  hBitmapUnchecked = iupImageGetImage(value, ih, 0, NULL);
 
   impress = iupAttribGet(ih, "IMPRESS");
   if (impress)
-    hBitmapChecked = iupImageGetImage(impress, ih, 0);
+    hBitmapChecked = iupImageGetImage(impress, ih, 0, NULL);
   else
     hBitmapChecked = hBitmapUnchecked;
 
@@ -442,10 +442,10 @@ static int winItemSetImpressAttrib(Ihandle* ih, const char* value)
   HBITMAP hBitmapUnchecked, hBitmapChecked;
 
   char *image = iupAttribGet(ih, "IMPRESS");
-  hBitmapUnchecked = iupImageGetImage(image, ih, 0);
+  hBitmapUnchecked = iupImageGetImage(image, ih, 0, NULL);
 
   if (value)
-    hBitmapChecked = iupImageGetImage(value, ih, 0);
+    hBitmapChecked = iupImageGetImage(value, ih, 0, NULL);
   else
     hBitmapChecked = hBitmapUnchecked;
 
@@ -500,7 +500,7 @@ static int winItemSetTitleImageAttrib(Ihandle* ih, const char* value)
   if (ih->handle == (InativeHandle*)-1)
     return 1;
 
-  hBitmap = iupImageGetImage(value, ih, 0);
+  hBitmap = iupImageGetImage(value, ih, 0, NULL);
 
   {
     MENUITEMINFO menuiteminfo;

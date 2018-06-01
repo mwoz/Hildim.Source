@@ -52,13 +52,6 @@ static int iOleControlSetDesignModeDontNotifyAttrib(Ihandle* ih, const char* val
   return 1;
 }
 
-static int iOleControlSetInvokeFlagAttrib(Ihandle* ih, const char* value){
-	int flag;
-	if (!iupStrToInt(value, &flag))	flag = 0;
-	ih->data->olehandler->ResetInvokeFlag(flag);
-	return 1;
-}
-
 static int iOleControlSetProgIdAttrib(Ihandle* ih, const char* value)
 {
   CLSID clsid;
@@ -135,7 +128,7 @@ static int iOleControlMapMethod(Ihandle* ih)
 
 static int iOleControlCreateMethod(Ihandle* ih, void **params)
 {
-  /* free the data alocated by IupCanvas */
+  /* free the data allocated by IupCanvas */
   free(ih->data);
   ih->data = iupALLOCCTRLDATA();
   ih->data->olehandler = new tOleHandler();
@@ -166,7 +159,12 @@ static void iOleControlDestroyMethod(Ihandle* ih)
 static void iOleControlRelease(Iclass* ic)
 {
   (void)ic;
-  OleUninitialize();
+
+  if (IupGetGlobal("_IUPWIN_OLEINITIALIZE"))
+  {
+    OleUninitialize();
+    IupSetGlobal("_IUPWIN_OLEINITIALIZE", NULL);
+  }
 }
 
 static Iclass* iOleControlNewClass(void)
@@ -188,7 +186,6 @@ static Iclass* iOleControlNewClass(void)
   ic->LayoutUpdate = iOleControlLayoutUpdateMethod;
   ic->ComputeNaturalSize = iOleControlComputeNaturalSizeMethod;
 
-  iupClassRegisterAttribute(ic, "INVOKEFLAG", NULL, iOleControlSetInvokeFlagAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "PROGID", NULL, iOleControlSetProgIdAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DESIGNMODE", iOleControlGetDesignModeAttrib, iOleControlSetDesignModeAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DESIGNMODE_DONT_NOTIFY", iOleControlGetDesignModeAttrib, iOleControlSetDesignModeDontNotifyAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);

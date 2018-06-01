@@ -137,7 +137,7 @@ static void iTreeInitializeImages(void)
   image_expanded  = IupImage(ITREE_IMG_WIDTH, ITREE_IMG_HEIGHT, img_expanded);
   image_blank     = IupImage(ITREE_IMG_WIDTH, ITREE_IMG_HEIGHT, img_blank);
   image_paper     = IupImage(ITREE_IMG_WIDTH, ITREE_IMG_HEIGHT, img_paper);
-  image_empty     = IupImage(ITREE_IMG_WIDTH/2, ITREE_IMG_HEIGHT, NULL);
+  image_empty     = IupImage(ITREE_IMG_WIDTH, ITREE_IMG_HEIGHT, NULL);
 
   IupSetAttribute(image_leaf, "0", "BGCOLOR");
   IupSetAttribute(image_leaf, "1", "192 192 192");
@@ -179,6 +179,7 @@ static void iTreeInitializeImages(void)
   IupSetAttribute(image_paper, "5", "187 187 187");
 
   IupSetAttribute(image_empty, "0", "BGCOLOR");
+  IupSetAttribute(image_empty, "FLAT_ALPHA", "Yes"); /* necessary for Windows */
 
   IupSetHandle("IMGLEAF",      image_leaf);
   IupSetHandle("IMGCOLLAPSED", image_collapsed);

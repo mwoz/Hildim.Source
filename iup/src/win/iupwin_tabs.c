@@ -28,6 +28,7 @@
 #include "iup_array.h"
 #include "iup_assert.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 #include "iup_childtree.h"
 
 #include "iupwin_drv.h"
@@ -335,11 +336,11 @@ int iupdrvTabsGetCurrentTab(Ihandle* ih)
 static int winTabsGetImageIndex(Ihandle* ih, const char* name)
 {
   HIMAGELIST image_list;
-  int count, i, bpp, ret;
+  int count, i, ret;
   int width, height;
   Iarray* bmp_array;
-  HBITMAP *bmp_array_data, hMask=NULL;
-  HBITMAP bmp = iupImageGetImage(name, ih, 0);
+  HBITMAP *bmp_array_data;
+  HBITMAP bmp = iupImageGetImage(name, ih, 0, NULL);
   if (!bmp)
     return -1;
 
@@ -355,15 +356,13 @@ static int winTabsGetImageIndex(Ihandle* ih, const char* name)
   bmp_array_data = iupArrayGetData(bmp_array);
 
   /* must use this info, since image can be a driver image loaded from resources */
-  iupdrvImageGetInfo(bmp, &width, &height, &bpp);
+  iupdrvImageGetInfo(bmp, &width, &height, NULL);
 
   image_list = (HIMAGELIST)SendMessage(ih->handle, TCM_GETIMAGELIST, 0, 0);
   if (!image_list)
   {
-    UINT flags = ILC_COLOR32 | (bpp == 8 ? ILC_MASK : 0);
-
     /* create the image list if does not exist */
-    image_list = ImageList_Create(width, height, flags, 0, 50);
+    image_list = ImageList_Create(width, height, ILC_COLOR32, 0, 50);
     SendMessage(ih->handle, TCM_SETIMAGELIST, 0, (LPARAM)image_list);
   }
 
@@ -376,21 +375,9 @@ static int winTabsGetImageIndex(Ihandle* ih, const char* name)
       return i;
   }
 
-  if (bpp == 8)
-  {
-    Ihandle* image = IupGetHandle(name);
-    if (image)
-    {
-      iupAttribSet(image, "_IUPIMG_NO_INVERT", "1");
-      hMask = iupdrvImageCreateMask(image);
-      iupAttribSet(image, "_IUPIMG_NO_INVERT", NULL);
-    }
-  }
-
   bmp_array_data = iupArrayInc(bmp_array);
   bmp_array_data[i] = bmp;
-  ret = ImageList_Add(image_list, bmp, hMask);  /* the bmp is duplicated at the list */
-  DeleteObject(hMask);
+  ret = ImageList_Add(image_list, bmp, NULL);  /* the bmp is duplicated at the list */
   return ret;
 }
 
@@ -436,14 +423,18 @@ static LRESULT CALLBACK winTabsPageWndProc(HWND hWnd, UINT msg, WPARAM wp, LPARA
   {
   case WM_ERASEBKGND:
     {
-      RECT rect;
-      HDC hDC = (HDC)wp;
       Ihandle* ih = iupwinHandleGet(hWnd);
-      GetClientRect(ih->handle, &rect); 
-      winTabsDrawPageBackground(ih, hDC, &rect);
+      if (iupObjectCheck(ih)) /* should always be ok */
+      {
+        RECT rect;
+        HDC hDC = (HDC)wp;
+        GetClientRect(ih->handle, &rect);
+        winTabsDrawPageBackground(ih, hDC, &rect);
 
-      /* return non zero value */
-      return 1;
+        /* return non zero value */
+        return 1;
+      }
+      break;
     }
   case WM_COMMAND:
   case WM_CTLCOLORSCROLLBAR:
@@ -1097,7 +1088,7 @@ static void winTabsDrawRotateText(HDC hDC, char* text, int x, int y, HFONT hFont
 
 static void winTabsDrawTab(Ihandle* ih, HDC hDC, int p, int width, int height, COLORREF fgcolor)
 {
-  HBITMAP hBitmapClose, hCloseMask = NULL;
+  HBITMAP hBitmapClose;
   HFONT hFont = (HFONT)iupwinGetHFontAttrib(ih);
 	TCHAR title[256] = TEXT("");
 	TCITEM tci;
@@ -1130,9 +1121,9 @@ static void winTabsDrawTab(Ihandle* ih, HDC hDC, int p, int width, int height, C
   /* Create the close button image */
   high_p = iupAttribGetInt(ih, "_IUPTABS_CLOSEHIGH");
   if (high_p == p)
-    hBitmapClose = iupImageGetImage("IMGCLOSEHIGH", ih, 0);
+    hBitmapClose = iupImageGetImage("IMGCLOSEHIGH", ih, 0, NULL);
   else
-    hBitmapClose = iupImageGetImage("IMGCLOSE", ih, 0);
+    hBitmapClose = iupImageGetImage("IMGCLOSE", ih, 0, NULL);
   if (!hBitmapClose)
   {
     if (str && str != value) free(str);
@@ -1140,8 +1131,6 @@ static void winTabsDrawTab(Ihandle* ih, HDC hDC, int p, int width, int height, C
   }
 
   iupdrvImageGetInfo(hBitmapClose, NULL, NULL, &bpp);
-  if (bpp == 8)
-    hCloseMask = iupdrvImageCreateMask(IupGetHandle("IMGCLOSE"));
 
   /* Draw image tab, title tab and close image */
   if (ih->data->type == ITABS_BOTTOM || ih->data->type == ITABS_TOP)
@@ -1213,10 +1202,7 @@ static void winTabsDrawTab(Ihandle* ih, HDC hDC, int p, int width, int height, C
     y++;
   }
 
-  iupwinDrawBitmap(hDC, hBitmapClose, hCloseMask, x, y, ITABS_CLOSE_SIZE, ITABS_CLOSE_SIZE, bpp);
-
-  if (hCloseMask)
-    DeleteObject(hCloseMask);
+  iupwinDrawBitmap(hDC, hBitmapClose, x, y, ITABS_CLOSE_SIZE, ITABS_CLOSE_SIZE, ITABS_CLOSE_SIZE, ITABS_CLOSE_SIZE, bpp);
 
   if (str && str != value) free(str);
 }
@@ -1264,7 +1250,7 @@ static void winTabsDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 
   /* If the item has the focus, draw the focus rectangle */
   if (drawitem->itemState & ODS_FOCUS)
-    iupdrvPaintFocusRect(ih, hDC, 0, 0, width, height);
+    iupwinDrawFocusRect(hDC, 0, 0, width, height);
 
   iupwinDrawDestroyBitmapDC(&bmpDC);
 }
