@@ -1,6 +1,7 @@
 #include "SciTEWin.h"
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/src/iup_draw.h"
 #include "../../iup/src/iup_str.h"
 #include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
@@ -146,7 +147,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	markerMaskAll = leftClr.mask | rightClr.mask;
 }
 
-void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int highlight, char* fgcolor_drag, char * bgcolor) {
+void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int pos2, int highlight, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 
 	int size = pixelMap.size();
@@ -223,13 +224,13 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	int dL, dR;
 	dL = 0, dR = 0;
 	if (highlight < 4) {
-		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
+		for (int i = pos; (i <= pos2) && i < size; i++) {
 			if (pixelMap[i].left) {
 				dL = 1;
 				break;
 			}
 		}
-		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
+		for (int i = pos; (i <= pos2) && i < size; i++) {
 			if (pixelMap[i].right) {
 				dR = 1;
 				break;
@@ -240,7 +241,7 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 		int uuu = 0;
 	}
 
-	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos + d, fgcolor_drag, bgcolor, 1);
+	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 
 }
 

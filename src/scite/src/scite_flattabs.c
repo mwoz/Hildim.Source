@@ -25,6 +25,7 @@
 #include "../../iup/src/iup_image.h"
 #include "../../iup/src/iup_register.h"
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/src/iup_draw.h"
 #include "../../iup/srclua5/il.h"
 #include "../../iup/src/win/iupwin_handle.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
@@ -168,7 +169,7 @@ static void iFlatTabsGetIconSize(Ihandle* ih, int pos, int *w, int *h) {
 			int spacing = iupAttribGetInt(ih, "TABSIMAGESPACING");
 			int text_w, text_h;
 
-			iupDrawGetTextSize(ih, title, &text_w, &text_h);
+			IupDrawGetTextSize(ih, title, 0, &text_w, &text_h);
 
 			if (img_position == IUP_IMGPOS_RIGHT ||
 				img_position == IUP_IMGPOS_LEFT) {
@@ -180,7 +181,7 @@ static void iFlatTabsGetIconSize(Ihandle* ih, int pos, int *w, int *h) {
 			}
 		}
 	} else if (title)
-		iupDrawGetTextSize(ih, title, w, h);
+		IupDrawGetTextSize(ih, title, 0, w, h);
 }
 
 static void iFlatTabsSetTabFont(Ihandle* ih, int pos) {
@@ -261,7 +262,7 @@ static int iFlatTabsGetExtraWidthId(Ihandle* ih, int i, int img_position, int ho
 			int spacing = iupAttribGetInt(ih, "TABSIMAGESPACING");
 			int text_w, text_h;
 
-			iupDrawGetTextSize(ih, title, &text_w, &text_h);
+			IupDrawGetTextSize(ih, title, 0, &text_w, &text_h);
 
 			if (img_position == IUP_IMGPOS_RIGHT ||
 				img_position == IUP_IMGPOS_LEFT)
@@ -270,7 +271,7 @@ static int iFlatTabsGetExtraWidthId(Ihandle* ih, int i, int img_position, int ho
 				w = iupMAX(w, text_w);
 		}
 	} else if (title)
-		iupDrawGetTextSize(ih, title, &w, NULL);
+		IupDrawGetTextSize(ih, title, 0, &w, NULL);
 
 	w += 2 * horiz_padding;
 
@@ -589,7 +590,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 		iupFlatDrawIcon(ih, dc, tab_x, 0,
 			icon_width, title_height,
 			img_position, spacing, horiz_alignment, vert_alignment, horiz_padding, vert_padding,
-			tab_image, make_inactive, tab_title, text_align, foreground_color, background_color, tab_active);
+			tab_image, make_inactive, tab_title, 0, 0, foreground_color, background_color, tab_active);
 
 		if (show_close && (valuepos == pos)) {
 			int close_x = tab_x + tab_w - ITABS_CLOSE_BORDER - ITABS_CLOSE_SIZE;
@@ -607,7 +608,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			}
 
 			imagename = iupFlatGetImageName(ih, "CLOSEIMAGE", NULL, pos == tab_close_press, pos == tab_close_high, tab_active, &make_inactive);
-			iupdrvDrawImage(dc, imagename, make_inactive, close_x, close_y);
+			iupdrvDrawImage(dc, imagename, make_inactive, background_color, close_x, close_y, -1, -1);
 		}
 
 		/* goto next tab area */
@@ -692,7 +693,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			iupFlatDrawIcon(ih, dc, extra_x, 0,
 				extra_w, title_height - 1,
 				img_position, spacing, extra_horiz_alignment, extra_vert_alignment, horiz_padding, vert_padding,
-				extra_image, make_inactive, extra_title, text_align, extra_forecolor, tabs_bgcolor, extra_active);
+				extra_image, make_inactive, extra_title, 0, 0, extra_forecolor, tabs_bgcolor, extra_active);
 
 			right_extra_width += extra_w;
 		}
@@ -1536,7 +1537,7 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params) {
 	int vert_padding, horiz_padding;
 	iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
 
-	iupDrawGetTextSize(ih, "AaBbCc", &w, &h);
+	IupDrawGetTextSize(ih, "AaBbCc", 6, &w, &h);
 	char msz[10];
 	msz[0] = 'x';
 	h += 6;
