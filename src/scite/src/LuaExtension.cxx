@@ -992,6 +992,16 @@ static int bf_get_buffer_side(lua_State *L) {
 	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->GetBufferSide(luaL_checkint(L, 1)));
 	return 1;
 }
+static int bf_get_buffer_order(lua_State *L) {
+
+	lua_pushinteger(L, host->GetBufferOrder(luaL_checkint(L, 1)));
+	return 1;
+}
+static int bf_get_buffer_modtime(lua_State *L) {
+
+	lua_pushinteger(L, host->GetBufferModTime(luaL_checkint(L, 1)));
+	return 1;
+}
 static int bf_is_cloned(lua_State *L) {
 	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->Cloned(luaL_checkint(L, 1)));
 	return 1;
@@ -2092,6 +2102,12 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, bf_get_buffer_side);
 	lua_setfield(luaState, -2, "GetBufferSide");
+
+	lua_pushcfunction(luaState, bf_get_buffer_order);
+	lua_setfield(luaState, -2, "GetBufferOrder");
+
+	lua_pushcfunction(luaState, bf_get_buffer_modtime);
+	lua_setfield(luaState, -2, "GetBufferModTime");
 
 	lua_pushcfunction(luaState, bf_is_cloned);
 	lua_setfield(luaState, -2, "IsCloned");
