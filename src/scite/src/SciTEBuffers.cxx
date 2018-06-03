@@ -220,6 +220,17 @@ int BufferList::StackPrev() {
 	return stack[stackcurrent];
 }
 
+int BufferList::GetOrder(int index) {
+	int res = length;
+	for (int i = 0; i < length; i++) {
+		if (stack[i] == index) {
+			res = i;
+			break;
+		}
+	}
+	return res;
+}
+
 void BufferList::MoveToStackTop(int index) {
 	// shift top chunk of stack down into the slot that index occupies
 	bool move = false;

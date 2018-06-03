@@ -143,10 +143,12 @@ struct _IcontrolData
   int hidden_text_marks, editnext;
   int use_title_size;   /* use title contents when calculating cell size */
   int limit_expand; /* limit expand to maximum size */
-  int undo_redo, show_fill_value;
+  int undo_redo, 
+      flat,
+      show_fill_value;
 
   /* Mouse and Keyboard AUX */
-  int button1edit;
+  int button1edit, button1press;
   int homekeycount, endkeycount;  /* numbers of times that key was pressed */
 
   /* ColRes AUX */
@@ -154,6 +156,9 @@ struct _IcontrolData
       colres_drag_col,   /* column being resized, handler is at right of the column */
       colres_drag_col_start_x; /* handler start position */
   long colres_color;
+  int colres_feedback;   /* draw the colres feedback */
+  int colres_x, colres_y1, colres_y2;
+  int colres_drag;       /* draw while dragging */
 
   /* Mark AUX */
   int mark_lin1, mark_col1,  /* used to store the start cell when a block is being marked */

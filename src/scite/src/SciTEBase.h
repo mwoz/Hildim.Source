@@ -195,6 +195,7 @@ public:
 	void CommitStackSelection();
 	void MoveToStackTop(int index);
 	void ShiftTo(int indexFrom, int indexTo);
+	int GetOrder(int index);
 	virtual void* GetAt(int index) {
 		return (void*) &buffers[index];
 	}
@@ -589,6 +590,8 @@ protected:
 	int GetBuffersCount(){return buffers.length; };		
 	int GetCurrentBufer(){ return buffers.Current(); };	
 	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
+	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
+	virtual int GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
 	virtual int SecondEditorActive();
 	virtual void Open_script(const char* path);
 	virtual void SavePositions();

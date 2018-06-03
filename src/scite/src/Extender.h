@@ -49,6 +49,8 @@ public:
 	virtual void RunAsync(int idx)=0;
 	virtual int ActiveEditor()=0;
 	virtual int GetBufferSide(int index) = 0;
+	virtual int GetBufferModTime(int index) = 0;
+	virtual int GetBufferOrder(int index) = 0;
 	virtual int SecondEditorActive() = 0;
 	virtual int Cloned(int index) = 0;
 	virtual int IndexOfClone(int index) = 0;

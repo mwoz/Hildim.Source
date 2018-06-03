@@ -21,8 +21,10 @@
 #include "iup_dlglist.h"
 #include "iup_assert.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 #include "iup_image.h"
 #include "iup_childtree.h"
+#include "iup_dialog.h"
 #include "iup_drv.h"
 #include "iup_func.h"
 #include "iup_register.h"
@@ -239,7 +241,7 @@ static char* iLayoutGetElementTreeTitle(Ihandle* ih)
   {
     char buffer[51];
 
-    if (iupStrLineCount(title) > 1)
+    if (iupStrLineCount(title, (int)strlen(title)) > 1)
     {
       int len;
       iupStrNextLine(title, &len); /* get the size of the first line */
@@ -438,6 +440,8 @@ static void iLayoutUpdateLayout(iLayoutDialog* layoutdlg)
   IupUpdate(canvas);
 }
 
+static void iLayoutUpdateMark(iLayoutDialog* layoutdlg, Ihandle* ih, int id);
+
 static void iLayoutTreeRebuild(iLayoutDialog* layoutdlg)
 {
   Ihandle* tree = layoutdlg->tree;
@@ -448,6 +452,9 @@ static void iLayoutTreeRebuild(iLayoutDialog* layoutdlg)
 
   iLayoutTreeSetNodeInfo(tree, 0, layoutdlg->dialog);
   iLayoutTreeAddChildren(tree, 0, layoutdlg->dialog);
+
+  IupSetAttribute(tree, "VALUE", "ROOT");
+  iLayoutUpdateMark(layoutdlg, layoutdlg->dialog, 0);
 
   iLayoutUpdateLayout(layoutdlg);
 }
@@ -1352,7 +1359,7 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
 
       iupImageGetInfo(image, &img_w, &img_h, NULL);
 
-      iupdrvDrawImage(dc, image, 0, x + 1, y + 1);
+      iupdrvDrawImage(dc, image, 0, bgcolor, x + 1, y + 1, img_w, img_h);
 
       position = IupGetAttribute(ih, "IMAGEPOSITION");  /* used only for buttons */
       if (position &&
@@ -1385,7 +1392,7 @@ static void iLayoutDrawElement(IdrawCanvas* dc, Ihandle* ih, int marked, int nat
       int len;
       iupStrNextLine(title, &len);  /* get the size of the first line */
       color = iupDrawStrToColor(IupGetAttribute(ih, "FGCOLOR"), fg);
-      iupdrvDrawText(dc, title, len, x + 1, y + 1, w, h, color, IupGetAttribute(ih, "FONT"), IUP_ALIGN_ALEFT);
+      iupdrvDrawText(dc, title, len, x + 1, y + 1, w, h, color, IupGetAttribute(ih, "FONT"), IUP_DRAW_LEFT, 0);
     }
 
     if (ih->iclass->childtype == IUP_CHILDNONE &&
@@ -1584,7 +1591,7 @@ static void iLayoutPropertiesUpdate(Ihandle* properties, Ihandle* ih)
   IupGetAllAttributes(ih, attr_names, attr_count);
   for (i = 0, j = 1; i < attr_count; i++)
   {
-    if (attr_names[i] && !iupClassAttribIsRegistered(ih->iclass, attr_names[i]))
+    if (!iupClassAttribIsRegistered(ih->iclass, attr_names[i]))
     {
       IupSetAttributeId(list2, "", j, attr_names[i]);
       j++;
@@ -2143,7 +2150,7 @@ IupSetAttribute(dlg, "MINBOX", "NO");
 IupSetAttribute(dlg, "MAXBOX", "NO");
 IupSetAttributeHandle(dlg, "DEFAULTENTER", close);
 IupSetAttributeHandle(dlg, "DEFAULTESC", close);
-IupSetAttributeHandle(dlg, "PARENTDIALOG", parent);
+if (parent) IupSetAttributeHandle(dlg, "PARENTDIALOG", parent);
 IupSetAttribute(dlg, "ICON", IupGetGlobal("ICON"));
 iupAttribSet(dlg, "_IUP_PROPLIST1", (char*)list1);
 iupAttribSet(dlg, "_IUP_PROPLIST2", (char*)list2);
@@ -2603,7 +2610,36 @@ static void iLayoutBlink(Ihandle* ih)
 
 static void iLayoutUpdateMark(iLayoutDialog* layoutdlg, Ihandle* ih, int id)
 {
-  IupSetfAttribute(layoutdlg->status, "TITLE", "Position:%4d,%4d | User:%4d,%4d | Natural:%4d,%4d | Current:%4d,%4d", ih->x, ih->y, ih->userwidth, ih->userheight, ih->naturalwidth, ih->naturalheight, ih->currentwidth, ih->currentheight);
+  if (ih->iclass->childtype != IUP_CHILDNONE)
+  {
+    int x = 0, y = 0;
+    int w, h;
+    IupGetIntInt(ih, "CLIENTOFFSET", &x, &y);
+    IupGetIntInt(ih, "CLIENTSIZE", &w, &h);
+
+    if (!IupClassMatch(ih, "dialog"))
+    {
+      IupSetfAttribute(layoutdlg->status, "TITLE", "Position:%4d,%4d | User:%4d,%4d | Natural:%4d,%4d | Current:%4d,%4d\n"
+                                                   "Client Offset: %4d, %4d | Client Size: %4d, %4d",
+                       ih->x, ih->y, ih->userwidth, ih->userheight, ih->naturalwidth, ih->naturalheight, ih->currentwidth, ih->currentheight,
+                       x, y, w, h);
+    }
+    else
+    {
+      int border, caption, menu;
+      iupdrvDialogGetDecoration(ih, &border, &caption, &menu);
+      IupSetfAttribute(layoutdlg->status, "TITLE", "Position:%4d,%4d | User:%4d,%4d | Natural:%4d,%4d | Current:%4d,%4d\n"
+                                                   "Client Offset: %4d, %4d | Client Size: %4d, %4d | Border: %3d, Caption: %3d, Menu: %3d",
+                       ih->x, ih->y, ih->userwidth, ih->userheight, ih->naturalwidth, ih->naturalheight, ih->currentwidth, ih->currentheight,
+                       x, y, w, h, border, caption, menu);
+    }
+  }
+  else
+  {
+    IupSetfAttribute(layoutdlg->status, "TITLE", "Position:%4d,%4d | User:%4d,%4d | Natural:%4d,%4d | Current:%4d,%4d\n",
+                     ih->x, ih->y, ih->userwidth, ih->userheight, ih->naturalwidth, ih->naturalheight, ih->currentwidth, ih->currentheight);
+  }
+
 
   if (!ih->handle)
     IupSetAttributeId(layoutdlg->tree, "COLOR", id, "128 0 0");
@@ -2986,7 +3022,7 @@ Ihandle* IupLayoutDialog(Ihandle* dialog)
   status = IupLabel(NULL);
   IupSetAttribute(status, "EXPAND", "HORIZONTAL");
   IupSetAttribute(status, "FONT", "Courier, 11");
-  IupSetAttribute(status, "SIZE", "x12");
+  IupSetAttribute(status, "SIZE", "x20");
   layoutdlg->status = status;
 
   split = IupSplit(tree, canvas);

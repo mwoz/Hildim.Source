@@ -1,6 +1,7 @@
 #include "SciTEWin.h"
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
+#include "../../iup/src/iup_draw.h"
 #include "../../iup/src/iup_str.h"
 #include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
@@ -146,7 +147,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	markerMaskAll = leftClr.mask | rightClr.mask;
 }
 
-void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int highlight, char* fgcolor_drag, char * bgcolor) {
+void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int pos2, int highlight, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 
 	int size = pixelMap.size();
@@ -223,13 +224,13 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	int dL, dR;
 	dL = 0, dR = 0;
 	if (highlight < 4) {
-		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
+		for (int i = pos; (i <= pos2) && i < size; i++) {
 			if (pixelMap[i].left) {
 				dL = 1;
 				break;
 			}
 		}
-		for (int i = pos - sb_size; (i <= pos + d - sb_size) && i < size; i++) {
+		for (int i = pos; (i <= pos2) && i < size; i++) {
 			if (pixelMap[i].right) {
 				dR = 1;
 				break;
@@ -240,7 +241,7 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 		int uuu = 0;
 	}
 
-	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos + d, fgcolor_drag, bgcolor, 1);
+	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 
 }
 
@@ -573,6 +574,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
+	IupSetGlobal("ICON", "SCITE");
 	static char minSz[10];
 	::ZeroMemory((void*)minSz, sizeof(char) * 10);
 	minSz[0] = '0';
@@ -582,11 +584,12 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
 		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
 		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14],
-		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14];
+		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4];
 
-	PropGet("layout.scroll.forecolor", "220 220 220", scrFORECOLOR);
-	PropGet("layout.scroll.presscolor", "190 190 190", scrPRESSCOLOR);
-	PropGet("layout.scroll.highcolor", "200 200 200", scrHIGHCOLOR);
+	PropGet("layout.splittercolor", "220 220 220", scrSPLITCOLOR);
+	PropGet("layout.scroll.forecolor", "190 190 190", scrFORECOLOR);
+	PropGet("layout.scroll.presscolor", "150 150 150", scrPRESSCOLOR);
+	PropGet("layout.scroll.highcolor", "170 170 170", scrHIGHCOLOR);
 	PropGet("layout.scroll.backcolor", "240 240 240", scrBACKCOLOR);
 
 	PropGet("layout.hlcolor", "200 225 245", scrHLCOLOR);
@@ -598,6 +601,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	PropGet("layout.txtfgcolor", "0 0 0", scrTXTFGCOLOR);
 	PropGet("layout.txthlcolor", "15 60 195", scrTXTHLCOLOR);
 	PropGet("layout.txtinactivcolor", "70 70 70", scrTXTINACTIVCOLOR);
+	PropGet("iup.scrollbarsize", "15", scrollsize);
 
 	IupSetHandle("property_µ", load_image_property_WW(scrFGCOLOR));
 	IupSetHandle("check_µ", load_image_check(scrBGCOLOR, scrBORDERCOLOR, scrFGCOLOR));
@@ -605,8 +609,6 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	IupSetHandle("check_t_µ", load_image_check(scrTXTBGCOLOR, scrBORDERCOLOR, scrTXTFGCOLOR));
 	IupSetHandle("uncheck_t_µ", load_image_uncheck(scrTXTBGCOLOR, scrBORDERCOLOR));
 	IupSetHandle("uncheck_inactive_µ", load_image_uncheck(scrTXTINACTIVCOLOR, scrBORDERCOLOR));
-
-	static char * scrollsize = "15";
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -644,7 +646,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"ORIENTATION", "VERTICAL",
 		"NAME", "TabBarSplit",
 		"SHOWGRIP", "NO",
-		"COLOR", scrFORECOLOR,
+		"COLOR", scrSPLITCOLOR,
 		"BARSIZE", "0",
 		"LAYOUTDRAG", "NO",
 		"VALUE", "1000",
@@ -654,86 +656,86 @@ Ihandle* IupLayoutWnd::Create_dialog()
 
 
 
-	containers[3] = 
-	IupSetAtt(NULL, IupCreatep("split", 
-		IupSetAtt(NULL, IupCreatep("expander",
-			IupSetAtt(NULL, IupCreatep("scrollbox",
-				NULL),
-				"NAME", "LeftBarPH",
-				"SCROLLBAR", "NO",
-				NULL),
-			NULL),
-			"NAME", "LeftBarExpander",
-			"BARSIZE", "0",
-			"BARPOSITION", "LEFT",
-			"LAYOUTDRAG", "NO",
-			"MINSIZE", "x1",
-			"VALUE", "0",
-		NULL),
+	containers[3] =
 		IupSetAtt(NULL, IupCreatep("split",
+			IupSetAtt(NULL, IupCreatep("expander",
+				IupSetAtt(NULL, IupCreatep("scrollbox",
+					NULL),
+					"NAME", "LeftBarPH",
+					"SCROLLBAR", "NO",
+					NULL),
+				NULL),
+				"NAME", "LeftBarExpander",
+				"BARSIZE", "0",
+				"BARPOSITION", "LEFT",
+				"LAYOUTDRAG", "NO",
+				"MINSIZE", "x1",
+				"VALUE", "0",
+				NULL),
 			IupSetAtt(NULL, IupCreatep("split",
-						IupSetAtt(NULL, IupCreatep("split",
-								IupSetAtt(NULL, IupCreate("scrollcanvas"),
-									"NAME", "Source",
+				IupSetAtt(NULL, IupCreatep("split",
+					IupSetAtt(NULL, IupCreatep("split",
+						IupSetAtt(NULL, IupCreate("scrollcanvas"),
+							"NAME", "Source",
+							"EXPAND", "YES",
+							"HIGHCOLOR", scrHIGHCOLOR,
+							"PRESSCOLOR", scrPRESSCOLOR,
+							"FORECOLOR", scrFORECOLOR,
+							"BACKCOLOR", scrBACKCOLOR,
+							"SCROLLBARSIZE", scrollsize,
+							NULL),
+						IupSetAtt(NULL, IupCreatep("expander",
+							IupSetAtt(NULL, IupCreatep("sc_detachbox",
+								IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
+									"NAME", "CoSource",
 									"EXPAND", "YES",
 									"HIGHCOLOR", scrHIGHCOLOR,
 									"PRESSCOLOR", scrPRESSCOLOR,
 									"FORECOLOR", scrFORECOLOR,
 									"BACKCOLOR", scrBACKCOLOR,
 									"SCROLLBARSIZE", scrollsize,
-								NULL),
-								IupSetAtt(NULL, IupCreatep("expander",
-									IupSetAtt(NULL, IupCreatep("sc_detachbox",
-										IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
-										"NAME", "CoSource",
-										"EXPAND", "YES",
-										"HIGHCOLOR", scrHIGHCOLOR,
-										"PRESSCOLOR", scrPRESSCOLOR,
-										"FORECOLOR", scrFORECOLOR,
-										"BACKCOLOR", scrBACKCOLOR,
-										"SCROLLBARSIZE", scrollsize,
-										NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
-									"NAME", "SourceExDetach",
-									"ORIENTATION", "HORIZONTAL",
-									NULL), NULL),
-									"NAME", "CoSourceExpander",
-									"BARSIZE", "0",
-									"BARPOSITION", "LEFT",
-									//"FONT", "::1",
-									"MINSIZE", "0x0",
-									NULL),
-							NULL), 
-							"NAME", "SourceSplitMiddle",
-						 	"SHOWGRIP", "NO",
-							"COLOR", scrFORECOLOR,
+									NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
+								"NAME", "SourceExDetach",
+								"ORIENTATION", "HORIZONTAL",
+								NULL), NULL),
+							"NAME", "CoSourceExpander",
 							"BARSIZE", "0",
-							"VALUE", "1000",
-							"LAYOUTDRAG", "NO",
-							"MINSIZE", "x1",
+							"BARPOSITION", "LEFT",
+							//"FONT", "::1",
+							"MINSIZE", "0x0",
 							NULL),
-							IupSetAtt(NULL, IupCreatep("expander",NULL),
-								"NAME", "CoSourceExpanderBtm",
-								"BARSIZE", "0",
-								"BARPOSITION", "TOP",
-								//"FONT", "::1",
-								"MINSIZE", "0x0",
-							NULL),
+						NULL),
+						"NAME", "SourceSplitMiddle",
+						"SHOWGRIP", "NO",
+						"COLOR", scrSPLITCOLOR,
+						"BARSIZE", "0",
+						"VALUE", "1000",
+						"LAYOUTDRAG", "NO",
+						"MINSIZE", "x1",
+						NULL),
+					IupSetAtt(NULL, IupCreatep("expander", NULL),
+						"NAME", "CoSourceExpanderBtm",
+						"BARSIZE", "0",
+						"BARPOSITION", "TOP",
+						//"FONT", "::1",
+						"MINSIZE", "0x0",
+						NULL),
 					NULL),
 					"ORIENTATION", "HORIZONTAL",
 					"NAME", "SourceSplitBtm",
-				 	"SHOWGRIP", "NO",
-				    "COLOR", scrFORECOLOR,
+					"SHOWGRIP", "NO",
+					"COLOR", scrSPLITCOLOR,
 					"BARSIZE", "0",
 					"VALUE", "1000",
 					"LAYOUTDRAG", "NO",
 					"MINSIZE", "x1",
 					NULL),
 				IupSetAtt(NULL, IupCreatep("expander",
-				IupSetAtt(NULL, IupCreatep("scrollbox",
-					NULL),
-					"NAME", "RightBarPH",
-					"SCROLLBAR", "NO",
-					NULL),
+					IupSetAtt(NULL, IupCreatep("scrollbox",
+						NULL),
+						"NAME", "RightBarPH",
+						"SCROLLBAR", "NO",
+						NULL),
 					NULL),
 					"NAME", "RightBarExpander",
 					"BARSIZE", "0",
@@ -741,27 +743,27 @@ Ihandle* IupLayoutWnd::Create_dialog()
 					"MINSIZE", "x0",
 
 					//"STATE", "CLOSE",
+					NULL),
+				NULL),
+				"DIRECTION", "EAST",
+				"NAME", "SourceSplitRight",
+				"SHOWGRIP", "NO",
+				"COLOR", scrSPLITCOLOR,
+				"BARSIZE", "5",
+				"VALUE", "1000",
+				"LAYOUTDRAG", "NO",
+				"MINSIZE", "x1",
 				NULL),
 			NULL),
-			"DIRECTION", "EAST",
-			"NAME", "SourceSplitRight",
-		 	"SHOWGRIP", "NO",
-			"COLOR", scrFORECOLOR,
-			"BARSIZE", "5",
-			"VALUE", "1000",
+			"DIRECTION", "WEST",
+			"NAME", "SourceSplitLeft",
+			"SHOWGRIP", "NO",
+			"COLOR", scrSPLITCOLOR,
+			"BARSIZE", "0",
+			"VALUE", "0",
 			"LAYOUTDRAG", "NO",
-			"MINSIZE", "x1",
-		NULL),
-		NULL),
-		"DIRECTION", "WEST",
-		"NAME", "SourceSplitLeft",
-	 	"SHOWGRIP", "NO",
-		"COLOR", scrFORECOLOR,
-		"BARSIZE", "0",
-		"VALUE", "0",
-		"LAYOUTDRAG", "NO",
-		//"MINSIZE", "x1",
-	NULL);
+			//"MINSIZE", "x1",
+			NULL);
 
 	containers[2] = IupSetAtt(NULL, IupCreatep("hbox",
 		containers[3],
@@ -769,66 +771,66 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"NAME", "SourceHB",
 		NULL);
 
-	containers[7] = 
-	IupSetAtt(NULL, IupCreatep("expander", 
-		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
-			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
-				"NAME", "Run",
-				"MINSIZE", "x20",
-				"HIGHCOLOR", scrHIGHCOLOR,
-				"PRESSCOLOR", scrPRESSCOLOR,
-				"FORECOLOR", scrFORECOLOR,
-				"BACKCOLOR", scrBACKCOLOR,
-				"SCROLLBARSIZE", scrollsize,
+	containers[7] =
+		IupSetAtt(NULL, IupCreatep("expander",
+			IupSetAtt(NULL, IupCreatep("sc_detachbox",
+				IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
+					"NAME", "Run",
+					"MINSIZE", "x20",
+					"HIGHCOLOR", scrHIGHCOLOR,
+					"PRESSCOLOR", scrPRESSCOLOR,
+					"FORECOLOR", scrFORECOLOR,
+					"BACKCOLOR", scrBACKCOLOR,
+					"SCROLLBARSIZE", scrollsize,
+					NULL),
+					NULL), "NAME", "concolebar_vbox", NULL), NULL),
+				"NAME", "ConsoleDetach",
+				"ORIENTATION", "HORIZONTAL",
 				NULL),
-				NULL), "NAME", "concolebar_vbox", NULL), NULL),
-			"NAME", "ConsoleDetach",
-			"ORIENTATION", "HORIZONTAL",
 			NULL),
-		NULL),
-		"NAME", "ConsoleExpander",
-		"BARSIZE", "0",
-		"BARPOSITION", "LEFT",
-		"FONT", "::1",
-		"MINSIZE", "0x0", 
-	NULL);
+			"NAME", "ConsoleExpander",
+			"BARSIZE", "0",
+			"BARPOSITION", "LEFT",
+			"FONT", "::1",
+			"MINSIZE", "0x0",
+			NULL);
 
-	containers[10] = 
-	IupSetAtt(NULL, IupCreatep("expander", 
-		IupSetAtt(NULL, IupCreatep("sc_detachbox", 
-			IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
-				"NAME", "FindRes",
-				"MINSIZE", "x20",
-				"HIGHCOLOR", scrHIGHCOLOR,
-				"PRESSCOLOR", scrPRESSCOLOR,
-				"FORECOLOR", scrFORECOLOR,
-				"BACKCOLOR", scrBACKCOLOR,
-				"SCROLLBARSIZE", scrollsize,
+	containers[10] =
+		IupSetAtt(NULL, IupCreatep("expander",
+			IupSetAtt(NULL, IupCreatep("sc_detachbox",
+				IupSetAtt(NULL, IupCreatep("vbox", IupSetAtt(NULL, IupCreate("scrollcanvas"),
+					"NAME", "FindRes",
+					"MINSIZE", "x20",
+					"HIGHCOLOR", scrHIGHCOLOR,
+					"PRESSCOLOR", scrPRESSCOLOR,
+					"FORECOLOR", scrFORECOLOR,
+					"BACKCOLOR", scrBACKCOLOR,
+					"SCROLLBARSIZE", scrollsize,
+					NULL),
+					NULL), "NAME", "findresbar_vbox", NULL), NULL),
+				"NAME", "FindResDetach",
+				"ORIENTATION", "HORIZONTAL",
 				NULL),
-				NULL), "NAME", "findresbar_vbox", NULL), NULL),
-			"NAME", "FindResDetach",
-			"ORIENTATION", "HORIZONTAL",
 			NULL),
-		NULL),
-		"NAME", "FindResExpander",
-		"BARSIZE", "0",
-		"BARPOSITION", "LEFT",
-		"FONT", "::1",
-		"MINSIZE", "0x0", 
-	NULL);
+			"NAME", "FindResExpander",
+			"BARSIZE", "0",
+			"BARPOSITION", "LEFT",
+			"FONT", "::1",
+			"MINSIZE", "0x0",
+			NULL);
 
 
-	containers[6] = 
-	IupSetAtt(NULL, IupCreatep("split",
-		containers[7],
-		containers[10],
-		NULL),
-		"NAME", "BottomSplit",
-	 	"SHOWGRIP", "NO",
-		"COLOR", scrFORECOLOR,
-		"BARSIZE", "5",
-		"LAYOUTDRAG", "NO",
-	NULL);
+	containers[6] =
+		IupSetAtt(NULL, IupCreatep("split",
+			containers[7],
+			containers[10],
+			NULL),
+			"NAME", "BottomSplit",
+			"SHOWGRIP", "NO",
+			"COLOR", scrSPLITCOLOR,
+			"BARSIZE", "5",
+			"LAYOUTDRAG", "NO",
+			NULL);
 
 	containers[9] = IupSetAtt(NULL, IupCreatep("scrollbox",
 		NULL),
@@ -836,28 +838,28 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"SCROLLBAR", "NO",
 		NULL);
 
-	containers[8] = 
-	IupSetAtt(NULL, IupCreatep("split",
-		containers[6],
-		containers[9],
-		NULL),
-		"NAME", "BottomSplit2",
-	 	"SHOWGRIP", "NO",
-		"COLOR", scrFORECOLOR,
-		"BARSIZE", "0",
-		"LAYOUTDRAG", "NO",
-		"BGCOLOR", "255 255 255",
-		"VALUE", "1000",
-	NULL);
+	containers[8] =
+		IupSetAtt(NULL, IupCreatep("split",
+			containers[6],
+			containers[9],
+			NULL),
+			"NAME", "BottomSplit2",
+			"SHOWGRIP", "NO",
+			"COLOR", scrSPLITCOLOR,
+			"BARSIZE", "0",
+			"LAYOUTDRAG", "NO",
+			"BGCOLOR", "255 255 255",
+			"VALUE", "1000",
+			NULL);
 
-	containers[5] = 
-	IupSetAtt(NULL, IupCreatep("hbox",
-		containers[8],
-		NULL),
-		"NAME", "BottomSplitParent",
-		"MINSIZE", "x20",	 
-		//"VISIBLE", "NO",
-	NULL);
+	containers[5] =
+		IupSetAtt(NULL, IupCreatep("hbox",
+			containers[8],
+			NULL),
+			"NAME", "BottomSplitParent",
+			"MINSIZE", "x20",
+			//"VISIBLE", "NO",
+			NULL);
 
 
 	containers[4] = IupSetAtt(NULL, IupCreatep("expander",
@@ -867,7 +869,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"BARSIZE", "0",
 		"FONT", "::1",
 		"MINSIZE", "x0",
-	NULL);
+		NULL);
 
 
 	containers[1] = IupSetAtt(NULL, IupCreatep("vbox",
@@ -878,22 +880,22 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"BARSIZE", "0",
 			"EXPAND", "HORIZONTAL",
 			"MINSIZE", "x0",
-		NULL),
+			NULL),
 
 		IupSetAtt(NULL, IupCreatep("split", containers[2],
 			containers[4], NULL),
 			"ORIENTATION", "HORIZONTAL",
 			"NAME", "BottomBarSplit",
-	 		"SHOWGRIP", "NO",
-			"COLOR", scrFORECOLOR,
+			"SHOWGRIP", "NO",
+			"COLOR", scrSPLITCOLOR,
 			"BARSIZE", "5",
 			"LAYOUTDRAG", "NO",
+			NULL),
 		NULL),
-	NULL),
-	"NAME", "SciteVB",
-	"MINSIZE", "100x100",
-	//"VISIBLE", "NO",
-	NULL);
+		"NAME", "SciteVB",
+		"MINSIZE", "100x100",
+		//"VISIBLE", "NO",
+		NULL);
 
 	containers[0] = IupSetAtt(NULL, IupCreatep("dialog",
 		containers[1],
@@ -902,7 +904,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"CONTROL", "YES",
 		"MINSIZE", "200x200",
 		"SIZE", "200x200",
-		"SHRINK", "YES", 
+		"SHRINK", "YES",
 		"FLAT", "YES",
 		"HLCOLOR", scrHLCOLOR,
 		"BORDERHLCOLOR", scrBORDERHLCOLOR,

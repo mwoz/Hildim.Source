@@ -674,7 +674,7 @@ static int winTreeGetImageIndex(Ihandle* ih, const char* name)
   int count, i;
   Iarray* bmpArray;
   HBITMAP *bmpArrayData;
-  HBITMAP bmp = iupImageGetImage(name, ih, 0);
+  HBITMAP bmp = iupImageGetImage(name, ih, 0, NULL);
   if (!bmp)
     return -1;
 
@@ -713,7 +713,9 @@ static int winTreeGetImageIndex(Ihandle* ih, const char* name)
 
   bmpArrayData = iupArrayInc(bmpArray);
   bmpArrayData[i] = bmp;
-  return ImageList_Add(image_list, bmp, NULL);  /* the bmp is duplicated at the list */
+
+  i = ImageList_Add(image_list, bmp, NULL);  /* the bmp is duplicated at the list */
+  return i;
 }
 
 static void winTreeSetToggleState(Ihandle* ih, HTREEITEM hItem, int state)
@@ -811,7 +813,11 @@ static int winTreeCallBranchLeafCb(Ihandle* ih, HTREEITEM hItem)
   /* Get Children: branch or leaf */
   item.mask = TVIF_HANDLE|TVIF_PARAM|TVIF_STATE; 
   item.hItem = hItem;
-  SendMessage(ih->handle, TVM_GETITEM, 0, (LPARAM)(LPTVITEM)&item);
+
+  /* check if item still exists */
+  if (!SendMessage(ih->handle, TVM_GETITEM, 0, (LPARAM)(LPTVITEM)&item))
+    return IUP_IGNORE;  
+  
   itemData = (winTreeItemData*)item.lParam;
 
   if (itemData->kind == ITREE_BRANCH)
@@ -2071,7 +2077,12 @@ static int winTreeSetValueAttrib(Ihandle* ih, const char* value)
   else if(iupStrEqualNoCase(value, "PREVIOUS"))
     hItem = (HTREEITEM)SendMessage(ih->handle, TVM_GETNEXTITEM, TVGN_PREVIOUSVISIBLE, (LPARAM)hItemFocus);
   else if (iupStrEqualNoCase(value, "CLEAR"))
+  {
     winTreeSelectNode(ih, hItemFocus, 0);
+
+    if (ih->data->mark_mode == ITREE_MARK_SINGLE)
+      iupAttribSet(ih, "_IUP_UNSELECTEDNODE", (char*)hItemFocus);
+  }
   else
     hItem = iupTreeGetNodeFromString(ih, value);
 
@@ -2131,7 +2142,7 @@ static LRESULT CALLBACK winTreeEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
   Ihandle *ih;
 
   ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
     return DefWindowProc(hwnd, msg, wp, lp);  /* should never happen */
 
   /* retrieve the control previous procedure for subclassing */
@@ -2440,6 +2451,12 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
     {
       if (iupwinBaseMsgProc(ih, msg, wp, lp, result)==1)
         return 1;
+
+      if (!iupObjectCheck(ih))
+      {
+        *result = 0;
+        return 1;
+      }
 
       if (wp == VK_RETURN)
       {

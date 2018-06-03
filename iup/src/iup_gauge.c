@@ -15,6 +15,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -68,7 +69,7 @@ static void iGaugeDrawText(Ihandle* ih, int xmid, int w, int h, long fgcolor)
     text = buffer;
   }
 
-  IupDrawGetTextSize(ih, text, &text_w, &text_h);
+  IupDrawGetTextSize(ih, text, 0, &text_w, &text_h);
   x -= text_w / 2;
   y -= text_h / 2;
   xmin = x;
@@ -79,22 +80,22 @@ static void iGaugeDrawText(Ihandle* ih, int xmid, int w, int h, long fgcolor)
   if(xmid < xmin)
   {
     iupDrawSetColor(ih, "DRAWCOLOR", fgcolor);
-    IupDrawText(ih, text, 0, x, y);
+    IupDrawText(ih, text, 0, x, y, -1, -1);
   }
   else if(xmid > xmax)
   {
     iupDrawSetColor(ih, "DRAWCOLOR", ih->data->bgcolor);
-    IupDrawText(ih, text, 0, x, y);
+    IupDrawText(ih, text, 0, x, y, -1, -1);
   }
   else
   {
     IupDrawSetClipRect(ih, xmin, ymin, xmid, ymax);
     iupDrawSetColor(ih, "DRAWCOLOR", ih->data->bgcolor);
-    IupDrawText(ih, text, 0, x, y);
+    IupDrawText(ih, text, 0, x, y, -1, -1);
 
     IupDrawSetClipRect(ih, xmid, ymin, xmax, ymax);
     iupDrawSetColor(ih, "DRAWCOLOR", fgcolor);
-    IupDrawText(ih, text, 0, x, y);
+    IupDrawText(ih, text, 0, x, y, -1, -1);
     IupDrawResetClip(ih);
   }
 }

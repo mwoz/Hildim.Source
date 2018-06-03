@@ -461,7 +461,7 @@ char** iuplua_checkstring_array(lua_State *L, int pos, int n)
   char **v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n==0) 
+  if (n == -1) 
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -484,7 +484,7 @@ int* iuplua_checkint_array(lua_State *L, int pos, int n)
   int *v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n==0) 
+  if (n == -1) 
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -507,7 +507,7 @@ float* iuplua_checkfloat_array(lua_State *L, int pos, int n)
   float* v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n==0) 
+  if (n == -1)
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -530,7 +530,7 @@ double* iuplua_checkdouble_array(lua_State *L, int pos, int n)
   double* v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n == 0)
+  if (n == -1)
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -553,7 +553,7 @@ unsigned char* iuplua_checkuchar_array(lua_State *L, int pos, int n)
   unsigned char *v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n==0) 
+  if (n == -1)
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -576,7 +576,7 @@ Ihandle ** iuplua_checkihandle_array(lua_State *L, int pos, int n)
   Ihandle **v;
 
   luaL_checktype(L, pos, LUA_TTABLE);
-  if (n==0) 
+  if (n == -1)
     n = iuplua_getn(L, pos);
   else if (n != iuplua_getn(L, pos))
     luaL_argerror(L, pos, "Invalid number of elements (n!=count).");
@@ -1365,8 +1365,13 @@ int iuplua_open(lua_State * L)
   iuptreelua_open(L);
   iupclipboardlua_open(L);
   iupprogressdlglua_open(L);
+  iupflatlabellua_open(L);
   iupflatbuttonlua_open(L);
+  iupflattogglelua_open(L);
+  iupdropbuttonlua_open(L);
   iupflatframelua_open(L);
+  iupflatseparatorlua_open(L);
+  iupspacelua_open(L);
   iupconfiglua_open(L);
   iupanimatedlabellua_open(L);
   iupcalendarlua_open(L);

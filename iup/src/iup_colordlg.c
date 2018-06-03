@@ -15,6 +15,7 @@
 
 #include "iupdraw.h"
 #include "iup_drvdraw.h"
+#include "iup_draw.h"
 
 #include "iup_object.h"
 #include "iup_attrib.h"
@@ -239,7 +240,7 @@ static void iColorDrawTransparentRectangle(Ihandle* color_cnv, int xmin, int ymi
     }
 
     iupAttribSetHandleName(image);
-    IupDrawImage(color_cnv, iupAttribGetHandleName(image), 0, xmin, ymin);
+    IupDrawImage(color_cnv, iupAttribGetHandleName(image), xmin, ymin, -1, -1);
 
     IupDestroy(image);
   }

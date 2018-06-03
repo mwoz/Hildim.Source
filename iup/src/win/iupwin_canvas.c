@@ -579,6 +579,7 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
       *result = 0;
       return 1;
     }
+    break;
   case WM_HSCROLL:
     /* only process the scrollbar if not a MDI client AND a standard scrollbar */
     if (!iupAttribGetBoolean(ih, "MDICLIENT") && lp == 0)
@@ -587,6 +588,7 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
       *result = 0;
       return 1;
     }
+    break;
   case WM_SETFOCUS:
     if (!iupAttribGetBoolean(ih, "CANFOCUS"))
     {
@@ -736,7 +738,7 @@ static void winCanvasRegisterClass(void)
   wndclass.lpfnWndProc    = (WNDPROC)DefWindowProc;
   wndclass.hCursor        = LoadCursor(NULL, IDC_ARROW);
   wndclass.style          = CS_DBLCLKS | CS_OWNDC | CS_HREDRAW | CS_VREDRAW; /* using CS_OWNDC will minimize the work of Activate in the CD library */
-  wndclass.hbrBackground  = NULL;  /* remove the background to optimize redraw */
+  wndclass.hbrBackground = NULL;  /* remove the background to optimize redraw */
    
   RegisterClass(&wndclass);
 }

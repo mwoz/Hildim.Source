@@ -14,10 +14,13 @@
 #include "iupcbs.h"
 #include "iupcontrols.h"
 
-
 #include <cd.h>
+
+#ifdef USE_OLD_DRAW
 #include <cdiup.h>
-#include <cddbuf.h>
+#else
+#include <iupdraw_cd.h>
+#endif
 
 #include "iup_cdutil.h"
 
@@ -186,6 +189,25 @@ static int iMatrixSetUseTitleSizeAttrib(Ihandle* ih, const char* value)
 static char* iMatrixGetUseTitleSizeAttrib(Ihandle* ih)
 {
   return iupStrReturnBoolean(ih->data->use_title_size);
+}
+
+static int iMatrixSetResizeDragAttrib(Ihandle* ih, const char* value)
+{
+  /* can be set only before map */
+  if (ih->handle)
+    return 0;
+
+  if (iupStrBoolean(value))
+    ih->data->colres_drag = 1;
+  else
+    ih->data->colres_drag = 0;
+
+  return 0;
+}
+
+static char* iMatrixGetResizeDragAttrib(Ihandle* ih)
+{
+  return iupStrReturnBoolean(ih->data->colres_drag);
 }
 
 static int iMatrixSetLimitExpandAttrib(Ihandle* ih, const char* value)
@@ -938,6 +960,22 @@ static int iMatrixSetNeedRedraw(Ihandle* ih)
 {
   ih->data->need_redraw = 1;
   return 1;
+}
+
+static int iMatrixSetFlatAttrib(Ihandle* ih, const char* value)
+{
+  if (iupStrBoolean(value))
+    ih->data->flat = 1;
+  else
+    ih->data->flat = 0;
+
+  IupUpdate(ih);
+  return 0; /* do not store value in hash table */
+}
+
+static char* iMatrixGetFlatAttrib(Ihandle* ih)
+{
+  return iupStrReturnBoolean(ih->data->flat);
 }
 
 static void iMatrixClearAttribFlags(Ihandle* ih, unsigned char *flags, int lin, int col)
@@ -1706,8 +1744,12 @@ static int iMatrixResize_CB(Ihandle* ih)
   int old_w = ih->data->w,
       old_h = ih->data->h;
 
+#ifdef USE_OLD_DRAW
   cdCanvasActivate(ih->data->cd_canvas);
   cdCanvasGetSize(ih->data->cd_canvas, &(ih->data->w), &(ih->data->h), NULL, NULL);
+#else
+  IupGetIntInt(ih, "DRAWSIZE", &(ih->data->w), &(ih->data->h));
+#endif
 
   if (old_w != ih->data->w || old_h != ih->data->h)
   {
@@ -1736,11 +1778,15 @@ static int iMatrixRedraw_CB(Ihandle* ih)
     return IUP_DEFAULT;
 
   if (ih->data->callback_mode ||  /* in callback mode the values are not changed by attributes, so we can NOT wait for a REDRAW */
-      ih->data->need_redraw ||  /* if some of the attributes that do not automatically redraw were set */
-      ih->data->need_calcsize)   /* if something changed the matrix size */
-      iupMatrixDraw(ih, 0);
+      ih->data->need_redraw ||    /* if some of the attributes that do not automatically redraw were set */
+      ih->data->need_calcsize)    /* if something changed the matrix size */
+    iupMatrixDraw(ih, 0);
 
+#ifdef USE_OLD_DRAW
   iupMatrixDrawUpdate(ih);
+#else
+  iupMatrixDrawCB(ih);
+#endif
 
   return IUP_DEFAULT;
 }
@@ -1803,7 +1849,11 @@ static int iMatrixCreateMethod(Ihandle* ih, void **params)
 
 static int iMatrixMapMethod(Ihandle* ih)
 {
+#ifdef USE_OLD_DRAW
   ih->data->cd_canvas = cdCreateCanvas(CD_IUPDBUFFER, ih);
+#else
+  ih->data->cd_canvas = cdCreateCanvas(CD_IUPDRAW, ih);
+#endif
   if (!ih->data->cd_canvas)
     return IUP_ERROR;
 
@@ -1975,7 +2025,7 @@ int iupMatrixGetScrollbarSize(Ihandle* ih)
 
 static void iMatrixComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
-  int sb, sb_w = 0, sb_h = 0, full_width, full_height, border = 0;
+  int sb, sb_w = 0, sb_h = 0, full_width = 0, full_height = 0, border = 0;
   (void)children_expand; /* unset if not name container */
 
   sb = iupMatrixGetScrollbar(ih);
@@ -2195,6 +2245,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttribute(ic, "TOGGLECENTERED", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TOGGLEIMAGEON", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TOGGLEIMAGEOFF", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FLAT", iMatrixGetFlatAttrib, iMatrixSetFlatAttrib, NULL, NULL, IUPAF_NOT_MAPPED);
 
   iupClassRegisterAttributeId2(ic, "MERGE", iMatrixGetMergeAttrib, iMatrixSetMergeAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "MERGESPLIT", NULL, iMatrixSetMergeSplitAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -2288,6 +2339,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttribute(ic, "READONLY", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RESIZEMATRIX", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RESIZEMATRIXCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "102 102 102", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "RESIZEDRAG", iMatrixGetResizeDragAttrib, iMatrixSetResizeDragAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HIDEFOCUS", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWFILLVALUE", iMatrixGetShowFillValueAttrib, iMatrixSetShowFillValueAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TYPECOLORINACTIVE", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

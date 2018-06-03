@@ -126,6 +126,7 @@ int iupwinClassExist(const TCHAR* name);
 /*      Utilities    */
 /*********************/
 
+
 int iupwinSetTitleAttrib(Ihandle* ih, const char* value);
 TCHAR* iupwinGetWindowText(HWND hWnd);
 
@@ -136,6 +137,8 @@ int iupwinGetParentBgColor(Ihandle* ih, COLORREF* cr);
 
 int iupwinSetAutoRedrawAttrib(Ihandle* ih, const char* value);
 void iupwinSetMnemonicTitle(Ihandle *ih, int pos, const char* value);
+
+void iupwinDrawFocusRect(HDC hDC, int x, int y, int w, int h);
 
 int iupwinGetScreenRes(void);
 /* 1 point = 1/72 inch */

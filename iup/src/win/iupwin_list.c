@@ -99,7 +99,7 @@ static void winListSetItemData(Ihandle* ih, int pos, const char* str, HBITMAP hB
     SendMessage(ih->handle, WIN_SETITEMDATA(ih), pos, (LPARAM)itemdata);
   }
 
-  if (str && 0)
+  if (str)
   {
     itemdata->text_width = iupdrvFontGetStringWidth(ih, str);
     winListUpdateScrollWidthItem(ih, itemdata->text_width, 1);
@@ -465,7 +465,6 @@ static int winListSetValueAttrib(Ihandle* ih, const char* value)
         SendMessage(ih->handle, WIN_SETCURSEL(ih), (WPARAM)-1, 0);   /* no selection */
         iupAttribSet(ih, "_IUPLIST_OLDVALUE", NULL);
       }
-	  RedrawWindow(ih->handle, NULL, NULL, RDW_INVALIDATE);
     }
     else
     {
@@ -963,12 +962,13 @@ static int winListSetScrollToPosAttrib(Ihandle* ih, const char* value)
 
 static int winListSetImageAttrib(Ihandle* ih, int id, const char* value)
 {
-  HBITMAP hBitmap = iupImageGetImage(value, ih, 0);
+  HBITMAP hBitmap;
   int pos = iupListGetPosAttrib(ih, id);
 
   if (!ih->data->show_image || pos < 0)
     return 0;
 
+  hBitmap = iupImageGetImage(value, ih, 0, NULL);
   winListSetItemData(ih, pos, NULL, hBitmap);
 
   iupdrvRedrawNow(ih);
@@ -1143,10 +1143,10 @@ static int winListCtlColor(Ihandle* ih, HDC hdc, LRESULT *result)
 {
   COLORREF cr;
 
-  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTFGCOLOR", &cr) || iupwinGetColorRef(ih, "FGCOLOR", &cr))
+  if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
     SetTextColor(hdc, cr);
 
-  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTBGCOLOR", &cr) || iupwinGetColorRef(ih, "BGCOLOR", &cr))
+  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
   {
     SetBkColor(hdc, cr);
     SetDCBrushColor(hdc, cr);
@@ -1330,6 +1330,11 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   if (msg==WM_KEYDOWN) /* process K_ANY before text callbacks */
   {
     ret = iupwinBaseMsgProc(ih, msg, wp, lp, result);
+    if (!iupObjectCheck(ih))
+    {
+      *result = 0;
+      return 1;
+    }
 
     if (ret) 
     {
@@ -1554,7 +1559,7 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
   Ihandle *ih;
 
   ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
     return DefWindowProc(hwnd, msg, wp, lp);  /* should never happen */
 
   /* retrieve the control previous procedure for subclassing */
@@ -1568,7 +1573,6 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 		return CallWindowProc(oldProc, hwnd, msg, wp, lp);
 	}
 }
-
 static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
 	case WM_PAINT:
@@ -1667,9 +1671,11 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 				else
 					SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 			}
-			font = iupDrawGetTextSize(ih, text, &w1, &h1);
+			if (!text)
+				text = "";
 
 			int len = text ? strlen(text) : 0;
+			font = IupDrawGetTextSize(ih, text, len, &w1, &h1);
 
 			HFONT hFont = (HFONT)iupwinGetHFont(font);
 			SelectObject(hdc, hFont);
@@ -1713,7 +1719,7 @@ static LRESULT CALLBACK winListStaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPA
 	Ihandle *ih;
 
 	ih = iupwinHandleGet(hwnd);
-	if (!ih)
+	if (!iupObjectCheck(ih))
 		return DefWindowProc(hwnd, msg, wp, lp);  /* should never happen */
 
 												  /* retrieve the control previous procedure for subclassing */
@@ -1774,7 +1780,7 @@ static LRESULT CALLBACK winListComboListWndProc(HWND hwnd, UINT msg, WPARAM wp, 
   Ihandle *ih;
 
   ih = iupwinHandleGet(hwnd); 
-  if (!ih)
+  if (!iupObjectCheck(ih))
     return DefWindowProc(hwnd, msg, wp, lp);  /* should never happen */
 
   /* retrieve the control previous procedure for subclassing */
@@ -1790,7 +1796,6 @@ static LRESULT CALLBACK winListComboListWndProc(HWND hwnd, UINT msg, WPARAM wp, 
 
 static int winListMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result)
 {
-
   if (ih->data->is_dropdown)
   {
     switch (msg)
@@ -1853,6 +1858,7 @@ static int winListMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       *result = 0;
       return 1;
     }
+    break;
   case WM_SETFOCUS:
   case WM_KILLFOCUS:
   case WM_MOUSELEAVE:
@@ -1875,6 +1881,8 @@ static void winListDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
   HDC hDC;
   RECT rect;
   COLORREF fgcolor, bgcolor;
+
+  /* called only when SHOWIMAGE=Yes */
 
   int x = drawitem->rcItem.left;
   int y = drawitem->rcItem.top;
@@ -1920,28 +1928,17 @@ static void winListDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
   if (itemdata->hBitmap)
   {
     int bpp, img_w, img_h;
-    HBITMAP hMask = NULL;
 
     iupdrvImageGetInfo(itemdata->hBitmap, &img_w, &img_h, &bpp);
 
-    if (bpp == 8)
-    {
-      char name[50];
-      sprintf(name, "IMAGE%d", (int)drawitem->itemID+1);
-      hMask = iupdrvImageCreateMask(IupGetAttributeHandle(ih, name));
-    }
-
     x = 0;
     y = (height - img_h)/2;  /* vertically centered */
-    iupwinDrawBitmap(hDC, itemdata->hBitmap, hMask, x, y, img_w, img_h, bpp);
-
-    if (hMask)
-      DeleteObject(hMask);
+    iupwinDrawBitmap(hDC, itemdata->hBitmap, x, y, img_w, img_h, img_w, img_h, bpp);
   }
 
   /* If the item has the focus, draw the focus rectangle */
   if (drawitem->itemState & ODS_FOCUS)
-    iupdrvPaintFocusRect(ih, hDC, 0, 0, width, height);
+    iupwinDrawFocusRect(hDC, 0, 0, width, height);
 
   iupwinDrawDestroyBitmapDC(&bmpDC);
 }
@@ -2108,13 +2105,6 @@ static int winListMapMethod(Ihandle* ih)
       /* subclass the edit box. */
       IupSetCallback(ih, "_IUPWIN_EDITOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC));
       SetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)winListEditWndProc);
-
-	  if (!iupAttribGetBoolean(ih, "NOHIDESEL")) {
-		  HWND old_handle = ih->handle;
-		  ih->handle = (HWND)iupAttribGet(ih, "_IUPWIN_EDITBOX");
-		  iupwinMergeStyle(ih, ES_NOHIDESEL, 0);
-		  ih->handle = old_handle;
-	  }
 
       /* set defaults */
       SendMessage(ih->handle, CB_LIMITTEXT, 0, 0L);

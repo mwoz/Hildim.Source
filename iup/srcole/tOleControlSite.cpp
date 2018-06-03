@@ -237,8 +237,6 @@ STDMETHODIMP tOleControlSite::TranslateAccelerator(LPMSG pMsg
      * grfModifiers, so we ignore them.  Especially since
      * we have nothing to do here ourselves anyway.
      */
-	pMsg; grfModifiers;
-
     return ResultFromScode(S_FALSE);
     }
 
@@ -272,7 +270,6 @@ STDMETHODIMP tOleControlSite::OnFocus(BOOL fGotFocus)
      * we need to when a new control gets the focus.  We
      * do nothing when a control loses the focus.
      */
-	fGotFocus;
     return NOERROR;
     }
 

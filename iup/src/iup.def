@@ -216,6 +216,11 @@ IupSetStrAttributeId2
 IupSetStrfId2
 IupSetStrGlobal
 IupFlatButton
+IupFlatSeparator
+IupSpace
+IupFlatToggle
+IupDropButton
+IupFlatLabel
 IupFlatFrame
 IupAnimatedLabel
 IupDatePick
@@ -232,6 +237,7 @@ IupDrawGetTextSize
 IupDrawImage
 IupDrawGetImageInfo
 IupDrawSetClipRect
+IupDrawGetClipRect
 IupDrawResetClip
 IupDrawSelectRect
 IupDrawFocusRect
@@ -290,7 +296,7 @@ iupdrvFontGetStringWidth
 iupdrvFontGetMultiLineStringSize
 iupdrvFontGetTextSize
 iupdrvFontGetCharSize
-iupdrvPaintFocusRect
+iupdrvFontGetFontDim
 iupdrvPostRedraw
 iupdrvRedrawNow
 iupdrvBaseUnMapMethod
@@ -416,6 +422,7 @@ iupKeyProcessMnemonic
 iupKeySetMnemonic
 iupImageInitColorTable
 iupImageStockSet
+iupImageStockSetNoResize
 iupImageStockLoadAll
 iupImageColorMakeInactive
 iupImageGetHandle
@@ -567,6 +574,7 @@ iupdrvDrawLine
 iupdrvDrawArc
 iupdrvDrawPolygon
 iupdrvDrawResetClip
+iupdrvDrawGetClipRect
 iupdrvDrawSetClipRect
 iupdrvDrawText
 iupdrvDrawUpdateSize

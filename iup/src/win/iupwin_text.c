@@ -191,12 +191,12 @@ static void winTextParseParagraphFormat(Ihandle* formattag, PARAFORMAT2 *parafor
 
     while (format)
     {
-      str = iupStrDupUntil((char**)&format, ' ');
+      str = iupStrDupUntil((const char**)&format, ' ');
       if (!str) break;
       pos = atoi(str)*convert2twips;
       free(str);
 
-      str = iupStrDupUntil((char**)&format, ' ');
+      str = iupStrDupUntil((const char**)&format, ' ');
       if (!str) break;
 
       if (iupStrEqualNoCase(str, "DECIMAL"))
@@ -1624,10 +1624,10 @@ static int winTextCtlColor(Ihandle* ih, HDC hdc, LRESULT *result)
 {
   COLORREF cr;
 
-  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTFGCOLOR", &cr) || iupwinGetColorRef(ih, "FGCOLOR", &cr))
+  if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
     SetTextColor(hdc, cr);
 
-  if (!IupGetInt(ih, "READONLY") && iupwinGetColorRef(ih, "TXTBGCOLOR", &cr) || iupwinGetColorRef(ih, "BGCOLOR", &cr))
+  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
   {
     SetBkColor(hdc, cr);
     SetDCBrushColor(hdc, cr);
@@ -1714,7 +1714,13 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
   if (msg==WM_KEYDOWN) /* process K_ANY before text callbacks */
   {
     ret = iupwinBaseMsgProc(ih, msg, wp, lp, result);
-    if (ret) 
+    if (!iupObjectCheck(ih))
+    {
+      *result = 0;
+      return 1;
+    }
+
+    if (ret)
     {
       iupAttribSet(ih, "_IUPWIN_IGNORE_CHAR", "1");
       *result = 0;
@@ -2194,9 +2200,9 @@ static int winTextMapMethod(Ihandle* ih)
   if (iupAttribGetBoolean(ih, "NOHIDESEL"))
     dwStyle |= ES_NOHIDESEL;
 
-  if (iupAttribGetBoolean(ih, "BORDER")) {
-	  dwExStyle |= WS_EX_CLIENTEDGE;
-  }
+  if (iupAttribGetBoolean(ih, "BORDER"))
+    dwExStyle |= WS_EX_CLIENTEDGE;
+
   if (!iupwinCreateWindow(ih, winclass, dwExStyle, dwStyle, NULL))
     return IUP_ERROR;
 

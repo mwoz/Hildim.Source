@@ -83,7 +83,7 @@ static void winToggleSetBitmap(Ihandle* ih, const char* name, int make_inactive)
   /* called only when (ih->data->type==IUP_TOGGLE_IMAGE && !iupwin_comctl32ver6 && !ih->data->flat) */
   if (name)
   {
-    HBITMAP bitmap = iupImageGetImage(name, ih, make_inactive);
+    HBITMAP bitmap = iupImageGetImage(name, ih, make_inactive, NULL);
     SendMessage(ih->handle, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)bitmap);
   }
   else
@@ -159,7 +159,7 @@ static void winToggleDrawImage(Ihandle* ih, HDC hDC, int rect_width, int rect_he
       ypad = ih->data->vert_padding + border;
   int horiz_alignment, vert_alignment;
   int x, y, width, height, bpp;
-  HBITMAP hBitmap, hMask = NULL;
+  HBITMAP hBitmap;
   char *name;
   int make_inactive = 0;
 
@@ -179,7 +179,7 @@ static void winToggleDrawImage(Ihandle* ih, HDC hDC, int rect_width, int rect_he
       name = iupAttribGet(ih, "IMAGE");
   }
 
-  hBitmap = iupImageGetImage(name, ih, make_inactive);
+  hBitmap = iupImageGetImage(name, ih, make_inactive, NULL);
   if (!hBitmap)
     return;
 
@@ -214,13 +214,7 @@ static void winToggleDrawImage(Ihandle* ih, HDC hDC, int rect_width, int rect_he
     }
   }
 
-  if (bpp == 8)
-    hMask = iupdrvImageCreateMask(IupGetHandle(name));
-
-  iupwinDrawBitmap(hDC, hBitmap, hMask, x, y, width, height, bpp);
-
-  if (hMask)
-    DeleteObject(hMask);
+  iupwinDrawBitmap(hDC, hBitmap, x, y, width, height, width, height, bpp);
 }
 
 static void winToggleDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
@@ -269,7 +263,7 @@ static void winToggleDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
       iupAttribGetBoolean(ih, "CANFOCUS"))
   {
     border--;
-    iupdrvPaintFocusRect(ih, hDC, border, border, width - 2 * border, height - 2 * border);
+    iupwinDrawFocusRect(hDC, border, border, width - 2 * border, height - 2 * border);
   }
 
   iupwinDrawDestroyBitmapDC(&bmpDC);
@@ -462,19 +456,6 @@ static int winTogglePostRedrawSetAttrib(Ihandle* ih, const char* value)
   (void)value;
   if (ih->handle)
     iupdrvPostRedraw(ih);  /* Post a redraw */
-  return 1;
-}
-
-static int winToggleSetBgColorAttrib(Ihandle* ih, const char* value)
-{
-  (void)value;
-  if (ih->data->type==IUP_TOGGLE_IMAGE)
-  {
-    /* update internal image cache for controls that have the IMAGE attribute */
-    iupAttribSet(ih, "BGCOLOR", value);
-    iupImageUpdateParent(ih);
-    iupdrvRedrawNow(ih);
-  }
   return 1;
 }
 
@@ -781,7 +762,7 @@ void iupdrvToggleInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "ACTIVE", winToggleGetActiveAttrib, winToggleSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
 
   /* Visual */
-  iupClassRegisterAttribute(ic, "BGCOLOR", winToggleGetBgColorAttrib, winToggleSetBgColorAttrib, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE|IUPAF_DEFAULT);  
+  iupClassRegisterAttribute(ic, "BGCOLOR", winToggleGetBgColorAttrib, winTogglePostRedrawSetAttrib, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE | IUPAF_DEFAULT);
 
   /* Special */
   iupClassRegisterAttribute(ic, "FGCOLOR", NULL, winTogglePostRedrawSetAttrib, "DLGFGCOLOR", NULL, IUPAF_NOT_MAPPED);  /* force the new default value */  

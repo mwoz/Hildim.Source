@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <memory.h>
 
 #include "iup.h"
 
@@ -208,7 +209,7 @@ int IupGetAllNames(char** names, int n)
   int i = 0;
   char* name;
 
-  if (!names || !n)
+  if (!names || n == 0 || n == -1)
     return iupTableCount(inames_strtable);
 
   name = iupTableFirst(inames_strtable);
@@ -245,7 +246,7 @@ int IupGetAllDialogs(char** names, int n)
   int i = 0;
   char* name;
 
-  if (!names || !n)
+  if (!names || n==0 || n==-1)
     return iNamesCountDialogs();
 
   name = iupTableFirst(inames_strtable);
