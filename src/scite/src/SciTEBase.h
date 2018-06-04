@@ -370,6 +370,7 @@ public:
 	COLORREF GetColorRef(char* name);
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
+	LRESULT OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 private:
 	void * pSciteWin;
 	IupChildWnd ichFindRes;

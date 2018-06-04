@@ -915,6 +915,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"TXTFGCOLOR", scrTXTFGCOLOR,
 		"TXTHLCOLOR", scrTXTHLCOLOR,
 		"TXTINACTIVCOLOR", scrTXTINACTIVCOLOR,
+		"CAPTBGCOLOR", scrSPLITCOLOR,
 		"SCR_FORECOLOR", scrFORECOLOR,
 		"SCR_PRESSCOLOR", scrPRESSCOLOR,
 		"SCR_HIGHCOLOR", scrHIGHCOLOR,
@@ -1065,4 +1066,13 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		return lpIupLayoutWnd->WndProc(hwnd, uMsg, wParam, lParam); 
 
 	return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
+	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
+	if (bCalcValidRects) {
+		lpncsp->rgrc[0].top += 30;
+		int ttt = 1;
+	}
+	return r;
 }

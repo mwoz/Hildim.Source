@@ -1668,7 +1668,51 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		}
 
 		switch (iMessage) {
-
+		case WM_NCPAINT:
+		{
+			WINDOWPLACEMENT wp;
+			::GetWindowPlacement(MainHWND(), &wp);
+			//DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			//if (wp.flags & SW_SHOWMAXIMIZED) {
+				HDC hdc;
+				RECT rect;
+				HBRUSH b;
+				//HPEN pe;
+				hdc = ::GetWindowDC(MainHWND());
+				GetWindowRect(MainHWND(), &rect);
+				b = CreateSolidBrush(layout.GetColorRef("CAPTBGCOLOR"));
+				SelectObject(hdc, b);
+				//pe = CreatePen(PS_SOLID, 1, RGB(90, 90, 90));
+				//SelectObject(hdc, pe);
+				//::SendMessage(MainHWND(), WM_PRINT, WPARAM(hdc), PRF_NONCLIENT);
+				//::Rectangle(hdc, 0, 0, 10, 10);
+				int ttt = ::GetSystemMetrics(SM_CYSIZEFRAME);
+				//::FillRect(hdc)
+				Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
+				ReleaseDC(MainHWND(), hdc);
+				RedrawWindow(MainHWND(), &rect, (HRGN)wParam, RDW_UPDATENOW);
+				return 0;
+			//}
+		}
+		return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		break;
+		case WM_NCCALCSIZE:
+			return layout.OnNcCalcSize(MainHWND(), (BOOL)wParam, (NCCALCSIZE_PARAMS*)lParam);
+		case WM_NCHITTEST:
+		{
+			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			if(r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON)
+				r = HTCAPTION;
+			return r;
+		}
+			
+		case WM_NCACTIVATE:
+		{
+			// Force paint our non-client area otherwise Windows will paint its own.
+			//LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			RedrawWindow(MainHWND(), NULL, NULL, RDW_UPDATENOW);
+			return TRUE;
+		}
 		case WM_CREATE:
 			Creation();
 			break;
