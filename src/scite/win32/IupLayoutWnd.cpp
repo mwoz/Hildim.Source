@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
 #include "../../iup/src/iup_draw.h"
+#include "../../iup/src/iup_image.h"
 #include "../../iup/src/iup_str.h"
 #include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
@@ -83,6 +84,90 @@ static Ihandle* load_image_check(const char *back, const char *border, const cha
 
 	return image;
 }
+static Ihandle* load_image_MINIMISE(const char* forward, const char* bg) {
+	unsigned char imgdata[] = {
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+	Ihandle* image = IupImage(10, 10, imgdata);
+
+	IupSetAttribute(image, "0", bg);
+	IupSetAttribute(image, "1", forward);
+
+	return image;
+}
+
+static Ihandle* load_image_NORMAL(const char* forward, const char* bg) {
+	unsigned char imgdata[] = {
+		0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+		1, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0 };
+
+	Ihandle* image = IupImage(10, 10, imgdata);
+
+	IupSetAttribute(image, "0", bg);
+	IupSetAttribute(image, "1", forward);
+
+	return image;
+}
+
+static Ihandle* load_image_CLOSE(const char* forward, const char* bg) {
+	unsigned char imgdata[] = {
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+		1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
+		0, 1, 1, 1, 0, 0, 1, 1, 1, 0,
+		0, 0, 1, 1, 1, 1, 1, 1, 0, 0,
+		0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+		0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
+		0, 0, 1, 1, 1, 1, 1, 1, 0, 0,
+		0, 1, 1, 1, 0, 0, 1, 1, 1, 0,
+		1, 1, 1, 0, 0, 0, 0, 1, 1, 1,
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 0 };
+
+	Ihandle* image = IupImage(10, 10, imgdata);
+
+	IupSetAttribute(image, "0", bg);
+	IupSetAttribute(image, "1", forward);
+
+	return image;
+}
+
+static Ihandle* load_image_MAXIMISE(const char* forward, const char* bg) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(10, 10, imgdata);
+
+	IupSetAttribute(image, "0", bg);
+	IupSetAttribute(image, "1", forward);
+
+	return image;
+}
+
 
 static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	classList[IupGetAttribute(ih, "NAME")]->Scroll_CB(op, posx, posy);
@@ -584,7 +669,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
 		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
 		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14],
-		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4];
+		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4];
+	_itoa(::GetSystemMetrics(SM_CYSIZEFRAME), framesize, 10);
 
 	PropGet("layout.splittercolor", "220 220 220", scrSPLITCOLOR);
 	PropGet("layout.scroll.forecolor", "190 190 190", scrFORECOLOR);
@@ -602,6 +688,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	PropGet("layout.txthlcolor", "15 60 195", scrTXTHLCOLOR);
 	PropGet("layout.txtinactivcolor", "70 70 70", scrTXTINACTIVCOLOR);
 	PropGet("iup.scrollbarsize", "15", scrollsize);
+	((SciTEWin*)pSciteWin)->SetProperty("layout.wndframesize", framesize);
 
 	IupSetHandle("property_µ", load_image_property_WW(scrFGCOLOR));
 	IupSetHandle("check_µ", load_image_check(scrBGCOLOR, scrBORDERCOLOR, scrFGCOLOR));
@@ -609,6 +696,15 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	IupSetHandle("check_t_µ", load_image_check(scrTXTBGCOLOR, scrBORDERCOLOR, scrTXTFGCOLOR));
 	IupSetHandle("uncheck_t_µ", load_image_uncheck(scrTXTBGCOLOR, scrBORDERCOLOR));
 	IupSetHandle("uncheck_inactive_µ", load_image_uncheck(scrTXTINACTIVCOLOR, scrBORDERCOLOR));
+	
+	IupSetHandle("MINIMISE_µ", load_image_MINIMISE(scrFGCOLOR, scrSPLITCOLOR));
+	IupSetHandle("NORMAL_µ", load_image_NORMAL(scrFGCOLOR, scrSPLITCOLOR));
+	IupSetHandle("CLOSE_µ", load_image_CLOSE(scrFGCOLOR, scrSPLITCOLOR));
+	IupSetHandle("MAXIMISE_µ", load_image_MAXIMISE(scrFGCOLOR, scrSPLITCOLOR));
+	IupSetHandle("MINIMISE_H_µ", load_image_MINIMISE(scrFGCOLOR, scrHLCOLOR));
+	IupSetHandle("NORMAL_H_µ", load_image_NORMAL(scrFGCOLOR, scrHLCOLOR));
+	IupSetHandle("CLOSE_H_µ", load_image_CLOSE("255 0 0", scrHLCOLOR));
+	IupSetHandle("MAXIMISE_H_µ", load_image_MAXIMISE(scrFGCOLOR, scrHLCOLOR));
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -1070,9 +1166,178 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
 	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
-	if (bCalcValidRects) {
-		lpncsp->rgrc[0].top += 30;
-		int ttt = 1;
+	if (bCalcValidRects && !FullScreen) {
+		lpncsp->rgrc[0].top = lpncsp->rgrc[1].top + captWidth;
 	}
 	return r;
+}
+
+void drawWinBtn(HDC hDC, HBITMAP hBitmap, int x, int y) {
+	HDC hMemDC = CreateCompatibleDC(hDC);
+	HBITMAP oldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
+
+	StretchBlt(hDC, x, y, 10, 10, hMemDC, 0, 0, 10, 10, SRCCOPY);
+
+	SelectObject(hMemDC, oldBitmap);
+	DeleteDC(hMemDC);
+}
+
+bool IupLayoutWnd::HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr) {
+	RECT r = { rect->right - rect->left - (captWidth + 10) * iBtn , 0, 
+		rect->right - rect->left - (captWidth + 10) * (iBtn - 1) , captWidth };
+	bool rez = (r.left <= p->x) && (r.right > p->x) && (r.top <= p->y) && (r.bottom >= p->y);
+	if (rez && clr) {
+		rez = ((iBtn == 1 && nBtn == HTCLOSE) || (iBtn == 2 && nBtn == HTMAXBUTTON) || (iBtn == 3 && nBtn == HTMINBUTTON));
+		if (rez) {
+			HBRUSH b = CreateSolidBrush(clr);
+			FillRect(hdc, &r, b);
+			DeleteObject(b);
+		}
+	}
+	return rez;
+}
+
+LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
+	RECT rect;
+	GetWindowRect(hwnd, &rect);
+	mouse.x -= rect.left;
+	mouse.y -= rect.top;
+	TRACKMOUSEEVENT tme;
+	tme.cbSize = sizeof(TRACKMOUSEEVENT);
+	tme.dwFlags = TME_NONCLIENT | TME_LEAVE;
+	tme.hwndTrack = hwnd;
+	tme.dwHoverTime = HOVER_DEFAULT;
+	TrackMouseEvent(&tme);
+
+	if (HilightBtn(&rect, &mouse, NULL, 1, NULL))
+		return HTCLOSE;
+	if (HilightBtn(&rect, &mouse, NULL, 2, NULL))
+		return HTMAXBUTTON;
+	if (HilightBtn(&rect, &mouse, NULL, 3, NULL))
+		return HTMINBUTTON;
+	return HTCAPTION;
+
+}
+LRESULT IupLayoutWnd::OnNcMouseMove(HWND hwnd, int iBtn) {
+	if (iBtn != nBtn) {
+		nBtn = iBtn;
+		if (nBtnPressed != iBtn)
+			nBtnPressed = 0;
+		OnNcPaint(hwnd, true);
+	}
+	return 0;
+}
+LRESULT IupLayoutWnd::OnNcLMouseDown(HWND hwnd, int iBtn) {
+	nBtnPressed = iBtn;
+	return 0;
+}
+LRESULT IupLayoutWnd::OnNcLMouseUp(HWND hwnd, int iBtn) {
+	if (nBtnPressed == iBtn) {
+		switch (iBtn) {
+		case HTMINBUTTON:
+			::ShowWindow(hwnd, SW_MINIMIZE);
+			break;
+		case HTMAXBUTTON:
+			{
+				WINDOWPLACEMENT wp;
+				::GetWindowPlacement(hwnd, &wp);
+				if (wp.showCmd == SW_SHOWNORMAL)
+					::ShowWindow(hwnd, SW_MAXIMIZE);
+				else
+					::ShowWindow(hwnd, SW_NORMAL);
+			}
+			break;
+		case HTCLOSE:
+			((SciTEWin*)pSciteWin)->DoMenuCommand(IDM_QUIT);
+		}
+	}
+	return 0;
+}
+LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
+	if (FullScreen)
+		return 0;
+	WINDOWPLACEMENT wp;
+	::GetWindowPlacement(hwnd, &wp);
+	HDC hdc, hdcw;
+	RECT rect;
+	HBRUSH b;
+
+	hdc = ::GetWindowDC(hwnd);
+	bool bActive = ((hwnd == ::GetForegroundWindow()) && bActiv);
+
+	GetWindowRect(hwnd, &rect);
+	HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
+	b = CreateSolidBrush(GetColorRef("CAPTBGCOLOR"));
+	::SetWindowRgn(hwnd, hrgn, false);
+
+	POINT mouse;
+	::GetCursorPos(&mouse);
+	mouse.x -= rect.left;
+	mouse.y -= rect.top;
+
+	int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
+	//::FillRect(hdc)
+	RECT rdraw;
+	if (wp.showCmd == SW_SHOWNORMAL) {
+		rdraw = { 0, 0, ibrd, rect.bottom - rect.top };
+		FillRect(hdc, &rdraw, b);
+		rdraw = { rect.right -rect.left - ibrd, 0, rect.right - rect.left, rect.bottom - rect.top };
+		FillRect(hdc, &rdraw, b);
+		rdraw = { 0, rect.bottom - rect.top - ibrd, rect.right - rect.left, rect.bottom - rect.top };
+		FillRect(hdc, &rdraw, b);
+	}
+	rdraw = { 0, 0, rect.right - rect.left, captWidth };
+	FillRect(hdc, &rdraw, b);
+
+	DeleteObject(b); 
+	
+	HICON hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
+	::DrawIconEx(hdc, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
+	
+	char* font;
+	font = IupGetGlobal("DEFAULTFONT");
+	
+	HFONT hFont = (HFONT)iupwinGetHFont(font);
+	HGDIOBJ hFont_old = SelectObject(hdc, hFont);
+	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
+	SetTextColor(hdc, bActive ? GetColorRef("TXTFGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
+	
+	WCHAR cap[500];
+	GetWindowText((HWND)((SciTEWin*)pSciteWin)->GetID(), cap, 499);
+	rdraw = {40, 0, rect.right - rect.left - captWidth * 3 - 30, captWidth};
+	
+	::DrawText(hdc, cap, -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
+
+	rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
+
+	COLORREF hl = GetColorRef("HLCOLOR");
+
+	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl);
+	HBITMAP hb = (HBITMAP)iupImageGetImage(bHl ? "CLOSE_H_µ": "CLOSE_µ", NULL, FALSE, NULL);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2);
+
+	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl);
+	hb = (HBITMAP)iupImageGetImage(wp.showCmd == SW_SHOWNORMAL ? (bHl ? "MAXIMISE_H_µ" : "MAXIMISE_µ") : (bHl ? "NORMAL_H_µ" : "NORMAL_µ"), NULL, FALSE, NULL);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2);
+
+	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl);
+	hb = (HBITMAP)iupImageGetImage(bHl ? "MINIMISE_H_µ" : "MINIMISE_µ", NULL, FALSE, NULL);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2);
+
+
+	if (bActive && wp.showCmd == SW_SHOWNORMAL) {
+		HPEN hPen, hPenOld;
+		hPen = CreatePen(PS_SOLID, 1, GetColorRef("BORDERCOLOR"));
+		hPenOld = (HPEN)SelectObject(hdc, hPen);
+		POINT line_poly[5] = {0, 0, 0, rect.bottom - rect.top -1, rect.right - rect.left -1, rect.bottom - rect.top -1, rect.right - rect.left -1, 0, 0, 0};
+		BOOL b = Polyline(hdc, line_poly, 5);
+		SelectObject(hdc, hPenOld);
+		DeleteObject(hPen);
+	}
+
+	//Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
+	//int tt = ::BitBlt(hdcw, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hdc, 0, 0, SRCCOPY);
+	ReleaseDC(hwnd, hdc);
+	RedrawWindow(hwnd, &rect, NULL, RDW_UPDATENOW);
+	return 0;
 }

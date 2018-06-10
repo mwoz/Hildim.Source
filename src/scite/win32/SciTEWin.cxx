@@ -9,6 +9,7 @@
 
 #include "Platform.h" //!-add-[no_wornings]
 #include "SciTEWin.h"
+#include "Windowsx.h"
 
 #ifdef DTBG_CLIPRECT
 #define THEME_AVAILABLE
@@ -564,12 +565,14 @@ void SciTEWin::CopyAsRTF() {
 void SciTEWin::FullScreenToggle() {
 	LONG_PTR oldstyle = ::GetWindowLongPtr(MainHWND(), GWL_STYLE);
 	if (oldstyle & WS_CAPTION) {
+		layout.FullScreen = true;
 		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle & (~ WS_CAPTION));
 		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
 		::ShowWindow(MainHWND(), SW_SHOWMAXIMIZED);
 		extender->OnLayOutNotify("FULLSCREEN_ON");
 	}
 	else{
+		layout.FullScreen = false;
 		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle | WS_CAPTION);
 		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
 		extender->OnLayOutNotify("FULLSCREEN_OFF");
@@ -1669,49 +1672,56 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		switch (iMessage) {
 		case WM_NCPAINT:
-		{
-			WINDOWPLACEMENT wp;
-			::GetWindowPlacement(MainHWND(), &wp);
-			//DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-			//if (wp.flags & SW_SHOWMAXIMIZED) {
-				HDC hdc;
-				RECT rect;
-				HBRUSH b;
-				//HPEN pe;
-				hdc = ::GetWindowDC(MainHWND());
-				GetWindowRect(MainHWND(), &rect);
-				b = CreateSolidBrush(layout.GetColorRef("CAPTBGCOLOR"));
-				SelectObject(hdc, b);
-				//pe = CreatePen(PS_SOLID, 1, RGB(90, 90, 90));
-				//SelectObject(hdc, pe);
-				//::SendMessage(MainHWND(), WM_PRINT, WPARAM(hdc), PRF_NONCLIENT);
-				//::Rectangle(hdc, 0, 0, 10, 10);
-				int ttt = ::GetSystemMetrics(SM_CYSIZEFRAME);
-				//::FillRect(hdc)
-				Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
-				ReleaseDC(MainHWND(), hdc);
-				RedrawWindow(MainHWND(), &rect, (HRGN)wParam, RDW_UPDATENOW);
-				return 0;
-			//}
-		}
-		return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-		break;
+			return layout.OnNcPaint(MainHWND(), TRUE);
+			break;
 		case WM_NCCALCSIZE:
 			return layout.OnNcCalcSize(MainHWND(), (BOOL)wParam, (NCCALCSIZE_PARAMS*)lParam);
 		case WM_NCHITTEST:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			if(r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON)
-				r = HTCAPTION;
+			if (r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON || r == HTCAPTION) {
+				POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+				r = layout.OnNcHitTest(MainHWND(), p );
+			}
 			return r;
 		}
 			
 		case WM_NCACTIVATE:
-		{
-			// Force paint our non-client area otherwise Windows will paint its own.
-			//LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			RedrawWindow(MainHWND(), NULL, NULL, RDW_UPDATENOW);
+		{			
+		if (IsWindowVisible(MainHWND()))
+				layout.OnNcPaint(MainHWND(), wParam);
 			return TRUE;
+		}
+		case WM_NCMOUSEMOVE:
+			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) {
+				layout.OnNcMouseMove(MainHWND(), wParam);
+				return 0;
+			}
+			layout.OnNcMouseMove(MainHWND(), 0);
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		case WM_NCMOUSELEAVE:
+			layout.OnNcMouseMove(MainHWND(), 0);
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		case WM_NCLBUTTONDOWN:
+			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) 
+				return layout.OnNcLMouseDown(MainHWND(), wParam);
+			if (wParam == HTCAPTION) {
+				int rez = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+				layout.OnNcPaint(MainHWND(), TRUE);
+				return rez;
+			}
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		case WM_NCLBUTTONUP:
+			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON )
+				return layout.OnNcLMouseUp(MainHWND(), wParam);
+
+
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		case WM_SETTEXT:
+		{
+			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			layout.OnNcPaint(MainHWND(), TRUE);
+			return r;
 		}
 		case WM_CREATE:
 			Creation();
@@ -1890,8 +1900,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_ACTIVATE:
 			if (wParam != WA_INACTIVE) {
 				::SetFocus(wFocus);
-			}
-
+			} 
 			break;
 
 		case WM_DROPFILES:
