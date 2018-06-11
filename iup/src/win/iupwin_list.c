@@ -1662,7 +1662,9 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 				COLORREF cr;
 				iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
 				if (cnt) {
-					if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+					if (iupwinGetColorRef(ih, "STATICFGCOLOR", &cr))
+						SetTextColor(hdc, cr);
+					else if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
 						SetTextColor(hdc, cr);
 
 					text = IupGetAttribute(ih, "VALUESTRING");
@@ -1693,7 +1695,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			line_poly[2].x = w - 9-2;
 			line_poly[2].y = h / 2 + 3;
 
-			iupwinGetColorRef(ih, bEdit ? "TXTFGCOLOR" : "FGCOLOR", &RGBbgcolor);
+			iupwinGetColorRef(ih, bEdit ? "TXTFGCOLOR" : "STATICFGCOLOR", &RGBbgcolor);
 
 			hBrush = CreateSolidBrush(RGBbgcolor);
 			hBrushOld = SelectObject(hdc, hBrush);

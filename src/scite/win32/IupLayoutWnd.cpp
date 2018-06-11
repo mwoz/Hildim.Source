@@ -713,7 +713,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"EXTRABUTTONS", "1",
 		"MAXSIZE", "65535x65535",
 		"MINSIZE", minSz,
-		"FORECOLOR", "",
+		"TABSFORECOLOR", scrFGCOLOR,
 		"TABSLINECOLOR", scrBORDERCOLOR,
 		NULL);
 	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
@@ -723,7 +723,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"EXTRABUTTONS", "1",
 		"MAXSIZE", "65535x65535",
 		"MINSIZE", minSz,
-		"FORECOLOR", "",
+		"TABSFORECOLOR", scrFGCOLOR,
 		"TABSLINECOLOR", scrBORDERCOLOR,
 		NULL);
 
@@ -1300,7 +1300,7 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	HFONT hFont = (HFONT)iupwinGetHFont(font);
 	HGDIOBJ hFont_old = SelectObject(hdc, hFont);
 	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
-	SetTextColor(hdc, bActive ? GetColorRef("TXTFGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
+	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
 	
 	WCHAR cap[500];
 	GetWindowText((HWND)((SciTEWin*)pSciteWin)->GetID(), cap, 499);

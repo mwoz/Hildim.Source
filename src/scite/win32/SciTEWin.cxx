@@ -1687,10 +1687,10 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		}
 			
 		case WM_NCACTIVATE:
-		{			
+		{
 		if (IsWindowVisible(MainHWND()))
 				layout.OnNcPaint(MainHWND(), wParam);
-			return TRUE;
+		return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
 		case WM_NCMOUSEMOVE:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) {
@@ -1711,6 +1711,13 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				return rez;
 			}
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+		case WM_NCLBUTTONDBLCLK:
+			if (wParam == HTCAPTION) {
+				int rez = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+				layout.OnNcPaint(MainHWND(), TRUE);
+				return rez;
+			}
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);			
 		case WM_NCLBUTTONUP:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON )
 				return layout.OnNcLMouseUp(MainHWND(), wParam);
