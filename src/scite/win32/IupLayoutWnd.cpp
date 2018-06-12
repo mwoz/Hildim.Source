@@ -1257,7 +1257,6 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	if (FullScreen)
 		return 0;
 	WINDOWPLACEMENT wp;
-
 	::GetWindowPlacement(hwnd, &wp);
 	if (wp.showCmd == SW_SHOWMINIMIZED)
 		return 0;	
@@ -1289,52 +1288,43 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 		rdraw = { 0, rect.bottom - rect.top - ibrd, rect.right - rect.left, rect.bottom - rect.top };
 		FillRect(hdc, &rdraw, b);
 	}
-
-	HDC hdcm = hdc;
-	 
-
 	rdraw = { 0, 0, rect.right - rect.left, captWidth };
-	FillRect(hdcm, &rdraw, b);
+	FillRect(hdc, &rdraw, b);
 
 	DeleteObject(b); 
-
+	
 	HICON hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
-	::DrawIconEx(hdcm, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
+	::DrawIconEx(hdc, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
 	
 	char* font;
 	font = IupGetGlobal("DEFAULTFONT");
 	
 	HFONT hFont = (HFONT)iupwinGetHFont(font);
-	HGDIOBJ hFont_old = SelectObject(hdcm, hFont);
-
-	SetBkColor(hdcm, GetColorRef("CAPTBGCOLOR"));
-	SetTextColor(hdcm, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
+	SelectObject(hdc, hFont);
+	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
+	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
 	
 	WCHAR cap[500];
 	GetWindowText((HWND)((SciTEWin*)pSciteWin)->GetID(), cap, 499);
 	rdraw = {40, 0, rect.right - rect.left - captWidth * 3 - 30, captWidth};
-
-	//SelectObject(hdcm, hFont_old);
 	
-	::DrawText(hdcm, cap, -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ;
+	::DrawText(hdc, cap, -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
 
 	rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
 
 	COLORREF hl = GetColorRef("HLCOLOR");
 
-	bool bHl = HilightBtn(&rect, &mouse, hdcm, 1, hl);
+	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl);
 	HBITMAP hb = (HBITMAP)iupImageGetImage(bHl ? "CLOSE_H_µ": "CLOSE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdcm, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2);
 
-	bHl = HilightBtn(&rect, &mouse, hdcm, 2, hl);
+	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl);
 	hb = (HBITMAP)iupImageGetImage(wp.showCmd == SW_SHOWNORMAL ? (bHl ? "MAXIMISE_H_µ" : "MAXIMISE_µ") : (bHl ? "NORMAL_H_µ" : "NORMAL_µ"), NULL, FALSE, NULL);
-	drawWinBtn(hdcm, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2);
 
-	bHl = HilightBtn(&rect, &mouse, hdcm, 3, hl);
-
+	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl);
 	hb = (HBITMAP)iupImageGetImage(bHl ? "MINIMISE_H_µ" : "MINIMISE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdcm, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2);
-
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2);
 
 
 	if (bActive && wp.showCmd == SW_SHOWNORMAL) {
