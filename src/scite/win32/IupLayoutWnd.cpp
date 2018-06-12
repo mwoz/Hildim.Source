@@ -657,8 +657,12 @@ Ihandle* IupLayoutWnd::Create_dialog()
 
 	char* fntSize = ((SciTEWin*)pSciteWin)->Property("iup.defaultfontsize");
 
-	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0)
+	captWidth = 20;
+	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0) {
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
+		if (atoi(fntSize) > 10)
+			captWidth = 30;
+	}
 	IupSetGlobal("ICON", "SCITE");
 	static char minSz[10];
 	::ZeroMemory((void*)minSz, sizeof(char) * 10);
@@ -1293,8 +1297,15 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 
 	DeleteObject(b); 
 	
-	HICON hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
-	::DrawIconEx(hdc, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
+	HICON hicon;
+	if (captWidth > 20) {
+		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
+		::DrawIconEx(hdc, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
+	} else {
+		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
+		::DrawIconEx(hdc, 2, 2, hicon, 16, 16, 0, NULL, DI_NORMAL);
+
+	}
 	
 	char* font;
 	font = IupGetGlobal("DEFAULTFONT");
