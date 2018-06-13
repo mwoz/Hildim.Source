@@ -1171,7 +1171,11 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
 	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
 	if (bCalcValidRects && !FullScreen) {
+		int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
 		lpncsp->rgrc[0].top = lpncsp->rgrc[1].top + captWidth;
+		lpncsp->rgrc[0].bottom = lpncsp->rgrc[1].bottom - ibrd;
+		lpncsp->rgrc[0].left = lpncsp->rgrc[1].left + ibrd;
+		lpncsp->rgrc[0].right = lpncsp->rgrc[1].right - ibrd;
 	}
 	return r;
 }

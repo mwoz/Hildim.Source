@@ -1743,7 +1743,14 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_SETTEXT:
 		{
+			BOOL block = FALSE;
+			if (IsWindowVisible(MainHWND())) {
+				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 0, 0);
+				block = TRUE;
+			}
 			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			if (block)
+				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
 			layout.OnNcPaint(MainHWND(), TRUE);
 			return r;
 		}
