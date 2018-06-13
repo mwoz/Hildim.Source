@@ -1287,6 +1287,7 @@ void SciTEWin::CreateUI() {
 	GetNextPropItem(next, val, 32);
 	pagesetupMargin.bottom = atol(val);
 	delete []ps;
+	BOOL b = FALSE;
 					 	
 	extender->PostInit((void*)layout.hMain);
 }
@@ -1664,8 +1665,9 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	int statusFailure = 0;
 	static int boxesVisible = 0;
+	static int prevShowCmd = -1;
 
-	static int cursorFix = 0;
+	static bool sysminimized = false;
 	try {
 		LRESULT uim = uniqueInstance.CheckMessage(iMessage, wParam, lParam);
 		if (uim != 0) {
@@ -1690,9 +1692,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			
 		case WM_NCACTIVATE:
 		{
-		if (IsWindowVisible(MainHWND()))
+			if (IsWindowVisible(MainHWND()))
 				layout.OnNcPaint(MainHWND(), wParam);
-		return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
+			return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
 		case WM_NCMOUSEMOVE:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) {
@@ -1707,36 +1709,32 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_NCLBUTTONDOWN:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) 
 				return layout.OnNcLMouseDown(MainHWND(), wParam);
-			if (wParam == HTCAPTION) {
-				SendMessage(MainHWND(), WM_SETREDRAW, 0, 0);
-				int rez = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-				SendMessage(MainHWND(), WM_SETREDRAW, 1, 0);
-				return rez;
-			}
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			break;
+		case SCITE_NEEDNCPAINT:
+		{
+			::DefWindowProcW(MainHWND(), WM_SETREDRAW, 0, 0);
+			::DefWindowProcW(MainHWND(), WM_SETCURSOR, (WPARAM)MainHWND(), MAKELPARAM(HTTOP, WM_MOUSEMOVE) );
+			::DefWindowProcW(MainHWND(), WM_SETCURSOR, (WPARAM)MainHWND(), MAKELPARAM(HTCAPTION, WM_MOUSEMOVE) );
+			::DefWindowProcW(MainHWND(), WM_NCLBUTTONDOWN, HTCAPTION, 0);
+			::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
+			::UpdateWindow(MainHWND());
+			sysminimized = false;
+		}
+
+			break;
 		case WM_WINDOWPOSCHANGED:
 		{
-
-			static int prev = -1;
 			WINDOWPLACEMENT wp;
 			::GetWindowPlacement(MainHWND(), &wp);
-			if (prev > 0 && wp.showCmd == SW_NORMAL && prev != SW_NORMAL)
-				cursorFix = TRUE;
-			prev = wp.showCmd;
+
+			if((::GetAsyncKeyState(VK_LBUTTON) || sysminimized) && wp.showCmd != SW_SHOWMINIMIZED &&
+				prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
+				::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
+			prevShowCmd = wp.showCmd;
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		}
 		break;
-		case WM_SETCURSOR:
-		{
-			if (cursorFix && (LOWORD(lParam) >= HTSIZEFIRST && LOWORD(lParam) <= HTSIZELAST)) {
-				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 0, 0);
-				::DefWindowProcW(MainHWND(), iMessage, wParam, MAKELPARAM(HTTOP, HIWORD(lParam)));
-				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
-				cursorFix = 0;
-			}
-			return  ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-
-		}
 		case WM_NCLBUTTONUP:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON )
 				return layout.OnNcLMouseUp(MainHWND(), wParam);
@@ -1778,6 +1776,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_SYSCOMMAND:
+			if (wParam == SC_MINIMIZE)
+				sysminimized = true;
 			if ((wParam == SC_MINIMIZE) && props.GetInt("minimize.to.tray")) {
 				MinimizeToTray();
 				return 0;
