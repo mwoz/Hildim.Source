@@ -420,6 +420,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 
+	wEditor.Call(WM_SETREDRAW, 0);
 	UpdateBuffersCurrent();
 	buffers.SetCurrent(index);
 	if (updateStack) {
@@ -452,6 +453,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
+	wEditor.Call(WM_SETREDRAW, 1);
+	UpdateWindow((HWND)wEditor.GetID());
 }
 
 void SciTEBase::UpdateBuffersCurrent() {

@@ -1676,14 +1676,14 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		switch (iMessage) {
 		case WM_NCPAINT:
-			return layout.OnNcPaint(MainHWND(), TRUE);
+			return layout.StandartWindowDecoration ? ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam) : layout.OnNcPaint(MainHWND(), TRUE);
 			break;
 		case WM_NCCALCSIZE:
 			return layout.OnNcCalcSize(MainHWND(), (BOOL)wParam, (NCCALCSIZE_PARAMS*)lParam);
 		case WM_NCHITTEST:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			if (r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON || r == HTCAPTION) {
+			if (!layout.StandartWindowDecoration && (r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON || r == HTCAPTION)) {
 				POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 				r = layout.OnNcHitTest(MainHWND(), p );
 			}
@@ -1692,7 +1692,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			
 		case WM_NCACTIVATE:
 		{
-			if (IsWindowVisible(MainHWND()))
+			if (!layout.StandartWindowDecoration && IsWindowVisible(MainHWND()))
 				layout.OnNcPaint(MainHWND(), wParam);
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
@@ -1707,7 +1707,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			layout.OnNcMouseMove(MainHWND(), 0);
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_NCLBUTTONDOWN:
-			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) 
+			if (!layout.StandartWindowDecoration && (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
 				return layout.OnNcLMouseDown(MainHWND(), wParam);
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			break;
@@ -1725,35 +1725,25 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 		case WM_WINDOWPOSCHANGED:
 		{
-			WINDOWPLACEMENT wp;
-			::GetWindowPlacement(MainHWND(), &wp);
+			if (!layout.StandartWindowDecoration) {
+				WINDOWPLACEMENT wp;
+				::GetWindowPlacement(MainHWND(), &wp);
 
-			if((::GetAsyncKeyState(VK_LBUTTON) || sysminimized) && wp.showCmd != SW_SHOWMINIMIZED &&
-				prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
-				::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
-			prevShowCmd = wp.showCmd;
+				if ((::GetAsyncKeyState(VK_LBUTTON) || sysminimized) && wp.showCmd != SW_SHOWMINIMIZED &&
+					prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
+					::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
+				prevShowCmd = wp.showCmd;
+			}
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		}
 		break;
 		case WM_NCLBUTTONUP:
-			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON )
+			if (!layout.StandartWindowDecoration && (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
 				return layout.OnNcLMouseUp(MainHWND(), wParam);
 
 
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-		case WM_SETTEXT:
-		{
-			BOOL block = FALSE;
-			if (IsWindowVisible(MainHWND())) {
-				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 0, 0);
-				block = TRUE;
-			}
-			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-			if (block)
-				::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
-			layout.OnNcPaint(MainHWND(), TRUE);
-			return r;
-		}
+			break;
 		case WM_CREATE:
 			Creation();
 			break;

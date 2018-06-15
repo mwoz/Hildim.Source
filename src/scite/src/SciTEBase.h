@@ -377,6 +377,8 @@ public:
 	LRESULT OnNcLMouseDown(HWND hwnd, int iBtn);
 	LRESULT OnNcLMouseUp(HWND hwnd, int iBtn);
 	bool FullScreen = false;
+	bool StandartWindowDecoration = false;
+	void SetTitle(const GUI::gui_char *s);
 private:
 	void * pSciteWin;
 	IupChildWnd ichFindRes;
@@ -390,6 +392,9 @@ private:
 	int captWidth = 30;
 	int nBtn = 0;
 	int nBtnPressed = 0;
+	int borderX = 0;
+	int borderY = 0;
+	GUI::gui_string title = L"";
 };
 
 class SciTEBase : public ExtensionAPI, public Searcher {

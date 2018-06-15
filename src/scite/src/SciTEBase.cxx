@@ -1274,8 +1274,11 @@ void SciTEBase::SetWindowName() {
 		windowName += GUI::StringFromInteger(buffers.length);
 		windowName += GUI_TEXT("]");
 	}
-
-	wSciTE.SetTitle(windowName.c_str());
+	
+	if (layout.StandartWindowDecoration)
+		wSciTE.SetTitle(windowName.c_str());
+	else
+		layout.SetTitle(windowName.c_str());
 }
 
 Sci_CharacterRange SciTEBase::GetSelection() {

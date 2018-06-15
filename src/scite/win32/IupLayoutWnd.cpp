@@ -676,6 +676,9 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4];
 	_itoa(::GetSystemMetrics(SM_CYSIZEFRAME), framesize, 10);
 
+	PropGet("layout.standard.decoration", "0", scrollsize);
+	StandartWindowDecoration = (_atoi64(scrollsize) == 1);
+
 	PropGet("layout.splittercolor", "220 220 220", scrSPLITCOLOR);
 	PropGet("layout.scroll.forecolor", "190 190 190", scrFORECOLOR);
 	PropGet("layout.scroll.presscolor", "150 150 150", scrPRESSCOLOR);
@@ -1170,12 +1173,11 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
 	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
-	if (bCalcValidRects && !FullScreen) {
-		int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
+	if (bCalcValidRects && !FullScreen && !StandartWindowDecoration ) {
+
 		lpncsp->rgrc[0].top = lpncsp->rgrc[1].top + captWidth;
-		lpncsp->rgrc[0].bottom = lpncsp->rgrc[1].bottom - ibrd;
-		lpncsp->rgrc[0].left = lpncsp->rgrc[1].left + ibrd;
-		lpncsp->rgrc[0].right = lpncsp->rgrc[1].right - ibrd;
+		borderX = lpncsp->rgrc[0].left - lpncsp->rgrc[1].left;
+		borderY = lpncsp->rgrc[1].bottom - lpncsp->rgrc[0].bottom;
 	}
 	return r;
 }
@@ -1227,7 +1229,7 @@ LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
 
 }
 LRESULT IupLayoutWnd::OnNcMouseMove(HWND hwnd, int iBtn) {
-	if (iBtn != nBtn) {
+	if (iBtn != nBtn && !StandartWindowDecoration) {
 		nBtn = iBtn;
 		if (nBtnPressed != iBtn)
 			nBtnPressed = 0;
@@ -1261,9 +1263,13 @@ LRESULT IupLayoutWnd::OnNcLMouseUp(HWND hwnd, int iBtn) {
 	}
 	return 0;
 }
+
+void IupLayoutWnd::SetTitle(const GUI::gui_char *s) {
+	title = s;
+	OnNcPaint((HWND)((SciTEWin*)pSciteWin)->GetID(), TRUE);
+}
+
 LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
-	if (FullScreen)
-		return 0;
 	WINDOWPLACEMENT wp;
 	::GetWindowPlacement(hwnd, &wp);
 	if (wp.showCmd == SW_SHOWMINIMIZED)
@@ -1285,15 +1291,15 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	mouse.x -= rect.left;
 	mouse.y -= rect.top;
 
-	int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
+	//int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
 
 	RECT rdraw;
 	if (wp.showCmd == SW_SHOWNORMAL) {
-		rdraw = { 0, 0, ibrd, rect.bottom - rect.top };
+		rdraw = { 0, 0, borderX, rect.bottom - rect.top };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { rect.right -rect.left - ibrd, 0, rect.right - rect.left, rect.bottom - rect.top };
+		rdraw = { rect.right -rect.left - borderX, 0, rect.right - rect.left, rect.bottom - rect.top };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { 0, rect.bottom - rect.top - ibrd, rect.right - rect.left, rect.bottom - rect.top };
+		rdraw = { 0, rect.bottom - rect.top - borderY, rect.right - rect.left, rect.bottom - rect.top };
 		FillRect(hdc, &rdraw, b);
 	}
 	rdraw = { 0, 0, rect.right - rect.left, captWidth };
@@ -1319,11 +1325,9 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
 	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
 	
-	WCHAR cap[500];
-	GetWindowText((HWND)((SciTEWin*)pSciteWin)->GetID(), cap, 499);
 	rdraw = {40, 0, rect.right - rect.left - captWidth * 3 - 30, captWidth};
 	
-	::DrawText(hdc, cap, -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
+	::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
 
 	rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
 
