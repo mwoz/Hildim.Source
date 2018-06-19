@@ -1272,9 +1272,12 @@ void IupLayoutWnd::SetTitle(const GUI::gui_char *s) {
 LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	WINDOWPLACEMENT wp;
 	::GetWindowPlacement(hwnd, &wp);
-	if (wp.showCmd == SW_SHOWMINIMIZED)
+	static int bRedraw = -1;
+	if (wp.showCmd == SW_SHOWMINIMIZED) {
+		bRedraw = wp.showCmd;
 		return 0;	
-	HDC hdc, hdcw;
+	}
+	HDC hdc;
 	RECT rect;
 	HBRUSH b;
 
@@ -1359,6 +1362,8 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	//Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
 	//int tt = ::BitBlt(hdcw, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hdc, 0, 0, SRCCOPY);
 	ReleaseDC(hwnd, hdc);
+	if(bRedraw != wp.showCmd)
 	RedrawWindow(hwnd, &rect, NULL, RDW_UPDATENOW);
+	bRedraw = wp.showCmd;
 	return 0;
 }

@@ -418,7 +418,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	        currentbuf >= buffers.length) {
 		return;
 	}
-	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
+	int startSize = buffers.buffers[buffers.Current()].editorSide;
+	layout.OnOpenClose(startSize);
 
 	wEditor.Call(WM_SETREDRAW, 0);
 	UpdateBuffersCurrent();
@@ -454,7 +455,13 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
 	wEditor.Call(WM_SETREDRAW, 1);
-	UpdateWindow((HWND)wEditor.GetID());
+	RedrawWindow((HWND)wEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+
+	if (startSize != buffers.buffers[buffers.Current()].editorSide) {
+		wEditor.coEditor.Call(WM_SETREDRAW, 1);
+		RedrawWindow((HWND)wEditor.coEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	
+	}
 }
 
 void SciTEBase::UpdateBuffersCurrent() {
