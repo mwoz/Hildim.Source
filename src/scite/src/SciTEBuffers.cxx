@@ -454,10 +454,10 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
-	wEditor.Call(WM_SETREDRAW, 1);
-	RedrawWindow((HWND)wEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+	if(!bBlockUIUpdate){
+		wEditor.Call(WM_SETREDRAW, 1);
+		RedrawWindow((HWND)wEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 
-	if (startSize != buffers.buffers[buffers.Current()].editorSide) {
 		wEditor.coEditor.Call(WM_SETREDRAW, 1);
 		RedrawWindow((HWND)wEditor.coEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 	
