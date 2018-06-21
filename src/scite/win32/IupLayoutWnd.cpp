@@ -660,7 +660,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	captWidth = 20;
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0) {
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
-		if (atoi(fntSize) > 10)
+		if (atoi(fntSize) > 9)
 			captWidth = 30;
 	}
 	IupSetGlobal("ICON", "SCITE");
