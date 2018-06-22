@@ -12,6 +12,7 @@
 #include <cstdarg>
 
 #include <stdexcept>
+#include <string_view>
 #include <vector>
 #include <algorithm>
 #include <memory>
@@ -254,9 +255,8 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-int UndoHistory::EndUndoAction() {
-	int res = undoSequenceDepth;
-	if(undoSequenceDepth > 0){
+void UndoHistory::EndUndoAction() {
+	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
 	if (0 == undoSequenceDepth) {
@@ -267,8 +267,6 @@ int UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
-	}
-	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -813,8 +811,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-int CellBuffer::EndUndoAction() {
-	return uh.EndUndoAction();
+void CellBuffer::EndUndoAction() {
+	uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {

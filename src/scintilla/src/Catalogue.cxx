@@ -1,6 +1,8 @@
 // Scintilla source code edit control
 /** @file Catalogue.cxx
- ** Colourise for particular languages.
+ ** Lexer infrastructure.
+ ** Contains a list of LexerModules which can be searched to find a module appropriate for a
+ ** particular language.
  **/
 // Copyright 1998-2002 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
@@ -111,7 +113,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmESCRIPT);
 	LINK_LEXER(lmF77);
 	LINK_LEXER(lmFlagShip);
-	LINK_LEXER(lmFormEngine);
 	LINK_LEXER(lmForth);
 	LINK_LEXER(lmFortran);
 	LINK_LEXER(lmFreeBasic);
@@ -168,7 +169,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmRuby);
 	LINK_LEXER(lmRust);
 	LINK_LEXER(lmScriptol);
-	LINK_LEXER(lmSearchResult);
 	LINK_LEXER(lmSmalltalk);
 	LINK_LEXER(lmSML);
 	LINK_LEXER(lmSorc);

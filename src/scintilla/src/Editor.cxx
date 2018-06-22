@@ -15,6 +15,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <map>
 #include <forward_list>
@@ -28,7 +29,6 @@
 #include "ILexer.h"
 #include "Scintilla.h"
 
-#include "StringCopy.h"
 #include "CharacterSet.h"
 #include "Position.h"
 #include "UniqueString.h"
@@ -113,7 +113,6 @@ Editor::Editor() {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -243,6 +242,17 @@ void Editor::SetRepresentations() {
 			sprintf(hexits, "x%2X", k);
 			reprs.SetRepresentation(hiByte, hexits);
 		}
+	} else if (pdoc->dbcsCodePage) {
+		// DBCS invalid single lead bytes
+		for (int k = 0x80; k < 0x100; k++) {
+			const char ch = static_cast<char>(k);
+			if (pdoc->IsDBCSLeadByteNoExcept(ch)  || pdoc->IsDBCSLeadByteInvalid(ch)) {
+				const char hiByte[2] = { ch, 0 };
+				char hexits[5];	// Really only needs 4 but that causes warning from gcc 7.1
+				sprintf(hexits, "x%2X", k);
+				reprs.SetRepresentation(hiByte, hexits);
+			}
+		}
 	}
 }
 
@@ -308,8 +318,7 @@ Sci::Line Editor::TopLineOfMain() const {
 }
 
 PRectangle Editor::GetClientRectangle() const {
-	Window win = wMain;
-	return win.GetClientPosition();
+	return wMain.GetClientPosition();
 }
 
 PRectangle Editor::GetClientDrawingRectangle() {
@@ -368,9 +377,10 @@ SelectionPosition Editor::ClampPositionIntoDocument(SelectionPosition sp) const 
 }
 
 Point Editor::LocationFromPosition(SelectionPosition pos, PointEnd pe) {
+	const PRectangle rcClient = GetTextRectangle();
 	RefreshStyleData();
 	AutoSurface surface(this);
-	return view.LocationFromPosition(surface, *this, pos, topLine, vs, pe);
+	return view.LocationFromPosition(surface, *this, pos, topLine, vs, pe, rcClient);
 }
 
 Point Editor::LocationFromPosition(Sci::Position pos, PointEnd pe) {
@@ -386,11 +396,12 @@ SelectionPosition Editor::SPositionFromLocation(Point pt, bool canReturnInvalid,
 	RefreshStyleData();
 	AutoSurface surface(this);
 
+	PRectangle rcClient = GetTextRectangle();
+	// May be in scroll view coordinates so translate back to main view
+	const Point ptOrigin = GetVisibleOriginInMain();
+	rcClient.Move(-ptOrigin.x, -ptOrigin.y);
+
 	if (canReturnInvalid) {
-		PRectangle rcClient = GetTextRectangle();
-		// May be in scroll view coordinates so translate back to main view
-		const Point ptOrigin = GetVisibleOriginInMain();
-		rcClient.Move(-ptOrigin.x, -ptOrigin.y);
 		if (!rcClient.Contains(pt))
 			return SelectionPosition(INVALID_POSITION);
 		if (pt.x < vs.textStart)
@@ -399,7 +410,8 @@ SelectionPosition Editor::SPositionFromLocation(Point pt, bool canReturnInvalid,
 			return SelectionPosition(INVALID_POSITION);
 	}
 	const PointDocument ptdoc = DocumentPointFromView(pt);
-	return view.SPositionFromLocation(surface, *this, ptdoc, canReturnInvalid, charPosition, virtualSpace, vs);
+	return view.SPositionFromLocation(surface, *this, ptdoc, canReturnInvalid,
+		charPosition, virtualSpace, vs, rcClient);
 }
 
 Sci::Position Editor::PositionFromLocation(Point pt, bool canReturnInvalid, bool charPosition) {
@@ -1793,7 +1805,7 @@ int Editor::TextWidth(int style, const char *text) {
 	RefreshStyleData();
 	AutoSurface surface(this);
 	if (surface) {
-		return static_cast<int>(surface->WidthText(vs.styles[style].font, text, static_cast<int>(strlen(text))));
+		return static_cast<int>(surface->WidthText(vs.styles[style].font, text));
 	} else {
 		return 1;
 	}
@@ -1958,7 +1970,7 @@ void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
 			// characters representing themselves.
 		} else {
 			unsigned int utf32[1] = { 0 };
-			UTF32FromUTF8(s, len, utf32, ELEMENTS(utf32));
+			UTF32FromUTF8(std::string_view(s, len), utf32, std::size(utf32));
 			byte = utf32[0];
 		}
 		NotifyChar(byte);
@@ -2272,7 +2284,7 @@ void Editor::DelCharBack(bool allowLineStartDeletion) {
 	ShowCaretAtCurrentPosition();
 }
 
-int Editor::ModifierFlags(bool shift, bool ctrl, bool alt, bool meta, bool super) {
+int Editor::ModifierFlags(bool shift, bool ctrl, bool alt, bool meta, bool super) noexcept {
 	return
 		(shift ? SCI_SHIFT : 0) |
 		(ctrl ? SCI_CTRL : 0) |
@@ -2300,19 +2312,6 @@ void Editor::NotifyStyleToNeeded(Sci::Position endStyleNeeded) {
 
 void Editor::NotifyStyleNeeded(Document *, void *, Sci::Position endStyleNeeded) {
 	NotifyStyleToNeeded(endStyleNeeded);
-}
-
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_COLORIZED;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
 }
 
 void Editor::NotifyLexerChanged(Document *, void *) {
@@ -2353,27 +2352,6 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_CLICK;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers) {
 	SCNotification scn = {};
@@ -2555,7 +2533,7 @@ static inline Sci::Position MovePositionForDeletion(Sci::Position position, Sci:
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate(SC_UPDATE_CONTENT | (mh.modificationType << 4));
+	ContainerNeedsUpdate(SC_UPDATE_CONTENT);
 	if (paintState == painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3056,8 +3034,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!Мой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3232,11 +3210,11 @@ Sci::Position Editor::StartEndDisplayLine(Sci::Position pos, bool start) {
 
 namespace {
 
-short HighShortFromLong(long x) {
+constexpr short HighShortFromWParam(uptr_t x) {
 	return static_cast<short>(x >> 16);
 }
 
-short LowShortFromLong(long x) {
+constexpr short LowShortFromWParam(uptr_t x) {
 	return static_cast<short>(x & 0xffff);
 }
 
@@ -3670,11 +3648,6 @@ int Editor::DelWordOrLine(unsigned int iMessage) {
 }
 
 int Editor::KeyCommand(unsigned int iMessage) {
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_KEYCOMMAND;
-	scn.wParam = iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case SCI_LINEDOWN:
 		CursorUpOrDown(1, Selection::noSel);
@@ -3803,7 +3776,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
 		ShowCaretAtCurrentPosition();
@@ -3924,9 +3896,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		ScrollTo(MaxScrollPos());
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -4103,7 +4072,7 @@ Sci::Position Editor::SearchText(
     sptr_t lParam) {			///< The text to search for.
 
 	const char *txt = CharPtrFromSPtr(lParam);
-	Sci::Position pos;
+	Sci::Position pos = INVALID_POSITION;
 	Sci::Position lengthFound = strlen(txt);
 	if (!pdoc->HasCaseFolder())
 		pdoc->SetCaseFolder(CaseFolderForEncoding());
@@ -4119,9 +4088,9 @@ Sci::Position Editor::SearchText(
 		}
 	} catch (RegexError &) {
 		errorStatus = SC_STATUS_WARN_REGEX;
-		return -1;
+		return INVALID_POSITION;
 	}
-	if (pos != -1) {
+	if (pos != INVALID_POSITION) {
 		SetSelection(pos, pos + lengthFound);
 	}
 
@@ -4494,7 +4463,7 @@ void Editor::MouseLeave() {
 	}
 }
 
-static bool AllowVirtualSpace(int virtualSpaceOptions, bool rectangular) {
+static constexpr bool AllowVirtualSpace(int virtualSpaceOptions, bool rectangular) noexcept {
 	return (!rectangular && ((virtualSpaceOptions & SCVS_USERACCESSIBLE) != 0))
 		|| (rectangular && ((virtualSpaceOptions & SCVS_RECTANGULARSELECTION) != 0));
 }
@@ -4512,7 +4481,6 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4672,14 +4640,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, int modifiers) {
@@ -4967,7 +4933,6 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, modifiers & SCI_CTRL); //!-add-[OnMouseButtonUp]
 }
 
 bool Editor::Idle() {
@@ -5002,7 +4967,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case tickScroll:
 			// Auto scroll
- 			//ButtonMove(ptMouseLast);		- Убрано для перехода по Shift+Click - иначе сбивается выделение
+			ButtonMoveWithModifiers(ptMouseLast, 0, 0);
 			break;
 		case tickWiden:
 			SetScrollBars();
@@ -5641,10 +5606,10 @@ void Editor::StyleSetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 	vs.EnsureStyle(wParam);
 	switch (iMessage) {
 	case SCI_STYLESETFORE:
-		vs.styles[wParam].fore = ColourDesired(static_cast<long>(lParam));
+		vs.styles[wParam].fore = ColourDesired(static_cast<int>(lParam));
 		break;
 	case SCI_STYLESETBACK:
-		vs.styles[wParam].back = ColourDesired(static_cast<long>(lParam));
+		vs.styles[wParam].back = ColourDesired(static_cast<int>(lParam));
 		break;
 	case SCI_STYLESETBOLD:
 		vs.styles[wParam].weight = lParam != 0 ? SC_WEIGHT_BOLD : SC_WEIGHT_NORMAL;
@@ -5696,9 +5661,9 @@ sptr_t Editor::StyleGetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lPar
 	vs.EnsureStyle(wParam);
 	switch (iMessage) {
 	case SCI_STYLEGETFORE:
-		return vs.styles[wParam].fore.AsLong();
+		return vs.styles[wParam].fore.AsInteger();
 	case SCI_STYLEGETBACK:
-		return vs.styles[wParam].back.AsLong();
+		return vs.styles[wParam].back.AsInteger();
 	case SCI_STYLEGETBOLD:
 		return vs.styles[wParam].weight > SC_WEIGHT_NORMAL;
 	case SCI_STYLEGETWEIGHT:
@@ -6213,7 +6178,8 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return 0;
 
 	case SCI_ENDUNDOACTION:
-		return pdoc->EndUndoAction();
+		pdoc->EndUndoAction();
+		return 0;
 
 	case SCI_GETCARETPERIOD:
 		return caret.period;
@@ -6837,13 +6803,13 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_MARKERSETFORE:
 		if (wParam <= MARKER_MAX)
-			vs.markers[wParam].fore = ColourDesired(static_cast<long>(lParam));
+			vs.markers[wParam].fore = ColourDesired(static_cast<int>(lParam));
 		InvalidateStyleData();
 		RedrawSelMargin();
 		break;
 	case SCI_MARKERSETBACKSELECTED:
 		if (wParam <= MARKER_MAX)
-			vs.markers[wParam].backSelected = ColourDesired(static_cast<long>(lParam));
+			vs.markers[wParam].backSelected = ColourDesired(static_cast<int>(lParam));
 		InvalidateStyleData();
 		RedrawSelMargin();
 		break;
@@ -6853,7 +6819,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 	case SCI_MARKERSETBACK:
 		if (wParam <= MARKER_MAX)
-			vs.markers[wParam].back = ColourDesired(static_cast<long>(lParam));
+			vs.markers[wParam].back = ColourDesired(static_cast<int>(lParam));
 		InvalidateStyleData();
 		RedrawSelMargin();
 		break;
@@ -6992,14 +6958,14 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_SETMARGINBACKN:
 		if (ValidMargin(wParam)) {
-			vs.ms[wParam].back = ColourDesired(static_cast<long>(lParam));
+			vs.ms[wParam].back = ColourDesired(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_GETMARGINBACKN:
 		if (ValidMargin(wParam))
-			return vs.ms[wParam].back.AsLong();
+			return vs.ms[wParam].back.AsInteger();
 		else
 			return 0;
 
@@ -7094,9 +7060,9 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		InvalidateStyleRedraw();
 		break;
 	case SCI_GETCARETLINEBACK:
-		return vs.caretLineBackground.AsLong();
+		return vs.caretLineBackground.AsInteger();
 	case SCI_SETCARETLINEBACK:
-		vs.caretLineBackground = ColourDesired(static_cast<long>(wParam));
+		vs.caretLineBackground = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 	case SCI_GETCARETLINEBACKALPHA:
@@ -7244,13 +7210,13 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_SETSELFORE:
 		vs.selColours.fore = ColourOptional(wParam, lParam);
-		vs.selAdditionalForeground = ColourDesired(static_cast<long>(lParam));
+		vs.selAdditionalForeground = ColourDesired(static_cast<int>(lParam));
 		InvalidateStyleRedraw();
 		break;
 
 	case SCI_SETSELBACK:
 		vs.selColours.back = ColourOptional(wParam, lParam);
-		vs.selAdditionalBackground = ColourDesired(static_cast<long>(lParam));
+		vs.selAdditionalBackground = ColourDesired(static_cast<int>(lParam));
 		InvalidateStyleRedraw();
 		break;
 
@@ -7282,12 +7248,12 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_SETCARETFORE:
-		vs.caretcolour = ColourDesired(static_cast<long>(wParam));
+		vs.caretcolour = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 
 	case SCI_GETCARETFORE:
-		return vs.caretcolour.AsLong();
+		return vs.caretcolour.AsInteger();
 
 	case SCI_SETCARETSTYLE:
 		if (wParam <= CARETSTYLE_BLOCK)
@@ -7310,13 +7276,13 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return vs.caretWidth;
 
 	case SCI_ASSIGNCMDKEY:
-		kmap.AssignCmdKey(LowShortFromLong(static_cast<long>(wParam)),
-			HighShortFromLong(static_cast<long>(wParam)), static_cast<unsigned int>(lParam));
+		kmap.AssignCmdKey(LowShortFromWParam(wParam),
+			HighShortFromWParam(wParam), static_cast<unsigned int>(lParam));
 		break;
 
 	case SCI_CLEARCMDKEY:
-		kmap.AssignCmdKey(LowShortFromLong(static_cast<long>(wParam)),
-			HighShortFromLong(static_cast<long>(wParam)), SCI_NULL);
+		kmap.AssignCmdKey(LowShortFromWParam(wParam),
+			HighShortFromWParam(wParam), SCI_NULL);
 		break;
 
 	case SCI_CLEARALLCMDKEYS:
@@ -7336,14 +7302,14 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_INDICSETFORE:
 		if (wParam <= INDIC_MAX) {
-			vs.indicators[wParam].sacNormal.fore = ColourDesired(static_cast<long>(lParam));
-			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<long>(lParam));
+			vs.indicators[wParam].sacNormal.fore = ColourDesired(static_cast<int>(lParam));
+			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETFORE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacNormal.fore.AsLong() : 0;
+		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacNormal.fore.AsInteger() : 0;
 
 	case SCI_INDICSETHOVERSTYLE:
 		if (wParam <= INDIC_MAX) {
@@ -7357,13 +7323,13 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case SCI_INDICSETHOVERFORE:
 		if (wParam <= INDIC_MAX) {
-			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<long>(lParam));
+			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETHOVERFORE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacHover.fore.AsLong() : 0;
+		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacHover.fore.AsInteger() : 0;
 
 	case SCI_INDICSETFLAGS:
 		if (wParam <= INDIC_MAX) {
@@ -7594,10 +7560,10 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_GETEDGECOLOUR:
-		return vs.theEdge.colour.AsLong();
+		return vs.theEdge.colour.AsInteger();
 
 	case SCI_SETEDGECOLOUR:
-		vs.theEdge.colour = ColourDesired(static_cast<long>(wParam));
+		vs.theEdge.colour = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 
@@ -7730,17 +7696,11 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
+		if (inOverstrike != (wParam != 0)) {
 			inOverstrike = wParam != 0;
 			ContainerNeedsUpdate(SC_UPDATE_SELECTION);
 			ShowCaretAtCurrentPosition();
 		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_chang
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -7835,7 +7795,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_GETHOTSPOTACTIVEFORE:
-		return vs.hotspotColours.fore.AsLong();
+		return vs.hotspotColours.fore.AsInteger();
 
 	case SCI_SETHOTSPOTACTIVEBACK:
 		vs.hotspotColours.back = ColourOptional(wParam, lParam);
@@ -7843,7 +7803,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_GETHOTSPOTACTIVEBACK:
-		return vs.hotspotColours.back.AsLong();
+		return vs.hotspotColours.back.AsInteger();
 
 	case SCI_SETHOTSPOTACTIVEUNDERLINE:
 		vs.hotspotUnderline = wParam != 0;
@@ -8167,12 +8127,12 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return virtualSpaceOptions;
 
 	case SCI_SETADDITIONALSELFORE:
-		vs.selAdditionalForeground = ColourDesired(static_cast<long>(wParam));
+		vs.selAdditionalForeground = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 
 	case SCI_SETADDITIONALSELBACK:
-		vs.selAdditionalBackground = ColourDesired(static_cast<long>(wParam));
+		vs.selAdditionalBackground = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 
@@ -8185,12 +8145,12 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return vs.selAdditionalAlpha;
 
 	case SCI_SETADDITIONALCARETFORE:
-		vs.additionalCaretColour = ColourDesired(static_cast<long>(wParam));
+		vs.additionalCaretColour = ColourDesired(static_cast<int>(wParam));
 		InvalidateStyleRedraw();
 		break;
 
 	case SCI_GETADDITIONALCARETFORE:
-		return vs.additionalCaretColour.AsLong();
+		return vs.additionalCaretColour.AsInteger();
 
 	case SCI_ROTATESELECTION:
 		sel.RotateMain();
@@ -8213,11 +8173,6 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<Sci::Position>(wParam), lParam);
 		break;
-//!-start-[MouseClickHandled]
-	case SCI_SETMOUSECAPTURE:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));
