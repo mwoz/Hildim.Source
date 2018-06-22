@@ -5,7 +5,9 @@
  **/
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-
+#include <memory>
+#include <vector>
+#include <string>
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -179,6 +181,14 @@ public:
 
 	bool operator==(const ColourDesired &other) const noexcept {
 		return co == other.co;
+	}
+
+	void Set(long lcol) {  ///!!!TODO! - Проанализировать использование и по возможности удалить
+		co = lcol;
+	}
+
+	void Set(unsigned int red, unsigned int green, unsigned int blue) {
+		co = red | (green << 8) | (blue << 16);
 	}
 
 	int AsInteger() const noexcept {
