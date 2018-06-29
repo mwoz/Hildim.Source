@@ -1195,6 +1195,19 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return StringResult(lParam, DocumentLexState()->
 				    DescriptionOfStyle(static_cast<int>(wParam)));
 
+	case SCI_LISTCUSTOMCOLORS:
+	{
+		Sci_ListColorsInfo *ci = (Sci_ListColorsInfo*)wParam;
+		ac.listcolors.inizialized = ci->inizialized;
+		ac.listcolors.border = ci->border;
+		ac.listcolors.borderbak = ci->borderbak;
+		ac.listcolors.scroll = ci->scroll;
+		ac.listcolors.scrollbak = ci->scrollbak;
+		ac.listcolors.scrollhl = ci->scrollhl;
+		ac.listcolors.scrollpress = ci->scrollpress;
+		ac.listcolors.scrollsize = ci->scrollsize;
+	}
+
 #endif
 
 	default:

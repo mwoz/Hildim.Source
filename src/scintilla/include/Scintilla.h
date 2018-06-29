@@ -1138,10 +1138,24 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCN_COLORIZED 3997 
 #define SCN_NOTYFY_OUTPUTCMD 3998 
 #define SCN_NOTYFY_OUTPUTEXIT 3999 
+#define SCI_LISTCUSTOMCOLORS 5000
 
 #if defined(__cplusplus) && defined(SCI_NAMESPACE)
 namespace Scintilla {
 #endif
+
+struct Sci_ListColorsInfo {
+	bool inizialized = false;
+	unsigned long border;
+	unsigned long borderbak;
+	unsigned long scrollbak;
+	unsigned long scroll;
+	unsigned long scrollhl;
+	unsigned long scrollpress;
+	int scrollsize;
+	
+};
+
 
 struct Sci_CharacterRange {
 	Sci_PositionCR cpMin;

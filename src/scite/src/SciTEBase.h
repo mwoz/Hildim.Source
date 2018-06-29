@@ -389,7 +389,7 @@ private:
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void PropGet(const char *name, const char *defoult, char* buff);
 	bool HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr);
-	int captWidth = 30;
+	int captWidth = 32;
 	int nBtn = 0;
 	int nBtnPressed = 0;
 	int borderX = 0;

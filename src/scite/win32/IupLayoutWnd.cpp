@@ -657,11 +657,11 @@ Ihandle* IupLayoutWnd::Create_dialog()
 
 	char* fntSize = ((SciTEWin*)pSciteWin)->Property("iup.defaultfontsize");
 
-	captWidth = 20;
+	captWidth = 22;
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0) {
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
 		if (atoi(fntSize) > 9)
-			captWidth = 30;
+			captWidth = 32;
 	}
 	IupSetGlobal("ICON", "SCITE");
 	static char minSz[10];
@@ -1080,7 +1080,22 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	childMap[name] = pICH;
 	RECT rc;
 	::GetWindowRect(GetChildHWND(name), &rc);
-	if(pW) ::SetWindowPos((HWND)pW->GetID(), HWND_TOP, 0, 0, rc.right, rc.bottom, 0);
+	if (pW) {
+		::SetWindowPos((HWND)pW->GetID(), HWND_TOP, 0, 0, rc.right, rc.bottom, 0);
+		if (!StandartWindowDecoration) {
+			Sci_ListColorsInfo ci;
+			ci.inizialized = true;
+			ci.border = GetColorRef("BORDERCOLOR");
+			ci.borderbak = GetColorRef("CAPTBGCOLOR");
+			ci.scroll = GetColorRef("SCR_FORECOLOR");
+			ci.scrollbak = GetColorRef("SCR_BACKCOLOR");
+			ci.scrollhl = GetColorRef("SCR_HIGHCOLOR");
+			ci.scrollpress = GetColorRef("SCR_PRESSCOLOR");
+			ci.scrollsize = 15;
+
+			pW->Call(SCI_LISTCUSTOMCOLORS, (WPARAM)&ci);
+		}
+	}
 }
 
 
@@ -1311,12 +1326,12 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	DeleteObject(b); 
 	
 	HICON hicon;
-	if (captWidth > 20) {
+	if (captWidth > 30) {
 		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
-		::DrawIconEx(hdc, 3, 3, hicon, 24, 24, 0, NULL, DI_NORMAL);
+		::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
 	} else {
 		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
-		::DrawIconEx(hdc, 2, 2, hicon, 16, 16, 0, NULL, DI_NORMAL);
+		::DrawIconEx(hdc, 6, 4, hicon, 16, 16, 0, NULL, DI_NORMAL);
 
 	}
 	
@@ -1328,7 +1343,7 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
 	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
 	
-	rdraw = {40, 0, rect.right - rect.left - captWidth * 3 - 30, captWidth};
+	rdraw = {40, 2, rect.right - rect.left - captWidth * 3 - 30, captWidth};
 	
 	::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
 
@@ -1338,15 +1353,15 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 
 	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl);
 	HBITMAP hb = (HBITMAP)iupImageGetImage(bHl ? "CLOSE_H_µ": "CLOSE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2 + 1);
 
 	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl);
 	hb = (HBITMAP)iupImageGetImage(wp.showCmd == SW_SHOWNORMAL ? (bHl ? "MAXIMISE_H_µ" : "MAXIMISE_µ") : (bHl ? "NORMAL_H_µ" : "NORMAL_µ"), NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2 + 1);
 
 	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl);
 	hb = (HBITMAP)iupImageGetImage(bHl ? "MINIMISE_H_µ" : "MINIMISE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2 + 1);
 
 
 	if (bActive && wp.showCmd == SW_SHOWNORMAL) {

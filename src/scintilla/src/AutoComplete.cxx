@@ -61,7 +61,7 @@ void AutoComplete::Start(Window &parent, int ctrlID,
 	if (active) {
 		Cancel();
 	}
-	lb->Create(parent, ctrlID, location, lineHeight, unicodeMode, technology);
+	lb->Create(parent, ctrlID, location, lineHeight, unicodeMode, technology, &listcolors);
 	lb->Clear();
 	active = true;
 	startLen = startLen_;
