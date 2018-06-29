@@ -399,7 +399,7 @@ private:
 
 class SciTEBase : public ExtensionAPI, public Searcher {
 protected:
-	GUI::gui_string windowName;
+	GUI::gui_string windowName = L"HildiM";
 	FilePath filePath;
 	FilePath dirNameAtExecute;
 	FilePath dirNameForExecute;
