@@ -264,16 +264,6 @@
 #define IDD_FIND_ADV		403
 #define IDD_REPLACE_ADV		404
 
-// Resource IDs
-//! #define IDR_CLOSEFILE 100
-#define IDR_BUTTONS			100	//!-change-[user.toolbar]
-#define IDC_DRAGDROP        401
-#define IDBM_WORD 101
-#define IDBM_CASE 102
-#define IDBM_REGEX 103
-#define IDBM_BACKSLASH 104
-#define IDBM_AROUND 105
-#define IDBM_UP 106
 #endif
 #define UPDATE_BLOCK 0
 #define UPDATE_FORCE 2

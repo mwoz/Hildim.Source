@@ -42,34 +42,6 @@ SCITESES                ICON                    "SciTE-ses.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Bitmap
-//
-
-IDR_BUTTONS             BITMAP                  "buttons.bmp"
-
-IDBM_WORD               BITMAP                  "word.bmp"
-
-IDBM_CASE               BITMAP                  "case.bmp"
-
-IDBM_REGEX              BITMAP                  "regex.bmp"
-
-IDBM_BACKSLASH          BITMAP                  "backslash.bmp"
-
-IDBM_AROUND             BITMAP                  "around.bmp"
-
-IDBM_UP                 BITMAP                  "up.bmp"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Cursor
-//
-
-IDC_DRAGDROP            CURSOR                  "DragDrop.cur"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Version
 //
 
