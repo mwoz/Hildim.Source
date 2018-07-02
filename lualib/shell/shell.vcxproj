@@ -109,6 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ibox\resource.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="utils\luaargs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

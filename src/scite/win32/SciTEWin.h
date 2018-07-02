@@ -171,9 +171,6 @@ protected:
 
 	virtual void CheckMenus();
 
-	void LocaliseDialog(HWND wDialog);
-
-	int DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc);
 	GUI::gui_string DialogFilterFromProperty(const GUI::gui_char *filterProperty);
 	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter);
 	FilePath ChooseSaveName(FilePath directory, const char *title, const GUI::gui_char *filter=0, const char *ext=0, int *nFilter = NULL);
@@ -194,7 +191,7 @@ protected:
 
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style);
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
-	virtual void AboutDialog();
+
 	void DropFiles(HDROP hdrop);
 	void MinimizeToTray();
 	void RestoreFromTray();
@@ -223,10 +220,6 @@ protected:
 
 	virtual void UIClosed();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
-
-	BOOL AboutMessage(HWND hDlg, UINT message, WPARAM wParam);
-	static BOOL CALLBACK AboutDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-	void AboutDialogWithBuild(int staticBuild);
 
 
 	void EnsureVisible();

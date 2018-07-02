@@ -93,6 +93,7 @@
     <ClInclude Include="lptree.h" />
     <ClInclude Include="lptypes.h" />
     <ClInclude Include="lpvm.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lpcap.c" />
@@ -100,6 +101,9 @@
     <ClCompile Include="lpprint.c" />
     <ClCompile Include="lptree.c" />
     <ClCompile Include="lpvm.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="lpeg.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

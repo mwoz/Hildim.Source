@@ -61,7 +61,6 @@
 #define CS_VREDRAW                      0x0001
 #define CF_TEXT                         1
 #define SCF_ISSECURE                    0x00000001
-#define IDOK                            1
 #define BN_PAINT                        1
 #define BST_CHECKED                     0x0001
 #define TBSTYLE_SEP                     0x0001
@@ -942,7 +941,6 @@
 #define VK_OEM_4                        0xDB
 #define VK_OEM_5                        0xDC
 #define VK_OEM_6                        0xDD
-#define IDABOUTSCINTILLA                221
 #define VK_OEM_7                        0xDE
 #define VK_OEM_8                        0xDF
 #define VK_OEM_AX                       0xE1

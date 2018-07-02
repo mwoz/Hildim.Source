@@ -647,7 +647,7 @@ protected:
 	sptr_t CallFocused(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	void CallChildren(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	SString GetTranslationToAbout(const char * const propname, bool retainIfNotFound = true);
+
 	int LengthDocument();
 	int GetCaretInLine();
 	void GetLine(char *text, int sizeText, int line = -1);
@@ -800,7 +800,6 @@ protected:
 	virtual void AddCommand(const SString &cmd, const SString &dir,
 	        JobSubsystem jobType, const SString &input = "",
 	        int flags = 0);
-	virtual void AboutDialog() = 0;
 
 	virtual void QuitProgram() = 0;
 	void CloseTab(int tab);
@@ -857,7 +856,7 @@ protected:
 
 	void AssignKey(int key, int mods, int cmd);
 	void ViewWhitespace(bool view);
-	void SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle);
+
 	//void ImportMenu(int pos);
 	//void SetLanguageMenu();
 	void SetPropertiesInitial();

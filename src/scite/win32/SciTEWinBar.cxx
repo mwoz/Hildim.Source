@@ -118,11 +118,6 @@ void SciTEWin::CheckMenus() {
 
 }
 
-
-void SciTEWin::LocaliseDialog(HWND wDialog) {
-
-}
-
 // Mingw headers do not have this:
 #ifndef TBSTYLE_FLAT
 #define TBSTYLE_FLAT 0x0800

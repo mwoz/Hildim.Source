@@ -1143,6 +1143,93 @@ static int sf_SetRestart(lua_State* L) {
 	return 0;
 }
 
+static void sf_FileVersionInfo_value(lua_State* L, BYTE* pbVersionInfo, const char* field) {
+	struct LANGANDCODEPAGE {
+		WORD wLanguage;
+		WORD wCodePage;
+	} *lpTranslate;
+	GUI::gui_string block = L"\\StringFileInfo\\%04x%04x\\";
+	block += GUI::StringFromUTF8(field);
+	UINT len;
+	if (VerQueryValue(pbVersionInfo,
+		TEXT("\\VarFileInfo\\Translation"),
+		(LPVOID*)&lpTranslate,
+		&len)) {
+		TCHAR SubBlock[128];
+		swprintf(SubBlock, block.c_str(),
+			lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
+		LPTSTR ret;
+		if (VerQueryValue(pbVersionInfo, SubBlock, (LPVOID*)&ret, &len) && len>0) {
+			GUI::gui_string s = ret;
+			lua_pushstring(L, GUI::UTF8FromString(s).c_str());
+			lua_setfield(L, -2, field);
+		}
+	}
+}
+
+static int sf_FileVersionInfo(lua_State* L) {
+	DWORD               dwSize = 0;
+	BYTE                *pbVersionInfo = NULL;
+	VS_FIXEDFILEINFO    *pFileInfo = NULL;
+	UINT                puLenFileInfo = 0;
+	GUI::gui_string path = GUI::StringFromUTF8(luaL_checkstring(L, 1));
+
+	// Get the version information for the file requested
+	dwSize = GetFileVersionInfoSizeEx(FILE_VER_GET_NEUTRAL | FILE_VER_GET_LOCALISED, path.c_str(), NULL);
+	if (dwSize == 0) {
+		printf("Error in GetFileVersionInfoSize: %d\n", GetLastError());
+		return 0;
+	}
+
+	pbVersionInfo = new BYTE[dwSize];
+
+	if (!GetFileVersionInfoEx(FILE_VER_GET_NEUTRAL | FILE_VER_GET_LOCALISED, path.c_str(), 0, dwSize, pbVersionInfo)) {
+		printf("Error in GetFileVersionInfo: %d\n", GetLastError());
+		delete[] pbVersionInfo;
+		return 0;
+	}
+
+	if (!VerQueryValue(pbVersionInfo, TEXT("\\"), (LPVOID*)&pFileInfo, &puLenFileInfo)) {
+		printf("Error in VerQueryValue: %d\n", GetLastError());
+		delete[] pbVersionInfo;
+		return 0;
+	}
+	lua_createtable(L, 1, 0);
+	 //pFileInfo->dwFileVersionMS is usually zero. However, you should check
+	// this if your version numbers seem to be wrong
+
+
+	lua_pushnumber(L, (pFileInfo->dwFileVersionMS >> 16) & 0xff);
+	lua_setfield(L, -2, "FVMS1");
+	lua_pushnumber(L, (pFileInfo->dwFileVersionMS >> 0) & 0xff);
+	lua_setfield(L, -2, "FVMS2");
+	lua_pushnumber(L, (pFileInfo->dwFileVersionLS >> 16) & 0xff);
+	lua_setfield(L, -2, "FVLS1");
+	lua_pushnumber(L, (pFileInfo->dwFileVersionLS >> 0) & 0xff);
+	lua_setfield(L, -2, "FVLS2");
+	lua_pushnumber(L, (pFileInfo->dwProductVersionMS >> 16) & 0xff);
+	lua_setfield(L, -2, "PVMS1");
+	lua_pushnumber(L, (pFileInfo->dwProductVersionMS >> 0) & 0xff);
+	lua_setfield(L, -2, "PVMS2");
+	lua_pushnumber(L, (pFileInfo->dwProductVersionLS >> 16) & 0xff);
+	lua_setfield(L, -2, "PVLS1");
+	lua_pushnumber(L, (pFileInfo->dwProductVersionLS >> 0) & 0xff);
+	lua_setfield(L, -2, "PVLS2");
+
+	sf_FileVersionInfo_value(L, pbVersionInfo, "ProductVersion");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "CompanyName");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "FileDescription");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "FileVersion");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "InternalName");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "LegalCopyright");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "OriginalFilename");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "ProductName");
+	sf_FileVersionInfo_value(L, pbVersionInfo, "IUPVersion");
+	
+	delete[] pbVersionInfo;
+	return 1;
+}
+
 bool LuaExtension::OnPostCallback(int idx) {
 	lua_rawgeti(luaState, LUA_REGISTRYINDEX, idx);
 	call_function(luaState, 0);
@@ -2080,6 +2167,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_SetRestart);
 	lua_setfield(luaState, -2, "SetRestart");
+
+	lua_pushcfunction(luaState, sf_FileVersionInfo);
+	lua_setfield(luaState, -2, "FileVersionInfo");
 
 	// buffers
 	lua_newtable(luaState);

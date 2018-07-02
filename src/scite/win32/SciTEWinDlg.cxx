@@ -164,21 +164,6 @@ bool SciTEWin::ModelessHandler(MSG *pmsg) {
 	return false;
 }
 
-//  DoDialog is a bit like something in PC Magazine May 28, 1991, page 357
-int SciTEWin::DoDialog(HINSTANCE hInst, const TCHAR *resName, HWND hWnd, DLGPROC lpProc) {
-	int result = ::DialogBoxParam(hInst, resName, hWnd, lpProc, reinterpret_cast<LPARAM>(this));
-
-	if (result == -1) {
-		GUI::gui_string errorNum = GUI::StringFromInteger(::GetLastError());
-		extender->HildiAlarm("Failed to create dialog box: %1.",
-			MB_OK, errorNum.c_str());
-
-	}
-
-	return result;
-}
-
-
 GUI::gui_string SciTEWin::DialogFilterFromProperty(const GUI::gui_char *filterProperty) {
 	GUI::gui_string filter = filterProperty;
 	filter.append(L"||");
@@ -881,55 +866,3 @@ int SciTEWin::WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p
 }
 
 
-LRESULT CALLBACK CreditsWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	if (uMsg == WM_GETDLGCODE)
-		return DLGC_STATIC | DLGC_WANTARROWS | DLGC_WANTCHARS;
-
-	WNDPROC lpPrevWndProc = reinterpret_cast<WNDPROC>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
-	if (lpPrevWndProc)
-		return ::CallWindowProc(lpPrevWndProc, hwnd, uMsg, wParam, lParam);
-
-	return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-BOOL SciTEWin::AboutMessage(HWND hDlg, UINT message, WPARAM wParam) {
-	switch (message) {
-
-	case WM_INITDIALOG: {
-		LocaliseDialog(hDlg);
-		GUI::ScintillaWindow ss;
-		HWND hwndCredits = ::GetDlgItem(hDlg, IDABOUTSCINTILLA);
-		LONG_PTR subclassedProc = ::SetWindowLongPtr(hwndCredits, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(CreditsWndProc));
-		::SetWindowLongPtr(hwndCredits, GWLP_USERDATA, subclassedProc);
-		ss.SetID(hwndCredits);
-		SetAboutMessage(ss, staticBuild ? "Sc1  " : "HildiM");
-		}
-		return TRUE;
-
-	case WM_CLOSE:
-		::SendMessage(hDlg, WM_COMMAND, IDCANCEL, 0);
-		break;
-
-	case WM_COMMAND:
-		if (ControlIDOfCommand(wParam) == IDOK) {
-			::EndDialog(hDlg, IDOK);
-			return TRUE;
-		} else if (ControlIDOfCommand(wParam) == IDCANCEL) {
-			::EndDialog(hDlg, IDCANCEL);
-			return FALSE;
-		}
-	}
-
-	return FALSE;
-}
-
-BOOL CALLBACK SciTEWin::AboutDlg(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
-	return Caller(hDlg, message, lParam)->AboutMessage(hDlg, message, wParam);
-}
-
-void SciTEWin::AboutDialogWithBuild(int staticBuild_) {
-	staticBuild = staticBuild_;
-	DoDialog(hInstance, TEXT("About"), MainHWND(),
-	         reinterpret_cast<DLGPROC>(AboutDlg));
-	WindowSetFocus(wEditor);
-}

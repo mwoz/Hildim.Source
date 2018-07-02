@@ -797,95 +797,6 @@ void SciTEBase::CallChildren(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 	wFindRes.Call(msg, wParam, lParam);
 }
 
-SString SciTEBase::GetTranslationToAbout(const char * const propname, bool retainIfNotFound) {
-	return SString(GUI::UTF8FromString(extender->LocalizeText(propname)).c_str());
-}
-
-void SciTEBase::SetAboutMessage(GUI::ScintillaWindow &wsci, const char *appTitle) {
-	if (wsci.Created()) {
-		wsci.Send(SCI_SETSTYLEBITS, 7, 0);
-		wsci.Send(SCI_STYLERESETDEFAULT, 0, 0);
-		int fontSize = 15;
-#if defined(GTK)
-		wsci.Send(SCI_STYLESETFONT, STYLE_DEFAULT,
-		        reinterpret_cast<uptr_t>("!Serif"));
-		fontSize = 14;
-#endif
-
-		wsci.Send(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
-
-		wsci.Send(SCI_STYLESETSIZE, STYLE_DEFAULT, fontSize);
-		wsci.Send(SCI_STYLESETBACK, STYLE_DEFAULT, ColourRGB(0xff, 0xff, 0xff));
-		wsci.Send(SCI_STYLECLEARALL, 0, 0);
-
-		SetAboutStyle(wsci, 0, ColourRGB(0xff, 0xff, 0xff));
-		wsci.Send(SCI_STYLESETSIZE, 0, fontSize);
-		wsci.Send(SCI_STYLESETBACK, 0, ColourRGB(0, 0, 0x80));
-		AddStyledText(wsci, appTitle, 0);
-		AddStyledText(wsci, "\n", 0);
-		SetAboutStyle(wsci, 1, ColourRGB(0, 0, 0));
-		int trsSty = 5; // define the stylenumber to assign font for translators.
-		SString translator = GetTranslationToAbout("TranslationCredit", false);
-		SetAboutStyle(wsci, trsSty, ColourRGB(0, 0, 0));
-#if !defined(GTK)
-		// On Windows Me (maybe 9x also), we must assign another font to display translation.
-		if (translator.length()) {
-			SString fontBase = props.GetExpanded("font.translators");
-			StyleDefinition sd(fontBase.c_str());
-			if (sd.specified & StyleDefinition::sdFont) {
-				wsci.Send(SCI_STYLESETFONT, trsSty,
-				        reinterpret_cast<uptr_t>(sd.font.c_str()));
-			}
-			if (sd.specified & StyleDefinition::sdSize) {
-				wsci.Send(SCI_STYLESETSIZE, trsSty, sd.size);
-			}
-		}
-#endif
-		AddStyledText(wsci, "By Michal Voznesenskiy.\n", 2);
-        AddStyledText(wsci, GetTranslationToAbout("Version").c_str(), trsSty);
-		AddStyledText(wsci, " 3.3.1\n", 1); //!-change-[SciTE-Ru]
-		AddStyledText(wsci, "    " __DATE__ " " __TIME__ "\n", 1);
-		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f)); //!-add-[SciTE-Ru]
-		AddStyledText(wsci, "http://scite.net.ru\n", 4); //!-add-[SciTE-Ru]
-		SetAboutStyle(wsci, 2, ColourRGB(0, 0, 0));
-		wsci.Send(SCI_STYLESETITALIC, 2, 1);
-		AddStyledText(wsci, GetTranslationToAbout("Based on version").c_str(), trsSty); //!-add-[SciTE-Ru]
-		AddStyledText(wsci, " 2.24 ", 1); //!-add-[SciTE-Ru]
-		AddStyledText(wsci, GetTranslationToAbout("by").c_str(), trsSty);
-		AddStyledText(wsci, " Neil Hodgson.\n", 2);
-		SetAboutStyle(wsci, 3, ColourRGB(0, 0, 0));
-		AddStyledText(wsci, "December 1998-December 2010.\n", 3);
-		SetAboutStyle(wsci, 4, ColourRGB(0, 0x7f, 0x7f));
-		AddStyledText(wsci, "Scintilla 4.1.0.1 code editing componen, Neil Hodgson\n", 3);
-		AddStyledText(wsci, "http://www.scintilla.org\n", 4);
-		AddStyledText(wsci, "UIP libraries 3.25 by TeCGraf, PUC-Rio\n", 3);
-		AddStyledText(wsci, "    http://iup.sourceforge.net\n", 4);
-		AddStyledText(wsci, "Lua 5.3 scripting language by TeCGraf, PUC-Rio\n", 3);
-		AddStyledText(wsci, "    http://www.lua.org\n", 4);
-		if (translator.length()) {
-			AddStyledText(wsci, translator.c_str(), trsSty);
-			AddStyledText(wsci, "\n", 5);
-		}
-		AddStyledText(wsci, GetTranslationToAbout("Contributors:").c_str(), trsSty);
-		srand(static_cast<unsigned>(time(0)));
-		for (unsigned int co = 0;co < ELEMENTS(contributors);co++) {
-			int colourIndex = 50 + (co % 78);
-			AddStyledText(wsci, "\n    ", colourIndex);
-			AddStyledText(wsci, contributors[co], colourIndex);
-		}
-		int r = rand() % 256;
-		int g = rand() % 256;
-		int b = rand() % 256;
-		for (unsigned int sty = 0;sty < 78; sty++) {
-			HackColour(r);
-			HackColour(g);
-			HackColour(b);
-			SetAboutStyle(wsci, sty + 50, ColourRGB(r, g, b));
-		}
-		wsci.Send(SCI_SETREADONLY, 1, 0);
-	}
-}
-
 void SciTEBase::ViewWhitespace(bool view) {
 	if (view && indentationWSVisible)
 		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);	  
@@ -3212,9 +3123,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 	case IDM_PRINTSETUP:
 		PrintSetup();
-		break;
-	case IDM_ABOUT:
-		AboutDialog();
 		break;
 	case IDM_QUIT:
 		QuitProgram();

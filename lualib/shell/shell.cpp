@@ -356,11 +356,35 @@ static int msgbox( lua_State* L )
 	return 1;
 }
 
-static int getfileattr(lua_State *L)
-{
+static int getfileattr(lua_State *L) {
 	const char* FN = luaL_checkstring(L, -1);
 	lua_pushnumber(L, CPath::GetFileAttributes(FN));
 	return 1;
+}
+static int getfiletime(lua_State *L) {
+	const char* FN = luaL_checkstring(L, -1);
+	lua_pushnumber(L, CPath::GetFileAttributes(FN));
+	HANDLE hf = ::CreateFileA(FN, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hf != INVALID_HANDLE_VALUE) {
+		FILETIME ft;
+		::GetFileTime(hf, NULL, NULL, &ft);
+		::CloseHandle(hf);
+		SYSTEMTIME st;
+		::FileTimeToSystemTime(&ft, &st);
+		lua_createtable(L, 1, 0);
+		lua_pushnumber(L, st.wYear);
+		lua_setfield(L, -2, "Year");
+		lua_pushnumber(L, st.wMonth);
+		lua_setfield(L, -2, "Month");
+		lua_pushnumber(L, st.wDay);
+		lua_setfield(L, -2, "Day");
+		lua_pushnumber(L, st.wHour);
+		lua_setfield(L, -2, "Hour");
+		lua_pushnumber(L, st.wMinute);
+		lua_setfield(L, -2, "Minute");
+		return 1;
+	}
+	return 0;
 }
 static int delete_file(lua_State *L)
 {
@@ -1329,7 +1353,8 @@ luaL_Reg shell[] =
 	{ "greateCuid", greateCuid },
 	{ "exec", exec },
 	{ "msgbox", msgbox },
-	{ "getfileattr", getfileattr },
+    { "getfiletime", getfiletime },
+    { "getfileattr", getfileattr },
 	{ "setfileattr", setfileattr },				   
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },

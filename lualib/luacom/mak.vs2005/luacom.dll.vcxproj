@@ -144,6 +144,7 @@
     <ClInclude Include="..\src\library\tLuaVector.h" />
     <ClInclude Include="..\src\library\tStringBuffer.h" />
     <ClInclude Include="..\src\library\tUtil.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\dll\luacom_dll.def" />
@@ -153,6 +154,9 @@
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
     </lua2c>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="luacom.dll.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

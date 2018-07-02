@@ -3211,7 +3211,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 			si.nPage = HIWORD(lParam) / ItemHeight();
 			::SetScrollInfo(scb, SB_CTL, &si, false);
 
-			int sWidth = si.nMax > si.nPage ? 15 : 0;
+			int sWidth = si.nMax > (int)si.nPage ? 15 : 0;
 			::SetWindowPos(lb, 0, 0, 0, LOWORD(lParam) - sWidth, HIWORD(lParam), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
 			::SetWindowPos(scb, 0, LOWORD(lParam) - sWidth,0, sWidth, HIWORD(lParam), SWP_NOZORDER|SWP_NOACTIVATE );
 			// Ensure the selection remains visible

@@ -140,6 +140,9 @@
     <ClInclude Include="..\src\library\tUtil.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\dll\luacom_dll.def">
@@ -150,5 +153,10 @@
     <lua2c Include="..\src\library\luacom5.lua">
       <Filter>Lua</Filter>
     </lua2c>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="luacom.dll.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

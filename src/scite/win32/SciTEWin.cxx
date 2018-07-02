@@ -1374,15 +1374,6 @@ void SciTEWin::SetRestart(const char* cmdLine) {
 	restartCmdLine = cmdLine;
 }
 
-
-void SciTEWin::AboutDialog() {
-#ifdef STATIC_BUILD
-	AboutDialogWithBuild(1);
-#else
-	AboutDialogWithBuild(0);
-#endif
-}
-
 /**
  * Open files dropped on the SciTE window.
  */
