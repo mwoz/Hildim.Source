@@ -3327,20 +3327,28 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 
 		HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
 		::SetWindowRgn(hWnd, hrgn, false);
+
+		HPEN p = CreatePen(PS_SOLID, 1, pListcolors->border);
+		HPEN penOld = static_cast<HPEN>(SelectObject(hdc, p));
+		Rectangle(hdc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
+		SelectObject(hdc, penOld);
+		DeleteObject(p);
+
 		HBRUSH b = CreateSolidBrush(pListcolors->borderbak);
 		int borderX = ::GetSystemMetrics(SM_CXSIZEFRAME);
 		int borderY = ::GetSystemMetrics(SM_CYSIZEFRAME);
 
-		rdraw = { 0, 0, rect.right - rect.left, borderY };
+		rdraw = { 1, 1, rect.right - rect.left - 2, borderY };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { 0, 0, borderX, rect.bottom - rect.top };
+		rdraw = { 1, 1, borderX , rect.bottom - rect.top - 2 };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { rect.right - rect.left - borderX, 0, rect.right - rect.left, rect.bottom - rect.top };
+		rdraw = { rect.right - rect.left - borderX , 1, rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { 0, rect.bottom - rect.top - borderY, rect.right - rect.left, rect.bottom - rect.top };
+		rdraw = { 1, rect.bottom - rect.top - borderY , rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
 		FillRect(hdc, &rdraw, b);
 
 		DeleteObject(b);
+
 		ReleaseDC(hWnd, hdc);
 		return 0;
 	}

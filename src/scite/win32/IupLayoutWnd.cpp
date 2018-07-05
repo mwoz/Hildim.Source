@@ -331,10 +331,11 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 }
 
 void IupChildWnd::resetPixelMap() {
-	if (!vPx || !colodizedSB)
+	if (!vPx || !colodizedSB || vHeight == 0)
 		return;
-	
+
 	pixelMap.assign(vHeight + 1, { 0, 0 });
+
 	int docCount = pS->Call(SCI_GETLINECOUNT);
 	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, docCount) + pS->Call(SCI_LINESONSCREEN);
 	if (!count)
@@ -542,6 +543,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				RECT r;
 				::GetWindowRect((HWND)IupGetAttribute(pContainer, "HWND"), &r);
 				int newVHeight = r.bottom - r.top - 2 * vPx - hPx;
+				if (newVHeight < 0)
+					newVHeight = 0;
 				if (vPx && (vHeight != newVHeight)) {
 					vHeight = newVHeight;
 					resetmap = true;
@@ -570,6 +573,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				RECT r;
 				::GetWindowRect((HWND)IupGetAttribute(pContainer, "HWND"), &r);
 				int newVHeight = r.bottom - r.top - 2 * vPx - hPx;
+				if (newVHeight < 0)
+					newVHeight = 0;
 				if (vPx && (vHeight != newVHeight)) {
 					vHeight = newVHeight;
 					resetmap = true;
@@ -601,6 +606,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_SIZE:
 	{
 		int newVHeight = HIWORD(lParam) - 2 * vPx - hPx;
+		if (newVHeight < 0)
+			newVHeight = 0;
 		if (vPx && (vHeight != newVHeight)) {
 			vHeight = newVHeight;
 			resetmap = true;

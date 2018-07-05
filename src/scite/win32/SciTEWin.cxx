@@ -1709,29 +1709,30 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			::DefWindowProcW(MainHWND(), WM_SETCURSOR, (WPARAM)MainHWND(), MAKELPARAM(HTCAPTION, WM_MOUSEMOVE) );
 			::DefWindowProcW(MainHWND(), WM_NCLBUTTONDOWN, HTCAPTION, 0);
 			::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
-			::UpdateWindow(MainHWND());
+			//::UpdateWindow(MainHWND());
+			::RedrawWindow(MainHWND(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 			sysminimized = false;
 		}
 
 			break;
 		case WM_WINDOWPOSCHANGED:
 		{
+			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			if (!layout.StandartWindowDecoration) {
 				WINDOWPLACEMENT wp;
-				::GetWindowPlacement(MainHWND(), &wp);
+				::GetWindowPlacement(MainHWND(), &wp);//(::GetAsyncKeyState(VK_LBUTTON) || sysminimized) &&
 
-				if ((::GetAsyncKeyState(VK_LBUTTON) || sysminimized) && wp.showCmd != SW_SHOWMINIMIZED &&
+				if ( wp.showCmd != SW_SHOWMINIMIZED &&
 					prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
 					::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
 				prevShowCmd = wp.showCmd;
 			}
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			return r;
 		}
 		break;
 		case WM_NCLBUTTONUP:
 			if (!layout.StandartWindowDecoration && (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
 				return layout.OnNcLMouseUp(MainHWND(), wParam);
-
 
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			break;
