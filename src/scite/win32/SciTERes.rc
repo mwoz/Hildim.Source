@@ -64,13 +64,13 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "mwoz"
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
-            VALUE "FileVersion", "3.3.2"
+            VALUE "FileVersion", "3.3.3"
             VALUE "InternalName", "HildiM"
             VALUE "IUPVersion", "3.25"
             VALUE "LegalCopyright", "Copyright 2016-2018 Michal Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "3.3.2"
+            VALUE "ProductVersion", "3.3.3"
         END
     END
     BLOCK "VarFileInfo"

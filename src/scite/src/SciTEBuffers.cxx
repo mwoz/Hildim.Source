@@ -274,6 +274,7 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	}
 	if (indexTo >= current && current > indexFrom) current--;
 	if (indexTo <= current && current < indexFrom) current++;
+	if (indexFrom == current) current = indexTo;
 }
 
 void SciTEBase::ChangeTabWnd() {
@@ -388,19 +389,19 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 	return buffers.buffers[index].doc;
 }
 
-void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
-	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate &&
-		(((!props.GetInt("tabctrl.alwayssavepos") && !(::GetAsyncKeyState(VK_SHIFT) & 0x8000))) || (props.GetInt("tabctrl.alwayssavepos") && (::GetAsyncKeyState(VK_SHIFT) & 0x8000)))  ){
+int SciTEBase::ShiftToVisible(int index) {
+	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate && !props.GetInt("tabctrl.moved") &&
+		(((!props.GetInt("tabctrl.alwayssavepos") && !(::GetAsyncKeyState(VK_SHIFT) & 0x8000))) || (props.GetInt("tabctrl.alwayssavepos") && (::GetAsyncKeyState(VK_SHIFT) & 0x8000)))) {
 		int side = buffers.buffers[index].editorSide;
 		int realIndex = 0;
-		int firstSide;  
+		int firstSide;
 		for (int pos = 0; pos < buffers.length; pos++) {
 			if (side == buffers.buffers[pos].editorSide) {
 				if (!realIndex)
 					firstSide = pos;
 				if (pos == index) {
 					if ((int)IupGetAttribute(IupTab(side), "LASTVISIBLE") <= realIndex && index != firstSide) {
-						buffers.ShiftTo(index, firstSide);
+						ShiftTab(index, firstSide);
 						index = firstSide;
 					}
 					break;
@@ -409,6 +410,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 			}
 		}
 	}
+	return index;
+}
+void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
 	
 	int currentbuf = buffers.Current();
 	if (	index < 0 ||
@@ -1060,7 +1064,7 @@ void SciTEBase::BuffersMenu() {
 
 	CheckMenus();
 	CheckRightEditorVisible();
-
+	ShiftToVisible(buffers.Current());
 }
 
 

@@ -469,6 +469,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 			extender->InitBuffer(buffers.Current());
 	} else {
 		if (index < 0 || !(of & ofForceLoad)) { // No new buffer, already opened
+			index = buffers.length;
 			New();
 		}
 	}
@@ -506,6 +507,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	if (lineNumbers && lineNumbersExpand)
 		SetLineNumberWidth();
 	bBlockRedraw = false;
+
 	BuffersMenu();
 	if (extender)
 		extender->OnOpen(filePath.AsUTF8().c_str());
@@ -515,7 +517,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 
 void SciTEBase::Revert() {
 	RecentFile rf = GetFilePosition();
-	//OpenFile(filePath.GetFileLength(), false);
+	
 	Open(filePath,ofForceLoad);
 	DisplayAround(rf);
 }

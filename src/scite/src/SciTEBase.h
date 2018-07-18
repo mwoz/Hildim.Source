@@ -599,6 +599,7 @@ protected:
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
+	int ShiftToVisible(int index);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
 	void SetBufferEncoding(int i, int e);

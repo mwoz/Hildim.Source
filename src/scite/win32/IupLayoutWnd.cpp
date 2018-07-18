@@ -550,7 +550,7 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					resetmap = true;
 				}
 				//SizeEditor();
-				bNeedSize = false;
+				bNeedSize = true;
 			}
 		} else if(wParam == SB_HORZ) {
 			if (lpsi->fMask & SIF_RANGE) {
@@ -793,6 +793,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 							"FORECOLOR", scrFORECOLOR,
 							"BACKCOLOR", scrBACKCOLOR,
 							"SCROLLBARSIZE", scrollsize,
+							"BGCOLOR", scrBACKCOLOR,
 							NULL),
 						IupSetAtt(NULL, IupCreatep("expander",
 							IupSetAtt(NULL, IupCreatep("sc_detachbox",
@@ -804,6 +805,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 									"FORECOLOR", scrFORECOLOR,
 									"BACKCOLOR", scrBACKCOLOR,
 									"SCROLLBARSIZE", scrollsize,
+									"BGCOLOR", scrBACKCOLOR,
 									NULL), NULL), "NAME", "coeditor_vbox", NULL), NULL),
 								"NAME", "SourceExDetach",
 								"ORIENTATION", "HORIZONTAL",
@@ -892,6 +894,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 					"FORECOLOR", scrFORECOLOR,
 					"BACKCOLOR", scrBACKCOLOR,
 					"SCROLLBARSIZE", scrollsize,
+					"BGCOLOR", scrBACKCOLOR,
 					NULL),
 					NULL), "NAME", "concolebar_vbox", NULL), NULL),
 				"NAME", "ConsoleDetach",
@@ -916,6 +919,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 					"FORECOLOR", scrFORECOLOR,
 					"BACKCOLOR", scrBACKCOLOR,
 					"SCROLLBARSIZE", scrollsize,
+					"BGCOLOR", scrBACKCOLOR,
 					NULL),
 					NULL), "NAME", "findresbar_vbox", NULL), NULL),
 				"NAME", "FindResDetach",
