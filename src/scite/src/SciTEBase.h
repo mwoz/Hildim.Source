@@ -966,6 +966,8 @@ public:
 	OutputMode curOutMode = outNull;
 	virtual Ihandle * IupTab(int id) = 0;
 	bool bFinalise = false;
+
+	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);

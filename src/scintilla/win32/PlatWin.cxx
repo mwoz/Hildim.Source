@@ -3720,6 +3720,11 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 	{
 		if (!lbx->pListcolors->inizialized)
 			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+		if (iMessage == WM_MOUSEMOVE && !::GetAsyncKeyState(VK_LBUTTON)) {
+			int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+			lbx->sc_Paint(false, 0);
+			return res;
+		}
 
 		::DefWindowProcW(hWnd, WM_SETREDRAW, 0, 0);
 		lbx->bBlockRedraw = true;

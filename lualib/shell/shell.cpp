@@ -4,6 +4,10 @@
 #include <shlwapi.h>
 #include <time.h>
 
+#include <string>
+#include <iostream>
+#include <filesystem>
+
 extern "C" {
 	#include "lua.h"
 	#include "lauxlib.h"
@@ -358,12 +362,12 @@ static int msgbox( lua_State* L )
 
 static int getfileattr(lua_State *L) {
 	const char* FN = luaL_checkstring(L, -1);
-	lua_pushnumber(L, CPath::GetFileAttributes(FN));
+	lua_pushinteger(L, CPath::GetFileAttributes(FN));
 	return 1;
 }
 static int getfiletime(lua_State *L) {
 	const char* FN = luaL_checkstring(L, -1);
-	lua_pushnumber(L, CPath::GetFileAttributes(FN));
+	lua_pushinteger(L, CPath::GetFileAttributes(FN));
 	HANDLE hf = ::CreateFileA(FN, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hf != INVALID_HANDLE_VALUE) {
 		FILETIME ft;
@@ -372,15 +376,15 @@ static int getfiletime(lua_State *L) {
 		SYSTEMTIME st;
 		::FileTimeToSystemTime(&ft, &st);
 		lua_createtable(L, 1, 0);
-		lua_pushnumber(L, st.wYear);
+		lua_pushinteger(L, st.wYear);
 		lua_setfield(L, -2, "Year");
-		lua_pushnumber(L, st.wMonth);
+		lua_pushinteger(L, st.wMonth);
 		lua_setfield(L, -2, "Month");
-		lua_pushnumber(L, st.wDay);
+		lua_pushinteger(L, st.wDay);
 		lua_setfield(L, -2, "Day");
-		lua_pushnumber(L, st.wHour);
+		lua_pushinteger(L, st.wHour);
 		lua_setfield(L, -2, "Hour");
-		lua_pushnumber(L, st.wMinute);
+		lua_pushinteger(L, st.wMinute);
 		lua_setfield(L, -2, "Minute");
 		return 1;
 	}
@@ -1060,6 +1064,53 @@ static int getclipboardtext( lua_State* L )
 	return 1;
 }
 
+static int findinsubfolders(lua_State* L) {
+	namespace fs = std::filesystem;
+	std::string path = luaL_checkstring(L, 1);
+	std::string fnp = luaL_checkstring(L, 2);
+	std::transform(fnp.begin(), fnp.end(), fnp.begin(), ::toupper);
+
+	int found = 0;
+	for (auto & p : std::filesystem::recursive_directory_iterator(path)) {
+		std::filesystem::path pth = p;
+		std::string fn_find = pth.filename().string();
+		std::transform(fn_find.begin(), fn_find.end(), fn_find.begin(), ::toupper);
+		if (fn_find == fnp) {
+			lua_pushstring(L, pth.u8string().c_str());
+			found++;
+			if (found > 1)
+				break;
+		}
+		//std::string fn = pth.filename().lexically_normal().string();
+	}
+	return found;
+}
+
+static int foldermap(lua_State* L) {
+	namespace fs = std::filesystem;
+	std::string path = luaL_checkstring(L, 1);
+	lua_createtable(L, 1, 0);
+
+
+	for (auto & p : std::filesystem::recursive_directory_iterator(path)) {
+		std::filesystem::path pth = p;
+		if (pth.has_extension()) {
+			std::string ext = pth.extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
+			if (ext == ".CFORM" || ext == ".WFORM" || ext == ".RFORM" || ext == ".XML") {
+				if (pth.string().find("\\Upgrades\\") == std::string::npos) {
+					std::string name = pth.filename().string();
+					std::transform(name.begin(), name.end(), name.begin(), ::toupper);
+					lua_pushstring(L, pth.string().c_str());
+					lua_setfield(L, -2, name.c_str());
+				}
+			}
+		}
+		//std::string fn = pth.filename().lexically_normal().string();
+	}
+	return 1;
+}
+
 static int findfiles( lua_State* L )
 {
 	const char* filename = luaL_checkstring( L, 1 );
@@ -1359,6 +1410,8 @@ luaL_Reg shell[] =
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
 	{ "findfiles", findfiles },
+	{ "findinsubfolders", findinsubfolders },
+	{ "foldermap", foldermap },
 	{ "inputbox", showinputbox },
 	{ "to_utf8", to_utf8 },
 	{ "from_utf8", from_utf8 },

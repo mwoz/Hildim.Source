@@ -59,6 +59,7 @@
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDOWS;_USRDLL;SHELL_EXPORTS;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderOutputFile>.\shell.pch</PrecompiledHeaderOutputFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -97,6 +98,7 @@
       <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <Optimization>Disabled</Optimization>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

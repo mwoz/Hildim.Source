@@ -62,7 +62,7 @@ public:
 	virtual void BlockUpdate(int cmd) = 0;
 	virtual void SetRestart(const char* cmdLine)=0;
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3)=0;
-
+	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare) = 0;
 };
 
 /**

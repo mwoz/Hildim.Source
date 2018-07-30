@@ -422,6 +422,46 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 	Redraw();
 }
 
+
+int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
+	FILE *fp = fileCompare.Open(fileRead);
+	int result = 2;
+	if (fp) {
+		result = 0;
+		char data[blockSize];
+		size_t lenFile = fread(data, 1, sizeof(data), fp);
+		UniMode codingCookie = CodingCookieValue(data, lenFile);
+
+		//!-start-[utf8.auto.check]
+		int check_utf8 = props.GetInt("utf8.auto.check");
+		if (codingCookie == uni8Bit && check_utf8 == 2) {
+			if (Has_UTF8_Char((unsigned char*)(data), lenFile)) {
+				codingCookie = uniCookie;
+			}
+		}
+		Utf8_16_Read convert(codingCookie == uni8Bit && check_utf8 == 1);
+		convert._encoding = filePath._encoding;
+		//!-end-[utf8.auto.check]
+
+		int lenCompare = 0;
+		
+		while (lenFile > 0) {
+			lenFile = convert.convert(data, lenFile);
+			char *dataBlock = convert.getNewBuf();
+			if (memcmp((void*)dataBlock, (void*)(txtCompare + lenCompare), lenFile)) {
+				result = 1;
+				break;
+			}
+
+			lenCompare += lenFile;
+			lenFile = fread(data, 1, sizeof(data), fp);
+		}
+		fclose(fp);
+	}
+	return result;
+}
+
+
 bool SciTEBase::PreOpenCheck(const GUI::gui_char *) {
 	return false;
 }
@@ -547,10 +587,10 @@ void SciTEBase::CheckReload() {
 						GUI::gui_string msg;
 						int decision;
 						if (CurrentBuffer()->isDirty) {
-							decision = extender->HildiAlarm("The file '%1' has been modified. Should it be reloaded?",
+							decision = extender->HildiAlarm("The file \n'%1'\n has been modified. Should it be reloaded?",
 								MB_YESNO, filePath.AsInternal());
 						} else {
-							decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be reloaded?",
+							decision = extender->HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be reloaded?",
 								MB_YESNO, filePath.AsInternal());
 						}
 						if (decision == IDYES) {
@@ -568,7 +608,7 @@ void SciTEBase::CheckReload() {
 				SetWindowName();
 				BuffersMenu();
 				if (0 == dialogsOnScreen) {
-						int decision = extender->HildiAlarm("File '%1' is missing or not available.\nDo you wish to keep the file open in the editor?",
+						int decision = extender->HildiAlarm("File \n'%1'\n is missing or not available.\nDo you wish to keep the file open in the editor?",
 							MB_YESNO, filePath.AsInternal());
 						if (decision == IDNO) {
 							Close();
@@ -783,7 +823,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 			time_t newModTime = filePath.ModifiedTime();
 			if ((newModTime != 0) && (CurrentBuffer()->fileModTime != 0) &&
 				(newModTime != CurrentBuffer()->fileModTime)) {
-				decision = extender->HildiAlarm("The file '%1' has been modified outside HildiM. Should it be saved?",
+				decision = extender->HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be saved?",
 					MB_YESNO | MB_ICONWARNING,  filePath.AsInternal());
 				if (decision == IDNO) {
 					return false;
@@ -798,7 +838,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 				ReloadProperties();
 			}
 		} else {
-			decision = extender->HildiAlarm("Could not save file '%1'. Save under a different name?",
+			decision = extender->HildiAlarm("Could not save file\n'%1'.\nSave under a different name?",
 				MB_YESNO | MB_ICONWARNING, filePath.AsInternal());
 			if (decision == IDYES) {
 				return SaveAsDialog();

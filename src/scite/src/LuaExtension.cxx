@@ -24,6 +24,7 @@
 #include "IFaceTable.h"
 #include "SciTEKeys.h"
 
+
 #include <regex>
 
 extern "C" {
@@ -317,7 +318,46 @@ static int cf_scite_save_encoding_file(lua_State *L) {
 	err += fPath.AsUTF8();
 errr:
 	lua_pushboolean(L, false);
-	lua_pushstring(L, "Error....");
+	lua_pushstring(L, err.c_str());
+	return 2;
+
+}
+
+static int cf_scite_compare_encoding_file(lua_State *L) {
+	const char *path = luaL_checkstring(L, 1);
+	const char *body = luaL_checkstring(L, 2);
+	int encoding = lua_tointeger(L, 3);
+
+
+	FilePath fPath = GUI::StringFromUTF8(path);
+	std::string err;
+	if (!fPath.Directory().IsDirectory()) {
+		err = "CompareEncodingFile: Not found directory ";
+		err += fPath.Directory().AsUTF8();
+		goto errr;
+	}
+
+	if (!fPath.Exists()) {
+		err = "CompareEncodingFile: File not found ";
+		err += fPath.Directory().AsUTF8();
+		goto errr;
+	}
+	int result = host->CompareFile(fPath, body);
+
+	if (!result) {
+		lua_pushboolean(L, true);
+		lua_pushstring(L, err.c_str());
+		return 2;
+	}
+	if (result == 2) {
+		err = "CompareEncodingFile: Can't open ";
+		err += fPath.AsUTF8();
+	} else {
+		err = "Different";
+	}
+errr:
+	lua_pushboolean(L, false);
+	lua_pushstring(L, err.c_str());
 	return 2;
 
 }
@@ -2149,6 +2189,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_scite_save_encoding_file);
 	lua_setfield(luaState, -2, "SaveEncodingFile");
+
+	lua_pushcfunction(luaState, cf_scite_compare_encoding_file);
+	lua_setfield(luaState, -2, "CompareEncodingFile");
 
 	lua_pushcfunction(luaState, sf_ReloadProperties);
 	lua_setfield(luaState, -2, "ReloadProperties");

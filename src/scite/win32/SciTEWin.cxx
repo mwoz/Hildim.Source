@@ -651,7 +651,7 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 //!-start-[close_on_dbl_clk]
 	case IDC_TABDBLCLK:
-		if (props.GetInt("tabbar.tab.close.on.doubleclick") == 1) {
+		if (props.GetInt("tabbar.tab.close.on.doubleclick") > 0) {
 			CloseTab((int)lParam);
 		}
 		break;
@@ -1797,7 +1797,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 //!-start-[new_on_dbl_clk]
 	case WM_LBUTTONDBLCLK:
-		if (props.GetInt("tabbar.tab.close.on.doubleclick") == 1)
+		if (props.GetInt("tabbar.tab.close.on.doubleclick") > 0)
 			::SendMessage(MainHWND(), WM_COMMAND, IDM_NEW, 0);
 		return 0;
 //!-end-[new_on_dbl_clk]
@@ -1814,7 +1814,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				if (file.Exists()) {
 					Open(file.AsInternal());
 				} else {
-					extender->HildiAlarm("Could not open file '%1'.",
+					extender->HildiAlarm("Could not open file\n'%1'.",
 						MB_OK | MB_ICONWARNING, file.AsInternal());
 				}
 			} 
