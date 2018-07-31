@@ -664,7 +664,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 
 	char* fntSize = ((SciTEWin*)pSciteWin)->Property("iup.defaultfontsize");
 
-	captWidth = 22;
+	captWidth = 26;
 	if (strcmp(fntSize, "") && StrToIntA(fntSize) > 0) {
 		IupSetGlobal("DEFAULTFONTSIZE", fntSize);
 		if (atoi(fntSize) > 9)
@@ -1342,7 +1342,7 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 		::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
 	} else {
 		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
-		::DrawIconEx(hdc, 6, 4, hicon, 16, 16, 0, NULL, DI_NORMAL);
+		::DrawIconEx(hdc, 6, 8, hicon, 16, 16, 0, NULL, DI_NORMAL);
 
 	}
 	
@@ -1354,7 +1354,7 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
 	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
 	
-	rdraw = {40, 2, rect.right - rect.left - captWidth * 3 - 30, captWidth};
+	rdraw = {40, 4, rect.right - rect.left - captWidth * 3 - 30, captWidth};
 	
 	::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
 

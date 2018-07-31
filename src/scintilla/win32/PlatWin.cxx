@@ -33,6 +33,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include <windowsx.h>
+#include <UxTheme.h>
 
 #if !defined(DISABLE_D2D)
 #define USE_D2D 1
@@ -3197,6 +3198,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 			::SetWindowLongPtr(lb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
 			prevWndProc = SubclassWindow(scb, ScrollWndProc);
 			::SetWindowLongPtr(scb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
+			SetWindowTheme(scb, L"", L"");
 	}
 		break;
 
