@@ -171,7 +171,7 @@ public:
 class BufferList: public BufferListAPI {
 protected:
 	int current;
-	int *stack;
+	int *stack; 
 public:
 	int stackcurrent;
 	Buffer *buffers;
@@ -199,6 +199,7 @@ public:
 	virtual void* GetAt(int index) {
 		return (void*) &buffers[index];
 	}
+	void OrderBy(std::map<int, int> &order);
 private:
 	void PopStack();
 };
@@ -640,6 +641,7 @@ protected:
 	void MoveTabLeft();
 	void CloneTab();
 	void ChangeTabWnd();
+	virtual void OrderTabsBy(std::map<int, int> &order);
 	void CheckRightEditorVisible();
 	bool m_bRightEditorVisible = false;
 

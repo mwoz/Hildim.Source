@@ -26,6 +26,7 @@
 
 
 #include <regex>
+#include <map>
 
 extern "C" {
 #include "lua.h"
@@ -1207,6 +1208,25 @@ static void sf_FileVersionInfo_value(lua_State* L, BYTE* pbVersionInfo, const ch
 	}
 }
 
+static int sf_OrderTab(lua_State* L) {
+	luaL_checktype(L, 1, LUA_TTABLE);
+	std::map<int, int> order;
+	lua_pushnil(L);  /* first key (первый ключ) */
+	while (lua_next(L, 1) != 0) {
+		/* uses 'key' (at index -2) and 'value' (at index -1) */
+		/* используем 'key' (по индексу -2) и 'value' (по индексу -1) */
+		int key = luaL_checkint(L, -2);
+		int val = luaL_checkint(L, -1);
+		order.insert({ key, val });
+
+		/* removes 'value'; keeps 'key' for next iteration */
+		/* удаляем 'value'; сохраняя 'key' для следующей итерации */
+		lua_pop(L, 1);
+	}
+	host->OrderTabsBy(order);
+	return 0;
+}
+
 static int sf_FileVersionInfo(lua_State* L) {
 	DWORD               dwSize = 0;
 	BYTE                *pbVersionInfo = NULL;
@@ -2213,6 +2233,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_FileVersionInfo);
 	lua_setfield(luaState, -2, "FileVersionInfo");
+
+	lua_pushcfunction(luaState, sf_OrderTab);
+	lua_setfield(luaState, -2, "OrderTab");
 
 	// buffers
 	lua_newtable(luaState);

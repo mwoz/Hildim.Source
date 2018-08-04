@@ -277,6 +277,37 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	if (indexFrom == current) current = indexTo;
 }
 
+void BufferList::OrderBy(std::map<int, int> &order) {
+	std::map<int, Buffer> orderBuf;
+	std::map<int, int> orderStack;
+	bool bSetCur = true;
+	for (auto& elem: order) {
+		orderBuf.insert({ elem.first, buffers[elem.second] });
+		if (current == elem.second && bSetCur) {
+			current = elem.first;
+			bSetCur = false;
+		}
+		for (int i = 0; i < length; i++) {
+			if (stack[i] == elem.second) {
+				orderStack.insert({ i, elem.first });
+				break;
+			}
+		}
+	}
+	for (auto& elem : orderBuf) {
+		buffers[elem.first] = elem.second;
+	}
+	for (auto& elem : orderStack) {
+		stack[elem.first] = elem.second;
+	}
+
+}
+
+void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
+	buffers.OrderBy(order);
+	BuffersMenu();
+}
+
 void SciTEBase::ChangeTabWnd() {
 	if (buffers.CurrentBuffer()->pFriend)
 		return;
@@ -299,9 +330,9 @@ void SciTEBase::ChangeTabWnd() {
 	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
 
-	ReadProperties();
-	SetIndentSettings();
-	SetEol();
+	//ReadProperties();
+	//SetIndentSettings();
+	//SetEol();
 	UpdateBuffersCurrent();
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
