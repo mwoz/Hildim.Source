@@ -6,7 +6,6 @@
 
 #include <string>
 #include <iostream>
-#include <filesystem>
 
 extern "C" {
 	#include "lua.h"
@@ -350,16 +349,6 @@ static void lua_pushlasterr( lua_State* L, const char* lpszFunction )
 	::LocalFree( lpMsgBuf );
 }
 
-static int msgbox( lua_State* L )
-{
-	const char* text = luaL_checkstring( L, 1 );
-	const char* title = lua_tostring( L, 2 );
-	int options = (int)lua_tonumber( L, 3 ) | MB_TASKMODAL;
-	int retCode = ::MessageBoxA( NULL, text, title == NULL ? "SciTE" : title, options );
-	lua_pushnumber( L, retCode );
-	return 1;
-}
-
 static int getfileattr(lua_State *L) {
 	const char* FN = luaL_checkstring(L, -1);
 	lua_pushinteger(L, CPath::GetFileAttributes(FN));
@@ -671,6 +660,7 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 				}
 				else
 				{
+					Sleep(10);
 					continue;
 				}
 			}
@@ -1064,53 +1054,6 @@ static int getclipboardtext( lua_State* L )
 	return 1;
 }
 
-static int findinsubfolders(lua_State* L) {
-	namespace fs = std::filesystem;
-	std::string path = luaL_checkstring(L, 1);
-	std::string fnp = luaL_checkstring(L, 2);
-	std::transform(fnp.begin(), fnp.end(), fnp.begin(), ::toupper);
-
-	int found = 0;
-	for (auto & p : std::filesystem::recursive_directory_iterator(path)) {
-		std::filesystem::path pth = p;
-		std::string fn_find = pth.filename().string();
-		std::transform(fn_find.begin(), fn_find.end(), fn_find.begin(), ::toupper);
-		if (fn_find == fnp) {
-			lua_pushstring(L, pth.u8string().c_str());
-			found++;
-			if (found > 1)
-				break;
-		}
-		//std::string fn = pth.filename().lexically_normal().string();
-	}
-	return found;
-}
-
-static int foldermap(lua_State* L) {
-	namespace fs = std::filesystem;
-	std::string path = luaL_checkstring(L, 1);
-	lua_createtable(L, 1, 0);
-
-
-	for (auto & p : std::filesystem::recursive_directory_iterator(path)) {
-		std::filesystem::path pth = p;
-		if (pth.has_extension()) {
-			std::string ext = pth.extension().string();
-			std::transform(ext.begin(), ext.end(), ext.begin(), ::toupper);
-			if (ext == ".CFORM" || ext == ".WFORM" || ext == ".RFORM" || ext == ".XML") {
-				if (pth.string().find("\\Upgrades\\") == std::string::npos) {
-					std::string name = pth.filename().string();
-					std::transform(name.begin(), name.end(), name.begin(), ::toupper);
-					lua_pushstring(L, pth.string().c_str());
-					lua_setfield(L, -2, name.c_str());
-				}
-			}
-		}
-		//std::string fn = pth.filename().lexically_normal().string();
-	}
-	return 1;
-}
-
 static int findfiles( lua_State* L )
 {
 	const char* filename = luaL_checkstring( L, 1 );
@@ -1204,39 +1147,6 @@ private:
 	wchar_t *buffer;
 };
 
-static int internalConv( lua_State *L, bool toUTF8 )
-{
-	bool success = false;
-	if ( lua_isstring(L, 1) )
-	{
-		size_t len;
-		const char *src = lua_tolstring( L, 1, &len );
-		ptrdiff_t cp = luaL_optinteger( L, 2, CP_ACP );
-		MB2W wc( src, toUTF8? cp:CP_UTF8 );
-		if ( wc.c_str() )
-		{
-			W2MB nc( wc.c_str(), toUTF8? CP_UTF8:cp );
-			if ( nc.c_str() )
-			{
-				lua_pushstring( L, nc.c_str() );
-				success = true;
-			}
-		}
-	}
-	if ( !success )
-		lua_pushnil( L );
-	return 1;
-}
-
-static int to_utf8( lua_State* L )
-{
-	return internalConv( L, true );
-}
-
-static int from_utf8( lua_State* L )
-{
-	return internalConv( L, false );
-}
 static int get_clipboard( lua_State* L )
 {
 	HGLOBAL hglb=0; 
@@ -1403,18 +1313,12 @@ luaL_Reg shell[] =
 {
 	{ "greateCuid", greateCuid },
 	{ "exec", exec },
-	{ "msgbox", msgbox },
     { "getfiletime", getfiletime },
     { "getfileattr", getfileattr },
 	{ "setfileattr", setfileattr },				   
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
 	{ "findfiles", findfiles },
-	{ "findinsubfolders", findinsubfolders },
-	{ "foldermap", foldermap },
-	{ "inputbox", showinputbox },
-	{ "to_utf8", to_utf8 },
-	{ "from_utf8", from_utf8 },
 	{ "get_clipboard", get_clipboard },
 	{ "set_clipboard", set_clipboard },
 	{ "delete_file", delete_file },

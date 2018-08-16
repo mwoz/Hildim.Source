@@ -152,7 +152,7 @@ int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
 
 int SciTEWin::OnShift(Ihandle * ih, int old_tab, int new_tab) {
 
-	ShiftTab(IupGetIntId(ih, "TABBUFFERID", old_tab), IupGetIntId(ih, "TABBUFFERID", new_tab));
+	ShiftTab(IupGetIntId(ih, "TABBUFFERID", old_tab), IupGetIntId(ih, "TABBUFFERID", new_tab), true);
 	return IUP_DEFAULT;
 }
 

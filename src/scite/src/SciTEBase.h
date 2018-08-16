@@ -628,7 +628,7 @@ protected:
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
-	void BuffersMenu();
+	void BuffersMenu(bool mousedrag = false);
 	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
@@ -636,7 +636,7 @@ protected:
 	void PrevInStack();
 	void EndStackedTabbing();
 
-	void ShiftTab(int indexFrom, int indexTo);
+	void ShiftTab(int indexFrom, int indexTo, bool mose = false);
 	void MoveTabRight();
 	void MoveTabLeft();
 	void CloneTab();

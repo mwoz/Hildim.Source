@@ -102,9 +102,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ibox\ibox.cpp" />
     <ClCompile Include="shell.cpp" />
-    <ClCompile Include="utils\luaargs.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="shell.rc" />
@@ -112,7 +110,6 @@
   <ItemGroup>
     <ClInclude Include="ibox\resource.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="utils\luaargs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

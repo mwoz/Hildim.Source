@@ -1203,6 +1203,13 @@ static int iFlatTabsSetValueAttrib(Ihandle* ih, const char* value) {
 	return 0;
 }
 
+static int iFlatTabsSetCancelDragAttrib(Ihandle* ih, const char* value) {
+	ih->data->dragTab = ITABS_NONE;
+	ih->data->start = 0;
+	ih->data->xFreeMax = 0;
+	return 0;
+}
+
 static int iupFlatTabsDrawSetRedrawAttrib(Ihandle* ih, const char* value) {
 	iupdrvRedrawNow(ih);
 	return 0;
@@ -1622,6 +1629,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttribute(ic, "TABCHANGEONCHECK", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "REDRAW", NULL, iupFlatTabsDrawSetRedrawAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "LASTVISIBLE", (IattribGetFunc)iFlatTabsGetLastVisibleAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
+	iupClassRegisterAttribute(ic, "CANCELDRAG", NULL, iFlatTabsSetCancelDragAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 
 	/* IupFlatTabs Child only */
 	iupClassRegisterAttributeId(ic, "TABTITLE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);

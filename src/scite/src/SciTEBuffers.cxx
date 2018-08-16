@@ -868,10 +868,10 @@ void SciTEBase::Prev() {
 	CheckReload();
 }
 
-void SciTEBase::ShiftTab(int indexFrom, int indexTo) {
+void SciTEBase::ShiftTab(int indexFrom, int indexTo, bool mouse) {
 	buffers.ShiftTo(indexFrom, indexTo);
 	buffers.SetCurrent(indexTo);
-	BuffersMenu();
+	BuffersMenu(mouse);
 
 	DisplayAround(buffers.buffers[buffers.Current()]);
 }
@@ -945,7 +945,7 @@ const char* SciTEBase::GetPropClr(const char* propName, char* buff, const char* 
 
 
 
-void SciTEBase::BuffersMenu() {
+void SciTEBase::BuffersMenu(bool mousedrag) {
 	UpdateBuffersCurrent();
 	static char tabForeColor[16];
 	static char tabROColor[16];
@@ -1090,6 +1090,10 @@ void SciTEBase::BuffersMenu() {
 
 		IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
 		IupRedraw(IupGetParent(IupTab(IDM_COSRCWIN)), 1);
+		if (!mousedrag) {
+			IupSetAttribute(IupTab(IDM_SRCWIN), "CANCELDRAG", "");
+			IupSetAttribute(IupTab(IDM_COSRCWIN), "CANCELDRAG", "");
+		}
 
 	}
 
