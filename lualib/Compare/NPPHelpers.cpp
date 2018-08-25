@@ -367,30 +367,35 @@ void resetPrevOffset() {
 
 void addEmptyLines(HWND hSci, int offset, int length, const char *lines) {
 	static int prev_length;
-
+	bool l0l1 = false;
 	if (offset == -1) {
 		offset = 0;
 		prev_offset = -1;
 	} else if(offset == 0 && prev_offset == -1) {
 		length += prev_length;
 		prev_offset = offset;
+		l0l1 = true;
 	} else {
 		prev_offset = offset;
 	}
 	prev_length = length;
 
-	char  *buff = NULL;
-	if(true) {
-		buff = new char[length];
-		for (int i = 0; i < length - 1; i++)
-			buff[i] = '\n';
-		buff[length - 1] = 0;
-	}
+	
+	if(l0l1) {
+		int tSize = ::SendMessage(hSci, SCI_ANNOTATIONGETTEXT, offset, (LPARAM)NULL);
+		char  *buff = new char[tSize + 1];
+		::SendMessage(hSci, SCI_ANNOTATIONGETTEXT, offset, (LPARAM)buff);
+		buff[tSize] = 0;
+		std::string b = "";
+		b += buff;
+		b += "\n   --------------------\\/under 1-st line\\/";
+		b += lines;
 
-
-	::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)(lines? lines:buff));
+		::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)b.c_str());
+		delete[] buff;
+	}else
+		::SendMessage(hSci, SCI_ANNOTATIONSETTEXT, offset, (LPARAM)lines);
 	::SendMessage(hSci, SCI_ANNOTATIONSETSTYLE, offset, 0);
-	delete[] buff;
 }
 //void addEmptyLines(HWND hSci, int offset, int length){
 //	if(length<=0){return;}
