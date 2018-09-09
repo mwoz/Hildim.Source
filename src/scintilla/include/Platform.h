@@ -5,9 +5,7 @@
  **/
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-#include <memory>
-#include <vector>
-#include <string>
+
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -27,6 +25,7 @@
 #define PLAT_FOX 0
 #define PLAT_CURSES 0
 #define PLAT_TK 0
+#define PLAT_HAIKU 0
 
 #if defined(FOX)
 #undef PLAT_FOX
@@ -39,6 +38,10 @@
 #elif defined(CURSES)
 #undef PLAT_CURSES
 #define PLAT_CURSES 1
+
+#elif defined(__HAIKU__)
+#undef PLAT_HAIKU
+#define PLAT_HAIKU 1
 
 #elif defined(SCINTILLA_QT)
 #undef PLAT_QT
@@ -181,14 +184,6 @@ public:
 
 	bool operator==(const ColourDesired &other) const noexcept {
 		return co == other.co;
-	}
-
-	void Set(long lcol) {  ///!!!TODO! - Проанализировать использование и по возможности удалить
-		co = lcol;
-	}
-
-	void Set(unsigned int red, unsigned int green, unsigned int blue) {
-		co = red | (green << 8) | (blue << 16);
 	}
 
 	int AsInteger() const noexcept {
@@ -474,7 +469,7 @@ public:
 	static ListBox *Allocate();
 
 	void SetFont(Font &font) override =0;
-	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo = 0)=0;
+	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_)=0;
 	virtual void SetAverageCharWidth(int width)=0;
 	virtual void SetVisibleRows(int rows)=0;
 	virtual int GetVisibleRows() const=0;
