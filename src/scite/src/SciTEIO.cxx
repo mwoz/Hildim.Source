@@ -347,16 +347,8 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		size_t lenFile = fread(data, 1, sizeof(data), fp);
 		UniMode codingCookie = CodingCookieValue(data, lenFile);
 
-//!-start-[utf8.auto.check]
-		int check_utf8=props.GetInt("utf8.auto.check");
-		if (codingCookie==uni8Bit && check_utf8==2) {
-			if (Has_UTF8_Char((unsigned char*)(data),lenFile)) {
-				codingCookie=uniCookie;
-			}
-		}
-		Utf8_16_Read convert(codingCookie==uni8Bit && check_utf8==1);
+		Utf8_16_Read convert(codingCookie==uni8Bit);
 		convert._encoding = filePath._encoding;
-//!-end-[utf8.auto.check]
 
 		wEditor.Call(SCI_ALLOCATE, fileSize + 1000);
 		SString languageOverride;
@@ -432,16 +424,8 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 		size_t lenFile = fread(data, 1, sizeof(data), fp);
 		UniMode codingCookie = CodingCookieValue(data, lenFile);
 
-		//!-start-[utf8.auto.check]
-		int check_utf8 = props.GetInt("utf8.auto.check");
-		if (codingCookie == uni8Bit && check_utf8 == 2) {
-			if (Has_UTF8_Char((unsigned char*)(data), lenFile)) {
-				codingCookie = uniCookie;
-			}
-		}
-		Utf8_16_Read convert(codingCookie == uni8Bit && check_utf8 == 1);
+		Utf8_16_Read convert(codingCookie == uni8Bit );
 		convert._encoding = filePath._encoding;
-		//!-end-[utf8.auto.check]
 
 		int lenCompare = 0;
 		

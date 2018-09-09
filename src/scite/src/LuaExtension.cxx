@@ -629,6 +629,55 @@ static int cf_Reg_HotKey(lua_State* L){
 	return 1;
 }
 
+static int sf_findfiles(lua_State* L) {
+	WIN32_FIND_DATAW findFileData;
+	HANDLE hFind = ::FindFirstFileW(GUI::StringFromUTF8(luaL_checkstring(L, 1)).c_str(), &findFileData);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		// create table for result
+		lua_createtable(L, 1, 0);
+
+		lua_Integer num = 1;
+		BOOL isFound = TRUE;
+		while (isFound != FALSE) {
+			// store file info
+			lua_pushinteger(L, num);
+			lua_createtable(L, 0, 4);
+
+			lua_pushstring(L, GUI::UTF8FromString(findFileData.cFileName).c_str());
+			lua_setfield(L, -2, "name");
+
+			lua_pushboolean(L, findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+			lua_setfield(L, -2, "isdirectory");
+
+			lua_pushinteger(L, findFileData.dwFileAttributes);
+			lua_setfield(L, -2, "attributes");
+
+			lua_pushinteger(L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
+				findFileData.nFileSizeLow);
+			lua_setfield(L, -2, "size");
+
+
+			__int64 t = findFileData.ftLastWriteTime.dwLowDateTime + ((__int64)findFileData.ftLastWriteTime.dwHighDateTime << 32);
+			lua_pushnumber(L, (lua_Number)t);
+			lua_setfield(L, -2, "writetime");
+
+			lua_settable(L, -3);
+			num++;
+
+			// next
+			isFound = ::FindNextFileW(hFind, &findFileData);
+		}
+
+		::FindClose(hFind);
+
+		return 1;
+	}
+
+	// files not found
+	return 0;
+}
+
+
 static int cf_EnsureVisible(lua_State* L){
 	host->EnsureVisible();
 	return 0;
@@ -2236,6 +2285,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_OrderTab);
 	lua_setfield(luaState, -2, "OrderTab");
+
+	lua_pushcfunction(luaState, sf_findfiles);
+	lua_setfield(luaState, -2, "findfiles");
 
 	// buffers
 	lua_newtable(luaState);

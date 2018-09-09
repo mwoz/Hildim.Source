@@ -671,6 +671,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			captWidth = 32;
 	}
 	IupSetGlobal("ICON", "SCITE");
+	IupSetGlobal("UTF8MODE", "YES");
 	static char minSz[10];
 	::ZeroMemory((void*)minSz, sizeof(char) * 10);
 	minSz[0] = '0';

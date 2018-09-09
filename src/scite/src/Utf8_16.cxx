@@ -111,54 +111,59 @@ size_t Utf8_16_Read::convert(char* buf, size_t len, bool reset) {
 	return pCur - m_pNewBuf;
 }
 
-//!-start-[utf8.auto.check]
-//[mhb] 07/05/09 : check whether a data block contains UTF8 chars
-int Has_UTF8_Char(unsigned char *buf,int size) {
-	if (!buf||size<2) {return 0;}
-	unsigned char *p=buf;
-	int i=0,cnt=0;
-	while (p[0] && i<size) {
-		if (p[0]>>7==0x01) {
-			if (p[0]>>5==0x06 && (i+1)<size) {
-				if (p[1]>>6!=0x02) { return 0;} //not utf8
-				cnt++;p++;i++;//UTF-8: U-00000080 ?C U-000007FF
+// Returned value :
+// 0 : utf8
+// 1 : 7bits
+// 2 : 8bits
+u78 Utf8_16_Read::utf8_7bits_8bits() {
+	int rv = 1;
+	int ASCII7only = 1;
+	utf8 *sx = (utf8 *)m_pBuf;
+	utf8 *endx = sx + m_nLen;
+
+	while (sx < endx) {
+		if (!*sx) {											// For detection, we'll say that NUL means not UTF8
+			ASCII7only = 0;
+			rv = 0;
+			break;
+		} else if (*sx < 0x80) {			// 0nnnnnnn If the byte's first hex code begins with 0-7, it is an ASCII character.
+			++sx;
+		} else if (*sx < (0x80 + 0x40)) {											  // 10nnnnnn 8 through B cannot be first hex codes
+			ASCII7only = 0;
+			rv = 0;
+			break;
+		} else if (*sx < (0x80 + 0x40 + 0x20)) {					  // 110xxxvv 10nnnnnn  If it begins with C or D, it is an 11 bit character
+			ASCII7only = 0;
+			if (sx >= endx - 1)
+				break;
+			if ((*sx & 0xC0) != 0xC0 || (sx[1] & (0x80 + 0x40)) != 0x80) {
+				rv = 0; break;
 			}
-			else if (p[0]>>4==0x0e && (i+2)<size) {
-				if (p[1]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[2]>>6!=0x02) 	{ return 0;} //not utf8
-				cnt++;p+=2;i+=2;//UTF-8: U-00000800 ?C U-0000FFFF
+			sx += 2;
+		} else if (*sx < (0x80 + 0x40 + 0x20 + 0x10)) {								// 1110qqqq 10xxxxvv 10nnnnnn If it begins with E, it is 16 bit
+			ASCII7only = 0;
+			if (sx >= endx - 2)
+				break;
+			if ((*sx & 0xE0) != 0xE0 || (sx[1] & (0x80 + 0x40)) != 0x80 || (sx[2] & (0x80 + 0x40)) != 0x80) {
+				rv = 0; break;
 			}
-			else if (p[0]>>3==0x1e && (i+3)<size) {
-				if (p[1]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[2]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[3]>>6!=0x02) 	{ return 0;} //not utf8
-				cnt++;p+=3;i+=3;//UTF-8: U-00010000 ?C U-001FFFFF
-			}
-			else if (p[0]>>2==0x3e && (i+4)<size) {
-				if (p[1]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[2]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[3]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[4]>>6!=0x02) 	{ return 0;} //not utf8
-				cnt++;p+=4;i+=4;//UTF-8: U-00200000 ?C U-03FFFFFF
-			}
-			else if (p[0]>>1==0x7e && (i+5)<size) {
-				if (p[1]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[2]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[3]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[4]>>6!=0x02) 	{ return 0;} //not utf8
-				if (p[5]>>6!=0x02) 	{ return 0;} //not utf8
-				cnt++;p+=5;i+=5;//UTF-8: U-04000000 ?C U-7FFFFFFF
-			}
+			sx += 3;
+		} else {													  // more than 16 bits are not allowed here
+			ASCII7only = 0;
+			rv = 0;
+			break;
 		}
-		p++;i++;
 	}
-	return cnt>0 ? 1 : 0;
+	if (ASCII7only)
+		return ascii7bits;
+	if (rv)
+		return utf8NoBOM;
+	return ascii8bits;
 }
-//!-end-[utf8.auto.check]
 
 int Utf8_16_Read::determineEncoding() {
 	m_eEncoding = eUnknown;
-
+	utf8noBoom = false;
 	int nRet = 0;
 
 	if (m_nLen > 1) {
@@ -174,13 +179,14 @@ int Utf8_16_Read::determineEncoding() {
 		}
 //!-start-[utf8.auto.check]
 		//[mhb] 07/05/09 :to support checking utf-8 from raw chars; 07/07/09 : method 1
-		else if (m_nLen>2 && m_nAutoCheckUtf8==1 ) {
-			if (Has_UTF8_Char(m_pBuf,m_nLen)) {
+		else if (m_nLen>2) {
+			u78 detectedEncoding = utf8_7bits_8bits();
+			if (detectedEncoding == utf8NoBOM) {
 				m_eEncoding = eUtf8;
-				nRet=0;
+				nRet = 0;
+				utf8noBoom = true;
 			}
 		}
-//!-end-[utf8.auto.check]
 	}
 
 	return nRet;

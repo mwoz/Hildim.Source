@@ -19,6 +19,8 @@
 #pragma warning(disable: 4514) // nreferenced inline function has been removed
 #endif
 
+enum u78 { utf8NoBOM = 0, ascii7bits = 1, ascii8bits = 2 };
+
 class Utf8_16 {
 public:
 	typedef unsigned short utf16; // 16 bits
@@ -106,10 +108,12 @@ public:
 	size_t convert(char* buf, size_t len, bool reset = false);
 	char* getNewBuf() { return reinterpret_cast<char*>(m_pNewBuf); }
 
-	encodingType getEncoding() const { return m_eEncoding; }
+	encodingType getEncoding() const { return utf8noBoom ? eLast : m_eEncoding; }
 	int _encoding = 0;
 protected:
 	int determineEncoding();
+	u78 utf8_7bits_8bits();
+	bool utf8noBoom = false;
 private:
 	encodingType m_eEncoding;
 	ubyte* m_pBuf;
@@ -141,4 +145,3 @@ protected:
 	bool m_bFirstWrite;
 };
 
-int Has_UTF8_Char(unsigned char *buf,int size);//!-add-[utf8.auto.check]

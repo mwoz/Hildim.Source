@@ -6,6 +6,7 @@
 
 #include <string>
 #include <iostream>
+#include <filesystem>
 
 extern "C" {
 	#include "lua.h"
@@ -350,14 +351,23 @@ static void lua_pushlasterr( lua_State* L, const char* lpszFunction )
 }
 
 static int getfileattr(lua_State *L) {
-	const char* FN = luaL_checkstring(L, -1);
-	lua_pushinteger(L, CPath::GetFileAttributes(FN));
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, 1));
+	} catch (...) {
+		return 0;
+	}
+	lua_pushinteger(L, ::GetFileAttributesW(f.c_str()));
 	return 1;
 }
 static int getfiletime(lua_State *L) {
-	const char* FN = luaL_checkstring(L, -1);
-	lua_pushinteger(L, CPath::GetFileAttributes(FN));
-	HANDLE hf = ::CreateFileA(FN, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, 1));
+	} catch (...) {
+		return 0;
+	}
+	HANDLE hf = ::CreateFileW(f.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hf != INVALID_HANDLE_VALUE) {
 		FILETIME ft;
 		::GetFileTime(hf, NULL, NULL, &ft);
@@ -381,17 +391,23 @@ static int getfiletime(lua_State *L) {
 }
 static int delete_file(lua_State *L)
 {
-	const char* FN = luaL_checkstring(L, -1);
-	SHFILEOPSTRUCT ls;
-	char buff[MAX_PATH + 1];
-	::ZeroMemory(&ls, sizeof(SHFILEOPSTRUCT));
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, 1));
+	} catch (...) {
+		return 0;
+	}
+
+	SHFILEOPSTRUCTW ls;
+	WCHAR buff[MAX_PATH + 1];
+	::ZeroMemory(&ls, sizeof(SHFILEOPSTRUCTW));
 	::ZeroMemory(buff, MAX_PATH+1);
-	strcpy(buff, FN);
+	wcscpy(buff, f.c_str());
 	ls.pFrom = buff;
 	ls.wFunc = FO_DELETE;
 	ls.fFlags = FOF_SILENT |  FOF_ALLOWUNDO | FOF_NOCONFIRMATION;  // FOF_NOERRORUI |
 
-	lua_pushnumber(L, SHFileOperation(&ls));
+	lua_pushnumber(L, SHFileOperationW(&ls));
 	return 1;
 }
 typedef struct tagENUMINFO
@@ -535,49 +551,72 @@ static int activate_proc_wnd(lua_State *L)
 }
 static int rename_file(lua_State *L)
 {
-	const char* FO = luaL_checkstring(L, -2);
-	const char* FN = luaL_checkstring(L, -1);
-	SHFILEOPSTRUCT ls;
-	char buff[MAX_PATH + 1];
-	char buff2[MAX_PATH + 1];
-	::ZeroMemory(&ls, sizeof(SHFILEOPSTRUCT));
+	std::filesystem::path fo;
+	std::filesystem::path fn;
+	try {
+		fo = std::filesystem::u8path(luaL_checkstring(L, -2));
+		fn = std::filesystem::u8path(luaL_checkstring(L, -1));
+	} catch (...) {
+		return 0;
+	}
+
+	SHFILEOPSTRUCTW ls;
+	WCHAR buff[MAX_PATH + 1];
+	WCHAR buff2[MAX_PATH + 1];
+	::ZeroMemory(&ls, sizeof(SHFILEOPSTRUCTW));
 	::ZeroMemory(buff, MAX_PATH + 1);
 	::ZeroMemory(buff2, MAX_PATH + 1);
 
 
-	strcpy(buff2, FN);
-	strcpy(buff, FO);
+	wcscpy(buff2, fn.c_str());
+	wcscpy(buff, fo.c_str());
 	ls.pFrom = buff;
 	ls.pTo = buff2;
 	ls.wFunc = FO_RENAME;
 	ls.fFlags = FOF_SILENT |  FOF_NOCONFIRMATION; //  FOF_NOERRORUI |
 
-	lua_pushnumber(L, SHFileOperation(&ls));
+	lua_pushnumber(L, SHFileOperationW(&ls));
 	return 1;
 }
 
 static int setfileattr( lua_State* L )
 {
-	const char* FN = luaL_checkstring( L, -2 );
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, -2));
+	} catch (...) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
 	DWORD attr = luaL_checkint( L, -1 );
-	lua_pushboolean( L, CPath::SetFileAttributes( FN, attr ) );
+	lua_pushboolean( L, ::SetFileAttributesW(f.c_str(), attr));
 	return 1;
 }
 
 static int fileexists(lua_State* L) {
-	const char* FN = luaL_checkstring(L, 1);
-	lua_pushboolean(L, CPath::IsPathExist(FN));
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, 1));
+	} catch (...) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	lua_pushboolean(L, ::PathFileExistsW(f.c_str()) != FALSE);
 	return 1;
 }
 
 static int greate_directory(lua_State* L) {
-	const char* FN = luaL_checkstring(L, 1);
-	if (CPath::IsPathExist(FN)) {
-		lua_pushboolean(L, true);
+	std::filesystem::path f;
+	try {
+		f = std::filesystem::u8path(luaL_checkstring(L, 1));
+	} catch (...) {
+		lua_pushboolean(L, false);
 		return 1;
 	}
-	CPath p(FN);
-	lua_pushboolean(L, ::CreateDirectory(FN, NULL));
+	std::error_code ec;
+	std::filesystem::create_directory(f, ec);
+	lua_pushboolean(L, ec.value() == 0);
 	return 1;
 }
 
@@ -1054,62 +1093,9 @@ static int getclipboardtext( lua_State* L )
 	return 1;
 }
 
-static int findfiles( lua_State* L )
-{
-	const char* filename = luaL_checkstring( L, 1 );
-
-	WIN32_FIND_DATAA findFileData;
-	HANDLE hFind = ::FindFirstFileA( filename, &findFileData );
-	if ( hFind != INVALID_HANDLE_VALUE )
-	{
-		// create table for result
-		lua_createtable( L, 1, 0 );
-
-		lua_Integer num = 1;
-		BOOL isFound = TRUE;
-		while ( isFound != FALSE )
-		{
-			// store file info
-			lua_pushinteger( L, num );
-			lua_createtable( L, 0, 4 );
-
-			lua_pushstring( L, findFileData.cFileName );
-			lua_setfield( L, -2, "name" );
-
-			lua_pushboolean( L, findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY );
-			lua_setfield( L, -2, "isdirectory" );
-
-			lua_pushinteger( L, findFileData.dwFileAttributes );
-			lua_setfield( L, -2, "attributes" );
-
-			lua_pushinteger( L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
-							   findFileData.nFileSizeLow );
-			lua_setfield( L, -2, "size" );
-
-
-			__int64 t = findFileData.ftLastWriteTime.dwLowDateTime + ((__int64)findFileData.ftLastWriteTime.dwHighDateTime << 32);
-			lua_pushnumber(L, (lua_Number)t);
-			lua_setfield(L, -2, "writetime");
-
-			lua_settable(L, -3);
-			num++;
-
-			// next
-			isFound = ::FindNextFileA( hFind, &findFileData );
-		}
-
-		::FindClose( hFind );
-
-		return 1;
-	}
-
-	// files not found
-	return 0;
-}
-
 struct W2MB
 {
-	W2MB( const wchar_t *src, int cp )
+	W2MB( const wchar_t *src, int cp = CP_UTF7 )
 			: buffer(0)
 		{
 			int len = ::WideCharToMultiByte( cp, 0, src, -1, 0, 0, 0, 0 );
@@ -1129,7 +1115,7 @@ private:
 
 struct MB2W
 {
-	MB2W( const char *src, int cp )
+	MB2W( const char *src, int cp = CP_UTF7 )
 			: buffer(0)
 		{
 			int len = ::MultiByteToWideChar( cp, 0, src, -1, 0, 0 );
@@ -1318,7 +1304,6 @@ luaL_Reg shell[] =
 	{ "setfileattr", setfileattr },				   
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
-	{ "findfiles", findfiles },
 	{ "get_clipboard", get_clipboard },
 	{ "set_clipboard", set_clipboard },
 	{ "delete_file", delete_file },
