@@ -3329,6 +3329,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 
 		HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
 		::SetWindowRgn(hWnd, hrgn, false);
+		DeleteObject(hrgn);
 
 		HPEN p = CreatePen(PS_SOLID, 1, pListcolors->border);
 		HPEN penOld = static_cast<HPEN>(SelectObject(hdc, p));

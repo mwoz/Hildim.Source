@@ -646,6 +646,8 @@ IupLayoutWnd::IupLayoutWnd()
 
 IupLayoutWnd::~IupLayoutWnd()
 {
+	DestroyIcon(hicon);
+	hicon = NULL;
 }
 
 void IupLayoutWnd::PropGet(const char *name, const char *defoult, char* buff) {
@@ -1337,12 +1339,14 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 
 	DeleteObject(b); 
 	
-	HICON hicon;
+
 	if (captWidth > 30) {
-		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
+		if(!hicon)
+			hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
 		::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
 	} else {
-		hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
+		if (!hicon)
+			hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
 		::DrawIconEx(hdc, 6, 8, hicon, 16, 16, 0, NULL, DI_NORMAL);
 
 	}
@@ -1384,10 +1388,12 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 		BOOL b = Polyline(hdc, line_poly, 5);
 		SelectObject(hdc, hPenOld);
 		DeleteObject(hPen);
+		DeleteObject(hPenOld);
 	}
 
 	//Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
 	//int tt = ::BitBlt(hdcw, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hdc, 0, 0, SRCCOPY);
+	DeleteObject(hrgn);
 	ReleaseDC(hwnd, hdc);
 	if(bRedraw != wp.showCmd)
 	RedrawWindow(hwnd, &rect, NULL, RDW_UPDATENOW);

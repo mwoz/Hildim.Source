@@ -1034,6 +1034,7 @@ static void winListDrawDropFeedback(Ihandle *ih, int nIndex)
        This can happen at the top of the listbox since 
        the listbox's DC is the parent's DC */
     SelectClipRgn(hDC, rgn);
+	DeleteObject(rgn);
 
     winListDrawRect(hWnd, hDC, nLastIndex);
     winListDrawRect(hWnd, hDC, nIndex);

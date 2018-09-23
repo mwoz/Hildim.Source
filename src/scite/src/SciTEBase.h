@@ -396,6 +396,7 @@ private:
 	int borderX = 0;
 	int borderY = 0;
 	GUI::gui_string title = L"";
+	HICON hicon = NULL;
 };
 
 class SciTEBase : public ExtensionAPI, public Searcher {
