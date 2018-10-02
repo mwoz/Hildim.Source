@@ -396,7 +396,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		std::string cmd = "print(([[";
 		cmd += "Could not open file ";
 		cmd += filePath.AsUTF8();
-		cmd += ".]]):from_utf8(1251))";
+		cmd += ".]]):from_utf8())";
 		extender->DoLua(cmd.c_str());
 	}
 	if (!wEditor.Call(SCI_GETUNDOCOLLECTION)) {
@@ -775,7 +775,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 			std::string cmd = "print(([[";
 			//cmd += "File ";
 			cmd += saveName.AsUTF8();
-			cmd += "]]):from_utf8(1251)..' is not changed')";
+			cmd += "]]):from_utf8()..' is not changed')";
 			extender->DoLua(cmd.c_str());
 		}
 
@@ -1025,6 +1025,7 @@ class FileReader {
 	bool caseSensitive;
 	Utf8_16_Read *convert;
 	Utf8_16::encodingType encType;
+	bool isEncoding = false;
 public:
 	int m_LineLen;
 	FileReader(FilePath fPath, bool caseSensitive_) {
@@ -1042,9 +1043,12 @@ public:
 	}
 	void Encode(char *buf, int i){
 		int l = 0;
-		if (!lineNum || encType != Utf8_16::encodingType::eUnknown){
+		if (!lineNum || encType != Utf8_16::encodingType::eUnknown) {
 			l = convert->convert(buf, i + 1, true);
-			if (!lineNum) encType = convert->getEncoding();
+			if (!isEncoding && i > 0) {
+				encType = convert->getEncoding();
+				isEncoding = true;
+			}
 		}
 		if (encType == Utf8_16::encodingType::eUnknown) {
 			lineToShow += buf;
@@ -1054,8 +1058,8 @@ public:
 		}
 		char *chr = convert->getNewBuf();									 
 		chr[l] = '\0';
-		lineToShow += GUI::ConvertFromUTF8(chr, 1251).c_str();
-		if (!caseSensitive) lineToCompare += GUI::ConvertFromUTF8(GUI::UTF8ToLower(chr), 1251).c_str();
+		lineToShow += GUI::ConvertFromUTF8(chr, CP_ACP).c_str();
+		if (!caseSensitive) lineToCompare += GUI::ConvertFromUTF8(GUI::UTF8ToLower(chr), CP_ACP).c_str();
 		else lineToCompare += lineToShow;
 	}
 	char *Next() {
@@ -1191,7 +1195,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 					if (!bFindInFiles) {
 						if (gf & grepGroup){
 							os.append(" ");	  
-							os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), 1251).c_str());
+							os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), CP_ACP).c_str());
 							os.append("\n");
 						}
 						grepOut->iInFiles += 1;
@@ -1202,7 +1206,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 					} 
 					else {
 						os.append(".");
-						os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), 1251).c_str() + basePath);
+						os.append(GUI::ConvertFromUTF8(fPath.AsUTF8(), CP_ACP).c_str() + basePath);
 						os.append(":");
 					}
 					SString lNumber(fr.LineNumber());
@@ -1269,7 +1273,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	if (!(gf & grepStdOut)) {
 		os.append(">Search for \"").append(searchString.c_str()).append("\" in \"");
 
-		std::string dir = GUI::ConvertFromUTF8( GUI::UTF8FromString(directory), 1251);
+		std::string dir = GUI::ConvertFromUTF8( GUI::UTF8FromString(directory), CP_ACP);
 		basePathLen = dir.length();
 		os.append(dir.c_str());
 		if (pathSepChar == os[os.length()-1]) {
