@@ -3210,6 +3210,10 @@ const char *LuaExtension::OnSendEditor(unsigned int msg, unsigned int wp, long l
 	return CallNamedFunction("OnSendEditor", msg, wp, lp);
 }
 //!-end-[OnSendEditor]
+bool LuaExtension::OnLindaNotify(const char* key) {
+	return CallNamedFunction("OnLindaNotify", key);
+}
+
 bool LuaExtension::OnColorized(unsigned int wp, unsigned int lp) {
 	return CallNamedFunction("OnColorized", wp, lp);
 }

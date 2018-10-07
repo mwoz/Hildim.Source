@@ -1783,6 +1783,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				::FlashWindow(MainHWND(), FALSE);
 			}
 			break;
+		case SCITE_NOTIFYTREAD:
+		{
+			extender->OnLindaNotify((const char*)wParam);
+			return 0;
+		}
 		case SCITE_NOTIYCMD:
 			//Пришли даные из консольного потока  - выполним скрипт в луа
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTCMD, wParam, reinterpret_cast<const char *>(lParam));
