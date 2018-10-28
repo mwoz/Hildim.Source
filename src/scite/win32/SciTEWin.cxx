@@ -1785,7 +1785,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 		case SCITE_NOTIFYTREAD:
 		{
-			extender->OnLindaNotify((const char*)wParam);
+			extender->OnLindaNotify((const char*)wParam, (const char*)lParam);
 			return 0;
 		}
 		case SCITE_NOTIYCMD:

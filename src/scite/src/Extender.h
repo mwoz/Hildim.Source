@@ -112,7 +112,7 @@ public:
 	virtual bool OnMenuCommand(int, int) { return false; } //!-add-[OnMenuCommand]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, const char *) { return 0; } //!-add-[OnSendEditor]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, long) { return 0; } //!-add-[OnSendEditor]
-	virtual bool OnLindaNotify(const char*) { return false; }
+	virtual bool OnLindaNotify(const char*, const char*) { return false; }
 
 	virtual bool SendProperty(const char *) { return false; }
 

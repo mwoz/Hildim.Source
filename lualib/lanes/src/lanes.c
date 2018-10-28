@@ -53,7 +53,6 @@
  */
 
 char const* VERSION = "3.12";
-
 /*
 ===============================================================================
 
@@ -85,6 +84,7 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "lauxlib.h"
 
 #include "threading.h"
 #include "compat.h"
@@ -92,6 +92,7 @@ THE SOFTWARE.
 #include "universe.h"
 #include "keeper.h"
 #include "lanes.h"
+
 
 #if !(defined( PLATFORM_XBOX) || defined( PLATFORM_WIN32) || defined( PLATFORM_POCKETPC))
 # include <sys/time.h>
@@ -524,6 +525,8 @@ LUAG_FUNC( linda_send)
 			}
 
 			STACK_MID( KL, 0);
+			const char *d = luaL_checkstring(L, 2);
+			PostMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)d, 0);
 			pushed = keeper_call( linda->U, KL, KEEPER_API( send), L, linda, key_i);
 			if( pushed < 0)
 			{
@@ -1995,7 +1998,7 @@ LUAG_FUNC( set_thread_priority)
 	return 0;
 }
 
-#if USE_DEBUG_SPEW
+
 // can't use direct LUA_x errcode indexing because the sequence is not the same between Lua 5.1 and 5.2 :-(
 // LUA_ERRERR doesn't have the same value
 struct errcode_name
@@ -2003,7 +2006,6 @@ struct errcode_name
 	int code;
 	char const* name;
 };
-
 static struct errcode_name s_errcodes[] =
 {
 	{ LUA_OK, "LUA_OK"},
@@ -2014,6 +2016,7 @@ static struct errcode_name s_errcodes[] =
 	{ LUA_ERRGCMM, "LUA_ERRGCMM"},
 	{ LUA_ERRERR, "LUA_ERRERR"},
 };
+
 static char const* get_errcode_name( int _code)
 {
 	int i;
@@ -2026,7 +2029,7 @@ static char const* get_errcode_name( int _code)
 	}
 	return "<NULL>";
 }
-#endif // USE_DEBUG_SPEW
+
 
 #if THREADWAIT_METHOD == THREADWAIT_CONDVAR // implies THREADAPI == THREADAPI_PTHREAD
 static void thread_cleanup_handler( void* opaque)
@@ -2087,6 +2090,11 @@ static THREAD_RETURN_T THREAD_CALLCONV lane_main( void* vs)
 	// in case of error and if it exists, fetch stack trace from registry and push it
 	push_stack_trace( L, rc, 1);                                                 // retvals|error [trace]
 
+
+	if(lua_isstring(L, 1))
+		SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", lua_tostring(L, 1));
+	else if(rc != LUA_OK)
+		SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", get_errcode_name(rc));
 	DEBUGSPEW_CODE( fprintf( stderr, INDENT_BEGIN "Lane %p body: %s (%s)\n" INDENT_END, L, get_errcode_name( rc), (lua_touserdata( L, 1)==CANCEL_ERROR) ? "cancelled" : lua_typename( L, lua_type( L, 1))));
 	//STACK_DUMP(L);
 	// Call finalizers, if the script has set them up.
@@ -3316,10 +3324,26 @@ int LANES_API luaopen_lanes_core( lua_State* L)
 	{
 		// will do nothing on first invocation, as we haven't stored settings in the registry yet
 		lua_setfield( L, -3, "settings");                 // M LG_configure()
-		lua_setfield( L, -2, "configure");                // M
+		lua_setfield( L, -2, "configure");                // M 
 	}
 
 	STACK_END( L, 1);
+
+	m_hwnd = NULL;
+	HWND hwnd = NULL;
+
+	DWORD p = GetCurrentProcessId();
+
+	for (;;) {
+		hwnd = FindWindowEx(NULL, hwnd, L"HildiMWindow", NULL);
+		DWORD d = 0;
+		GetWindowThreadProcessId(hwnd, &d);
+		if (d == p) break;
+		if (!hwnd) break;
+	}
+	if (hwnd) 
+		m_hwnd = hwnd;
+
 	return 1;
 }
 

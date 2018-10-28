@@ -50,7 +50,7 @@ public:
 	virtual bool OnMenuCommand(int, int); //!-add-[OnMenuCommand]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, const char *); //!-add-[OnSendEditor]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, long); //!-add-[OnSendEditor]
-	virtual bool OnLindaNotify(const char*);
+	virtual bool OnLindaNotify(const char*, const char* );
 	virtual bool OnColorized(unsigned int, unsigned int);
 	virtual const char *OnContextMenu(unsigned int, unsigned int, const char *);
 	virtual bool OnFindProgress(int state, int all);

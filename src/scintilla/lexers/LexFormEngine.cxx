@@ -1085,6 +1085,8 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 						blockReFoldLine= fc.currentLine + 1;//в следующей строке тоже не рефолдим
 						selectionState = Next;
 					}else if(wUnfold.InList(s)){//конец фолдинга - end next wend loop
+						if (!strcmp(s, "end") && fc.ch != ' ')
+							break;
 						selectionState = Next;
 						if(fc.Skip()){//точно нашли кусок в другом стиле на этой строке
 							if(fc.style == SCE_FM_VB_KEYWORD){

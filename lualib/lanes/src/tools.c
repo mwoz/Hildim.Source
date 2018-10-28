@@ -54,6 +54,35 @@ char const* const LOOKUP_REGKEY = "ddea37aa-50c7-4d3f-8e0b-fb7a9d62bac5";
 
 DEBUGSPEW_CODE( char const* debugspew_indent = "----+----!----+----!----+----!----+----!----+----!----+----!----+----!----+");
 
+static int hildim_print(lua_State *L) {
+
+	int nargs = lua_gettop(L);
+
+	lua_getglobal(L, "tostring");
+
+	for (int i = 1; i <= nargs; ++i) {
+		if (i > 1)
+			SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)"\t");
+
+		const char *argStr = lua_tostring(L, i);
+		if (argStr) {
+			SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)argStr);
+		} else {
+			lua_pushvalue(L, -1); // tostring
+			lua_pushvalue(L, i);
+			lua_call(L, 1, 1);
+			argStr = lua_tostring(L, -1);
+			if (argStr) {
+				SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)argStr);
+			} else {
+				//raise_error(L, "tostring (called from print) returned a non-string");
+			}
+			lua_settop(L, nargs + 1);
+		}
+	}
+
+	return 0;
+}
 
 /*---=== luaG_dump ===---*/
 
@@ -729,6 +758,13 @@ lua_State* luaG_newstate( struct s_Universe* U, lua_State* from_, char const* li
 	lua_pushglobaltable( L); // Lua 5.2 no longer has LUA_GLOBALSINDEX: we must push globals table on the stack
 	populate_func_lookup_table( L, -1, NULL);
 
+	// override a library function whose default impl uses stdout
+	lua_register(L, "print", hildim_print);
+	lua_register(L, "_ALERT", hildim_print);
+
+	// although this is mostly redundant with output:append
+	// it is still included for now
+	lua_register(L, "trace", hildim_print);
 #if 0 && USE_DEBUG_SPEW
 	// dump the lookup database contents
 	lua_getfield( L, LUA_REGISTRYINDEX, LOOKUP_REGKEY);                       // {}

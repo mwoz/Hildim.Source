@@ -3210,7 +3210,11 @@ const char *LuaExtension::OnSendEditor(unsigned int msg, unsigned int wp, long l
 	return CallNamedFunction("OnSendEditor", msg, wp, lp);
 }
 //!-end-[OnSendEditor]
-bool LuaExtension::OnLindaNotify(const char* key) {
+bool LuaExtension::OnLindaNotify(const char* key, const char* msg) {
+	if (!strcmp(key, "print")) {
+		host->Trace(msg);
+		host->Trace("\n");
+	}
 	return CallNamedFunction("OnLindaNotify", key);
 }
 
