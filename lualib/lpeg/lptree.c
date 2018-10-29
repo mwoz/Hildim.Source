@@ -1,5 +1,5 @@
 /*
-** $Id: lptree.c,v 1.21 2015/09/28 17:01:25 roberto Exp $
+** $Id: lptree.c,v 1.22 2016/09/13 18:10:22 roberto Exp $
 ** Copyright 2013, Lua.org & PUC-Rio  (see 'lpeg.html' for license)
 */
 
@@ -55,7 +55,7 @@ static void fixonecall (lua_State *L, int postable, TTree *g, TTree *t) {
   int n;
   lua_rawgeti(L, -1, t->key);  /* get rule's name */
   lua_gettable(L, postable);  /* query name in position table */
-  n = (int)lua_tonumber(L, -1);  /* get (absolute) position */
+  n = lua_tonumber(L, -1);  /* get (absolute) position */
   lua_pop(L, 1);  /* remove position */
   if (n == 0) {  /* no position? */
     lua_rawgeti(L, -1, t->key);  /* get rule's name again */
@@ -64,7 +64,7 @@ static void fixonecall (lua_State *L, int postable, TTree *g, TTree *t) {
   t->tag = TCall;
   t->u.ps = n - (t - g);  /* position relative to node */
   assert(sib2(t)->tag == TRule);
-  sib2(t)->key = t->key;
+  sib2(t)->key = t->key;  /* fix rule's key */
 }
 
 
@@ -575,8 +575,8 @@ static int lp_star (lua_State *L) {
   TTree *tree1 = getpatt(L, 1, &size1);
   if (n >= 0) {  /* seq tree1 (seq tree1 ... (seq tree1 (rep tree1))) */
     TTree *tree = newtree(L, (n + 1) * (size1 + 1));
-//    if (nullable(tree1))
-//      luaL_error(L, "loop body may accept empty string");
+    if (nullable(tree1))
+      luaL_error(L, "loop body may accept empty string");
     while (n--)  /* repeat 'n' times */
       tree = seqaux(tree, tree1, size1);
     tree->tag = TRep;
@@ -935,7 +935,7 @@ static void buildgrammar (lua_State *L, TTree *grammar, int frule, int n) {
     int rulesize;
     TTree *rn = gettree(L, ridx, &rulesize);
     nd->tag = TRule;
-    nd->key = 0;
+    nd->key = 0;  /* will be fixed when rule is used */
     nd->cap = i;  /* rule number */
     nd->u.ps = rulesize + 1;  /* point to next rule */
     memcpy(sib1(nd), rn, rulesize * sizeof(TTree));  /* copy rule */
@@ -969,6 +969,11 @@ static int checkloops (TTree *tree) {
 }
 
 
+/*
+** Give appropriate error message for 'verifyrule'. If a rule appears
+** twice in 'passed', there is path from it back to itself without
+** advancing the subject.
+*/
 static int verifyerror (lua_State *L, int *passed, int npassed) {
   int i, j;
   for (i = npassed - 1; i >= 0; i--) {  /* search for a repetition */
@@ -990,6 +995,8 @@ static int verifyerror (lua_State *L, int *passed, int npassed) {
 ** is only relevant if the first is nullable.
 ** Parameter 'nb' works as an accumulator, to allow tail calls in
 ** choices. ('nb' true makes function returns true.)
+** Parameter 'passed' is a list of already visited rules, 'npassed'
+** counts the elements in 'passed'.
 ** Assume ktable at the top of the stack.
 */
 static int verifyrule (lua_State *L, TTree *tree, int *passed, int npassed,
@@ -1187,8 +1194,7 @@ static int lp_setmax (lua_State *L) {
 
 
 static int lp_version (lua_State *L) {
-  //lua_pushstring(L, VERSION);
-  lua_pushinteger(L, 1);
+  lua_pushstring(L, VERSION);
   return 1;
 }
 
@@ -1282,8 +1288,7 @@ static struct luaL_Reg metareg[] = {
 };
 
 
-//int luaopen_lpeg (lua_State *L);
-__declspec(dllexport)
+int luaopen_lpeg (lua_State *L);
 int luaopen_lpeg (lua_State *L) {
   luaL_newmetatable(L, PATTERN_T);
   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
@@ -1291,7 +1296,6 @@ int luaopen_lpeg (lua_State *L) {
   luaL_setfuncs(L, metareg, 0);
   luaL_newlib(L, pattreg);
   lua_pushvalue(L, -1);
-  //lua_setglobal(L, "lpeg");
   lua_setfield(L, -3, "__index");
   return 1;
 }
