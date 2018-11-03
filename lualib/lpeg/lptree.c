@@ -21,7 +21,7 @@
 /* number of siblings for each tree */
 const byte numsiblings[] = {
   0, 0, 0,	/* char, set, any */
-  0, 0,		/* true, false */	
+  0, 0,		/* true, false */
   1,		/* rep */
   2, 2,		/* seq, choice */
   1, 1,		/* not, and */
@@ -55,7 +55,7 @@ static void fixonecall (lua_State *L, int postable, TTree *g, TTree *t) {
   int n;
   lua_rawgeti(L, -1, t->key);  /* get rule's name */
   lua_gettable(L, postable);  /* query name in position table */
-  n = lua_tonumber(L, -1);  /* get (absolute) position */
+  n = (int)lua_tonumber(L, -1);  /* get (absolute) position */
   lua_pop(L, 1);  /* remove position */
   if (n == 0) {  /* no position? */
     lua_rawgeti(L, -1, t->key);  /* get rule's name again */
@@ -575,8 +575,8 @@ static int lp_star (lua_State *L) {
   TTree *tree1 = getpatt(L, 1, &size1);
   if (n >= 0) {  /* seq tree1 (seq tree1 ... (seq tree1 (rep tree1))) */
     TTree *tree = newtree(L, (n + 1) * (size1 + 1));
-    if (nullable(tree1))
-      luaL_error(L, "loop body may accept empty string");
+    //if (nullable(tree1))
+    //  luaL_error(L, "loop body may accept empty string");
     while (n--)  /* repeat 'n' times */
       tree = seqaux(tree, tree1, size1);
     tree->tag = TRep;
@@ -794,9 +794,14 @@ static int lp_simplecapture (lua_State *L) {
 }
 
 
-static int lp_poscapture (lua_State *L) {
-  newemptycap(L, Cposition);
-  return 1;
+static int lp_poscapture(lua_State *L) {
+	newemptycap(L, Cposition);
+	return 1;
+}
+
+static int lp_linescapture(lua_State *L) {
+	newemptycap(L, Clines);
+	return 1;
 }
 
 
@@ -1271,6 +1276,7 @@ static struct luaL_Reg pattreg[] = {
   {"version", lp_version},
   {"setmaxstack", lp_setmax},
   {"type", lp_type},
+  {"Cl", lp_linescapture},
   {NULL, NULL}
 };
 
@@ -1288,13 +1294,15 @@ static struct luaL_Reg metareg[] = {
 };
 
 
-int luaopen_lpeg (lua_State *L);
+//int luaopen_lpeg (lua_State * L);
+__declspec(dllexport)
 int luaopen_lpeg (lua_State *L) {
   luaL_newmetatable(L, PATTERN_T);
   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
   lua_setfield(L, LUA_REGISTRYINDEX, MAXSTACKIDX);
   luaL_setfuncs(L, metareg, 0);
-  luaL_newlib(L, pattreg);
+  //luaL_newlib(L, pattreg);
+  luaL_openlib(L, "lpeg", pattreg, 0);
   lua_pushvalue(L, -1);
   lua_setfield(L, -3, "__index");
   return 1;

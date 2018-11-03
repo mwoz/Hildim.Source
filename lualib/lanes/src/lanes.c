@@ -526,7 +526,8 @@ LUAG_FUNC( linda_send)
 
 			STACK_MID( KL, 0);
 			const char *d = luaL_checkstring(L, 2);
-			PostMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)d, 0);
+			if(d[0] != '_')
+				PostMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)d, 0);
 			pushed = keeper_call( linda->U, KL, KEEPER_API( send), L, linda, key_i);
 			if( pushed < 0)
 			{

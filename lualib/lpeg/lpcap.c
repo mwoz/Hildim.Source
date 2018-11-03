@@ -449,12 +449,29 @@ static int pushcapture (CapState *cs) {
   lua_State *L = cs->L;
   luaL_checkstack(L, 4, "too many captures");
   switch (captype(cs->cap)) {
-    case Cposition: {
-      lua_pushinteger(L, cs->cap->s - cs->s + 1);
-      cs->cap++;
-      return 1;
-    }
-    case Cconst: {
+  case Clines:
+  {
+	  int curPos = cs->cap->s - cs->s;
+	  if (cs->lastCLPos < curPos) {
+		  cs->lastCLPos = 0;
+		  cs->caplines = 0;
+	  }
+	  for (int i = cs->lastCLPos; i < curPos + 1; i++) {
+		  if (cs->s[i] == cs->lineBreak)
+			  cs->lastCLPos++;
+	  }
+
+	  lua_pushinteger(L, cs->lastCLPos);
+	  cs->cap++;
+	  return 1;
+  }
+  case Cposition:
+  {
+	  lua_pushinteger(L, cs->cap->s - cs->s + 1);
+	  cs->cap++;
+	  return 1;
+  }
+  case Cconst: {
       pushluaval(cs);
       cs->cap++;
       return 1;
@@ -521,6 +538,9 @@ int getcaptures (lua_State *L, const char *s, const char *r, int ptop) {
   int n = 0;
   if (!isclosecap(capture)) {  /* is there any capture? */
     CapState cs;
+	cs.lineBreak = '\n';
+	cs.caplines = 0;
+	cs.lastCLPos = 0;
     cs.ocap = cs.cap = capture; cs.L = L;
     cs.s = s; cs.valuecached = 0; cs.ptop = ptop;
     do {  /* collect their values */

@@ -212,6 +212,8 @@ luaL_Reg spell_methods[] = {
 	{NULL, NULL}
 };
 
+
+
 static int g_spell(lua_State *L) {
 	const char *aff = luaL_checkstring(L, 1);
 	const char *dic = luaL_checkstring(L, 2);
@@ -226,6 +228,11 @@ static int g_spell(lua_State *L) {
 
 	return 1;
 }
+
+luaL_Reg luaspell_methods[] = {
+	{"Create", g_spell},
+	{NULL, NULL}
+};
 
 static void createMetatable(lua_State *L, const char *name, luaL_Reg *methods) {
 	luaL_newmetatable(L, name);
@@ -243,8 +250,9 @@ extern "C" __declspec(dllexport) int luaopen_luahunspell(lua_State *L) {
 		// copy locale from environment
 		//setlocale(LC_ALL, "");
 
-		createMetatable(L, MT, spell_methods);
+	createMetatable(L, MT, spell_methods);
+	luaL_register(L, "luahunspell", luaspell_methods);
 
-		lua_pushcfunction(L, g_spell);
+		///lua_pushcfunction(L, g_spell);
 		return 1;
 	}
