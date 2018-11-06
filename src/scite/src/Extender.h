@@ -30,7 +30,6 @@ public:
 	virtual void DoMenuCommand(int cmdID)=0;
 	virtual void CheckMenus()=0; //!-add-[CheckMenus]
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
-	virtual int RunLuaThread(const char *s, const char *desc) = 0;
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false) = 0;
 	virtual int GetBuffersCount() = 0;

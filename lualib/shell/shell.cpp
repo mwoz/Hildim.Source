@@ -606,6 +606,16 @@ static int fileexists(lua_State* L) {
 	return 1;
 }
 
+static int clock_start(lua_State* L) {
+	lua_pushnumber(L, clock());
+	return 1;
+}
+static int clock_diff(lua_State* L) {
+	lua_Number n = luaL_checknumber(L, 1);
+	lua_pushnumber(L, (clock() - n) / CLOCKS_PER_SEC * 1000);
+	return 1;
+}
+
 static int greate_directory(lua_State* L) {
 	std::filesystem::path f;
 	try {
@@ -1093,6 +1103,59 @@ static int getclipboardtext( lua_State* L )
 	return 1;
 }
 
+static int findfiles( lua_State* L )
+{
+	const char* filename = luaL_checkstring( L, 1 );
+
+	WIN32_FIND_DATAA findFileData;
+	HANDLE hFind = ::FindFirstFileA( filename, &findFileData );
+	if ( hFind != INVALID_HANDLE_VALUE )
+	{
+		// create table for result
+		lua_createtable( L, 1, 0 );
+
+		lua_Integer num = 1;
+		BOOL isFound = TRUE;
+		while ( isFound != FALSE )
+		{
+			// store file info
+			lua_pushinteger( L, num );
+			lua_createtable( L, 0, 4 );
+
+			lua_pushstring( L, findFileData.cFileName );
+			lua_setfield( L, -2, "name" );
+
+			lua_pushboolean( L, findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY );
+			lua_setfield( L, -2, "isdirectory" );
+
+			lua_pushinteger( L, findFileData.dwFileAttributes );
+			lua_setfield( L, -2, "attributes" );
+
+			lua_pushinteger( L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
+							   findFileData.nFileSizeLow );
+			lua_setfield( L, -2, "size" );
+
+
+			__int64 t = findFileData.ftLastWriteTime.dwLowDateTime + ((__int64)findFileData.ftLastWriteTime.dwHighDateTime << 32);
+			lua_pushnumber(L, (lua_Number)t);
+			lua_setfield(L, -2, "writetime");
+
+			lua_settable(L, -3);
+			num++;
+
+			// next
+			isFound = ::FindNextFileA( hFind, &findFileData );
+		}
+
+		::FindClose( hFind );
+
+		return 1;
+	}
+
+	// files not found
+	return 0;
+}
+
 struct W2MB
 {
 	W2MB( const wchar_t *src, int cp = CP_UTF7 )
@@ -1281,7 +1344,6 @@ static int set_clipboard(lua_State* L)
 
 static int greateCuid(lua_State* L)
 {
-
 	GUID MyGuid;
 	HRESULT hr = CoCreateGuid(&MyGuid);	hr;
 	lua_pushinteger(L, MyGuid.Data1);
@@ -1304,6 +1366,7 @@ luaL_Reg shell[] =
 	{ "setfileattr", setfileattr },				   
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
+	{ "findfiles", findfiles },
 	{ "get_clipboard", get_clipboard },
 	{ "set_clipboard", set_clipboard },
 	{ "delete_file", delete_file },
@@ -1314,6 +1377,8 @@ luaL_Reg shell[] =
 	{ "async_mouse_state", async_mouse_state },
 	{ "load_kb_layout", load_kb_layout },
 	{ "greateDirectory", greate_directory },
+	{ "clockStart", clock_start },
+	{ "clockDiff", clock_diff },
 	{ NULL, NULL }
 };
 

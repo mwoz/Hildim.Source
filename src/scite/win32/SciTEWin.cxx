@@ -757,16 +757,6 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 		return exitcode;
 	}
 
-	if (jobToRun.jobType == iobAsyncLua) {
-		SString r = jobToRun.input;
-		r.substitute('|', '\0');
-		const char *strMsg = r.c_str();
-		const char *strRunAfter = strMsg + strlen(strMsg) + 1;
-		internalRunLuaThread(jobToRun.command, strMsg);
-		SendMessage(MainHWND(), SCITE_NOTIYCMD, strlen(strRunAfter), (WPARAM)(strRunAfter));
-		return 0;
-	}
-
 	UINT codePage = wOutput.Send(SCI_GETCODEPAGE);
 	if (codePage != SC_CP_UTF8) {
 //!		codePage = CodePageFromCharSet(characterSet, codePage);
@@ -1088,7 +1078,7 @@ void SciTEWin::ProcessExecute() {
 	::PostMessage(MainHWND(), WM_COMMAND, IDM_FINISHEDEXECUTE, 0);
 	//ѕќ—џЋј≈ћ нотификацию в главное окно, чтобы она смогла вызвать эвент у скрипта. по этому эвенту можно будет создать новый джоб
 	//(выполнитькомманду меню и пр) - изнутри этого потока этого деолать Ќ≈Ћ№«я!
-	if (initJobType == jobCLI || initJobType == iobAsyncLua) ::PostMessage(MainHWND(), SCITE_NOTIFYCMDEXIT, exitcode, 0);//”ведомим скрипт, что команда окончилась
+	if (initJobType == jobCLI) ::PostMessage(MainHWND(), SCITE_NOTIFYCMDEXIT, exitcode, 0);//”ведомим скрипт, что команда окончилась
 }
 
 void ExecThread(void *ptw) {

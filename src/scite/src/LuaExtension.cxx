@@ -378,13 +378,6 @@ static int cf_editor_get_translation(lua_State *L) {
 }
 //!-end-[LocalizationFromLua]
 
-static int cf_run_lua_thread(lua_State* L){
-	const char *s = luaL_checkstring(L, 1);
-	const char *desc = luaL_checkstring(L, 2);
-	host->RunLuaThread(s,desc);
-	return 0;
-}
-
 //!-start-[CheckMenus]
 static int cf_scite_check_menus(lua_State *) {
 	host->CheckMenus();
@@ -2219,9 +2212,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_editor_get_translation);
 	lua_setfield(luaState, -2, "GetTranslation");
 //!-end-[LocalizationFromLua]
-
-	lua_pushcfunction(luaState, cf_run_lua_thread);
-	lua_setfield(luaState, -2, "RunLuaThread");
 
 	lua_pushcfunction(luaState, cf_Reg_HotKey);
 	lua_setfield(luaState, -2, "RegistryHotKeys");

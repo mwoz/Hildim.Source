@@ -4645,14 +4645,4 @@ char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
 #endif
 }
 //!-end-[LocalizationFromLua]
-int SciTEBase::RunLuaThread(const char *s, const char *desc){
-	if (SaveIfUnsureForBuilt() != IDCANCEL) {
-		SelectionIntoProperties();
-		AddCommand(s, "", iobAsyncLua, desc);
 
-		if (jobQueue.commandCurrent > 0)
-			Execute();
-	}
-
-	return 0;
-}

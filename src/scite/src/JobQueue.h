@@ -13,7 +13,7 @@
 #include <windows.h>
 
 enum JobSubsystem {
-    jobCLI = 0, jobGUI = 1, jobShell = 2, jobExtension = 3, jobHelp = 4, jobOtherHelp = 5, jobGrep = 6, iobAsyncLua = 7};
+    jobCLI = 0, jobGUI = 1, jobShell = 2, jobExtension = 3, jobHelp = 4, jobOtherHelp = 5, jobGrep = 6};
 
 enum JobFlags {
     jobForceQueue = 1,

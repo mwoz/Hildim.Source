@@ -933,7 +933,6 @@ public:
 protected:
 	virtual int ActiveEditor();
 	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
-	virtual int RunLuaThread(const char *s, const char *desc);
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
 	virtual void RunInConcole();
 	virtual void RunAsync(int idx)=0;
