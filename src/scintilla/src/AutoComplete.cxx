@@ -233,7 +233,7 @@ bool IsAbbr(const char *item, const char *abr)
 	int i2 = 0;
 	for (int i = 0; i<l; i++)
 	{
-		for (; i2<l2 && item[i2] > 'Z' && i2>0; i2++);
+		for (; i2<l2 && (item[i2] > 'Z'|| item[i2] < 'A') && i2>0; i2++);
 		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;
 		i2++;
 	}
@@ -309,8 +309,8 @@ void AutoComplete::Select(const char *word) {
 			if (!s[i]) break;
 		}
 	}
-	if (separator == '‡' && lenWord > 1 && lenWord < 20)
-	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '‡'
+	if (separator == '\t' && lenWord > 1 && lenWord < 20)
+	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '\t'
 		char testUpper[21];
 		strncpy(testUpper, pword, lenWord + 1);
 		_strupr(testUpper);
