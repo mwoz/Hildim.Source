@@ -1995,7 +1995,7 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	ft.chrgText.cpMax = 0;
 	const int flags = SCFIND_WORDSTART | (autoCompleteIgnoreCase ? 0 : SCFIND_MATCHCASE);
 
-	SString templateEnd = "[^" + wordCharacters + "]";
+	SString templateEnd = "[" + wordCharacters + "]*";
 	if (CurrentBuffer()->unicodeMode) {
 		std::string enc = GUI::ConvertToUTF8(templateEnd.c_str(), ::GetACP());
 		templateEnd = enc.c_str();
@@ -2023,14 +2023,16 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	TextReader acc(wEditor);
 	while (posFind >= 0 && posFind < doclen) {	// search all the document
 		ftE.chrg.cpMin = ft.chrgText.cpMax;
+		//ftE.chrg.cpMax = wEditor.Call(SCI_POSITIONFROMLINE, wEditor.Call(SCI_LINEFROMPOSITION, ft.chrgText.cpMax) + 1);
 		int wordEnd = wEditor.CallString(SCI_FINDTEXT, flagsE, reinterpret_cast<char *>(&ftE));
 		if (wordEnd < 0)
 			break;
+		wordEnd = ftE.chrgText.cpMax;
 		size_t wordLength = wordEnd - posFind;
 		if (wordLength > root.length()) {
 			SString word = GetRange(wEditor, posFind, wordEnd);
-			word.substitute("\n", "");
-			word.substitute("\r", "");
+			//word.substitute("\n", "");
+			//word.substitute("\r", "");
 			if (word.length() > root.length() && !(posFind < curr_position && curr_position <= wordEnd)) {
 				word.insert(0, "\n");
 				word.append("\n");
