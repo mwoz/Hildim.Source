@@ -25,6 +25,11 @@ LUASQL_API int luasql_faildirect(lua_State *L, const char *err) {
 	lua_pushliteral(L, LUASQL_PREFIX);
 	lua_pushstring(L, err);
 	lua_concat(L, 2);
+
+	lua_getglobal(L, "print");
+	lua_insert(L, -2); // use pushed error message
+	lua_pcall(L, 1, 0, 0);
+
 	return 2;
 }
 
@@ -40,6 +45,10 @@ LUASQL_API int luasql_failmsg(lua_State *L, const char *err, const char *m) {
 	lua_pushstring(L, err);
 	lua_pushstring(L, m);
 	lua_concat(L, 3);
+
+	lua_getglobal(L, "print");
+	lua_insert(L, -2); // use pushed error message
+	lua_pcall(L, 1, 0, 0);
 	return 2;
 }
 

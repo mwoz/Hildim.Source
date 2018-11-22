@@ -286,8 +286,8 @@ static int cur_fetch (lua_State *L) {
     SQLHSTMT hstmt = cur->hstmt;
     int ret; 
     SQLRETURN rc = SQLFetch(cur->hstmt); 
-    if (rc == SQL_NO_DATA) {
-        lua_pushnil(L);
+    if (rc == SQL_NO_DATA) {		
+		lua_pushnil(L);
         return 1;
     } else if (error(rc)) return fail(L, hSTMT, hstmt);
 
@@ -518,6 +518,7 @@ static int conn_execute (lua_State *L) {
 	if (numcols > 0)
     	/* if there is a results table (e.g., SELECT) */
 		return create_cursor (L, 1, conn, hstmt, numcols);
+
 	else {
 		/* if action has no results (e.g., UPDATE) */
 		SQLLEN numrows;
@@ -630,7 +631,13 @@ static int env_connect (lua_State *L) {
 	if (error(ret)) {
 		ret = fail(L, hDBC, hdbc);
 		SQLFreeHandle(hDBC, hdbc);
-		return ret;
+
+		char* msg = "";
+		if (lua_isstring(L, -1)) 
+			msg = luaL_checkstring(L, -1);
+		
+		luasql_failmsg(L, "ODBC connection error:", msg);
+		return 0;
 	}
 
 	/* success, return connection object */

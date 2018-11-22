@@ -7,7 +7,7 @@
 #define _LUASQL_
 
 #ifndef LUASQL_API
-#define LUASQL_API
+#define LUASQL_API __declspec(dllexport)
 #endif
 
 #if !defined LUA_VERSION_NUM
