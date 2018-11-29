@@ -13,6 +13,8 @@ extern "C" {
 	#include "lauxlib.h"
 	#include "lualib.h"
 }
+
+#define SHELLPROCOBJECT "SHELLPROCOBJECT*"
 //
 //#ifdef DEBUG
 //BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -422,6 +424,14 @@ typedef struct tagENUMINFO
 	HWND  hEmptyInvisibleWnd;
 } ENUMINFO, *PENUMINFO;
 
+typedef struct tagSHELLPROCINFO
+{
+	PROCESS_INFORMATION pi;
+	HANDLE FReadPipe;
+	HANDLE FWritePipe;
+
+}SHELLPROCINFO, *PSHELLPROCINFO;
+
 
 BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 {
@@ -627,6 +637,154 @@ static int greate_directory(lua_State* L) {
 	std::error_code ec;
 	std::filesystem::create_directory(f, ec);
 	lua_pushboolean(L, ec.value() == 0);
+	return 1;
+}
+
+static int proc_Exit(lua_State* L) {
+	return 0;
+}
+
+static int proc_Continue(lua_State* L) {
+	PSHELLPROCINFO sh = (PSHELLPROCINFO)lua_touserdata(L, 1);
+	static const int MAX_CMD = 1024;
+
+	if (!sh) {
+		lua_pushstring(L, "E");
+		lua_pushstring(L, "proc_Continue: Argument 1 isn't a process");
+		return 2;
+	}
+
+	try {
+		DWORD BytesToRead = 0;
+		DWORD BytesRead = 0;
+		DWORD TotalBytesAvail = 0;
+		DWORD PipeReaded = 0;
+		DWORD exit_code = 0;
+		CMemBuffer< char, MAX_CMD > bufCmdLine; // строковой буфер длиной MAX_CMD
+		char bufStr[MAX_CMD];
+		while (::PeekNamedPipe(sh->FReadPipe, NULL, 0, &BytesRead, &TotalBytesAvail, NULL)) {
+			if (TotalBytesAvail == 0) {
+				if (::GetExitCodeProcess(sh->pi.hProcess, &exit_code) == FALSE ||
+					exit_code != STILL_ACTIVE) {
+					lua_pushstring(L, "S");
+					lua_pushstring(L, "");
+					break;
+				} else {
+					Sleep(10);
+					continue;
+				}
+			} else {
+				while (TotalBytesAvail > BytesRead) {
+					if (TotalBytesAvail - BytesRead > MAX_CMD - 1) {
+						BytesToRead = MAX_CMD - 1;
+					} else {
+						BytesToRead = TotalBytesAvail - BytesRead;
+					}
+					if (::ReadFile(sh->FReadPipe,
+						bufCmdLine.GetBuffer(),
+						BytesToRead,
+						&PipeReaded,
+						NULL) == FALSE) {
+						lua_pushstring(L, "E");
+						lua_pushstring(L, "ReadPipe Error");
+						break;
+					}
+					if (PipeReaded <= 0) continue;
+					BytesRead += PipeReaded;
+					bufCmdLine[PipeReaded] = '\0';
+					::OemToAnsi(bufCmdLine.GetBuffer(), bufStr);
+					lua_pushstring(L, "C");
+					lua_pushstring(L, bufStr);
+					return 2;
+				}
+			}
+		}
+	} catch (...) {
+	}
+
+	// Код завершения процесса
+	DWORD out_exitcode;
+	::GetExitCodeProcess(sh->pi.hProcess,  &out_exitcode);
+	lua_pushnumber(L, out_exitcode);
+	::CloseHandle(sh->pi.hProcess);
+	::CloseHandle(sh->FReadPipe);
+	::CloseHandle(sh->FWritePipe);
+	return 3;
+}
+
+static int do_startProc(lua_State* L) {
+	static const int MAX_CMD = 1024;
+	PSHELLPROCINFO sh = (PSHELLPROCINFO)lua_newuserdata(L, sizeof(SHELLPROCINFO));
+
+	const char* strPath = luaL_checkstring(L, 1);
+
+	STARTUPINFOA si = { sizeof(STARTUPINFOA) };
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+
+	// устанавливаем именованные каналы на потоки ввода/вывода
+	BOOL bUsePipes = FALSE;
+	HANDLE FWritePipe = NULL;
+	HANDLE FReadPipe = NULL;
+	SECURITY_ATTRIBUTES pa = { sizeof(pa), NULL, TRUE };
+	bUsePipes = ::CreatePipe(&(sh->FReadPipe), &(sh->FWritePipe), &pa, 0);
+	if (bUsePipes != FALSE) {
+		si.hStdOutput = sh->FWritePipe;
+		si.hStdInput = sh->FReadPipe;
+		si.hStdError = sh->FWritePipe;
+		si.dwFlags = STARTF_USESTDHANDLES | si.dwFlags;
+	}
+
+	// запускаем процесс
+	CMemBuffer< char, MAX_CMD > bufCmdLine; // строковой буфер длиной MAX_CMD
+	bufCmdLine.GetBuffer()[0] = 0;
+
+	strcat(bufCmdLine.GetBuffer(), strPath);
+
+	const char *lp = NULL;
+	if (lua_isstring(L, 2)) {
+		lp = luaL_checkstring(L, 2);
+	}
+	sh->pi = { 0 };
+	BOOL RetCode = ::CreateProcessA(NULL, // не используем имя файла, все в строке запуска
+		bufCmdLine.GetBuffer(), // строка запуска
+		NULL, // Process handle not inheritable
+		NULL, // Thread handle not inheritable
+		TRUE, // Set handle inheritance to FALSE
+		0, // No creation flags
+		NULL, // Use parent's environment block
+		lp, //path.GetDirectory(), // устанавливаем дирректорию запуска
+		&si, // STARTUPINFO
+		&(sh->pi)); // PROCESS_INFORMATION
+
+// если провалили запуск сообщаем об ошибке
+	if (RetCode == FALSE) {
+		::CloseHandle(sh->FReadPipe);
+		::CloseHandle(sh->FWritePipe);
+		lua_pushboolean(L, FALSE);
+		lua_pushstring(L, "Can't run process");
+
+		char* lpMsgBuf = NULL;
+		::FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),   // Default language
+			lpMsgBuf,
+			0,
+			NULL
+		);
+		lua_pushstring(L, lpMsgBuf);
+		delete sh;
+		return 3;
+	}
+
+	// закрываем описатель потока, в нем нет необходимости 
+	::CloseHandle(sh->pi.hThread);
+	luaL_getmetatable(L, SHELLPROCOBJECT);
+	lua_setmetatable(L, -2);
 	return 1;
 }
 
@@ -1379,12 +1537,23 @@ luaL_Reg shell[] =
 	{ "greateDirectory", greate_directory },
 	{ "clockStart", clock_start },
 	{ "clockDiff", clock_diff },
+	{ "startProc", do_startProc },
 	{ NULL, NULL }
+};
+
+luaL_Reg proc_methods[] = {
+	{"Continue",proc_Continue},
+	{"Exit",proc_Exit},
+	{NULL, NULL},
 };
 
 extern "C" __declspec(dllexport) int luaopen_shell( lua_State* L )
 {
 	::ZeroMemory(currentDir, MAX_PATH + 1);
 	luaL_register( L, "shell", shell );
+	luaL_newmetatable(L, SHELLPROCOBJECT);  // create metatable for window objects
+	lua_pushvalue(L, -1);  // push metatable
+	lua_setfield(L, -2, "__index");  // metatable.__index = metatable
+	luaL_register(L, NULL, proc_methods);
 	return 1;
 }

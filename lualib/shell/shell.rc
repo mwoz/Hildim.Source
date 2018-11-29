@@ -14,8 +14,8 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,8,0,0
- PRODUCTVERSION 3,4,2,0
+ FILEVERSION 1,9,0,0
+ PRODUCTVERSION 3,4,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -33,12 +33,12 @@ BEGIN
             VALUE "Comments", "Windows Shell Lua Lib for HildiM"
             VALUE "CompanyName", "SciTE-Ru"
             VALUE "FileDescription", "Windows Shell Lua Lib for HildiM"
-            VALUE "FileVersion", "1.8"
+            VALUE "FileVersion", "1.9"
             VALUE "InternalName", "shell"
             VALUE "LegalCopyright", "Copyright © 2008-2018"
             VALUE "OriginalFilename", "shell.dll"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "3.4.2.0"
+            VALUE "ProductVersion", "3.4.4.0"
         END
     END
     BLOCK "VarFileInfo"

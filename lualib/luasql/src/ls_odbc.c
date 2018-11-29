@@ -27,6 +27,8 @@
 #include "lauxlib.h"
 
 #include "luasql.h"
+#define ODBCVER 0x0300
+#include "sqlncli.h"
 
 #define LUASQL_ENVIRONMENT_ODBC "ODBC environment"
 #define LUASQL_CONNECTION_ODBC "ODBC connection"
@@ -129,6 +131,20 @@ static int fail(lua_State *L,  const SQLSMALLINT type, const SQLHANDLE handle) {
         ret = SQLGetDiagRec(type, handle, i, State, &NativeError, Msg, 
                 sizeof(Msg), &MsgSize);
         if (ret == SQL_NO_DATA) break;
+		if (ret != SQL_SUCCESS) {
+			luaL_addlstring(&b, "LuaSql Error", 12);
+			break;
+		}
+		SQLLEN numRecs = 0;
+		ret = SQLGetDiagField(type, handle, i, SQL_DIAG_SS_LINE, &numRecs, 0, 0);
+		if (ret == SQL_SUCCESS) {
+			lua_pushinteger(L, numRecs);
+
+			luaL_addchar(&b, ':');
+			luaL_addvalue(&b);			
+			luaL_addchar(&b, ':');
+			luaL_addchar(&b, ' ');
+		}
         luaL_addlstring(&b, (char*)Msg, MsgSize);
         luaL_addchar(&b, '\n');
         i++;
@@ -286,7 +302,52 @@ static int cur_fetch (lua_State *L) {
     SQLHSTMT hstmt = cur->hstmt;
     int ret; 
     SQLRETURN rc = SQLFetch(cur->hstmt); 
-    if (rc == SQL_NO_DATA) {		
+    if (rc == SQL_NO_DATA) {	
+		int i = 0;
+		BOOL isTbl = lua_istable(L, 4);
+		SQLSMALLINT numcols;
+		while (isTbl) {
+			if (isTbl && (SQLMoreResults(hstmt) == SQL_SUCCESS)) {
+				//
+			} else {
+				break;
+			}			
+			i++;
+			ret = SQLNumResultCols(hstmt, &numcols);
+			if (error(ret)) {
+				ret = fail(L, hSTMT, hstmt);
+				SQLFreeHandle(hSTMT, hstmt);
+				return ret;
+			}
+			if (numcols > 0) {
+				/* if there is a results table (e.g., SELECT) */
+				//ret = create_cursor(L, 1, conn, hstmt, numcols);
+				cur->closed = 0;
+				cur->numcols = numcols;
+				cur->colnames = LUA_NOREF;
+				cur->coltypes = LUA_NOREF;
+				if (create_colinfo(L, cur) < 0) {
+					lua_pop(L, 1);
+					return fail(L, hSTMT, cur->hstmt);
+				}
+				lua_pushvalue(L, 1);
+				lua_rawseti(L, 4, i);
+				break;
+			} else {
+				/* if action has no results (e.g., UPDATE) */
+				SQLLEN numrows;
+				ret = SQLRowCount(hstmt, &numrows);
+				if (error(ret)) {
+					ret = fail(L, hSTMT, hstmt);
+					SQLFreeHandle(hSTMT, hstmt);
+					return ret;
+				}
+				lua_pushnumber(L, numrows);
+				lua_rawseti(L, 4, i);
+				ret = 1;
+			}
+
+		}
 		lua_pushnil(L);
         return 1;
     } else if (error(rc)) return fail(L, hSTMT, hstmt);
@@ -335,16 +396,17 @@ static int cur_close (lua_State *L) {
 	cur_data *cur = (cur_data *) luaL_checkudata (L, 1, LUASQL_CURSOR_ODBC);
 	SQLRETURN ret;
 	luaL_argcheck (L, cur != NULL, 1, LUASQL_PREFIX"cursor expected");
-	if (cur->closed) {
+	if (cur->closed == 1) {
 		lua_pushboolean (L, 0);
 		return 1;
 	}
 
 	/* Nullify structure fields. */
 	cur->closed = 1;
-	ret = SQLCloseCursor(cur->hstmt);
-    if (error(ret))
+	ret = SQLFreeStmt(cur->hstmt, SQL_CLOSE);
+	if (error(ret))
 		return fail(L, hSTMT, cur->hstmt);
+
 	ret = SQLFreeHandle(hSTMT, cur->hstmt);
 	if (error(ret))
 		return fail(L, hSTMT, cur->hstmt);
@@ -506,32 +568,47 @@ static int conn_execute (lua_State *L) {
 		SQLFreeHandle(hSTMT, hstmt);
 		return ret;
 	}
+	BOOL isTbl = lua_istable(L, 3);
 
 	/* determine the number of results */
-	ret = SQLNumResultCols (hstmt, &numcols);
-	if (error(ret)) {
-		ret = fail(L, hSTMT, hstmt);
-		SQLFreeHandle(hSTMT, hstmt);
-		return ret;
-	}
-
-	if (numcols > 0)
-    	/* if there is a results table (e.g., SELECT) */
-		return create_cursor (L, 1, conn, hstmt, numcols);
-
-	else {
-		/* if action has no results (e.g., UPDATE) */
-		SQLLEN numrows;
-		ret = SQLRowCount(hstmt, &numrows);
+	int i = 0;
+	while (TRUE) {
+		i++;
+		ret = SQLNumResultCols(hstmt, &numcols);
 		if (error(ret)) {
 			ret = fail(L, hSTMT, hstmt);
 			SQLFreeHandle(hSTMT, hstmt);
 			return ret;
 		}
-		lua_pushnumber(L, numrows);
-		SQLFreeHandle(hSTMT, hstmt);
-		return 1;
+		if (numcols > 0) {
+			/* if there is a results table (e.g., SELECT) */
+			ret = create_cursor(L, 1, conn, hstmt, numcols);
+			if (isTbl)
+				lua_rawseti(L, 3, i);
+			break;
+		}
+		else {
+			/* if action has no results (e.g., UPDATE) */
+			SQLLEN numrows;
+			ret = SQLRowCount(hstmt, &numrows);
+			if (error(ret)) {
+				ret = fail(L, hSTMT, hstmt);
+				SQLFreeHandle(hSTMT, hstmt);
+				return ret;
+			}
+			lua_pushnumber(L, numrows);
+			if (isTbl)
+				lua_rawseti(L, 3, i);
+			ret = 1;
+		}
+		if (isTbl && (SQLMoreResults(hstmt) == SQL_SUCCESS)) {
+			//
+		} else {
+			SQLFreeHandle(hSTMT, hstmt);
+			break;
+		}
 	}
+	return ret;
 }
 
 /*
