@@ -777,12 +777,12 @@ static int do_startProc(lua_State* L) {
 			NULL
 		);
 		lua_pushstring(L, lpMsgBuf);
-		delete sh;
+		//delete sh;
 		return 3;
 	}
 
 	// закрываем описатель потока, в нем нет необходимости 
-	::CloseHandle(sh->pi.hThread);
+	//::CloseHandle(sh->pi.hThread);
 	luaL_getmetatable(L, SHELLPROCOBJECT);
 	lua_setmetatable(L, -2);
 	return 1;

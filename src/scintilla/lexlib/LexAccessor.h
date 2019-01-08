@@ -150,7 +150,7 @@ public:
 	void ColourTo(Sci_PositionU pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
-			assert(pos >= startSeg);
+			//luasql.odbcassert(pos >= startSeg);
 			if (pos < startSeg) {
 				return;
 			}
