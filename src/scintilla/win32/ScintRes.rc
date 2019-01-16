@@ -4,7 +4,7 @@
 
 #include <windows.h>
 
-#define VERSION_SCINTILLA "4.1.3"
+#define VERSION_SCINTILLA "4.1.3.0"
 #define VERSION_WORDS 4, 1, 3, 0
 
 VS_VERSION_INFO VERSIONINFO
@@ -30,8 +30,8 @@ BEGIN
 			VALUE	"InternalName",	"Scintilla\0"
 			VALUE	"LegalCopyright",	"Copyright 1998-2012 by Neil Hodgson\0"
 			VALUE	"OriginalFilename",	"Scintilla.DLL\0"
-			VALUE	"ProductName",	"Scintilla\0"
-			VALUE	"ProductVersion",	VERSION_SCINTILLA "\0"
+			VALUE	"ProductName",	"HildiM\0"
+			VALUE	"ProductVersion",	"3.5.0" "\0"
 		END
 	END
 END
