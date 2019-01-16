@@ -190,6 +190,26 @@ struct RegexError : public std::runtime_error {
 };
 
 /**
+ * The ActionDuration class stores the average time taken for some action such as styling or
+ * wrapping a line. It is used to decide how many repetitions of that action can be performed
+ * on idle to maximize efficiency without affecting application responsiveness.
+ * The duration changes if the time for the action changes. For example, if a simple lexer is
+ * changed to a complex lexer. Changes are damped and clamped to avoid short periods of easy
+ * or difficult processing moving the value too far leading to inefficiency or poor user
+ * experience.
+ */
+
+class ActionDuration {
+	double duration;
+	const double minDuration;
+	const double maxDuration;
+public:
+	ActionDuration(double duration_, double minDuration_, double maxDuration_) noexcept;
+	void AddSample(size_t numberActions, double durationOfActions) noexcept;
+	double Duration() const noexcept;
+};
+
+/**
  */
 class Document : PerLine, public IDocument, public ILoader {
 
@@ -259,7 +279,7 @@ public:
 	bool useTabs;
 	bool tabIndents;
 	bool backspaceUnindents;
-	double durationStyleOneLine;
+	ActionDuration durationStyleOneLine;
 
 	std::unique_ptr<IDecorationList> decorations;
 
@@ -333,7 +353,7 @@ public:
 	}
 	bool IsCollectingUndo() const { return cb.IsCollectingUndo(); }
 	void BeginUndoAction() { cb.BeginUndoAction(); }
-	int EndUndoAction() { return cb.EndUndoAction(); }
+	void EndUndoAction() { cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const { return cb.IsSavePoint(); }
@@ -557,7 +577,6 @@ public:
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyLexerChanged(Document *doc, void *userData) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, int status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }

@@ -25,9 +25,9 @@
 #include <chrono>
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0500
 #undef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0500
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
@@ -388,7 +388,6 @@ class ScintillaWin :
 	void ChangeScrollPos(int barType, Sci::Position pos);
 	sptr_t GetTextLength();
 	sptr_t GetText(uptr_t wParam, sptr_t lParam);
-	void InsertMultiPasteText(const char *text, int len); //!-add-[InsertMultiPasteText]  
 
 public:
 	// Public for benefit of Scintilla_DirectFunction
@@ -430,7 +429,7 @@ private:
 	int sysCaretHeight;
 };
 
-HINSTANCE ScintillaWin::hInstance = 0;
+HINSTANCE ScintillaWin::hInstance {};
 ATOM ScintillaWin::scintillaClassAtom = 0;
 ATOM ScintillaWin::callClassAtom = 0;
 
@@ -475,7 +474,7 @@ ScintillaWin::ScintillaWin(HWND hwnd) {
 	sysCaretHeight = 0;
 
 #if defined(USE_D2D)
-	pRenderTarget = 0;
+	pRenderTarget = nullptr;
 	renderTargetValid = true;
 #endif
 
@@ -605,7 +604,7 @@ void ScintillaWin::EnsureRenderTarget(HDC hdc) {
 void ScintillaWin::DropRenderTarget() {
 	if (pRenderTarget) {
 		pRenderTarget->Release();
-		pRenderTarget = 0;
+		pRenderTarget = nullptr;
 	}
 }
 
@@ -1189,7 +1188,7 @@ UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage) {
 	}
 	switch (characterSet) {
 	case SC_CHARSET_ANSI: return 1252;
-	case SC_CHARSET_DEFAULT: return documentCodePage;
+	case SC_CHARSET_DEFAULT: return documentCodePage ? documentCodePage : 1252;
 	case SC_CHARSET_BALTIC: return 1257;
 	case SC_CHARSET_CHINESEBIG5: return 950;
 	case SC_CHARSET_EASTEUROPE: return 1250;
@@ -1682,7 +1681,7 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 			if (lParam) {
 				*reinterpret_cast<int *>(lParam) = static_cast<int>(SelectionEnd().Position());
 			}
-			return MAKELONG(SelectionStart().Position(), SelectionEnd().Position());
+			return MAKELRESULT(SelectionStart().Position(), SelectionEnd().Position());
 
 		case EM_EXGETSEL: {
 				if (lParam == 0) {
@@ -1914,13 +1913,11 @@ void ScintillaWin::UpdateSystemCaret() {
 }
 
 int ScintillaWin::SetScrollInfo(int nBar, LPCSCROLLINFO lpsi, BOOL bRedraw) {
-	//return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
-	return ::SendMessage(::GetParent(MainHWND()), SCI_SETSCROLLINFO, nBar, (WPARAM)lpsi) ? true : false;
+	return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
 }
 
 bool ScintillaWin::GetScrollInfo(int nBar, LPSCROLLINFO lpsi) {
-	//return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
-	return ::SendMessage(::GetParent(MainHWND()), SCI_GETSCROLLINFO, nBar, (WPARAM)lpsi) ? true : ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
+	return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
 }
 
 // Change the scroll position but avoid repaint if changing to same value
@@ -1999,14 +1996,16 @@ bool ScintillaWin::ModifyScrollBars(Sci::Line nMax, Sci::Line nPage) {
 
 void ScintillaWin::NotifyChange() {
 	::SendMessage(::GetParent(MainHWND()), WM_COMMAND,
-	        MAKELONG(GetCtrlID(), SCEN_CHANGE),
+	        MAKEWPARAM(GetCtrlID(), SCEN_CHANGE),
 		reinterpret_cast<LPARAM>(MainHWND()));
 }
 
 void ScintillaWin::NotifyFocus(bool focus) {
-	::SendMessage(::GetParent(MainHWND()), WM_COMMAND,
-	        MAKELONG(GetCtrlID(), focus ? SCEN_SETFOCUS : SCEN_KILLFOCUS),
-		reinterpret_cast<LPARAM>(MainHWND()));
+	if (commandEvents) {
+		::SendMessage(::GetParent(MainHWND()), WM_COMMAND,
+			MAKEWPARAM(GetCtrlID(), focus ? SCEN_SETFOCUS : SCEN_KILLFOCUS),
+			reinterpret_cast<LPARAM>(MainHWND()));
+	}
 	Editor::NotifyFocus(focus);
 }
 
@@ -2186,12 +2185,12 @@ bool ScintillaWin::CanPaste() {
 namespace {
 
 class GlobalMemory {
-	HGLOBAL hand;
+	HGLOBAL hand {};
 public:
-	void *ptr;
-	GlobalMemory() : hand(0), ptr(0) {
+	void *ptr {};
+	GlobalMemory() {
 	}
-	explicit GlobalMemory(HGLOBAL hand_) : hand(hand_), ptr(0) {
+	explicit GlobalMemory(HGLOBAL hand_) : hand(hand_) {
 		if (hand) {
 			ptr = ::GlobalLock(hand);
 		}
@@ -2224,7 +2223,7 @@ public:
 		::SetClipboardData(uFormat, Unlock());
 	}
 	operator bool() const {
-		return ptr != 0;
+		return ptr != nullptr;
 	}
 	SIZE_T Size() {
 		return ::GlobalSize(hand);
@@ -2248,71 +2247,16 @@ bool OpenClipboardRetry(HWND hwnd) {
 
 }
 
-//!-start-[InsertMultiPasteText]
-void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
-	std::string	convertedText;
-	if (convertPastes) {
-		// Convert line endings of the paste into our local line-endings mode
-		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode);
-		text = convertedText.c_str();
-	}
-	FilterSelections();
-	UndoGroup ug(pdoc, (sel.Count() > 1) || !sel.Empty());
-	for (size_t r=0; r<sel.Count(); r++) {
-		if (!RangeContainsProtected(sel.Range(r).Start().Position(),
-			sel.Range(r).End().Position())) {
-			int positionInsert = sel.Range(r).Start().Position();
-			if (!sel.Range(r).Empty()) {
-				if (sel.Range(r).Length()) {
-					pdoc->DeleteChars(positionInsert, sel.Range(r).Length());
-					sel.Range(r).ClearVirtualSpace();
-				} else {
-					// Range is all virtual so collapse to start of virtual space
-					sel.Range(r).MinimizeVirtualSpace();
-				}
-			}
-			positionInsert = RealizeVirtualSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
-			if (pdoc->InsertString(positionInsert, text, len)) {
-				sel.Range(r).caret.SetPosition(positionInsert + len);
-				sel.Range(r).anchor.SetPosition(positionInsert + len);
-			}
-			sel.Range(r).ClearVirtualSpace();
-			// If in wrap mode rewrap current line so EnsureCaretVisible has accurate information
-			if (Wrapping()) {
-				AutoSurface surface(this);
-				if (surface) {
-					WrapOneLine(surface, pdoc->LineFromPosition(positionInsert));
-				}
-			}
-		}
-	}
-}
-//!-end-[InsertMultiPasteText]
-
 void ScintillaWin::Paste() {
 	if (!::OpenClipboardRetry(MainHWND())) {
 		return;
 	}
-/*!-remove-[InsertMultiPasteText]
 	UndoGroup ug(pdoc);
 	const bool isLine = SelectionEmpty() &&
 		(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
 	ClearSelection(multiPasteMode == SC_MULTIPASTE_EACH);
 	bool isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
-*/
-//!-start-[InsertMultiPasteText]
-	bool isLine = SelectionEmpty() && (::IsClipboardFormatAvailable(cfLineSelect) != 0);
-	SelectionPosition selStart;
-	bool isRectangular = ::IsClipboardFormatAvailable(cfColumnSelect) != 0;
-	bool isMultiPaste = (!isRectangular)&&(!isLine)&&(sel.Count()>1);
-	if(!isMultiPaste) {
-		UndoGroup ug(pdoc);
-		ClearSelection();
-		selStart = sel.IsRectangular() ?
-			sel.Rectangular().Start() :
-			sel.Range(sel.Main()).Start();
-	}
-//!-end-[InsertMultiPasteText]
+
 	if (!isRectangular) {
 		// Evaluate "Borland IDE Block Type" explicitly
 		GlobalMemory memBorlandSelection(::GetClipboardData(cfBorlandIDEBlockType));
@@ -2346,14 +2290,7 @@ void ScintillaWin::Paste() {
 				MultiByteFromWideChar(cpDest, uptr, &putf[0], len);
 			}
 
-//!			InsertPasteShape(&putf[0], len, pasteShape);
-//!-start-[InsertMultiPasteText]
-			if(!isMultiPaste) {
-			InsertPasteShape(&putf[0], static_cast<int>(len), pasteShape);
-			} else {
-				InsertMultiPasteText(&putf[0], len);
-			}
-//!-end-[InsertMultiPasteText]
+			InsertPasteShape(&putf[0], len, pasteShape);
 		}
 		memUSelection.Unlock();
 	} else {
@@ -2368,12 +2305,12 @@ void ScintillaWin::Paste() {
 					if ((len == bytes) && (0 == ptr[i]))
 						len = i;
 				}
-				const int ilen = static_cast<int>(len);
 
 				// In Unicode mode, convert clipboard text to UTF-8
 				if (IsUnicodeMode()) {
 					std::vector<wchar_t> uptr(len+1);
 
+					const int ilen = static_cast<int>(len);
 					const size_t ulen = WideCharFromMultiByte(CP_ACP,
 					                    std::string_view(ptr, ilen), &uptr[0], ilen +1);
 
@@ -2382,23 +2319,9 @@ void ScintillaWin::Paste() {
 					std::vector<char> putf(mlen+1);
 					UTF8FromUTF16(wsv, &putf[0], mlen);
 
-//!					InsertPasteShape(&putf[0], mlen, pasteShape);
-//!-begin-[InsertMultiPasteText]
-						if(!isMultiPaste) {
-					InsertPasteShape(&putf[0], static_cast<int>(mlen), pasteShape);
+					InsertPasteShape(&putf[0], mlen, pasteShape);
 				} else {
-							InsertMultiPasteText(&putf[0], mlen);
-						}
-//!-end-[InsertMultiPasteText]
-						} else {
-//!					InsertPasteShape(ptr, len, pasteShape);
-//!-begin-[InsertMultiPasteText]
-						if(!isMultiPaste) {
-					InsertPasteShape(ptr, ilen, pasteShape);
-				} else {
-							InsertMultiPasteText(ptr, ilen);
-						}
-//!-end-[InsertMultiPasteText]
+					InsertPasteShape(ptr, len, pasteShape);
 				}
 			}
 			memSelection.Unlock();
@@ -2547,7 +2470,7 @@ static VFunction *vtDropSource[] = {
 
 DropSource::DropSource() {
 	vtbl = vtDropSource;
-	sci = 0;
+	sci = nullptr;
 }
 
 /// Implement IUnkown
@@ -2673,7 +2596,7 @@ static VFunction *vtDataObject[] = {
 
 DataObject::DataObject() {
 	vtbl = vtDataObject;
-	sci = 0;
+	sci = nullptr;
 }
 
 /// Implement IUnknown
@@ -2736,7 +2659,7 @@ static VFunction *vtDropTarget[] = {
 
 DropTarget::DropTarget() {
 	vtbl = vtDropTarget;
-	sci = 0;
+	sci = nullptr;
 }
 
 /**
@@ -3393,7 +3316,7 @@ LRESULT PASCAL ScintillaWin::CTWndProc(
 	ScintillaWin *sciThis = static_cast<ScintillaWin *>(PointerFromWindow(hWnd));
 	try {
 		// ctp will be zero if WM_CREATE not seen yet
-		if (sciThis == 0) {
+		if (sciThis == nullptr) {
 			if (iMessage == WM_CREATE) {
 				// Associate CallTip object with window
 				CREATESTRUCT *pCreate = static_cast<CREATESTRUCT *>(PtrFromSPtr(lParam));
@@ -3507,7 +3430,7 @@ LRESULT PASCAL ScintillaWin::SWndProc(
 	// Find C++ object associated with window.
 	ScintillaWin *sci = static_cast<ScintillaWin *>(PointerFromWindow(hWnd));
 	// sci will be zero if WM_CREATE not seen yet
-	if (sci == 0) {
+	if (sci == nullptr) {
 		try {
 			if (iMessage == WM_CREATE) {
 				// Create C++ object associated with window

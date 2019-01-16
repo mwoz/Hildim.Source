@@ -54,6 +54,7 @@ int iupMenuGetChildId(Ihandle* ih)
 
 char* iupMenuGetChildIdStr(Ihandle* ih)
 {
+  /* Used only in Motif */
   Ihandle* dlg = IupGetDialog(ih);
   if (dlg)
     return iupDialogGetChildIdStr(ih);
@@ -263,7 +264,7 @@ Iclass* iupSubmenuNewClass(void)
   ic->name = "submenu";
   ic->format = "sh"; /* one string and one Ihandle */
   ic->nativetype = IUP_TYPEMENU;
-  ic->childtype = IUP_CHILDMANY+1;  /* one child */
+  ic->childtype = IUP_CHILDMANY+1;  /* 1 child */
   ic->is_interactive = 1;
 
   /* Class functions */
@@ -295,7 +296,7 @@ Iclass* iupMenuNewClass(void)
   ic->name = "menu";
   ic->format = "g"; /* (Ihandle**) */
   ic->nativetype = IUP_TYPEMENU;
-  ic->childtype = IUP_CHILDMANY;
+  ic->childtype = IUP_CHILDMANY;  /* can have children */
   ic->is_interactive = 1;
 
   /* Class functions */

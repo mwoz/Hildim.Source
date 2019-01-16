@@ -2692,8 +2692,7 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
 
 static COLORREF winTreeInvertColor(COLORREF color)
 {
-	return color;
-  //return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
+  return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
 }
 
 static int winTreeWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)
@@ -3142,7 +3141,7 @@ static int winTreeMapMethod(Ihandle* ih)
       SelectObject(hBitmapDC, hOldBitmap);
       ImageList_Add(image_list, hBitmap, NULL);
 
-      DeleteDC(hBitmapDC);
+      DeleteDC(hBitmapDC);  /* to match CreateCompatibleDC */
       ReleaseDC(ih->handle, hScreenDC);
       DeleteObject(hBitmap);
     }
@@ -3263,4 +3262,6 @@ void iupdrvTreeInitClass(Iclass* ic)
   /* necessary because transparent background does not work when not using visual styles */
   if (!iupwin_comctl32ver6)  /* Used by iupdrvImageCreateImage */
     iupClassRegisterAttribute(ic, "FLAT_ALPHA", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+
+  iupClassRegisterAttribute(ic, "CONTROLID", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 }

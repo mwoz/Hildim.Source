@@ -691,9 +691,19 @@ void iupdrvSetActive(Ihandle* ih, int enable)
 
 int iupwinSetTitleAttrib(Ihandle* ih, const char* value)
 {
-  if (!value) value = "";
-  SetWindowText(ih->handle, iupwinStrToSystem(value));
+  if (!value)
+    SetWindowText(ih->handle, TEXT(""));
+  else
+    SetWindowText(ih->handle, iupwinStrToSystem(value));
   return 1;
+}
+
+void iupdrvSetAccessibleTitle(Ihandle *ih, const char* title)
+{
+  if (!title) 
+    SetWindowText(ih->handle, TEXT(""));
+  else
+    SetWindowText(ih->handle, iupwinStrToSystem(title));
 }
 
 void iupwinSetMnemonicTitle(Ihandle *ih, int pos, const char* value)
@@ -987,7 +997,8 @@ HWND iupwinCreateWindowEx(HWND hParent, LPCTSTR lpClassName, DWORD dwExStyle, DW
 
 int iupwinCreateWindow(Ihandle* ih, LPCTSTR lpClassName, DWORD dwExStyle, DWORD dwStyle, void* clientdata)
 {
-  ih->serial = iupDialogGetChildId(ih);
+  const int serial = iupAttribGetInt(ih, "CONTROLID");
+  ih->serial = (serial ? serial : iupDialogGetChildId(ih));
 
   ih->handle = iupwinCreateWindowEx(iupChildTreeGetNativeParentHandle(ih), lpClassName, dwExStyle, dwStyle, ih->serial, clientdata);
   if (!ih->handle)

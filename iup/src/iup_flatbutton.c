@@ -68,6 +68,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
   int image_pressed;
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
   int make_inactive = 0;
+  int focus_feedback = iupAttribGetBoolean(ih, "FOCUSFEEDBACK");
 
   iupDrawParentBackground(dc, ih);
 
@@ -85,6 +86,10 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
     if (presscolor)
       bgcolor = presscolor;
 
+    presscolor = iupAttribGetStr(ih, "TEXTPSCOLOR");
+    if (presscolor)
+      fgcolor = presscolor;
+
     draw_border = 1;
   }
   else if (ih->data->highlighted)
@@ -92,6 +97,10 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
     char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
     if (hlcolor)
       bgcolor = hlcolor;
+
+    hlcolor = iupAttribGetStr(ih, "TEXTHLCOLOR");
+    if (hlcolor)
+      fgcolor = hlcolor;
 
     draw_border = 1;
   }
@@ -140,7 +149,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
                        bgcolor, NULL, 1);  /* background is always active */
 
   /* reserve space for focus feedback (after background draw) */
-  if (iupAttribGetBoolean(ih, "CANFOCUS"))
+  if (iupAttribGetBoolean(ih, "CANFOCUS") && focus_feedback)
     border_width++;
 
   /* draw icon */
@@ -168,7 +177,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
   }
 
 
-  if (ih->data->has_focus)
+  if (ih->data->has_focus && focus_feedback)
   {
     border_width--;
     iupdrvDrawFocusRect(dc, border_width, border_width, ih->currentwidth - 1 - border_width, ih->currentheight - 1 - border_width);
@@ -265,7 +274,7 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       ih->data->pressed = pressed;
       iupdrvRedrawNow(ih);
 
-	  if (!pressed && (!iup_isbutton1(status) || (x >= 0 && y >= 0 && x <= ih->currentwidth && y <= ih->currentheight))) 
+      if (!pressed)
         iFlatButtonNotify(ih, 0);
     }
   }
@@ -640,6 +649,7 @@ Iclass* iupFlatButtonNewClass(void)
   iupClassRegisterAttribute(ic, "PRESSED", iFlatButtonGetPressedAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HASFOCUS", iFlatButtonGetHasFocusAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWBORDER", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
@@ -649,6 +659,8 @@ Iclass* iupFlatButtonNewClass(void)
   iupClassRegisterAttribute(ic, "BGCOLOR", iFlatButtonGetBgColorAttrib, iFlatButtonSetAttribPostRedraw, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE | IUPAF_DEFAULT);
   iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "PSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "TEXTHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "TEXTPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
 
   iupClassRegisterAttribute(ic, "IMAGE", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IMAGEPRESS", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);

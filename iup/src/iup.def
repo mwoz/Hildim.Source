@@ -123,6 +123,7 @@ IupGetChild
 IupGetChildPos
 IupGetChildCount
 IupGetAllAttributes
+IupCopyAttributes
 IupSetAttributeHandle
 IupGetAttributeHandle
 IupSetAttributeHandleId
@@ -148,6 +149,9 @@ IupCboxv
 IupCbox
 IupGridBox 
 IupGridBoxv
+IupMultiBoxv
+IupMultiBoxV
+IupMultiBox
 IupVal
 IupProgressBar
 IupTabs
@@ -381,6 +385,7 @@ iupStrReturnStrf
 iupStrGetMemory
 iupStrGetLargeMem
 iupStrFileMakeFileName
+iupStrFileNameSplit
 iupStrFileGetTitle
 iupStrFileGetPath
 iupStrFileGetExt
@@ -485,6 +490,7 @@ iupBaseRegisterVisualAttrib
 iupBaseRegisterCommonAttrib
 iupBaseRegisterCommonCallbacks
 iupBaseGetWidAttrib
+iupBaseUpdateAttribFromFont
 iupBaseGetVisibleAttrib
 iupBaseGetSizeAttrib
 iupRound
@@ -508,6 +514,7 @@ iupFlatScrollBarSetChildrenPosition
 iupFlatScrollBarWheelUpdate
 iupFlatScrollBarMotionUpdate
 iupFlatScrollBarSetPos
+iupDialogGetNativeParent
 
 iupAttribSetClassObject
 iupAttribSetClassObjectId
@@ -642,3 +649,5 @@ iupwinStrChar2Wide
 iupwinStrWide2Char
 iupwinShowLastError
 iupwinSetInstance
+iupwinStrToSystemFilename
+iupwinStrFromSystemFilename

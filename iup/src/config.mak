@@ -55,7 +55,7 @@ SRC = iup_array.c iup_callback.c iup_dlglist.c iup_attrib.c iup_focus.c iup_font
       iup_flatbutton.c iup_animatedlabel.c iup_draw.c iup_flatframe.c iup_flattabs.c \
       iup_flatscrollbar.c iup_flatscrollbox.c iup_gauge.c iup_dial.c iup_colorbar.c \
       iup_colorbrowser.c iup_colorhsi.c iup_flatlabel.c iup_dropbutton.c iup_flattoggle.c \
-      iup_flatseparator.c iup_space.c
+      iup_flatseparator.c iup_space.c iup_multibox.c
 
 ifdef USE_HAIKU
   # Since Haiku has no GTK and no Motif, we can only use the native implementation
@@ -169,12 +169,12 @@ else
          
   ifdef USE_NEW_DRAW
     INCLUDES += win/wdl
-    DEFINES += COBJMACROS _UNICODE
+    DEFINES += COBJMACROS _UNICODE USE_NEW_DRAW
     WDL := win/wdl/backend-d2d.c win/wdl/backend-dwrite.c win/wdl/backend-gdix.c win/wdl/backend-wic.c \
            win/wdl/bitblt.c win/wdl/brush.c win/wdl/cachedimage.c win/wdl/canvas.c win/wdl/draw.c \
            win/wdl/fill.c win/wdl/font.c win/wdl/image.c win/wdl/init.c win/wdl/memstream.c \
            win/wdl/misc.c win/wdl/path.c win/wdl/string.c win/wdl/strokestyle.c
-    SRC += win/iupwin_draw_wdl.c iupwin_image_wdl.c $(WDL)
+    SRC += win/iupwin_draw_wdl.c win/iupwin_draw_gdi.c iupwin_image_wdl.c $(WDL)
   else
     SRC += win/iupwin_draw_gdi.c
   endif

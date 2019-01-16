@@ -65,11 +65,12 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
   char* fgimage = iupAttribGet(ih, "FRONTIMAGE");
   int text_flags = iupDrawGetTextFlags(ih, "TEXTALIGNMENT", "TEXTWRAP", "TEXTELLIPSIS");
   double text_orientation = iupAttribGetDouble(ih, "TEXTORIENTATION");
-  int check_right = iupAttribGetInt(ih, "CHECKRIGHT");
+  int check_at_right = iupAttribGetInt(ih, "CHECKRIGHT");
   Ihandle* radio = iupRadioFindToggleParent(ih);
   const char* draw_image;
   int border_width = ih->data->border_width;
   int draw_border = iupAttribGetBoolean(ih, "SHOWBORDER");
+  int focus_feedback = iupAttribGetBoolean(ih, "FOCUSFEEDBACK");
   int image_pressed, icon_left, check_left, icon_width, icon_right;
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
   int make_inactive = 0;
@@ -89,7 +90,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
     check_left = 0;
     icon_left = ih->data->check_size + ih->data->check_spacing;
     icon_right = ih->currentwidth - 1;
-    if (check_right)
+    if (check_at_right)
     {
       check_left = ih->currentwidth - ih->data->check_size;
       icon_left = 0;
@@ -105,6 +106,10 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
       if (presscolor)
         bgcolor = presscolor;
 
+      presscolor = iupAttribGetStr(ih, "TEXTPSCOLOR");
+      if (presscolor)
+        fgcolor = presscolor;
+
       draw_border = 1;
     }
     else if (ih->data->highlighted)
@@ -112,6 +117,10 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
       char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
       if (hlcolor)
         bgcolor = hlcolor;
+
+      hlcolor = iupAttribGetStr(ih, "TEXTHLCOLOR");
+      if (hlcolor)
+        fgcolor = hlcolor;
 
       draw_border = 1;
     }
@@ -166,7 +175,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
                        bgcolor, NULL, 1);  /* background is always active */
 
   /* reserve space for focus feedback (after background draw) */
-  if (iupAttribGetBoolean(ih, "CANFOCUS"))
+  if (iupAttribGetBoolean(ih, "CANFOCUS") && focus_feedback)
     border_width++;
 
   /* draw icon */
@@ -195,6 +204,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
 
   if (ih->data->check_size)
   {
+    int check_alig = iupFlatGetVerticalAlignment(iupAttribGetStr(ih, "CHECKALIGN"));
     int xc = check_left + ih->data->check_size / 2;
     int yc = ih->currentheight / 2;
     int radius = ih->data->check_size / 2 - ITOGGLE_MARGIN;
@@ -202,6 +212,17 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
     int check_ymin = (ih->currentheight - ih->data->check_size) / 2 + ITOGGLE_MARGIN;
     int check_size = ih->data->check_size - 2 * ITOGGLE_MARGIN;
     char* check_image = iupAttribGet(ih, "CHECKIMAGE");
+
+    if (check_alig == IUP_ALIGN_ABOTTOM)
+    {
+      check_ymin = ih->currentheight - 1 - ITOGGLE_MARGIN;
+      yc = ih->currentheight - 1 - ITOGGLE_MARGIN - ih->data->check_size / 2;
+    }
+    else if (check_alig == IUP_ALIGN_ATOP)
+    {
+      check_ymin = ITOGGLE_MARGIN;
+      yc = ih->data->check_size / 2;
+    }
 
     if (check_image)
     {
@@ -269,7 +290,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
     }
   }
 
-  if (ih->data->has_focus)
+  if (ih->data->has_focus && focus_feedback)
   {
     border_width--;
     iupdrvDrawFocusRect(dc, border_width + icon_left, border_width,
@@ -779,6 +800,7 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterAttribute(ic, "PRESSED", iFlatToggleGetPressedAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HASFOCUS", iFlatToggleGetHasFocusAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWBORDER", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
@@ -788,6 +810,8 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterAttribute(ic, "BGCOLOR", iFlatToggleGetBgColorAttrib, iFlatToggleSetAttribPostRedraw, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE | IUPAF_DEFAULT);
   iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "PSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "TEXTHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "TEXTPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
 
   iupClassRegisterAttribute(ic, "IMAGE", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IMAGEPRESS", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
@@ -817,6 +841,7 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterAttribute(ic, "CHECKRIGHT", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKSIZE", iFlatToggleGetCheckSizeAttrib, iFlatToggleSetCheckSizeAttrib, NULL, NULL, IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "CHECKSPACING", iFlatToggleGetCheckSpacingAttrib, iFlatToggleSetCheckSpacingAttrib, IUPAF_SAMEASSYSTEM, "5", IUPAF_NOT_MAPPED);
+  iupClassRegisterAttribute(ic, "CHECKALIGN", NULL, NULL, IUPAF_SAMEASSYSTEM, "ACENTER", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKBGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "TXTBGCOLOR", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKFGCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);

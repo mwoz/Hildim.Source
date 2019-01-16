@@ -73,29 +73,29 @@ static void iGaugeDrawText(Ihandle* ih, int xmid, int w, int h, long fgcolor)
   x -= text_w / 2;
   y -= text_h / 2;
   xmin = x;
-  ymin = y + text_h;
-  xmax = xmin + text_w;
-  ymax = y;
+  xmax = x + text_w;
+  ymin = y;
+  ymax = y + text_h;
 
   if(xmid < xmin)
   {
     iupDrawSetColor(ih, "DRAWCOLOR", fgcolor);
-    IupDrawText(ih, text, 0, x, y, -1, -1);
+    IupDrawText(ih, text, 0, x, y, text_w, text_h);
   }
   else if(xmid > xmax)
   {
     iupDrawSetColor(ih, "DRAWCOLOR", ih->data->bgcolor);
-    IupDrawText(ih, text, 0, x, y, -1, -1);
+    IupDrawText(ih, text, 0, x, y, text_w, text_h);
   }
   else
   {
     IupDrawSetClipRect(ih, xmin, ymin, xmid, ymax);
     iupDrawSetColor(ih, "DRAWCOLOR", ih->data->bgcolor);
-    IupDrawText(ih, text, 0, x, y, -1, -1);
+    IupDrawText(ih, text, 0, x, y, text_w, text_h);
 
     IupDrawSetClipRect(ih, xmid, ymin, xmax, ymax);
     iupDrawSetColor(ih, "DRAWCOLOR", fgcolor);
-    IupDrawText(ih, text, 0, x, y, -1, -1);
+    IupDrawText(ih, text, 0, x, y, text_w, text_h);
     IupDrawResetClip(ih);
   }
 }
@@ -162,7 +162,7 @@ static int iGaugeRedraw_CB(Ihandle* ih)
       IupDrawRectangle(ih, xstart, ystart, xmid, yend);
     }
 
-    if(ih->data->show_text)
+    if (ih->data->show_text)
       iGaugeDrawText(ih, xmid, w, h, fgcolor);
   }
 
@@ -224,7 +224,7 @@ static int iGaugeSetValueAttrib(Ihandle* ih, const char* value)
       iGaugeCropValue(ih);
   }
 
-  IupUpdate(ih);
+  IupRedraw(ih, 0); /* redraw now */
   return 0; /* do not store value in hash table */
 }
 
@@ -357,6 +357,9 @@ static int iGaugeCreateMethod(Ihandle* ih, void **params)
   ih->data->flatcolor = iupDrawColor(164, 164, 164, 255);
   ih->data->show_text = 1;
 
+  /* to avoid performance glitches on Windows */
+  iupAttribSet(ih, "DRAWUSEGDI", "YES");
+
   /* IupCanvas callbacks */
   IupSetCallback(ih, "ACTION",    (Icallback)iGaugeRedraw_CB);
 
@@ -370,7 +373,7 @@ Iclass* iupGaugeNewClass(void)
   ic->name = "gauge";
   ic->format = NULL; /* no parameters */
   ic->nativetype  = IUP_TYPECANVAS;
-  ic->childtype   = IUP_CHILDNONE;
+  ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 0;
 
   /* Class functions */

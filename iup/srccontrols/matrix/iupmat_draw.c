@@ -1169,7 +1169,7 @@ static void iMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2
   int x1, y1, x2, y2, old_x2, old_y1, old_y2, toggle_centered;
   int col_alignment, lin, col, active, first_col, first_lin;
   int i, adjust_merged_col = 0, adjust_merged_lin = 0;
-  long framecolor, framehighlight, emptyarea_color = -1;
+  long framecolor, framehighlight;
   IFnii mark_cb;
   IFnii dropcheck_cb;
   IFniiiiiiC draw_cb;
@@ -1272,7 +1272,7 @@ static void iMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2
 
   if ((col2 == ih->data->columns.num - 1) && (old_x2 > x2))
   {
-    emptyarea_color = cdIupConvertColor(ih->data->bgcolor_parent);
+    long emptyarea_color = cdIupConvertColor(ih->data->bgcolor_parent);
     cdCanvasForeground(ih->data->cd_canvas, emptyarea_color);
 
     /* If it was drawn until the last column and remains space in the right of it,
@@ -1282,8 +1282,7 @@ static void iMatrixDrawCells(Ihandle* ih, int lin1, int col1, int lin2, int col2
 
   if ((lin2 == ih->data->lines.num - 1) && (old_y2 > y2))
   {
-    if (emptyarea_color == -1)
-      emptyarea_color = cdIupConvertColor(ih->data->bgcolor_parent);
+    long emptyarea_color = cdIupConvertColor(ih->data->bgcolor_parent);
     cdCanvasForeground(ih->data->cd_canvas, emptyarea_color);
 
     /* If it was drawn until the last line visible and remains space below it,
@@ -1434,16 +1433,12 @@ static void iMatrixDrawMatrix(Ihandle* ih)
 
   /* If there are ordinary cells, then draw them */
   if (ih->data->columns.num_noscroll > 1 && ih->data->lines.num_noscroll > 1)
-    iMatrixDrawCells(ih, 1, 1,
-    ih->data->lines.num_noscroll - 1, ih->data->columns.num_noscroll - 1);
+    iMatrixDrawCells(ih, 1, 1, ih->data->lines.num_noscroll - 1, ih->data->columns.num_noscroll - 1);
   if (ih->data->columns.num_noscroll > 1)
-    iMatrixDrawCells(ih, ih->data->lines.first, 1,
-    ih->data->lines.last, ih->data->columns.num_noscroll - 1);
+    iMatrixDrawCells(ih, ih->data->lines.first, 1, ih->data->lines.last, ih->data->columns.num_noscroll - 1);
   if (ih->data->lines.num_noscroll > 1)
-    iMatrixDrawCells(ih, 1, ih->data->columns.first,
-    ih->data->lines.num_noscroll - 1, ih->data->columns.last);
-  iMatrixDrawCells(ih, ih->data->lines.first, ih->data->columns.first,
-                     ih->data->lines.last, ih->data->columns.last);
+    iMatrixDrawCells(ih, 1, ih->data->columns.first, ih->data->lines.num_noscroll - 1, ih->data->columns.last);
+  iMatrixDrawCells(ih, ih->data->lines.first, ih->data->columns.first, ih->data->lines.last, ih->data->columns.last);
 
   if (iupAttribGetBoolean(ih, "FRAMEBORDER"))
   {
@@ -1564,14 +1559,30 @@ void iupMatrixDrawUpdate(Ihandle* ih)
 #endif
 }
 
+static int iMatrixDrawHasFlatScrollBar(Ihandle* ih)
+{
+  char* value = iupAttribGetStr(ih, "FLATSCROLLBAR");
+  if (value && !iupStrEqualNoCase(value, "NO"))
+    return 1;
+  else
+    return 0;
+}
+
 #ifndef USE_OLD_DRAW
 void iupMatrixDrawCB(Ihandle* ih)
 {
   /* called only from the ACTION callback */
-  cdCanvasActivate(ih->data->cd_canvas);
-
   if (ih->data->need_calcsize)
-    iupMatrixAuxCalcSizes(ih);
+  {
+    int sb_resize = iupMatrixAuxCalcSizes(ih);  /* does not use cd_canvas, no need to Activate, */
+    if (sb_resize)                              /* but it can trigger a resize+redraw event */
+    {
+      if (!iMatrixDrawHasFlatScrollBar(ih))
+        return;
+    }
+  }
+
+  cdCanvasActivate(ih->data->cd_canvas);
 
   iMatrixDrawMatrix(ih);
 
@@ -1679,7 +1690,7 @@ int iupMatrixDrawSetRedrawAttrib(Ihandle* ih, const char* value)
   ih->data->need_redraw = 0;
   iupMatrixDrawUpdate(ih);
 #else
-  IupUpdate(ih);
+  IupRedraw(ih, 0);  /* redraw now */
   (void)value;
 #endif
   return 0;

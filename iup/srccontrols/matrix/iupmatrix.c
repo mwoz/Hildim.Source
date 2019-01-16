@@ -16,7 +16,7 @@
 
 #include <cd.h>
 
-#ifdef USE_OLD_DRAW
+#ifdef USE_OLD_CDIUP
 #include <cdiup.h>
 #else
 #include <iupdraw_cd.h>
@@ -1394,9 +1394,10 @@ static int iMatrixSetFontAttrib(Ihandle* ih, int lin, int col, const char* value
   {
     if (!value)
       value = IupGetGlobal("DEFAULTFONT");
+
     if (!iupdrvSetFontAttrib(ih, value))
       return 0;
-    iupAttribSetStr(ih, "FONT", value);
+
     return 1;
   }
 
@@ -1812,6 +1813,9 @@ static int iMatrixCreateMethod(Ihandle* ih, void **params)
   iupAttribSet(ih, "BORDER", "NO");
   iupAttribSet(ih, "CURSOR", "IupMatrixCrossCursor");
 
+  /* to avoid performance glitches on Windows */
+  iupAttribSet(ih, "DRAWUSEGDI", "YES");
+
   /* IupCanvas callbacks */
   IupSetCallback(ih, "ACTION", (Icallback)iMatrixRedraw_CB);
   IupSetCallback(ih, "RESIZE_CB", (Icallback)iMatrixResize_CB);
@@ -1849,7 +1853,7 @@ static int iMatrixCreateMethod(Ihandle* ih, void **params)
 
 static int iMatrixMapMethod(Ihandle* ih)
 {
-#ifdef USE_OLD_DRAW
+#ifdef USE_OLD_CDIUP
   ih->data->cd_canvas = cdCreateCanvas(CD_IUPDBUFFER, ih);
 #else
   ih->data->cd_canvas = cdCreateCanvas(CD_IUPDRAW, ih);
@@ -2187,7 +2191,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterCallback(ic, "BGCOLOR_CB", "iiIII");
   iupClassRegisterCallback(ic, "FGCOLOR_CB", "iiIII");
   iupClassRegisterCallback(ic, "FONT_CB", "ii=s");
-  iupClassRegisterCallback(ic, "DRAW_CB", "iiiiiiv");
+  iupClassRegisterCallback(ic, "DRAW_CB", "iiiiiiC");
   iupClassRegisterCallback(ic, "DROPCHECK_CB", "ii");
   iupClassRegisterCallback(ic, "TYPE_CB", "ii=s");
   iupClassRegisterCallback(ic, "TRANSLATEVALUE_CB", "iis=s");
@@ -2221,12 +2225,12 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttributeId2(ic, "FGCOLOR", NULL, iMatrixSetFgColorAttrib, IUPAF_NOT_MAPPED);
   iupClassRegisterAttributeId2(ic, "TYPE", NULL, iMatrixSetTypeAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId2(ic, "FONT", iMatrixGetFontAttrib, iMatrixSetFontAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FONTSTYLE", iMatrixGetFontStyleAttrib, iMatrixSetFontStyleAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FONTSIZE", iMatrixGetFontSizeAttrib, iMatrixSetFontSizeAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FRAMEHORIZCOLOR", NULL, iMatrixSetFrameHorizColorAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FRAMEVERTCOLOR", NULL, iMatrixSetFrameVertColorAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FRAMETITLEHORIZCOLOR", NULL, iMatrixSetFrameHorizColorAttrib, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttributeId2(ic, "FRAMETITLEVERTCOLOR", NULL, iMatrixSetFrameVertColorAttrib, IUPAF_NOT_MAPPED);
+  iupClassRegisterAttributeId2(ic, "FONTSTYLE", iMatrixGetFontStyleAttrib, iMatrixSetFontStyleAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId2(ic, "FONTSIZE", iMatrixGetFontSizeAttrib, iMatrixSetFontSizeAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId2(ic, "FRAMEHORIZCOLOR", NULL, iMatrixSetFrameHorizColorAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId2(ic, "FRAMEVERTCOLOR", NULL, iMatrixSetFrameVertColorAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId2(ic, "FRAMETITLEHORIZCOLOR", NULL, iMatrixSetFrameHorizColorAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId2(ic, "FRAMETITLEVERTCOLOR", NULL, iMatrixSetFrameVertColorAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FRAMECOLOR", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, IUPAF_SAMEASSYSTEM, "100 100 100", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FRAMETITLEHIGHLIGHT", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FRAMEBORDER", NULL, (IattribSetFunc)iMatrixSetNeedRedraw, NULL, NULL, IUPAF_NO_INHERIT);
@@ -2286,6 +2290,8 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttributeId(ic, "COPYCOL", NULL, iMatrixSetCopyColAttrib, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "MOVELIN", NULL, iMatrixSetMoveLinAttrib, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttributeId(ic, "MOVECOL", NULL, iMatrixSetMoveColAttrib, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId(ic, "MINCOLWIDTH", NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "MINCOLWIDTHDEF", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   /* IupMatrix Attributes - MARK */
   iupClassRegisterAttribute(ic, "MARKED", iupMatrixGetMarkedAttrib, iupMatrixSetMarkedAttrib, NULL, NULL, IUPAF_NO_INHERIT);  /* noticed that for MARKED the matrix must be mapped */

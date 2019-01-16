@@ -36,6 +36,69 @@
   }
 
 
+void iupAttribSetTheme(Ihandle* ih, Ihandle* theme)
+{
+  /* theme is a IupUser, we assume all attributes are strings */
+  /* only attributes registered on "ih" will be copied from the theme */
+  char *name, *value;
+  char class_name[100];
+
+  iupASSERT(iupObjectCheck(ih));
+  if (!iupObjectCheck(ih))
+    return;
+
+  iupASSERT(iupObjectCheck(theme));
+  if (!iupObjectCheck(theme))
+    return;
+
+  name = iupTableFirst(theme->attrib);
+  while (name)
+  {
+    if (iupClassObjectAttribCanCopy(ih, name))
+    {
+      value = iupTableGetCurr(theme->attrib);
+      IupStoreAttribute(ih, name, value);
+    }
+
+    name = iupTableNext(theme->attrib);
+  }
+
+  sprintf(class_name, "IUP%s", ih->iclass->name);
+  iupStrUpper(class_name, class_name);
+  value = iupAttribGet(theme, class_name);
+  if (value)
+  {
+    theme = IupGetHandle(value);
+    if (theme)
+      iupAttribSetTheme(ih, theme);
+  }
+}
+
+void IupCopyAttributes(Ihandle* src_ih, Ihandle* dst_ih)
+{
+  char *name, *value;
+
+  iupASSERT(iupObjectCheck(src_ih));
+  if (!iupObjectCheck(src_ih))
+    return;
+
+  iupASSERT(iupObjectCheck(dst_ih));
+  if (!iupObjectCheck(dst_ih))
+    return;
+
+  name = iupTableFirst(src_ih->attrib);
+  while (name)
+  {
+    if (!iupATTRIB_ISINTERNAL(name) && !iupAttribIsNotString(src_ih, name))
+    {
+      value = iupTableGetCurr(src_ih->attrib);
+      IupStoreAttribute(dst_ih, name, value);
+    }
+
+    name = iupTableNext(src_ih->attrib);
+  }
+}
+
 int IupGetAllAttributes(Ihandle* ih, char** names, int n)
 {
   char *name;

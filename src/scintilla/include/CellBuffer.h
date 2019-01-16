@@ -74,7 +74,7 @@ public:
 	const char *AppendAction(actionType at, Sci::Position position, const char *data, Sci::Position lengthData, bool &startSequence, bool mayCoalesce=true);
 
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void DropUndoSequence();
 	void DeleteUndoHistory();
 
@@ -125,6 +125,7 @@ private:
 	bool UTF8IsCharacterBoundary(Sci::Position position) const;
 	void ResetLineEnds();
 	void RecalculateIndexLineStarts(Sci::Line lineFirst, Sci::Line lineLast);
+	bool MaintainingLineCharacterIndex() const noexcept;
 	/// Actions without undo
 	void BasicInsertString(Sci::Position position, const char *s, Sci::Position insertLength);
 	void BasicDeleteChars(Sci::Position position, Sci::Position deleteLength);
@@ -193,7 +194,7 @@ public:
 	bool SetUndoCollection(bool collectUndo);
 	bool IsCollectingUndo() const;
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory();
 

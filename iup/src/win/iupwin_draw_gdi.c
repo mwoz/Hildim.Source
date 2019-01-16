@@ -26,6 +26,28 @@
 #include "iupwin_str.h"
 
 
+#ifdef USE_NEW_DRAW
+#define iupwinDrawInit           iupwinDrawInitGDI
+#define iupwinDrawFinish         iupwinDrawFinishGDI
+#define iupdrvDrawCreateCanvas   iupdrvDrawCreateCanvasGDI
+#define iupdrvDrawKillCanvas     iupdrvDrawKillCanvasGDI
+#define iupdrvDrawFlush          iupdrvDrawFlushGDI
+#define iupdrvDrawUpdateSize     iupdrvDrawUpdateSizeGDI
+#define iupdrvDrawGetSize        iupdrvDrawGetSizeGDI
+#define iupdrvDrawLine           iupdrvDrawLineGDI
+#define iupdrvDrawRectangle      iupdrvDrawRectangleGDI
+#define iupdrvDrawArc            iupdrvDrawArcGDI
+#define iupdrvDrawPolygon        iupdrvDrawPolygonGDI
+#define iupdrvDrawText           iupdrvDrawTextGDI
+#define iupdrvDrawImage          iupdrvDrawImageGDI
+#define iupdrvDrawSetClipRect    iupdrvDrawSetClipRectGDI
+#define iupdrvDrawResetClip      iupdrvDrawResetClipGDI
+#define iupdrvDrawGetClipRect    iupdrvDrawGetClipRectGDI
+#define iupdrvDrawSelectRect     iupdrvDrawSelectRectGDI
+#define iupdrvDrawFocusRect      iupdrvDrawFocusRectGDI
+#endif
+
+
 struct _IdrawCanvas{
   Ihandle* ih;
   int w, h;
@@ -84,9 +106,9 @@ void iupdrvDrawKillCanvas(IdrawCanvas* dc)
 {
   SelectObject(dc->hBitmapDC, dc->hOldBitmap);
   DeleteObject(dc->hBitmap);
-  DeleteDC(dc->hBitmapDC);
+  DeleteDC(dc->hBitmapDC);  /* to match CreateCompatibleDC */
   if (dc->release_dc)
-    DeleteDC(dc->hDC);
+    ReleaseDC(dc->hWnd, dc->hDC);  /* to match GetDC */
 
   free(dc);
 }
@@ -107,7 +129,7 @@ void iupdrvDrawUpdateSize(IdrawCanvas* dc)
 
     SelectObject(dc->hBitmapDC, dc->hOldBitmap);
     DeleteObject(dc->hBitmap);
-    DeleteDC(dc->hBitmapDC);
+    DeleteDC(dc->hBitmapDC);  /* to match CreateCompatibleDC */
 
     dc->hBitmap = CreateCompatibleBitmap(dc->hDC, dc->w, dc->h);
     dc->hBitmapDC = CreateCompatibleDC(dc->hDC);
@@ -296,6 +318,16 @@ void iupdrvDrawGetClipRect(IdrawCanvas* dc, int *x1, int *y1, int *x2, int *y2)
   if (y2) *y2 = dc->clip_y2;
 }
 
+void iupdrvDrawResetClip(IdrawCanvas* dc)
+{
+  SelectClipRgn(dc->hBitmapDC, NULL);
+
+  dc->clip_x1 = 0;
+  dc->clip_y1 = 0;
+  dc->clip_x2 = 0;
+  dc->clip_y2 = 0;
+}
+
 void iupdrvDrawSetClipRect(IdrawCanvas* dc, int x1, int y1, int x2, int y2)
 {
   HRGN clip_hrgn;
@@ -318,16 +350,6 @@ void iupdrvDrawSetClipRect(IdrawCanvas* dc, int x1, int y1, int x2, int y2)
   dc->clip_y1 = y1;
   dc->clip_x2 = x2;
   dc->clip_y2 = y2;
-}
-
-void iupdrvDrawResetClip(IdrawCanvas* dc)
-{
-  SelectClipRgn(dc->hBitmapDC, NULL);
-
-  dc->clip_x1 = 0;
-  dc->clip_y1 = 0;
-  dc->clip_x2 = 0;
-  dc->clip_y2 = 0;
 }
 
 static void gdiRotateWorld(HDC hDC, int xc, int yc, double angle)

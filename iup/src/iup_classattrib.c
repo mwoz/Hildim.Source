@@ -476,6 +476,18 @@ int iupClassObjectCurAttribIsInherit(Iclass* ic)
   return 0;
 }
 
+int iupClassObjectAttribCanCopy(Ihandle* ih, const char* name)
+{
+  Iclass* ic = ih->iclass;
+  IattribFunc* afunc = (IattribFunc*)iupTableGet(ic->attrib_func, name);
+  if (afunc && !(afunc->flags & IUPAF_NO_STRING) &&  /* is a string */
+               !(afunc->flags & IUPAF_READONLY) &&   /* not read-only */
+               !(afunc->flags & IUPAF_WRITEONLY) &&  /* not write-only */
+               !(afunc->flags & IUPAF_CALLBACK))     /* not a callback */
+    return 1;
+  return 0;
+}
+
 int iupClassObjectAttribIsNotString(Ihandle* ih, const char* name)
 {
   IattribFunc* afunc = (IattribFunc*)iupTableGet(ih->iclass->attrib_func, name);
@@ -875,8 +887,8 @@ void IupCopyClassAttributes(Ihandle* src_ih, Ihandle* dst_ih)
   ic = src_ih->iclass;
 
   has_attrib_id = ic->has_attrib_id;
-  if (iupClassMatch(ic, "tree") || /* tree can only set id attributes after map, so they can not be saved */
-      iupClassMatch(ic, "cells")) /* cells does not have any saveable id attributes */
+  if (iupClassMatch(ic, "tree") ||  /* tree can only set id attributes after map, so they can not be saved */
+      iupClassMatch(ic, "cells"))   /* cells does not have any savable id attributes */
     has_attrib_id = 0;  
 
   if (iupClassMatch(ic, "list"))
@@ -950,17 +962,17 @@ void IupCopyClassAttributes(Ihandle* src_ih, Ihandle* dst_ih)
     name = iupTableNext(ic->attrib_func);
   }
 
-
-
+  /* loop again over all registered attributes to check for different values,
+     in the previous loop some attribute my set another attribute during the loop */
   name = iupTableFirst(ic->attrib_func);
   while (name)
   {
     IattribFunc* afunc = (IattribFunc*)iupTableGet(ic->attrib_func, name);
     if (afunc && !(afunc->flags & IUPAF_NO_STRING) &&   /* is a string */
-                 !(afunc->flags & IUPAF_READONLY) &&
-                 !(afunc->flags & IUPAF_WRITEONLY) &&
-                 !(afunc->flags & IUPAF_HAS_ID) &&
-                 !(afunc->flags & IUPAF_CALLBACK))
+                 !(afunc->flags & IUPAF_READONLY) &&    /* not read-only */
+                 !(afunc->flags & IUPAF_WRITEONLY) &&   /* not write-only */
+                 !(afunc->flags & IUPAF_HAS_ID) &&      /* no ID */
+                 !(afunc->flags & IUPAF_CALLBACK))      /* not a callback */
     {
       char *value = IupGetAttribute(src_ih, name);
       if (value &&     /* NOT NULL */

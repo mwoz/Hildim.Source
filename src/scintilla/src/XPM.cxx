@@ -26,13 +26,13 @@ namespace {
 
 const char *NextField(const char *s) {
 	// In case there are leading spaces in the string
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	while (*s && *s != ' ') {
 		s++;
 	}
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	return s;

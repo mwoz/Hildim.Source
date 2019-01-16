@@ -294,11 +294,7 @@ static int iSplitMotion_CB(Ihandle* bar, int x, int y, char *status)
 static int iSplitButton_CB(Ihandle* bar, int button, int pressed, int x, int y, char* status)
 {
   Ihandle* ih = bar->parent;
-  IFniiiis cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
-  if (cb) {
-	  if (cb(ih, button, pressed, x, y, status) == IUP_IGNORE)
-		  return IUP_DEFAULT;
-  }
+
   if (button!=IUP_BUTTON1)
     return IUP_DEFAULT;
 
@@ -820,7 +816,7 @@ Iclass* iupSplitNewClass(void)
   ic->name   = "split";
   ic->format = "hh";   /* two Ihandle*(s) */
   ic->nativetype = IUP_TYPEVOID;
-  ic->childtype  = IUP_CHILDMANY+3;  /* canvas+child+child */
+  ic->childtype = IUP_CHILDMANY+3;  /* canvas+child+child */
   ic->is_interactive = 0;
 
   /* Class functions */
@@ -833,7 +829,6 @@ Iclass* iupSplitNewClass(void)
   ic->SetChildrenPosition    = iSplitSetChildrenPositionMethod;
 
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
-  iupClassRegisterCallback(ic, "FLAT_BUTTON_CB", "iiiis");
 
   /* Common */
   iupBaseRegisterCommonAttrib(ic);

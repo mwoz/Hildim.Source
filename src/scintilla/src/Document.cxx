@@ -84,8 +84,31 @@ int LexInterface::LineEndTypesSupported() {
 	return 0;
 }
 
+ActionDuration::ActionDuration(double duration_, double minDuration_, double maxDuration_) noexcept :
+	duration(duration_), minDuration(minDuration_), maxDuration(maxDuration_) {
+}
+
+void ActionDuration::AddSample(size_t numberActions, double durationOfActions) noexcept {
+	// Only adjust for multiple actions to avoid instability
+	if (numberActions < 8)
+		return;
+
+	// Alpha value for exponential smoothing.
+	// Most recent value contributes 25% to smoothed value.
+	const double alpha = 0.25;
+
+	const double durationOne = durationOfActions / numberActions;
+	duration = std::clamp(alpha * durationOne + (1.0 - alpha) * duration,
+		minDuration, maxDuration);
+}
+
+double ActionDuration::Duration() const noexcept {
+	return duration;
+}
+
 Document::Document(int options) :
-	cb((options & SC_DOCUMENTOPTION_STYLES_NONE) == 0, (options & SC_DOCUMENTOPTION_TEXT_LARGE) != 0) {
+	cb((options & SC_DOCUMENTOPTION_STYLES_NONE) == 0, (options & SC_DOCUMENTOPTION_TEXT_LARGE) != 0),
+	durationStyleOneLine(0.00001, 0.000001, 0.0001) {
 	refCount = 0;
 #ifdef _WIN32
 	eolMode = SC_EOL_CRLF;
@@ -106,7 +129,6 @@ Document::Document(int options) :
 	useTabs = true;
 	tabIndents = true;
 	backspaceUnindents = false;
-	durationStyleOneLine = 0.00001;
 
 	matchesValid = false;
 
@@ -300,7 +322,7 @@ int Document::AddMark(Sci::Line line, int markerNum) {
 		NotifyModified(mh);
 		return prev;
 	} else {
-		return 0;
+		return -1;
 	}
 }
 
@@ -905,8 +927,8 @@ Sci::Position Document::GetRelativePositionUTF16(Sci::Position positionStart, Sc
 int SCI_METHOD Document::GetCharacterAndWidth(Sci_Position position, Sci_Position *pWidth) const {
 	int character;
 	int bytesInCharacter = 1;
+	const unsigned char leadByte = cb.UCharAt(position);
 	if (dbcsCodePage) {
-		const unsigned char leadByte = cb.UCharAt(position);
 		if (SC_CP_UTF8 == dbcsCodePage) {
 			if (UTF8IsAscii(leadByte)) {
 				// Single byte character or invalid
@@ -934,7 +956,7 @@ int SCI_METHOD Document::GetCharacterAndWidth(Sci_Position position, Sci_Positio
 			}
 		}
 	} else {
-		character = cb.CharAt(position);
+		character = leadByte;
 	}
 	if (pWidth) {
 		*pWidth = bytesInCharacter;
@@ -1951,7 +1973,6 @@ Document::CharacterExtracted Document::ExtractCharacter(Sci::Position position) 
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         int flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -2197,9 +2218,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			const Sci::Line lineEndStyled = SciLineFromPosition(GetEndStyled());
 			const Sci::Position endStyledTo = LineStart(lineEndStyled);
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2208,37 +2229,15 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
 		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
-		}
 	}
 }
 
 void Document::StyleToAdjustingLineDuration(Sci::Position pos) {
-	// Place bounds on the duration used to avoid glitches spiking it
-	// and so causing slow styling or non-responsive scrolling
-	const double minDurationOneLine = 0.000001;
-	const double maxDurationOneLine = 0.0001;
-
-	// Alpha value for exponential smoothing.
-	// Most recent value contributes 25% to smoothed value.
-	const double alpha = 0.25;
-
 	const Sci::Line lineFirst = SciLineFromPosition(GetEndStyled());
 	ElapsedPeriod epStyling;
 	EnsureStyledTo(pos);
-	const double durationStyling = epStyling.Duration();
 	const Sci::Line lineLast = SciLineFromPosition(GetEndStyled());
-	if (lineLast >= lineFirst + 8) {
-		// Only adjust for styling multiple lines to avoid instability
-		const double durationOneLine = durationStyling / (lineLast - lineFirst);
-		durationStyleOneLine = alpha * durationOneLine + (1.0 - alpha) * durationStyleOneLine;
-		if (durationStyleOneLine < minDurationOneLine) {
-			durationStyleOneLine = minDurationOneLine;
-		} else if (durationStyleOneLine > maxDurationOneLine) {
-			durationStyleOneLine = maxDurationOneLine;
-		}
-	}
+	durationStyleOneLine.AddSample(lineLast - lineFirst, epStyling.Duration());
 }
 
 void Document::LexerChanged() {
@@ -3089,11 +3088,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;
@@ -3194,7 +3191,7 @@ const char *BuiltinRegex::SubstituteByPosition(Document *doc, const char *text, 
 	substituted.clear();
 	const DocumentIndexer di(doc, doc->Length());
 	search.GrabMatches(di);
-	for (int j = 0; j < *length; j++) {
+	for (Sci::Position j = 0; j < *length; j++) {
 		if (text[j] == '\\') {
 			if (text[j + 1] >= '0' && text[j + 1] <= '9') {
 				const unsigned int patNum = text[j + 1] - '0';

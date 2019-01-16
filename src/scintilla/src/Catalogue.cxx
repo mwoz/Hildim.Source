@@ -33,7 +33,7 @@ const LexerModule *Catalogue::Find(int language) {
 			return lm;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 const LexerModule *Catalogue::Find(const char *languageName) {
@@ -45,7 +45,7 @@ const LexerModule *Catalogue::Find(const char *languageName) {
 			}
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void Catalogue::AddLexerModule(LexerModule *plm) {
@@ -113,7 +113,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmESCRIPT);
 	LINK_LEXER(lmF77);
 	LINK_LEXER(lmFlagShip);
-	LINK_LEXER(lmFormEngine);
 	LINK_LEXER(lmForth);
 	LINK_LEXER(lmFortran);
 	LINK_LEXER(lmFreeBasic);
@@ -143,6 +142,7 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmModula);
 	LINK_LEXER(lmMSSQL);
 	LINK_LEXER(lmMySQL);
+	LINK_LEXER(lmNim);
 	LINK_LEXER(lmNimrod);
 	LINK_LEXER(lmNncrontab);
 	LINK_LEXER(lmNsis);
@@ -171,7 +171,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmRust);
 	LINK_LEXER(lmSAS);
 	LINK_LEXER(lmScriptol);
-	LINK_LEXER(lmSearchResult);
 	LINK_LEXER(lmSmalltalk);
 	LINK_LEXER(lmSML);
 	LINK_LEXER(lmSorc);

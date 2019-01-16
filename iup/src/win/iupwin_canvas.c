@@ -57,6 +57,28 @@ static int winCanvasSetBgColorAttrib(Ihandle *ih, const char *value)
   return 1;
 }
               
+static int winCanvasIsScrollbarVisible(Ihandle* ih, int flag)
+{
+  SCROLLBARINFO si;
+  LONG idObject;
+  ZeroMemory(&si, sizeof(SCROLLBARINFO));
+  si.cbSize = sizeof(SCROLLBARINFO);
+
+  if (flag == SB_HORZ)
+    idObject = OBJID_HSCROLL;
+  else
+    idObject = OBJID_VSCROLL;
+
+  if (!GetScrollBarInfo(ih->handle, idObject, &si))
+    return 0;
+
+  if (si.rgstate[0] & STATE_SYSTEM_INVISIBLE || 
+      si.rgstate[0] & STATE_SYSTEM_OFFSCREEN)
+    return 0;
+
+  return 1;
+}
+
 static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
 {
   if (ih->data->sb & IUP_SB_HORIZ)
@@ -67,6 +89,8 @@ static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
 
     if (!iupStrToDoubleDef(value, &dx, 0.1))
       return 1;
+
+    iupAttribSet(ih, "SB_RESIZE", NULL);
 
     xmin = iupAttribGetDouble(ih, "XMIN");
     xmax = iupAttribGetDouble(ih, "XMAX");
@@ -81,6 +105,8 @@ static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "XAUTOHIDE"))
       {
+        if (winCanvasIsScrollbarVisible(ih, SB_HORZ))
+          iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "XHIDDEN", "YES");
         ShowScrollBar(ih->handle, SB_HORZ, FALSE);
         SetScrollPos(ih->handle, SB_HORZ, IUP_SB_MIN, FALSE);
@@ -97,6 +123,8 @@ static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "XAUTOHIDE"))
       {
+        if (!winCanvasIsScrollbarVisible(ih, SB_HORZ))
+          iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "XHIDDEN", "NO");
         ShowScrollBar(ih->handle, SB_HORZ, TRUE);
       }
@@ -124,6 +152,8 @@ static int winCanvasSetDYAttrib(Ihandle* ih, const char *value)
     if (!iupStrToDoubleDef(value, &dy, 0.1))
       return 1;
 
+    iupAttribSet(ih, "SB_RESIZE", NULL);
+
     ymin = iupAttribGetDouble(ih, "YMIN");
     ymax = iupAttribGetDouble(ih, "YMAX");
     posy = ih->data->posy;
@@ -137,6 +167,8 @@ static int winCanvasSetDYAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "YAUTOHIDE"))
       {
+        if (winCanvasIsScrollbarVisible(ih, SB_VERT))
+          iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "YHIDDEN", "YES");
         ShowScrollBar(ih->handle, SB_VERT, FALSE);
         SetScrollPos(ih->handle, SB_VERT, IUP_SB_MIN, FALSE);
@@ -154,6 +186,8 @@ static int winCanvasSetDYAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "YAUTOHIDE"))
       {
+        if (!winCanvasIsScrollbarVisible(ih, SB_VERT))
+          iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "YHIDDEN", "NO");
         ShowScrollBar(ih->handle, SB_VERT, TRUE);
       }
@@ -780,7 +814,10 @@ void iupdrvCanvasInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "HWND", iupBaseGetWidAttrib, NULL, NULL, NULL, IUPAF_NO_STRING|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HDC_WMPAINT", NULL, NULL, NULL, NULL, IUPAF_NO_STRING|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HTTRANSPARENT", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "DRAWUSEGDI", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);  /* undocumented feature */
 
   /* Not Supported */
   iupClassRegisterAttribute(ic, "BACKINGSTORE", NULL, NULL, "YES", NULL, IUPAF_NOT_SUPPORTED|IUPAF_NO_INHERIT);
+
+  iupClassRegisterAttribute(ic, "CONTROLID", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 }

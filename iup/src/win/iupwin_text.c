@@ -126,9 +126,9 @@ static void winTextParseParagraphFormat(Ihandle* formattag, PARAFORMAT2 *parafor
     {
       paraformat->dwMask |= PFM_NUMBERINGSTYLE;
 
-      if (iupStrEqualNoCase(format, "RIGHTPARENTESES"))
+      if (iupStrEqualNoCase(format, "RIGHTPARENTHESIS"))
         paraformat->wNumberingStyle = PFNS_PAREN;
-      else if (iupStrEqualNoCase(format, "PARENTESES"))
+      else if (iupStrEqualNoCase(format, "PARENTHESES"))
         paraformat->wNumberingStyle = PFNS_PARENS;
       else if (iupStrEqualNoCase(format, "PERIOD"))
         paraformat->wNumberingStyle = PFNS_PERIOD;
@@ -1936,70 +1936,6 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       }
       break;
     }
-
-  case WM_NCPAINT:
-	  if (iupAttribGetBoolean(ih, "FLAT") && iupAttribGetBoolean(ih, "BORDER")) {
-		
-		  RECT rect;
-		  GetWindowRect(ih->handle, &rect);
-		  HDC hdc = GetWindowDC(ih->handle);
-
-		  //POINT cursor;
-		  //GetCursorPos(&cursor);
-
-		  //BOOL higlight = PtInRect(&rect, cursor);
-
-		  POINT line_poly[5];
-		  line_poly[0].x = 0;
-		  line_poly[0].y = 0;
-		  line_poly[1].x = rect.right - rect.left - 1;
-		  line_poly[1].y = 0;					 
-		  line_poly[2].x = rect.right - rect.left - 1;
-		  line_poly[2].y = rect.bottom - rect.top - 1;
-		  line_poly[3].x = 0;					 
-		  line_poly[3].y = rect.bottom - rect.top - 1;
-		  line_poly[4].x = 0;
-		  line_poly[4].y = 0;
-
-		  COLORREF RGBbordercolor, RGBbgcolor;
-		  unsigned char r, g , b ;
-		  iupwinGetColorRef(ih, "BORDERCOLOR", &RGBbordercolor);
-		  iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
-
-		  RGBbgcolor = RGB(r, g, b);
-
-		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
-		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
-		  HPEN hPenOld = SelectObject(hdc, hPen);
-
-		  Polyline(hdc, line_poly, 5);
-
-		  SelectObject(hdc, hPen2);
-		  DeleteObject(hPen);
-
-		  line_poly[0].x++;
-		  line_poly[0].y++;
-		  line_poly[1].x--;
-		  line_poly[1].y++;
-		  line_poly[2].x--;
-		  line_poly[2].y--;
-		  line_poly[3].x++;
-		  line_poly[3].y--;
-		  line_poly[4].x++;
-		  line_poly[4].y++;
-
-		  Polyline(hdc, line_poly, 5);
-
-		  SelectObject(hdc, hPenOld);
-		  DeleteObject(hPen2);
-
-		  ReleaseDC(ih->handle, hdc);
-
-		  *result = 0;
-		  return 1;
-	  }
-	  break;
-
   }
 
   if (ret)       /* if abort processing, then the result is 0 */
@@ -2304,4 +2240,6 @@ void iupdrvTextInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "CUEBANNER", NULL, winTextSetCueBannerAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FILTER", NULL, winTextSetFilterAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NOHIDESEL", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
+
+  iupClassRegisterAttribute(ic, "CONTROLID", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 }
