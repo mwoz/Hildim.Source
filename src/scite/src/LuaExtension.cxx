@@ -1135,6 +1135,20 @@ static int bf_set_buffer_encoding(lua_State *L) {
 	return 0;
 }
 
+static int bf_get_filetime(lua_State *L) {
+	int i = luaL_checkint(L, 1);
+	lua_pushinteger(L, host->GetBufferFileTime(i));
+	return 1;
+}
+
+static int bf_set_filetime(lua_State *L) {
+	int i = luaL_checkint(L, 1);
+	host->ClearBufferFileTime(i);
+	return 0;
+}
+
+
+
 static int cf_set_document_at(lua_State *L){
 	int index = luaL_checkint(L, 1);
 	int updateStack = 1;
@@ -2293,8 +2307,10 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "EncodingAt");
 	lua_pushcfunction(luaState, bf_set_buffer_encoding);
 	lua_setfield(luaState, -2, "SetEncodingAt");
-	//lua_pushcfunction(luaState, bf_set_current);
-	//lua_setfield(luaState, -2, "SetCurrent");
+	lua_pushcfunction(luaState, bf_get_filetime);
+	lua_setfield(luaState, -2, "FileTimeAt");
+	lua_pushcfunction(luaState, bf_set_filetime);
+	lua_setfield(luaState, -2, "ClearFileTimeAt");
 	lua_pushcfunction(luaState, bf_current);
 	lua_setfield(luaState, -2, "GetCurrent");
 

@@ -1647,6 +1647,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	int statusFailure = 0;
 	static int boxesVisible = 0;
 	static int prevShowCmd = -1;
+	static bool isSysMenu = false;
 
 	static bool sysminimized = false;
 	try {
@@ -1744,7 +1745,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return ContextMenuMessage(iMessage, wParam, lParam);
 
 		case WM_ENTERMENULOOP:
-			if (!wParam){
+			if (!wParam && !isSysMenu){
 				menuSource = 0;
 				::EndMenu();
 				POINT cp;
@@ -1752,6 +1753,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				::MapWindowPoints(HWND_DESKTOP, layout.GetChildHWND(NULL), &cp, 1);
 				if (!wParam && cp.y > 0) extender->OnMouseHook(-70000, -70000);
 			}
+			isSysMenu = false;
 			break;
 
 		case WM_SYSCOMMAND:
@@ -1760,9 +1762,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if ((wParam == SC_MINIMIZE) && props.GetInt("minimize.to.tray")) {
 				MinimizeToTray();
 				return 0;
-			} else if(wParam == SC_CLOSE){
+			} else if (wParam == SC_CLOSE) {
 				::SendMessage(MainHWND(), WM_COMMAND, IDM_QUIT, 0);
 				return 0;
+			} else if (wParam == SC_KEYMENU){
+				isSysMenu = true;
 			}
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 

@@ -604,6 +604,8 @@ protected:
 	int ShiftToVisible(int index);
 	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
+	int GetBufferFileTime(int i) { return (int)buffers.buffers[i].fileModTime;};
+	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
 	void SetBufferEncoding(int i, int e);
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		

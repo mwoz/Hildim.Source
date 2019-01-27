@@ -37,6 +37,8 @@ public:
 	virtual void GetBufferName(int i, char* c) = 0;
 	virtual void SetBufferEncoding(int i, int e) = 0;
 	virtual int GetBufferEncoding(int i) = 0;
+	virtual void ClearBufferFileTime(int i) = 0;
+	virtual int GetBufferFileTime(int i) = 0;
 	virtual bool GetBuffersSavedState(int i) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;

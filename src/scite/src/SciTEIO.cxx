@@ -588,16 +588,8 @@ void SciTEBase::CheckReload() {
 					DisplayAround(rf);
 				}
 			} else {
-				CurrentBuffer()->SetTimeFromFile();
 				SetWindowName();
 				BuffersMenu();
-				if (0 == dialogsOnScreen) {
-						int decision = extender->HildiAlarm("File \n'%1'\n is missing or not available.\nDo you wish to keep the file open in the editor?",
-							MB_YESNO, filePath.AsInternal());
-						if (decision == IDNO) {
-							Close();
-						}
-					}
 			}
 		}
 	}
