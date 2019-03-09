@@ -4005,6 +4005,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 				handled = extender->OnSavePointReached();
 			if (!handled) {
 				CurrentBuffer()->isDirty = false;
+				if (CurrentBuffer()->pFriend)
+					CurrentBuffer()->Friend()->isDirty = false;
 			}
 		}
 		if (!bBlockUIUpdate){

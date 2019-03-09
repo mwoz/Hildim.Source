@@ -691,7 +691,7 @@ static int create_connection (lua_State *L, int o, env_data *env, SQLHDBC hdbc) 
 */
 static int env_connect (lua_State *L) {
 	env_data *env = (env_data *) getenvironment (L);
-	SQLCHAR *sourcename = (SQLCHAR*)luaL_checkstring (L, 2);
+	SQLCHAR *sourcename = (SQLCHAR*)luaL_checkstring(L, 2);
 	SQLCHAR *username = (SQLCHAR*)luaL_optstring (L, 3, NULL);
 	SQLCHAR *password = (SQLCHAR*)luaL_optstring (L, 4, NULL);
 	SQLHDBC hdbc;
@@ -703,8 +703,22 @@ static int env_connect (lua_State *L) {
 		return luasql_faildirect (L, "connection allocation error.");
 
 	/* tries to connect handle */
-	ret = SQLConnect (hdbc, sourcename, SQL_NTS, 
-		username, SQL_NTS, password, SQL_NTS);
+	if (!strchr(sourcename, '{')) {
+		ret = SQLConnect(hdbc, sourcename, SQL_NTS, username, SQL_NTS, password, SQL_NTS);
+	} else {
+		SQLCHAR out[1024];
+		int lOut = strlen(sourcename);
+		ret = SQLDriverConnect(
+			hdbc, NULL,
+			sourcename,
+			strlen(sourcename),
+			out,
+			1024,
+			&lOut,
+			SQL_DRIVER_NOPROMPT
+		);
+	}
+
 	if (error(ret)) {
 		ret = fail(L, hDBC, hdbc);
 		SQLFreeHandle(hDBC, hdbc);
@@ -817,9 +831,13 @@ LUASQL_API int luaopen_luasql_odbc (lua_State *L) {
 		{NULL, NULL},
 	};
 	create_metatables (L);
-	lua_newtable (L);
+	if(lua_getglobal(L, "luasql") != LUA_TTABLE)
+		lua_newtable (L);
+
 	luaL_setfuncs (L, driver, 0);
-	luasql_set_info (L);
-	lua_setglobal(L, "LUASQL");
+	//luaL_register(L, "LUASQL", driver);
+	luaL_openlib(L, "luasql", driver, 0);
+	////luasql_set_info (L);
+	//lua_setglobal(L, "LUASQL");
 	return 1;
 } 
