@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <cctype>
 #include <cstdio>
 #include <cstdarg>
 #include <ctime>
@@ -26,14 +25,13 @@
 #define NOMINMAX
 #endif
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0500
 #undef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0500
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
 #include <windowsx.h>
-#include <UxTheme.h>
 
 #if !defined(DISABLE_D2D)
 #define USE_D2D 1
@@ -51,7 +49,6 @@
 #include "FontQuality.h"
 
 #include "PlatWin.h"
-#include "../include/Scintilla.h"
 
 #ifndef SPI_GETFONTSMOOTHINGCONTRAST
 #define SPI_GETFONTSMOOTHINGCONTRAST	0x200C
@@ -64,12 +61,6 @@
 namespace Scintilla {
 
 UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage);
-
-RECT RectFromPRectangle(PRectangle prc) noexcept {
-	RECT rc = {static_cast<LONG>(prc.left), static_cast<LONG>(prc.top),
-		static_cast<LONG>(prc.right), static_cast<LONG>(prc.bottom)};
-	return rc;
-}
 
 #if defined(USE_D2D)
 IDWriteFactory *pIDWriteFactory = nullptr;
@@ -155,7 +146,7 @@ struct FormatAndMetrics {
 	FLOAT yAscent;
 	FLOAT yDescent;
 	FLOAT yInternalLeading;
-	FormatAndMetrics(HFONT hfont_, int extraFontFlag_, int characterSet_) :
+	FormatAndMetrics(HFONT hfont_, int extraFontFlag_, int characterSet_) noexcept :
 		technology(SCWIN_TECH_GDI), hfont(hfont_),
 #if defined(USE_D2D)
 		pTextFormat(nullptr),
@@ -168,7 +159,7 @@ struct FormatAndMetrics {
 	        int characterSet_,
 	        FLOAT yAscent_,
 	        FLOAT yDescent_,
-	        FLOAT yInternalLeading_) :
+	        FLOAT yInternalLeading_) noexcept :
 		technology(SCWIN_TECH_DIRECTWRITE),
 		hfont{},
 		pTextFormat(pTextFormat_),
@@ -231,11 +222,11 @@ HFONT FormatAndMetrics::HFont() {
 
 namespace {
 
-void *PointerFromWindow(HWND hWnd) {
+void *PointerFromWindow(HWND hWnd) noexcept {
 	return reinterpret_cast<void *>(::GetWindowLongPtr(hWnd, 0));
 }
 
-void SetWindowPointer(HWND hWnd, void *ptr) {
+void SetWindowPointer(HWND hWnd, void *ptr) noexcept {
 	::SetWindowLongPtr(hWnd, 0, reinterpret_cast<LONG_PTR>(ptr));
 }
 
@@ -244,11 +235,11 @@ HINSTANCE hinstPlatformRes {};
 
 HCURSOR reverseArrowCursor {};
 
-FormatAndMetrics *FamFromFontID(void *fid) {
+FormatAndMetrics *FamFromFontID(void *fid) noexcept {
 	return static_cast<FormatAndMetrics *>(fid);
 }
 
-BYTE Win32MapFontQuality(int extraFontFlag) {
+constexpr BYTE Win32MapFontQuality(int extraFontFlag) noexcept {
 	switch (extraFontFlag & SC_EFF_QUALITY_MASK) {
 
 		case SC_EFF_QUALITY_NON_ANTIALIASED:
@@ -266,7 +257,7 @@ BYTE Win32MapFontQuality(int extraFontFlag) {
 }
 
 #if defined(USE_D2D)
-D2D1_TEXT_ANTIALIAS_MODE DWriteMapFontQuality(int extraFontFlag) {
+constexpr D2D1_TEXT_ANTIALIAS_MODE DWriteMapFontQuality(int extraFontFlag) noexcept {
 	switch (extraFontFlag & SC_EFF_QUALITY_MASK) {
 
 		case SC_EFF_QUALITY_NON_ANTIALIASED:
@@ -295,51 +286,11 @@ void SetLogFont(LOGFONTW &lf, const char *faceName, int characterSet, float size
 	UTF16FromUTF8(faceName, lf.lfFaceName, LF_FACESIZE);
 }
 
-/**
- * Create a hash from the parameters for a font to allow easy checking for identity.
- * If one font is the same as another, its hash will be the same, but if the hash is the
- * same then they may still be different.
- */
-int HashFont(const FontParameters &fp) noexcept {
-	return
-		static_cast<int>(fp.size) ^
-		(fp.characterSet << 10) ^
-		((fp.extraFontFlag & SC_EFF_QUALITY_MASK) << 9) ^
-		((fp.weight/100) << 12) ^
-		(fp.italic ? 0x20000000 : 0) ^
-		(fp.technology << 15) ^
-		fp.faceName[0];
-}
-
-}
-
-class FontCached : Font {
-	FontCached *next;
-	int usage;
-	float size;
+FontID CreateFontFromParameters(const FontParameters &fp) {
 	LOGFONTW lf;
-	int technology;
-	int hash;
-	explicit FontCached(const FontParameters &fp);
-	bool SameAs(const FontParameters &fp);
-	void Release() override;
-
-	static FontCached *first;
-public:
-	~FontCached() override {}
-	static FontID FindOrCreate(const FontParameters &fp);
-	static void ReleaseId(FontID fid_);
-};
-
-FontCached *FontCached::first = nullptr;
-
-FontCached::FontCached(const FontParameters &fp) :
-	next(nullptr), usage(0), size(1.0), hash(0) {
 	SetLogFont(lf, fp.faceName, fp.characterSet, fp.size, fp.weight, fp.italic, fp.extraFontFlag);
-	technology = fp.technology;
-	hash = HashFont(fp);
-	fid = 0;
-	if (technology == SCWIN_TECH_GDI) {
+	FontID fid = nullptr;
+	if (fp.technology == SCWIN_TECH_GDI) {
 		HFONT hfont = ::CreateFontIndirectW(&lf);
 		fid = new FormatAndMetrics(hfont, fp.extraFontFlag, fp.characterSet);
 	} else {
@@ -385,67 +336,9 @@ FontCached::FontCached(const FontParameters &fp) :
 		}
 #endif
 	}
-	usage = 1;
+	return fid;
 }
 
-bool FontCached::SameAs(const FontParameters &fp) {
-	if (
-		(size == fp.size) &&
-		(lf.lfWeight == fp.weight) &&
-		(lf.lfItalic == (fp.italic ? 1 : 0)) &&
-		(lf.lfCharSet == fp.characterSet) &&
-		(lf.lfQuality == Win32MapFontQuality(fp.extraFontFlag)) &&
-		(technology == fp.technology)) {
-			wchar_t wszFace[LF_FACESIZE] = L"";
-			UTF16FromUTF8(fp.faceName, wszFace, LF_FACESIZE);
-			return 0 == wcscmp(lf.lfFaceName,wszFace);
-	}
-	return false;
-}
-
-void FontCached::Release() {
-	delete FamFromFontID(fid);
-	fid = nullptr;
-}
-
-FontID FontCached::FindOrCreate(const FontParameters &fp) {
-	FontID ret {};
-	::EnterCriticalSection(&crPlatformLock);
-	const int hashFind = HashFont(fp);
-	for (FontCached *cur=first; cur; cur=cur->next) {
-		if ((cur->hash == hashFind) &&
-			cur->SameAs(fp)) {
-			cur->usage++;
-			ret = cur->fid;
-		}
-	}
-	if (!ret) {
-		FontCached *fc = new FontCached(fp);
-		fc->next = first;
-		first = fc;
-		ret = fc->fid;
-	}
-	::LeaveCriticalSection(&crPlatformLock);
-	return ret;
-}
-
-void FontCached::ReleaseId(FontID fid_) {
-	::EnterCriticalSection(&crPlatformLock);
-	FontCached **pcur=&first;
-	for (FontCached *cur=first; cur; cur=cur->next) {
-		if (cur->fid == fid_) {
-			cur->usage--;
-			if (cur->usage == 0) {
-				*pcur = cur->next;
-				cur->Release();
-				cur->next = nullptr;
-				delete cur;
-			}
-			break;
-		}
-		pcur=&cur->next;
-	}
-	::LeaveCriticalSection(&crPlatformLock);
 }
 
 Font::Font() noexcept : fid{} {
@@ -454,18 +347,16 @@ Font::Font() noexcept : fid{} {
 Font::~Font() {
 }
 
-#define FONTS_CACHED
-
 void Font::Create(const FontParameters &fp) {
 	Release();
 	if (fp.faceName)
-		fid = FontCached::FindOrCreate(fp);
+		fid = CreateFontFromParameters(fp);
 }
 
 void Font::Release() {
 	if (fid)
-		FontCached::ReleaseId(fid);
-	fid = 0;
+		delete FamFromFontID(fid);
+	fid = nullptr;
 }
 
 // Buffer to hold strings and string position arrays without always allocating on heap.
@@ -534,17 +425,17 @@ class SurfaceGDI : public Surface {
 
 	void BrushColor(ColourDesired back);
 	void SetFont(Font &font_);
-	void Clear();
+	void Clear() noexcept;
 
 public:
-	SurfaceGDI();
+	SurfaceGDI() noexcept;
 	// Deleted so SurfaceGDI objects can not be copied.
 	SurfaceGDI(const SurfaceGDI &) = delete;
 	SurfaceGDI(SurfaceGDI &&) = delete;
 	SurfaceGDI &operator=(const SurfaceGDI &) = delete;
 	SurfaceGDI &operator=(SurfaceGDI &&) = delete;
 
-	~SurfaceGDI() override;
+	~SurfaceGDI() noexcept override;
 
 	void Init(WindowID wid) override;
 	void Init(SurfaceID sid, WindowID wid) override;
@@ -591,14 +482,14 @@ public:
 	void SetBidiR2L(bool bidiR2L_) override;
 };
 
-SurfaceGDI::SurfaceGDI() {
+SurfaceGDI::SurfaceGDI() noexcept {
 }
 
-SurfaceGDI::~SurfaceGDI() {
+SurfaceGDI::~SurfaceGDI() noexcept {
 	Clear();
 }
 
-void SurfaceGDI::Clear() {
+void SurfaceGDI::Clear() noexcept {
 	if (penOld) {
 		::SelectObject(hdc, penOld);
 		::DeleteObject(pen);
@@ -765,7 +656,7 @@ void SurfaceGDI::RoundedRectangle(PRectangle rc, ColourDesired fore, ColourDesir
 namespace {
 
 // Plot a point into a DWORD buffer symmetrically to all 4 quadrants
-void AllFour(DWORD *pixels, int width, int height, int x, int y, DWORD val) {
+void AllFour(DWORD *pixels, int width, int height, int x, int y, DWORD val) noexcept {
 	pixels[y*width+x] = val;
 	pixels[y*width+width-1-x] = val;
 	pixels[(height-1-y)*width+x] = val;
@@ -784,7 +675,7 @@ DWORD dwordFromBGRA(byte b, byte g, byte r, byte a) noexcept {
 	return converter.val;
 }
 
-DWORD dwordMultiplied(ColourDesired colour, unsigned int alpha) {
+DWORD dwordMultiplied(ColourDesired colour, unsigned int alpha) noexcept {
 	return dwordFromBGRA(
 		static_cast<byte>(colour.GetBlue() * alpha / 255),
 		static_cast<byte>(colour.GetGreen() * alpha / 255),
@@ -1100,11 +991,11 @@ class SurfaceD2D : public Surface {
 	float dpiScaleX;
 	float dpiScaleY;
 
-	void Clear();
+	void Clear() noexcept;
 	void SetFont(Font &font_);
 
 public:
-	SurfaceD2D();
+	SurfaceD2D() noexcept;
 	// Deleted so SurfaceD2D objects can not be copied.
 	SurfaceD2D(const SurfaceD2D &) = delete;
 	SurfaceD2D(SurfaceD2D &&) = delete;
@@ -1162,7 +1053,7 @@ public:
 	void SetBidiR2L(bool bidiR2L_) override;
 };
 
-SurfaceD2D::SurfaceD2D() :
+SurfaceD2D::SurfaceD2D() noexcept :
 	unicodeMode(false),
 	x(0), y(0) {
 
@@ -1190,7 +1081,7 @@ SurfaceD2D::~SurfaceD2D() {
 	Clear();
 }
 
-void SurfaceD2D::Clear() {
+void SurfaceD2D::Clear() noexcept {
 	if (pBrush) {
 		pBrush->Release();
 		pBrush = nullptr;
@@ -1322,7 +1213,7 @@ void SurfaceD2D::MoveTo(int x_, int y_) {
 	y = y_;
 }
 
-static int Delta(int difference) {
+static constexpr int Delta(int difference) noexcept {
 	if (difference < 0)
 		return -1;
 	else if (difference > 0)
@@ -2223,7 +2114,7 @@ Surface *Surface::Allocate(int technology) {
 
 namespace {
 
-HWND HwndFromWindowID(WindowID wid) {
+HWND HwndFromWindowID(WindowID wid) noexcept {
 	return static_cast<HWND>(wid);
 }
 
@@ -2252,7 +2143,7 @@ void Window::SetPosition(PRectangle rc) {
 
 namespace {
 
-static RECT RectFromMonitor(HMONITOR hMonitor) {
+static RECT RectFromMonitor(HMONITOR hMonitor) noexcept {
 	MONITORINFO mi = {};
 	mi.cbSize = sizeof(mi);
 	if (GetMonitorInfo(hMonitor, &mi)) {
@@ -2331,7 +2222,7 @@ void Window::SetFont(Font &font) {
 
 namespace {
 
-void FlipBitmap(HBITMAP bitmap, int width, int height) {
+void FlipBitmap(HBITMAP bitmap, int width, int height) noexcept {
 	HDC hdc = ::CreateCompatibleDC(NULL);
 	if (hdc) {
 		HBITMAP prevBmp = SelectBitmap(hdc, bitmap);
@@ -2341,7 +2232,7 @@ void FlipBitmap(HBITMAP bitmap, int width, int height) {
 	}
 }
 
-HCURSOR GetReverseArrowCursor() {
+HCURSOR GetReverseArrowCursor() noexcept {
 	if (reverseArrowCursor)
 		return reverseArrowCursor;
 
@@ -2436,7 +2327,7 @@ class LineToItem {
 	std::vector<ListItemData> data;
 
 public:
-	void Clear() {
+	void Clear() noexcept {
 		words.clear();
 		data.clear();
 	}
@@ -2449,7 +2340,7 @@ public:
 			return missing;
 		}
 	}
-	int Count() const {
+	int Count() const noexcept {
 		return static_cast<int>(data.size());
 	}
 
@@ -2478,7 +2369,7 @@ class ListBoxX : public ListBox {
 	int technology;
 	RGBAImageSet images;
 	LineToItem lti;
-	HWND lb, scb;
+	HWND lb;
 	bool unicodeMode;
 	int desiredVisibleRows;
 	unsigned int maxItemCharacters;
@@ -2512,7 +2403,6 @@ class ListBoxX : public ListBox {
 	void CentreItem(int n);
 	void Paint(HDC);
 	static LRESULT PASCAL ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 	static const Point ItemInset;	// Padding around whole item
 	static const Point TextInset;	// Padding around text
@@ -2532,7 +2422,7 @@ public:
 		}
 	}
 	void SetFont(Font &font) override;
-	void Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo) override;
+	void Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_) override;
 	void SetAverageCharWidth(int width) override;
 	void SetVisibleRows(int rows) override;
 	int GetVisibleRows() const override;
@@ -2553,12 +2443,6 @@ public:
 	void Draw(DRAWITEMSTRUCT *pDrawItem);
 	LRESULT WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StaticWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	Sci_ListColorsInfo* pListcolors;
-	void OnScrollChange();
-	void sc_OnPaint(HDC hdc, RECT *rcPaint, bool bDrag, int nTrackPos);
-	void sc_Paint(bool bDrag, int nTrackPos);
-	bool bBlockRedraw = false;
-
 };
 
 const Point ListBoxX::ItemInset(0, 0);
@@ -2570,14 +2454,13 @@ ListBox *ListBox::Allocate() {
 	return lb;
 }
 
-void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo) {
+void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_) {
 	parent = &parent_;
 	ctrlID = ctrlID_;
 	location = location_;
 	lineHeight = lineHeight_;
 	unicodeMode = unicodeMode_;
 	technology = technology_;
-	pListcolors = (Sci_ListColorsInfo*)pColorInfo;
 	HWND hwndParent = HwndFromWindowID(parent->GetID());
 	HINSTANCE hinstanceParent = GetWindowInstance(hwndParent);
 	// Window created as popup so not clipped within parent client area
@@ -2638,7 +2521,7 @@ PRectangle ListBoxX::GetDesiredRect() {
 	if (widestItem) {
 		len = static_cast<int>(strlen(widestItem));
 		if (unicodeMode) {
-			const TextWide tbuf(widestItem, len, unicodeMode);
+			const TextWide tbuf(widestItem, unicodeMode);
 			::GetTextExtentPoint32W(hdc, tbuf.buffer, tbuf.tlen, &textSize);
 		} else {
 			::GetTextExtentPoint32A(hdc, widestItem, len, &textSize);
@@ -2698,9 +2581,6 @@ void ListBoxX::Select(int n) {
 	::SendMessage(lb, LB_SETCURSEL, n, 0);
 	OnSelChange();
 	SetRedraw(true);
-	OnScrollChange();
-	if (pListcolors->inizialized)
-		sc_Paint(false, 0);
 }
 
 int ListBoxX::GetSelection() {
@@ -3104,14 +2984,21 @@ void ListBoxX::Paint(HDC hDC) {
 }
 
 LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-	if (!prevWndProc)
-		prevWndProc = ::DefWindowProc;
 	try {
 		ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
 		switch (iMessage) {
 		case WM_ERASEBKGND:
 			return TRUE;
+
+		case WM_PAINT: {
+				PAINTSTRUCT ps;
+				HDC hDC = ::BeginPaint(hWnd, &ps);
+				if (lbx) {
+					lbx->Paint(hDC);
+				}
+				::EndPaint(hWnd, &ps);
+			}
+			return 0;
 
 		case WM_MOUSEACTIVATE:
 			// This prevents the view activating when the scrollbar is clicked
@@ -3144,20 +3031,14 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 		case WM_MBUTTONDOWN:
 			// disable the scroll wheel button click action
 			return 0;
-
-		case WM_VSCROLL:
-		case LB_SETCURSEL:
-		{
-			LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-			lbx->OnScrollChange();
-			return res;
-		}
-		
-			break;
 		}
 
+		WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		if (prevWndProc) {
 			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-
+		} else {
+			return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
+		}
 	} catch (...) {
 	}
 	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
@@ -3171,41 +3052,21 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 			// but has useful side effect of speeding up list population significantly
 			lb = ::CreateWindowEx(
 				0, TEXT("listbox"), TEXT(""),
-				WS_CHILD | WS_VISIBLE | //WS_VSCROLL |
+				WS_CHILD | WS_VSCROLL | WS_VISIBLE |
 				LBS_OWNERDRAWFIXED | LBS_NODATA | LBS_NOINTEGRALHEIGHT,
 				0, 0, 150,80, hWnd,
 				reinterpret_cast<HMENU>(static_cast<ptrdiff_t>(ctrlID)),
 				hinstanceParent,
 				0);
-			scb = CreateWindowEx(
-				0, TEXT("Scrollbar"), TEXT(""),
-				WS_CHILD | WS_VISIBLE | SBS_VERT | SBS_RIGHTALIGN,
-				0, 0, 150, 65, hWnd,
-				reinterpret_cast<HMENU>(static_cast<ptrdiff_t>(ctrlID)),
-				hinstanceParent,
-				0); 
 			WNDPROC prevWndProc = SubclassWindow(lb, ControlWndProc);
 			::SetWindowLongPtr(lb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
-			prevWndProc = SubclassWindow(scb, ScrollWndProc);
-			::SetWindowLongPtr(scb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
-			SetWindowTheme(scb, L"", L"");
 		}
 		break;
 
 	case WM_SIZE:
 		if (lb) {
 			SetRedraw(false);
-			SCROLLINFO si;
-			si.cbSize = sizeof(SCROLLINFO);
-			si.fMask = SIF_PAGE | SIF_RANGE;
-			si.nMin = 0;
-			si.nMax = ControlWndProc(lb, LB_GETCOUNT, 0, 0) - 1;
-			si.nPage = HIWORD(lParam) / ItemHeight();
-			::SetScrollInfo(scb, SB_CTL, &si, false);
-
-			int sWidth = si.nMax > (int)si.nPage ? 15 : 0;
-			::SetWindowPos(lb, 0, 0, 0, LOWORD(lParam) - sWidth, HIWORD(lParam), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
-			::SetWindowPos(scb, 0, LOWORD(lParam) - sWidth,0, sWidth, HIWORD(lParam), SWP_NOZORDER|SWP_NOACTIVATE );
+			::SetWindowPos(lb, 0, 0,0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 			// Ensure the selection remains visible
 			CentreItem(GetSelection());
 			SetRedraw(true);
@@ -3302,68 +3163,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 				wheelDelta = wheelDelta % WHEEL_DELTA;
 			else
 				wheelDelta = - (-wheelDelta % WHEEL_DELTA);
-			OnScrollChange();
-			if (pListcolors->inizialized)
-				sc_Paint(false, 0);
 		}
-		break;
-	case WM_NCPAINT:
-	{
-		if (!pListcolors->inizialized)
-			return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
-		
-		RECT rect, rdraw;
-		HDC hdc = ::GetWindowDC(hWnd);
-
-		GetWindowRect(hWnd, &rect);
-
-		HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
-		::SetWindowRgn(hWnd, hrgn, false);
-		DeleteObject(hrgn);
-
-		HPEN p = CreatePen(PS_SOLID, 1, pListcolors->border);
-		HPEN penOld = static_cast<HPEN>(SelectObject(hdc, p));
-		Rectangle(hdc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
-		SelectObject(hdc, penOld);
-		DeleteObject(p);
-
-		HBRUSH b = CreateSolidBrush(pListcolors->borderbak);
-		int borderX = ::GetSystemMetrics(SM_CXSIZEFRAME);
-		int borderY = ::GetSystemMetrics(SM_CYSIZEFRAME);
-
-		rdraw = { 1, 1, rect.right - rect.left - 2, borderY };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { 1, 1, borderX , rect.bottom - rect.top - 2 };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { rect.right - rect.left - borderX , 1, rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { 1, rect.bottom - rect.top - borderY , rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
-		FillRect(hdc, &rdraw, b);
-
-		DeleteObject(b);
-
-		ReleaseDC(hWnd, hdc);
-		return 0;
-	}
-	case WM_VSCROLL:
-	{
-		SHORT pos = HIWORD(wParam);
-		SHORT flag = LOWORD(wParam);
-		int r = ControlWndProc(lb, iMessage, wParam, lParam);
-
-		if (!pListcolors->inizialized)
-			return r;
-
-		if(bBlockRedraw)
-			::DefWindowProcW(scb, WM_SETREDRAW, 1, 0);
-		sc_Paint((flag == SB_THUMBPOSITION || flag == SB_THUMBTRACK), pos);
-		
-		if(bBlockRedraw)
-			::DefWindowProcW(scb, WM_SETREDRAW, 0, 0);
-		return r;
-
-	}
-
 		break;
 
 	default:
@@ -3390,7 +3190,7 @@ LRESULT PASCAL ListBoxX::StaticWndProc(
 
 namespace {
 
-bool ListBoxX_Register() {
+bool ListBoxX_Register() noexcept {
 	WNDCLASSEX wndclassc;
 	wndclassc.cbSize = sizeof(wndclassc);
 	// We need CS_HREDRAW and CS_VREDRAW because of the ellipsis that might be drawn for
@@ -3411,7 +3211,7 @@ bool ListBoxX_Register() {
 	return ::RegisterClassEx(&wndclassc) != 0;
 }
 
-bool ListBoxX_Unregister() {
+bool ListBoxX_Unregister() noexcept {
 	return ::UnregisterClass(ListBoxX_ClassName, hinstPlatformRes) != 0;
 }
 
@@ -3442,7 +3242,7 @@ class DynamicLibraryImpl : public DynamicLibrary {
 protected:
 	HMODULE h;
 public:
-	explicit DynamicLibraryImpl(const char *modulePath) {
+	explicit DynamicLibraryImpl(const char *modulePath) noexcept {
 		h = ::LoadLibraryA(modulePath);
 	}
 
@@ -3452,7 +3252,7 @@ public:
 	}
 
 	// Use GetProcAddress to get a pointer to the relevant function.
-	Function FindFunction(const char *name) override {
+	Function FindFunction(const char *name) noexcept override {
 		if (h) {
 			// C++ standard doesn't like casts between function pointers and void pointers so use a union
 			union {
@@ -3466,7 +3266,7 @@ public:
 		}
 	}
 
-	bool IsValid() override {
+	bool IsValid() noexcept override {
 		return h != NULL;
 	}
 };
@@ -3582,155 +3382,6 @@ void Platform_Finalise(bool fromDllMain) {
 		::DestroyCursor(reverseArrowCursor);
 	ListBoxX_Unregister();
 	::DeleteCriticalSection(&crPlatformLock);
-}
-
-void ListBoxX::OnScrollChange() {
-	int ind = ControlWndProc(lb, LB_GETTOPINDEX, 0, 0);
-	::SetScrollPos(scb, SB_CTL, ind, !pListcolors->inizialized);
-}
-
-void ListBoxX::sc_Paint(bool bDrag, int nTrackPos) {
-	HDC hdc = ::GetDC(scb);
-	RECT r;
-	::GetClientRect(scb, &r);
-	sc_OnPaint(hdc, &r, bDrag, nTrackPos);
-
-	ReleaseDC(scb, hdc);
-}
-
-bool PointInRect(POINT *p, RECT *r) {
-	return (r->left <= p->x) && (p->x <= r->right) && (r->top <= p->y) && (p->y <= r->bottom);
-}
-
-void ListBoxX::sc_OnPaint(HDC hDC, RECT *rcPaint, bool bDrag, int nTrackPos) {
-	int w = rcPaint->right - rcPaint->left;
-	int h = rcPaint->bottom - rcPaint->top;
-
-	HDC hdc = ::CreateCompatibleDC(hDC);
-	HBITMAP hBitmap = ::CreateCompatibleBitmap(hDC, w, h);
-	HBITMAP hBitmapOld = SelectBitmap(hdc, hBitmap);
-
-	HBRUSH b = CreateSolidBrush(pListcolors->scrollbak);
-	::FillRect(hdc, rcPaint, b);
-	::DeleteObject(b);
-
-	HBRUSH b_fore = CreateSolidBrush(pListcolors->scroll);
-	HBRUSH b_hl = CreateSolidBrush(pListcolors->scrollhl);
-	HBRUSH b_press = CreateSolidBrush(pListcolors->scrollpress);
-
-	RECT r;
-	r.left = rcPaint->left + 2;
-	r.right = rcPaint->right - 2;
-
-
-	int count = ControlWndProc(lb, LB_GETCOUNT, 0, 0);
-	int hs = h - 2 * w;
-	int lenT = hs  * (rcPaint->bottom - rcPaint ->top)/ (count * ItemHeight()); ;
-	int hTop = hs  * ControlWndProc(lb, LB_GETTOPINDEX, 0, 0) / count;
-	r.top = rcPaint->top + w + hTop;
-	r.bottom = rcPaint->top + w + hTop + lenT;
-
-	POINT curPos;
-	::GetCursorPos(&curPos);
-	SHORT bPress = ::GetAsyncKeyState(VK_LBUTTON);
-
-	::MapWindowPoints(NULL, scb, &curPos, 1);
-
-	b = b_fore;
-	if (PointInRect(&curPos, &r) || bDrag) {
-		b = (bDrag || bPress) ? b_press : b_hl;
-	}
-
-	::FillRect(hdc, &r, b);
-
-	int w2 = w / 2;
-	POINT line_poly[3] = { {rcPaint->left + 1, rcPaint->top + w2 + 2},
-	{ rcPaint->right - 1, rcPaint->top + w2 + 2 },
-	{ rcPaint->left + w2, rcPaint->top + 2} };
-
-	r.top = 0;
-	r.bottom = w;
-	b = b_fore;
-	if (PointInRect(&curPos, &r)) {
-		b = (bPress) ? b_press : b_hl;
-	}
-
-	HBRUSH hBrushOld = (HBRUSH)SelectObject(hdc, b);
-	BeginPath(hdc);
-	Polygon(hdc, line_poly, 3);
-	EndPath(hdc);
-	FillPath(hdc);
-	
-	POINT line_poly2[3] = { { rcPaint->left + 2, rcPaint->bottom - w2 - 2 },
-	{ rcPaint->right - 2, rcPaint->bottom - w2 - 2 },
-	{ rcPaint->left + w2, rcPaint->bottom - 3 } };
-
-	r.top = rcPaint->bottom - w;
-	r.bottom = rcPaint->bottom;
-	b = b_fore;
-	if (PointInRect(&curPos, &r)) {
-		b = (bPress) ? b_press : b_hl;
-	}
-
-	BeginPath(hdc);
-	Polygon(hdc, line_poly2, 3);
-	EndPath(hdc);
-	FillPath(hdc);
-
-	SelectObject(hdc, hBrushOld);
-	::DeleteObject(b_fore);
-	::DeleteObject(b_hl);
-	::DeleteObject(b_press);
-
-	::BitBlt(hDC, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
-
-	::SelectObject(hdc, GetStockFont(WHITE_BRUSH));
-	SelectBitmap(hdc, hBitmapOld);
-	::DeleteObject(hBitmap);
-	::DeleteDC(hdc);
-
-}
-
-LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-	ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
-	switch (iMessage) {
-	case WM_PAINT:
-	{
-		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-		lbx->sc_OnPaint(hdc, &ps.rcPaint, false, 0);
-
-		EndPaint(hWnd, &ps);
-	}
-	break;
-	case WM_LBUTTONUP:
-	case WM_LBUTTONDBLCLK:
-	case WM_LBUTTONDOWN:
-	case WM_MOUSEMOVE:
-	{
-		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		if (iMessage == WM_MOUSEMOVE && !::GetAsyncKeyState(VK_LBUTTON)) {
-			int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-			lbx->sc_Paint(false, 0);
-			return res;
-		}
-
-		::DefWindowProcW(hWnd, WM_SETREDRAW, 0, 0);
-		lbx->bBlockRedraw = true;
-		int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		::DefWindowProcW(hWnd, WM_SETREDRAW, 1, 0);
-		lbx->bBlockRedraw = false;
-		if(!::GetAsyncKeyState(VK_LBUTTON))
-			lbx->sc_Paint(false, 0);
-
-		return res;
-	}
-	}
-	return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
 }
 
 }
