@@ -1114,8 +1114,8 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 
 
 void IupLayoutWnd::OnIdle() {
-	classList["Source"]->OnIdle();
 	classList["CoSource"]->OnIdle();
+	classList["Source"]->OnIdle();
 }
 
 void IupLayoutWnd::OnSwitchFile(int editorSide) {
