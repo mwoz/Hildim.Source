@@ -453,8 +453,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	        currentbuf >= buffers.length) {
 		return;
 	}
-	int startSize = buffers.buffers[buffers.Current()].editorSide;
-	layout.OnOpenClose(startSize);
+	int startSide = buffers.buffers[buffers.Current()].editorSide;
+	if(startSide == buffers.buffers[index].editorSide)
+		layout.OnOpenClose(startSide);
 
 	wEditor.Call(WM_SETREDRAW, 0);
 	UpdateBuffersCurrent();

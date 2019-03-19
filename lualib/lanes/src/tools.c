@@ -60,27 +60,49 @@ static int hildim_print(lua_State *L) {
 
 	lua_getglobal(L, "tostring");
 
-	for (int i = 1; i <= nargs; ++i) {
-		if (i > 1)
-			SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)"\t");
+	int len = 2;
 
+	for (int i = 1; i <= nargs; ++i) {
 		const char *argStr = lua_tostring(L, i);
 		if (argStr) {
-			SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)argStr);
+			len += strlen(argStr) + 1;
 		} else {
 			lua_pushvalue(L, -1); // tostring
 			lua_pushvalue(L, i);
 			lua_call(L, 1, 1);
 			argStr = lua_tostring(L, -1);
 			if (argStr) {
-				SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)argStr);
+				len += strlen(argStr) + 1;
 			} else {
 				//raise_error(L, "tostring (called from print) returned a non-string");
 			}
 			lua_settop(L, nargs + 1);
 		}
 	}
+	char *pMsg = malloc(len);
+	ZeroMemory(pMsg, len);
+	for (int i = 1; i <= nargs; ++i) {
 
+		const char *argStr = lua_tostring(L, i);
+		if (argStr) {
+			strcat(pMsg, argStr);
+			strcat(pMsg, "\t");
+		} else {
+			lua_pushvalue(L, -1); // tostring
+			lua_pushvalue(L, i);
+			lua_call(L, 1, 1);
+			argStr = lua_tostring(L, -1);
+			if (argStr) {
+				strcat(pMsg, argStr);
+				strcat(pMsg, "\t");
+			} else {
+				//raise_error(L, "tostring (called from print) returned a non-string");
+			}
+			lua_settop(L, nargs + 1);
+		}
+	}
+	SendMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)"print", (LPARAM)pMsg);
+	free(pMsg);
 	return 0;
 }
 
