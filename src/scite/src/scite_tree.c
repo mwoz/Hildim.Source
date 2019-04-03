@@ -57,6 +57,13 @@ static int sctree_branchopen_cb(Ihandle *self, int p0) {
 	return iuplua_call(L, 1);
 }
 
+static int sctree_selection_cb(Ihandle *self, int p0, int p1) {
+	lua_State *L = iuplua_call_start(self, "flat_selection_cb");
+	lua_pushinteger(L, p0);
+	lua_pushinteger(L, p1);
+	return iuplua_call(L, 2);
+}
+
 static int winTreeProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
 	case WM_HSCROLL:
@@ -153,26 +160,7 @@ static void isc_SetNoScrollSize(Ihandle* ih, int iAct, int bOpen) {
 		bRefresh = TRUE;
 }
 
-static int isc_TreeBranchOpen_CB(Ihandle* ih, int item) {
-	IFni cbFlatBranchOpen = (IFni)IupGetCallback(ih, "FLAT_BRANCHOPEN_CB");
-	int res = IUP_DEFAULT;
-	if (cbFlatBranchOpen)
-		res = cbFlatBranchOpen(ih, item);
-	isc_SetNoScrollSize(ih, item, 1);
-	return res;
-}
-
-static int isc_TreeBranchClose_CB(Ihandle* ih, int item) {
-	IFni cbFlatBranchClose = (IFni)IupGetCallback(ih, "FLAT_BRANCHCLOSE_CB");
-	int res = IUP_DEFAULT;
-	if (cbFlatBranchClose)
-		res = cbFlatBranchClose(ih, item);
-	isc_SetNoScrollSize(ih, item, 0);
-	return res;
-}
-
-static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOOL * bFind) {
-	int iH = SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
+static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOOL * bFind, int iH) {
 	for (; ; ) {
 		if (item >= ItemFound){
 			*bFind = TRUE;
@@ -181,9 +169,10 @@ static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOO
 		y += iH;
 		if (!strcmp(IupGetAttributeId(ih, "KIND", item), "BRANCH") && (!strcmp(IupGetAttributeId(ih, "STATE", item), "EXPANDED")))
 		{
-			y = isc_GetTopItem_Recr(ih, y , item + 1, ItemFound, bFind);
+			y = isc_GetTopItem_Recr(ih, y , item + 1, ItemFound, bFind, iH);
 			if (*bFind)
 				return y;
+
 		}
 		int next;
 		iupStrToInt(IupGetAttributeId(ih, "NEXT", item), &next);
@@ -195,28 +184,72 @@ static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOO
 	return y;
 }
 
+static void iscTreeFlatTopitemAttrib_int(Ihandle* ih, int item) {
+
+	BOOL bFound = FALSE;
+
+	int x, y, delta = 0;
+	int iH = (int)SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
+	IupGetIntInt(ih->parent,"RASTERSIZE", &x, &y);
+	if (y >= iH * 2)
+		delta = iH/2;
+
+	int curY = isc_GetTopItem_Recr(ih, 0, 0, item, &bFound, iH);
+	if (bFound) {
+		int posy = IupGetInt(ih->parent, "POSY");
+		int dy = IupGetInt(ih->parent, "DY");
+		if (curY < posy) {
+			IupSetInt(ih->parent, "POSY", curY - 10);
+
+		} else if (curY + iH > posy + dy) {
+			IupSetInt(ih->parent, "POSY", curY + iH - dy + 10);
+		}
+	}
+}
+
 static int iscTreeFlatTopitemAttrib(Ihandle* ih, const char* value) {
 	
 	int item;
 	if (iupStrToInt(value, &item)) {
-		IupSetAttribute(ih, "TOPITEM", "VALUE");
-
-		BOOL bFound = FALSE;
-
-		int curY = isc_GetTopItem_Recr(ih, 0, 0, item, &bFound);
-		if (bFound) {
-			int posy = IupGetInt(ih->parent, "POSY");
-			int dy = IupGetInt(ih->parent, "DY");
-			int iH = SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
-			if (curY < posy) {
-				IupSetInt(ih->parent, "POSY", curY);
-
-			} else if (curY + iH > posy + dy) {
-				IupSetInt(ih->parent, "POSY", curY + iH - dy);
-			}
-		}
+		IupSetAttribute(ih, "TOPITEM", value);
+		iscTreeFlatTopitemAttrib_int(ih, item);
 	}
 	return 1;
+}
+
+static int isc_TreeBranchOpen_CB(Ihandle* ih, int item) {
+	IFni cbFlatBranchOpen = (IFni)IupGetCallback(ih, "FLAT_BRANCHOPEN_CB");
+	int res = IUP_DEFAULT;
+	if (cbFlatBranchOpen)
+		res = cbFlatBranchOpen(ih, item);
+	if (res != IUP_IGNORE) {
+		isc_SetNoScrollSize(ih, item, 1);
+		iscTreeFlatTopitemAttrib_int(ih, item);
+	}
+	return res;
+}
+
+static int isc_TreeBranchClose_CB(Ihandle* ih, int item) {
+	IFni cbFlatBranchClose = (IFni)IupGetCallback(ih, "FLAT_BRANCHCLOSE_CB");
+	int res = IUP_DEFAULT;
+	if (cbFlatBranchClose)
+		res = cbFlatBranchClose(ih, item);
+	if (res != IUP_IGNORE) {
+		isc_SetNoScrollSize(ih, item, 0);
+		iscTreeFlatTopitemAttrib_int(ih, item);
+	}
+	return res;
+}
+
+static int isc_Selection_CB(Ihandle* ih, int id, int status) {
+	IFnii cbSelection = (IFnii)IupGetCallback(ih, "FLAT_SELECTION_CB");
+	int res = IUP_DEFAULT;
+	if (cbSelection)
+		res = cbSelection(ih, id, status);
+
+	iscTreeFlatTopitemAttrib_int(ih, IupGetInt(ih, "VALUE"));
+
+	return res;
 }
 
 static int iscTreeSetResetScrollAttrib(Ihandle* ih, const char* value) {
@@ -227,6 +260,7 @@ static int iscTreeSetResetScrollAttrib(Ihandle* ih, const char* value) {
 static int isc_TreeCreateMethod(Ihandle* ih, void** params) {
 	IupSetCallback(ih, "BRANCHOPEN_CB", (Icallback)isc_TreeBranchOpen_CB);
 	IupSetCallback(ih, "BRANCHCLOSE_CB", (Icallback)isc_TreeBranchClose_CB);
+	IupSetCallback(ih, "SELECTION_CB", (Icallback)isc_Selection_CB);
 	return IUP_NOERROR;
 }
 
@@ -262,6 +296,7 @@ Iclass* iupsc_TreeNewClass(void)
 
 	iupClassRegisterCallback(ic, "FLAT_BRANCHCLOSE_CB", "i");
 	iupClassRegisterCallback(ic, "FLAT_BRANCHOPEN_CB", "i");
+	iupClassRegisterCallback(ic, "FLAT_SELECTION_CB", "ii");
 
 	iupClassRegisterAttribute(ic, "RESETSCROLL", NULL, iscTreeSetResetScrollAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "FLAT_TOPITEM", NULL, iscTreeFlatTopitemAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
@@ -293,6 +328,7 @@ int iupsc_Treelua_open(lua_State * L)
 	iuplua_register(L, sc_Tree, "sc_Tree");
 	iuplua_register_cb(L, "FLAT_BRANCHCLOSE_CB", (lua_CFunction)sctree_branchclose_cb, NULL);
 	iuplua_register_cb(L, "FLAT_BRANCHOPEN_CB", (lua_CFunction)sctree_branchopen_cb, NULL);
+	iuplua_register_cb(L, "FLAT_SELECTION_CB", (lua_CFunction)sctree_selection_cb, NULL);
 	iuplua_dostring(L,
 		"local ctrl = { nick = 'sc_tree', parent = iup.BOX, subdir = 'elem', creation = 'I',  funcname = 'sc_Tree', }; function ctrl.createElement(class, param) return iup.sc_Tree() end iup.RegisterWidget(ctrl); iup.SetClass(ctrl, 'iupWidget')",
 		"sc_tree.lua");

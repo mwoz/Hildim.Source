@@ -4084,6 +4084,130 @@ static Ihandle* load_image_HildiM_WW(void) {
 	return image;
 }
 
+static Ihandle* load_image_Class_WW(void) {
+	unsigned char imgdata[] = {
+	  8, 8, 8, 8, 8, 15, 2, 15, 8, 8, 8, 8, 8, 8, 8, 8,
+	  8, 8, 8, 8, 15, 2, 13, 2, 15, 8, 8, 8, 8, 8, 8, 8,
+	  8, 8, 8, 15, 2, 13, 12, 12, 2, 15, 8, 8, 8, 15, 8, 8,
+	  8, 8, 15, 2, 13, 12, 12, 11, 2, 0, 15, 8, 15, 6, 15, 8,
+	  8, 15, 2, 13, 12, 12, 11, 2, 0, 15, 8, 15, 6, 10, 6, 15,
+	  15, 2, 13, 12, 12, 11, 2, 0, 15, 8, 15, 6, 10, 9, 6, 5,
+	  8, 15, 1, 12, 11, 11, 0, 5, 5, 5, 6, 10, 9, 6, 5, 15,
+	  8, 8, 15, 1, 2, 1, 15, 8, 5, 8, 15, 6, 6, 5, 15, 8,
+	  8, 8, 8, 15, 1, 15, 8, 8, 5, 8, 8, 15, 5, 7, 8, 8,
+	  8, 3, 3, 3, 3, 3, 1, 1, 1, 8, 8, 8, 7, 5, 7, 8,
+	  8, 3, 2, 12, 14, 14, 12, 2, 0, 8, 8, 7, 5, 7, 4, 7,
+	  8, 3, 14, 2, 12, 12, 2, 12, 0, 8, 7, 5, 7, 5, 5, 4,
+	  8, 3, 14, 3, 2, 2, 3, 12, 0, 5, 5, 7, 5, 5, 4, 7,
+	  8, 3, 2, 12, 14, 14, 12, 2, 0, 8, 7, 4, 5, 4, 7, 8,
+	  8, 1, 1, 1, 0, 0, 0, 0, 0, 8, 8, 7, 4, 7, 8, 8,
+	  8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 8, 8, 8 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", "71 60 31");
+	IupSetAttribute(image, "1", "159 133 70");
+	IupSetAttribute(image, "2", "218 166 22");
+	IupSetAttribute(image, "3", "217 182 67");
+	IupSetAttribute(image, "4", "38 87 181");
+	IupSetAttribute(image, "5", "115 127 187");
+	IupSetAttribute(image, "6", "198 134 191");
+	IupSetAttribute(image, "7", "231 230 251");
+	IupSetAttribute(image, "8", "BGCOLOR");
+	IupSetAttribute(image, "9", "255 156 255");
+	IupSetAttribute(image, "10", "255 173 255");
+	IupSetAttribute(image, "11", "247 198 49");
+	IupSetAttribute(image, "12", "245 212 94");
+	IupSetAttribute(image, "13", "247 231 132");
+	IupSetAttribute(image, "14", "255 247 140");
+	IupSetAttribute(image, "15", "251 239 238");
+	IupSetAttribute(image, "16", "0 102 204");
+
+	return image;
+}
+
+static Ihandle* load_image_Switch_WW(void) {
+	unsigned char imgdata[] = {
+	  9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 11, 13, 9, 9, 9,
+	  9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 4, 4, 13, 9, 9,
+	  13, 11, 11, 13, 9, 9, 9, 5, 11, 14, 4, 4, 3, 4, 13, 9,
+	  11, 13, 13, 13, 11, 5, 11, 4, 15, 3, 3, 3, 15, 3, 4, 5,
+	  11, 13, 13, 13, 13, 14, 7, 3, 15, 15, 15, 15, 14, 15, 7, 5,
+	  8, 11, 3, 13, 15, 10, 15, 15, 15, 4, 7, 10, 15, 10, 8, 9,
+	  9, 5, 8, 11, 10, 4, 14, 4, 10, 14, 5, 10, 10, 8, 9, 9,
+	  9, 9, 9, 7, 10, 4, 12, 10, 7, 9, 9, 8, 11, 9, 9, 9,
+	  9, 5, 14, 10, 12, 2, 10, 0, 1, 11, 5, 1, 1, 5, 9, 9,
+	  7, 10, 10, 2, 2, 12, 0, 4, 6, 15, 14, 1, 3, 1, 13, 9,
+	  0, 6, 2, 2, 2, 0, 10, 6, 6, 6, 6, 6, 6, 15, 14, 5,
+	  0, 12, 12, 10, 0, 1, 8, 14, 14, 6, 6, 6, 6, 15, 14, 5,
+	  7, 0, 0, 7, 5, 9, 9, 5, 11, 1, 7, 7, 15, 7, 8, 9,
+	  9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 7, 8, 9, 9,
+	  9, 9, 9, 5, 5, 5, 5, 8, 8, 8, 8, 1, 8, 5, 9, 9,
+	  9, 9, 9, 9, 9, 9, 5, 5, 5, 5, 5, 5, 9, 9, 9, 9 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", "56 124 183");
+	IupSetAttribute(image, "1", "135 176 213");
+	IupSetAttribute(image, "2", "17 178 248");
+	IupSetAttribute(image, "3", "140 212 250");
+	IupSetAttribute(image, "4", "95 174 231");
+	IupSetAttribute(image, "5", "215 226 234");
+	IupSetAttribute(image, "6", "90 202 251");
+	IupSetAttribute(image, "7", "103 158 209");
+	IupSetAttribute(image, "8", "187 204 218");
+	IupSetAttribute(image, "9", "BGCOLOR");
+	IupSetAttribute(image, "10", "69 148 207");
+	IupSetAttribute(image, "11", "147 199 238");
+	IupSetAttribute(image, "12", "46 176 239");
+	IupSetAttribute(image, "13", "176 219 247");
+	IupSetAttribute(image, "14", "116 175 223");
+	IupSetAttribute(image, "15", "119 199 245");
+
+	return image;
+}
+static Ihandle* load_image_Event(void) {
+	unsigned char imgdata[] = {
+	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 15, 13, 6, 6, 6, 6, 2, 2, 7, 15, 15,
+	  15, 15, 15, 15, 15, 15, 3, 7, 6, 6, 5, 4, 0, 14, 15, 15,
+	  15, 15, 15, 15, 15, 11, 3, 11, 3, 5, 4, 0, 9, 15, 15, 15,
+	  15, 15, 15, 15, 15, 3, 7, 3, 5, 4, 1, 9, 15, 15, 15, 15,
+	  15, 15, 15, 15, 10, 3, 11, 3, 4, 1, 8, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 3, 6, 6, 6, 5, 5, 4, 0, 9, 15, 15, 15,
+	  15, 15, 15, 15, 2, 1, 0, 1, 3, 4, 0, 8, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 14, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 8, 6, 4, 1, 8, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 5, 5, 1, 9, 15, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 8, 2, 9, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 };
+
+	Ihandle* image = IupImage(16, 16, imgdata);
+
+	IupSetAttribute(image, "0", "109 89 56");
+	IupSetAttribute(image, "1", "154 129 61");
+	IupSetAttribute(image, "2", "184 159 109");
+	IupSetAttribute(image, "3", "242 191 111");
+	IupSetAttribute(image, "4", "231 132 132");
+	IupSetAttribute(image, "5", "224 182 141");
+	IupSetAttribute(image, "6", "232 211 135");
+	IupSetAttribute(image, "7", "229 208 170");
+	IupSetAttribute(image, "8", "231 226 214");
+	IupSetAttribute(image, "9", "233 231 222");
+	IupSetAttribute(image, "10", "243 235 218");
+	IupSetAttribute(image, "11", "255 247 222");
+	IupSetAttribute(image, "12", "239 231 231");
+	IupSetAttribute(image, "13", "255 247 231");
+	IupSetAttribute(image, "14", "247 247 247");
+	IupSetAttribute(image, "15", "BGCOLOR");
+	IupSetAttribute(image, "16", "0 102 204");
+
+	return image;
+}
+
 void load_all_images_Images(void)
 {
   IupSetHandle("HildiM_µ", load_image_HildiM_WW());
@@ -4183,5 +4307,8 @@ void load_all_images_Images(void)
   IupSetHandle("scissors_µ", load_image_scissors_WW());
   IupSetHandle("control_record_µ", load_image_control_record_WW());
   IupSetHandle("control_stop_square_µ", load_image_control_stop_square_WW());
+  IupSetHandle("IMAGE_Class", load_image_Class_WW());
+  IupSetHandle("IMAGE_Switch", load_image_Switch_WW());
+  IupSetHandle("IMAGE_Event", load_image_Event());
 }
 
