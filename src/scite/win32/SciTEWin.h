@@ -286,6 +286,7 @@ public:
 	void NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 	LRESULT NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam);
 	virtual Ihandle * IupTab(int id);
+	virtual void PostLoadScript();
 };
 
 

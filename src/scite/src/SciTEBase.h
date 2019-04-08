@@ -645,6 +645,7 @@ protected:
 	void CloneTab();
 	void ChangeTabWnd();
 	virtual void OrderTabsBy(std::map<int, int> &order);
+	virtual void PostLoadScript() = 0;
 	void CheckRightEditorVisible();
 	bool m_bRightEditorVisible = false;
 

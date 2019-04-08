@@ -1311,6 +1311,10 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   {
     switch (msg)
     {
+	case EM_SETSEL:
+		if (ih->data->block_sel) 
+			return 1;
+		break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
@@ -1970,12 +1974,16 @@ static void winListLayoutUpdateMethod(Ihandle *ih)
     win_h = rect.bottom-rect.top;
     win_w = rect.right-rect.left;
 
-    if (ih->currentwidth != win_w || calc_h != win_h)
-      SetWindowPos(ih->handle, HWND_TOP, ih->x, ih->y, ih->currentwidth, calc_h, 
-                   SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER);
+	ih->data->block_sel = 1;
+
+    if (ih->currentwidth != win_w || calc_h != win_h) 
+        SetWindowPos(ih->handle, HWND_TOP, ih->x, ih->y, ih->currentwidth, calc_h,
+                     SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER);
     else
       SetWindowPos(ih->handle, HWND_TOP, ih->x, ih->y, 0, 0, 
                    SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER);
+
+	ih->data->block_sel = 0;
   }                
   else
     iupdrvBaseLayoutUpdateMethod(ih);
@@ -2104,6 +2112,7 @@ static int winListMapMethod(Ihandle* ih)
 
     if (ih->data->has_editbox)
     {
+		ih->data->block_sel = 0;
       iupwinHandleAdd(ih, boxinfo.hwndItem);
       iupAttribSet(ih, "_IUPWIN_EDITBOX", (char*)boxinfo.hwndItem);
 

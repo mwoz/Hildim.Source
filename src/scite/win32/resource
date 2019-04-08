@@ -783,6 +783,7 @@
 #define VK_F10                          0x79
 #define VK_F11                          0x7A
 #define LANG_MAPUDUNGUN                 0x7a
+#define IDR_MENU1                       122
 #define VK_F12                          0x7B
 #define WM_CONTEXTMENU                  0x007B
 #define VK_F13                          0x7C
@@ -1517,7 +1518,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        122
+#define _APS_NEXT_RESOURCE_VALUE        123
 #define _APS_NEXT_COMMAND_VALUE         40005
 #define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           101

@@ -102,14 +102,15 @@ static LRESULT CALLBACK winTreeWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
 	ret = winTreeProc(ih, hwnd, msg, wp, lp, &result);
 
+	if (bRefresh&& msg == WM_PAINT) {
+		bRefresh = FALSE;
+		IupRefreshChildren(ih->parent);
+	}	
 	if (ret)
 		return result;
 	else
 		ret = CallWindowProc(oldProc, hwnd, msg, wp, lp);
-	if (bRefresh) {
-		bRefresh = FALSE;
-		IupRefresh(ih);
-	}
+
 	return ret;
 
 }
@@ -144,18 +145,18 @@ static void isc_SetNoScrollSize(Ihandle* ih, int iAct, int bOpen) {
 	HDC hdc = GetDC(ih->handle);
 	int iH = SendMessage(ih->handle, TVM_GETITEMHEIGHT, 0, 0);
 	int l1 = SendMessage(ih->handle, TVM_GETINDENT, 0, 0) + 21;
-	
+
 	HFONT hOldFont, hFont = (HFONT)iupwinGetHFont(IupGetAttribute(ih, "FONT"));
 	hOldFont = SelectObject(hdc, hFont);
 
-	int h = isc_SetNoScrollSize_recr(ih, hdc, 0 , &w, l1, 1, iAct, bOpen) * iH;
+	int h = isc_SetNoScrollSize_recr(ih, hdc, 0, &w, l1, 1, iAct, bOpen) * iH;
 
 	SelectObject(hdc, hOldFont);
 	ReleaseDC(ih->handle, hdc);
 
 	IupSetAttribute(ih, "RASTERSIZE", iupStrReturnIntInt(w, h, 'x'));
 	if(bOpen)
-		IupRefresh(ih);
+		IupRefreshChildren(ih->parent);
 	else
 		bRefresh = TRUE;
 }

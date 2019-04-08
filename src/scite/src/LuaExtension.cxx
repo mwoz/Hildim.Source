@@ -3259,6 +3259,11 @@ void LuaExtension::DoLua(const char *c) {
 bool LuaExtension::OnMacroBlocked(int msg, int wParam, int lParam) {
 	return CallNamedFunction("OnMacroBlockedEvents", msg, wParam, lParam);
 }
+
+int LuaExtension::OnMenuChar(int flag, const char* key) {
+	return CallNamedFunction("event_MenuChar", flag, key);
+}
+
 void LuaExtension::OnMouseHook(int x, int y){
 	CallNamedFunction("event_MenuMouseHook", x, y);
 }
@@ -3345,13 +3350,8 @@ static int cf_editor_reload_startup_script(lua_State*) {
 		if (!call_function(luaState, 0, 0)) {
 			host->Trace(">Lua: error occurred while loading startup script\n");
 		}
+		host->PostLoadScript();
 	}
-
-
-	//InitGlobalScope(false, true);
-	//if (extensionScript.length()) {
-	//	reinterpret_cast<LuaExtension*>(host)->Load(extensionScript.c_str());
-	//}
 	return 0;
 }
 

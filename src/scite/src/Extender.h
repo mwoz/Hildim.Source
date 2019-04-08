@@ -65,6 +65,7 @@ public:
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3)=0;
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare) = 0;
 	virtual void OrderTabsBy(std::map<int, int> &order) = 0;
+	virtual void PostLoadScript() = 0;
 };
 
 /**
@@ -133,6 +134,7 @@ public:
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
+	virtual int OnMenuChar(int flag, const char* key) { return 0; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
 	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };

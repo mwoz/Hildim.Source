@@ -744,7 +744,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"TABSLINECOLOR", scrBORDERCOLOR,
 		NULL);
 
-	pTab = IupSetAtt(NULL, IupCreatep("split",
+	pTab = IupSetAtt(NULL, IupCreatep("split",    
 		pLeftTab,
 		IupSetAtt(NULL, IupCreatep("expander",
 			pRightTab,
@@ -754,6 +754,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"EXPAND", "HORIZONTAL",
 			"MINSIZE", minSz,
 			"STATE", "CLOSE",
+			"STATEREFRESH", "NO",
 			NULL),
 		NULL),
 		"ORIENTATION", "VERTICAL",
@@ -784,6 +785,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 				"LAYOUTDRAG", "NO",
 				"MINSIZE", "x1",
 				"VALUE", "0",
+				"STATEREFRESH", "NO",
 				NULL),
 			IupSetAtt(NULL, IupCreatep("split",
 				IupSetAtt(NULL, IupCreatep("split",
@@ -817,7 +819,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 							"BARSIZE", "0",
 							"BARPOSITION", "LEFT",
 							//"FONT", "::1",
-							"MINSIZE", "0x0",
+							"MINSIZE", "0x0", 
+							"STATEREFRESH", "NO",
 							NULL),
 						NULL),
 						"NAME", "SourceSplitMiddle",
@@ -834,6 +837,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 						"BARPOSITION", "TOP",
 						//"FONT", "::1",
 						"MINSIZE", "0x0",
+						"STATEREFRESH", "NO",
 						NULL),
 					NULL),
 					"ORIENTATION", "HORIZONTAL",
@@ -856,7 +860,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 					"BARSIZE", "0",
 					"BARPOSITION", "LEFT",
 					"MINSIZE", "x0",
-
+					"STATEREFRESH", "NO",
 					//"STATE", "CLOSE",
 					NULL),
 				NULL),
@@ -909,6 +913,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"BARPOSITION", "LEFT",
 			"FONT", "::1",
 			"MINSIZE", "0x0",
+			"STATEREFRESH", "NO",
 			NULL);
 
 	containers[10] =
@@ -934,6 +939,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"BARPOSITION", "LEFT",
 			"FONT", "::1",
 			"MINSIZE", "0x0",
+			"STATEREFRESH", "NO",
 			NULL);
 
 
@@ -986,6 +992,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"BARSIZE", "0",
 		"FONT", "::1",
 		"MINSIZE", "x0",
+		"STATEREFRESH", "NO",
 		NULL);
 
 
@@ -997,6 +1004,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"BARSIZE", "0",
 			"EXPAND", "HORIZONTAL",
 			"MINSIZE", "x0",
+			"STATEREFRESH", "NO",
 			NULL),
 
 		IupSetAtt(NULL, IupCreatep("split", containers[2],
@@ -1055,8 +1063,7 @@ void IupLayoutWnd::Fit(){
 	if (!r.right && !r.bottom)
 		return;
 	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, r.right, r.bottom, 0);
-	IupRefresh(pLeftTab);
-	IupRefresh(pRightTab);
+	IupRefresh(IupGetParent(pLeftTab));
 }
 
 void IupLayoutWnd::Close(){

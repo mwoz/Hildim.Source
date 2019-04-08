@@ -4631,7 +4631,7 @@ int SciTEBase::ActiveEditor() {
 }
 
 //!-start-[LocalizationFromLua]
-// TODO: переделать всё на utf8, это вызывается только из луа
+// TODO: переделать всё на utf8, это вызывается только из луа 
 char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
 #if defined(GTK)
     //TODO: add get translation

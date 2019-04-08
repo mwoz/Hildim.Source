@@ -1485,6 +1485,8 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 
 		case WM_CHAR:
 			if (((wParam >= 128) || !iscntrl(static_cast<int>(wParam))) || !lastKeyDownConsumed) {
+				if (wParam < 32 && wParam > 0 && KeyboardIsKeyDown(VK_CONTROL))
+					return 0;
 				wchar_t wcs[3] = {static_cast<wchar_t>(wParam), 0};
 				unsigned int wclen = 1;
 				if (IS_HIGH_SURROGATE(wcs[0])) {
@@ -1658,6 +1660,9 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 		case WM_WINDOWPOSCHANGING:
 		case WM_WINDOWPOSCHANGED:
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+
+		case WM_SYSCHAR:
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 
 		case WM_GETTEXTLENGTH:
 			return GetTextLength();

@@ -52,6 +52,8 @@ HHOOK macroHook = NULL;
 HHOOK mouseHook = NULL;
 HHOOK keyBoardHook = NULL;
 HMENU topLevelPopUp = NULL;
+bool kbdHookOn = false;
+bool bAltReleased = false;
 
 static GUI::gui_string GetErrorMessage(DWORD nRet) {
 	LPWSTR lpMsgBuf = NULL;
@@ -267,6 +269,26 @@ const TCHAR *SciTEWin::classNameInternal = NULL;
 SciTEWin *SciTEWin::app = NULL;
 SciTEWin *pSciTEWin;
 
+LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	bAltReleased = (wParam == VK_MENU && lParam < 0 && !kbdHookOn);
+	if(wParam == VK_MENU && lParam < 0)
+		pSciTEWin->NotifyMouseHook(nCode, WM_KEYDOWN, -1);
+	else {
+		if (wParam == VK_MENU && lParam > 0 && !kbdHookOn)
+			pSciTEWin->NotifyMouseHook(nCode, WM_KEYDOWN, 1);
+		else {
+			if (kbdHookOn) {
+				if (!(bIsPopUpMenuItem & 2) && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)) {
+					pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
+				} else if (!(bIsPopUpMenuItem & 1) && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)) {
+					pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
+				}
+			}
+		}
+	}
+	return CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
+}
+
 SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 	app = this;
 	pSciTEWin = this;
@@ -366,7 +388,7 @@ void SciTEWin::Register(HINSTANCE hInstance_) {
 	wndclass.hIcon = ::LoadIcon(hInstance, resourceName);
 	wndclass.hCursor = NULL;
 	wndclass.hbrBackground = NULL;
-	wndclass.lpszMenuName = pSciTEWin->props.GetInt("main.menu.used") ? resourceName : 0;
+	wndclass.lpszMenuName = 0;
 	wndclass.lpszClassName = className;
 	if (!::RegisterClass(&wndclass))
 		exit(FALSE);
@@ -1647,7 +1669,6 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	int statusFailure = 0;
 	static int boxesVisible = 0;
 	static int prevShowCmd = -1;
-	static bool isSysMenu = false;
 
 	static bool sysminimized = false;
 	try {
@@ -1729,6 +1750,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 		case WM_CREATE:
 			Creation();
+			keyBoardHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoardProc, hInstance, GetCurrentThreadId());
 			break;
 		case WM_SIZE:
 		{
@@ -1745,16 +1767,25 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return ContextMenuMessage(iMessage, wParam, lParam);
 
 		case WM_ENTERMENULOOP:
-			if (!wParam && !isSysMenu){
+			if (!wParam){
 				menuSource = 0;
 				::EndMenu();
-				POINT cp;
-				::GetCursorPos(&cp);
-				::MapWindowPoints(HWND_DESKTOP, layout.GetChildHWND(NULL), &cp, 1);
-				if (!wParam && cp.y > 0) extender->OnMouseHook(-70000, -70000);
+				if (bAltReleased)
+					extender->OnMenuChar(1, "");
 			}
-			isSysMenu = false;
 			break;
+		case WM_MENUCHAR:
+			if(MF_SYSMENU == HIWORD(wParam)){
+				WCHAR key[2];
+				key[1] = 0;
+				key[0] = LOWORD(wParam);
+				std::string keyUtf = GUI::UTF8FromString(key).c_str();
+				return MAKELRESULT(0, extender->OnMenuChar(0, keyUtf.c_str()));
+			}
+			break;
+
+		case WM_SYSCHAR:
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 
 		case WM_SYSCOMMAND:
 			if (wParam == SC_MINIMIZE)
@@ -1762,11 +1793,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if ((wParam == SC_MINIMIZE) && props.GetInt("minimize.to.tray")) {
 				MinimizeToTray();
 				return 0;
-			} else if (wParam == SC_CLOSE) {
+			} else if(wParam == SC_CLOSE){
 				::SendMessage(MainHWND(), WM_COMMAND, IDM_QUIT, 0);
 				return 0;
-			} else if (wParam == SC_KEYMENU){
-				isSysMenu = true;
 			}
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 
@@ -1870,6 +1899,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		case WM_DESTROY:
 			layout.Close();
+			UnhookWindowsHookEx(keyBoardHook);
+			keyBoardHook = NULL;
 			PostMessage(MainHWND(), WM_QUIT, 0, 0);
 			break;
 
@@ -1899,6 +1930,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if (props.GetInt("selection.hide.on.deactivate", 1)) {
 				wEditor.Call(SCI_HIDESELECTION, !wParam);
 			}
+			extender->OnMenuChar(3, "NO");
 			// Do not want to display dialog yet as may be in middle of system mouse capture
 			::PostMessage(MainHWND(), WM_COMMAND, IDM_ACTIVATE, wParam);
 			if(wParam == WA_INACTIVE)
@@ -2291,16 +2323,7 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 	pSciTEWin->NotifyMouseHook(nCode, wParam, lParam);
 	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
 }
-LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if (!(bIsPopUpMenuItem&2) && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)){
-		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
-	}
-	else if (!(bIsPopUpMenuItem&1) && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)){
-		pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
-	}
-	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
-}
+
 bool SciTEWin::SwitchMacroHook(bool bSet) {
 	bool result = false;
 	if (bSet && !macroHook) {
@@ -2318,15 +2341,14 @@ bool SciTEWin::SwitchMouseHook(bool bSet){
 		bIsPopUpMenuItem = false;
 		topLevelPopUp = NULL;
 		mouseHook = SetWindowsHookEx(WH_MOUSE, MouseProc, hInstance, GetCurrentThreadId());
-		keyBoardHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoardProc, hInstance, GetCurrentThreadId());
+		kbdHookOn = true;
 		result = (mouseHook != NULL);
 	}
 	else if (!bSet && mouseHook){
 		result = UnhookWindowsHookEx(mouseHook);
-		result = UnhookWindowsHookEx(keyBoardHook);
+		kbdHookOn = false;
 		
 		::EndMenu();
-		keyBoardHook = NULL;
 		mouseHook = NULL;
 	}
 	return result;
@@ -2360,8 +2382,13 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 		extender->OnMouseHook(mh->pt.x - area.left, mh->pt.y - area.top);
 	}
 	else if (wParam == WM_KEYUP) {
-		extender->OnMouseHook(-70000, lParam);
+		extender->OnMenuChar(2, lParam > 0 ? "1" : "-1");
+	} else if (wParam == WM_KEYDOWN) {
+		extender->OnMenuChar(3, lParam > 0 ? "YES" : "NO");
 	}
+}
+void SciTEWin::PostLoadScript() {
+	
 }
 
 

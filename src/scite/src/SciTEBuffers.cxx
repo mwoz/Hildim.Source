@@ -485,6 +485,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		CheckMenus();
 	} else if (startSide == buffers.buffers[index].editorSide)
 		ReadProperties();
+	else
+		RestoreState(bufferNext, switchTab);
 
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
