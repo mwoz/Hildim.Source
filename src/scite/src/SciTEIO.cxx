@@ -764,11 +764,13 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 			}
 		} else {
 			retVal = true; //Не смогли сохранить несохраненный - наплюем
-			std::string cmd = "print(([[";
-			//cmd += "File ";
-			cmd += saveName.AsUTF8();
-			cmd += "]]):from_utf8()..' is not changed')";
-			extender->DoLua(cmd.c_str());
+			if (!props.GetInt("save.scip.alert")) {
+				std::string cmd = "print(([[";
+				//cmd += "File ";
+				cmd += saveName.AsUTF8();
+				cmd += "]]):from_utf8()..' is not changed')";
+				extender->DoLua(cmd.c_str());
+			}
 		}
 
 		if (retVal && extender) {

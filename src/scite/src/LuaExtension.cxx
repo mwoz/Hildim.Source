@@ -1070,6 +1070,7 @@ static int bf_current(lua_State *L) {
 	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->GetCurrentBufer());
 	return 1;
 }
+
 static int bf_get_buffer_side(lua_State *L) {
 
 	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->GetBufferSide(luaL_checkint(L, 1)));
@@ -1085,6 +1086,13 @@ static int bf_get_buffer_modtime(lua_State *L) {
 	lua_pushinteger(L, host->GetBufferModTime(luaL_checkint(L, 1)));
 	return 1;
 }
+
+static int bf_get_buffer_unicmode(lua_State *L) {
+
+	lua_pushinteger(L, host->GetBufferUnicMode(luaL_checkint(L, 1)));
+	return 1;
+}
+
 static int bf_is_cloned(lua_State *L) {
 	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->Cloned(luaL_checkint(L, 1)));
 	return 1;
@@ -1112,6 +1120,13 @@ static int bf_get_buffer_name(lua_State *L){
 	int i = luaL_checkint(L, 1);
 	char c[2000];
 	host->GetBufferName(i, c);
+	lua_pushstring(L, c);
+	return 1;
+}
+
+static int bf_get_cobuffer_name(lua_State *L){
+	char c[2000];
+	host->GetCoBufferName(c);
 	lua_pushstring(L, c);
 	return 1;
 }
@@ -1999,6 +2014,7 @@ void ContinueInit(void* h){
 			if (!call_function(luaState, 0, 0)) {
 				host->Trace(">Lua: error occurred while loading startup script\n");
 			}
+			host->PostLoadScript();
 		}
 	}
 
@@ -2301,6 +2317,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "SetDocumentAt");
 	lua_pushcfunction(luaState, bf_get_buffer_name);
 	lua_setfield(luaState, -2, "NameAt");
+	lua_pushcfunction(luaState, bf_get_cobuffer_name);
+	lua_setfield(luaState, -2, "CoName");
 	lua_pushcfunction(luaState, bf_get_buffer_saved);
 	lua_setfield(luaState, -2, "SavedAt");
 	lua_pushcfunction(luaState, bf_get_buffer_encoding);
@@ -2322,6 +2340,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, bf_get_buffer_modtime);
 	lua_setfield(luaState, -2, "GetBufferModTime");
+
+	lua_pushcfunction(luaState, bf_get_buffer_unicmode);
+	lua_setfield(luaState, -2, "GetBufferUnicMode");
 
 	lua_pushcfunction(luaState, bf_is_cloned);
 	lua_setfield(luaState, -2, "IsCloned");

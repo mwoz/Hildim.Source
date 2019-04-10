@@ -552,6 +552,7 @@ protected:
 	int maxCallTips;
 	SString currentCallTipWord;
 	int lastPosCallTip;
+	bool macro1stLoaded = false;
 
 	bool margin;
 	int marginWidth;
@@ -602,7 +603,8 @@ protected:
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	int ShiftToVisible(int index);
-	void GetBufferName(int i, char *c){lstrcpynA( c, buffers.buffers[i].AsUTF8().c_str(), 2000);};
+	void GetBufferName(int i, char *c) { lstrcpynA(c, buffers.buffers[i].AsUTF8().c_str(), 2000); };
+	void GetCoBufferName(char *c){lstrcpynA( c, wEditor.GetCoBuffPointer().AsUTF8().c_str(), 2000);};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
 	int GetBufferFileTime(int i) { return (int)buffers.buffers[i].fileModTime;};
 	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
@@ -613,6 +615,7 @@ protected:
 	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
 	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
 	virtual int GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
+	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
 	virtual int SecondEditorActive();
 	virtual void Open_script(const char* path);
 	virtual void SavePositions();

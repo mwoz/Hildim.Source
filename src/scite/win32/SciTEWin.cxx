@@ -1368,6 +1368,7 @@ void SciTEWin::EnsureVisible(){
 		cmdShow = 0;	
 		Redraw();	 
 	}
+	macro1stLoaded = true;
 }
 
 void SciTEWin::HideForeReolad(){
@@ -1705,9 +1706,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				return 0;
 			}
 			layout.OnNcMouseMove(MainHWND(), 0);
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_NCMOUSELEAVE:
 			layout.OnNcMouseMove(MainHWND(), 0);
+			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_NCLBUTTONDOWN:
 			if (!layout.StandartWindowDecoration && (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
@@ -1730,11 +1731,12 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_WINDOWPOSCHANGED:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			if (!layout.StandartWindowDecoration) {
+
+			if ( !layout.StandartWindowDecoration) {
 				WINDOWPLACEMENT wp;
 				::GetWindowPlacement(MainHWND(), &wp);//(::GetAsyncKeyState(VK_LBUTTON) || sysminimized) &&
-
-				if ( wp.showCmd != SW_SHOWMINIMIZED &&
+				
+				if (macro1stLoaded && wp.showCmd != SW_SHOWMINIMIZED &&
 					prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
 					::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
 				prevShowCmd = wp.showCmd;
@@ -2388,7 +2390,6 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 	}
 }
 void SciTEWin::PostLoadScript() {
-	
 }
 
 

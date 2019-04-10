@@ -35,6 +35,7 @@ public:
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
 	virtual void GetBufferName(int i, char* c) = 0;
+	virtual void GetCoBufferName(char* c) = 0;
 	virtual void SetBufferEncoding(int i, int e) = 0;
 	virtual int GetBufferEncoding(int i) = 0;
 	virtual void ClearBufferFileTime(int i) = 0;
@@ -51,6 +52,7 @@ public:
 	virtual int ActiveEditor()=0;
 	virtual int GetBufferSide(int index) = 0;
 	virtual int GetBufferModTime(int index) = 0;
+	virtual int GetBufferUnicMode(int index) = 0;
 	virtual int GetBufferOrder(int index) = 0;
 	virtual int SecondEditorActive() = 0;
 	virtual int Cloned(int index) = 0;
