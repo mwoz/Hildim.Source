@@ -4127,12 +4127,31 @@ void SciTEBase::Notify(SCNotification *notification) {
 				handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 			else
 				handled = extender->CoOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
+			
+			if (notification->updated & SC_UPDATE_SELECTION) {
+				if (notification->nmhdr.idFrom == IDM_SRCWIN) {
+					static int line = -1;
+					int l = wEditorL.Call(SCI_VISIBLEFROMDOCLINE, wEditorL.Call(SCI_LINEFROMPOSITION, wEditorL.Call(SCI_GETCURRENTPOS)));
+					if (line != l) { 
+						line = l;
+						layout.childMap["Source"]->setCurLine(l);
+					}
+				} else {
+					static int line = -1;
+					int l = wEditorL.Call(SCI_VISIBLEFROMDOCLINE, wEditorR.Call(SCI_LINEFROMPOSITION, wEditorR.Call(SCI_GETCURRENTPOS)));
+					if (line != l) { 
+						line = l;
+						layout.childMap["CoSource"]->setCurLine(l);
+					}
+				}
+			}		
 		}
 		if (!handled) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN);
 			if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			}
 		}
+
 		break;
 
 	case SCN_MODIFIED:

@@ -320,12 +320,16 @@ public:
 	~IupChildWnd();
 	void Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt);
 	void Scroll_CB(int op, float posx, float posy);
-	void VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
+	void VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
 	void ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value);
 	void HideScrolls();
 	void OnIdle();
 	void resetPixelMap();
+	void setCurLine(int l);
 private:
+	int curLine = -1;
+	bool lineChanged = false;
+	float lineheightPx;
 	char name[16];
 	bool bNeedSize = false;
 	HWND hMainWnd;
@@ -380,11 +384,12 @@ public:
 	bool FullScreen = false;
 	bool StandartWindowDecoration = false;
 	void SetTitle(const GUI::gui_char *s);
+	mapsICW childMap;
 private:
 	void * pSciteWin;
 	IupChildWnd ichFindRes;
 	Ihandle* Create_dialog();
-	mapsICW childMap;
+	
 	WNDPROC subclassedProc;
 	LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

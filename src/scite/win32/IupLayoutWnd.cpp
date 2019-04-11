@@ -174,8 +174,8 @@ static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	return IUP_DEFAULT;
 }
 
-static int iVScrollFraw_CB(Ihandle*ih, IdrawCanvas* dc, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
-	classList[IupGetAttribute(ih, "NAME")]->VScrollFraw_CB(ih, (void*)dc, sb_size, ymax, pos, d, active, fgcolor_drag, bgcolor);
+static int iVScrollDraw_CB(Ihandle*ih, IdrawCanvas* dc, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
+	classList[IupGetAttribute(ih, "NAME")]->VScrollDraw_CB(ih, (void*)dc, sb_size, ymax, pos, d, active, fgcolor_drag, bgcolor);
 	return IUP_DEFAULT;
 }
 
@@ -232,7 +232,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	markerMaskAll = leftClr.mask | rightClr.mask;
 }
 
-void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int pos2, int highlight, char* fgcolor_drag, char * bgcolor) {
+void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int pos2, int highlight, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 
 	int size = pixelMap.size();
@@ -327,7 +327,16 @@ void IupChildWnd::VScrollFraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	}
 
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
+	if (curLine >= 0) {
+		int cur = lineheightPx * curLine + sb_size;
+		iupdrvDrawLine(dc, 0, cur, sb_size, cur, 0, IUP_DRAW_FILL, 1);
+	}
 
+}
+
+void IupChildWnd::setCurLine(int l) {
+	curLine = l;
+	lineChanged = true;
 }
 
 void IupChildWnd::resetPixelMap() {
@@ -341,7 +350,7 @@ void IupChildWnd::resetPixelMap() {
 	if (!count)
 		return;
 
-	float lineheightPx = (float)vHeight / (float)count;
+	lineheightPx = (float)vHeight / (float)count;
 	
 	int vLine, curMark;
 	for(int line = 0; line <= docCount; line ++){
@@ -438,7 +447,7 @@ void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
 	IupSetCallback(pCnt, "_COLORSETTINGS_CB", (Icallback)iColorSettings_CB);
 	if(colodizedSB)
-		IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollFraw_CB); 
+		IupSetCallback(pCnt, "VSCROLLDRAW_CB", (Icallback)iVScrollDraw_CB); 
 
 }
 
@@ -461,11 +470,13 @@ void IupChildWnd::HideScrolls() {
 }
 
 void IupChildWnd::OnIdle() {
-	if (resetmap) {
-		resetPixelMap();
+	if (resetmap || lineChanged) {
+		if(resetmap)
+			resetPixelMap();
 		IupSetAttribute(pContainer, "REDRAWVSCROLL", "");
 	}
 	resetmap = false;
+	lineChanged = false;
 	if (bNeedSize)
 		SizeEditor();
 }
