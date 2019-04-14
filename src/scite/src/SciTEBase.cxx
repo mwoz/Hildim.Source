@@ -4138,7 +4138,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					}
 				} else {
 					static int line = -1;
-					int l = wEditorL.Call(SCI_VISIBLEFROMDOCLINE, wEditorR.Call(SCI_LINEFROMPOSITION, wEditorR.Call(SCI_GETCURRENTPOS)));
+					int l = wEditorR.Call(SCI_VISIBLEFROMDOCLINE, wEditorR.Call(SCI_LINEFROMPOSITION, wEditorR.Call(SCI_GETCURRENTPOS)));
 					if (line != l) { 
 						line = l;
 						layout.childMap["CoSource"]->setCurLine(l);
@@ -4240,10 +4240,29 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_DWELLSTART:
 		if (extender && (INVALID_POSITION != notification->position)) {
+//////ToDelete
 			int endWord = notification->position;
-			SString message =
-				RangeExtendAndGrab(wEditor,
+			SString message="";
+			auto original = _set_se_translator([](unsigned int u, EXCEPTION_POINTERS *pExp) {
+				std::string error = "!!!WARNING: SCN_DWELLSTART exeption: ";
+				char result[11];
+				sprintf_s(result, 11, "0x%08X", u);
+				error += result;
+				throw std::exception(error.c_str());
+			});
+		
+			try {
+				message = RangeExtendAndGrab((notification->nmhdr.idFrom == IDM_SRCWIN ? wEditorL : wEditorR),
 					notification->position, endWord, &SciTEBase::iswordcharforsel);
+			} catch (std::exception &e) {
+				if (strlen(e.what())) {
+					std::string warning = "print([[";
+					warning += e.what();
+					warning += "]])";
+					extender->DoLua(warning.c_str());
+				}
+			}
+			_set_se_translator(original);
 			if (message.length()) {
 				extender->OnDwellStart(notification->position,message.c_str());
 			}

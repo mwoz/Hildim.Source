@@ -271,21 +271,18 @@ SciTEWin *pSciTEWin;
 
 LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	bAltReleased = (wParam == VK_MENU && lParam < 0 && !kbdHookOn);
-	if(wParam == VK_MENU && lParam < 0)
+	if (wParam == VK_MENU && lParam < 0)
 		pSciTEWin->NotifyMouseHook(nCode, WM_KEYDOWN, -1);
 	else {
-		if (wParam == VK_MENU && lParam > 0 && !kbdHookOn)
-			pSciTEWin->NotifyMouseHook(nCode, WM_KEYDOWN, 1);
-		else {
-			if (kbdHookOn) {
-				if (!(bIsPopUpMenuItem & 2) && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)) {
-					pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
-				} else if (!(bIsPopUpMenuItem & 1) && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)) {
-					pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
-				}
+		if (kbdHookOn) {
+			if (!(bIsPopUpMenuItem & 2) && nCode && wParam == VK_LEFT && (::GetAsyncKeyState(VK_LEFT) < 0)) {
+				pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, -1);
+			} else if (!(bIsPopUpMenuItem & 1) && nCode && wParam == VK_RIGHT && (::GetAsyncKeyState(VK_RIGHT) < 0)) {
+				pSciTEWin->NotifyMouseHook(nCode, WM_KEYUP, 1);
 			}
 		}
 	}
+
 	return CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
 }
 
@@ -2203,6 +2200,17 @@ int SciTEWin::EventLoop() {
 		{
 			if (msg.message != WM_QUIT)
 			{
+				switch (msg.message) {
+				case WM_SYSKEYDOWN:
+					switch (msg.wParam) {
+					case VK_MENU:
+						if (!kbdHookOn) {
+							extender->OnMenuChar(3, "YES");
+						}
+						break;
+					}
+					break;
+				}
 				if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
 				{
 					::TranslateMessage(&msg);

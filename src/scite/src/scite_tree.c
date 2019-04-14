@@ -168,6 +168,9 @@ static int isc_GetTopItem_Recr(Ihandle* ih,  int y, int item, int ItemFound, BOO
 			return item == ItemFound ? y : -1;
 		}
 		y += iH;
+		//char *atrKind = IupGetAttributeId(ih, "KIND", item);
+		//char *atrState = IupGetAttributeId(ih, "STATE", item);
+		//char *atrTitle = IupGetAttributeId(ih, "TITLE", item);
 		if (!strcmp(IupGetAttributeId(ih, "KIND", item), "BRANCH") && (!strcmp(IupGetAttributeId(ih, "STATE", item), "EXPANDED")))
 		{
 			y = isc_GetTopItem_Recr(ih, y , item + 1, ItemFound, bFind, iH);
@@ -212,8 +215,10 @@ static int iscTreeFlatTopitemAttrib(Ihandle* ih, const char* value) {
 	
 	int item;
 	if (iupStrToInt(value, &item)) {
-		IupSetAttribute(ih, "TOPITEM", value);
-		iscTreeFlatTopitemAttrib_int(ih, item);
+		if (IupGetInt(ih, "COUNT") >= item && item >= 0) {
+			IupSetAttribute(ih, "TOPITEM", value);
+			iscTreeFlatTopitemAttrib_int(ih, item);
+		}
 	}
 	return 1;
 }
