@@ -43,7 +43,7 @@ public:
 	virtual bool GetBuffersSavedState(int i) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
-	virtual void HideForeReolad() = 0;
+	virtual void HideForeReolad(int close) = 0;
 	virtual void SetOverrideLanguage(const char *lexer, bool bFireEvent) = 0;
 	virtual bool SwitchMouseHook(bool bSet) = 0;
 	virtual void RunInConcole() = 0;
@@ -123,7 +123,7 @@ public:
 //!	virtual bool OnKey(int, int) { return false; }
 	virtual bool OnKey(int, int, char) { return false; } //!-change-[OnKey]
 
-	virtual bool OnDwellStart(int, const char *) { return false; }
+	virtual bool OnDwellStart(int, const char *, bool) { return false; }
 	virtual bool OnClose(const char *) { return false; }
 	virtual bool OnColorized(unsigned int, unsigned int) { return false; }
 	virtual const char *OnContextMenu(unsigned int msg, unsigned int wp, const char *lp){ return 0; }

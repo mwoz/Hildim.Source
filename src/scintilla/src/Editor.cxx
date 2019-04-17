@@ -3973,7 +3973,8 @@ int Editor::KeyDefault(int, int) {
 }
 
 int Editor::KeyDownWithModifiers(int key, int modifiers, bool *consumed) {
-	DwellEnd(false);
+	if(key!=0x11 && modifiers!= SCMOD_CTRL)
+		DwellEnd(false);
 	const int msg = kmap.Find(key, modifiers);
 	if (msg) {
 		if (consumed)

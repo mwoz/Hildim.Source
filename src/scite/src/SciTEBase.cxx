@@ -4249,8 +4249,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 				sprintf_s(result, 11, "0x%08X", u);
 				error += result;
 				throw std::exception(error.c_str());
-			});
-		
+			}); 
+
 			try {
 				message = RangeExtendAndGrab((notification->nmhdr.idFrom == IDM_SRCWIN ? wEditorL : wEditorR),
 					notification->position, endWord, &SciTEBase::iswordcharforsel);
@@ -4264,14 +4264,14 @@ void SciTEBase::Notify(SCNotification *notification) {
 			}
 			_set_se_translator(original);
 			if (message.length()) {
-				extender->OnDwellStart(notification->position,message.c_str());
+				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL));
 			}
 		}
 		break;
 
 	case SCN_DWELLEND:
 		if (extender) {
-			extender->OnDwellStart(0,""); // flags end of calltip
+			extender->OnDwellStart(0,"", ::GetAsyncKeyState(VK_CONTROL)); // flags end of calltip
 		}
 		break;
 

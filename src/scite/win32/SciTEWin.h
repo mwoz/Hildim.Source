@@ -223,7 +223,7 @@ protected:
 
 
 	void EnsureVisible();
-	virtual void HideForeReolad();
+	virtual void HideForeReolad(int close);
 	virtual void RunAsync(int idx);
 	virtual void SetRestart(const char* cmdLine);
 	SString restartCmdLine = "-";

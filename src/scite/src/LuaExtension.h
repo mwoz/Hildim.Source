@@ -44,7 +44,7 @@ public:
 	virtual bool OnNavigation(const char *item);
 //!	virtual bool OnKey(int keyval, int modifiers);
 	virtual bool OnKey(int keyval, int modifiers, char ch); //!-change-[OnKey]
-	virtual bool OnDwellStart(int pos, const char *word);
+	virtual bool OnDwellStart(int pos, const char *wordd, bool ctrl);
 	virtual bool OnClose(const char *filename);
 	virtual bool OnMacro(const char *func, unsigned int w, unsigned int l, const char *s); //!-add-[macro]
 	virtual bool OnMenuCommand(int, int); //!-add-[OnMenuCommand]

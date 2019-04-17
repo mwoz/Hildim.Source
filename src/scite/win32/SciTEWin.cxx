@@ -40,12 +40,7 @@
 
 #include "LuaExtension.h"
 
-
-#ifdef STATIC_BUILD
-const GUI::gui_char appName[] = GUI_TEXT("Sc1");
-#else
 const GUI::gui_char appName[] = GUI_TEXT("HildiM");
-#endif
 
 int bIsPopUpMenuItem = 0;
 HHOOK macroHook = NULL;
@@ -1367,13 +1362,24 @@ void SciTEWin::EnsureVisible(){
 	}
 	macro1stLoaded = true;
 }
-
-void SciTEWin::HideForeReolad(){
+void TimerExit(
+	HWND Arg1,
+	UINT Arg2,
+	UINT_PTR Arg3,
+	DWORD Arg4
+) {
+	::KillTimer((HWND)pSciTEWin->GetID(), 666);
+	::MessageBox(NULL, TEXT("HildiM Close Error!"), TEXT("HildiM"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
+	::ExitProcess(666);
+}
+void SciTEWin::HideForeReolad(int close){
 	WINDOWPLACEMENT wp;
 	wp.length = sizeof(wp);
 	::GetWindowPlacement(MainHWND(), &wp);
 	cmdShow = wp.showCmd;
 	::ShowWindow(MainHWND(), SW_HIDE);
+	if (close) //таймер на 100 секунд - если за это время не закрылись - вырубим процесс 
+		SetTimer((HWND)wSciTE.GetID(),666, 100000, (TIMERPROC)TimerExit);
 }
 
 void SciTEWin::RunAsync(int idx)	{
@@ -1633,6 +1639,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 LRESULT SciTEWin::KeyUp(WPARAM wParam) {
 	if (wParam == VK_CONTROL) {
 		EndStackedTabbing();
+		extender->OnDwellStart(0, "", false);
 	}
 	return 0l;
 }
@@ -2265,32 +2272,16 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		SetDllDirectoryFn(TEXT(""));
 	}
 
-#ifdef NO_EXTENSIONS
-	Extension *extender = 0;
-#else
 	LuaExtension multiExtender;
 	Extension *extender = &multiExtender;
 
-#ifndef NO_LUA
-	//SingleThreadExtension luaAdapter(LuaExtension::Instance());
-	//multiExtender.RegisterExtension(luaAdapter);
-#endif
-
-
-#endif
 	SciTEWin MainWind(extender);
 	SciTEWin::Register(hInstance);
-#ifdef STATIC_BUILD
-
-	Scintilla_LinkLexers();
-	Scintilla_RegisterClasses(hInstance);
-#else
 
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
 	if (hmod == NULL)
 		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  SciTE will now close"),
 			TEXT("Error loading Scintilla"), MB_OK | MB_ICONERROR);
-#endif
 
 	int result;
 	{
@@ -2313,12 +2304,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		result = MainWind.EventLoop();
 	}
 
-#ifdef STATIC_BUILD
-	Scintilla_ReleaseResources();
-#else
-
 	::FreeLibrary(hmod);
-#endif
 
 	return result;
 }

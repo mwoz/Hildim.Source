@@ -677,7 +677,10 @@ static int cf_EnsureVisible(lua_State* L){
 }
 
 static int cf_HideForeReolad(lua_State* L){
-	host->HideForeReolad();
+	int close =0;
+	if(lua_isinteger(L, 1))
+		close = luaL_checkinteger(L, 1);
+	host->HideForeReolad(close);
 	return 0;
 }
 
@@ -3183,8 +3186,8 @@ bool LuaExtension::OnKey(int keyval, int modifiers, char ch) { //!-chage-[OnKey]
 	return handled;
 }
 
-bool LuaExtension::OnDwellStart(int pos, const char *word) {
-	return CallNamedFunction("OnDwellStart", pos, word);
+bool LuaExtension::OnDwellStart(int pos, const char *word, bool ctrl) {
+	return CallNamedFunction("OnDwellStart", pos, word, ctrl);
 }
 
 bool LuaExtension::OnClose(const char *filename) {
