@@ -7,7 +7,7 @@
 // The License.txt file describes the conditions under which this software may be distributed.
 
 #include <time.h>
-
+#include <codecvt>
 #include <string>
 #include <vector>
 
@@ -143,6 +143,9 @@ static size_t UTF16FromUTF8(const char *s, size_t len, gui_char *tbuf, size_t tl
 }
 
 gui_string StringFromUTF8(const char *s) {
+	//std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	//return conv.from_bytes(s);
+
 	size_t sLen = s ? strlen(s) : 0;
 	size_t wideLen = UTF16Length(s, sLen);
 	std::vector<gui_char> vgc(wideLen + 1);
@@ -152,6 +155,9 @@ gui_string StringFromUTF8(const char *s) {
 }
 
 std::string UTF8FromString(const gui_string &s) {
+	//std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	//return conv.to_bytes(s);
+
 	size_t sLen = s.size();
 	size_t narrowLen = UTF8Length(s.c_str(), sLen);
 	std::vector<char> vc(narrowLen + 1);

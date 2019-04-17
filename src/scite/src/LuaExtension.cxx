@@ -671,6 +671,16 @@ static int sf_findfiles(lua_State* L) {
 }
 
 
+static int sf_IsRunAsAdmin(lua_State* L) {
+	BOOL res = host->IsRunAsAdmin();
+	lua_pushboolean(L, res);
+	return 1;
+}
+static int sf_NewInstance(lua_State* L) {
+	BOOL res = host->NewInstance(luaL_checkstring(L, 1), luaL_checkint(L, 2));
+	lua_pushboolean(L, res);
+	return 1;
+}
 static int cf_EnsureVisible(lua_State* L){
 	host->EnsureVisible();
 	return 0;
@@ -2311,6 +2321,12 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_findfiles);
 	lua_setfield(luaState, -2, "findfiles");
+
+	lua_pushcfunction(luaState, sf_IsRunAsAdmin);
+	lua_setfield(luaState, -2, "IsRunAsAdmin");
+
+	lua_pushcfunction(luaState, sf_NewInstance);
+	lua_setfield(luaState, -2, "NewInstance");
 
 	// buffers
 	lua_newtable(luaState);

@@ -68,6 +68,8 @@ public:
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare) = 0;
 	virtual void OrderTabsBy(std::map<int, int> &order) = 0;
 	virtual void PostLoadScript() = 0;
+	virtual bool IsRunAsAdmin()=0;
+	virtual bool NewInstance(const char* arg, bool asAdmin) =0;
 };
 
 /**

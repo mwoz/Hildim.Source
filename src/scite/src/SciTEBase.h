@@ -981,6 +981,8 @@ public:
 	bool bFinalise = false;
 
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
+	virtual bool IsRunAsAdmin() = 0;
+	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);

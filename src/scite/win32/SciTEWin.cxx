@@ -1306,13 +1306,17 @@ static bool IsASpace(int ch) {
  * create the SciTE window, perform batch processing (print) or transmit command line
  * to other instance and exit or just show the window and open files.
  */
-void SciTEWin::Run(const GUI::gui_char *cmdLine) {
+void SciTEWin::Run(const GUI::gui_string &cmdLine) {
 
+	bool allowDouble = false;
+	if (cmdLine != L"") {
+		std::wregex re(L"^((?![-/]cmd).)*?[-/]d[-/ ]", std::regex::ECMAScript); //ищем -d ДО которого нет -cmd
+		allowDouble = std::regex_search(cmdLine + L" ", re);
+	}	
 
-#ifndef _DEBUG
 	// No need to check for other instances when doing a batch job:
 	// perform some tasks and exit immediately.
-	if (props.GetInt("check.if.already.open") != 0) {
+	if (props.GetInt("check.if.already.open") != 0 && !allowDouble) {
 		uniqueInstance.CheckOtherInstance();
 		
 		//При нажатом CTRL всегда разрешаем открывать новый инстанс - иногда открывается и при нажаотм почему-то - отменили...&& !::GetAsyncKeyState(VK_CONTROL)
@@ -1325,11 +1329,11 @@ void SciTEWin::Run(const GUI::gui_char *cmdLine) {
 			return;	// Don't do anything else
 		}
 	}
-#endif /* DEBUG */
+
+	props.Set("hildim.command.line", GUI::UTF8FromString(cmdLine).c_str());
 
 	CreateUI();
 
-	props.Set("hildim.command.line", GUI::UTF8FromString(cmdLine).c_str());
 	cfColumnSelect = ::RegisterClipboardFormat(TEXT("MSDEVColumnSelect"));		
 	hNextCBWnd = ::SetClipboardViewer(MainHWND());
 	//Redraw();
@@ -1989,6 +1993,63 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	return 0l;
 }
 
+bool SciTEWin::IsRunAsAdmin() {
+	BOOL fIsRunAsAdmin = FALSE;
+	DWORD dwError = ERROR_SUCCESS;
+	PSID pAdministratorsGroup = NULL;
+
+	// Allocate and initialize a SID of the administrators group.
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	if (!AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&pAdministratorsGroup)) {
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+	// Determine whether the SID of administrators group is enabled in 
+	// the primary access token of the process.
+	if (!CheckTokenMembership(NULL, pAdministratorsGroup, &fIsRunAsAdmin)) {
+		dwError = GetLastError();
+		goto Cleanup;
+	}
+
+Cleanup:
+	// Centralized cleanup for all allocated resources.
+	if (pAdministratorsGroup) {
+		FreeSid(pAdministratorsGroup);
+		pAdministratorsGroup = NULL;
+	}
+
+	// Throw the error if something failed in the function.
+	if (ERROR_SUCCESS != dwError) {
+		throw dwError;
+	}
+
+	return fIsRunAsAdmin;
+}
+
+bool SciTEWin::NewInstance(const char* arg, bool asAdmin) {
+	wchar_t szPath[MAX_PATH];
+	GUI::gui_string a = GUI::StringFromUTF8(arg);
+	if (GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath))) {
+		// Launch itself as administrator.
+		SHELLEXECUTEINFO sei = { sizeof(sei) };
+		if(asAdmin)
+			sei.lpVerb = L"runas";
+		sei.lpFile = szPath;
+		sei.lpParameters = a.c_str(); 
+		sei.hwnd = (HWND)wSciTE.GetID();
+		sei.nShow = SW_NORMAL;
+
+		return ShellExecuteEx(&sei);
+	}
+}
+
 // Take care of 32/64 bit pointers
 #ifdef GetWindowLongPtr
 static void *PointerFromWindow(HWND hWnd) {
@@ -2287,20 +2348,30 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	{
 		//SciTEWin MainWind(extender);
 		pSciTEWin = &MainWind;
-		LPTSTR lptszCmdLine = GetCommandLine();
-		if (*lptszCmdLine == '\"') {
-			lptszCmdLine++;
-			while (*lptszCmdLine && (*lptszCmdLine != '\"'))
-				lptszCmdLine++;
-			if (*lptszCmdLine == '\"')
-				lptszCmdLine++;
-		} else {
-			while (*lptszCmdLine && (*lptszCmdLine != ' '))
-				lptszCmdLine++;
-		}
-		while (*lptszCmdLine == ' ')
-			lptszCmdLine++;
-			MainWind.Run(lptszCmdLine);
+		//LPTSTR lptszCmdLine = GetCommandLine();
+
+		GUI::gui_string cmdLine = GetCommandLine();
+		if (cmdLine[0] == '\"') {
+			cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
+		} else if (cmdLine.find(' ') != std::string::npos) {
+			cmdLine = cmdLine.substr(cmdLine.substr(1).find(' ') + 1);
+		} else
+			cmdLine = L"";
+
+		//if (*lptszCmdLine == '\"') {
+		//	lptszCmdLine++;
+		//	while (*lptszCmdLine && (*lptszCmdLine != '\"'))
+		//		lptszCmdLine++;
+		//	if (*lptszCmdLine == '\"')
+		//		lptszCmdLine++;
+		//} else {
+		//	while (*lptszCmdLine && (*lptszCmdLine != ' '))
+		//		lptszCmdLine++;
+		//}
+		//while (*lptszCmdLine == ' ')
+		//	lptszCmdLine++;
+
+		MainWind.Run(cmdLine);
 		result = MainWind.EventLoop();
 	}
 

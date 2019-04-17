@@ -231,6 +231,8 @@ protected:
 	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
 	HWND hNextCBWnd;
 	WORD cfColumnSelect;
+	virtual bool IsRunAsAdmin();
+	virtual bool NewInstance(const char* arg, bool asAdmin);
 public:
 
 	SciTEWin(Extension *ext = 0);
@@ -241,7 +243,7 @@ public:
 
 	void CreateUI();
 	/// Management of the command line parameters.
-	void Run(const GUI::gui_char *cmdLine);
+	void Run(const GUI::gui_string &cmdLine);
     int EventLoop();
 	void OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage);
 	DWORD ExecuteOne(const Job &jobToRun, bool &seenOutput);
