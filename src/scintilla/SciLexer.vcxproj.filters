@@ -477,6 +477,9 @@
     <ClCompile Include="lexers\LexCIL.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
+    <ClCompile Include="src\UniqueString.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -669,6 +672,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\IntegerRectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\UniqueString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

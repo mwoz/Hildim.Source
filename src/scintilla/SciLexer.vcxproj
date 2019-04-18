@@ -157,6 +157,7 @@
     <ClCompile Include="src\Selection.cxx" />
     <ClCompile Include="src\Style.cxx" />
     <ClCompile Include="src\UniConversion.cxx" />
+    <ClCompile Include="src\UniqueString.cxx" />
     <ClCompile Include="src\ViewStyle.cxx" />
     <ClCompile Include="src\XPM.cxx" />
     <ClCompile Include="win32\CheckD2D.cxx" />
@@ -209,6 +210,7 @@
     <ClInclude Include="include\SVector.h" />
     <ClInclude Include="include\UnicodeFromUTF8.h" />
     <ClInclude Include="include\UniConversion.h" />
+    <ClInclude Include="include\UniqueString.h" />
     <ClInclude Include="include\ViewStyle.h" />
     <ClInclude Include="include\XPM.h" />
     <ClInclude Include="lexlib\Accessor.h" />
