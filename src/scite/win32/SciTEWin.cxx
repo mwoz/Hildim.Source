@@ -1648,7 +1648,7 @@ LRESULT SciTEWin::KeyUp(WPARAM wParam) {
 	return 0l;
 }
 
-LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam) {
+LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam, bool fromMargin) {
 	GUI::ScintillaWindow *w = &wEditor;
 	if (wOutput.Call(SCI_GETFOCUS)) w = &wOutput;
 	else if (wFindRes.Call(SCI_GETFOCUS)) w = &wFindRes;
@@ -1669,7 +1669,7 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	}
 
 	menuSource = ::GetDlgCtrlID(HwndOf(*w));
-	ContextMenu(*w, pt, wSciTE);
+	ContextMenu(*w, pt, wSciTE, fromMargin);
 	return 0;
 }
 
@@ -1774,7 +1774,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_CONTEXTMENU:
-			return ContextMenuMessage(iMessage, wParam, lParam);
+			return ContextMenuMessage(iMessage, wParam, lParam, false);
+		case SCI_MARGINCONTEXTMENU:
+			return ContextMenuMessage(iMessage, wParam, lParam, true);
 
 		case WM_ENTERMENULOOP:
 			if (!wParam){

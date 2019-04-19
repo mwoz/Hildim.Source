@@ -1150,6 +1150,7 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
  * So older code that treats Scintilla as a RichEdit will work. */
 
 
+#define SCI_MARGINCONTEXTMENU 3990 
 #define SCI_SETSCROLLINFO 3991 
 #define SCI_GETSCROLLINFO 3992 
 #define SCI_FINDPROGRESS 3993 

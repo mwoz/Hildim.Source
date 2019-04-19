@@ -257,7 +257,7 @@ public:
 	LRESULT KeyDown(WPARAM wParam);
 	LRESULT KeyUp(WPARAM wParam);
 //!	virtual void AddToPopUp(const char *label, int cmd=0, bool enabled=true);	//!-change-[ExtendedContextMenu]
-	LRESULT ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam);
+	LRESULT ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam, bool fromMargin);
 	LRESULT WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam);
 	int OnTab(Ihandle * ih, int new_pos, int old_pos);
 	int OnShift(Ihandle * ih, int old_tab, int new_tab);

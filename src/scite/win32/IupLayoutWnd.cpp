@@ -500,7 +500,7 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				lpsi->nPage = IupGetInt(pContainer, "DY");
 			}
 			if (lpsi->fMask & (SIF_POS | SIF_TRACKPOS)) {
-				lpsi->nPos = IupGetInt(pContainer, "POSY");
+				lpsi->nPos = IupGetInt(pContainer, "POSY");  
 				lpsi->nTrackPos = lpsi->nPos;
 			}
 
@@ -611,6 +611,7 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if (::IsWindowVisible(hMainWnd))return ((SciTEWin*)pSciteWin)->WndProc(uMsg, wParam, lParam);
 		break;
 	case WM_COMMAND:
+	case SCI_MARGINCONTEXTMENU:
 	case WM_CONTEXTMENU:
 		if(::IsWindowVisible(hMainWnd) )return ((SciTEWin*)pSciteWin)->WndProc(uMsg, wParam, lParam);
 		break;

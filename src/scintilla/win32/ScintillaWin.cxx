@@ -1607,6 +1607,10 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 					ContextMenu(pt);
 					return 0;
 				}
+				if (PointInSelMargin(ptClient)) {
+					SendMessage(GetParent(MainHWND()), SCI_MARGINCONTEXTMENU, wParam, lParam);
+					return 0;
+				}
 			}
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 		case WM_INPUTLANGCHANGE:

@@ -4305,12 +4305,14 @@ void SciTEBase::CheckMenus() {
 	props.SetInteger("wrap", wrap);
 }
 
-void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd) {
+void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd, int isMargin) {
 	SString mnuFake = "";
 	if (wSource.GetID() == wOutput.GetID())
 		extender->OnContextMenu(pt.x, pt.y, "OUTPUT");
 	else if (wSource.GetID() == wFindRes.GetID())
 		extender->OnContextMenu(pt.x, pt.y, "FINDRES");
+	else if(isMargin)
+		extender->OnContextMenu(pt.x, pt.y, "EDITMARGIN");
 	else
 		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
 }
