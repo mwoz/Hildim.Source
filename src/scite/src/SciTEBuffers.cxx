@@ -66,8 +66,6 @@
 #include "JobQueue.h"
 #include "SciTEBase.h"
 
-const GUI::gui_char defaultSessionFileName[] = GUI_TEXT("SciTE.session");
-
 BufferList::BufferList() : current(0), stackcurrent(0), stack(0), buffers(0), size(0), length(0), initialised(false) {}
 
 BufferList::~BufferList() {
@@ -374,11 +372,19 @@ void SciTEBase::CloneTab(){
 	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
 	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
 	wEditor.SetCoBuffPointer(&absPath);
+
+	wEditor.coEditor.Call(SCI_SETZOOM, wEditor.Call(SCI_GETZOOM));
+	wEditor.coEditor.Call(SCI_SETFIRSTVISIBLELINE, wEditor.Call(SCI_GETFIRSTVISIBLELINE));
+	wEditor.coEditor.Call(SCI_SETSELECTIONSTART, wEditor.Call(SCI_GETSELECTIONSTART));
+	wEditor.coEditor.Call(SCI_SETSELECTIONEND, wEditor.Call(SCI_GETSELECTIONEND));
+
 	wEditor.Switch();
 
 	buffers.SetCurrent(buffers.Add(d));
 	bPrev->pFriend = true;
 	CurrentBuffer()->pFriend = true;
+	CurrentBuffer()->pFriend = true;
+	CurrentBuffer()->unicodeMode = bPrev->unicodeMode;
 
 	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
@@ -483,7 +489,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		DisplayAround(bufferNext);
 
 		CheckMenus();
-	} else if (startSide == buffers.buffers[index].editorSide)
+	} else if (startSide == buffers.buffers[index].editorSide )
 		ReadProperties();
 	else
 		RestoreState(bufferNext, switchTab);

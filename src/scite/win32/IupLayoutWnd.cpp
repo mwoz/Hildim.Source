@@ -174,6 +174,11 @@ static int iScroll_CB(Ihandle *ih, int op, float posx, float posy) {
 	return IUP_DEFAULT;
 }
 
+static int iFlatScroll_CB(Ihandle *ih, int op, float posx, float posy) {
+	classList[IupGetAttribute(ih, "NAME")]->FlatScroll_CB();
+	return IUP_DEFAULT;
+}
+
 static int iVScrollDraw_CB(Ihandle*ih, IdrawCanvas* dc, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor) {
 	classList[IupGetAttribute(ih, "NAME")]->VScrollDraw_CB(ih, (void*)dc, sb_size, ymax, pos, d, active, fgcolor_drag, bgcolor);
 	return IUP_DEFAULT;
@@ -409,6 +414,14 @@ void IupChildWnd::resetPixelMap() {
 	}
 }
 
+void IupChildWnd::FlatScroll_CB() {
+	blockV = true;
+	pS->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
+	blockV = false;
+	blockH = true;
+	pS->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
+	blockH = false;
+}
 void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	switch (op) {
 	case IUP_SBUP:
@@ -444,6 +457,7 @@ void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::
 	colodizedSB = !strcmp(name, "Source") || !strcmp(name, "CoSource");
 	pS = pW;
 	pContainer = pCnt;
+	IupSetCallback(pCnt, "FLATSCROLL_CB", (Icallback)iFlatScroll_CB);
 	IupSetCallback(pCnt, "SCROLL_CB", (Icallback)iScroll_CB);
 	IupSetCallback(pCnt, "_COLORSETTINGS_CB", (Icallback)iColorSettings_CB);
 	if(colodizedSB)
@@ -487,8 +501,10 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg){
 	case WM_SETFOCUS:
 	{
-		HWND h = ::FindWindowEx(hwnd, NULL, NULL, NULL);
+		HWND h = ::FindWindowEx(hwnd, NULL, L"Scintilla", NULL);
 		::SetFocus(h);
+		if(pS->Call(SCI_GETFOCUS))
+			pS->Call(SCI_SETFOCUS, true);
 	}
 		return 0;
 	case SCI_GETSCROLLINFO:
@@ -560,7 +576,6 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					vHeight = newVHeight;
 					resetmap = true;
 				}
-				//SizeEditor();
 				bNeedSize = true;
 			}
 		} else if(wParam == SB_HORZ) {
@@ -590,7 +605,6 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 					vHeight = newVHeight;
 					resetmap = true;
 				}
-				//SizeEditor();
 				bNeedSize = true;
 			}
 		} else
@@ -623,7 +637,6 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		if (vPx && (vHeight != newVHeight)) {
 			vHeight = newVHeight;
 			resetmap = true;
-			//resetPixelMap();
 		}
 		SizeEditor();
 	}

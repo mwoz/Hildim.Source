@@ -320,6 +320,7 @@ public:
 	~IupChildWnd();
 	void Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt);
 	void Scroll_CB(int op, float posx, float posy);
+	void FlatScroll_CB();
 	void VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int d, int active, char* fgcolor_drag, char * bgcolor);
 	void ColorSettings_CB(Ihandle* ih, int side, int markerid, const char* value);
 	void HideScrolls();

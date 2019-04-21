@@ -2342,40 +2342,24 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	SciTEWin::Register(hInstance);
 
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
-	if (hmod == NULL)
+	if (hmod == NULL) {
 		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  SciTE will now close"),
 			TEXT("Error loading Scintilla"), MB_OK | MB_ICONERROR);
-
-	int result;
-	{
-		//SciTEWin MainWind(extender);
-		pSciTEWin = &MainWind;
-		//LPTSTR lptszCmdLine = GetCommandLine();
-
-		GUI::gui_string cmdLine = GetCommandLine();
-		if (cmdLine[0] == '\"') {
-			cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
-		} else if (cmdLine.find(' ') != std::string::npos) {
-			cmdLine = cmdLine.substr(cmdLine.substr(1).find(' ') + 1);
-		} else
-			cmdLine = L"";
-
-		//if (*lptszCmdLine == '\"') {
-		//	lptszCmdLine++;
-		//	while (*lptszCmdLine && (*lptszCmdLine != '\"'))
-		//		lptszCmdLine++;
-		//	if (*lptszCmdLine == '\"')
-		//		lptszCmdLine++;
-		//} else {
-		//	while (*lptszCmdLine && (*lptszCmdLine != ' '))
-		//		lptszCmdLine++;
-		//}
-		//while (*lptszCmdLine == ' ')
-		//	lptszCmdLine++;
-
-		MainWind.Run(cmdLine);
-		result = MainWind.EventLoop();
+		return 1;
 	}
+
+	pSciTEWin = &MainWind;
+
+	GUI::gui_string cmdLine = GetCommandLine();
+	if (cmdLine[0] == '\"') {
+		cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
+	} else if (cmdLine.find(' ') != std::string::npos) {
+		cmdLine = cmdLine.substr(cmdLine.substr(1).find(' ') + 1);
+	} else
+		cmdLine = L"";
+
+	MainWind.Run(cmdLine);
+	int result = MainWind.EventLoop();
 
 	::FreeLibrary(hmod);
 

@@ -116,9 +116,18 @@ static int ScrollCanvas(lua_State *L) {
 	return 1;
 }
 
+static int scrollcanvas_contextmenu_cb(Ihandle *self, int p0, int p1, char* p2) {
+	lua_State *L = iuplua_call_start(self, "contextmenu_cb");
+	lua_pushinteger(L, p0); 
+	lua_pushinteger(L, p1);
+	lua_pushstring(L, p2);
+	return iuplua_call(L, 3);
+}
+
 int iupIupScrollCanvaslua_open(lua_State * L) {
 	static int run = 0;	  	  // if (!run)
-	iuplua_register(L, ScrollCanvas, "ScrollCanvas");
+	iuplua_register(L, ScrollCanvas, "ScrollCanvas"); 
+	iuplua_register_cb(L, "CONTEXTMENU_CB", (lua_CFunction)scrollcanvas_contextmenu_cb, NULL);
 	iuplua_dostring(L,
 		"local ctrl = {  nick = 'scrollcanvas_ctrl',  parent = iup.BOX,  subdir = 'elem',  creation = 'I',  funcname = 'ScrollCanvas', };function ctrl.createElement(class, param)  return iup.ScrollCanvas() end; iup.RegisterWidget(ctrl); iup.SetClass(ctrl, 'iupWidget')",
 		"scrollcanvas.lua");
