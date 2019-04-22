@@ -658,7 +658,7 @@ protected:
 	void CheckRightEditorVisible();
 	bool m_bRightEditorVisible = false;
 
-	void ReadGlobalPropFile();
+	void ReadGlobalPropFile(GUI::gui_string adv);
 
 	sptr_t CallFocused(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);

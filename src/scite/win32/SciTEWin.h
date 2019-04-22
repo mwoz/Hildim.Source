@@ -235,7 +235,7 @@ protected:
 	virtual bool NewInstance(const char* arg, bool asAdmin);
 public:
 
-	SciTEWin(Extension *ext = 0);
+	SciTEWin(Extension *ext, GUI::gui_string &propsExt);
 	~SciTEWin();
 
 	bool DialogHandled(GUI::WindowID id, MSG *pmsg);
@@ -243,7 +243,7 @@ public:
 
 	void CreateUI();
 	/// Management of the command line parameters.
-	void Run(const GUI::gui_string &cmdLine);
+	void Run(const GUI::gui_string &cmdLine, bool allowDouble);
     int EventLoop();
 	void OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage);
 	DWORD ExecuteOne(const Job &jobToRun, bool &seenOutput);

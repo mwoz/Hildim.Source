@@ -74,7 +74,7 @@ const GUI::gui_char propDirectoryFileName[] = GUI_TEXT("SciTEDirectory.propertie
 /**
 Read global and user properties files.
 */
-void SciTEBase::ReadGlobalPropFile() {
+void SciTEBase::ReadGlobalPropFile(GUI::gui_string adv) {
 #ifdef __unix__
 	extern char **environ;
 	char **e=environ;
@@ -108,6 +108,10 @@ void SciTEBase::ReadGlobalPropFile() {
 	FilePath propfileBase = GetDefaultPropertiesFileName();	
 	//Вызываем модифицированный метод - с передачей главной директории
 	propsBase.Read(GetSciteDefaultHome().AsUTF8().c_str(), propfileBase, propfileBase.Directory(), importFiles, importMax);
+	if (adv != L"") {
+		FilePath fAdv = adv; 
+		propsBase.Read(fAdv, fAdv.Directory(), importFiles, importMax);
+	}
 
 	propsUser.Clear();
 	FilePath propfileUser = GetUserPropertiesFileName();

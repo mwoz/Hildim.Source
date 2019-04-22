@@ -782,7 +782,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 }
 
 void SciTEBase::ReloadProperties() {
-	ReadGlobalPropFile();
+	ReadGlobalPropFile(L"");
 
 	ReadProperties();
 	SetWindowName();

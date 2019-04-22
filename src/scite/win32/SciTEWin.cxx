@@ -281,7 +281,7 @@ LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	return CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
 }
 
-SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
+SciTEWin::SciTEWin(Extension *ext, GUI::gui_string &propsExt) : SciTEBase(ext) {
 	app = this;
 	pSciTEWin = this;
 
@@ -327,7 +327,7 @@ SciTEWin::SciTEWin(Extension *ext) : SciTEBase(ext) {
 
 	pathAbbreviations = GetAbbrevPropertiesFileName();
 
-	ReadGlobalPropFile();
+	ReadGlobalPropFile(propsExt);
 	/// Need to copy properties to variables before setting up window
 	SetPropertiesInitial();
 
@@ -1306,13 +1306,7 @@ static bool IsASpace(int ch) {
  * create the SciTE window, perform batch processing (print) or transmit command line
  * to other instance and exit or just show the window and open files.
  */
-void SciTEWin::Run(const GUI::gui_string &cmdLine) {
-
-	bool allowDouble = false;
-	if (cmdLine != L"") {
-		std::wregex re(L"^((?![-/]cmd).)*?[-/]d[-/ ]", std::regex::ECMAScript); //ищем -d ДО которого нет -cmd
-		allowDouble = std::regex_search(cmdLine + L" ", re);
-	}	
+void SciTEWin::Run(const GUI::gui_string &cmdLine, bool allowDouble) {
 
 	// No need to check for other instances when doing a batch job:
 	// perform some tasks and exit immediately.
@@ -2050,6 +2044,7 @@ bool SciTEWin::NewInstance(const char* arg, bool asAdmin) {
 
 		return ShellExecuteEx(&sei);
 	}
+	return false;
 }
 
 // Take care of 32/64 bit pointers
@@ -2338,7 +2333,28 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	LuaExtension multiExtender;
 	Extension *extender = &multiExtender;
 
-	SciTEWin MainWind(extender);
+	GUI::gui_string cmdLine = GetCommandLine();
+	if (cmdLine[0] == '\"') {
+		cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
+	} else if (cmdLine.find(' ') != std::string::npos) {
+		cmdLine = cmdLine.substr(cmdLine.substr(1).find(' ') + 1);
+	} else
+		cmdLine = L"";	
+	GUI::gui_string advProps;
+	bool allowDouble = false;
+	if (cmdLine != L"") {
+		std::wregex re(L"^((?![-/]cmd).)*?[-/]d[-/ ]", std::regex::ECMAScript); //ищем -d ДО которого нет -cmd
+		allowDouble = std::regex_search(cmdLine + L" ", re);
+		re = L"^((?![-/]cmd).)*?[-/]props=\"([^\"]+)\".*";
+
+		std::wsmatch mtch;
+
+		if (std::regex_match(cmdLine, mtch, re)) {
+			advProps = mtch[2];
+		}
+	}
+
+	SciTEWin MainWind(extender, advProps);
 	SciTEWin::Register(hInstance);
 
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
@@ -2350,15 +2366,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 	pSciTEWin = &MainWind;
 
-	GUI::gui_string cmdLine = GetCommandLine();
-	if (cmdLine[0] == '\"') {
-		cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
-	} else if (cmdLine.find(' ') != std::string::npos) {
-		cmdLine = cmdLine.substr(cmdLine.substr(1).find(' ') + 1);
-	} else
-		cmdLine = L"";
-
-	MainWind.Run(cmdLine);
+	MainWind.Run(cmdLine, allowDouble);
 	int result = MainWind.EventLoop();
 
 	::FreeLibrary(hmod);
