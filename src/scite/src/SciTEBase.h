@@ -353,6 +353,7 @@ private:
 	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
 	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
 	DWORD markerMaskAll = 0;
+	bool bBlockFlatCollback = false;
 
 };
 typedef std::map<const char*, IupChildWnd*> mapsICW;

@@ -415,6 +415,8 @@ void IupChildWnd::resetPixelMap() {
 }
 
 void IupChildWnd::FlatScroll_CB() {
+	if (bBlockFlatCollback)
+		return;
 	blockV = true;
 	pS->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
 	blockV = false;
@@ -544,6 +546,7 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 	case SCI_SETSCROLLINFO:
 	{
+		bBlockFlatCollback = true;
 		if (!pContainer) return false;
 		LPSCROLLINFO lpsi = (LPSCROLLINFO)lParam; 
 		if (wParam == SB_VERT) {
@@ -607,11 +610,14 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 				}
 				bNeedSize = true;
 			}
-		} else
+		} else {
+			bBlockFlatCollback = false;
 			return false;
+		}
 	}
-		return true;
-		break;
+	bBlockFlatCollback = false;
+	return true;
+	break;
 	case WM_NOTIFY:
 	{
 		SCNotification *notification = (SCNotification*)(lParam);

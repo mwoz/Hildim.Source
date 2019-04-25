@@ -652,10 +652,15 @@ void SciTEBase::New() {
 
 	// If the current buffer is the initial untitled, clean buffer then overwrite it,
 	// otherwise add a new buffer.
-	if ((buffers.length > 1) ||
+	bool emptyInSrc = false;
+	if (wEditor.GetWindowIdm() == IDM_SRCWIN && SecondEditorActive()) {
+		emptyInSrc = (buffers.NextByIdm(IDM_SRCWIN) == -1 && buffers.buffers[buffers.Current()].IsUntitled() &&
+			!buffers.buffers[buffers.Current()].isDirty);
+	}
+	if (!emptyInSrc && ((buffers.length > 1) ||
 	        (buffers.Current() != 0) ||
 	        (buffers.buffers[0].isDirty) ||
-	        (!buffers.buffers[0].IsUntitled())) {
+	        (!buffers.buffers[0].IsUntitled()))) {
 		if (buffers.size == buffers.length) {
 			Close(false, false, true);
 		}
@@ -771,11 +776,11 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		if (closingLast) {
 			ClearDocument();
 		}
-		if (updateUI)
-			CheckReload();
 		if (updateUI) {
+			CheckReload();
 			RestoreState(bufferNext);
-			DisplayAround(bufferNext);
+			if (prevIdm == buffers.CurrentBuffer()->editorSide)
+				DisplayAround(bufferNext);
 		}
 	}
 
