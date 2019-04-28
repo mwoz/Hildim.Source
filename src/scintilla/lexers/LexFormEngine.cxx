@@ -141,7 +141,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 	}
 };
 
-class LexerFormEngine : public DefaultLexer {
+class LexerFormEngine : public ILexer4 {
 	bool caseSensitive;
 	CharacterSet setFoldingWordsBegin;
 	WordList keywords[24];	//переданные нам вордлисты
@@ -197,6 +197,53 @@ public:
 			WordListSet(cmd,wl);
 		}
 		return 0;
+	}
+	int SCI_METHOD LineEndTypesSupported() noexcept override {
+		return SC_LINE_END_TYPE_UNICODE;
+	}
+	int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) noexcept override {
+		return -1;
+	}
+	int SCI_METHOD SubStylesStart(int)  noexcept override {
+		return -1;
+	}
+
+	int SCI_METHOD SubStylesLength(int)  noexcept override {
+		return 0;
+	}
+
+	int SCI_METHOD StyleFromSubStyle(int subStyle)  noexcept override {
+		return subStyle;
+	}
+	int SCI_METHOD PrimaryStyleFromStyle(int style)  noexcept override {
+		return style;
+	}
+
+	void SCI_METHOD FreeSubStyles()  noexcept override {}
+
+	void SCI_METHOD SetIdentifiers(int, const char *)  noexcept override {}
+
+	int SCI_METHOD DistanceToSecondaryStyles()  noexcept override {
+		return 0;
+	}
+
+	const char * SCI_METHOD GetSubStyleBases()  noexcept override {
+		return { 0 };
+	}
+	int SCI_METHOD NamedStyles()  noexcept override {
+		return 0;
+	}
+
+	const char * SCI_METHOD NameOfStyle(int style) {
+		return "";
+	}
+
+	const char * SCI_METHOD TagsOfStyle(int style) {
+		return "";
+	}
+
+	const char * SCI_METHOD DescriptionOfStyle(int style) {
+		return "";
 	}
 
 	static ILexer4 *LexerFactoryFM() {
@@ -889,6 +936,7 @@ public:
 	void Forward();
 	void GetRangeLowered(unsigned int start,unsigned int end,char *s,unsigned int len);
 	bool GetNextLowered(char *s,unsigned int len);
+	int MatchLowerStyledLine(unsigned int line, const char *mtch, const int style, IDocument *pAccess);
 	bool Skip();
 	void WalkToEOL();
 
@@ -950,6 +998,21 @@ void FoldContext::GetRangeLowered(unsigned int start,
 			i++;
 		}
 		s[i] = '\0';
+}
+int FoldContext::MatchLowerStyledLine(unsigned int line, const char *mtch, const int style, IDocument *pAccess) {
+	int l = currentLine - line;
+	if (l < 0)
+		return 0;
+	int ls = pAccess->LineStart(l) + pAccess->GetLineIndentation(l);
+	int lineStyle = styler.StyleAt(ls);
+	if(lineStyle != style)
+		return lineStyle;
+	int len = strlen(mtch);
+	for (int i = 0; i < len; i++) {
+		if (mtch[i] != static_cast<char>(tolower(styler.SafeGetCharAt(ls + i))))
+			return lineStyle;
+	}
+	return 0;
 }
 bool FoldContext::GetNextLowered(char *s,unsigned int len){
 	int startstyle = style;
@@ -1062,23 +1125,51 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					}else if(!strcmp(s, "select")){
 						fc.currentLevel ++;
 						selectionState = Start;
-						//blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
 					}else if(wFold.InList(s)){//начало фолдинга - do function sub for with property while
 						fc.currentLevel++;
 						selectionState = Next;
 					}
 					else if (!strcmp(s, "case")){
-						if (selectionState == Empty && fc.currentLine > 0)return false;
+						if (selectionState == Empty && fc.currentLine > 0 && !fc.startLineResolved) {
+							int strOut = 1;
+							selectionState = Start;
+							for (int j = 1; strOut; j++) {
+								strOut = fc.MatchLowerStyledLine(j, "select", SCE_FM_VB_KEYWORD, pAccess);
+								if(strOut && (strOut != SCE_FM_VB_COMMENT && strOut != SCE_FM_VB_DEFAULT)) {
+									selectionState = End;
+									break;
+								}
+							}
+						}
 						if (selectionState == Start){
 							fc.currentLevel++;
-						}
-						else if (selectionState == Next){
+						}else{
 							fc.SetCurLevel(fc.currentLevel - 1);
 						}
 						selectionState = Next;
 					}
-					else if (wRefold.InList(s) && options.foldAtElse){//промежуточный фолдинг для ифа и свитча - case else elseif
-						if(!fc.startLineResolved)return false;
+					else if (wRefold.InList(s) && options.foldAtElse ){//промежуточный фолдинг для ифа и свитча - case else elseif
+						if (!fc.startLineResolved) {
+							char *then = "then";
+							int lEnd = pAccess->LineEnd(fc.currentLine - 1);
+							bool bFind = false;
+							for (int ls = pAccess->LineStart(fc.currentLine - 1); ls <= lEnd; ls++) {
+								if (styler.StyleAt(ls) == SCE_FM_VB_KEYWORD && lEnd - ls >= 4) {
+									bFind = true;
+									for (int i = 0; i < 4; i++) {
+										if (then[i] != static_cast<char>(tolower(styler.SafeGetCharAt(ls + i)))) {
+											bFind = false;
+											break;
+										}
+									}
+									if (bFind) {
+										blockReFoldLine = fc.currentLine;
+										break;
+									}
+								}
+							}
+							fc.startLineResolved = true;
+						}
 						if(fc.currentLine != blockReFoldLine){
 							fc.SetCurLevel(fc.currentLevel - 1); //Фолдим, если не фолдили в прошлой строке
 						}
@@ -1092,7 +1183,8 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 							if(fc.style == SCE_FM_VB_KEYWORD){
 								fc.GetNextLowered(s, 100);
 								if (!strcmp(s, "select")){
-									fc.SetCurLevel(fc.currentLevel - 1);
+									if(fc.MatchLowerStyledLine(1, "case", SCE_FM_VB_KEYWORD, pAccess))
+										fc.SetCurLevel(fc.currentLevel - 1);
 									selectionState = End;
 								}
 								if(!strcmp(s, "if") || !strcmp(s, "select")){
@@ -1108,19 +1200,28 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 				if(!fc.startLineResolved)return false;
 				break;
 			case SCE_FM_VB_COMMENT:
-				if(!fc.visibleChars && options.foldComment){
-					if(!fc.startLineResolved)return false;
+				if(!fc.visibleChars && options.foldComment  ){
+					if (!fc.startLineResolved) {
+						if (!fc.MatchLowerStyledLine(1, "'", SCE_FM_VB_COMMENT, pAccess)) {
+							if (fc.MatchLowerStyledLine(2, "'", SCE_FM_VB_COMMENT, pAccess))
+								return false;
+							processComment = 1;
+						}
+						fc.startLineResolved = true;
+					}
 					if(processComment==0) fc.currentLevel++;
 						//fc.SetPrevLevel(fc.currentLevel+1);
 
 					//проверим, является ли следующая строка комментарием
-
-					if('\'' != styler.SafeGetCharAt(pAccess->GetLineIndentation(fc.currentLine + 1)+pAccess->LineStart(fc.currentLine + 1),'\0')){
+				
+					int ls = pAccess->GetLineIndentation(fc.currentLine + 1) + pAccess->LineStart(fc.currentLine + 1);
+					if ('\'' != styler.SafeGetCharAt(ls, '\0') || (options.debugmode && ('#' == styler.SafeGetCharAt(ls + 1, '\0'))) ) {
 						fc.currentLevel--;
 						processComment = 0;
 					}else{
 						processComment++;
 					}
+					//fc.WalkToEOL();
 				}
 				continue;
 			default:
