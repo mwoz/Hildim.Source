@@ -124,7 +124,7 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 	WordList &kwM4Keys = *keywordlists[KW_MSSQL_M4KEYS];
 	styler.StartAt(startPos);
 
-	bool fold = styler.GetPropertyInt("fold") != 0;
+	//bool fold = styler.GetPropertyInt("fold") != 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int spaceFlags = 0;
 
@@ -138,20 +138,20 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 
-		if ((ch == '\r' && chNext != '\n') || (ch == '\n')) {
-			int indentCurrent = styler.IndentAmount(lineCurrent, &spaceFlags);
-			int lev = indentCurrent;
-			if (!(indentCurrent & SC_FOLDLEVELWHITEFLAG)) {
-				// Only non whitespace lines can be headers
-				int indentNext = styler.IndentAmount(lineCurrent + 1, &spaceFlags);
-				if (indentCurrent < (indentNext & ~SC_FOLDLEVELWHITEFLAG)) {
-					lev |= SC_FOLDLEVELHEADERFLAG;
-				}
-			}
-			if (fold) {
-				styler.SetLevel(lineCurrent, lev);
-			}
-		}
+		//if ((ch == '\r' && chNext != '\n') || (ch == '\n')) {
+		//	int indentCurrent = styler.IndentAmount(lineCurrent, &spaceFlags);
+		//	int lev = indentCurrent;
+		//	if (!(indentCurrent & SC_FOLDLEVELWHITEFLAG)) {
+		//		// Only non whitespace lines can be headers
+		//		int indentNext = styler.IndentAmount(lineCurrent + 1, &spaceFlags);
+		//		if (indentCurrent < (indentNext & ~SC_FOLDLEVELWHITEFLAG)) {
+		//			lev |= SC_FOLDLEVELHEADERFLAG;
+		//		}
+		//	}
+		//	if (fold) {
+		//		//styler.SetLevel(lineCurrent, lev);
+		//	}
+		//}
 
 		if (styler.IsLeadByte(ch)) {
 			chNext = styler.SafeGetCharAt(i + 2);
@@ -315,6 +315,8 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 }
 
 static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
+	if (!styler.GetPropertyInt("fold"))
+		return;
 	bool foldComment = styler.GetPropertyInt("fold.comment") != 0;
 	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
 	Sci_PositionU endPos = startPos + length;

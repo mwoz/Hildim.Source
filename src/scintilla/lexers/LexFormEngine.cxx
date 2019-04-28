@@ -65,6 +65,7 @@ struct OptionsFM {
 	bool debugmode;
 	bool foldonerror;
 	bool frozen;  //флаг для временного отключения на время загрузки хелплистов
+	std::string debugsuffix;
 	OptionsFM() {
 		fold = false;
 		foldComment = false;
@@ -74,6 +75,7 @@ struct OptionsFM {
 		foldcdata = false;
 		foldonerror = false;
 		frozen = false;
+		debugsuffix = "";
 	}
 };
 
@@ -131,6 +133,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 		DefineProperty("fold.onerror", &OptionsFM::foldonerror);
 		DefineProperty("fold.cdata", &OptionsFM::foldcdata);
 		DefineProperty("precompiller.debugmode", &OptionsFM::debugmode);
+		DefineProperty("precompiller.debugsuffix", &OptionsFM::debugsuffix);
 		DefineProperty("lexer.formenjine.frozen", &OptionsFM::frozen);
 
 
@@ -148,6 +151,7 @@ class LexerFormEngine : public ILexer4 {
 	WordList wRefold; //начала фолдинга
 	WordList wFold;   //продолжения ифов и свитчей
 	WordList wUnfold; //окончания конструкций
+	WordList wDebug; //Используемые в данный момент дебаги с суффиксами
 	std::map<std::string, std::string> preprocessorDefinitionsStart;
 	OptionsFM options;
 	OptionsSetFM osFM;
@@ -165,6 +169,7 @@ public:
 			wRefold.Set("else elseif");
 			wFold.Set("do function sub for with private public property class while");
 			wUnfold.Set("end next wend loop");
+			wDebug.Set("");
 	}
 	~LexerFormEngine() {
 	}
@@ -257,6 +262,9 @@ public:
 
 int SCI_METHOD LexerFormEngine::PropertySet(const char *key, const char *val) {
 	if (osFM.PropertySet(&options, key, val)) {
+		if (!strcmp(key, "precompiller.debugsuffix")) {
+			wDebug.Set(val);
+		}
 		return 0;
 	}
 	return -1;
@@ -737,11 +745,19 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 							sc.ChangeState(SCE_FM_PREPROCESSOR);
 							sc.SetState(SCE_FM_VB_DEFAULT);
 						} else if (sc.ch == '-') {
+							char s[100];
 							sc.Forward();
-							while(IsAWordChar(sc.ch))
+							int i = 0;
+							while (IsAlphaNumeric(sc.ch)) {
+								s[i] = sc.ch;
 								sc.Forward();
+								i++;
+							}
+							s[i] = 0;
+							if (wDebug.InList(s)) {
 								sc.ChangeState(SCE_FM_PREPROCESSOR);
 								sc.SetState(SCE_FM_VB_DEFAULT);
+							}
 						}
 					}
 				}
@@ -863,7 +879,7 @@ void SCI_METHOD LexerFormEngine::Lex(unsigned int startPos, int length, int init
 class FoldContext {
 	unsigned int endPos;
 	LexAccessor &styler;
-	FoldContext &operator=(const FoldContext &);
+	//FoldContext &operator=(const FoldContext &);
 	void GetNextChar(unsigned int pos) {
 		chNext = static_cast<unsigned char>(styler.SafeGetCharAt(pos+1));
 		if (styler.IsLeadByte(static_cast<char>(chNext))) {
@@ -1215,7 +1231,24 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					//проверим, является ли следующая строка комментарием
 				
 					int ls = pAccess->GetLineIndentation(fc.currentLine + 1) + pAccess->LineStart(fc.currentLine + 1);
-					if ('\'' != styler.SafeGetCharAt(ls, '\0') || (options.debugmode && ('#' == styler.SafeGetCharAt(ls + 1, '\0'))) ) {
+					bool bNoComment = '\'' != styler.SafeGetCharAt(ls, '\0');
+					if (!bNoComment && (options.debugmode && ('#' == styler.SafeGetCharAt(ls + 1, '\0')))) {
+						bNoComment = styler.Match(ls + 2, "DEBUG ");
+						if (!bNoComment && styler.Match(ls + 2, "DEBUG-")){
+							char s[100];
+							char c;
+							for (int j = 0; j < 100; j++) {
+								c = styler.SafeGetCharAt(ls + 8 + j, '\0');
+								if (!IsAlphaNumeric(c)) {
+									s[j] = 0;
+									break;
+								}
+								s[j] = c;
+							}
+							bNoComment = wDebug.InList(s);
+						}
+					}
+					if (bNoComment) {
 						fc.currentLevel--;
 						processComment = 0;
 					}else{

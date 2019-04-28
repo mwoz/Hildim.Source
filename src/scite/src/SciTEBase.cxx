@@ -3812,6 +3812,12 @@ bool SciTEBase::MarginClick(int position, int modifiers, GUI::ScintillaWindow *w
 }
 
 void SciTEBase::ToggleFoldRecursive(int line, int level) {
+	int baseLevel = wEditor.Call(SCI_GETFOLDLEVEL, line, 0) & SC_FOLDLEVELNUMBERMASK;
+	if (baseLevel > SC_FOLDLEVELBASE && (baseLevel & SC_FOLDLEVELHEADERFLAG) == 0) {
+		line = wEditor.Call(SCI_GETFOLDPARENT, line, 0);
+		level = wEditor.Call(SCI_GETFOLDLEVEL, line, 0);
+	}
+	
 	if (wEditor.Call(SCI_GETFOLDEXPANDED, line)) {
 		// Contract this line and all children
 		wEditor.Call(SCI_SETFOLDEXPANDED, line, 0);
