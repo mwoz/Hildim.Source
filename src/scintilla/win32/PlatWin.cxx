@@ -2181,8 +2181,11 @@ void Window::SetPositionRelative(PRectangle rc, const Window *relativeTo) {
 		rc.Move(static_cast<XYPOSITION>(ptOther.x), static_cast<XYPOSITION>(ptOther.y));
 
 		const RECT rcMonitor = RectFromPRectangle(rc);
+		//HMONITOR hMonitor = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTONEAREST);
+		
+		POINT ptTopLeft = { rc.left, rc.top }; //хотим получить именно тот монитор, в котором расположен верхний левый угол окна, в свою очередь привязанный к курсору
+		HMONITOR hMonitor = MonitorFromPoint(ptTopLeft, MONITOR_DEFAULTTONEAREST);
 
-		HMONITOR hMonitor = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTONEAREST);
 		// If hMonitor is NULL, that's just the main screen anyways.
 		const RECT rcWork = RectFromMonitor(hMonitor);
 

@@ -11,6 +11,10 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <algorithm>
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -22,6 +26,8 @@
 #include "StyleContext.h"
 #include "CharacterSet.h"
 #include "LexerModule.h"
+#include "OptionSet.h"
+#include "DefaultLexer.h"
 
 using namespace Scintilla;
 
@@ -33,6 +39,84 @@ using namespace Scintilla;
 #define KW_MSSQL_STORED_PROCEDURES  5
 #define KW_MSSQL_OPERATORS          6
 #define KW_MSSQL_M4KEYS             7
+
+static const char * const sqlWordListDesc[] = {
+	"Statements",
+	"Data Types",
+	"System tables",
+	"Global variables",
+	"Functions",
+	"System Stored Procedures",
+	"Operators",
+	0,
+};
+
+struct OptionsMSSQL {
+	bool fold;
+	bool foldComment;
+	bool foldCompact;
+	OptionsMSSQL() {
+		fold = false;
+		foldComment = false;
+		foldCompact = false;
+	}
+};
+
+struct OptionsSetMSSQL : public OptionSet<OptionsMSSQL> {
+	OptionsSetMSSQL() {
+
+		DefineProperty("fold", &OptionsMSSQL::fold, "");
+
+		DefineProperty("fold.comment", &OptionsMSSQL::foldComment,
+			"This option enables folding multi-line comments and explicit fold points when using the C++ lexer. "
+			"Explicit fold points allows adding extra folding by placing a //{ comment at the start and a //} "
+			"at the end of a section that should fold.");
+
+		DefineProperty("fold.compact", &OptionsMSSQL::foldCompact, "");
+
+		DefineWordListSets(sqlWordListDesc);
+
+	}
+};
+
+class LexerMSSQL : public DefaultLexer {
+
+	OptionsMSSQL options;
+	OptionsSetMSSQL osMSSQL;
+	WordList keywords[8];	//переданные нам вордлисты
+	char classifyWordSQL(Sci_PositionU start, Sci_PositionU end, LexAccessor &styler, unsigned int actualState, unsigned int prevState);
+public:
+	LexerMSSQL() {}
+
+	~LexerMSSQL() {}
+	void SCI_METHOD Release() {
+		delete this;
+	}
+	int SCI_METHOD Version() const {
+		return lvRelease4;
+	}
+	const char * SCI_METHOD PropertyNames() {
+		return osMSSQL.PropertyNames();
+	}
+	int SCI_METHOD PropertyType(const char *name) {
+		return osMSSQL.PropertyType(name);
+	}
+	const char * SCI_METHOD DescribeProperty(const char *name) {
+		return osMSSQL.DescribeProperty(name);
+	}
+	int SCI_METHOD PropertySet(const char *key, const char *val);
+	const char * SCI_METHOD DescribeWordListSets() {
+		return osMSSQL.DescribeWordListSets();
+	}
+	int SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+
+	static ILexer4 *LexerFactoryMSSQL() {
+		return new LexerMSSQL();
+	}
+
+};
 
 static bool isMSSQLOperator(char ch) {
 	if (isascii(ch) && isalnum(ch))
@@ -47,23 +131,38 @@ static bool isMSSQLOperator(char ch) {
 	return false;
 }
 
-static char classifyWordSQL(Sci_PositionU start,
+
+int SCI_METHOD LexerMSSQL::PropertySet(const char *key, const char *val) {
+	if (osMSSQL.PropertySet(&options, key, val)) {
+		return 0;
+	}
+	return -1;
+}
+
+int SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
+	int firstModification = -1;
+	if (n < 8) {
+		WordList *wordListN = 0;
+		wordListN = &keywords[n];
+		if (wordListN) {
+			WordList wlNew;
+			wlNew.Set(wl);
+			if (*wordListN != wlNew) {
+				wordListN->Set(wl);
+				firstModification = 0;
+			}
+		}
+	}
+	return firstModification;
+}
+
+char LexerMSSQL::classifyWordSQL(Sci_PositionU start,
                             Sci_PositionU end,
-                            WordList *keywordlists[],
-                            Accessor &styler,
+                            LexAccessor &styler,
                             unsigned int actualState,
 							unsigned int prevState) {
 	char s[256];
 	bool wordIsNumber = isdigit(styler[start]) || (styler[start] == '.');
-
-	WordList &kwStatements          = *keywordlists[KW_MSSQL_STATEMENTS];
-    WordList &kwDataTypes           = *keywordlists[KW_MSSQL_DATA_TYPES];
-    WordList &kwSystemTables        = *keywordlists[KW_MSSQL_SYSTEM_TABLES];
-    WordList &kwGlobalVariables     = *keywordlists[KW_MSSQL_GLOBAL_VARIABLES];
-    WordList &kwFunctions           = *keywordlists[KW_MSSQL_FUNCTIONS];
-    WordList &kwStoredProcedures    = *keywordlists[KW_MSSQL_STORED_PROCEDURES];
-	WordList &kwOperators			= *keywordlists[KW_MSSQL_OPERATORS];
-	WordList &kwM4Keys				= *keywordlists[KW_MSSQL_M4KEYS];
 
 	for (Sci_PositionU i = 0; i < end - start + 1 && i < 128; i++) {
 		s[i] = static_cast<char>(tolower(styler[start + i]));
@@ -73,7 +172,7 @@ static char classifyWordSQL(Sci_PositionU start,
 
 	if (actualState == SCE_MSSQL_GLOBAL_VARIABLE) {
 
-        if (kwGlobalVariables.InList(&s[2]))
+        if (keywords[KW_MSSQL_GLOBAL_VARIABLES].InList(&s[2]))
             chAttr = SCE_MSSQL_GLOBAL_VARIABLE;
 
 	} else if (wordIsNumber) {
@@ -81,35 +180,35 @@ static char classifyWordSQL(Sci_PositionU start,
 
 	} else if (prevState == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
 		// Look first in datatypes
-        if (kwDataTypes.InList(s))
+        if (keywords[KW_MSSQL_DATA_TYPES].InList(s))
             chAttr = SCE_MSSQL_DATATYPE;
-		else if (kwOperators.InList(s))
+		else if (keywords[KW_MSSQL_OPERATORS].InList(s))
 			chAttr = SCE_MSSQL_OPERATOR;
-		else if (kwStatements.InList(s))
+		else if (keywords[KW_MSSQL_STATEMENTS].InList(s))
 			chAttr = SCE_MSSQL_STATEMENT;
-		else if (kwSystemTables.InList(s))
+		else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s))
 			chAttr = SCE_MSSQL_SYSTABLE;
-		else if (kwFunctions.InList(s))
+		else if (keywords[KW_MSSQL_FUNCTIONS].InList(s))
             chAttr = SCE_MSSQL_FUNCTION;
-		else if (kwStoredProcedures.InList(s))
+		else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s))
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
-		else if (kwM4Keys.InList(s))
+		else if (keywords[KW_MSSQL_M4KEYS].InList(s))
 			chAttr = SCE_MSSQL_M4KEYS;
 	}
 	else {
-		if (kwOperators.InList(s))
+		if (keywords[KW_MSSQL_OPERATORS].InList(s))
 			chAttr = SCE_MSSQL_OPERATOR;
-		else if (kwStatements.InList(s))
+		else if (keywords[KW_MSSQL_STATEMENTS].InList(s))
 			chAttr = SCE_MSSQL_STATEMENT;
-		else if (kwSystemTables.InList(s))
+		else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s))
 			chAttr = SCE_MSSQL_SYSTABLE;
-		else if (kwFunctions.InList(s))
+		else if (keywords[KW_MSSQL_FUNCTIONS].InList(s))
 			chAttr = SCE_MSSQL_FUNCTION;
-		else if (kwStoredProcedures.InList(s))
+		else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s))
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
-		else if (kwDataTypes.InList(s))
+		else if (keywords[KW_MSSQL_DATA_TYPES].InList(s))
 			chAttr = SCE_MSSQL_DATATYPE;
-		else if (kwM4Keys.InList(s))
+		else if (keywords[KW_MSSQL_M4KEYS].InList(s))
 			chAttr = SCE_MSSQL_M4KEYS;
 	}
 
@@ -118,10 +217,9 @@ static char classifyWordSQL(Sci_PositionU start,
 	return chAttr;
 }
 
-static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
-                              int initStyle, WordList *keywordlists[], Accessor &styler) {
+void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+	Accessor styler(pAccess, NULL);
 
-	WordList &kwM4Keys = *keywordlists[KW_MSSQL_M4KEYS];
 	styler.StartAt(startPos);
 
 	//bool fold = styler.GetPropertyInt("fold") != 0;
@@ -137,21 +235,6 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 	for (Sci_PositionU i = startPos; i < lengthDoc; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
-
-		//if ((ch == '\r' && chNext != '\n') || (ch == '\n')) {
-		//	int indentCurrent = styler.IndentAmount(lineCurrent, &spaceFlags);
-		//	int lev = indentCurrent;
-		//	if (!(indentCurrent & SC_FOLDLEVELWHITEFLAG)) {
-		//		// Only non whitespace lines can be headers
-		//		int indentNext = styler.IndentAmount(lineCurrent + 1, &spaceFlags);
-		//		if (indentCurrent < (indentNext & ~SC_FOLDLEVELWHITEFLAG)) {
-		//			lev |= SC_FOLDLEVELHEADERFLAG;
-		//		}
-		//	}
-		//	if (fold) {
-		//		//styler.SetLevel(lineCurrent, lev);
-		//	}
-		//}
 
 		if (styler.IsLeadByte(ch)) {
 			chNext = styler.SafeGetCharAt(i + 2);
@@ -176,7 +259,7 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 					styler.ColourTo(i - 1, state);
 					stateTmp = state;
 				} else				
-					stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
+					stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, styler, state, prevState);
 
 				prevState = state;
 
@@ -199,7 +282,7 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 			}
 		} else if (state == SCE_MSSQL_GLOBAL_VARIABLE) {
 			if ((ch != '@') && !iswordchar(ch)) {
-				classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
+				classifyWordSQL(styler.GetStartSegment(), i - 1, styler, state, prevState);
 				prevState = state;
 				state = SCE_MSSQL_DEFAULT;
 			}
@@ -239,7 +322,7 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				prevState = state;
 				state = SCE_MSSQL_COLUMN_NAME_2;
-			} else if((ch == '{' || ch == '}') && kwM4Keys.InList("}")) {
+			} else if((ch == '{' || ch == '}') && keywords[KW_MSSQL_M4KEYS].InList("}")) {
 				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
 				styler.ColourTo(i, SCE_MSSQL_M4KBRASHES);
 				prevState = state;
@@ -312,13 +395,16 @@ static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
 		chPrev = ch;
 	}
 	styler.ColourTo(lengthDoc - 1, state);
+	styler.Flush();
 }
 
-static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
-	if (!styler.GetPropertyInt("fold"))
+void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+	if (!options.fold)
 		return;
-	bool foldComment = styler.GetPropertyInt("fold.comment") != 0;
-	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
+	LexAccessor styler(pAccess);
+
+	bool foldComment = options.foldComment;
+	bool foldCompact = options.foldCompact;
 	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
@@ -448,15 +534,4 @@ static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordL
 	styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
-static const char * const sqlWordListDesc[] = {
-	"Statements",
-    "Data Types",
-    "System tables",
-    "Global variables",
-    "Functions",
-    "System Stored Procedures",
-    "Operators",
-	0,
-};
-
-LexerModule lmMSSQL(SCLEX_MSSQL, ColouriseMSSQLDoc, "mssql", FoldMSSQLDoc, sqlWordListDesc);
+LexerModule lmMSSQL(SCLEX_MSSQL, LexerMSSQL::LexerFactoryMSSQL, "mssql", sqlWordListDesc);
