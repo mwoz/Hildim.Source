@@ -84,7 +84,25 @@ class LexerMSSQL : public DefaultLexer {
 	OptionsMSSQL options;
 	OptionsSetMSSQL osMSSQL;
 	WordList keywords[8];	//переданные нам вордлисты
-	char classifyWordSQL(Sci_PositionU start, Sci_PositionU end, LexAccessor &styler, unsigned int actualState, unsigned int prevState);
+
+	class StyleContextEx : public StyleContext
+	{
+	public:
+		StyleContextEx(unsigned int startPos,
+			unsigned int length,
+			int initStyle,
+			LexAccessor &styler_, char chMask)
+			: StyleContext(startPos, length, initStyle, styler_, chMask)
+			, prevState(initStyle) {}
+		void SetStateEx(int state_) {
+			prevState = state;
+			SetState(state_);
+		}
+		int prevState;
+	};
+	char classifyWordSQL(Sci_PositionU start,LexAccessor &styler, StyleContextEx &sc);
+
+
 public:
 	LexerMSSQL() {}
 
@@ -156,21 +174,19 @@ int SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
 	return firstModification;
 }
 
-char LexerMSSQL::classifyWordSQL(Sci_PositionU start,
-                            Sci_PositionU end,
-                            LexAccessor &styler,
-                            unsigned int actualState,
-							unsigned int prevState) {
+char LexerMSSQL::classifyWordSQL(Sci_PositionU start, LexAccessor &styler, StyleContextEx &sc) {
+                            
 	char s[256];
 	bool wordIsNumber = isdigit(styler[start]) || (styler[start] == '.');
 
-	for (Sci_PositionU i = 0; i < end - start + 1 && i < 128; i++) {
-		s[i] = static_cast<char>(tolower(styler[start + i]));
-		s[i + 1] = '\0';
-	}
+	sc.GetCurrentLowered(s, sizeof(s));
+	//for (Sci_PositionU i = 0; i < sc.currentPos - start + 1 && i < 128; i++) {
+	//	s[i] = static_cast<char>(tolower(styler[start + i]));
+	//	s[i + 1] = '\0';
+	//}
 	char chAttr = SCE_MSSQL_IDENTIFIER;
 
-	if (actualState == SCE_MSSQL_GLOBAL_VARIABLE) {
+	if (sc.state == SCE_MSSQL_GLOBAL_VARIABLE) {
 
         if (keywords[KW_MSSQL_GLOBAL_VARIABLES].InList(&s[2]))
             chAttr = SCE_MSSQL_GLOBAL_VARIABLE;
@@ -178,7 +194,7 @@ char LexerMSSQL::classifyWordSQL(Sci_PositionU start,
 	} else if (wordIsNumber) {
 		chAttr = SCE_MSSQL_NUMBER;
 
-	} else if (prevState == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
+	} else if (sc.prevState == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
 		// Look first in datatypes
         if (keywords[KW_MSSQL_DATA_TYPES].InList(s))
             chAttr = SCE_MSSQL_DATATYPE;
@@ -212,7 +228,8 @@ char LexerMSSQL::classifyWordSQL(Sci_PositionU start,
 			chAttr = SCE_MSSQL_M4KEYS;
 	}
 
-	styler.ColourTo(end, chAttr);
+	//sc.SetStateEx(chAttr);
+	sc.ChangeState(chAttr);
 
 	return chAttr;
 }
@@ -226,176 +243,120 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int spaceFlags = 0;
 
-	int state = initStyle;
-	int prevState = initStyle;
-	char chPrev = ' ';
-	char chNext = styler[startPos];
-	styler.StartSegment(startPos);
+	//int state = initStyle;
+	//int prevState = initStyle;
+	//char chPrev = ' ';
+	//char chNext = styler[startPos];
+	//styler.StartSegment(startPos);
+	StyleContextEx sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 	Sci_PositionU lengthDoc = startPos + length;
-	for (Sci_PositionU i = startPos; i < lengthDoc; i++) {
-		char ch = chNext;
-		chNext = styler.SafeGetCharAt(i + 1);
-
-		if (styler.IsLeadByte(ch)) {
-			chNext = styler.SafeGetCharAt(i + 2);
-			chPrev = ' ';
-			i += 1;
-			continue;
-		}
+	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 
 		// When the last char isn't part of the state (have to deal with it too)...
-		if ( (state == SCE_MSSQL_IDENTIFIER) ||
-			(state == SCE_MSSQL_STORED_PROCEDURE) ||
-			(state == SCE_MSSQL_DATATYPE) ||
-			(state == SCE_MSSQL_M4KEYS) ||
-			//~ (state == SCE_MSSQL_COLUMN_NAME) ||
-			(state == SCE_MSSQL_FUNCTION) ||
-			//~ (state == SCE_MSSQL_GLOBAL_VARIABLE) ||
-			(state == SCE_MSSQL_VARIABLE)) {
-			if (!iswordchar(ch)) {
+		if ( (sc.state == SCE_MSSQL_IDENTIFIER) ||
+			(sc.state == SCE_MSSQL_STORED_PROCEDURE) ||
+			(sc.state == SCE_MSSQL_DATATYPE) ||
+			(sc.state == SCE_MSSQL_M4KEYS) ||
+			(sc.state == SCE_MSSQL_FUNCTION) ||
+			(sc.state == SCE_MSSQL_VARIABLE)) {
+			if (!iswordchar(sc.ch)) {
 				int stateTmp;
 
-				if ((state == SCE_MSSQL_VARIABLE) || (state == SCE_MSSQL_COLUMN_NAME)) {
-					styler.ColourTo(i - 1, state);
-					stateTmp = state;
+				if ((sc.state == SCE_MSSQL_VARIABLE) || (sc.state == SCE_MSSQL_COLUMN_NAME)) {
+					sc.SetStateEx(sc.state);
+					stateTmp = sc.state;
 				} else				
-					stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, styler, state, prevState);
-
-				prevState = state;
+					stateTmp = classifyWordSQL(styler.GetStartSegment(), styler, sc);
 
 				if (stateTmp == SCE_MSSQL_IDENTIFIER || stateTmp == SCE_MSSQL_VARIABLE)
-					state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
 				else
-					state = SCE_MSSQL_DEFAULT;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if(state == SCE_MSSQL_SYSMCONSTANTS){
-			if (!iswordchar(ch) || ch == '.') {
-				styler.ColourTo(i - 1, state);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
+		} else if(sc.state == SCE_MSSQL_SYSMCONSTANTS){
+			if (!iswordchar(sc.ch) || sc.ch == '.') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if (state == SCE_MSSQL_LINE_COMMENT) {
-			if (ch == '\r' || ch == '\n') {
-				styler.ColourTo(i - 1, state);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
+		} else if (sc.state == SCE_MSSQL_LINE_COMMENT) {
+			if (sc.ch == '\r' || sc.ch == '\n') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if (state == SCE_MSSQL_GLOBAL_VARIABLE) {
-			if ((ch != '@') && !iswordchar(ch)) {
-				classifyWordSQL(styler.GetStartSegment(), i - 1, styler, state, prevState);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
+		} else if (sc.state == SCE_MSSQL_GLOBAL_VARIABLE) {
+			if ((sc.ch != '@') && !iswordchar(sc.ch)) {
+				classifyWordSQL(styler.GetStartSegment(), styler, sc);
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
+		} else if(sc.state == SCE_MSSQL_OPERATOR || sc.state == SCE_MSSQL_M4KBRASHES ){
+			sc.SetStateEx(SCE_MSSQL_DEFAULT);
 		}
 
 		// If is the default or one of the above succeeded
-		if (state == SCE_MSSQL_DEFAULT || state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
-			if ((chPrev == '\r' || chPrev == '\n' || i == startPos) && ch == 'd' && chNext == 'n' && styler.SafeGetCharAt(i + 2) == 'l') {	//)
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_LINE_COMMENT;
-			}else if (ch == '_' && chNext == '_'){
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_SYSMCONSTANTS;
-			}else if (iswordstart(ch)) {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_IDENTIFIER;
-			} else if (ch == '/' && chNext == '*') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COMMENT;
-			} else if (ch == '-' && chNext == '-') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_LINE_COMMENT;
-			} else if (ch == '\'') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_STRING;
-			} else if (ch == '"') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COLUMN_NAME;
-			} else if (ch == '[') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COLUMN_NAME_2;
-			} else if((ch == '{' || ch == '}') && keywords[KW_MSSQL_M4KEYS].InList("}")) {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				styler.ColourTo(i, SCE_MSSQL_M4KBRASHES);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
-			} else if (isMSSQLOperator(ch)) {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				styler.ColourTo(i, SCE_MSSQL_OPERATOR);
-                //~ style = SCE_MSSQL_DEFAULT;
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
-			} else if (ch == '@') {
-                styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-                if (chNext == '@') {
-                    state = SCE_MSSQL_GLOBAL_VARIABLE;
-//                    i += 2;
+		if (sc.state == SCE_MSSQL_DEFAULT || sc.state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
+			int stateTmp = sc.state;
+			sc.ChangeState(SCE_MSSQL_DEFAULT);
+			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l') {	//)
+				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT);
+			}else if (sc.ch == '_' && sc.chNext == '_'){
+				sc.SetStateEx(SCE_MSSQL_SYSMCONSTANTS);
+			}else if (iswordstart(sc.ch)) {
+				sc.SetStateEx(SCE_MSSQL_IDENTIFIER);
+			} else if (sc.ch == '/' && sc.chNext == '*') {
+				sc.SetStateEx(SCE_MSSQL_COMMENT);
+			} else if (sc.ch == '-' && sc.chNext == '-') {
+				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT);
+			} else if (sc.ch == '\'') {
+				sc.SetStateEx(SCE_MSSQL_STRING);
+			} else if (sc.ch == '"') {
+				sc.SetStateEx(SCE_MSSQL_COLUMN_NAME);
+			} else if (sc.ch == '[') {
+				sc.SetStateEx(SCE_MSSQL_COLUMN_NAME_2);
+			} else if((sc.ch == '{' || sc.ch == '}') && keywords[KW_MSSQL_M4KEYS].InList("}")) {
+				sc.SetStateEx(SCE_MSSQL_M4KBRASHES);
+				//sc.SetStateEx(SCE_MSSQL_DEFAULT);
+			} else if (isMSSQLOperator(sc.ch)) {
+				sc.SetStateEx(SCE_MSSQL_OPERATOR);
+				//sc.SetStateEx(SCE_MSSQL_DEFAULT);
+			} else if (sc.ch == '@') {
+                if (sc.chNext == '@') {
+					sc.SetStateEx(SCE_MSSQL_GLOBAL_VARIABLE);
                 } else
-                    state = SCE_MSSQL_VARIABLE;
+					sc.SetStateEx(SCE_MSSQL_VARIABLE);
+			} else {
+				sc.ChangeState(stateTmp); //??
 			}
 
 
 		// When the last char is part of the state...
-		} else if (state == SCE_MSSQL_COMMENT) {
-				if (ch == '/' && chPrev == '*') {
-					if (((i > (styler.GetStartSegment() + 2)) || ((initStyle == SCE_MSSQL_COMMENT) &&
+		} else if (sc.state == SCE_MSSQL_COMMENT) {
+				if (sc.ch == '/' && sc.chPrev == '*') {
+					if (((sc.currentPos > (styler.GetStartSegment() + 2)) || ((initStyle == SCE_MSSQL_COMMENT) &&
 					    (styler.GetStartSegment() == startPos)))) {
-						styler.ColourTo(i, state);
-						//~ state = SCE_MSSQL_COMMENT;
-					prevState = state;
-                        state = SCE_MSSQL_DEFAULT;
+						sc.SetStateEx(SCE_MSSQL_DEFAULT);
 					}
 				}
-			} else if (state == SCE_MSSQL_STRING) {
-				if (ch == '\'') {
-					if ( chNext == '\'' ) {
-						i++;
-					ch = chNext;
-					chNext = styler.SafeGetCharAt(i + 1);
+			} else if (sc.state == SCE_MSSQL_STRING) {
+				if (sc.ch == '\'') {
+					if (sc.chNext == '\'' ) {
+						sc.Forward();
 					} else {
-						styler.ColourTo(i, state);
-					prevState = state;
-						state = SCE_MSSQL_DEFAULT;
-					//i++;
+						sc.SetStateEx(SCE_MSSQL_DEFAULT);
 					}
-				//ch = chNext;
-				//chNext = styler.SafeGetCharAt(i + 1);
 				}
-			} else if (state == SCE_MSSQL_COLUMN_NAME) {
-				if (ch == '"') {
-					if (chNext == '"') {
-						i++;
-					ch = chNext;
-					chNext = styler.SafeGetCharAt(i + 1);
+			} else if (sc.state == SCE_MSSQL_COLUMN_NAME) {
+				if (sc.ch == '"') {
+					if (sc.chNext == '"') {
+						sc.Forward();
 				} else {
-                    styler.ColourTo(i, state);
-					prevState = state;
-					state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
-					//i++;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
                 }
                 }
-		} else if (state == SCE_MSSQL_COLUMN_NAME_2) {
-			if (ch == ']') {
-                styler.ColourTo(i, state);
-				prevState = state;
-                state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
-                //i++;
+		} else if (sc.state == SCE_MSSQL_COLUMN_NAME_2) {
+			if (sc.ch == ']') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
 			}
 		}
-
-		chPrev = ch;
 	}
-	styler.ColourTo(lengthDoc - 1, state);
-	styler.Flush();
+	sc.Complete();
 }
 
 void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {

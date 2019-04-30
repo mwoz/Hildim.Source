@@ -118,7 +118,6 @@ public:
 
 };
 
-
 // Test for [=[ ... ]=] delimiters, returns 0 if it's only a [ or ],
 // return 1 for [[ or ]], returns >=2 for [=[ or ]=] and so on.
 // The maximum number of '=' characters allowed is 254.
@@ -178,7 +177,6 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 		startPos--;
 		initStyle = styler.StyleAt(startPos-1);
 	}
-//!-end-[LuaLexerImprovement]
 
 	Sci_Position currentLine = styler.GetLine(startPos);
 	// Initialize long string [[ ... ]] or block comment --[[ ... ]] nesting level,
@@ -201,8 +199,6 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 		initStyle = SCE_LUA_DEFAULT;
 	}
 
-//!	StyleContext sc(startPos, length, initStyle, styler);
-//!-start-[LuaLexerImprovement]
 	unsigned int objectPartEndPos = 0;
 	bool isObject = false;
 	bool isObjectStart = false;
@@ -263,7 +259,7 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 		sc.SetState(SCE_LUA_COMMENTLINE);
 	}
 
-	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) { //!-change-[LexersLastWordFix]
+	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) { 
 		if (sc.atLineEnd) {
 			// Update the line state, so it can be seen by next line
 			currentLine = styler.GetLine(sc.currentPos);
@@ -347,9 +343,7 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 				if (!setExponent.Contains(sc.chPrev))
 					sc.SetState(SCE_LUA_DEFAULT);
 			}
-/*!		} else if (sc.state == SCE_LUA_IDENTIFIER) {
-			if (!(setWord.Contains(sc.ch) || sc.ch == '.') || sc.Match('.', '.')) {*/
-//!-start-[LuaLexerImprovement]
+
 		} else if (sc.state == SCE_LUA_IDENTIFIER
 				|| sc.state == SCE_LUA_WORD
 				|| sc.state == SCE_LUA_WORD2
@@ -373,7 +367,7 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 				} else {
 					isFin = true;
 				}
-//!-end-[LuaLexerImprovement]
+
 				char s[100];
 				sc.GetCurrent(s, sizeof(s));
 				if (keywords[0].InList(s)) {
