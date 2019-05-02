@@ -17,7 +17,30 @@
 
 #include "iuplua.h"
 #include "il.h"
-#define LUA_VERSION_NUM		503
+
+
+static int CopyUserData2String(lua_State *L)
+{
+  void* udata = lua_touserdata(L, 1);
+  size_t size = luaL_checkinteger(L, 2);
+  char* str = malloc(size);
+  memcpy(str, udata, size);  /* buffer must contain the terminator */
+  lua_pushlstring(L, str, size - 1); /* len */
+  free(str);
+  return 1;
+}
+
+static int CopyString2UserData(lua_State *L)
+{
+  size_t len;
+  const char* str = luaL_checklstring(L, 1, &len);
+  void* udata = lua_touserdata(L, 2);
+  size_t size = luaL_checkinteger(L, 3);
+  if (len >= size) len = size-1;
+  memcpy(udata, str, len);
+  ((char*)udata)[len] = 0;
+  return 0;
+}
 
 static int StringCompare(lua_State *L)
 {
@@ -1257,6 +1280,8 @@ int iuplua_open(lua_State * L)
     {"dostring", il_dostring},
     {"dofile", il_dofile},
     { "StringCompare", StringCompare },
+    { "CopyUserData2String", CopyUserData2String },
+    { "CopyString2UserData", CopyString2UserData },
 
     { NULL, NULL },
   };
@@ -1372,6 +1397,7 @@ int iuplua_open(lua_State * L)
   iupdropbuttonlua_open(L);
   iupflatframelua_open(L);
   iupflatseparatorlua_open(L);
+  iupflatlistlua_open(L);
   iupspacelua_open(L);
   iupconfiglua_open(L);
   iupanimatedlabellua_open(L);

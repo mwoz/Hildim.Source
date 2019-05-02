@@ -105,7 +105,7 @@ static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "XAUTOHIDE"))
       {
-        if (winCanvasIsScrollbarVisible(ih, SB_HORZ))
+        if (winCanvasIsScrollbarVisible(ih, SB_HORZ) && iupdrvIsVisible(ih))
           iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "XHIDDEN", "YES");
         ShowScrollBar(ih->handle, SB_HORZ, FALSE);
@@ -123,7 +123,7 @@ static int winCanvasSetDXAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "XAUTOHIDE"))
       {
-        if (!winCanvasIsScrollbarVisible(ih, SB_HORZ))
+        if (!winCanvasIsScrollbarVisible(ih, SB_HORZ) && iupdrvIsVisible(ih))
           iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "XHIDDEN", "NO");
         ShowScrollBar(ih->handle, SB_HORZ, TRUE);
@@ -167,7 +167,7 @@ static int winCanvasSetDYAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "YAUTOHIDE"))
       {
-        if (winCanvasIsScrollbarVisible(ih, SB_VERT))
+        if (winCanvasIsScrollbarVisible(ih, SB_VERT) && iupdrvIsVisible(ih))
           iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "YHIDDEN", "YES");
         ShowScrollBar(ih->handle, SB_VERT, FALSE);
@@ -186,7 +186,7 @@ static int winCanvasSetDYAttrib(Ihandle* ih, const char *value)
     {
       if (iupAttribGetBoolean(ih, "YAUTOHIDE"))
       {
-        if (!winCanvasIsScrollbarVisible(ih, SB_VERT))
+        if (!winCanvasIsScrollbarVisible(ih, SB_VERT) && iupdrvIsVisible(ih))
           iupAttribSet(ih, "SB_RESIZE", "YES");
         iupAttribSet(ih, "YHIDDEN", "NO");
         ShowScrollBar(ih->handle, SB_VERT, TRUE);
@@ -219,6 +219,9 @@ static int winCanvasSetPosXAttrib(Ihandle *ih, const char *value)
     xmax = iupAttribGetDouble(ih, "XMAX");
     dx = iupAttribGetDouble(ih, "DX");
 
+    if (dx >= xmax - xmin)
+      return 0;
+
     if (posx < xmin) posx = xmin;
     if (posx >(xmax - dx)) posx = xmax - dx;
     ih->data->posx = posx;
@@ -245,6 +248,9 @@ static int winCanvasSetPosYAttrib(Ihandle *ih, const char *value)
     ymin = iupAttribGetDouble(ih, "YMIN");
     ymax = iupAttribGetDouble(ih, "YMAX");
     dy = iupAttribGetDouble(ih, "DY");
+
+    if (dy >= ymax - ymin)
+      return 0;
 
     if (posy < ymin) posy = ymin;
     if (posy > (ymax - dy)) posy = ymax - dy;
@@ -561,6 +567,20 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
         iupwinRefreshCursor(ih);
       }
 
+      if (msg == WM_LBUTTONDOWN && iupAttribGetBoolean(ih, "DRAGSOURCE"))
+      {
+        if (!iupwinDragDetectStart(ih))
+        {
+          /* Did not started a drag, but it will process the WM_LBUTTONUP message internally, 
+             so IUP will lose it. Then we must simulate a button up. */
+          if (iupwinButtonUp(ih, WM_LBUTTONUP, wp, lp))
+          {
+            /* refresh the cursor, it could have been changed in BUTTON_CB */
+            iupwinRefreshCursor(ih);
+          }
+        }
+      }
+
       if (msg==WM_XBUTTONDOWN || msg==WM_XBUTTONDBLCLK)
         *result = 1;
       else
@@ -814,7 +834,8 @@ void iupdrvCanvasInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "HWND", iupBaseGetWidAttrib, NULL, NULL, NULL, IUPAF_NO_STRING|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HDC_WMPAINT", NULL, NULL, NULL, NULL, IUPAF_NO_STRING|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HTTRANSPARENT", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "DRAWUSEGDI", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);  /* undocumented feature */
+  iupClassRegisterAttribute(ic, "DRAWUSEDIRECT2D", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "DRAWANTIALIAS", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
 
   /* Not Supported */
   iupClassRegisterAttribute(ic, "BACKINGSTORE", NULL, NULL, "YES", NULL, IUPAF_NOT_SUPPORTED|IUPAF_NO_INHERIT);

@@ -74,6 +74,7 @@ int iupflatlabellua_open(lua_State * L);
 int iupdropbuttonlua_open(lua_State * L);
 int iupflatseparatorlua_open(lua_State * L);
 int iupspacelua_open(lua_State * L);
+int iupflatlistlua_open(lua_State * L);
 
 void iupgetparamlua_open (lua_State * L);
 void iupconfiglua_open(lua_State * L);
@@ -145,7 +146,7 @@ char* iuplua_call_ret_s(lua_State *L, int nargs);
  */
 double iuplua_call_ret_d(lua_State *L, int nargs);
 
-/** Same as lua_pcall, but if an error occour then
+/** Same as lua_pcall, but if an error occur then
  * _ERRORMESSAGE is called. 
  */
 int iuplua_call_raw(lua_State* L, int nargs, int nresults);

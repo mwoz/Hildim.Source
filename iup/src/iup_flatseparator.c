@@ -27,7 +27,7 @@
 
 
 enum { ISEPARATOR_VERT, ISEPARATOR_HORIZ };
-enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP };
+enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP, ISEPARATOR_EMPTY };
 
 struct _IcontrolData
 {
@@ -41,19 +41,26 @@ struct _IcontrolData
 
 /****************************************************************/
 
+static long iDrawGetDarkerColor(long color)
+{
+  unsigned char r = iupDrawRed(color), g = iupDrawGreen(color), b = iupDrawBlue(color), a = iupDrawAlpha(color);
+  r = (r * 80) / 100;
+  g = (g * 80) / 100;
+  b = (b * 80) / 100;
+  return iupDrawColor(r, g, b, a);
+}
 
 static int iFlatSeparatorRedraw_CB(Ihandle* ih)
 {
-  IdrawCanvas* dc;
-
-  dc = iupdrvDrawCreateCanvas(ih);
+  IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
   iupDrawParentBackground(dc, ih);
 
-  if (ih->data->style != ISEPARATOR_FILL)
+  if (ih->data->style != ISEPARATOR_FILL && ih->data->style != ISEPARATOR_EMPTY)
   {
-    int w, h, x, y;
-    long color = iupDrawStrToColor(IupGetAttribute(ih, "COLOR"), iupDrawColor(160, 160, 160, 255));
+    int x, y, w, h;
+    long color = iupDrawStrToColor(iupAttribGetStr(ih, "COLOR"), iupDrawColor(160, 160, 160, 255));
+
     iupdrvDrawGetSize(dc, &w, &h);
 
     if (ih->data->style == ISEPARATOR_GRIP)
@@ -69,13 +76,13 @@ static int iFlatSeparatorRedraw_CB(Ihandle* ih)
       {
         x = ih->data->barsize / 2 - 1;
         y = 2;
-        count = (h - 2) / 5;
+        count = (h - 2) / ih->data->barsize;
       }
       else
       {
         x = 2;
         y = ih->data->barsize / 2 - 1;
-        count = (w - 2) / 5;
+        count = (w - 2) / ih->data->barsize;
       }
 
       for (i = 0; i < count; i++)
@@ -84,9 +91,9 @@ static int iFlatSeparatorRedraw_CB(Ihandle* ih)
         iupdrvDrawRectangle(dc, x, y, x + 1, y + 1, color, IUP_DRAW_FILL, 1);
 
         if (ih->data->orientation == ISEPARATOR_VERT)
-          y += 5;
+          y += ih->data->barsize;
         else
-          x += 5;
+          x += ih->data->barsize;
       }
     }
     else if (ih->data->style == ISEPARATOR_DUALLINES)
@@ -145,17 +152,16 @@ static int iFlatSeparatorRedraw_CB(Ihandle* ih)
       }
     }
   }
-  else /* ISEPARATOR_FILL */
+  else if (ih->data->style == ISEPARATOR_FILL)
   {
-    char* color = iupAttribGet(ih, "COLOR");  /* ignore the default value */
-    if (color)
-    {
-      long color = iupDrawStrToColor(IupGetAttribute(ih, "COLOR"), iupDrawColor(160, 160, 160, 255));
-      int w, h;
-      iupdrvDrawGetSize(dc, &w, &h);
+    int w, h;
+    long color = iupDrawStrToColor(iupAttribGetStr(ih, "COLOR"), iupDrawColor(160, 160, 160, 255));
+    long border_color = iDrawGetDarkerColor(color);
 
-      iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, color, IUP_DRAW_FILL, 1);
-    }
+    iupdrvDrawGetSize(dc, &w, &h);
+
+    iupdrvDrawRectangle(dc, 1, 1, w - 2, h - 2, color, IUP_DRAW_FILL, 1);
+    iupdrvDrawRectangle(dc, 0, 0, w - 1, h - 1, border_color, IUP_DRAW_STROKE, 1);
   }
 
   iupdrvDrawFlush(dc);
@@ -193,7 +199,7 @@ static char* iFlatSeparatorGetOrientationAttrib(Ihandle* ih)
 
 static char* iFlatSeparatorGetStyleAttrib(Ihandle* ih)
 {
-  const char* style_str[] = { "FILL", "LINE", "SUNKENLINE", "DUALLINES", "GRIP" };
+  const char* style_str[] = { "FILL", "LINE", "SUNKENLINE", "DUALLINES", "GRIP", "EMPTY" };
   return (char*)style_str[ih->data->style];
 }
 
@@ -205,9 +211,11 @@ static int iFlatSeparatorSetStyleAttrib(Ihandle* ih, const char* value)
     ih->data->style = ISEPARATOR_LINE;
   else if (iupStrEqualNoCase(value, "DUALLINES"))
     ih->data->style = ISEPARATOR_DUALLINES;
+  else if (iupStrEqualNoCase(value, "EMPTY"))
+    ih->data->style = ISEPARATOR_EMPTY;
   else if (iupStrEqualNoCase(value, "GRIP"))
     ih->data->style = ISEPARATOR_GRIP;
-  else 
+  else
     ih->data->style = ISEPARATOR_SUNKENLINE;
   IupUpdate(ih);
   return 0; /* do not store value in hash table */

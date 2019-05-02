@@ -141,6 +141,7 @@ IupMessageDlg
 IupColorDlg   
 IupFontDlg    
 IupLayoutDialog
+IupGlobalsDialog
 IupElementPropertiesDialog
 IupSbox
 IupSpin
@@ -269,6 +270,7 @@ IupDial
 IupGauge
 IupColorbar
 IupColorBrowser
+IupFlatList
 
 iupdrvSetVisible
 iupdrvSetFontAttrib
@@ -374,7 +376,6 @@ iupStrNextLine
 iupStrNextValue
 IupMessageError
 IupMessageAlarm
-IupGetLanguageString
 iupStrLower
 iupStrUpper
 iupStrHasSpace

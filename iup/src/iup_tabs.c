@@ -94,28 +94,38 @@ static int iTabsGetMaxHeight(Ihandle* ih)
   return max_height;
 }
 
+static void iTabsGetDecorMargin(int *m, int *s)
+{
+  int e = iupdrvTabsExtraMargin();
+  *m = 4 + e;
+  *s = 2 + 2*e;
+}
+
 static void iTabsGetDecorSize(Ihandle* ih, int *width, int *height)
 {
+  int m, s;
+  iTabsGetDecorMargin(&m, &s);
+
   if (ih->data->type == ITABS_LEFT || ih->data->type == ITABS_RIGHT)
   {
     if (ih->data->orientation == ITABS_HORIZONTAL)
     {
       int max_width = iTabsGetMaxWidth(ih);
-      *width  = 4 + (3 + max_width + 3) + 2 + 4;
-      *height = 4 + 4;
+      *width  = m + (3 + max_width + 3) + s + m;
+      *height = m + m;
 
       if (iupdrvTabsExtraDecor(ih))
       {
         int h;
         iupdrvFontGetCharSize(ih, NULL, &h);
-        *height += h + 4;
+        *height += h + m;
       }
     }
     else
     {
       int max_height = iTabsGetMaxHeight(ih);
-      *width  = 4 + (3 + max_height + 3) + 2 + 4;
-      *height = 4 + 4;
+      *width  = m + (3 + max_height + 3) + s + m;
+      *height = m + m;
 
       if (ih->handle && ih->data->is_multiline)
       {
@@ -129,8 +139,8 @@ static void iTabsGetDecorSize(Ihandle* ih, int *width, int *height)
     if (ih->data->orientation == ITABS_HORIZONTAL)
     {
       int max_height = iTabsGetMaxHeight(ih);
-      *width  = 4 + 4;
-      *height = 4 + (3 + max_height + 3) + 2 + 4;
+      *width  = m + m;
+      *height = m + (3 + max_height + 3) + s + m;
 
       if (ih->handle && ih->data->is_multiline)
       {
@@ -142,14 +152,14 @@ static void iTabsGetDecorSize(Ihandle* ih, int *width, int *height)
       {
         int h;
         iupdrvFontGetCharSize(ih, NULL, &h);
-        *width += h + 4;
+        *width += h + m;
       }
     }
     else
     {
       int max_width = iTabsGetMaxWidth(ih);
-      *width  = 4 + 4;
-      *height = 4 + (3 + max_width + 3) + 2 + 4;
+      *width  = m + m;
+      *height = m + (3 + max_width + 3) + s + m;
     }
   }
 
@@ -159,6 +169,9 @@ static void iTabsGetDecorSize(Ihandle* ih, int *width, int *height)
 
 static void iTabsGetDecorOffset(Ihandle* ih, int *dx, int *dy)
 {
+  int m, s;
+  iTabsGetDecorMargin(&m, &s);
+
   if (ih->data->type == ITABS_LEFT || ih->data->type == ITABS_RIGHT)
   {
     if (ih->data->type == ITABS_LEFT)
@@ -166,12 +179,12 @@ static void iTabsGetDecorOffset(Ihandle* ih, int *dx, int *dy)
       if (ih->data->orientation == ITABS_HORIZONTAL)
       {
         int max_width = iTabsGetMaxWidth(ih);
-        *dx = 4 + (3 + max_width + 3) + 2;
+        *dx = m + (3 + max_width + 3) + s;
       }
       else
       {
         int max_height = iTabsGetMaxHeight(ih);
-        *dx = 4 + (3 + max_height + 3) + 2;
+        *dx = m + (3 + max_height + 3) + s;
 
         if (ih->handle && ih->data->is_multiline)
         {
@@ -181,9 +194,9 @@ static void iTabsGetDecorOffset(Ihandle* ih, int *dx, int *dy)
       }
     }
     else
-      *dx = 4;
+      *dx = m;
 
-    *dy = 4;
+    *dy = m;
   }
   else /* "BOTTOM" or "TOP" */
   {
@@ -192,7 +205,7 @@ static void iTabsGetDecorOffset(Ihandle* ih, int *dx, int *dy)
       if (ih->data->orientation == ITABS_HORIZONTAL)
       {
         int max_height = iTabsGetMaxHeight(ih);
-        *dy = 4 + (3 + max_height + 3) + 2;
+        *dy = m + (3 + max_height + 3) + s;
 
         if (ih->handle && ih->data->is_multiline)
         {
@@ -203,13 +216,13 @@ static void iTabsGetDecorOffset(Ihandle* ih, int *dx, int *dy)
       else
       {
         int max_width = iTabsGetMaxWidth(ih);
-        *dy = 4 + (3 + max_width + 3) + 2;
+        *dy = m + (3 + max_width + 3) + s;
       }
     }
     else
-      *dy = 4;
+      *dy = m;
 
-    *dx = 4;
+    *dx = m;
   }
 
   *dx += ih->data->horiz_padding;
@@ -239,6 +252,10 @@ void iupTabsCheckCurrentTab(Ihandle* ih, int pos, int removed)
       if (p != pos && iupdrvTabsIsTabVisible(child, p))
       {
         iupdrvTabsSetCurrentTab(ih, p);
+
+        if (!iupAttribGetBoolean(ih, "CHILDSIZEALL"))
+          IupRefresh(ih);
+
         return;
       }
 
@@ -255,7 +272,12 @@ static void iTabsSetTab(Ihandle* ih, Ihandle* child, int pos)
   {
     int cur_pos = iupdrvTabsGetCurrentTab(ih);
     if (cur_pos != pos && iupdrvTabsIsTabVisible(child, pos))
+    {
       iupdrvTabsSetCurrentTab(ih, pos);
+
+      if (!iupAttribGetBoolean(ih, "CHILDSIZEALL"))
+        IupRefresh(ih);
+    }
   }
   else
     iupAttribSet(ih, "_IUPTABS_VALUE_HANDLE", (char*)child);
@@ -439,6 +461,8 @@ static void iTabsComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *chil
   Ihandle* child;
   int children_naturalwidth, children_naturalheight;
   int decorwidth, decorheight;
+  int childSizeAll = iupAttribGetBoolean(ih, "CHILDSIZEALL");
+  Ihandle* current_child = childSizeAll? NULL: IupGetChild(ih, iupdrvTabsGetCurrentTab(ih));
 
   /* calculate total children natural size (even for hidden children) */
   children_naturalwidth = 0;
@@ -447,11 +471,18 @@ static void iTabsComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *chil
   for (child = ih->firstchild; child; child = child->brother)
   {
     /* update child natural size first */
-    iupBaseComputeNaturalSize(child);
+    if (!(child->flags & IUP_FLOATING_IGNORE))
+      iupBaseComputeNaturalSize(child);
 
-    *children_expand |= child->expand;
-    children_naturalwidth = iupMAX(children_naturalwidth, child->naturalwidth);
-    children_naturalheight = iupMAX(children_naturalheight, child->naturalheight);
+    if (!childSizeAll && child != current_child)
+      continue;
+
+    if (!(child->flags & IUP_FLOATING))
+    {
+      *children_expand |= child->expand;
+      children_naturalwidth = iupMAX(children_naturalwidth, child->naturalwidth);
+      children_naturalheight = iupMAX(children_naturalheight, child->naturalheight);
+    }
   }
 
   iTabsGetDecorSize(ih, &decorwidth, &decorheight);
@@ -474,7 +505,8 @@ static void iTabsSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
   for (child = ih->firstchild; child; child = child->brother)
   {
-    iupBaseSetCurrentSize(child, width, height, shrink);
+    if (!(child->flags & IUP_FLOATING))
+      iupBaseSetCurrentSize(child, width, height, shrink);
   }
 }
 
@@ -492,7 +524,10 @@ static void iTabsSetChildrenPositionMethod(Ihandle* ih, int x, int y)
   if (offset) iupStrToIntInt(offset, &x, &y, 'x');
 
   for (child = ih->firstchild; child; child = child->brother)
-    iupBaseSetPosition(child, x, y);
+  {
+    if (!(child->flags & IUP_FLOATING))
+      iupBaseSetPosition(child, x, y);
+  }
 }
 
 static void* iTabsGetInnerNativeContainerHandleMethod(Ihandle* ih, Ihandle* child)
@@ -566,6 +601,7 @@ Iclass* iupTabsNewClass(void)
   iupClassRegisterAttribute(ic, "VALUE_HANDLE", iTabsGetValueHandleAttrib, iTabsSetValueHandleAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT | IUPAF_IHANDLE | IUPAF_NO_STRING);
   iupClassRegisterAttribute(ic, "COUNT", iTabsGetCountAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWCLOSE", iTabsGetShowCloseAttrib, iTabsSetShowCloseAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CHILDSIZEALL", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "CLIENTSIZE", iTabsGetClientSizeAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);

@@ -20,8 +20,6 @@
 #include "iup_stdcontrols.h"
 #include "iup_layout.h"
 #include "iup_childtree.h"
-#include "iup_drvdraw.h"
-#include "iup_draw.h"
 
 
 enum { ISPLIT_VERT, ISPLIT_HORIZ };
@@ -294,11 +292,7 @@ static int iSplitMotion_CB(Ihandle* bar, int x, int y, char *status)
 static int iSplitButton_CB(Ihandle* bar, int button, int pressed, int x, int y, char* status)
 {
   Ihandle* ih = bar->parent;
-  IFniiiis cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
-  if (cb) {
-	  if (cb(ih, button, pressed, x, y, status) == IUP_IGNORE)
-		  return IUP_DEFAULT;
-  }
+
   if (button!=IUP_BUTTON1)
     return IUP_DEFAULT;
 
@@ -374,6 +368,9 @@ static char* iSplitGetClientSizeAttrib(Ihandle* ih)
 
 static int iSplitSetColorAttrib(Ihandle* ih, const char* value)
 {
+  if (value != NULL && ih->data->showgrip == 0)
+    IupSetAttribute(ih->firstchild, "STYLE", "FILL");
+
   IupSetStrAttribute(ih->firstchild, "COLOR", value);
   return 0;
 }
@@ -516,7 +513,11 @@ static int iSplitSetShowGripAttrib(Ihandle* ih, const char* value)
     }
     else
     {
-      IupSetAttribute(ih->firstchild, "STYLE", "FILL");
+      if (iupAttribGet(ih, "COLOR") != NULL)
+        IupSetAttribute(ih->firstchild, "STYLE", "FILL");
+      else
+        IupSetAttribute(ih->firstchild, "STYLE", "EMPTY");
+
       ih->data->showgrip = 0;
 
       if (ih->data->barsize == 5)
@@ -833,7 +834,6 @@ Iclass* iupSplitNewClass(void)
   ic->SetChildrenPosition    = iSplitSetChildrenPositionMethod;
 
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
-  iupClassRegisterCallback(ic, "FLAT_BUTTON_CB", "iiiis");
 
   /* Common */
   iupBaseRegisterCommonAttrib(ic);

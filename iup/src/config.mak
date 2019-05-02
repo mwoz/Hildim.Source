@@ -36,8 +36,9 @@ INCLUDES = ../include .
 
 # Windows XP minimum
 WIN32VER = 0x0501
+#For the future use 0x0601  (Windows 7 minimum)
 
-# Draw driver with alpha and anti-aliasing in Windows and Linux always
+# Draw driver with alpha and anti-aliasing in Windows and Linux enabled
 USE_NEW_DRAW := Yes
 
 SRC = iup_array.c iup_callback.c iup_dlglist.c iup_attrib.c iup_focus.c iup_font.c \
@@ -55,7 +56,7 @@ SRC = iup_array.c iup_callback.c iup_dlglist.c iup_attrib.c iup_focus.c iup_font
       iup_flatbutton.c iup_animatedlabel.c iup_draw.c iup_flatframe.c iup_flattabs.c \
       iup_flatscrollbar.c iup_flatscrollbox.c iup_gauge.c iup_dial.c iup_colorbar.c \
       iup_colorbrowser.c iup_colorhsi.c iup_flatlabel.c iup_dropbutton.c iup_flattoggle.c \
-      iup_flatseparator.c iup_space.c iup_multibox.c
+      iup_flatseparator.c iup_space.c iup_multibox.c iup_flatlist.c iup_globalsdlg.c
 
 ifdef USE_HAIKU
   # Since Haiku has no GTK and no Motif, we can only use the native implementation
