@@ -189,6 +189,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\iup_flatlabel.c" />
+    <ClCompile Include="..\src\iup_flatlist.c" />
     <ClCompile Include="..\src\iup_flatscrollbar.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
@@ -202,6 +203,7 @@
     <ClCompile Include="..\src\iup_func.c" />
     <ClCompile Include="..\src\iup_gauge.c" />
     <ClCompile Include="..\src\iup_globalattrib.c" />
+    <ClCompile Include="..\src\iup_globalsdlg.c" />
     <ClCompile Include="..\src\iup_gridbox.c" />
     <ClCompile Include="..\src\iup_key.c" />
     <ClCompile Include="..\src\iup_layout.c" />

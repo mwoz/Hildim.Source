@@ -260,6 +260,14 @@ static int matrix_click_cb(Ihandle *self, int p0, int p1, char * p2)
   return iuplua_call(L, 3);
 }
 
+static int matrix_contextmenu_cb(Ihandle *self, int p0, int p1, char* p2) {
+	lua_State *L = iuplua_call_start(self, "contextmenu_cb");
+	lua_pushinteger(L, p0);
+	lua_pushinteger(L, p1);
+	lua_pushstring(L, p2);
+	return iuplua_call(L, 3);
+}
+
 static int Matrix(lua_State *L)
 {
   Ihandle *ih = IupMatrix(NULL);
@@ -302,6 +310,7 @@ int iupmatrixlua_open(lua_State * L)
   iuplua_register_cb(L, "EDITCLICK_CB", (lua_CFunction)matrix_editclick_cb, NULL);
   iuplua_register_cb(L, "LEAVEITEM_CB", (lua_CFunction)matrix_leaveitem_cb, NULL);
   iuplua_register_cb(L, "CLICK_CB", (lua_CFunction)matrix_click_cb, NULL);
+  iuplua_register_cb(L, "CONTEXTMENU_CB", (lua_CFunction)matrix_contextmenu_cb, NULL);
 
   iuplua_matrixfuncs_open(L);
 
