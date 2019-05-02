@@ -55,10 +55,14 @@ struct OptionsMSSQL {
 	bool fold;
 	bool foldComment;
 	bool foldCompact;
+	bool foldBracket;
+	bool foldQuerry;
 	OptionsMSSQL() {
 		fold = false;
 		foldComment = false;
 		foldCompact = false;
+		foldBracket = true;
+		foldQuerry = true;
 	}
 };
 
@@ -73,6 +77,8 @@ struct OptionsSetMSSQL : public OptionSet<OptionsMSSQL> {
 			"at the end of a section that should fold.");
 
 		DefineProperty("fold.compact", &OptionsMSSQL::foldCompact, "");
+		DefineProperty("lexer.mssql.fold.querry", &OptionsMSSQL::foldQuerry, "");
+		DefineProperty("lexer.mssql.fold.bracket", &OptionsMSSQL::foldBracket, "");
 
 		DefineWordListSets(sqlWordListDesc);
 
@@ -180,10 +186,7 @@ char LexerMSSQL::classifyWordSQL(Sci_PositionU start, LexAccessor &styler, Style
 	bool wordIsNumber = isdigit(styler[start]) || (styler[start] == '.');
 
 	sc.GetCurrentLowered(s, sizeof(s));
-	//for (Sci_PositionU i = 0; i < sc.currentPos - start + 1 && i < 128; i++) {
-	//	s[i] = static_cast<char>(tolower(styler[start + i]));
-	//	s[i + 1] = '\0';
-	//}
+
 	char chAttr = SCE_MSSQL_IDENTIFIER;
 
 	if (sc.state == SCE_MSSQL_GLOBAL_VARIABLE) {
@@ -239,15 +242,9 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 
 	styler.StartAt(startPos);
 
-	//bool fold = styler.GetPropertyInt("fold") != 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int spaceFlags = 0;
 
-	//int state = initStyle;
-	//int prevState = initStyle;
-	//char chPrev = ' ';
-	//char chNext = styler[startPos];
-	//styler.StartSegment(startPos);
 	StyleContextEx sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 	Sci_PositionU lengthDoc = startPos + length;
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
@@ -458,7 +455,12 @@ void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyl
 					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
 				}
 			}
-		}if (style == SCE_MSSQL_SYSMCONSTANTS) {
+		}else if (style == SCE_MSSQL_OPERATOR) {
+			if (styler[i] == ')')
+				levelCurrent--;
+			else if (styler[i] == '(')
+				levelCurrent++;
+		}else if (style == SCE_MSSQL_SYSMCONSTANTS) {
 			char c = static_cast<char>(tolower(ch));
 			if (c == '_' ) {
 				Sci_PositionU j;

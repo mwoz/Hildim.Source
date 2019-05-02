@@ -387,19 +387,19 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 						}
 						sc.SetState(SCE_LUA_DEFAULT);
 					}
-				} else if (keywords[2].InList(s)) {
+				} else if (keywords[1].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD2);
-				} else if (keywords[3].InList(s)) {
+				} else if (keywords[2].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD3);
-				} else if (keywords[4].InList(s)) {
+				} else if (keywords[3].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD4);
-				} else if (keywords[5].InList(s)) {
+				} else if (keywords[4].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD5);
-				} else if (keywords[6].InList(s)) {
+				} else if (keywords[5].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD6);
-				} else if (keywords[7].InList(s)) {
+				} else if (keywords[6].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD7);
-				} else if (keywords[8].InList(s)) {
+				} else if (keywords[7].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD8);
 				} else if (isObject || isSubObject) {
 					// colourise objects part separately
@@ -410,19 +410,19 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 							sc.GetCurrent(s, sizeof(s));
 							if (keywords[0].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD);
-							} else if (keywords[2].InList(s)) {
+							} else if (keywords[1].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD2);
-							} else if (keywords[3].InList(s)) {
+							} else if (keywords[2].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD3);
-							} else if (keywords[4].InList(s)) {
+							} else if (keywords[3].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD4);
-							} else if (keywords[5].InList(s)) {
+							} else if (keywords[4].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD5);
-							} else if (keywords[6].InList(s)) {
+							} else if (keywords[5].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD6);
-							} else if (keywords[7].InList(s)) {
+							} else if (keywords[6].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD7);
-							} else if (keywords[8].InList(s)) {
+							} else if (keywords[7].InList(s)) {
 								sc.ChangeState(SCE_LUA_WORD8);
 							}
 							isObjectStart = false;
@@ -438,19 +438,19 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 					sc.GetCurrent(s + 1, sizeof(s) - 1);
 					if (keywords[0].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD);
-					} else if (keywords[2].InList(s)) {
+					} else if (keywords[1].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD2);
-					} else if (keywords[3].InList(s)) {
+					} else if (keywords[2].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD3);
-					} else if (keywords[4].InList(s)) {
+					} else if (keywords[3].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD4);
-					} else if (keywords[5].InList(s)) {
+					} else if (keywords[4].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD5);
-					} else if (keywords[6].InList(s)) {
+					} else if (keywords[5].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD6);
-					} else if (keywords[7].InList(s)) {
+					} else if (keywords[6].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD7);
-					} else if (keywords[8].InList(s)) {
+					} else if (keywords[7].InList(s)) {
 						sc.ChangeState(SCE_LUA_WORD8);
 					}
 					objectPartEndPos = sc.currentPos;
