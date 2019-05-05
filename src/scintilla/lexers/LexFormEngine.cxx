@@ -1096,6 +1096,31 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 				}
 			}
 			break;
+		case TYPE_SQL:
+			for (bool doing = fc.More(); doing; doing = fc.More() && !fc.atLineEnd) {
+				switch (fc.style) {
+				case SCE_FM_SQL_OPERATOR:
+					if (fc.ch == '(')
+						fc.currentLevel++;
+					else if (fc.ch == ')')
+						fc.currentLevel--;
+					break;
+				case SCE_FM_SQL_STATEMENT:
+					if (!fc.visibleChars) {//Нашли ключквое слово в начале строки
+						char s[100];
+						fc.GetNextLowered(s, 100);
+						if (!strcmp(s, "begin"))
+							fc.currentLevel++;
+						else if (!strcmp(s, "end"))
+							fc.currentLevel--;
+						continue;
+					}
+					break;
+				}
+				fc.Forward();
+				if (GetSector(fc.style) != TYPE_SQL) break;
+			}
+			break;
 		case TYPE_VBS:
 			switch(fc.style){
 			case SCE_FM_VB_DEFAULT:

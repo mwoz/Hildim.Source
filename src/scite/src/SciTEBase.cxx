@@ -2763,8 +2763,6 @@ void SciTEBase::CharAdded(char ch) {
 //!				StartAutoCompleteWord(true);
 				StartAutoCompleteWord(!props.GetInt("autocompleteword.incremental")); //!-change-[autocompleteword.incremental]
 			}
-		} else if (HandleXml(ch)) {
-			// Handled in the routine
 		} else {
 			if (prevAutoCHooseSingle) {
 				prevAutoCHooseSingle = 0;
@@ -2789,6 +2787,8 @@ void SciTEBase::CharAdded(char ch) {
 					autoCCausedByOnlyOne = wEditor.Call(SCI_AUTOCACTIVE);
 				}
 			}
+			if (!wEditor.Call(SCI_AUTOCACTIVE))
+				props.SetInteger("autocompleteword.automatic.blocked", 0);
 		}
 	}
 }
@@ -2823,100 +2823,6 @@ void SciTEBase::CharAddedOutput(int ch) {
 			}
 		}
 	}
-}
-
-/**
- * This routine will auto complete XML or HTML tags that are still open by closing them
- * @parm ch The characer we are dealing with, currently only works with the '>' character
- * @return True if handled, false otherwise
- */
-bool SciTEBase::HandleXml(char ch) {
-	// We're looking for this char
-	// Quit quickly if not found
-	if (ch != '>') {
-		return false;
-	}
-
-	// This may make sense only in certain languages
-	if (lexLanguage != SCLEX_HTML && lexLanguage != SCLEX_XML) {
-		return false;
-	}
-
-	// If the user has turned us off, quit now.
-	// Default is off
-	SString value = props.GetExpanded("xml.auto.close.tags");
-	if ((value.length() == 0) || (value == "0")) {
-		return false;
-	}
-
-	// Grab the last 512 characters or so
-	int nCaret = wEditor.Call(SCI_GETCURRENTPOS);
-	char sel[512];
-	int nMin = nCaret - (sizeof(sel) - 1);
-	if (nMin < 0) {
-		nMin = 0;
-	}
-
-	if (nCaret - nMin < 3) {
-		return false; // Smallest tag is 3 characters ex. <p>
-	}
-	GetRange(wEditor, nMin, nCaret, sel);
-	sel[sizeof(sel) - 1] = '\0';
-
-	if (sel[nCaret - nMin - 2] == '/') {
-		// User typed something like "<br/>"
-		return false;
-	}
-
-	SString strFound = FindOpenXmlTag(sel, nCaret - nMin);
-
-	if (strFound.length() > 0) {
-		wEditor.Call(SCI_BEGINUNDOACTION);
-		SString toInsert = "</";
-		toInsert += strFound;
-		toInsert += ">";
-		wEditor.CallString(SCI_REPLACESEL, 0, toInsert.c_str());
-		SetSelection(nCaret, nCaret);
-		wEditor.Call(SCI_ENDUNDOACTION);
-		return true;
-	}
-
-	return false;
-}
-
-/** Search backward through nSize bytes looking for a '<', then return the tag if any
- * @return The tag name
- */
-SString SciTEBase::FindOpenXmlTag(const char sel[], int nSize) {
-	SString strRet = "";
-
-	if (nSize < 3) {
-		// Smallest tag is "<p>" which is 3 characters
-		return strRet;
-	}
-	const char* pBegin = &sel[0];
-	const char* pCur = &sel[nSize - 1];
-
-	pCur--; // Skip past the >
-	while (pCur > pBegin) {
-		if (*pCur == '<') {
-			break;
-		} else if (*pCur == '>') {
-			break;
-		}
-		--pCur;
-	}
-
-	if (*pCur == '<') {
-		pCur++;
-		while (strchr(":_-.", *pCur) || isalnum(*pCur)) {
-			strRet += *pCur;
-			pCur++;
-		}
-	}
-
-	// Return the tag name or ""
-	return strRet;
 }
 
 void SciTEBase::GoMatchingBrace(bool select) {
@@ -3970,10 +3876,12 @@ void SciTEBase::Notify(SCNotification *notification) {
 		autoCompleteIncremental = false;
 		extender->OnAutocSelection(notification->listCompletionMethod, notification->position);
 		props.SetInteger("autocomleted.from.menu", 0);
+		props.SetInteger("autocompleteword.automatic.blocked", 0);
 		break;
 	case SCN_AUTOCCANCELLED:
 		autoCompleteIncremental = false;
 		props.SetInteger("autocomleted.from.menu", 0);
+		props.SetInteger("autocompleteword.automatic.blocked", 0);
 		break;
 	case SCN_AUTOCUPDATED:
 		if (autoCompleteIncremental)

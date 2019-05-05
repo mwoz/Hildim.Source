@@ -772,8 +772,6 @@ protected:
 	virtual void ScrollEditorIfNeeded();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
-	bool HandleXml(char ch);
-	SString FindOpenXmlTag(const char sel[], int nSize);
 	void GoMatchingBrace(bool select);
 	void GoMatchingPreprocCond(int direction, bool select);
 	void OutputAppendString(const char *s, int len = -1);

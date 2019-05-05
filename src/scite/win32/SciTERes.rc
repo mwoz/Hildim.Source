@@ -67,7 +67,7 @@ BEGIN
             VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
             VALUE "FileVersion", "3.7.0"
             VALUE "InternalName", "HildiM"
-            VALUE "IUPVersion", "3.26"
+            VALUE "IUPVersion", "3.27"
             VALUE "LegalCopyright", "Copyright 2016-2019 Michal Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
