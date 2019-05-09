@@ -1829,12 +1829,23 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case SCI_FINDPROGRESS:
 			return (LRESULT)extender->OnFindProgress(wParam, lParam);
 
-//!-start-[new_on_dbl_clk]
-	case WM_LBUTTONDBLCLK:
-		if (props.GetInt("tabbar.tab.close.on.doubleclick") > 0)
-			::SendMessage(MainHWND(), WM_COMMAND, IDM_NEW, 0);
-		return 0;
-//!-end-[new_on_dbl_clk]
+		case WM_MOUSEMOVE:
+			::SetCursor(::LoadCursor(NULL, IDC_ARROW)); //Сюда попадаем только при открытом модальном диалоге
+			break;
+
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		{
+			HWND h = GetActiveWindow();
+			for (HWND h = ::FindWindowExA(NULL, NULL, "IupDialogSaveBits", NULL); h; h = ::FindWindowExA(NULL, h, "IupDialogSaveBits", NULL)) {
+				if (!(GetWindowLongA(h, GWL_STYLE) & WS_DISABLED)) {
+					FlashWindow(h, true);
+					break;
+				}
+			}
+		}
+		break;
 
 		case SCITE_DROP:
 			// Open the files
@@ -2441,8 +2452,9 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 		RECT area;
 		SystemParametersInfoA(SPI_GETWORKAREA, 0, &area, 0);
 		extender->OnMouseHook(mh->pt.x - area.left, mh->pt.y - area.top);
-	}
-	else if (wParam == WM_KEYUP) {
+	} else if (wParam == WM_RBUTTONUP) { //|| wParam == WM_RBUTTONDOWN
+		extender->OnMouseHook(-7000, -7000);
+	} else if (wParam == WM_KEYUP) {
 		extender->OnMenuChar(2, lParam > 0 ? "1" : "-1");
 	} else if (wParam == WM_KEYDOWN) {
 		extender->OnMenuChar(3, lParam > 0 ? "YES" : "NO");
