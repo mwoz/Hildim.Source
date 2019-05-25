@@ -554,11 +554,7 @@ protected:
 	SString autoCompleteFillUpCharacters;
 	SString wordCharacters;
 	SString whitespaceCharacters;
-	int startCalltipWord;
-	int currentCallTip;
-	int maxCallTips;
-	SString currentCallTipWord;
-	int lastPosCallTip;
+
 	bool macro1stLoaded = false;
 
 	bool margin;
@@ -784,11 +780,8 @@ protected:
 	virtual void StopExecute() = 0;
 
 	bool GoMessage(int dir, GUI::ScintillaWindow &wBottom);
-	virtual bool StartCallTip();
 	char *GetNearestWords(const char *wordStart, int searchLen,
 		const char *separators, bool ignoreCase=false, bool exactLen=false);
-	virtual void FillFunctionDefinition(int pos = -1);
-	void ContinueCallTip();
 	virtual void EliminateDuplicateWords(char *words);
 	virtual bool StartAutoComplete();
 	virtual bool StartAutoCompleteWord(bool onlyOneWord);

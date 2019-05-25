@@ -173,59 +173,7 @@ void CallTip::DrawChunk(Surface *surface, int &x, const char *s,
 	}
 }
 
-/*!
-int CallTip::PaintContents(Surface *surfaceWindow, bool draw) {
-	const PRectangle rcClientPos = wCallTip.GetClientPosition();
-	const PRectangle rcClientSize(0.0f, 0.0f, rcClientPos.right - rcClientPos.left,
-	                        rcClientPos.bottom - rcClientPos.top);
-	PRectangle rcClient(1.0f, 1.0f, rcClientSize.right - 1, rcClientSize.bottom - 1);
 
-	// To make a nice small call tip window, it is only sized to fit most normal characters without accents
-	const int ascent = static_cast<int>(std::round(surfaceWindow->Ascent(font) - surfaceWindow->InternalLeading(font)));
-
-	// For each line...
-	// Draw the definition in three parts: before highlight, highlighted, after highlight
-	int ytext = static_cast<int>(rcClient.top) + ascent + 1;
-	rcClient.bottom = ytext + surfaceWindow->Descent(font) + 1;
-	const char *chunkVal = val.c_str();
-	bool moreChunks = true;
-	int maxWidth = 0;
-
-	while (moreChunks) {
-		const char *chunkEnd = strchr(chunkVal, '\n');
-		if (!chunkEnd) {
-			chunkEnd = chunkVal + strlen(chunkVal);
-			moreChunks = false;
-		}
-		const int chunkOffset = static_cast<int>(chunkVal - val.c_str());
-		const int chunkLength = static_cast<int>(chunkEnd - chunkVal);
-		const int chunkEndOffset = chunkOffset + chunkLength;
-		int thisStartHighlight = std::max(startHighlight, chunkOffset);
-		thisStartHighlight = std::min(thisStartHighlight, chunkEndOffset);
-		thisStartHighlight -= chunkOffset;
-		int thisEndHighlight = std::max(endHighlight, chunkOffset);
-		thisEndHighlight = std::min(thisEndHighlight, chunkEndOffset);
-		thisEndHighlight -= chunkOffset;
-		rcClient.top = static_cast<XYPOSITION>(ytext - ascent - 1);
-
-		int x = insetX;     // start each line at this inset
-
-		DrawChunk(surfaceWindow, x, chunkVal, 0, thisStartHighlight,
-			ytext, rcClient, false, draw);
-		DrawChunk(surfaceWindow, x, chunkVal, thisStartHighlight, thisEndHighlight,
-			ytext, rcClient, true, draw);
-		DrawChunk(surfaceWindow, x, chunkVal, thisEndHighlight, chunkLength,
-			ytext, rcClient, false, draw);
-
-		chunkVal = chunkEnd + 1;
-		ytext += lineHeight;
-		rcClient.bottom += lineHeight;
-		maxWidth = std::max(maxWidth, x);
-	}
-	return maxWidth;
-}
-*/
-//!-start-[BetterCalltips]
 #define IS_WS(ch) (((ch) == ' ') || ((ch) == '\t'))
 void CallTip::WrapLine(const char *text, int offset, int length, SplitVector<int> &wrapPosList) {
 	wrapPosList.DeleteAll();

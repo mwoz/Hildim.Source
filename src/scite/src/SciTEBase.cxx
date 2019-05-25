@@ -465,11 +465,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	callTipIgnoreCase = false;
 	calltipShowPerPage = 1; //!-add-[BetterCalltips]
 	autoCCausedByOnlyOne = false;
-	startCalltipWord = 0;
-	currentCallTip = 0;
-	maxCallTips = 1;
-	currentCallTipWord = "";
-	lastPosCallTip = 0;
 
 	margin = false;
 	marginWidth = marginWidthDefault;
@@ -1652,123 +1647,6 @@ char *SciTEBase::GetNearestWords(const char *wordStart, int searchLen,
 	return words;
 }
 
-void SciTEBase::FillFunctionDefinition(int pos /*= -1*/) {
-	if (pos > 0) {
-		lastPosCallTip = pos;
-	}
-	if (apis) {
-		char *words = GetNearestWords(currentCallTipWord.c_str(), currentCallTipWord.length(),
-			calltipParametersStart.c_str(), callTipIgnoreCase, true);
-		if (!words)
-			return;
-		// Counts how many call tips
-		const char *spacePos = strchr(words, ' ');
-		maxCallTips = 1;
-		while (spacePos) {
-			maxCallTips++;
-			spacePos = strchr(spacePos + 1, ' ');
-		}
-		delete []words;
-
-		// Should get current api definition
-/*!
-		const char *word = apis.GetNearestWord(currentCallTipWord.c_str(), currentCallTipWord.length(),
-		        callTipIgnoreCase, calltipWordCharacters, currentCallTip);
-*/
-//!-start-[BetterCalltips]
-		functionDefinition = "";
-		for (int i = currentCallTip; i < currentCallTip + calltipShowPerPage; i++) {
-			const char *word = apis.GetNearestWord(currentCallTipWord.c_str(), currentCallTipWord.length(),
-				callTipIgnoreCase, calltipWordCharacters, i);
-			if (!word) break;
-			if (functionDefinition != "")
-				functionDefinition.append("\n");
-			functionDefinition.append(word);
-		}
-//!-end-[BetterCalltips]
-/*!
-		if (word) {
-			functionDefinition = word;
-			if (maxCallTips > 1) {
-*/
-//!-start-[BetterCalltips]
-		if (functionDefinition.length()) {
-			if (maxCallTips > calltipShowPerPage) {
-//!-end-[BetterCalltips]
-				functionDefinition.insert(0, "\001");
-			}
-
-			if (calltipEndDefinition != "") {
-				int posEndDef = functionDefinition.search(calltipEndDefinition.c_str());
-//!				if (maxCallTips > 1) {
-				if (maxCallTips > calltipShowPerPage) { //!-change-[BetterCalltips]
-					if ((posEndDef > 1) &&
-					        ((posEndDef + calltipEndDefinition.length()) < functionDefinition.length())) {
-						functionDefinition.insert(posEndDef + calltipEndDefinition.length(), "\n\002");
-					} else {
-						functionDefinition.append("\n\002");
-					}
-				} else {
-//!					if ((posEndDef > 1) &&
-					if ((posEndDef > calltipShowPerPage) && //!-change-[BetterCalltips]
-					        ((posEndDef + calltipEndDefinition.length()) < functionDefinition.length())) {
-						functionDefinition.insert(posEndDef + calltipEndDefinition.length(), "\n");
-					}
-				}
-//!			} else if (maxCallTips > 1) {
-			} else if (maxCallTips > calltipShowPerPage) { //!-change-[BetterCalltips]
-				functionDefinition.insert(1, "\002");
-			}
-			functionDefinition.substitute("\\n", "\n"); //!-add-[CalltipBreaks]
-			functionDefinition = EncodeString(functionDefinition); //!-add-[FixEncoding]
-			wEditor.CallString(SCI_CALLTIPSHOW, lastPosCallTip - currentCallTipWord.length(), functionDefinition.c_str());
-			ContinueCallTip();
-		}
-	}
-}
-
-bool SciTEBase::StartCallTip() {
-	currentCallTip = 0;
-	currentCallTipWord = "";
-	SString line = GetLine();
-	int current = GetCaretInLine();
-	int pos = wEditor.Call(SCI_GETCURRENTPOS);
-	int braces;
-	do {
-		braces = 0;
-		while (current > 0 && (braces || !calltipParametersStart.contains(line[current - 1]))) {
-			if (calltipParametersStart.contains(line[current - 1]))
-				braces--;
-			else if (calltipParametersEnd.contains(line[current - 1]))
-				braces++;
-			current--;
-			pos--;
-		}
-		if (current > 0) {
-			current--;
-			pos--;
-		} else
-			break;
-		while (current > 0 && isspacechar(line[current - 1])) {
-			current--;
-			pos--;
-		}
-	} while (current > 0 && !calltipWordCharacters.contains(line[current - 1]));
-	if (current <= 0)
-		return true;
-
-	startCalltipWord = current - 1;
-	while (startCalltipWord > 0 &&
-	        calltipWordCharacters.contains(line[startCalltipWord - 1])) {
-		startCalltipWord--;
-	}
-
-	line.change(current, '\0');
-	currentCallTipWord = line.c_str() + startCalltipWord;
-	functionDefinition = "";
-	FillFunctionDefinition(pos);
-	return true;
-}
 
 //!-start-[BetterCalltips]
 static inline char MakeUpperCase(char ch) {
@@ -1796,93 +1674,7 @@ static int CompareNCaseInsensitive(const char *a, const char *b, size_t len) {
 		// Either *a or *b is nul
 		return *a - *b;
 }
-//!-end-[BetterCalltips]
 
-void SciTEBase::ContinueCallTip() {
-	SString line = GetLine();
-	int current = GetCaretInLine();
-
-	int braces = 0;
-	int commas = 0;
-	for (int i = startCalltipWord; i < current; i++) {
-		if (calltipParametersStart.contains(line[i]))
-			braces++;
-		else if (calltipParametersEnd.contains(line[i]) && braces > 0)
-			braces--;
-		else if (braces == 1 && calltipParametersSeparators.contains(line[i]))
-			commas++;
-	}
-/*!
-	int startHighlight = 0;
-	while (functionDefinition[startHighlight] && !calltipParametersStart.contains(functionDefinition[startHighlight]))
-		startHighlight++;
-	if (calltipParametersStart.contains(functionDefinition[startHighlight]))
-		startHighlight++;
-	while (functionDefinition[startHighlight] && commas > 0) {
-		if (calltipParametersSeparators.contains(functionDefinition[startHighlight]))
-			commas--;
-		// If it reached the end of the argument list it means that the user typed in more
-		// arguments than the ones listed in the calltip
-		if (calltipParametersEnd.contains(functionDefinition[startHighlight]))
-			commas = 0;
-		else
-			startHighlight++;
-	}
-	if (calltipParametersSeparators.contains(functionDefinition[startHighlight]))
-		startHighlight++;
-	int endHighlight = startHighlight;
-	while (functionDefinition[endHighlight] && !calltipParametersSeparators.contains(functionDefinition[endHighlight]) && !calltipParametersEnd.contains(functionDefinition[endHighlight]))
-		endHighlight++;
-
-	wEditor.Call(SCI_CALLTIPSETHLT, startHighlight, endHighlight);
-*/
-//!-start-[BetterCalltips]
-	wEditor.Call(SCI_CALLTIPCLEARHLT);
-	int startHighlight = 0;
-	while(startHighlight != -1) {
-		if (startHighlight) {
-			// go to next line
-			startHighlight = functionDefinition.search("\n", startHighlight);
-			if (startHighlight == -1) break;
-			startHighlight++; // go to start of the line
-			// check if line starts with calltip word
-			if (startHighlight + currentCallTipWord.length() > functionDefinition.length()) break;
-			int cmp_res;
-			if (callTipIgnoreCase)
-				cmp_res = ::CompareNCaseInsensitive(functionDefinition.c_str() + startHighlight, currentCallTipWord.c_str(), currentCallTipWord.length());
-			else
-				cmp_res = ::strncmp(functionDefinition.c_str() + startHighlight, currentCallTipWord.c_str(), currentCallTipWord.length());
-			// line does not start with definition - goto next line
-			if (cmp_res != 0)
-				continue;
-		}
-
-		while (functionDefinition[startHighlight] && !calltipParametersStart.contains(functionDefinition[startHighlight]))
-			startHighlight++;
-		if (calltipParametersStart.contains(functionDefinition[startHighlight]))
-			startHighlight++;
-		int comma_cnt = commas;
-		while (functionDefinition[startHighlight] && comma_cnt > 0) {
-			if (calltipParametersSeparators.contains(functionDefinition[startHighlight]))
-				comma_cnt--;
-			// If it reached the end of the argument list it means that the user typed in more
-			// arguments than the ones listed in the calltip
-			if (calltipParametersEnd.contains(functionDefinition[startHighlight]))
-				comma_cnt = 0;
-			else
-				startHighlight++;
-		}
-		if (calltipParametersSeparators.contains(functionDefinition[startHighlight]))
-			startHighlight++;
-		int endHighlight = startHighlight;
-		while (functionDefinition[endHighlight] && !calltipParametersSeparators.contains(functionDefinition[endHighlight]) && !calltipParametersEnd.contains(functionDefinition[endHighlight]))
-			endHighlight++;
-
-		wEditor.Call(SCI_CALLTIPADDHLT, startHighlight, endHighlight);
-	};
-	wEditor.Call(SCI_CALLTIPUPDATEHLT);
-//!-end-[BetterCalltips]
-}
 
 void SciTEBase::EliminateDuplicateWords(char *words) {
 	char *firstWord = words;
@@ -2732,24 +2524,18 @@ void SciTEBase::CharAdded(char ch) {
 	int selStart = crange.cpMin;
 	int selEnd = crange.cpMax;
 	if ((selEnd == selStart) && (selStart > 0)) {
-		if (wEditor.Call(SCI_CALLTIPACTIVE)) {
-			if (calltipParametersEnd.contains(ch)) {
-				braceCount--;
-				if (braceCount < 1)
-					wEditor.Call(SCI_CALLTIPCANCEL);
-				else
-					StartCallTip();
-			} else if (calltipParametersStart.contains(ch)) {
-				braceCount++;
-				StartCallTip();
-			} else {
-				ContinueCallTip();
-			}
-		} else if (wEditor.Call(SCI_AUTOCACTIVE)) {
+		//if (wEditor.Call(SCI_CALLTIPACTIVE)) {
+		//	if (calltipParametersEnd.contains(ch)) {
+		//		braceCount--;
+		//		if (braceCount < 1)
+		//			wEditor.Call(SCI_CALLTIPCANCEL);
+		//	} else if (calltipParametersStart.contains(ch)) {
+		//		braceCount++;
+		//	}
+		//} else 
+		if (wEditor.Call(SCI_AUTOCACTIVE)) {
 			if (calltipParametersStart.contains(ch)) {
 				braceCount++;
-//!				StartCallTip();
-				if (callTipAutomatic) StartCallTip(); //!-change-[BetterCalltips]
 			} else if (calltipParametersEnd.contains(ch)) {
 				braceCount--;
 			} else if (!wordCharacters.contains(ch)) {
@@ -2770,8 +2556,6 @@ void SciTEBase::CharAdded(char ch) {
 			}
 			if (calltipParametersStart.contains(ch)) {
 				braceCount = 1;
-//!				StartCallTip();
-				if (callTipAutomatic) StartCallTip(); //!-change-[BetterCalltips]
 			} else {
 				autoCCausedByOnlyOne = false;
 				if (indentMaintain)
@@ -3202,10 +2986,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_SELECTTONEXTMATCHPPC:
 		GoMatchingPreprocCond(IDM_NEXTMATCHPPC, true);
-		break;
-
-	case IDM_SHOWCALLTIP:
-		StartCallTip();
 		break;
 
 	case IDM_COMPLETE:
@@ -4122,26 +3902,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 
-	case SCN_CALLTIPCLICK: {
-			if (notification->position == 1 && currentCallTip > 0) {
-/*!
-				currentCallTip--;
-				FillFunctionDefinition();
-			} else if (notification->position == 2 && currentCallTip + 1 < maxCallTips) {
-				currentCallTip++;
-*/
-//!-start-[BetterCalltips]
-				if (currentCallTip >= calltipShowPerPage)
-					currentCallTip -= calltipShowPerPage;
-				else
-					currentCallTip = 0;
-				FillFunctionDefinition();
-			} else if (notification->position == 2 && currentCallTip + calltipShowPerPage < maxCallTips) {
-				currentCallTip += calltipShowPerPage;
-//!-end-[BetterCalltips]
-				FillFunctionDefinition();
-			}
-		}
+	case SCN_CALLTIPCLICK: 
+		extender->OnCallTipClick(notification->position);
 		break;
 
 	case SCN_MACRORECORD:

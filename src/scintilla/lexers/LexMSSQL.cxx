@@ -274,7 +274,7 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 			if (!iswordchar(sc.ch) || sc.ch == '.') {
 				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if (sc.state == SCE_MSSQL_LINE_COMMENT) {
+		} else if (sc.state == SCE_MSSQL_LINE_COMMENT || sc.state == SCE_MSSQL_LINE_COMMENT_EX) {
 			if (sc.ch == '\r' || sc.ch == '\n') {
 				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
@@ -291,8 +291,9 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 		if (sc.state == SCE_MSSQL_DEFAULT || sc.state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
 			int stateTmp = sc.state;
 			sc.ChangeState(SCE_MSSQL_DEFAULT);
-			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l') {	//)
-				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT);
+			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l' && 
+			  (styler.SafeGetCharAt(sc.currentPos + 3) == ' ' || styler.SafeGetCharAt(sc.currentPos + 3) == '\t' || styler.SafeGetCharAt(sc.currentPos + 3) == '\n')) {	
+				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT_EX);
 			}else if (sc.ch == '_' && sc.chNext == '_'){
 				sc.SetStateEx(SCE_MSSQL_SYSMCONSTANTS);
 			}else if (iswordstart(sc.ch)) {

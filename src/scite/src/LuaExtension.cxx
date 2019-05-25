@@ -1615,6 +1615,8 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 			params[i] = static_cast<long>(luaL_checknumber(L, arg++));
 		}
 	}
+	if (bSetter && func.paramType[0] == iface_stringresult)
+		params[1] = params[0];
 
 	if (needStringResult) {
 		int stringResultLen = host->Send(p, func.value, params[0], 0);
@@ -3166,6 +3168,9 @@ bool LuaExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
 
 bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
 	return CallNamedFunction("OnMarginClick", margin, modif, line);
+}
+bool LuaExtension::OnCallTipClick(int pos) {
+	return CallNamedFunction("OnCallTipClick", pos, 0, 0);
 }
 /*!
 bool LuaExtension::OnUserListSelection(int listType, const char *selection) {

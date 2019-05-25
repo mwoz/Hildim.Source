@@ -39,6 +39,7 @@ public:
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line);
+	virtual bool OnCallTipClick(int pos);
 //!	virtual bool OnUserListSelection(int listType, const char *selection);
 	virtual bool OnUserListSelection(int listType, const char *selection, int id); //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item);
