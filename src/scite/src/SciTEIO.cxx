@@ -1281,7 +1281,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 
 		originalEnd = wFindRes.Send(SCI_GETCURRENTPOS);
 	}
-	if (!(gf & grepMatchCase)) {
+	if (!(gf & grepMatchCase) && !(gf & grepRegExp)) {
 		char chtmp[1000];
 		lstrcpynA(chtmp, searchString.c_str(), 999);
 		CharLowerBuffA(chtmp, searchString.length());
