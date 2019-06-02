@@ -471,10 +471,12 @@ void IupChildWnd::SizeEditor() {
 	bNeedSize = false;
 	int x, y;
 	IupGetIntInt(pContainer, "RASTERSIZE", &x, &y);
+
 	RECT r;
+	::GetWindowRect((HWND)IupGetAttribute(pContainer, "HWND"), &r);
 	::GetWindowRect((HWND)pS->GetID(), &r);
 	if((r.right - r.left != x - vPx) || (r.bottom - r.top != y - hPx))
-		::SetWindowPos((HWND)pS->GetID(), HWND_TOP, 0, 0, x - vPx, y - hPx, 0);
+		::SetWindowPos((HWND)pS->GetID(), NULL, 0, 0, x - vPx, y - hPx, SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
 
 }
 
@@ -899,6 +901,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 				"NAME", "SourceSplitRight",
 				"SHOWGRIP", "NO",
 				"COLOR", scrSPLITCOLOR,
+				"FILLCOLOR", scrSPLITCOLOR,
+				"BORDERCOLOR", scrBORDERCOLOR,
 				"BARSIZE", "5",
 				"VALUE", "1000",
 				"LAYOUTDRAG", "NO",
@@ -909,6 +913,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"NAME", "SourceSplitLeft",
 			"SHOWGRIP", "NO",
 			"COLOR", scrSPLITCOLOR,
+			"FILLCOLOR", scrSPLITCOLOR,
+			"BORDERCOLOR", scrBORDERCOLOR,
 			"BARSIZE", "0",
 			"VALUE", "0",
 			"LAYOUTDRAG", "NO",
@@ -1044,6 +1050,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"NAME", "BottomBarSplit",
 			"SHOWGRIP", "NO",
 			"COLOR", scrSPLITCOLOR,
+			"FILLCOLOR", scrSPLITCOLOR,
+			"BORDERCOLOR", scrBORDERCOLOR ,
 			"BARSIZE", "5",
 			"LAYOUTDRAG", "NO",
 			NULL),
@@ -1093,7 +1101,7 @@ void IupLayoutWnd::Fit(){
 	::GetClientRect((HWND)((SciTEWin*)pSciteWin)->GetID(), &r);
 	if (!r.right && !r.bottom)
 		return;
-	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), HWND_TOP, 0, 0, r.right, r.bottom, 0);
+	::SetWindowPos((HWND)IupGetAttribute(hMain, "HWND"), NULL, 0, 0, r.right, r.bottom, SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
 	IupRefresh(IupGetParent(pLeftTab));
 }
 
@@ -1133,7 +1141,7 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	RECT rc;
 	::GetWindowRect(GetChildHWND(name), &rc);
 	if (pW) {
-		::SetWindowPos((HWND)pW->GetID(), HWND_TOP, 0, 0, rc.right, rc.bottom, 0);
+		::SetWindowPos((HWND)pW->GetID(), NULL, 0, 0, rc.right, rc.bottom, SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
 		if (!StandartWindowDecoration) {
 			Sci_ListColorsInfo ci;
 			ci.inizialized = true;
@@ -1190,7 +1198,7 @@ void IupLayoutWnd::AdjustTabBar(){
 	GetPaneRect("SciTeTabCtrl", &rc);
 	int width = rc.right;
 	SetWindowPos(hTab,
-		0, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE);
+		0, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOACTIVATE);
 
 	RECT r = { 0, 0, width - 2, 0 };
 	::SendMessage(hTab, TCM_ADJUSTRECT, TRUE, LPARAM(&r));
@@ -1208,7 +1216,7 @@ LRESULT PASCAL IupLayoutWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 		GetPaneRect("SciTeTabCtrl", &rc);
 		rc.right = LOWORD(lParam) - 2;
 			SetWindowPos(hTab,
-			0, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE);
+			NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOACTIVATE);
 
 		RECT r = {0,0,LOWORD(lParam) - 2,0};
 		::SendMessage(hTab, TCM_ADJUSTRECT, TRUE, LPARAM(&r));

@@ -1391,17 +1391,9 @@ void SciTEBase::SetPropertiesInitial() {
 
 void SciTEBase::ReadPropertiesInitial() {
 	SetPropertiesInitial();
-	widthFindRes = props.GetInt("findres.width", 0);
-	prevousWidthFindRes = widthFindRes;
 	int sizeVertical = props.GetInt("output.vertical.size", 0);
 	int hideOutput = props.GetInt("output.initial.hide", 0);
-	if (sizeVertical > 0 ) {
-		previousHeightOutput = sizeVertical;
-		if (!hideOutput) {
-			heightOutput = NormaliseSplit(previousHeightOutput);
-			Redraw();
-		}
-	}
+
 	ViewWhitespace(props.GetInt("view.whitespace"));
 	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides") ?
 		indentExamine : SC_IV_NONE);

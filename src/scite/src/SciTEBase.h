@@ -508,22 +508,14 @@ protected:
 	int wrapStyle;
 	bool isReadOnly;
 	bool openFilesHere;
-	bool fullScreen;
 //!	enum { toolMax = 50 };
 	enum { toolMax = 300 }; //!-change-[ToolsMax]
 	Extension *extender;
 	bool needReadProperties;
 	bool preserveFocusOnEditor; //!-add-[GoMessageImprovement]
 
-	int widthPanel;
-	int widthPanelStartDrag;
-	int prevousWidthPanel;
-	int sizeSplit;
-	int heightOutput;
-	int heightOutputStartDrag;
 	GUI::Point ptStartDrag;
 	bool capturedMouse;
-	int previousHeightOutput;
 	bool firstPropertiesRead;
 	bool bufferedDraw;
 	bool twoPhaseDraw;
@@ -531,10 +523,6 @@ protected:
 	bool bracesSloppy;
 	int bracesStyle;
 	int braceCount;
-
-	int widthFindRes;
-	int widthFindResStartDrag;
-	int prevousWidthFindRes;
 
 	bool indentationWSVisible;
 	int indentExamine;
@@ -841,7 +829,6 @@ protected:
 	bool BookmarkPresent(int lineno = -1);
 	void BookmarkToggle(int lineno = -1);
 	void BookmarkNext(bool forwardScan = true, bool select = false);
-	void ToggleOutputVisible();
 
 	virtual void CheckMenus();
 //!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
@@ -888,10 +875,8 @@ protected:
 	void Activate(bool activeApp);
 	virtual GUI::Rectangle GetClientRectangle()=0;
 	void Redraw();
-	int NormaliseSplit(int splitPos);
 
 	enum { splitOut = 1, splitSidebar = 2, splitFindRes };
-	void MoveSplit(GUI::Point ptNewDrag, int movedSplitter);
 
 	void UIAvailable();
 	void StartRecordMacro();

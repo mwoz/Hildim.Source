@@ -41,6 +41,7 @@ int       IupLoopStep      (void);
 int       IupLoopStepWait  (void);
 int       IupMainLoopLevel (void);
 void      IupFlush         (void);
+void      IupFlushMouse    (void);
 void      IupExitLoop      (void);
 
 int       IupRecordInput(const char* filename, int mode);

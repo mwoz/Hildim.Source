@@ -3155,10 +3155,12 @@ bool LuaExtension::OnMouseButtonUp(int modifiers) {
 	return handled;
 }
 //!-end-[OnMouseButtonUp]
-
+static int prevBuffer = -1;
 bool LuaExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag) {
 	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
-	return CallNamedFunction("OnUpdateUI", bModified, bSelChange, flag);
+	const char *res = CallNamedFunction("OnUpdateUI", bModified, bSelChange, flag, prevBuffer != curBufferIndex);
+	prevBuffer = curBufferIndex;
+	return res;
 }
 
 bool LuaExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {

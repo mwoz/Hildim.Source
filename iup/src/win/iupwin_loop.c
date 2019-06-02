@@ -158,3 +158,19 @@ void IupFlush(void)
   if (post_quit && win_main_loop>0)
     IupExitLoop();
 }
+
+void IupFlushMouse(void) {
+	int post_quit = 0;
+	MSG msg;
+
+	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
+		if (msg.message != WM_MOUSEMOVE && winLoopProcessMessage(&msg) == IUP_CLOSE) {
+			post_quit = 1;
+			break;
+		}
+	}
+
+	/* re post the quit message if still inside MainLoop */
+	if (post_quit && win_main_loop > 0)
+		IupExitLoop();
+}

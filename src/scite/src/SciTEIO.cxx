@@ -886,11 +886,7 @@ void SciTEBase::OpenFromStdin(bool UseOutputPane) {
 		lenFile = fread(data, 1, sizeof(data), stdin);
 	}
 	if (UseOutputPane) {
-		if (props.GetInt("split.vertical") == 0) {
-			heightOutput = 2000;
-		} else {
-			heightOutput = 500;
-		}
+
 	} else {
 		wEditor.Call(SCI_ENDUNDOACTION);
 	}

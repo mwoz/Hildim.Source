@@ -1234,8 +1234,6 @@ void SciTEWin::AddCommand(const SString &cmd, const SString &dir, JobSubsystem j
 }
 
 void SciTEWin::QuitProgram() {
-	if (fullScreen)	// Ensure tray visible on exit
-		FullScreenToggle();
 	::PostQuitMessage(0);
 	ChangeClipboardChain(MainHWND(), hNextCBWnd);
 	wSciTE.Destroy();
@@ -1880,22 +1878,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			wEditor.Call(SCI_CALLTIPCANCEL);
 			break;
 
-		case WM_GETMINMAXINFO: {
-				MINMAXINFO *pmmi = reinterpret_cast<MINMAXINFO *>(lParam);
-				if (fullScreen) {
-					pmmi->ptMaxSize.x = ::GetSystemMetrics(SM_CXSCREEN) +
-										2 * ::GetSystemMetrics(SM_CXSIZEFRAME);
-					pmmi->ptMaxSize.y = ::GetSystemMetrics(SM_CYSCREEN) +
-										::GetSystemMetrics(SM_CYCAPTION) +
-										::GetSystemMetrics(SM_CYMENU) +
-										2 * ::GetSystemMetrics(SM_CYSIZEFRAME);
-					pmmi->ptMaxTrackSize.x = pmmi->ptMaxSize.x;
-					pmmi->ptMaxTrackSize.y = pmmi->ptMaxSize.y;
-					return 0;
-				} else {
-					return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-				}
-			}
+		case WM_GETMINMAXINFO:
+			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			break;
 
 		case WM_INITMENU:
 			CheckMenus();

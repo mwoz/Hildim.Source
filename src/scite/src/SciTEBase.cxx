@@ -428,19 +428,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	wrapStyle = SC_WRAP_WORD;
 	isReadOnly = false;
 	openFilesHere = false;
-	fullScreen = false;
-
-	widthPanel = 0;
-	sizeSplit = 0;
-	widthPanelStartDrag = 0;
-	previousHeightOutput = 0;
-	heightOutput = 0;
-	heightOutputStartDrag = 0;
-	previousHeightOutput = 0;
-
-	widthFindRes = 100;
-	widthFindResStartDrag = 0;
-	prevousWidthFindRes = 0;
 
 	allowMenuActions = true;
 	scrollOutput = 1;
@@ -1549,21 +1536,6 @@ void SciTEBase::Execute() {
 	CheckMenus();
 	filePath.Directory().SetWorkingDirectory();
 	dirNameAtExecute = filePath.Directory();
-}
-
-void SciTEBase::ToggleOutputVisible() {
-	if (heightOutput > 0) {
-		heightOutput = NormaliseSplit(0);
-		WindowSetFocus(wEditor);
-	} else {
-		if (previousHeightOutput < 20) {
-			heightOutput = NormaliseSplit(100);
-			previousHeightOutput = heightOutput;
-		} else {
-			heightOutput = NormaliseSplit(previousHeightOutput);
-		}
-	}
-	Redraw();
 }
 
 void SciTEBase::BookmarkAdd(int lineno) {
@@ -3090,7 +3062,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_TOGGLEOUTPUT:
-		ToggleOutputVisible();
 		CheckMenus();
 		break;
 
@@ -3991,58 +3962,6 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 		extender->OnContextMenu(pt.x, pt.y, "EDITMARGIN");
 	else
 		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
-}
-
-/**
- * Ensure that a splitter bar position is inside the main window.
- */
-int SciTEBase::NormaliseSplit(int splitPos) {
-	static int iH = 0;		//ПРи неактивном окне  GetClientRectangle может вернуть прямой прямоуголник - будем исполтзовать	предыдущее положительное значение
-	GUI::Rectangle rcClient = GetClientRectangle();
-	int w = rcClient.Width();
-	int h = rcClient.Height();
-	h = h > 0 ? h : iH;
-	iH = h;
-	if (splitPos < 20)
-		splitPos = 0;
-
-	if (splitPos > h - heightBar - 20)
-		splitPos = h - heightBar;
-	return splitPos;
-}
-
-void SciTEBase::MoveSplit(GUI::Point ptNewDrag,int movedSplitter) {
-	switch (movedSplitter)
-	{
-	case splitOut:{
-
-		int newHeightOutput = heightOutputStartDrag + (ptStartDrag.y - ptNewDrag.y);
-
-		newHeightOutput = NormaliseSplit(newHeightOutput);
-		if (heightOutput != newHeightOutput) {
-			heightOutput = newHeightOutput;
-			//Redraw();
-		}
-
-		previousHeightOutput = newHeightOutput;
-	}break;
-	case splitSidebar:{
-
-		int newwidthPanel = widthPanelStartDrag + (ptStartDrag.x - ptNewDrag.x);
-		if (widthPanel != newwidthPanel) {
-			widthPanel = newwidthPanel;
-		}
-		prevousWidthPanel = newwidthPanel;
-	}break;
-	case splitFindRes:{
-	}
-		int newwidthFindRes = widthFindResStartDrag + (ptStartDrag.x - ptNewDrag.x);
-		if (widthFindRes != newwidthFindRes) {
-			widthFindRes = newwidthFindRes;
-		}
-		break;
-	}
-
 }
 
 void SciTEBase::UIAvailable() {
