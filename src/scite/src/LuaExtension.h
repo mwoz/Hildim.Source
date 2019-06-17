@@ -38,7 +38,7 @@ public:
 	virtual bool OnHotSpotReleaseClick(int modifiers); //!-add-[OnHotSpotReleaseClick]
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag);
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
-	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line);
+	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id);
 	virtual bool OnCallTipClick(int pos);
 //!	virtual bool OnUserListSelection(int listType, const char *selection);
 	virtual bool OnUserListSelection(int listType, const char *selection, int id); //!-change-[UserListItemID]

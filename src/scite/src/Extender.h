@@ -19,6 +19,7 @@ public:
 	enum Pane { paneEditor = 1, paneCoEditor = 2, paneOutput = 3, paneFindRes = 4 };
 	virtual sptr_t Send(Pane p, unsigned int msg, uptr_t wParam=0, sptr_t lParam=0)=0;
 	virtual char *Range(Pane p, int start, int end)=0;
+	virtual char *Line(Pane p, int line, int bNeedEnd)=0;
 	virtual void Remove(Pane p, int start, int end)=0;
 	virtual void Insert(Pane p, int pos, const char *s)=0;
 	virtual void Trace(const char *s)=0;
@@ -110,7 +111,7 @@ public:
 	virtual bool OnHotSpotReleaseClick(int) { return false; } //!-add-[OnHotSpotReleaseClick]
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
-	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line) { return false; }
+	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) { return false; }
 	virtual bool OnMacro(const char *, unsigned int, unsigned int, const char *) { return false; }
 //!	virtual bool OnUserListSelection(int, const char *) { return false; }
 	virtual bool OnUserListSelection(int, const char *,int) { return false; } //!-change-[UserListItemID]

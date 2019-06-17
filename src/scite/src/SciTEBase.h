@@ -911,6 +911,7 @@ protected:
 	// ExtensionAPI
 	sptr_t Send(Pane p, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	char *Range(Pane p, int start, int end);
+	char *Line(Pane p, int line, int bNeedEnd);
 	void Remove(Pane p, int start, int end);
 	void Insert(Pane p, int pos, const char *s);
 	void Trace(const char *s);

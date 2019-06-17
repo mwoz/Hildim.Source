@@ -178,7 +178,8 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_COPY",204},
 	{"IDM_COPYASRTF",245},
 	{"IDM_COPYPATH",118},
-	{"IDM_CUT",203},
+    {"IDM_COSRCWIN",356},
+    {"IDM_CUT",203},
 	{"IDM_DIRECTIONDOWN",806},
 	{"IDM_DIRECTIONUP",805},
 	{"IDM_DUPLICATE",250},
@@ -201,7 +202,8 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_FINDNEXTBACK",212},
 	{"IDM_FINDNEXTBACKSEL",214},
 	{"IDM_FINDNEXTSEL",213},
-	{"IDM_FINDRESENSUREVISIBLE", 422},
+	{"IDM_FINDRESENSUREVISIBLE",422},
+    {"IDM_FINDRESWIN",355},
 	{"IDM_FINISHEDEXECUTE",305},
 	{"IDM_FOLDMARGIN",406},
 	{"IDM_FULLSCREEN",961},
@@ -3189,7 +3191,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2544,
+	ifaceConstantCount = 2546,
 	ifacePropertyCount = 210
 };
 

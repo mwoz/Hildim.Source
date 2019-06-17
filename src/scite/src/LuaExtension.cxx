@@ -493,6 +493,34 @@ static ExtensionAPI::Pane check_pane_object(lua_State *L, int index) {
 	return ExtensionAPI::paneOutput; // this line never reached
 }
 
+static int cf_pane_line(lua_State *L) {
+	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	if (lua_gettop(L) >= 2) {
+		int cpLine = static_cast<int>(luaL_checknumber(L, 2));
+
+		if (cpLine >= 0) {
+			int bNeedEnd = 0;
+			if (lua_gettop(L) >= 3){
+				if(lua_isboolean(L, 3))
+					bNeedEnd = lua_toboolean(L, 3);
+				else
+					raise_error(L, "Invalid argument 2 for <pane>:line.  Boolean expected.");
+			}
+			char *range = host->Line(p, cpLine, bNeedEnd);
+			if (range) {
+				lua_pushstring(L, range);
+				delete[]range;
+				return 1;
+			}
+		} else {
+			raise_error(L, "Invalid argument 1 for <pane>:line.  Positive number or zero expected.");
+		}
+	} else {
+		raise_error(L, "Not enough arguments for <pane>:line");
+	}
+	return 0;
+}
+
 static int cf_pane_textrange(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 
@@ -1891,6 +1919,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		lua_setfield(L, -2, "remove");
 		lua_pushcfunction(L, cf_pane_append);
 		lua_setfield(L, -2, "append");
+		lua_pushcfunction(L, cf_pane_line);
+		lua_setfield(L, -2, "line");
 
 //!-start-[EncodingToLua]
 		lua_pushcfunction(luaState, cf_pane_get_codepage);
@@ -3168,8 +3198,8 @@ bool LuaExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
 	return CallNamedFunction("CoOnUpdateUI", bModified, bSelChange, flag);
 }
 
-bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line) {
-	return CallNamedFunction("OnMarginClick", margin, modif, line);
+bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) {
+	return CallNamedFunction("OnMarginClick", margin, modif, line, id);
 }
 bool LuaExtension::OnCallTipClick(int pos) {
 	return CallNamedFunction("OnCallTipClick", pos, 0, 0);

@@ -690,6 +690,9 @@ static void iSplitComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *chi
 static void iSplitSetZOrderRecr(Ihandle *ih, char *hwnd, int bSetVisible);
 static void iSplitSetZOrderRecr(Ihandle *ih, char *hwnd, int bSetVisible) {
 	if (!ih) return;
+	if (iupStrEqual(ih->iclass->name, "expander") && iupStrEqual(IupGetAttribute(ih,"STATE"), "CLOSE")) {
+		return;
+	}
 	if (ih->handle && ih->handle != 0xffffffff) {
 		if (bSetVisible && iupStrEqual(hwnd, "TOP"))
 			IupSetAttribute(ih, "VISIBLE", "YES");
@@ -758,8 +761,18 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
         iSplitCalcVal(ih, width1);
         if (child1)
           iupBaseSetCurrentSize(child1, width1, ih->currentheight, shrink);
-      }
-    }
+	  } else if (popside == 2 && width2 < ih->data->hiddenGap * 2) {
+		  width2 = ih->data->hiddenGap * 2;
+		  iSplitCalcVal(ih, ih->currentwidth - ih->data->barsize - width2);
+		  if (child2)
+			  iupBaseSetCurrentSize(child2, width2, ih->currentheight, shrink);
+	  } else if (popside == 1 && width1 < ih->data->hiddenGap * 2) {
+		width1 = ih->data->hiddenGap * 2;
+		iSplitCalcVal(ih, width1);
+		if (child1)
+			iupBaseSetCurrentSize(child1, width1, ih->currentheight, shrink);
+	  }
+  }
   }
   else /* ISPLIT_HORIZ */
   {

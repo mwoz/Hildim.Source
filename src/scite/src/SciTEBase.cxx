@@ -3838,24 +3838,28 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_MARGINCLICK: {
-			if (extender)
-				handled = extender->OnMarginClick(notification->margin, notification->modifiers, int(wEditor.Call(SCI_LINEFROMPOSITION, notification->position)));
+		GUI::ScintillaWindow *w;
+		if (notification->nmhdr.idFrom == IDM_RUNWIN)
+			w = &wOutput;
+		else if (notification->nmhdr.idFrom == IDM_FINDRESWIN)
+			w = &wFindRes;
+		else if (notification->nmhdr.idFrom == IDM_COSRCWIN)
+			w = &wEditor.coEditor;
+		else
+			w = &wEditor;
+		
+		if (extender)
+			handled = extender->OnMarginClick(notification->margin, notification->modifiers, int(w->Call(SCI_LINEFROMPOSITION, notification->position)), notification->nmhdr.idFrom);
+
 			if (!handled) {
 //!-start-[SetBookmark]
 				if (notification->margin == 1) {
 					int lineClick = int(wEditor.Call(SCI_LINEFROMPOSITION, notification->position));
-					BookmarkToggle(lineClick);
+					BookmarkToggle(lineClick); 
 				}
 //!-end-[SetBookmark]
 				if (notification->margin == 2) {
-					GUI::ScintillaWindow *w;
-					if (notification->nmhdr.idFrom == IDM_RUNWIN)
-						w = &wOutput;
-					else if (notification->nmhdr.idFrom == IDM_FINDRESWIN)
-						w = &wFindRes;
-					else{
-						w = &wEditor;
-					}
+
 					MarginClick(notification->position, notification->modifiers, w);
 				}
 			}
@@ -4150,6 +4154,33 @@ sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
 		return wOutput.Call(msg, wParam, lParam);
 	else
 		return wFindRes.Call(msg, wParam, lParam);
+}
+
+char *SciTEBase::Line(Pane p, int line, int bNeedEnd) {
+	GUI::ScintillaWindow *w;
+	switch (p) {
+	case paneEditor:
+		w = &wEditor;
+		break;
+	case paneCoEditor:
+		w = &(wEditor.coEditor);
+		break;
+	case paneOutput:
+		w = &wOutput;
+		break;
+	case paneFindRes:
+		w = &wFindRes;
+		break;
+	}
+	int len = w->Call(SCI_LINELENGTH, line);
+	if (!len)
+		return NULL;
+	char *s = new char[len + 1];
+	w->Call(SCI_GETLINE, line, (sptr_t)s);
+	if (!bNeedEnd)
+		len = w->Call(SCI_GETLINEENDPOSITION, line) - w->Call(SCI_POSITIONFROMLINE, line);
+	s[len] = 0;
+	return s;
 }
 
 char *SciTEBase::Range(Pane p, int start, int end) {
