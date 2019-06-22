@@ -480,6 +480,9 @@
     <ClCompile Include="src\UniqueString.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexX12.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
