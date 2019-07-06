@@ -100,10 +100,10 @@ Timer::Timer() noexcept :
 Idler::Idler() noexcept :
 		state(false), idlerID(0) {}
 
-static constexpr bool IsAllSpacesOrTabs(const char *s, unsigned int len) noexcept {
-	for (unsigned int i = 0; i < len; i++) {
+static constexpr bool IsAllSpacesOrTabs(std::string_view sv) noexcept {
+	for (const char ch : sv) {
 		// This is safe because IsSpaceOrTab() will return false for null terminators
-		if (!IsSpaceOrTab(s[i]))
+		if (!IsSpaceOrTab(ch))
 			return false;
 	}
 	return true;
@@ -119,7 +119,6 @@ Editor::Editor() : durationWrapOneLine(0.00001, 0.000001, 0.0001) {
 	cursorMode = SC_CURSORNORMAL;
 
 	hasFocus = false;
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = 0;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -1892,7 +1891,7 @@ void Editor::AddChar(char ch) {
 	char s[2];
 	s[0] = ch;
 	s[1] = '\0';
-	AddCharUTF(s, 1);
+	InsertCharacter(std::string_view(s, 1), CharacterSource::directInput);
 }
 
 void Editor::FilterSelections() {
@@ -1902,9 +1901,9 @@ void Editor::FilterSelections() {
 	}
 }
 
-// AddCharUTF inserts an array of bytes which may or may not be in UTF-8.
-void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
-	if (len == 0) {
+// InsertCharacter inserts a character encoded in document code page.
+void Editor::InsertCharacter(std::string_view sv, CharacterSource charSource) {
+	if (sv.empty()) {
 		return;
 	}
 	FilterSelections();
@@ -1944,7 +1943,7 @@ void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
 					}
 				}
 				positionInsert = RealizeVirtualSpace(positionInsert, currentSel->caret.VirtualSpace());
-				const Sci::Position lengthInserted = pdoc->InsertString(positionInsert, s, len);
+				const Sci::Position lengthInserted = pdoc->InsertString(positionInsert, sv.data(), sv.length());
 				if (lengthInserted > 0) {
 					currentSel->caret.SetPosition(positionInsert + lengthInserted);
 					currentSel->anchor.SetPosition(positionInsert + lengthInserted);
@@ -1973,32 +1972,33 @@ void Editor::AddCharUTF(const char *s, unsigned int len, bool treatAsDBCS) {
 	// Avoid blinking during rapid typing:
 	ShowCaretAtCurrentPosition();
 	if ((caretSticky == SC_CARETSTICKY_OFF) ||
-		((caretSticky == SC_CARETSTICKY_WHITESPACE) && !IsAllSpacesOrTabs(s, len))) {
+		((caretSticky == SC_CARETSTICKY_WHITESPACE) && !IsAllSpacesOrTabs(sv))) {
 		SetLastXChosen();
 	}
 
-	int ch = static_cast<unsigned char>(s[0]);
-	if (treatAsDBCS || pdoc->dbcsCodePage != SC_CP_UTF8) {
-		if (len > 1) {
+	int ch = static_cast<unsigned char>(sv[0]);
+	if (pdoc->dbcsCodePage != SC_CP_UTF8) {
+		if (sv.length() > 1) {
 			// DBCS code page or DBCS font character set.
-			ch = (ch << 8) | static_cast<unsigned char>(s[1]);
+			ch = (ch << 8) | static_cast<unsigned char>(sv[1]);
 		}
 	} else {
-		if ((ch < 0xC0) || (1 == len)) {
+		if ((ch < 0xC0) || (1 == sv.length())) {
 			// Handles UTF-8 characters between 0x01 and 0x7F and single byte
 			// characters when not in UTF-8 mode.
 			// Also treats \0 and naked trail bytes 0x80 to 0xBF as valid
 			// characters representing themselves.
 		} else {
 			unsigned int utf32[1] = { 0 };
-			UTF32FromUTF8(std::string_view(s, len), utf32, std::size(utf32));
+			UTF32FromUTF8(sv, utf32, std::size(utf32));
 			ch = utf32[0];
 		}
 	}
-	NotifyChar(ch);
+	NotifyChar(ch, charSource);
 
-	if (recordingMacro) {
-		NotifyMacroRecord(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(s));
+	if (recordingMacro && charSource != CharacterSource::tentativeInput) {
+		std::string copy(sv); // ensure NUL-terminated
+		NotifyMacroRecord(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(copy.data()));
 	}
 }
 
@@ -2335,19 +2335,6 @@ void Editor::NotifyStyleNeeded(Document *, void *, Sci::Position endStyleNeeded)
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_COLORIZED;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
-}
-
 void Editor::NotifyLexerChanged(Document *, void *) {
 }
 
@@ -2355,10 +2342,11 @@ void Editor::NotifyErrorOccurred(Document *, void *, int status) {
 	errorStatus = status;
 }
 
-void Editor::NotifyChar(int ch) {
+void Editor::NotifyChar(int ch, CharacterSource charSource) {
 	SCNotification scn = {};
 	scn.nmhdr.code = SCN_CHARADDED;
 	scn.ch = ch;
+	scn.characterSource = static_cast<int>(charSource);
 	NotifyParent(scn);
 }
 
@@ -2386,27 +2374,6 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_CLICK;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
-	SCNotification scn = {0};
-	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers) {
 	SCNotification scn = {};
@@ -2592,7 +2559,7 @@ constexpr Sci::Position MovePositionForDeletion(Sci::Position position, Sci::Pos
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate(SC_UPDATE_CONTENT | (mh.modificationType << 4));
+	ContainerNeedsUpdate(SC_UPDATE_CONTENT);
 	if (paintState == painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3099,8 +3066,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!Мой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3125,7 +3092,7 @@ void Editor::NewLine() {
 	for (size_t i = 0; i < countInsertions; i++) {
 		const char *eol = StringFromEOLMode(pdoc->eolMode);
 		while (*eol) {
-			NotifyChar(*eol);
+			NotifyChar(*eol, CharacterSource::directInput);
 			if (recordingMacro) {
 				char txt[2];
 				txt[0] = *eol;
@@ -3713,11 +3680,6 @@ int Editor::DelWordOrLine(unsigned int iMessage) {
 }
 
 int Editor::KeyCommand(unsigned int iMessage) {
-	SCNotification scn = { 0 };
-	scn.nmhdr.code = SCN_KEYCOMMAND;
-	scn.wParam = iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case SCI_LINEDOWN:
 		CursorUpOrDown(1, Selection::noSel);
@@ -3846,7 +3808,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		PageMove(1, Selection::selRectangle);
 		break;
 	case SCI_EDITTOGGLEOVERTYPE:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ContainerNeedsUpdate(SC_UPDATE_SELECTION);
 		ShowCaretAtCurrentPosition();
@@ -3968,9 +3929,6 @@ int Editor::KeyCommand(unsigned int iMessage) {
 		ScrollTo(MaxScrollPos());
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -3979,7 +3937,6 @@ int Editor::KeyDefault(int, int) {
 }
 
 int Editor::KeyDownWithModifiers(int key, int modifiers, bool *consumed) {
-	if(key!=0x11 && modifiers!= SCMOD_CTRL)
 	DwellEnd(false);
 	const int msg = kmap.Find(key, modifiers);
 	if (msg) {
@@ -4553,7 +4510,6 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = ddNone;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4713,14 +4669,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, int modifiers) {
@@ -5008,7 +4962,6 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, modifiers & SCI_CTRL); //!-add-[OnMouseButtonUp]
 }
 
 bool Editor::Idle() {
@@ -5045,7 +4998,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case tickScroll:
 			// Auto scroll
-			//ButtonMoveWithModifiers(ptMouseLast, 0, 0);- Убрано для перехода по Shift+Click - иначе сбивается выделение
+			ButtonMoveWithModifiers(ptMouseLast, 0, 0);
 			break;
 		case tickWiden:
 			SetScrollBars();
@@ -6260,7 +6213,8 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return 0;
 
 	case SCI_ENDUNDOACTION:
-		return pdoc->EndUndoAction();
+		pdoc->EndUndoAction();
+		return 0;
 
 	case SCI_GETCARETPERIOD:
 		return caret.period;
@@ -7370,7 +7324,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		return vs.caretcolour.AsInteger();
 
 	case SCI_SETCARETSTYLE:
-		if (wParam <= (CARETSTYLE_BLOCK | CARETSTYLE_OVERSTRIKE_BLOCK))
+		if (wParam <= (CARETSTYLE_BLOCK | CARETSTYLE_OVERSTRIKE_BLOCK | CARETSTYLE_BLOCK_AFTER))
 			vs.caretStyle = static_cast<int>(wParam);
 		else
 			/* Default to the line caret */
@@ -7404,7 +7358,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_INDICSETSTYLE:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].sacNormal.style = static_cast<int>(lParam);
 			vs.indicators[wParam].sacHover.style = static_cast<int>(lParam);
 			InvalidateStyleRedraw();
@@ -7412,10 +7366,10 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_INDICGETSTYLE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacNormal.style : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].sacNormal.style : 0;
 
 	case SCI_INDICSETFORE:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].sacNormal.fore = ColourDesired(static_cast<int>(lParam));
 			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
@@ -7423,67 +7377,67 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_INDICGETFORE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacNormal.fore.AsInteger() : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].sacNormal.fore.AsInteger() : 0;
 
 	case SCI_INDICSETHOVERSTYLE:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].sacHover.style = static_cast<int>(lParam);
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETHOVERSTYLE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacHover.style : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].sacHover.style : 0;
 
 	case SCI_INDICSETHOVERFORE:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].sacHover.fore = ColourDesired(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETHOVERFORE:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].sacHover.fore.AsInteger() : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].sacHover.fore.AsInteger() : 0;
 
 	case SCI_INDICSETFLAGS:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].SetFlags(static_cast<int>(lParam));
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETFLAGS:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].Flags() : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].Flags() : 0;
 
 	case SCI_INDICSETUNDER:
-		if (wParam <= INDIC_MAX) {
+		if (wParam <= INDICATOR_MAX) {
 			vs.indicators[wParam].under = lParam != 0;
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETUNDER:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].under : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].under : 0;
 
 	case SCI_INDICSETALPHA:
-		if (wParam <= INDIC_MAX && lParam >=0 && lParam <= 255) {
+		if (wParam <= INDICATOR_MAX && lParam >=0 && lParam <= 255) {
 			vs.indicators[wParam].fillAlpha = static_cast<int>(lParam);
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETALPHA:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].fillAlpha : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].fillAlpha : 0;
 
 	case SCI_INDICSETOUTLINEALPHA:
-		if (wParam <= INDIC_MAX && lParam >=0 && lParam <= 255) {
+		if (wParam <= INDICATOR_MAX && lParam >=0 && lParam <= 255) {
 			vs.indicators[wParam].outlineAlpha = static_cast<int>(lParam);
 			InvalidateStyleRedraw();
 		}
 		break;
 
 	case SCI_INDICGETOUTLINEALPHA:
-		return (wParam <= INDIC_MAX) ? vs.indicators[wParam].outlineAlpha : 0;
+		return (wParam <= INDICATOR_MAX) ? vs.indicators[wParam].outlineAlpha : 0;
 
 	case SCI_SETINDICATORCURRENT:
 		pdoc->DecorationSetCurrentIndicator(static_cast<int>(wParam));
@@ -7618,7 +7572,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_BRACEHIGHLIGHTINDICATOR:
-		if (lParam >= 0 && lParam <= INDIC_MAX) {
+		if (lParam >= 0 && lParam <= INDICATOR_MAX) {
 			vs.braceHighlightIndicatorSet = wParam != 0;
 			vs.braceHighlightIndicator = static_cast<int>(lParam);
 		}
@@ -7629,7 +7583,7 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case SCI_BRACEBADLIGHTINDICATOR:
-		if (lParam >= 0 && lParam <= INDIC_MAX) {
+		if (lParam >= 0 && lParam <= INDICATOR_MAX) {
 			vs.braceBadLightIndicatorSet = wParam != 0;
 			vs.braceBadLightIndicator = static_cast<int>(lParam);
 		}
@@ -7821,18 +7775,12 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case SCI_SETOVERTYPE:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
+		if (inOverstrike != (wParam != 0)) {
 			inOverstrike = wParam != 0;
 			ContainerNeedsUpdate(SC_UPDATE_SELECTION);
 			ShowCaretAtCurrentPosition();
 			SetIdle(true);
 		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_chang
 		break;
 
 	case SCI_GETOVERTYPE:
@@ -8305,11 +8253,6 @@ sptr_t Editor::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	case SCI_CHANGELEXERSTATE:
 		pdoc->ChangeLexerState(static_cast<Sci::Position>(wParam), lParam);
 		break;
-//!-start-[MouseClickHandled]
-	case SCI_SETMOUSECAPTURE:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case SCI_SETIDENTIFIER:
 		SetCtrlID(static_cast<int>(wParam));

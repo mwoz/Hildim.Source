@@ -24,9 +24,9 @@
 #include <chrono>
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0500
 #undef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0500
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
@@ -121,17 +121,17 @@
 // Two idle messages SC_WIN_IDLE and SC_WORK_IDLE.
 
 // SC_WIN_IDLE is low priority so should occur after the next WM_PAINT
-// It is for lengthy actions like wrapping and background styling 
+// It is for lengthy actions like wrapping and background styling
 constexpr UINT SC_WIN_IDLE = 5001;
 // SC_WORK_IDLE is high priority and should occur before the next WM_PAINT
 // It is for shorter actions like restyling the text just inserted
 // and delivering SCN_UPDATEUI
 constexpr UINT SC_WORK_IDLE = 5002;
 
-#define SC_INDICATOR_INPUT INDIC_IME
-#define SC_INDICATOR_TARGET INDIC_IME+1
-#define SC_INDICATOR_CONVERTED INDIC_IME+2
-#define SC_INDICATOR_UNKNOWN INDIC_IME_MAX
+#define SC_INDICATOR_INPUT INDICATOR_IME
+#define SC_INDICATOR_TARGET INDICATOR_IME+1
+#define SC_INDICATOR_CONVERTED INDICATOR_IME+2
+#define SC_INDICATOR_UNKNOWN INDICATOR_IME_MAX
 
 #ifndef SCS_CAP_SETRECONVERTSTRING
 #define SCS_CAP_SETRECONVERTSTRING 0x00000004
@@ -340,7 +340,7 @@ class ScintillaWin :
 	void SelectionToHangul();
 	void EscapeHanja();
 	void ToggleHanja();
-	void AddWString(std::wstring_view wsv);
+	void AddWString(std::wstring_view wsv, CharacterSource charSource);
 
 	UINT CodePageOfDocument() const;
 	bool ValidCodePage(int codePage) const override;
@@ -397,7 +397,6 @@ class ScintillaWin :
 	void ChangeScrollPos(int barType, Sci::Position pos);
 	sptr_t GetTextLength();
 	sptr_t GetText(uptr_t wParam, sptr_t lParam);
-	void InsertMultiPasteText(const char *text, int len); //!-add-[InsertMultiPasteText]  
 
 public:
 	~ScintillaWin() override;
@@ -894,7 +893,7 @@ sptr_t ScintillaWin::HandleCompositionWindowed(uptr_t wParam, sptr_t lParam) {
 	if (lParam & GCS_RESULTSTR) {
 		IMContext imc(MainHWND());
 		if (imc.hIMC) {
-			AddWString(imc.GetCompositionString(GCS_RESULTSTR));
+			AddWString(imc.GetCompositionString(GCS_RESULTSTR), CharacterSource::imeResult);
 
 			// Set new position after converted
 			const Point pos = PointMainCaret();
@@ -925,9 +924,9 @@ void ScintillaWin::MoveImeCarets(Sci::Position offset) {
 void ScintillaWin::DrawImeIndicator(int indicator, int len) {
 	// Emulate the visual style of IME characters with indicators.
 	// Draw an indicator on the character before caret by the character bytes of len
-	// so it should be called after addCharUTF().
+	// so it should be called after InsertCharacter().
 	// It does not affect caret positions.
-	if (indicator < 8 || indicator > INDIC_MAX) {
+	if (indicator < 8 || indicator > INDICATOR_MAX) {
 		return;
 	}
 	pdoc->DecorationSetCurrentIndicator(indicator);
@@ -1047,7 +1046,7 @@ std::vector<int> MapImeIndicators(std::vector<BYTE> inputStyle) {
 
 }
 
-void ScintillaWin::AddWString(std::wstring_view wsv) {
+void ScintillaWin::AddWString(std::wstring_view wsv, CharacterSource charSource) {
 	if (wsv.empty())
 		return;
 
@@ -1056,7 +1055,7 @@ void ScintillaWin::AddWString(std::wstring_view wsv) {
 		const size_t ucWidth = UTF16CharLength(wsv[i]);
 		const std::string docChar = StringEncode(wsv.substr(i, ucWidth), codePage);
 
-		AddCharUTF(docChar.c_str(), static_cast<unsigned int>(docChar.size()));
+		InsertCharacter(docChar, charSource);
 		i += ucWidth;
 	}
 }
@@ -1097,20 +1096,17 @@ sptr_t ScintillaWin::HandleCompositionInline(uptr_t, sptr_t lParam) {
 
 		std::vector<int> imeIndicator = MapImeIndicators(imc.GetImeAttributes());
 
-		const bool tmpRecordingMacro = recordingMacro;
-		recordingMacro = false;
 		const int codePage = CodePageOfDocument();
 		const std::wstring_view wsv = wcs;
 		for (size_t i = 0; i < wsv.size(); ) {
 			const size_t ucWidth = UTF16CharLength(wsv[i]);
 			const std::string docChar = StringEncode(wsv.substr(i, ucWidth), codePage);
 
-			AddCharUTF(docChar.c_str(), static_cast<unsigned int>(docChar.size()));
+			InsertCharacter(docChar, CharacterSource::tentativeInput);
 
 			DrawImeIndicator(imeIndicator[i], static_cast<unsigned int>(docChar.size()));
 			i += ucWidth;
 		}
-		recordingMacro = tmpRecordingMacro;
 
 		// Move IME caret from current last position to imeCaretPos.
 		const int imeEndToImeCaretU16 = imc.GetImeCaretPos() - static_cast<unsigned int>(wcs.size());
@@ -1122,7 +1118,7 @@ sptr_t ScintillaWin::HandleCompositionInline(uptr_t, sptr_t lParam) {
 			view.imeCaretBlockOverride = true;
 		}
 	} else if (lParam & GCS_RESULTSTR) {
-		AddWString(imc.GetCompositionString(GCS_RESULTSTR));
+		AddWString(imc.GetCompositionString(GCS_RESULTSTR), CharacterSource::imeResult);
 	}
 	EnsureCaretVisible();
 	SetCandidateWindowPos();
@@ -1170,7 +1166,7 @@ UINT CodePageFromCharSet(DWORD characterSet, UINT documentCodePage) noexcept {
 	}
 	switch (characterSet) {
 	case SC_CHARSET_ANSI: return 1252;
-	case SC_CHARSET_DEFAULT: return documentCodePage;
+	case SC_CHARSET_DEFAULT: return documentCodePage ? documentCodePage : 1252;
 	case SC_CHARSET_BALTIC: return 1257;
 	case SC_CHARSET_CHINESEBIG5: return 950;
 	case SC_CHARSET_EASTEUROPE: return 1250;
@@ -1202,34 +1198,31 @@ UINT ScintillaWin::CodePageOfDocument() const {
 }
 
 sptr_t ScintillaWin::GetTextLength() {
-	if (pdoc->Length() == 0)
-		return 0;
-	std::string docBytes(pdoc->Length(), '\0');
-	pdoc->GetCharRange(&docBytes[0], 0, pdoc->Length());
-	if (IsUnicodeMode()) {
-		return UTF16Length(std::string_view(&docBytes[0], docBytes.size()));
-	} else {
-		return WideCharLenFromMultiByte(CodePageOfDocument(), docBytes);
-	}
+	return pdoc->CountUTF16(0, pdoc->Length());
 }
 
 sptr_t ScintillaWin::GetText(uptr_t wParam, sptr_t lParam) {
+	if (lParam == 0) {
+		return pdoc->CountUTF16(0, pdoc->Length());
+	}
+	if (wParam == 0) {
+		return 0;
+	}
 	wchar_t *ptr = static_cast<wchar_t *>(PtrFromSPtr(lParam));
 	if (pdoc->Length() == 0) {
 		*ptr = L'\0';
 		return 0;
 	}
-	std::string docBytes(pdoc->Length(), '\0');
-	pdoc->GetCharRange(&docBytes[0], 0, pdoc->Length());
+	const Sci::Position lengthWanted = wParam - 1;
+	Sci::Position sizeRequestedRange = pdoc->GetRelativePositionUTF16(0, lengthWanted);
+	if (sizeRequestedRange < 0) {
+		// Requested more text than there is in the document.
+		sizeRequestedRange = pdoc->CountUTF16(0, pdoc->Length());
+	}
+	std::string docBytes(sizeRequestedRange, '\0');
+	pdoc->GetCharRange(&docBytes[0], 0, sizeRequestedRange);
 	if (IsUnicodeMode()) {
-                const std::string_view sv(&docBytes[0], docBytes.size());
-		const size_t lengthUTF16 = UTF16Length(sv);
-		if (lParam == 0)
-			return lengthUTF16;
-		if (wParam == 0)
-			return 0;
-		size_t uLen = UTF16FromUTF8(sv,
-			ptr, wParam - 1);
+		const size_t uLen = UTF16FromUTF8(docBytes, ptr, lengthWanted);
 		ptr[uLen] = L'\0';
 		return uLen;
 	} else {
@@ -1237,8 +1230,8 @@ sptr_t ScintillaWin::GetText(uptr_t wParam, sptr_t lParam) {
 		// Convert to Unicode using the current Scintilla code page
 		const UINT cpSrc = CodePageOfDocument();
 		int lengthUTF16 = WideCharLenFromMultiByte(cpSrc, docBytes);
-		if (lengthUTF16 >= static_cast<int>(wParam))
-			lengthUTF16 = static_cast<int>(wParam)-1;
+		if (lengthUTF16 > lengthWanted)
+			lengthUTF16 = static_cast<int>(lengthWanted);
 		WideCharFromMultiByte(cpSrc, docBytes, ptr, lengthUTF16);
 		ptr[lengthUTF16] = L'\0';
 		return lengthUTF16;
@@ -1471,8 +1464,6 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 
 		case WM_CHAR:
 			if (((wParam >= 128) || !iscntrl(static_cast<int>(wParam))) || !lastKeyDownConsumed) {
-				if (wParam < 32 && wParam > 0 && KeyboardIsKeyDown(VK_CONTROL))
-					return 0;
 				wchar_t wcs[3] = {static_cast<wchar_t>(wParam), 0};
 				unsigned int wclen = 1;
 				if (IS_HIGH_SURROGATE(wcs[0])) {
@@ -1485,7 +1476,7 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 					lastHighSurrogateChar = 0;
 					wclen = 2;
 				}
-				AddWString(std::wstring_view(wcs, wclen));
+				AddWString(std::wstring_view(wcs, wclen), CharacterSource::directInput);
 			}
 			return 0;
 
@@ -1497,7 +1488,7 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 			} else {
 				wchar_t wcs[3] = {0};
 				const unsigned int wclen = UTF16FromUTF32Character(static_cast<unsigned int>(wParam), wcs);
-				AddWString(std::wstring_view(wcs, wclen));
+				AddWString(std::wstring_view(wcs, wclen), CharacterSource::directInput);
 				return FALSE;
 			}
 
@@ -1607,10 +1598,6 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 					ContextMenu(pt);
 					return 0;
 				}
-				if (PointInSelMargin(ptClient)) {
-					SendMessage(GetParent(MainHWND()), SCI_MARGINCONTEXTMENU, wParam, lParam);
-					return 0;
-				}
 			}
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 		case WM_INPUTLANGCHANGE:
@@ -1650,9 +1637,6 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 		case WM_WINDOWPOSCHANGING:
 		case WM_WINDOWPOSCHANGED:
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-
-		case WM_SYSCHAR:
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 
 		case WM_GETTEXTLENGTH:
 			return GetTextLength();
@@ -1922,13 +1906,11 @@ void ScintillaWin::UpdateSystemCaret() {
 }
 
 int ScintillaWin::SetScrollInfo(int nBar, LPCSCROLLINFO lpsi, BOOL bRedraw) noexcept {
-	//return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
-	return ::SendMessage(::GetParent(MainHWND()), SCI_SETSCROLLINFO, nBar, (WPARAM)lpsi) ? true : false;
+	return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
 }
 
 bool ScintillaWin::GetScrollInfo(int nBar, LPSCROLLINFO lpsi) noexcept {
-	//return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
-	return ::SendMessage(::GetParent(MainHWND()), SCI_GETSCROLLINFO, nBar, (WPARAM)lpsi) ? true : ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
+	return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
 }
 
 // Change the scroll position but avoid repaint if changing to same value
@@ -2258,70 +2240,16 @@ bool OpenClipboardRetry(HWND hwnd) noexcept {
 
 }
 
-//!-start-[InsertMultiPasteText]
-void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
-	std::string	convertedText;
-	if (convertPastes) {
-		// Convert line endings of the paste into our local line-endings mode
-		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode);
-		text = convertedText.c_str();
-	}
-	FilterSelections();
-	UndoGroup ug(pdoc, (sel.Count() > 1) || !sel.Empty());
-	for (size_t r=0; r<sel.Count(); r++) {
-		if (!RangeContainsProtected(sel.Range(r).Start().Position(),
-			sel.Range(r).End().Position())) {
-			int positionInsert = sel.Range(r).Start().Position();
-			if (!sel.Range(r).Empty()) {
-				if (sel.Range(r).Length()) {
-					pdoc->DeleteChars(positionInsert, sel.Range(r).Length());
-					sel.Range(r).ClearVirtualSpace();
-				} else {
-					// Range is all virtual so collapse to start of virtual space
-					sel.Range(r).MinimizeVirtualSpace();
-				}
-			}
-			positionInsert = RealizeVirtualSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
-			if (pdoc->InsertString(positionInsert, text, len)) {
-				sel.Range(r).caret.SetPosition(positionInsert + len);
-				sel.Range(r).anchor.SetPosition(positionInsert + len);
-			}
-			sel.Range(r).ClearVirtualSpace();
-			// If in wrap mode rewrap current line so EnsureCaretVisible has accurate information
-			if (Wrapping()) {
-				AutoSurface surface(this);
-				if (surface) {
-					WrapOneLine(surface, pdoc->LineFromPosition(positionInsert));
-				}
-			}
-		}
-	}
-}
-//!-end-[InsertMultiPasteText]
 void ScintillaWin::Paste() {
 	if (!::OpenClipboardRetry(MainHWND())) {
 		return;
 	}
-/*!-remove-[InsertMultiPasteText]
 	UndoGroup ug(pdoc);
 	const bool isLine = SelectionEmpty() &&
 		(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
 	ClearSelection(multiPasteMode == SC_MULTIPASTE_EACH);
 	bool isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
-*/
-//!-start-[InsertMultiPasteText]
-	bool isLine = SelectionEmpty() && (::IsClipboardFormatAvailable(cfLineSelect) != 0);
-	SelectionPosition selStart;
-	bool isRectangular = ::IsClipboardFormatAvailable(cfColumnSelect) != 0;
-	bool isMultiPaste = (!isRectangular)&&(!isLine)&&(sel.Count()>1);
-	if(!isMultiPaste) {
-		UndoGroup ug(pdoc);
-		ClearSelection();
-		selStart = sel.IsRectangular() ?
-			sel.Rectangular().Start() :
-			sel.Range(sel.Main()).Start();
-	}
-//!-end-[InsertMultiPasteText]
+
 	if (!isRectangular) {
 		// Evaluate "Borland IDE Block Type" explicitly
 		GlobalMemory memBorlandSelection(::GetClipboardData(cfBorlandIDEBlockType));
@@ -2355,14 +2283,7 @@ void ScintillaWin::Paste() {
 				MultiByteFromWideChar(cpDest, uptr, &putf[0], len);
 			}
 
-//!			InsertPasteShape(&putf[0], len, pasteShape);
-//!-start-[InsertMultiPasteText]
-			if(!isMultiPaste) {
-			InsertPasteShape(&putf[0], static_cast<int>(len), pasteShape);
-			} else {
-				InsertMultiPasteText(&putf[0], len);
-			}
-//!-end-[InsertMultiPasteText]
+			InsertPasteShape(&putf[0], len, pasteShape);
 		}
 		memUSelection.Unlock();
 	} else {
@@ -2377,37 +2298,22 @@ void ScintillaWin::Paste() {
 					if ((len == bytes) && (0 == ptr[i]))
 						len = i;
 				}
-				const int ilen = static_cast<int>(len);
 
 				// In Unicode mode, convert clipboard text to UTF-8
 				if (IsUnicodeMode()) {
 					std::vector<wchar_t> uptr(len+1);
 
 					const size_t ulen = WideCharFromMultiByte(CP_ACP,
-					                    std::string_view(ptr, ilen), &uptr[0], ilen +1);
+					                    std::string_view(ptr, len), &uptr[0], len + 1);
 
 					const std::wstring_view wsv(&uptr[0], ulen);
 					const size_t mlen = UTF8Length(wsv);
 					std::vector<char> putf(mlen+1);
 					UTF8FromUTF16(wsv, &putf[0], mlen);
 
-//!					InsertPasteShape(&putf[0], mlen, pasteShape);
-//!-begin-[InsertMultiPasteText]
-						if(!isMultiPaste) {
-					InsertPasteShape(&putf[0], static_cast<int>(mlen), pasteShape);
+					InsertPasteShape(&putf[0], mlen, pasteShape);
 				} else {
-							InsertMultiPasteText(&putf[0], mlen);
-						}
-//!-end-[InsertMultiPasteText]
-						} else {
-//!					InsertPasteShape(ptr, len, pasteShape);
-//!-begin-[InsertMultiPasteText]
-						if(!isMultiPaste) {
-					InsertPasteShape(ptr, ilen, pasteShape);
-				} else {
-							InsertMultiPasteText(ptr, ilen);
-						}
-//!-end-[InsertMultiPasteText]
+					InsertPasteShape(ptr, len, pasteShape);
 				}
 			}
 			memSelection.Unlock();
