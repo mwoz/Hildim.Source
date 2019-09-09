@@ -1507,7 +1507,7 @@ static int greateCuid(lua_State* L)
 	lua_pushinteger(L, MyGuid.Data1);
 	lua_pushinteger(L, MyGuid.Data2);
 	lua_pushinteger(L, MyGuid.Data3);
-	lua_pushfstring(L, (const char*)MyGuid.Data4);
+	lua_pushstring(L, (const char*)MyGuid.Data4);
 	return 4;
 }
 

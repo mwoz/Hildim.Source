@@ -483,6 +483,9 @@
     <ClCompile Include="lexers\LexX12.cxx">
       <Filter>Source Files\Lexers</Filter>
     </ClCompile>
+    <ClCompile Include="lexers\LexDataflex.cxx">
+      <Filter>Source Files\Lexers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
