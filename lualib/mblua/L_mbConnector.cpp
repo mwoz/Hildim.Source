@@ -17,13 +17,17 @@ void CL_mbConnector::SetCallback(int idx)
 }
 HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CMessage* pMsg)
 {
+	HRESULT r = 0;
 	if (callback_idx != 0) {
 		lua_rawgeti(L,LUA_REGISTRYINDEX,callback_idx);
 		lua_pushlightuserdata(L,(void*)handle);
-		wrap_cmsg(L,(CMessage*)pOpaque);
+		if (pOpaque)
+			rewrap_cmsg(L, (MsgWrap*)pOpaque);
+		else
+			lua_pushnil(L);
 		lua_pushinteger(L, error);
 		wrap_cmsg(L,pMsg);
-		
+		r = 1;
 		if (lua_pcall(L,4,0,0)) { //обработка ошибки
 			if (lua_isstring(L,-1)) {
 				size_t len;
@@ -49,5 +53,5 @@ HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CM
 		m_pManager->mbUnsubscribeAll(this);
 		delete this;
 	}
-	return 0;
+	return r;
 }

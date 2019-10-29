@@ -1358,24 +1358,32 @@ void SciTEWin::EnsureVisible(){
 	}
 	macro1stLoaded = true;
 }
-void TimerExit(
-	HWND Arg1,
-	UINT Arg2,
-	UINT_PTR Arg3,
-	DWORD Arg4
-) {
-	::KillTimer((HWND)pSciTEWin->GetID(), 666);
-	::MessageBox(NULL, TEXT("HildiM Close Error!"), TEXT("HildiM"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
-	::ExitProcess(666);
+void KillThreadProc(void *p) {
+	::Sleep(60000);
+	::TerminateProcess(GetCurrentProcess(), 2);
 }
+//
+//void TimerExit(
+//	HWND Arg1,
+//	UINT Arg2,
+//	UINT_PTR Arg3,
+//	DWORD Arg4
+//) {
+//	::KillTimer((HWND)pSciTEWin->GetID(), 666);
+//	::MessageBox(NULL, TEXT("HildiM Close Error!"), TEXT("HildiM"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
+//	::ExitProcess(666);
+//}
 void SciTEWin::HideForeReolad(int close){
 	WINDOWPLACEMENT wp;
 	wp.length = sizeof(wp);
 	::GetWindowPlacement(MainHWND(), &wp);
 	cmdShow = wp.showCmd;
 	::ShowWindow(MainHWND(), SW_HIDE);
-	if (close) //таймер на 100 секунд - если за это время не закрылись - вырубим процесс 
-		SetTimer((HWND)wSciTE.GetID(),666, 100000, (TIMERPROC)TimerExit);
+//	if (close) //таймер на 100 секунд - если за это время не закрылись - вырубим процесс 
+//		SetTimer((HWND)wSciTE.GetID(),666, 100000, (TIMERPROC)TimerExit);
+	//if (close)
+	//	_beginthread(KillThreadProc, 1024 * 1024, NULL);
+	//int ttt = 44;
 }
 
 void SciTEWin::RunAsync(int idx)	{
@@ -2365,6 +2373,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	MainWind.Run(cmdLine, allowDouble);
 	int result = MainWind.EventLoop();
 
+	_beginthread(KillThreadProc, 1024 * 1024, NULL);
+	OleUninitialize();
 	::FreeLibrary(hmod);
 
 	return result;

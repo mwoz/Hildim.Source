@@ -106,6 +106,13 @@ int do_CreateMessage(lua_State* L)
 	wrap_cmsg(L, msg);
 	return 1;
 }
+int do_CreateMessageLite(lua_State* L)
+{
+	CMessage *msg = new CMessage();
+	wrap_cmsg(L, msg);
+	lua_pushlightuserdata(L, (void*)msg);
+	return 1;
+}
 
 int do_GetGuid(lua_State* L) 	{
 	CString s = mbTransport->mbCreateInbox();
@@ -209,10 +216,8 @@ int do_Request(lua_State* L)
 	{
 		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L,true);
 		cn->SetCallback();
-		void* pOpaq = NULL;
-		if(lua_type(L,4)!= LUA_TNIL)
-			pOpaq=(void*)cmessage_arg(L, "do_Request",4);
-		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3),pOpaq);
+
+		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3), luaL_testudata(L, 4, MESSAGEOBJECT));
 		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
@@ -295,6 +300,12 @@ int mesage_Subjects(lua_State* L)
 	lua_pushstring(L, msg->m_strReplySubject);
 	lua_pushstring(L, msg->id());
 	return 3;
+}
+int mesage_Reset(lua_State* L) {
+	CMessage* msg = cmessage_arg(L, "mesage_Counts");
+	if (msg)
+		msg->CleanUp();
+	return 0;
 }
 int mesage_Counts(lua_State* L)
 {
@@ -463,19 +474,24 @@ int mesage_Store(lua_State* L)
 	}
 	return 0;
 }
+int mesage_gc(lua_State* L) {
+	cmesage_gc(L);
+	return 0;
+}
+
 int mesage_Destroy(lua_State* L)
 {
-	CMessage* msg = cmessage_arg(L,"mesage_Destroy");
-	delete msg;
+	cmesage_Destroy(L);
 	return 0;
 }
 int mesage_GetMessage(lua_State* L)
 {
-	CMessage* msg = cmessage_arg(L,"mesage_RemoveMessage");
+	CMessage* msg = cmessage_arg(L,"mesage_GetMessage");
 	CString path = luaL_checkstring(L,2);
 	CMessage* msgOut = msg->AddMsgByPath(path);
 	if(msgOut)
 	{
+		msgOut->InternalAddRef();
 		wrap_cmsg(L, msgOut);
 		return 1;
 	}
@@ -488,6 +504,7 @@ int mesage_Message(lua_State* L)
 	CMessage* msgOut = msg->GetMsg(num);
 	if(msgOut)
 	{
+		msgOut->InternalAddRef();
 		wrap_cmsg(L, msgOut);
 		return 1;
 	}
@@ -513,6 +530,7 @@ int mesage_RemoveMessage(lua_State* L)
 	CMessage* msgOut = msg->DetachMsgByPath(path);
 	if(msgOut)
 	{
+		msgOut->InternalAddRef();
 		wrap_cmsg(L, msgOut);
 		return 1;
 	}
@@ -686,6 +704,7 @@ luaL_Reg message_methods[] = {
 	{"GetMessage",mesage_GetMessage},
 	{"Message",mesage_Message},
 	{"Execute",mesage_Execute},
+	{"Reset",mesage_Reset},
 	{"RemoveMessage",mesage_RemoveMessage},
 	{"AttachMessage",mesage_AttachMessage},
 	{"ExistsMessage",mesage_ExistsMessage},
@@ -693,6 +712,7 @@ luaL_Reg message_methods[] = {
 	{ "CopyFrom", mesage_CopyFrom },
 	{ "AddFieldBinary", mesage_AddFieldBinary },
 	{ "SaveFieldBinary", mesage_SaveFieldBinary },
+	{"__gc", mesage_gc},
 	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},
 };

@@ -207,7 +207,7 @@ BOOL WINAPI DllMain( HANDLE hModule,
     factoryCache_Init();
   } else if(ul_reason_for_call == DLL_PROCESS_DETACH) {
     factoryCache_Release();
-    OleUninitialize();
+    //OleUninitialize();
   }
     return TRUE;
 }
