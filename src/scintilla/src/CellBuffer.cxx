@@ -139,15 +139,14 @@ class LineVector : public ILineVector {
 	LineStartIndex<POS> startsUTF32;
 public:
 	LineVector() : starts(256), perLine(nullptr) {
-		Init();
- 	}
+	}
 	// Deleted so LineVector objects can not be copied.
 	LineVector(const LineVector &) = delete;
 	LineVector(LineVector &&) = delete;
 	LineVector &operator=(const LineVector &) = delete;
 	LineVector &operator=(LineVector &&) = delete;
 	~LineVector() override {
- 	}
+	}
 	void Init() override {
 		starts.DeleteAll();
 		if (perLine) {
@@ -424,10 +423,7 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-int UndoHistory::EndUndoAction() {
-	int res = undoSequenceDepth;
-	if (!res)
-		return res;
+void UndoHistory::EndUndoAction() {
 	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
@@ -439,7 +435,6 @@ int UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
-	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -684,9 +679,7 @@ void CellBuffer::Allocate(Sci::Position newSize) {
 }
 
 void CellBuffer::SetUTF8Substance(bool utf8Substance_) {
-	if (utf8Substance != utf8Substance_) {
-		utf8Substance = utf8Substance_;
-	}
+	utf8Substance = utf8Substance_;
 }
 
 void CellBuffer::SetLineEndTypes(int utf8LineEnds_) {
@@ -1149,8 +1142,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-int CellBuffer::EndUndoAction() {
-	return uh.EndUndoAction();
+void CellBuffer::EndUndoAction() {
+	uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {
