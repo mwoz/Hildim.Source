@@ -216,8 +216,14 @@ int do_Request(lua_State* L)
 	{
 		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L,true);
 		cn->SetCallback();
+		CMessage *msg = NULL;
+		MsgWrap *wrp = (MsgWrap*)luaL_testudata(L, 4, MESSAGEOBJECT);
+		if (wrp) {
+			msg = wrp->msg;
+			msg->InternalAddRef();
+		}
 
-		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3), luaL_testudata(L, 4, MESSAGEOBJECT));
+		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3), (void*)msg);
 		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}

@@ -22,7 +22,7 @@ HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CM
 		lua_rawgeti(L,LUA_REGISTRYINDEX,callback_idx);
 		lua_pushlightuserdata(L,(void*)handle);
 		if (pOpaque)
-			rewrap_cmsg(L, (MsgWrap*)pOpaque);
+			wrap_cmsg(L, (CMessage*)pOpaque);
 		else
 			lua_pushnil(L);
 		lua_pushinteger(L, error);
