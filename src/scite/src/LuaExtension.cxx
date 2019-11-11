@@ -45,6 +45,9 @@ extern "C" {
 #include "scite_scrollcanvas.h"
 #include "scite_tree.h"
 #include "scite_images.h"
+#include "../../iup/include/iup.h"
+#include "../../iup/include/iuplua.h"
+#include "../../iup/srccontrols/matrix/iupmat_getset.h"
 }
 
 
@@ -2117,6 +2120,19 @@ int OnParamKeyPress(int c, int press) {
 	return 0;
 }
 
+static Ihandle *IH;
+void setListVal(int lin, int col, const char* value) {
+	iupMatrixSetValue(IH, lin, col, value, 0);
+}
+
+int sf_GetListHandlers(lua_State *L) {
+	IH = iuplua_checkihandle(L, 1);
+	void(*pFunc)(int, int, const char*);
+	pFunc = setListVal;
+	lua_pushlightuserdata(L, (void*)pFunc);
+	return 1;
+}
+
 static int cf_editor_reload_startup_script(lua_State*); //!-add-[StartupScriptReload]
 
 static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
@@ -2360,6 +2376,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, sf_NewInstance);
 	lua_setfield(luaState, -2, "NewInstance");
 
+	lua_pushcfunction(luaState, sf_GetListHandlers);
+	lua_setfield(luaState, -2, "GetListHandlers");
+
 	// buffers
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
@@ -2440,7 +2459,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	if (checkProperties && reload) {
 		CheckStartupScript();
 	}
-
+	lua_pushliteral(luaState, LUA_VERSION_RELEASE);
+	lua_setfield(luaState, -2, "_VERSION_RELEASE");
 
 	//if (startupScript) {
 	//	// TODO: Should buffer be deactivated temporarily, so editor iface

@@ -16,6 +16,7 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+#include "../../iup/include/iup.h"
 }
 
 #ifdef _DEBUG
@@ -321,6 +322,44 @@ int mesage_Counts(lua_State* L)
 	return 2;
 }
 
+int mesage_SetField(lua_State* L) {
+	CString type = luaL_typename(L, 3);
+	CMessage* msg = cmessage_arg(L, "mesage_SetField");
+	CDatum* d;
+	COleVariant v;
+
+	if (type == "string") {
+		v = luaL_checkstring(L, 3);
+
+	} else if (type == "number") {
+		v = luaL_checknumber(L, 3);
+	} else if (type == "boolean") {
+		v.boolVal = (lua_toboolean(L, 3) == 1);
+	} else if (type == "nil") {
+		v.vt = VT_NULL;
+	} else if ( type == "no value") {
+		v.vt = VT_EMPTY;
+	} else {
+		throw_L_error(L, "Invalid type of value");
+	}
+
+
+	type = luaL_typename(L, 2);
+	if (type == "string") 
+		d = msg->SetDatum(luaL_checkstring(L, 2), v);
+	else if (type == "number" || (type == "integer")) {
+		d = msg->GetDatum(lua_tointeger(L, 2));
+		if (d)
+			d->value(v);
+		else
+			throw_L_error(L, "Index not exist");
+	}
+	else {
+		throw_L_error(L, "Invalid type of index");
+	}
+	return 0;
+}
+
 int mesage_SetPathValue(lua_State* L)
 {
 	CString type = luaL_typename(L,3);
@@ -490,6 +529,136 @@ int mesage_Destroy(lua_State* L)
 	cmesage_Destroy(L);
 	return 0;
 }
+
+ typedef void _PF(int, int, const char*);
+
+int mesage_FillList(lua_State* L) {
+	CMessage* msg = cmessage_arg(L, "mesage_FillList");
+
+	_PF *pFunc = (_PF*)lua_touserdata(L, 2);
+
+	int firstLine = luaL_checkint(L, 3);
+	int firstCol = luaL_checkint(L, 4);
+	bool setNum = false;
+	if (firstCol < 0) {
+		firstCol = firstCol * -1;
+		setNum = true;
+	}
+
+	if(!lua_istable(L, 5))
+		throw_L_error(L, "mesage_FillList:Argument 5 isn't a table");
+
+	int nFields = luaL_len(L, 5);
+	int *fMap = new int[nFields];
+	bool *fUtf = new bool[nFields];
+
+	for (int i = 0; i < nFields; i++) {
+		lua_rawgeti(L, 5, i + 1);
+		fMap[i] = luaL_checkint(L, -1);
+	}
+
+	if (lua_istable(L, 6)) {
+		if(nFields != luaL_len(L, 6))
+			throw_L_error(L, "mesage_FillList:Tables 5 and 6 have different lengths");
+		
+		for (int i = 0; i < nFields; i++) {
+			lua_rawgeti(L, 6, i + 1);
+			fUtf[i] = (luaL_checkint(L, -1) != 0);
+		}
+	} else {
+		bool b = lua_toboolean(L, 6);
+		for (int i = 0; i < nFields; i++) {
+			fUtf[i] = b;
+		}
+
+	}
+
+	int msgCnt = msg->GetMsgsCount();
+	char buf[256];
+	
+	for (int i = 0; i < msgCnt; i++) {
+		if (setNum) {
+			_ltoa(i + firstLine, buf, 10);
+			pFunc(i + firstLine, 0, buf);
+		}
+		for (int j = 0; j < nFields; j++) {
+			
+			CDatum *d = msg->GetMsg(i)->GetDatum(fMap[j] - 1);
+
+			const char *out = NULL;
+			if (d) {
+				switch (d->GetVarType()) {
+				case VT_R8:
+				{
+					double v;
+					d->GetValueAsDouble(v);
+					sprintf(buf, "%.9f", v);
+					out = buf;
+				}
+				break;
+				case VT_I4:
+				{
+					long v;
+					d->GetValueAsLong(v);
+					_ltoa(v, buf, 10);
+					out = buf;
+				}
+				break;
+				case VT_BOOL:
+				{
+					bool v;
+					d->GetValueAsBool(v);
+					out = v ? "true" : "false";
+				}
+				break;
+				case VT_DATE:
+				{
+					ATL::COleDateTime dt;
+					d->GetValueAsDate(dt);
+					strcpy(buf, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+					out = buf;
+				}
+				break;
+				case VT_BSTR:
+					if (fUtf[j]) {
+						//const char * str = d->GetValueText();
+						int result_u, result_c;
+						result_u = MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, 0, 0);
+						if (!result_u) { return 0; }
+						wchar_t *ures = new wchar_t[result_u];
+						if (!MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, ures, result_u)) {
+							delete[] ures;
+							break;
+						}
+						result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
+						if (!result_c) {
+							delete[] ures;
+							break;
+						}
+						char *cres = new char[result_c];
+						if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
+							delete[] cres;
+							break;
+						}
+						delete[] ures;
+						pFunc(i + 1, j + 1, cres);
+						delete[] cres;
+					} else {
+						pFunc(i + 1, j + 1, d->GetValueText());
+					}
+					break;
+				}
+			}
+			if(out)
+				pFunc(i + firstLine, j + firstCol, out);
+		}
+	}
+	delete[] fMap;
+	delete[] fUtf; 
+	
+	return 0;
+}
+
 int mesage_GetMessage(lua_State* L)
 {
 	CMessage* msg = cmessage_arg(L,"mesage_GetMessage");
@@ -703,6 +872,7 @@ luaL_Reg message_methods[] = {
 	{"SetPathValue",mesage_SetPathValue},
 	{"GetPathValue", mesage_GetPathValue },
 	{"Field", mesage_Field },
+	{"SetField", mesage_SetField },
 	{"FieldType", mesage_FieldType },
 	{"FieldName", mesage_FieldName },
 	{"Store",mesage_Store},
@@ -718,6 +888,7 @@ luaL_Reg message_methods[] = {
 	{ "CopyFrom", mesage_CopyFrom },
 	{ "AddFieldBinary", mesage_AddFieldBinary },
 	{ "SaveFieldBinary", mesage_SaveFieldBinary },
+	{ "FillList", mesage_FillList },
 	{"__gc", mesage_gc},
 	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},
