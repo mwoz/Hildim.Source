@@ -544,6 +544,7 @@ int mesage_FillList(lua_State* L) {
 		firstCol = firstCol * -1;
 		setNum = true;
 	}
+	bool setNull = false;
 
 	if(!lua_istable(L, 5))
 		throw_L_error(L, "mesage_FillList:Argument 5 isn't a table");
@@ -572,6 +573,8 @@ int mesage_FillList(lua_State* L) {
 		}
 
 	}
+	if (lua_isboolean(L, 7))
+		setNull = lua_toboolean(L, 7);
 
 	int msgCnt = msg->GetMsgsCount();
 	char buf[256];
@@ -608,7 +611,7 @@ int mesage_FillList(lua_State* L) {
 				{
 					bool v;
 					d->GetValueAsBool(v);
-					out = v ? "true" : "false";
+					out = v ? "<true>" : "<false>";
 				}
 				break;
 				case VT_DATE:
@@ -646,6 +649,10 @@ int mesage_FillList(lua_State* L) {
 					} else {
 						pFunc(i + 1, j + 1, d->GetValueText());
 					}
+					break;
+				case VT_NULL:
+					if(setNull)
+						out = "<null>";
 					break;
 				}
 			}

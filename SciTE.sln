@@ -101,6 +101,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "odbc", "lualib\luasql\odbc.
 		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socket", "lualib\luasocket\socket.vcxproj", "{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -257,6 +259,14 @@ Global
 		{02DBCF4A-1005-4B55-9E3C-2BDE14C2BBDC}.Release|Win32.Build.0 = Release|Win32
 		{02DBCF4A-1005-4B55-9E3C-2BDE14C2BBDC}.Release|x64.ActiveCfg = Release|x64
 		{02DBCF4A-1005-4B55-9E3C-2BDE14C2BBDC}.Release|x64.Build.0 = Release|x64
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Debug|Win32.Build.0 = Debug|Win32
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Debug|x64.ActiveCfg = Debug|x64
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Debug|x64.Build.0 = Debug|x64
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release|Win32.ActiveCfg = Release|Win32
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release|Win32.Build.0 = Release|Win32
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release|x64.ActiveCfg = Release|x64
+		{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
