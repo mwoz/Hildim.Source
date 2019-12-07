@@ -5,7 +5,7 @@
  **/
 // Copyright 1998-2007 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-#include <vector>
+
 #ifndef SPLITVECTOR_H
 #define SPLITVECTOR_H
 
@@ -76,11 +76,11 @@ public:
 	~SplitVector() {
 	}
 
-	ptrdiff_t GetGrowSize() const {
+	ptrdiff_t GetGrowSize() const noexcept {
 		return growSize;
 	}
 
-	void SetGrowSize(ptrdiff_t growSize_) {
+	void SetGrowSize(ptrdiff_t growSize_) noexcept {
 		growSize = growSize_;
 	}
 
@@ -290,7 +290,7 @@ public:
 		std::copy(body.data() + position, body.data() + position + range1Length, buffer);
 		buffer += range1Length;
 		position = position + range1Length + gapLength;
-		ptrdiff_t range2Length = retrieveLength - range1Length;
+		const ptrdiff_t range2Length = retrieveLength - range1Length;
 		std::copy(body.data() + position, body.data() + position + range2Length, buffer);
 	}
 
