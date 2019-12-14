@@ -102,6 +102,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "odbc", "lualib\luasql\odbc.
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socket", "lualib\luasocket\socket.vcxproj", "{66E3CE14-884D-4AEA-9F20-15A0BEAF8C5A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{651DBAB5-138E-4BCE-B0D1-EA7CB249DA89} = {651DBAB5-138E-4BCE-B0D1-EA7CB249DA89}
+		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

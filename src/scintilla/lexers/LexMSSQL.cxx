@@ -11,6 +11,10 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <algorithm>
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -22,6 +26,8 @@
 #include "StyleContext.h"
 #include "CharacterSet.h"
 #include "LexerModule.h"
+#include "OptionSet.h"
+#include "DefaultLexer.h"
 
 using namespace Scintilla;
 
@@ -32,266 +38,346 @@ using namespace Scintilla;
 #define KW_MSSQL_FUNCTIONS          4
 #define KW_MSSQL_STORED_PROCEDURES  5
 #define KW_MSSQL_OPERATORS          6
+#define KW_MSSQL_M4KEYS             7
 
-static char classifyWordSQL(Sci_PositionU start,
-                            Sci_PositionU end,
-                            WordList *keywordlists[],
-                            Accessor &styler,
-                            unsigned int actualState,
-							unsigned int prevState) {
+static const char * const sqlWordListDesc[] = {
+	"Statements",
+	"Data Types",
+	"System tables",
+	"Global variables",
+	"Functions",
+	"System Stored Procedures",
+	"Operators",
+	0,
+};
+
+struct OptionsMSSQL {
+	bool fold;
+	bool foldComment;
+	bool foldCompact;
+	bool foldBracket;
+	bool foldQuerry;
+	OptionsMSSQL() {
+		fold = false;
+		foldComment = false;
+		foldCompact = false;
+		foldBracket = true;
+		foldQuerry = true;
+	}
+};
+
+struct OptionsSetMSSQL : public OptionSet<OptionsMSSQL> {
+	OptionsSetMSSQL() {
+
+		DefineProperty("fold", &OptionsMSSQL::fold, "");
+
+		DefineProperty("fold.comment", &OptionsMSSQL::foldComment,
+			"This option enables folding multi-line comments and explicit fold points when using the C++ lexer. "
+			"Explicit fold points allows adding extra folding by placing a //{ comment at the start and a //} "
+			"at the end of a section that should fold.");
+
+		DefineProperty("fold.compact", &OptionsMSSQL::foldCompact, "");
+		DefineProperty("lexer.mssql.fold.querry", &OptionsMSSQL::foldQuerry, "");
+		DefineProperty("lexer.mssql.fold.bracket", &OptionsMSSQL::foldBracket, "");
+
+		DefineWordListSets(sqlWordListDesc);
+
+	}
+};
+
+class LexerMSSQL : public DefaultLexer {
+
+	OptionsMSSQL options;
+	OptionsSetMSSQL osMSSQL;
+	WordList keywords[8];	//переданные нам вордлисты
+
+	class StyleContextEx : public StyleContext
+	{
+	public:
+		StyleContextEx(unsigned int startPos,
+			unsigned int length,
+			int initStyle,
+			LexAccessor &styler_, char chMask)
+			: StyleContext(startPos, length, initStyle, styler_, chMask)
+			, prevState(initStyle) {}
+		void SetStateEx(int state_) {
+			prevState = state;
+			SetState(state_);
+		}
+		int prevState;
+	};
+	char classifyWordSQL(Sci_PositionU start,LexAccessor &styler, StyleContextEx &sc);
+
+
+public:
+	LexerMSSQL() {}
+
+	~LexerMSSQL() {}
+	void SCI_METHOD Release() {
+		delete this;
+	}
+	int SCI_METHOD Version() const {
+		return lvRelease4;
+	}
+	const char * SCI_METHOD PropertyNames() {
+		return osMSSQL.PropertyNames();
+	}
+	int SCI_METHOD PropertyType(const char *name) {
+		return osMSSQL.PropertyType(name);
+	}
+	const char * SCI_METHOD DescribeProperty(const char *name) {
+		return osMSSQL.DescribeProperty(name);
+	}
+	int SCI_METHOD PropertySet(const char *key, const char *val);
+	const char * SCI_METHOD DescribeWordListSets() {
+		return osMSSQL.DescribeWordListSets();
+	}
+	int SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+
+	static ILexer4 *LexerFactoryMSSQL() {
+		return new LexerMSSQL();
+	}
+
+};
+
+static bool isMSSQLOperator(char ch) {
+	if (isascii(ch) && isalnum(ch))
+		return false;
+	// '.' left out as it is used to make up numbers
+	if (ch == '%' || ch == '^' || ch == '&' || ch == '*' ||
+        ch == '-' || ch == '+' || ch == '=' || ch == '|' ||
+        ch == '<' || ch == '>' || ch == '/' ||
+        ch == '!' || ch == '~' || ch == '(' || ch == ')' ||
+		ch == ',')
+		return true;
+	return false;
+}
+
+
+int SCI_METHOD LexerMSSQL::PropertySet(const char *key, const char *val) {
+	if (osMSSQL.PropertySet(&options, key, val)) {
+		return 0;
+	}
+	return -1;
+}
+
+int SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
+	int firstModification = -1;
+	if (n < 8) {
+		WordList *wordListN = 0;
+		wordListN = &keywords[n];
+		if (wordListN) {
+			WordList wlNew;
+			wlNew.Set(wl);
+			if (*wordListN != wlNew) {
+				wordListN->Set(wl);
+				firstModification = 0;
+			}
+		}
+	}
+	return firstModification;
+}
+
+char LexerMSSQL::classifyWordSQL(Sci_PositionU start, LexAccessor &styler, StyleContextEx &sc) {
+                            
 	char s[256];
 	bool wordIsNumber = isdigit(styler[start]) || (styler[start] == '.');
 
-	WordList &kwStatements          = *keywordlists[KW_MSSQL_STATEMENTS];
-    WordList &kwDataTypes           = *keywordlists[KW_MSSQL_DATA_TYPES];
-    WordList &kwSystemTables        = *keywordlists[KW_MSSQL_SYSTEM_TABLES];
-    WordList &kwGlobalVariables     = *keywordlists[KW_MSSQL_GLOBAL_VARIABLES];
-    WordList &kwFunctions           = *keywordlists[KW_MSSQL_FUNCTIONS];
-    WordList &kwStoredProcedures    = *keywordlists[KW_MSSQL_STORED_PROCEDURES];
-    WordList &kwOperators           = *keywordlists[KW_MSSQL_OPERATORS];
+	sc.GetCurrentLowered(s, sizeof(s));
 
-	for (Sci_PositionU i = 0; i < end - start + 1 && i < 128; i++) {
-		s[i] = static_cast<char>(tolower(styler[start + i]));
-		s[i + 1] = '\0';
-	}
 	char chAttr = SCE_MSSQL_IDENTIFIER;
 
-	if (actualState == SCE_MSSQL_GLOBAL_VARIABLE) {
+	if (sc.state == SCE_MSSQL_GLOBAL_VARIABLE) {
 
-        if (kwGlobalVariables.InList(&s[2]))
+        if (keywords[KW_MSSQL_GLOBAL_VARIABLES].InList(&s[2]))
             chAttr = SCE_MSSQL_GLOBAL_VARIABLE;
 
 	} else if (wordIsNumber) {
 		chAttr = SCE_MSSQL_NUMBER;
 
-	} else if (prevState == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
+	} else if (sc.prevState == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
 		// Look first in datatypes
-        if (kwDataTypes.InList(s))
+        if (keywords[KW_MSSQL_DATA_TYPES].InList(s))
             chAttr = SCE_MSSQL_DATATYPE;
-		else if (kwOperators.InList(s))
+		else if (keywords[KW_MSSQL_OPERATORS].InList(s))
 			chAttr = SCE_MSSQL_OPERATOR;
-		else if (kwStatements.InList(s))
+		else if (keywords[KW_MSSQL_STATEMENTS].InList(s))
 			chAttr = SCE_MSSQL_STATEMENT;
-		else if (kwSystemTables.InList(s))
+		else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s))
 			chAttr = SCE_MSSQL_SYSTABLE;
-		else if (kwFunctions.InList(s))
+		else if (keywords[KW_MSSQL_FUNCTIONS].InList(s))
             chAttr = SCE_MSSQL_FUNCTION;
-		else if (kwStoredProcedures.InList(s))
+		else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s))
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
-
-	} else {
-		if (kwOperators.InList(s))
+		else if (keywords[KW_MSSQL_M4KEYS].InList(s))
+			chAttr = SCE_MSSQL_M4KEYS;
+	}
+	else {
+		if (keywords[KW_MSSQL_OPERATORS].InList(s))
 			chAttr = SCE_MSSQL_OPERATOR;
-		else if (kwStatements.InList(s))
+		else if (keywords[KW_MSSQL_STATEMENTS].InList(s))
 			chAttr = SCE_MSSQL_STATEMENT;
-		else if (kwSystemTables.InList(s))
+		else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s))
 			chAttr = SCE_MSSQL_SYSTABLE;
-		else if (kwFunctions.InList(s))
+		else if (keywords[KW_MSSQL_FUNCTIONS].InList(s))
 			chAttr = SCE_MSSQL_FUNCTION;
-		else if (kwStoredProcedures.InList(s))
+		else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s))
 			chAttr = SCE_MSSQL_STORED_PROCEDURE;
-		else if (kwDataTypes.InList(s))
+		else if (keywords[KW_MSSQL_DATA_TYPES].InList(s))
 			chAttr = SCE_MSSQL_DATATYPE;
+		else if (keywords[KW_MSSQL_M4KEYS].InList(s))
+			chAttr = SCE_MSSQL_M4KEYS;
 	}
 
-	styler.ColourTo(end, chAttr);
+	//sc.SetStateEx(chAttr);
+	sc.ChangeState(chAttr);
 
 	return chAttr;
 }
 
-static void ColouriseMSSQLDoc(Sci_PositionU startPos, Sci_Position length,
-                              int initStyle, WordList *keywordlists[], Accessor &styler) {
-
+void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+	Accessor styler(pAccess, NULL);
 
 	styler.StartAt(startPos);
 
-	bool fold = styler.GetPropertyInt("fold") != 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int spaceFlags = 0;
 
-	int state = initStyle;
-	int prevState = initStyle;
-	char chPrev = ' ';
-	char chNext = styler[startPos];
-	styler.StartSegment(startPos);
+	StyleContextEx sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 	Sci_PositionU lengthDoc = startPos + length;
-	for (Sci_PositionU i = startPos; i < lengthDoc; i++) {
-		char ch = chNext;
-		chNext = styler.SafeGetCharAt(i + 1);
-
-		if ((ch == '\r' && chNext != '\n') || (ch == '\n')) {
-			int indentCurrent = styler.IndentAmount(lineCurrent, &spaceFlags);
-			int lev = indentCurrent;
-			if (!(indentCurrent & SC_FOLDLEVELWHITEFLAG)) {
-				// Only non whitespace lines can be headers
-				int indentNext = styler.IndentAmount(lineCurrent + 1, &spaceFlags);
-				if (indentCurrent < (indentNext & ~SC_FOLDLEVELWHITEFLAG)) {
-					lev |= SC_FOLDLEVELHEADERFLAG;
-				}
-			}
-			if (fold) {
-				styler.SetLevel(lineCurrent, lev);
-			}
-		}
-
-		if (styler.IsLeadByte(ch)) {
-			chNext = styler.SafeGetCharAt(i + 2);
-			chPrev = ' ';
-			i += 1;
-			continue;
-		}
+	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 
 		// When the last char isn't part of the state (have to deal with it too)...
-		if ( (state == SCE_MSSQL_IDENTIFIER) ||
-                    (state == SCE_MSSQL_STORED_PROCEDURE) ||
-                    (state == SCE_MSSQL_DATATYPE) ||
-                    //~ (state == SCE_MSSQL_COLUMN_NAME) ||
-                    (state == SCE_MSSQL_FUNCTION) ||
-                    //~ (state == SCE_MSSQL_GLOBAL_VARIABLE) ||
-                    (state == SCE_MSSQL_VARIABLE)) {
-			if (!iswordchar(ch)) {
+		if ( (sc.state == SCE_MSSQL_IDENTIFIER) ||
+			(sc.state == SCE_MSSQL_STORED_PROCEDURE) ||
+			(sc.state == SCE_MSSQL_DATATYPE) ||
+			(sc.state == SCE_MSSQL_M4KEYS) ||
+			(sc.state == SCE_MSSQL_FUNCTION) ||
+			(sc.state == SCE_MSSQL_VARIABLE)) {
+			if (!iswordchar(sc.ch)) {
 				int stateTmp;
 
-                if ((state == SCE_MSSQL_VARIABLE) || (state == SCE_MSSQL_COLUMN_NAME)) {
-                    styler.ColourTo(i - 1, state);
-					stateTmp = state;
-                } else
-                    stateTmp = classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
-
-				prevState = state;
+				if ((sc.state == SCE_MSSQL_VARIABLE) || (sc.state == SCE_MSSQL_COLUMN_NAME)) {
+					sc.SetStateEx(sc.state);
+					stateTmp = sc.state;
+				} else				
+					stateTmp = classifyWordSQL(styler.GetStartSegment(), styler, sc);
 
 				if (stateTmp == SCE_MSSQL_IDENTIFIER || stateTmp == SCE_MSSQL_VARIABLE)
-					state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
 				else
-					state = SCE_MSSQL_DEFAULT;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if (state == SCE_MSSQL_LINE_COMMENT) {
-			if (ch == '\r' || ch == '\n') {
-				styler.ColourTo(i - 1, state);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
+		} else if(sc.state == SCE_MSSQL_SYSMCONSTANTS){
+			if (!iswordchar(sc.ch) || sc.ch == '.') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
-		} else if (state == SCE_MSSQL_GLOBAL_VARIABLE) {
-			if ((ch != '@') && !iswordchar(ch)) {
-				classifyWordSQL(styler.GetStartSegment(), i - 1, keywordlists, styler, state, prevState);
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
+		} else if (sc.state == SCE_MSSQL_LINE_COMMENT || sc.state == SCE_MSSQL_LINE_COMMENT_EX) {
+			if (sc.ch == '\r' || sc.ch == '\n') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
 			}
+		} else if (sc.state == SCE_MSSQL_GLOBAL_VARIABLE) {
+			if ((sc.ch != '@') && !iswordchar(sc.ch)) {
+				classifyWordSQL(styler.GetStartSegment(), styler, sc);
+				sc.SetStateEx(SCE_MSSQL_DEFAULT);
+			}
+		} else if(sc.state == SCE_MSSQL_OPERATOR || sc.state == SCE_MSSQL_M4KBRASHES ){
+			sc.SetStateEx(SCE_MSSQL_DEFAULT);
 		}
 
 		// If is the default or one of the above succeeded
-		if (state == SCE_MSSQL_DEFAULT || state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
-			if (iswordstart(ch)) {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_IDENTIFIER;
-			} else if (ch == '/' && chNext == '*') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COMMENT;
-			} else if (ch == '-' && chNext == '-') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_LINE_COMMENT;
-			} else if (ch == '\'') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_STRING;
-			} else if (ch == '"') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COLUMN_NAME;
-			} else if (ch == '[') {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-				state = SCE_MSSQL_COLUMN_NAME_2;
-			} else if (isoperator(ch)) {
-				styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				styler.ColourTo(i, SCE_MSSQL_OPERATOR);
-                //~ style = SCE_MSSQL_DEFAULT;
-				prevState = state;
-				state = SCE_MSSQL_DEFAULT;
-			} else if (ch == '@') {
-                styler.ColourTo(i - 1, SCE_MSSQL_DEFAULT);
-				prevState = state;
-                if (chNext == '@') {
-                    state = SCE_MSSQL_GLOBAL_VARIABLE;
-//                    i += 2;
+		if (sc.state == SCE_MSSQL_DEFAULT || sc.state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
+			int stateTmp = sc.state;
+			sc.ChangeState(SCE_MSSQL_DEFAULT);
+			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l' && 
+			  (styler.SafeGetCharAt(sc.currentPos + 3) == ' ' || styler.SafeGetCharAt(sc.currentPos + 3) == '\t' || styler.SafeGetCharAt(sc.currentPos + 3) == '\n')) {	
+				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT_EX);
+			}else if (sc.ch == '_' && sc.chNext == '_'){
+				sc.SetStateEx(SCE_MSSQL_SYSMCONSTANTS);
+			}else if (iswordstart(sc.ch)) {
+				sc.SetStateEx(SCE_MSSQL_IDENTIFIER);
+			} else if (sc.ch == '/' && sc.chNext == '*') {
+				sc.SetStateEx(SCE_MSSQL_COMMENT);
+			} else if (sc.ch == '-' && sc.chNext == '-') {
+				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT);
+			} else if (sc.ch == '\'') {
+				sc.SetStateEx(SCE_MSSQL_STRING);
+			} else if (sc.ch == '"') {
+				sc.SetStateEx(SCE_MSSQL_COLUMN_NAME);
+			} else if (sc.ch == '[') {
+				sc.SetStateEx(SCE_MSSQL_COLUMN_NAME_2);
+			} else if((sc.ch == '{' || sc.ch == '}') && keywords[KW_MSSQL_M4KEYS].InList("}")) {
+				sc.SetStateEx(SCE_MSSQL_M4KBRASHES);
+				//sc.SetStateEx(SCE_MSSQL_DEFAULT);
+			} else if (isMSSQLOperator(sc.ch)) {
+				sc.SetStateEx(SCE_MSSQL_OPERATOR);
+				//sc.SetStateEx(SCE_MSSQL_DEFAULT);
+			} else if (sc.ch == '@') {
+                if (sc.chNext == '@') {
+					sc.SetStateEx(SCE_MSSQL_GLOBAL_VARIABLE);
                 } else
-                    state = SCE_MSSQL_VARIABLE;
-            }
+					sc.SetStateEx(SCE_MSSQL_VARIABLE);
+			} else {
+				sc.ChangeState(stateTmp); //??
+			}
 
 
 		// When the last char is part of the state...
-		} else if (state == SCE_MSSQL_COMMENT) {
-				if (ch == '/' && chPrev == '*') {
-					if (((i > (styler.GetStartSegment() + 2)) || ((initStyle == SCE_MSSQL_COMMENT) &&
+		} else if (sc.state == SCE_MSSQL_COMMENT) {
+				if (sc.ch == '/' && sc.chPrev == '*') {
+					if (((sc.currentPos > (styler.GetStartSegment() + 2)) || ((initStyle == SCE_MSSQL_COMMENT) &&
 					    (styler.GetStartSegment() == startPos)))) {
-						styler.ColourTo(i, state);
-						//~ state = SCE_MSSQL_COMMENT;
-					prevState = state;
-                        state = SCE_MSSQL_DEFAULT;
+						sc.SetStateEx(SCE_MSSQL_DEFAULT);
 					}
 				}
-			} else if (state == SCE_MSSQL_STRING) {
-				if (ch == '\'') {
-					if ( chNext == '\'' ) {
-						i++;
-					ch = chNext;
-					chNext = styler.SafeGetCharAt(i + 1);
+			} else if (sc.state == SCE_MSSQL_STRING) {
+				if (sc.ch == '\'') {
+					if (sc.chNext == '\'' ) {
+						sc.Forward();
 					} else {
-						styler.ColourTo(i, state);
-					prevState = state;
-						state = SCE_MSSQL_DEFAULT;
-					//i++;
+						sc.SetStateEx(SCE_MSSQL_DEFAULT);
 					}
-				//ch = chNext;
-				//chNext = styler.SafeGetCharAt(i + 1);
 				}
-			} else if (state == SCE_MSSQL_COLUMN_NAME) {
-				if (ch == '"') {
-					if (chNext == '"') {
-						i++;
-					ch = chNext;
-					chNext = styler.SafeGetCharAt(i + 1);
+			} else if (sc.state == SCE_MSSQL_COLUMN_NAME) {
+				if (sc.ch == '"') {
+					if (sc.chNext == '"') {
+						sc.Forward();
 				} else {
-                    styler.ColourTo(i, state);
-					prevState = state;
-					state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
-					//i++;
+					sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
                 }
                 }
-		} else if (state == SCE_MSSQL_COLUMN_NAME_2) {
-			if (ch == ']') {
-                styler.ColourTo(i, state);
-				prevState = state;
-                state = SCE_MSSQL_DEFAULT_PREF_DATATYPE;
-                //i++;
+		} else if (sc.state == SCE_MSSQL_COLUMN_NAME_2) {
+			if (sc.ch == ']') {
+				sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
 			}
 		}
-
-		chPrev = ch;
 	}
-	styler.ColourTo(lengthDoc - 1, state);
+	sc.Complete();
 }
 
-static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
-	bool foldComment = styler.GetPropertyInt("fold.comment") != 0;
-	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
+void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+	if (!options.fold)
+		return;
+	LexAccessor styler(pAccess);
+
+	bool foldComment = options.foldComment;
+	bool foldCompact = options.foldCompact;
 	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
 	char chNext = styler[startPos];
-	bool inComment = (styler.StyleAt(startPos-1) == SCE_MSSQL_COMMENT);
-    char s[10] = "";
+	bool inComment = (styler.StyleAt(startPos - 1) == SCE_MSSQL_COMMENT);
+	char s[15];
 	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
 		int style = styler.StyleAt(i);
 		bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
-        // Comment folding
+		// Comment folding
 		if (foldComment) {
 			if (!inComment && (style == SCE_MSSQL_COMMENT))
 				levelCurrent++;
@@ -299,24 +385,98 @@ static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordL
 				levelCurrent--;
 			inComment = (style == SCE_MSSQL_COMMENT);
 		}
-        if (style == SCE_MSSQL_STATEMENT) {
-            // Folding between begin or case and end
-            if (ch == 'b' || ch == 'B' || ch == 'c' || ch == 'C' || ch == 'e' || ch == 'E') {
-                for (Sci_PositionU j = 0; j < 5; j++) {
+		if (style == SCE_MSSQL_M4KBRASHES){
+			if (ch == '{')
+				levelCurrent++;
+			else
+				if ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)
+						levelCurrent--;
+		}if (style == SCE_MSSQL_STATEMENT) {
+			// Folding between begin or case and end
+			char c = static_cast<char>(tolower(ch));
+			if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
+				Sci_PositionU j;
+                for (j = 0; j < 6; j++) {
 					if (!iswordchar(styler[i + j])) {
 						break;
 					}
 					s[j] = static_cast<char>(tolower(styler[i + j]));
 					s[j + 1] = '\0';
-                }
+				}
+				Sci_PositionU ii = i + j;
+
 				if ((strcmp(s, "begin") == 0) || (strcmp(s, "case") == 0)) {
 					levelCurrent++;
+					Sci_PositionU l;
+					char sNext[200];
+					sNext[0] = '\0';
+					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
+					if (l < 200)
+					{
+						unsigned int k;
+						for (k = 0; k < 200; k++)
+						{
+							if (!iswordchar(styler[ii + k + l])) break;
+							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
+							sNext[k] = styler[ii + k + l];
+							sNext[k + 1] = '\0';
+						}
+						_strlwr_s(sNext, 200);
+						if ((strcmp(sNext, "transaction") == 0)){//не фолдим начало транзакции
+							levelCurrent--;
+						}
+					}
 				}
-				if (strcmp(s, "end") == 0) {
+				else if (strcmp(s, "create") == 0){
+					Sci_PositionU  l;
+					char sNext[200];
+					sNext[0] = '\0';
+					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
+					if (l < 200)
+					{
+						Sci_PositionU  k;
+						for (k = 0; k < 200; k++)
+						{
+							if (!iswordchar(styler[ii + k + l])) break;
+							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
+							sNext[k] = styler[ii + k + l];
+							sNext[k + 1] = '\0';
+						}
+						_strlwr_s(sNext, 200);
+						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0) || (strcmp(sNext, "function") == 0)){//не фолдим начало транзакции
+							levelCurrent++;	   //if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK))
+						}
+
+					}
+				}
+				else if (strcmp(s, "end") == 0 && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
 					levelCurrent--;
 				}
-            }
-        }
+				else if (strcmp(s, "go") == 0){
+					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+				}
+			}
+		}else if (style == SCE_MSSQL_OPERATOR) {
+			if (styler[i] == ')')
+				levelCurrent--;
+			else if (styler[i] == '(')
+				levelCurrent++;
+		}else if (style == SCE_MSSQL_SYSMCONSTANTS) {
+			char c = static_cast<char>(tolower(ch));
+			if (c == '_' ) {
+				Sci_PositionU j;
+				for (j = 0; j < 13; j++) {
+					if (!iswordchar(styler[i + j])) {
+						break;
+					}
+					s[j] = static_cast<char>(tolower(styler[i + j]));
+					s[j + 1] = '\0';
+				}
+				if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0){
+					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+				}
+			}
+		}
 		if (atEOL) {
 			int lev = levelPrev;
 			if (visibleChars == 0 && foldCompact)
@@ -338,15 +498,4 @@ static void FoldMSSQLDoc(Sci_PositionU startPos, Sci_Position length, int, WordL
 	styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
-static const char * const sqlWordListDesc[] = {
-	"Statements",
-    "Data Types",
-    "System tables",
-    "Global variables",
-    "Functions",
-    "System Stored Procedures",
-    "Operators",
-	0,
-};
-
-LexerModule lmMSSQL(SCLEX_MSSQL, ColouriseMSSQLDoc, "mssql", FoldMSSQLDoc, sqlWordListDesc);
+LexerModule lmMSSQL(SCLEX_MSSQL, LexerMSSQL::LexerFactoryMSSQL, "mssql", sqlWordListDesc);

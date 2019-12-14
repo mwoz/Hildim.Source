@@ -54,6 +54,7 @@
     <ClCompile Include="lexers\LexGui4Cli.cxx" />
     <ClCompile Include="lexers\LexHaskell.cxx" />
     <ClCompile Include="lexers\LexHex.cxx" />
+    <ClCompile Include="lexers\LexHollywood.cxx" />
     <ClCompile Include="lexers\LexHTML.cxx" />
     <ClCompile Include="lexers\LexIndent.cxx" />
     <ClCompile Include="lexers\LexInno.cxx" />

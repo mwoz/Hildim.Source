@@ -109,6 +109,7 @@ public:
 	virtual bool OnClick(int) { return false; } //!-add-[OnClick]
 	virtual bool OnMouseButtonUp(int) { return false; } //!-add-[OnMouseButtonUp]
 	virtual bool OnHotSpotReleaseClick(int) { return false; } //!-add-[OnHotSpotReleaseClick]
+	virtual bool PaneOnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) { return false; }

@@ -1834,6 +1834,9 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return (LRESULT)extender->OnPostCallback(wParam);
 		case SCI_FINDPROGRESS:
 			return (LRESULT)extender->OnFindProgress(wParam, lParam);
+		case SCI_POSTPONECHECKRELOAD:
+			CheckReload();
+			break;
 
 		case WM_MOUSEMOVE:
 			::SetCursor(::LoadCursor(NULL, IDC_ARROW)); //Сюда попадаем только при открытом модальном диалоге

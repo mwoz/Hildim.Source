@@ -597,7 +597,7 @@ void SciTEBase::CheckReload() {
 
 void SciTEBase::Activate(bool activeApp) {
 	if (activeApp) {
-		CheckReload();
+		::PostMessage(reinterpret_cast<HWND>(GetID()), SCI_POSTPONECHECKRELOAD, 0, 0);
 	} else {
 		if (props.GetInt("save.on.deactivate")) {
 			SaveTitledBuffers();

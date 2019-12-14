@@ -3217,6 +3217,10 @@ bool LuaExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
 	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
 	return CallNamedFunction("CoOnUpdateUI", bModified, bSelChange, flag);
 }
+bool LuaExtension::PaneOnUpdateUI(bool bModified, bool bSelChange, int flag) {
+	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
+	return CallNamedFunction("PaneOnUpdateUI", bModified, bSelChange, flag);
+}
 
 bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) {
 	return CallNamedFunction("OnMarginClick", margin, modif, line, id);

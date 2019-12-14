@@ -3810,6 +3810,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 					}
 				}
 			}		
+		} else if (extender) {
+			extender->PaneOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 		}
 		if (!handled) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN);
