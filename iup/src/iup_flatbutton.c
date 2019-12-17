@@ -284,7 +284,7 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       ih->data->pressed = pressed;
       iupdrvRedrawNow(ih);
 
-      if (!pressed)
+	  if (!pressed && (!iup_isbutton1(status) || (x >= 0 && y >= 0 && x <= ih->currentwidth && y <= ih->currentheight))) 
         iFlatButtonNotify(ih, 0);
     }
   }

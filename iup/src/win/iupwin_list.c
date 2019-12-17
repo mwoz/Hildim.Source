@@ -465,6 +465,8 @@ static int winListSetValueAttrib(Ihandle* ih, const char* value)
         SendMessage(ih->handle, WIN_SETCURSEL(ih), (WPARAM)-1, 0);   /* no selection */
         iupAttribSet(ih, "_IUPLIST_OLDVALUE", NULL);
       }
+	  if(iupAttribGetBoolean(ih, "FLAT"))
+		  IupRedraw(ih, 1);
     }
     else
     {
@@ -1042,6 +1044,7 @@ static void winListDrawDropFeedback(Ihandle *ih, int nIndex)
        This can happen at the top of the listbox since 
        the listbox's DC is the parent's DC */
     SelectClipRgn(hDC, rgn);
+	DeleteObject(rgn);
 
     winListDrawRect(hWnd, hDC, nLastIndex);
     winListDrawRect(hWnd, hDC, nIndex);
@@ -1318,6 +1321,10 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   {
     switch (msg)
     {
+	case EM_SETSEL:
+		if (ih->data->block_sel) 
+			return 1;
+		break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
@@ -1489,6 +1496,62 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   case WM_IUPCARET:
     winListCallCaretCb(ih, cbedit);
     break;
+  case WM_NCPAINT:
+	  if (iupAttribGetBoolean(ih, "FLAT")) {
+
+		  RECT rect;
+		  GetWindowRect(ih->handle, &rect);
+		  HDC hdc = GetWindowDC(ih->handle);
+
+		  POINT line_poly[5];
+		  line_poly[0].x = 0;
+		  line_poly[0].y = 0;
+		  line_poly[1].x = rect.right - rect.left - 1;
+		  line_poly[1].y = 0;
+		  line_poly[2].x = rect.right - rect.left - 1;
+		  line_poly[2].y = rect.bottom - rect.top - 1;
+		  line_poly[3].x = 0;
+		  line_poly[3].y = rect.bottom - rect.top - 1;
+		  line_poly[4].x = 0;
+		  line_poly[4].y = 0;
+
+		  COLORREF RGBbordercolor, RGBbgcolor;
+		  unsigned char r, g, b;
+		  iupwinGetColorRef(ih, "BORDERCOLOR", &RGBbordercolor);
+		  iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
+		  RGBbgcolor = RGB(r, g, b);
+
+		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
+		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
+		  HPEN hPenOld = SelectObject(hdc, hPen);
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPen2);
+		  DeleteObject(hPen);
+
+		  line_poly[0].x++;
+		  line_poly[0].y++;
+		  line_poly[1].x--;
+		  line_poly[1].y++;
+		  line_poly[2].x--;
+		  line_poly[2].y--;
+		  line_poly[3].x++;
+		  line_poly[3].y--;
+		  line_poly[4].x++;
+		  line_poly[4].y++;
+
+		  Polyline(hdc, line_poly, 5);
+
+		  SelectObject(hdc, hPenOld);
+		  DeleteObject(hPen2);
+
+		  ReleaseDC(ih->handle, hdc);
+
+		  *result = 0;
+		  return 1;
+	  }
+	  break;
   }
 
   if (ret)       /* if abort processing, then the result is 0 */
@@ -1523,6 +1586,168 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 
   if (ret)
     return result;
+	else {
+		return CallWindowProc(oldProc, hwnd, msg, wp, lp);
+	}
+}
+static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
+	switch (msg) {
+	case WM_PAINT:
+		if (iupAttribGetBoolean(ih->parent, "FLAT")){
+			BOOL bEdit = ih->data->has_editbox;
+
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(ih->handle, &ps);
+	
+			POINT cursor;
+			GetCursorPos(&cursor);
+			MapWindowPoints(NULL, ih->handle, &cursor, 1);
+
+			int w, h, w1, h1;
+			iupStrToIntInt(iupBaseGetCurrentSizeAttrib(ih), &w, &h, 'x'); 
+		
+			RECT rect;
+			SetRect(&rect, 0, 0, w, h);
+		
+			BOOL higlight = PtInRect(&rect, cursor);
+			
+			char* bgcolor;
+			COLORREF RGBbgcolor, RGBfgcolor, RGBbordercolor;
+		
+			unsigned char r = 0, g = 0, b = 0;
+
+			if (higlight)
+				bgcolor = IupGetAttribute(ih, "HLCOLOR");
+			else if (bEdit)
+				bgcolor = IupGetAttribute(ih, "TXTBGCOLOR");
+			else
+				bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
+ 
+			iupStrToRGB(bgcolor, &r, &g, &b);
+			RGBbgcolor = RGB(r, g, b);
+
+			SetBkColor(hdc, RGBbgcolor);
+
+			HPEN hPen, hPenOld;
+			HBRUSH hBrush, hBrushOld;
+			POINT line_poly[3];		
+			if (higlight) {
+				iupStrToRGB(IupGetAttribute(ih, "BORDERHLCOLOR"), &r, &g, &b);
+				RGBbordercolor = RGB(r, g, b);
+
+				hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
+				hPenOld = SelectObject(hdc, hPen);
+				hBrush = CreateSolidBrush(RGBbgcolor);
+				hBrushOld = SelectObject(hdc, hBrush);
+
+				Rectangle(hdc, 0, 0, w, h);
+
+				SelectObject(hdc, hPenOld);
+				DeleteObject(hPen);
+				SelectObject(hdc, hBrushOld);
+				DeleteObject(hBrush);
+
+			} else {
+				if (!iupStrToRGB(IupGetAttribute(ih, "BORDERCOLOR"), &r, &g, &b))
+					iupStrToRGB("200 200 200", &r, &g, &b);
+				RGBbordercolor = RGB(r, g, b);
+
+				hBrush = CreateSolidBrush(RGBbgcolor);
+				RECT r;
+				r.bottom = h; r.right = w; r.top = 0; r.left = 0;
+
+				FillRect(hdc, &r, hBrush); DeleteObject(hBrush);
+
+				hPen = CreatePen(PS_SOLID, 1, RGBbordercolor);
+				hPenOld = SelectObject(hdc, hPen);
+
+				line_poly[0].x = 0;
+				line_poly[0].y = h - 2;
+				line_poly[1].x = w - 17;
+				line_poly[1].y = h - 2;
+				BOOL b = Polyline(hdc, line_poly, 2);
+			
+				SelectObject(hdc, hPenOld);
+				DeleteObject(hPen);
+			}
+
+			if (!bEdit) {
+				char * text, *font;
+				int cnt = 0;
+				COLORREF cr;
+				iupStrToInt(IupGetAttribute(ih, "COUNT"), &cnt);
+				if (cnt) {
+					if (iupwinGetColorRef(ih, "STATICFGCOLOR", &cr))
+						SetTextColor(hdc, cr);
+					else if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+						SetTextColor(hdc, cr);
+
+					text = IupGetAttribute(ih, "VALUESTRING");
+				} else {
+					text = IupGetAttribute(ih, "EMPTYLISTTEXT");
+					if (iupwinGetColorRef(ih, "TXTINACTIVCOLOR", &cr))
+						SetTextColor(hdc, cr);
+					else
+						SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+				}
+				if (!text)
+					text = "";
+
+				int len = text ? strlen(text) : 0;
+				font = IupDrawGetTextSize(ih, text, len, &w1, &h1);
+
+				HFONT hFont = (HFONT)iupwinGetHFont(font);
+				SelectObject(hdc, hFont);
+				TCHAR * wtext = iupwinStrToSystemLen(text, &len);
+				SetRect(&rect, 5, (h - h1) / 2, w - 17, h);
+				DrawText(hdc, wtext, len, &rect, 0);
+			}
+
+			line_poly[0].x = w - 12-2;
+			line_poly[0].y = h/2 - 1;
+			line_poly[1].x = w - 5-2;
+			line_poly[1].y = h / 2 - 1;
+			line_poly[2].x = w - 9-2;
+			line_poly[2].y = h / 2 + 3;
+
+			iupwinGetColorRef(ih, bEdit ? "TXTFGCOLOR" : "STATICFGCOLOR", &RGBbgcolor);
+
+			hBrush = CreateSolidBrush(RGBbgcolor);
+			hBrushOld = SelectObject(hdc, hBrush);
+			BeginPath(hdc);
+			Polygon(hdc, line_poly, 3);
+			EndPath(hdc);
+			FillPath(hdc);
+			SelectObject(hdc, hBrushOld);
+			DeleteObject(hBrush);
+
+
+			EndPaint(ih->handle, &ps);
+			return 1;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+static LRESULT CALLBACK winListStaticWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+	int ret = 0;
+	LRESULT result = 0;
+	WNDPROC oldProc;
+	Ihandle *ih;
+
+	ih = iupwinHandleGet(hwnd);
+	if (!iupObjectCheck(ih))
+		return DefWindowProc(hwnd, msg, wp, lp);  /* should never happen */
+
+												  /* retrieve the control previous procedure for subclassing */
+	oldProc = (WNDPROC)IupGetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB");
+
+	ret = winListStaticProc(ih, hwnd, msg, wp, lp, &result);
+
+	if (ret)
+		return result;
   else
     return CallWindowProc(oldProc, hwnd, msg, wp, lp);
 }
@@ -1539,8 +1764,6 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
   case WM_LBUTTONDOWN:
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:
-    iupwinFlagButtonDown(ih, msg);
-
     if (iupwinButtonDown(ih, msg, wp, lp)==-1)
     {
       *result = 0;
@@ -1550,12 +1773,6 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
   case WM_MBUTTONUP:
   case WM_RBUTTONUP:
   case WM_LBUTTONUP:
-    if (!iupwinFlagButtonUp(ih, msg))
-    {
-      *result = 0;
-      return 1;
-    }
-
     if (iupwinButtonUp(ih, msg, wp, lp)==-1)
     {
       *result = 0;
@@ -1767,12 +1984,16 @@ static void winListLayoutUpdateMethod(Ihandle *ih)
     win_h = rect.bottom-rect.top;
     win_w = rect.right-rect.left;
 
+	ih->data->block_sel = 1;
+
     if (ih->currentwidth != win_w || calc_h != win_h)
       SetWindowPos(ih->handle, HWND_TOP, ih->x, ih->y, ih->currentwidth, calc_h, 
-                   SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER);
+                     SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER);
     else
       SetWindowPos(ih->handle, HWND_TOP, ih->x, ih->y, 0, 0, 
                    SWP_NOSIZE|SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER);
+
+	ih->data->block_sel = 0;
   }                
   else
     iupdrvBaseLayoutUpdateMethod(ih);
@@ -1901,6 +2122,7 @@ static int winListMapMethod(Ihandle* ih)
 
     if (ih->data->has_editbox)
     {
+		ih->data->block_sel = 0;
       iupwinHandleAdd(ih, boxinfo.hwndItem);
       iupAttribSet(ih, "_IUPWIN_EDITBOX", (char*)boxinfo.hwndItem);
 
@@ -1910,6 +2132,13 @@ static int winListMapMethod(Ihandle* ih)
 
       /* set defaults */
       SendMessage(ih->handle, CB_LIMITTEXT, 0, 0L);
+		IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC));
+		SetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
+
+
+    }else {
+	  IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC));
+	  SetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
     }
   }
 
@@ -1978,6 +2207,11 @@ void iupdrvListInitClass(Iclass* ic)
 
   iupClassRegisterAttribute(ic, "CUEBANNER", NULL, winListSetCueBannerAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FILTER", NULL, winListSetFilterAttrib, NULL, NULL, IUPAF_NO_INHERIT);
+
+  iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "200 225 245", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "BORDERHLCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "NOHIDESEL", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "EMPTYLISTTEXT", NULL, NULL, IUPAF_SAMEASSYSTEM, "<Empty>", IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "CONTROLID", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 }

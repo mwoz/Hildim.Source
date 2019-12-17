@@ -876,6 +876,7 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
   IupSetAttribute(colordlg_data->color_browser, "EXPAND", "YES");  
   IupSetCallback(colordlg_data->color_browser, "DRAG_CB",   (Icallback)iColorDlgColorSelDrag_CB);
   IupSetCallback(colordlg_data->color_browser, "CHANGE_CB", (Icallback)iColorDlgColorSelDrag_CB);
+  IupSetAttribute(colordlg_data->color_browser, "MINSIZE", "200x200");
 
   colordlg_data->color_cnv = IupCanvas(NULL);  /* Canvas of the color */
   IupSetAttribute(colordlg_data->color_cnv, "SIZE", "x12");
@@ -1075,6 +1076,7 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
     IupSetStrf(colordlg_data->color_browser, "RASTERSIZE", "%dx%d", colordlg_data->color_browser->currentheight, colordlg_data->color_browser->currentheight);
     IupSetAttribute(ih, "RASTERSIZE", NULL);
   }
+  IupSetAttribute(ih, "RESIZE", "NO");
 
   iColorDlgInit_Defaults(colordlg_data);
 

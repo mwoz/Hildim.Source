@@ -578,7 +578,7 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
         cb(ih, active);
       }
 
-      if (!iupwin_comctl32ver6) /* visual style not active */
+      if (!iupwin_comctl32ver6 || cb) /* visual style not active */
       {
         DefWindowProc(ih->handle, msg, wp, (LPARAM)-1);  /* use -1 to not repaint the nonclient area */
 
