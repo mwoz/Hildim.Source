@@ -192,6 +192,7 @@ Iclass* iupAnimatedLabelNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("label"));
 
   ic->name = "animatedlabel";
+  ic->cons = "AnimatedLabel";
   ic->format = "h"; /* one Ihandle* */
   ic->nativetype = IUP_TYPECONTROL;
   ic->childtype = IUP_CHILDNONE;
@@ -216,7 +217,7 @@ Iclass* iupAnimatedLabelNewClass(void)
   return ic;
 }
 
-Ihandle* IupAnimatedLabel(Ihandle* animation)
+IUP_API Ihandle* IupAnimatedLabel(Ihandle* animation)
 {
   void *params[2];
   params[0] = (void*)animation;

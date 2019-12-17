@@ -1848,6 +1848,11 @@ static int iMatrixCreateMethod(Ihandle* ih, void **params)
   return IUP_NOERROR;
 }
 
+static void iMatrixDestroyMethod(Ihandle* ih)
+{
+  iupFlatScrollBarRelease(ih);
+}
+
 static int iMatrixMapMethod(Ihandle* ih)
 {
 #ifdef USE_OLD_CDIUP
@@ -2115,44 +2120,13 @@ static void iMatrixCreateCursor(void)
   IupSetHandle("matrx_img_cur_excel", imgcursor);  /* for backward compatibility */
 }
 
-static void iMatrixSetClassUpdate(Iclass* ic)
-{
-  (void)ic;
-
-  if (iupStrEqualNoCase(IupGetGlobal("LANGUAGE"), "ENGLISH"))
-  {
-    IupSetLanguageString("IUP_ERRORINVALIDFORMULA", "Invalid Formula.");
-  }
-  else if (iupStrEqualNoCase(IupGetGlobal("LANGUAGE"), "PORTUGUESE"))
-  {
-    IupSetLanguageString("IUP_ERRORINVALIDFORMULA", "Fórmula Inválida.");
-
-    if (IupGetInt(NULL, "UTF8MODE"))
-    {
-      /* When seeing this file assuming ISO8859-1 encoding, above will appear correct.
-      When seeing this file assuming UTF-8 encoding, bellow will appear correct. */
-      IupSetLanguageString("IUP_ERRORINVALIDFORMULA", "FÃ³rmula InvÃ¡lida.");
-    }
-  }
-  else if (iupStrEqualNoCase(IupGetGlobal("LANGUAGE"), "SPANISH"))
-  {
-    IupSetLanguageString("IUP_ERRORINVALIDFORMULA", "Fórmula Inválida.");
-
-    if (IupGetInt(NULL, "UTF8MODE"))
-    {
-      /* When seeing this file assuming ISO8859-1 encoding, above will appear correct.
-      When seeing this file assuming UTF-8 encoding, bellow will appear correct. */
-      IupSetLanguageString("IUP_ERRORINVALIDFORMULA", "FÃ³rmula InvÃ¡lida.");
-    }
-  }
-}
-
 Iclass* iupMatrixNewClass(void)
 {
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "matrix";
   ic->format = "a"; /* one ACTION_CB callback name */
+  ic->format_attr = "ACTION_CB";
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
@@ -2161,6 +2135,7 @@ Iclass* iupMatrixNewClass(void)
   /* Class functions */
   ic->New = iupMatrixNewClass;
   ic->Create = iMatrixCreateMethod;
+  ic->Destroy = iMatrixDestroyMethod;
   ic->Map = iMatrixMapMethod;
   ic->UnMap = iMatrixUnMapMethod;
   ic->ComputeNaturalSize = iMatrixComputeNaturalSizeMethod;
@@ -2347,15 +2322,10 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterAttribute(ic, "SHOWFILLVALUE", iMatrixGetShowFillValueAttrib, iMatrixSetShowFillValueAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TYPECOLORINACTIVE", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "CLASSUPDATE", NULL, (IattribSetFunc)iMatrixSetClassUpdate, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
-
   /* Flat Scrollbar */
   iupFlatScrollBarRegister(ic);
 
   iupClassRegisterAttribute(ic, "FLATSCROLLBAR", NULL, iMatrixSetFlatScrollbarAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-
-  /* Language Update */
-  iMatrixSetClassUpdate(ic);
 
   iupMatrixRegisterEx(ic);
 

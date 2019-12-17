@@ -23,6 +23,9 @@
 #include "iup_str.h"
 #include "iup_drv.h"
 #include "iup_drvfont.h"
+#include "iup_mask.h"
+#include "iup_array.h"
+#include "iup_text.h"
 
 #include "iupwin_drv.h"
 #include "iupwin_handle.h"
@@ -35,6 +38,7 @@
 
 #ifndef DTM_SETMCSTYLE
 #define DTM_SETMCSTYLE   (DTM_FIRST + 11)
+#define DTM_CLOSEMONTHCAL (DTM_FIRST + 13)
 #define DTM_GETIDEALSIZE (DTM_FIRST + 15)
 #endif
 #ifndef MCS_NOSELCHANGEONNAV
@@ -154,6 +158,13 @@ static int winDatePickSetOrderAttrib(Ihandle* ih, const char* value)
   return 1;
 }
 
+static int winDatePickSetShowDropdownAttrib(Ihandle* ih, const char* value)
+{
+  if (!iupStrBoolean(value))
+    SendMessage(ih->handle, DTM_CLOSEMONTHCAL, 0, 0);
+
+  return 0;
+}
 
 /*********************************************************************************************/
 
@@ -182,8 +193,6 @@ static int winDatePickWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)
 
 /*********************************************************************************************/
 
-void iupdrvTextAddBorders(int *w, int *h);
-
 static void winDatePickComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
   (void)children_expand; /* unset if not a container */
@@ -198,7 +207,7 @@ static void winDatePickComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int
   else
   {
     iupdrvFontGetMultiLineStringSize(ih, "WW/WW/WWWW", w, h);
-    iupdrvTextAddBorders(w, h);
+    iupdrvTextAddBorders(ih, w, h);
     *w += iupdrvGetScrollbarSize();
   }
 }
@@ -240,6 +249,7 @@ Iclass* iupDatePickNewClass(void)
   Iclass* ic = iupClassNew(NULL);
 
   ic->name = "datepick";
+  ic->cons = "DatePick";
   ic->format = NULL;  /* no parameters */
   ic->nativetype = IUP_TYPECONTROL;
   ic->childtype = IUP_CHILDNONE;
@@ -274,6 +284,7 @@ Iclass* iupDatePickNewClass(void)
   iupClassRegisterAttribute(ic, "SEPARATOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "/", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "ZEROPRECED", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "ORDER", NULL, winDatePickSetOrderAttrib, IUPAF_SAMEASSYSTEM, "DMY", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SHOWDROPDOWN", NULL, winDatePickSetShowDropdownAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 
   /* Windows Only */
   iupClassRegisterAttribute(ic, "MONTHSHORTNAMES", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

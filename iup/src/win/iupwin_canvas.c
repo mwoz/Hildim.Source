@@ -24,6 +24,7 @@
 #include "iup_drvfont.h"
 #include "iup_canvas.h"
 #include "iup_key.h"
+#include "iup_focus.h"
 
 #include "iupwin_drv.h"
 #include "iupwin_handle.h"
@@ -282,9 +283,9 @@ static void winCanvasGetScrollInfo(HWND hWnd, int *ipos, int *ipage, int flag, i
 
 static void winCanvasCallScrollCallback(Ihandle* ih, int op)
 {
-  IFniff cb = (IFniff)IupGetCallback(ih, "SCROLL_CB");
-  if (cb)
-    cb(ih, op, (float)ih->data->posx, (float)ih->data->posy);
+  IFniff scroll_cb = (IFniff)IupGetCallback(ih, "SCROLL_CB");
+  if (scroll_cb)
+    scroll_cb(ih, op, (float)ih->data->posx, (float)ih->data->posy);
   else
   {
     IFnff cb = (IFnff)IupGetCallback(ih, "ACTION");
@@ -452,8 +453,11 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
       FillRect(hdc, &rect, iupwinBrushGet(color)); 
     }
     else
-      InvalidateRect(ih->handle,NULL,FALSE);  /* This will invalidate all area. 
-                                                 Necessary in XP, or overlapping windows will have the effect of partial redrawing. */
+    {
+      if (!iupwinIsVistaOrNew())
+        InvalidateRect(ih->handle, NULL, FALSE);  /* This will invalidate all area.
+                                                     Necessary in XP, or overlapping windows will have the effect of partial redrawing. */
+    }
 
     /* always return non zero value */
     *result = 1;
@@ -503,6 +507,7 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
         *result = 0;
         return 1;
       }
+
       break;
     }
   case WM_GETDLGCODE:
@@ -513,6 +518,14 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
     {
       IFnfiis cb = (IFnfiis)IupGetCallback(ih, "WHEEL_CB");
       short delta = (short)HIWORD(wp);
+
+      if (iupAttribGetBoolean(ih, "WHEELDROPFOCUS"))
+      {
+        Ihandle* ih_focus = IupGetFocus();
+        if (ih_focus)
+          iupAttribSetClassObject(ih_focus, "SHOWDROPDOWN", "NO");
+      }
+
       if (cb)
       {
         char status[IUPKEY_STATUS_SIZE] = IUPKEY_STATUS_INIT;
@@ -543,7 +556,7 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
         }
       }
 
-      iupAttribSet(IupGetDialog(ih), "_IUP_WHEEL_PROPAGATING", "1"); /* to avoid the dialog to propagate again to the child */
+      iupAttribSet(ih, "_IUP_WHEEL_PROPAGATING", "1"); /* to avoid a parent to propagate again to the child */
       break; /* let DefWindowProc forward the message to the parent */
     }
   case WM_XBUTTONDBLCLK:
@@ -560,6 +573,8 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
         SetFocus(ih->handle);
 
       SetCapture(ih->handle);
+
+      iupwinFlagButtonDown(ih, msg);
 
       if (iupwinButtonDown(ih, msg, wp, lp))
       {
@@ -602,6 +617,12 @@ static int winCanvasMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
   case WM_MBUTTONUP:
   case WM_RBUTTONUP:
     {
+      if (!iupwinFlagButtonUp(ih, msg))
+      {
+        *result = 0;
+        return 1;
+      }
+
       ReleaseCapture();
 
       if (iupwinButtonUp(ih, msg, wp, lp))

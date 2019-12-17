@@ -144,9 +144,21 @@ static int iClassDlgPopup(Iclass* ic, Ihandle* ih, int x, int y)
     return ic->DlgPopup(ih, x, y);  /* ignore parent if implemented */
 
   if (ic->parent)
-    return  iClassDlgPopup(ic->parent, ih, x, y);
+    return iClassDlgPopup(ic->parent, ih, x, y);
 
   return IUP_INVALID;  /* means it is not implemented */
+}
+
+static int iClassHasDlgPopup(Iclass* ic)
+{
+  /* must be before the parent class */
+  if (ic->DlgPopup)
+    return 1;
+
+  if (ic->parent)
+    return iClassHasDlgPopup(ic->parent);
+
+  return 0;
 }
 
 
@@ -155,66 +167,70 @@ static int iClassDlgPopup(Iclass* ic, Ihandle* ih, int x, int y)
 *****************************************************************/
 
 
-int iupClassObjectCreate(Ihandle* ih, void** params)
+IUP_SDK_API int iupClassObjectCreate(Ihandle* ih, void** params)
 {
   return iClassCreate(ih->iclass, ih, params);
 }
 
-int iupClassObjectMap(Ihandle* ih)
+IUP_SDK_API int iupClassObjectMap(Ihandle* ih)
 {
   return iClassMap(ih->iclass, ih);
 }
 
-void iupClassObjectUnMap(Ihandle* ih)
+IUP_SDK_API void iupClassObjectUnMap(Ihandle* ih)
 {
   iClassUnMap(ih->iclass, ih);
 }
 
-void iupClassObjectDestroy(Ihandle* ih)
+IUP_SDK_API void iupClassObjectDestroy(Ihandle* ih)
 {
   iClassDestroy(ih->iclass, ih);
 }
 
-void iupClassObjectComputeNaturalSize(Ihandle* ih, int *w, int *h, int *children_expand)
+IUP_SDK_API void iupClassObjectComputeNaturalSize(Ihandle* ih, int *w, int *h, int *children_expand)
 {
   iClassComputeNaturalSize(ih->iclass, ih, w, h, children_expand);
 }
 
-void iupClassObjectSetChildrenCurrentSize(Ihandle* ih, int shrink)
+IUP_SDK_API void iupClassObjectSetChildrenCurrentSize(Ihandle* ih, int shrink)
 {
   iClassSetChildrenCurrentSize(ih->iclass, ih, shrink);
 }
 
-void iupClassObjectSetChildrenPosition(Ihandle* ih, int x, int y)
+IUP_SDK_API void iupClassObjectSetChildrenPosition(Ihandle* ih, int x, int y)
 {
   iClassSetChildrenPosition(ih->iclass, ih, x, y);
 }
 
-void* iupClassObjectGetInnerNativeContainerHandle(Ihandle* ih, Ihandle* child)
+IUP_SDK_API void* iupClassObjectGetInnerNativeContainerHandle(Ihandle* ih, Ihandle* child)
 {
   return iClassGetInnerNativeContainerHandle(ih->iclass, ih, child);
 }
 
-void iupClassObjectChildAdded(Ihandle* ih, Ihandle* child)
+IUP_SDK_API void iupClassObjectChildAdded(Ihandle* ih, Ihandle* child)
 {
   iClassObjectChildAdded(ih->iclass, ih, child);
 }
 
-void iupClassObjectChildRemoved(Ihandle* ih, Ihandle* child, int pos)
+IUP_SDK_API void iupClassObjectChildRemoved(Ihandle* ih, Ihandle* child, int pos)
 {
   iClassObjectChildRemoved(ih->iclass, ih, child, pos);
 }
 
-void iupClassObjectLayoutUpdate(Ihandle *ih)
+IUP_SDK_API void iupClassObjectLayoutUpdate(Ihandle *ih)
 {
   iClassLayoutUpdate(ih->iclass, ih);
 }
 
-int iupClassObjectDlgPopup(Ihandle* ih, int x, int y)
+IUP_SDK_API int iupClassObjectDlgPopup(Ihandle* ih, int x, int y)
 {
   return iClassDlgPopup(ih->iclass, ih, x, y);
 }
 
+IUP_SDK_API int iupClassObjectHasDlgPopup(Ihandle* ih)
+{
+  return iClassHasDlgPopup(ih->iclass);
+}
 
 /*****************************************************************
                         Class Definition
@@ -235,7 +251,7 @@ static void iClassReleaseAttribFuncTable(Iclass* ic)
   iupTableDestroy(ic->attrib_func);
 }
 
-Iclass* iupClassNew(Iclass* parent)
+IUP_SDK_API Iclass* iupClassNew(Iclass* parent)
 {
   Iclass* ic = malloc(sizeof(Iclass));
   memset(ic, 0, sizeof(Iclass));
@@ -252,7 +268,7 @@ Iclass* iupClassNew(Iclass* parent)
   return ic;
 }
 
-void iupClassRelease(Iclass* ic)
+IUP_SDK_API void iupClassRelease(Iclass* ic)
 {
   Iclass* parent;
 
@@ -276,7 +292,7 @@ void iupClassRelease(Iclass* ic)
   free(ic);
 }
 
-int iupClassMatch(Iclass* ic, const char* classname)
+IUP_SDK_API int iupClassMatch(Iclass* ic, const char* classname)
 {
   /* check for all classes in the hierarchy */
   while (ic)
@@ -293,7 +309,7 @@ int iupClassMatch(Iclass* ic, const char* classname)
 *****************************************************************/
 
 
-char* IupGetClassName(Ihandle *ih)
+IUP_API char* IupGetClassName(Ihandle *ih)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))
@@ -302,9 +318,9 @@ char* IupGetClassName(Ihandle *ih)
   return (char*)ih->iclass->name;
 }
 
-char* IupGetClassType(Ihandle *ih)
+IUP_API char* IupGetClassType(Ihandle *ih)
 {
-  static char* type2str[] = {"void", "control", "canvas", "dialog", "image", "menu"};
+  static char* type2str[] = { "void", "control", "canvas", "dialog", "image", "menu", "other" };
 
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))
@@ -313,7 +329,7 @@ char* IupGetClassType(Ihandle *ih)
   return type2str[ih->iclass->nativetype];
 }
 
-int IupClassMatch(Ihandle* ih, const char* classname)
+IUP_API int IupClassMatch(Ihandle* ih, const char* classname)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))

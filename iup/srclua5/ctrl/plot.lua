@@ -5,7 +5,6 @@ local ctrl = {
   nick = "plot",
   parent = iup.WIDGET,
   creation = "",
-  funcname = "Plot",
   subdir = "ctrl",
   callback = {
     drawsample_cb = "nnddn",
@@ -26,6 +25,8 @@ local ctrl = {
     plotbutton_cb = "nndds",
     menucontext_cb = "inn",
     menucontextclose_cb = "inn",
+    xtickformatnumber_cb = "ssds",   -- fake definitions to be replaced by plotfuncs module
+    ytickformatnumber_cb = "ssds",   -- fake definitions to be replaced by plotfuncs module
   },
   include = "iup_plot.h",
   extrafuncs = 1,

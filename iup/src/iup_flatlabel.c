@@ -62,7 +62,7 @@ static int iFlatLabelRedraw_CB(Ihandle* ih)
   if (bgimage) /* draw background */
   {
     int backimage_zoom = iupAttribGetBoolean(ih, "BACKIMAGEZOOM");
-    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, 0, 0, active, &make_inactive);
+    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, 0, 0, 1, &make_inactive);
     if (backimage_zoom)
       iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, 0, 0, ih->currentwidth, ih->currentheight);
     else
@@ -106,13 +106,6 @@ static int iFlatLabelRedraw_CB(Ihandle* ih)
 
 /***********************************************************************************************/
 
-
-static int iFlatLabelSetActiveAttrib(Ihandle* ih, const char* value)
-{
-  iupBaseSetActiveAttrib(ih, value);
-  iupdrvRedrawNow(ih);
-  return 0; 
-}
 
 static int iFlatLabelSetAlignmentAttrib(Ihandle* ih, const char* value)
 {
@@ -244,7 +237,9 @@ Iclass* iupFlatLabelNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "flatlabel";
+  ic->cons = "FlatLabel";
   ic->format = "s"; /* one string */
+  ic->format_attr = "TITLE";
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 0;
@@ -255,7 +250,7 @@ Iclass* iupFlatLabelNewClass(void)
   ic->ComputeNaturalSize = iFlatLabelComputeNaturalSizeMethod;
 
   /* Overwrite Visual */
-  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iFlatLabelSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iupFlatSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
   iupClassRegisterAttribute(ic, "BGCOLOR", iupBaseNativeParentGetBgColorAttrib, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE | IUPAF_DEFAULT);
 
   /* Special */
@@ -279,8 +274,6 @@ Iclass* iupFlatLabelNewClass(void)
   iupClassRegisterAttribute(ic, "TEXTORIENTATION", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "BACKIMAGE", NULL, iFlatLabelSetAttribPostRedraw, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "BACKIMAGEINACTIVE", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
-
   iupClassRegisterAttribute(ic, "BACKIMAGEZOOM", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FITTOBACKIMAGE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
@@ -290,7 +283,7 @@ Iclass* iupFlatLabelNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlatLabel(const char* title)
+IUP_API Ihandle* IupFlatLabel(const char* title)
 {
   void *params[2];
   params[0] = (void*)title;

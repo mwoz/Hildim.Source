@@ -59,7 +59,7 @@ enum { IUP_POS_BOTTOMLEFT, IUP_POS_TOPLEFT, IUP_POS_BOTTOMRIGHT, IUP_POS_TOPRIGH
 
 static int iDropButtonRedraw_CB(Ihandle* ih)
 {
-  char *image = iupAttribGet(ih, "IMAGE");
+  const char *image = iupAttribGet(ih, "IMAGE");
   char* title = iupAttribGet(ih, "TITLE");
   int active = IupGetInt(ih, "ACTIVE");  /* native implementation */
   char* fgcolor = iupAttribGetStr(ih, "FGCOLOR");
@@ -180,7 +180,7 @@ static int iDropButtonRedraw_CB(Ihandle* ih)
   if (bgimage)
   {
     int backimage_zoom = iupAttribGetBoolean(ih, "BACKIMAGEZOOM");
-    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, image_pressed, ih->data->highlighted, active, &make_inactive);
+    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, image_pressed, ih->data->highlighted, 1, &make_inactive);
     if (backimage_zoom)
       iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, border_width, border_width, ih->currentwidth - border_width, ih->currentheight - border_width);
     else
@@ -244,9 +244,6 @@ static int iDropButtonRedraw_CB(Ihandle* ih)
 
   if (arrow_images)
   {
-    int make_inactive;
-    const char* image;
-
     image = iupFlatGetImageName(ih, "ARROWIMAGE", NULL, arrow_active ? ih->data->pressed : 0, arrow_active ? ih->data->highlighted : 0, arrow_active, &make_inactive);
     iupdrvDrawImage(dc, image, make_inactive, bgcolor, arrow_x, arrow_y, -1, -1);
   }
@@ -509,13 +506,6 @@ static int iDropButtonSetShowDropdownAttrib(Ihandle* ih, const char* value)
     iDropButtonShowDrop(ih);
   }
   return 0;
-}
-
-static int iDropButtonSetActiveAttrib(Ihandle* ih, const char* value)
-{
-  iupBaseSetActiveAttrib(ih, value);
-  iupdrvRedrawNow(ih);
-  return 0; 
 }
 
 static int iDropButtonSetAlignmentAttrib(Ihandle* ih, const char* value)
@@ -797,8 +787,8 @@ static int iDropButtonCreateMethod(Ihandle* ih, void** params)
   ih->data->vert_padding = 3;
 
   /* initial values - don't use default so they can be set to NULL */
-  iupAttribSet(ih, "HLCOLOR", "200 225 245");
-  iupAttribSet(ih, "PSCOLOR", "150 200 235");
+  iupAttribSet(ih, "HLCOLOR", IUP_FLAT_HIGHCOLOR);
+  iupAttribSet(ih, "PSCOLOR", IUP_FLAT_PRESSCOLOR);
 
   /* internal callbacks */
   IupSetCallback(ih, "ACTION", (Icallback)iDropButtonRedraw_CB);
@@ -816,6 +806,11 @@ static int iDropButtonCreateMethod(Ihandle* ih, void** params)
     iDropButtonSetDropChild(ih, (Ihandle*)(params[0]));
 
   return IUP_NOERROR;
+}
+
+static void iDropButtonDestroyMethod(Ihandle* ih)
+{
+  IupDestroy(ih->data->dropdialog);
 }
 
 static void iDropButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
@@ -860,6 +855,7 @@ Iclass* iupDropButtonNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "dropbutton";
+  ic->cons = "DropButton";
   ic->format = "h";   /* one Ihandle* */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
@@ -868,6 +864,7 @@ Iclass* iupDropButtonNewClass(void)
   /* Class functions */
   ic->New = iupDropButtonNewClass;
   ic->Create = iDropButtonCreateMethod;
+  ic->Destroy = iDropButtonDestroyMethod;
   ic->ComputeNaturalSize = iDropButtonComputeNaturalSizeMethod;
 
   /* Callbacks */
@@ -881,7 +878,7 @@ Iclass* iupDropButtonNewClass(void)
   iupClassRegisterCallback(ic, "DROPSHOW_CB", "i");
 
   /* Overwrite Visual */
-  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iDropButtonSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iupFlatSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
 
   /* Special */
   iupClassRegisterAttribute(ic, "TITLE", NULL, iDropButtonSetAttribPostRedraw, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
@@ -896,7 +893,7 @@ Iclass* iupDropButtonNewClass(void)
   iupClassRegisterAttribute(ic, "SHOWBORDER", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, IUP_FLAT_BORDERCOLOR, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERWIDTH", iDropButtonGetBorderWidthAttrib, iDropButtonSetBorderWidthAttrib, IUPAF_SAMEASSYSTEM, "1", IUPAF_DEFAULT);  /* inheritable */
@@ -955,7 +952,7 @@ Iclass* iupDropButtonNewClass(void)
   return ic;
 }
 
-Ihandle* IupDropButton(Ihandle* dropchild)
+IUP_API Ihandle* IupDropButton(Ihandle* dropchild)
 {
   void *children[2];
   children[0] = (void*)dropchild;

@@ -7,7 +7,7 @@
 #ifndef __IUP_MATRIXEX_H 
 #define __IUP_MATRIXEX_H 
 
-#include"iup_array.h"
+#include "iup_array.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,10 +63,6 @@ void iupMatrixExRegisterUnits(Iclass* ic);
 void iupMatrixExRegisterUndo(Iclass* ic);
 void iupMatrixExRegisterFind(Iclass* ic);
 void iupMatrixExRegisterSort(Iclass* ic);
-
-void iupMatrixExSetClassUpdateFind(Iclass* ic);
-void iupMatrixExSetClassUpdateSort(Iclass* ic);
-void iupMatrixExSetClassUpdateUndo(Iclass* ic);
 
 /* Implemented in IupMatrix */
 char* iupMatrixExGetCellValue(Ihandle* ih, int lin, int col, int display);

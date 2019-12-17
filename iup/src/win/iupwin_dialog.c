@@ -125,8 +125,33 @@ void iupdrvDialogGetSize(Ihandle* ih, InativeHandle* handle, int *w, int *h)
   if (h) *h = rect.bottom-rect.top;
 }
 
+static void winDialogMaximizeAtParent(HWND hWnd, HWND hWndParent)
+{
+  MONITORINFO mi = { sizeof(MONITORINFO) };
+  const LONG currStyles = GetWindowLong(hWnd, GWL_STYLE);
+  GetMonitorInfo(MonitorFromWindow(hWndParent, MONITOR_DEFAULTTONEAREST), &mi);
+  SetWindowLong(hWnd, GWL_STYLE, currStyles | WS_MAXIMIZE);
+  SetWindowPos(hWnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, 0, 0, SWP_NOSIZE);
+}
+
 void iupdrvDialogSetVisible(Ihandle* ih, int visible)
 {
+  if (visible && (ih->data->cmd_show == SW_MAXIMIZE || ih->data->cmd_show == SW_SHOWMAXIMIZED))
+  {
+    if (iupAttribGetBoolean(ih, "MAXIMIZEATPARENT"))
+    {
+      Ihandle* parent = IupGetAttributeHandle(ih, "PARENTDIALOG");
+      if (parent && parent->handle)
+        winDialogMaximizeAtParent(ih->handle, parent->handle);
+    }
+    else if (iupAttribGetBoolean(ih, "MAXIMIZEATDIALOG"))
+    {
+      Ihandle* dialog = IupGetAttributeHandle(ih, "MAXIMIZEDIALOG");
+      if (dialog && dialog->handle)
+        winDialogMaximizeAtParent(ih->handle, dialog->handle);
+    }
+  }
+
   ShowWindow(ih->handle, visible? ih->data->cmd_show: SW_HIDE);
 }
 
@@ -267,7 +292,22 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
   {
     if (IsIconic(ih->handle) || IsZoomed(ih->handle))
       ih->data->show_state = IUP_RESTORE;
+
+    if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE") && iupDialogCustomFrameRestore(ih))
+    {
+      ih->data->show_state = IUP_RESTORE;
+      return 1;
+    }
+
     return 0;
+  }
+
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE") && iupStrEqualNoCase(placement, "MAXIMIZED"))
+  {
+    iupDialogCustomFrameMaximize(ih);
+    iupAttribSet(ih, "PLACEMENT", NULL); /* reset to NORMAL */
+    ih->data->show_state = IUP_MAXIMIZE;
+    return 1;
   }
 
   no_activate = iupAttribGetBoolean(ih, "SHOWNOACTIVATE");
@@ -538,7 +578,7 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
         cb(ih, active);
       }
 
-      if (!iupwin_comctl32ver6 || cb) /* visual style not active */
+      if (!iupwin_comctl32ver6) /* visual style not active */
       {
         DefWindowProc(ih->handle, msg, wp, (LPARAM)-1);  /* use -1 to not repaint the nonclient area */
 
@@ -569,7 +609,8 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
   }
   case WM_ERASEBKGND:
   {
-    InvalidateRect(ih->handle, NULL, FALSE);
+    if (!iupwinIsVistaOrNew())
+      InvalidateRect(ih->handle, NULL, FALSE);
 
     /* return non zero value */
     *result = 1;
@@ -611,6 +652,8 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
     {
       SetCapture(ih->handle);
 
+      iupwinFlagButtonDown(ih, msg);
+
       if (iupwinButtonDown(ih, msg, wp, lp))
       {
         /* refresh the cursor, it could have been changed in BUTTON_CB */
@@ -638,6 +681,12 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
   case WM_MBUTTONUP:
   case WM_RBUTTONUP:
     {
+      if (!iupwinFlagButtonUp(ih, msg))
+      {
+        *result = 0;
+        return 1;
+      }
+
       ReleaseCapture();
 
       if (iupwinButtonUp(ih, msg, wp, lp))
@@ -858,6 +907,53 @@ static int winDialogBaseProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESUL
         }
       }
       break; 
+    }
+    case WM_LBUTTONDBLCLK:
+    case WM_LBUTTONDOWN:
+    {
+      if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+      {
+        SetCapture(ih->handle);
+
+        if (iupwinButtonDown(ih, msg, wp, lp))
+        {
+          /* refresh the cursor, it could have been changed in BUTTON_CB */
+          iupwinRefreshCursor(ih);
+        }
+
+        *result = 0;
+        return 1;
+      }
+      break;
+    }
+    case WM_MOUSEMOVE:
+    {
+      if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+      {
+        if (iupwinMouseMove(ih, msg, wp, lp))
+        {
+          /* refresh the cursor, it could have been changed in MOTION_CB */
+          iupwinRefreshCursor(ih);
+        }
+      }
+      break;
+    }
+    case WM_LBUTTONUP:
+    {
+      if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+      {
+        ReleaseCapture();
+
+        if (iupwinButtonUp(ih, msg, wp, lp))
+        {
+          /* refresh the cursor, it could have been changed in BUTTON_CB */
+          iupwinRefreshCursor(ih);
+        }
+
+        *result = 0;
+        return 1;
+      }
+      break;
     }
   case WM_ERASEBKGND:
     {
@@ -1092,7 +1188,10 @@ static int winDialogMapMethod(Ihandle* ih)
   int has_titlebar = 0,
       has_border = 0;
   TCHAR* classname = TEXT("IupDialog");
-  char* title;
+  char* title, *value;
+
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+    iupDialogCustomFrameSimulateCheckCallbacks(ih);
 
   title = iupAttribGet(ih, "TITLE"); 
   if (title)
@@ -1196,6 +1295,15 @@ static int winDialogMapMethod(Ihandle* ih)
                                                                    (int)GetBValue(color));
       classname = TEXT("IupDialogMDIFrame");
     }
+  }
+
+  value = iupAttribGet(ih, "TASKBARBUTTON");
+  if (value)
+  {
+    if (iupStrEqualNoCase(value, "SHOW"))
+      dwExStyle |= WS_EX_APPWINDOW;   /* Force Show on taskbar even with no decorations */
+    else if (iupStrEqualNoCase(value, "HIDE"))
+      dwExStyle |= WS_EX_TOOLWINDOW;  /* Force Hide from taskbar even with all decorations */
   }
 
   if (iupAttribGetBoolean(ih, "TOOLBOX") && native_parent)
@@ -1305,6 +1413,7 @@ static void winDialogUnMapMethod(Ihandle* ih)
   {
     ih->data->menu->handle = NULL; /* the dialog will destroy the native menu */
     IupDestroy(ih->data->menu);  
+    ih->data->menu = NULL;
   }
 
 #ifdef __ITaskbarList3_FWD_DEFINED__
@@ -1381,21 +1490,27 @@ static char* winDialogGetClientOffsetAttrib(Ihandle *ih)
 
 static char* winDialogGetClientSizeAttrib(Ihandle* ih)
 {
-  RECT rect;
-  GetClientRect(ih->handle, &rect);
-
-  if (iupAttribGetBoolean(ih, "CUSTOMFRAMEDRAW"))
+  if (ih->handle)
   {
-    int border, caption, menu;
-    iupdrvDialogGetDecoration(ih, &border, &caption, &menu);
+    int width, height;
+    RECT rect;
 
-    rect.left += border;
-    rect.right -= border;
-    rect.bottom -= border;
-    rect.top += border + caption + menu;
+    GetClientRect(ih->handle, &rect);
+    width = (int)(rect.right - rect.left);
+    height = (int)(rect.bottom - rect.top);
+
+    if (iupAttribGetBoolean(ih, "CUSTOMFRAMEDRAW"))
+    {
+      int border, caption, menu;
+      iupdrvDialogGetDecoration(ih, &border, &caption, &menu);
+      width -= 2 * border;
+      height -= caption + menu + 2 * border;
+    }
+
+    return iupStrReturnIntInt(width, height, 'x');
   }
-
-  return iupStrReturnIntInt((int)(rect.right-rect.left), (int)(rect.bottom-rect.top), 'x');
+  else
+    return iupDialogGetClientSizeAttrib(ih);
 }
 
 static int winDialogSetTitleAttrib(Ihandle* ih, const char* value)
@@ -1408,7 +1523,11 @@ static int winDialogSetTitleAttrib(Ihandle* ih, const char* value)
   }
   else
     iupwinSetTitleAttrib(ih, value);
-  return 1; 
+
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAME") || iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+    return 0;
+
+  return 1;
 }
 
 static int winDialogSetBgColorAttrib(Ihandle* ih, const char* value)
@@ -1651,7 +1770,10 @@ static int winDialogSetMdiCloseAllAttrib(Ihandle *ih, const char *value)
 
 static char* winDialogGetMaximizedAttrib(Ihandle *ih)
 {
-  return iupStrReturnBoolean(IsZoomed(ih->handle));
+  if (iupAttribGetBoolean(ih, "CUSTOMFRAMESIMULATE"))
+    return iupAttribGet(ih, "MAXIMIZED");
+  else
+    return iupStrReturnBoolean(IsZoomed(ih->handle));
 }
 
 static char* winDialogGetMinimizedAttrib(Ihandle *ih)
@@ -1984,8 +2106,8 @@ void iupdrvDialogInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "TITLE", NULL, winDialogSetTitleAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
 
   /* Base Container */
-  iupClassRegisterAttribute(ic, "CLIENTSIZE", winDialogGetClientSizeAttrib, iupDialogSetClientSizeAttrib, NULL, NULL, IUPAF_NO_SAVE|IUPAF_NO_DEFAULTVALUE|IUPAF_NO_INHERIT);  /* dialog is the only not read-only */
-  iupClassRegisterAttribute(ic, "CLIENTOFFSET", winDialogGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NO_DEFAULTVALUE|IUPAF_READONLY|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CLIENTSIZE", winDialogGetClientSizeAttrib, iupDialogSetClientSizeAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_SAVE | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);  /* dialog is the only not read-only */
+  iupClassRegisterAttribute(ic, "CLIENTOFFSET", winDialogGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_DEFAULTVALUE | IUPAF_READONLY | IUPAF_NO_INHERIT);
 
   /* IupDialog only */
   iupClassRegisterAttribute(ic, "BACKGROUND", NULL, winDialogSetBackgroundAttrib, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_INHERIT);
@@ -2011,6 +2133,9 @@ void iupdrvDialogInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "MINIMIZED", winDialogGetMinimizedAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWNOACTIVATE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWMINIMIZENEXT", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "MAXIMIZEATPARENT", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "MAXIMIZEATDIALOG", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "MAXIMIZEDIALOG", NULL, NULL, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "COMPOSITED", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED);
 
@@ -2036,6 +2161,7 @@ void iupdrvDialogInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "TRAYTIPBALLOON", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TRAYTIPBALLOONTITLE", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TRAYTIPBALLOONTITLEICON", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "TASKBARBUTTON", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "CUSTOMFRAMEDRAW", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CUSTOMFRAMECAPTIONHEIGHT", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);

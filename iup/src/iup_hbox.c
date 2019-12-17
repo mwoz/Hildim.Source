@@ -82,6 +82,12 @@ static char* iHboxGetAlignmentAttrib(Ihandle* ih)
   return align2str[ih->data->alignment];
 }
 
+static char* iHboxGetOrientationAttrib(Ihandle* ih)
+{
+  (void)ih;
+  return "HORIZONTAL";
+}
+
 static void iHboxComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
   Ihandle* child;
@@ -268,17 +274,17 @@ static void iHboxSetChildrenPositionMethod(Ihandle* ih, int x, int y)
 /******************************************************************************/
 
 
-Ihandle *IupHboxv(Ihandle **children)
+IUP_API Ihandle* IupHboxv(Ihandle **children)
 {
   return IupCreatev("hbox", (void**)children);
 }
 
-Ihandle* IupHboxV(Ihandle* child, va_list arglist)
+IUP_API Ihandle* IupHboxV(Ihandle* child, va_list arglist)
 {
   return IupCreateV("hbox", child, arglist);
 }
 
-Ihandle *IupHbox(Ihandle* child, ...)
+IUP_API Ihandle* IupHbox(Ihandle* child, ...)
 {
   Ihandle *ih;
 
@@ -305,6 +311,8 @@ Iclass* iupHboxNewClass(void)
   /* Overwrite Common */
   iupClassRegisterAttribute(ic, "SIZE", iupBaseGetSizeAttrib, iHboxSetSizeAttrib, NULL, NULL, IUPAF_NO_SAVE|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "RASTERSIZE", iupBaseGetRasterSizeAttrib, iHboxSetRasterSizeAttrib, NULL, NULL, IUPAF_NO_SAVE|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+
+  iupClassRegisterAttribute(ic, "ORIENTATION", iHboxGetOrientationAttrib, NULL, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   /* Hbox only */
   iupClassRegisterAttribute(ic, "ALIGNMENT", iHboxGetAlignmentAttrib, iHboxSetAlignmentAttrib, IUPAF_SAMEASSYSTEM, "ATOP", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);

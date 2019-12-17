@@ -27,7 +27,7 @@
 
 
 enum { ISEPARATOR_VERT, ISEPARATOR_HORIZ };
-enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP, ISEPARATOR_EMPTY, ISEPARATOR_LINE1, ISEPARATOR_LINE2};
+enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP, ISEPARATOR_EMPTY };
 
 struct _IcontrolData
 {
@@ -136,29 +136,6 @@ static int iFlatSeparatorRedraw_CB(Ihandle* ih)
         iupdrvDrawLine(dc, 0, y + 1, w - 1, y + 1, sunken_color, IUP_DRAW_STROKE, 1);
       }
     }
-	else if (ih->data->style == ISEPARATOR_LINE1)
-	{
-		if (ih->data->orientation == ISEPARATOR_VERT) {
-			x = ih->data->barsize - 1;
-
-			iupdrvDrawLine(dc, x, 0, x, h - 1, color, IUP_DRAW_STROKE, 1);
-		} else {
-			y = ih->data->barsize - 1;
-
-			iupdrvDrawLine(dc, 0, y, w - 1, y, color, IUP_DRAW_STROKE, 1);
-		}
-	}
-	else if (ih->data->style == ISEPARATOR_LINE2) {
-		if (ih->data->orientation == ISEPARATOR_VERT) {
-			x = 0;
-
-			iupdrvDrawLine(dc, x, 0, x, h - 1, color, IUP_DRAW_STROKE, 1);
-		} else {
-			y = 0;
-
-			iupdrvDrawLine(dc, 0, y, w - 1, y, color, IUP_DRAW_STROKE, 1);
-		}
-	}
     else /* ISEPARATOR_LINE */
     {
       if (ih->data->orientation == ISEPARATOR_VERT)
@@ -237,11 +214,7 @@ static int iFlatSeparatorSetStyleAttrib(Ihandle* ih, const char* value)
   else if (iupStrEqualNoCase(value, "EMPTY"))
     ih->data->style = ISEPARATOR_EMPTY;
   else if (iupStrEqualNoCase(value, "GRIP"))
-	  ih->data->style = ISEPARATOR_GRIP;
-  else if (iupStrEqualNoCase(value, "LINE1"))
-	  ih->data->style = ISEPARATOR_LINE1;
-  else if (iupStrEqualNoCase(value, "LINE2"))
-	  ih->data->style = ISEPARATOR_LINE2;
+    ih->data->style = ISEPARATOR_GRIP;
   else
     ih->data->style = ISEPARATOR_SUNKENLINE;
   IupUpdate(ih);
@@ -312,6 +285,7 @@ Iclass* iupFlatSeparatorNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "flatseparator";
+  ic->cons = "FlatSeparator";
   ic->format = NULL;  /* no parameters */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
@@ -330,7 +304,7 @@ Iclass* iupFlatSeparatorNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlatSeparator(void)
+IUP_API Ihandle* IupFlatSeparator(void)
 {
   return IupCreate("flatseparator");
 }

@@ -56,7 +56,8 @@ SRC = iup_array.c iup_callback.c iup_dlglist.c iup_attrib.c iup_focus.c iup_font
       iup_flatbutton.c iup_animatedlabel.c iup_draw.c iup_flatframe.c iup_flattabs.c \
       iup_flatscrollbar.c iup_flatscrollbox.c iup_gauge.c iup_dial.c iup_colorbar.c \
       iup_colorbrowser.c iup_colorhsi.c iup_flatlabel.c iup_dropbutton.c iup_flattoggle.c \
-      iup_flatseparator.c iup_space.c iup_multibox.c iup_flatlist.c iup_globalsdlg.c
+      iup_flatseparator.c iup_space.c iup_multibox.c iup_flatlist.c iup_globalsdlg.c \
+      iup_flatval.c iup_loop.c iup_thread.c iup_classinfo.c iup_elempropdlg.c iup_export.c
 
 ifdef USE_HAIKU
   # Since Haiku has no GTK and no Motif, we can only use the native implementation
@@ -193,7 +194,13 @@ ifneq ($(findstring dll, $(TEC_UNAME)), )
   DEFINES += IUP_DLL
   INCLUDES += ../etc
   SRC += ../etc/iup.rc
-  DEF_FILE = iup.def
+  ifdef USE_EXPORT
+    # Experimental
+    DEFINES += IUP_BUILD_LIBRARY
+    DEF_FILE = iup_dummy.def
+  else
+    DEF_FILE = iup.def
+  endif
 endif
 
 ifeq "$(TEC_UNAME)" "vc6"

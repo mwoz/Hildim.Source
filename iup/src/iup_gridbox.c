@@ -1136,17 +1136,17 @@ static int iGridBoxCreateMethod(Ihandle* ih, void** params)
 /******************************************************************************/
 
 
-Ihandle *IupGridBoxv(Ihandle **children)
+IUP_API Ihandle* IupGridBoxv(Ihandle **children)
 {
   return IupCreatev("gridbox", (void**)children);
 }
 
-Ihandle*  IupGridBoxV(Ihandle* child, va_list arglist)
+IUP_API Ihandle* IupGridBoxV(Ihandle* child, va_list arglist)
 {
   return IupCreateV("gridbox", child, arglist);
 }
 
-Ihandle *IupGridBox(Ihandle* child, ...)
+IUP_API Ihandle* IupGridBox(Ihandle* child, ...)
 {
   Ihandle *ih;
 
@@ -1163,6 +1163,7 @@ Iclass* iupGridBoxNewClass(void)
   Iclass* ic = iupClassNew(NULL);
 
   ic->name = "gridbox";
+  ic->cons = "GridBox";
   ic->format = "g"; /* array of Ihandle */
   ic->nativetype = IUP_TYPEVOID;
   ic->childtype = IUP_CHILDMANY;  /* can have children */
@@ -1210,7 +1211,7 @@ Iclass* iupGridBoxNewClass(void)
 
   iupClassRegisterAttribute(ic, "ALIGNMENTLIN", iGridBoxGetAlignmentLinAttrib, iGridBoxSetAlignmentLinAttrib, IUPAF_SAMEASSYSTEM, "ATOP", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "ALIGNMENTCOL", iGridBoxGetAlignmentColAttrib, iGridBoxSetAlignmentColAttrib, IUPAF_SAMEASSYSTEM, "ALEFT", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "ORIENTATION", iGridBoxGetOrientationAttrib, iGridBoxSetOrientationAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ORIENTATION", iGridBoxGetOrientationAttrib, iGridBoxSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMDIV", iGridBoxGetNumDivAttrib, iGridBoxSetNumDivAttrib, IUPAF_SAMEASSYSTEM, "AUTO", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMCOL", iGridBoxGetNumColAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMLIN", iGridBoxGetNumLinAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);

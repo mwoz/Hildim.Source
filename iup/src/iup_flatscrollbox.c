@@ -283,14 +283,14 @@ static void iFlatScrollBoxUpdateVisibleScrollArea(Ihandle* ih, int view_width, i
     then it has scrollbars
     but this affects the opposite direction */
 
-    if (view_width > ih->currentwidth)  /* check for horizontal scrollbar */
+    if (view_width > ih->currentwidth && sb_horiz)  /* check for horizontal scrollbar */
       canvas_height -= sb_size;                /* affect vertical size */
-    if (view_height > ih->currentheight)
+    if (view_height > ih->currentheight && sb_vert)
       canvas_width -= sb_size;
 
-    if (view_width <= ih->currentwidth && view_width > canvas_width)
+    if (view_width <= ih->currentwidth && view_width > canvas_width && sb_horiz)
       canvas_height -= sb_size;
-    if (view_height <= ih->currentheight && view_height > canvas_height)
+    if (view_height <= ih->currentheight && view_height > canvas_height && sb_vert)
       canvas_width -= sb_size;
   }
 
@@ -314,8 +314,9 @@ static void iFlatScrollBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
   if (child)
   {
     int w, h, has_sb_horiz=0, has_sb_vert=0;
-    int sb_vert = iupFlatScrollBarGet(ih) & IUP_SB_VERT;
-    int sb_horiz = iupFlatScrollBarGet(ih) & IUP_SB_HORIZ;
+    int sb = iupFlatScrollBarGet(ih);
+    int sb_vert = sb & IUP_SB_VERT;
+    int sb_horiz = sb & IUP_SB_HORIZ;
 
     /* If child is greater than scrollbox area, use child natural size,
        else use current scrollbox size;
@@ -411,6 +412,7 @@ static int iFlatScrollBoxCreateMethod(Ihandle* ih, void** params)
   IupSetCallback(ih, "WHEEL_CB", (Icallback)iFlatScrollBoxWheel_CB);
 
   IupSetAttribute(ih, "CANFOCUS", "NO");
+  IupSetAttribute(ih, "WHEELDROPFOCUS", "YES");
 
   if (params)
   {
@@ -421,11 +423,17 @@ static int iFlatScrollBoxCreateMethod(Ihandle* ih, void** params)
   return IUP_NOERROR;
 }
 
+static void iFlatScrollBoxDestroyMethod(Ihandle* ih)
+{
+  iupFlatScrollBarRelease(ih);
+}
+
 Iclass* iupFlatScrollBoxNewClass(void)
 {
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name   = "flatscrollbox";
+  ic->cons = "FlatScrollBox";
   ic->format = "h";   /* one Ihandle* */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDMANY+3;  /* 1 child + 2 scrollbars */
@@ -434,6 +442,7 @@ Iclass* iupFlatScrollBoxNewClass(void)
   /* Class functions */
   ic->New = iupFlatScrollBoxNewClass;
   ic->Create  = iFlatScrollBoxCreateMethod;
+  ic->Destroy = iFlatScrollBoxDestroyMethod;
 
   ic->ComputeNaturalSize = iFlatScrollBoxComputeNaturalSizeMethod;
   ic->SetChildrenCurrentSize = iFlatScrollBoxSetChildrenCurrentSizeMethod;
@@ -443,12 +452,8 @@ Iclass* iupFlatScrollBoxNewClass(void)
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "EXPAND", iFlatScrollBoxGetExpandAttrib, iFlatScrollBoxSetExpandAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "CLIENTOFFSET", iupBaseGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
-  {
-    IattribGetFunc drawsize_get = NULL;
-    iupClassRegisterGetAttribute(ic, "DRAWSIZE", &drawsize_get, NULL, NULL, NULL, NULL);
-    iupClassRegisterAttribute(ic, "CLIENTSIZE", drawsize_get, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
-  }
+  iupClassRegisterAttribute(ic, "CLIENTOFFSET", iupBaseCanvasGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CLIENTSIZE", iupBaseCanvasGetClientSizeAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
 
   /* Native Container */
   iupClassRegisterAttribute(ic, "CHILDOFFSET", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -478,7 +483,7 @@ Iclass* iupFlatScrollBoxNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlatScrollBox(Ihandle* child)
+IUP_API Ihandle* IupFlatScrollBox(Ihandle* child)
 {
   void *children[2];
   children[0] = (void*)child;

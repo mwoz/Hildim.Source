@@ -207,13 +207,15 @@
     </ClCompile>
     <ClCompile Include="..\src\win\iupwin_dragdrop.c" />
     <ClCompile Include="..\src\win\iupwin_draw.c" />
-    <ClCompile Include="..\src\win\iupwin_draw_wdl.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\win\iupwin_draw_gdi.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\win\iupwin_draw_wdl.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\win\iupwin_filedlg.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\win\iupwin_focus.c" />
     <ClCompile Include="..\src\win\iupwin_font.c" />
@@ -231,7 +233,6 @@
     <ClCompile Include="..\src\win\iupwin_canvas.c" />
     <ClCompile Include="..\src\win\iupwin_clipboard.c" />
     <ClCompile Include="..\src\win\iupwin_dialog.c" />
-    <ClCompile Include="..\src\win\iupwin_filedlg.c" />
     <ClCompile Include="..\src\win\iupwin_fontdlg.c" />
     <ClCompile Include="..\src\win\iupwin_frame.c" />
     <ClCompile Include="..\src\win\iupwin_image.c" />

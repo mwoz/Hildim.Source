@@ -428,7 +428,7 @@ static int iSboxCreateMethod(Ihandle* ih, void** params)
   IupSetAttribute(bar, "CURSOR", "RESIZE_WE");
   IupSetAttribute(bar, "ORIENTATION", "VERTICAL");
   IupSetAttribute(bar, "STYLE", "FILL");
-  IupSetAttribute(bar, "COLOR", "192 192 192");
+  IupSetAttribute(bar, "COLOR", "160 160 160");
 
   /* Setting callbacks */
   IupSetCallback(bar, "BUTTON_CB", (Icallback) iSboxButton_CB);
@@ -473,7 +473,7 @@ Iclass* iupSboxNewClass(void)
   iupClassRegisterAttribute(ic, "EXPAND", iupBaseContainerGetExpandAttrib, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 
   /* IupSbox only */
-  iupClassRegisterAttribute(ic, "COLOR", iSboxGetColorAttrib, iSboxSetColorAttrib, IUPAF_SAMEASSYSTEM, "192 192 192", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "COLOR", iSboxGetColorAttrib, iSboxSetColorAttrib, IUPAF_SAMEASSYSTEM, "160 160 160", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DIRECTION", NULL, iSboxSetDirectionAttrib, IUPAF_SAMEASSYSTEM, "EAST", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWGRIP", iSboxGetShowGripAttrib, iSboxSetShowGripAttrib, IUPAF_SAMEASSYSTEM, "NO", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BARSIZE", iSboxGetBarSizeAttrib, iSboxSetBarSizeAttrib, IUPAF_SAMEASSYSTEM, "5", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -482,7 +482,7 @@ Iclass* iupSboxNewClass(void)
   return ic;
 }
 
-Ihandle* IupSbox(Ihandle* child)
+IUP_API Ihandle* IupSbox(Ihandle* child)
 {
   void *children[2];
   children[0] = (void*)child;

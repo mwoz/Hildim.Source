@@ -876,7 +876,6 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
   IupSetAttribute(colordlg_data->color_browser, "EXPAND", "YES");  
   IupSetCallback(colordlg_data->color_browser, "DRAG_CB",   (Icallback)iColorDlgColorSelDrag_CB);
   IupSetCallback(colordlg_data->color_browser, "CHANGE_CB", (Icallback)iColorDlgColorSelDrag_CB);
-  IupSetAttribute(colordlg_data->color_browser, "MINSIZE", "200x200");
 
   colordlg_data->color_cnv = IupCanvas(NULL);  /* Canvas of the color */
   IupSetAttribute(colordlg_data->color_cnv, "SIZE", "x12");
@@ -1070,12 +1069,12 @@ static int iColorDlgCreateMethod(Ihandle* ih, void** params)
   iupChildTreeAppend(ih, IupSetAttributes(IupVbox(lin1, IupSetAttributes(IupLabel(NULL), "SEPARATOR=HORIZONTAL"), lin2, NULL), "MARGIN=10x10, GAP=10"));
 
   IupRefresh(ih);
+
   if (colordlg_data->color_browser->currentwidth < colordlg_data->color_browser->currentheight)
   {
-    IupSetStrf(colordlg_data->color_browser, "RASTERSIZE", "%dx", colordlg_data->color_browser->currentheight);
+    IupSetStrf(colordlg_data->color_browser, "RASTERSIZE", "%dx%d", colordlg_data->color_browser->currentheight, colordlg_data->color_browser->currentheight);
     IupSetAttribute(ih, "RASTERSIZE", NULL);
   }
-  IupSetAttribute(ih, "RESIZE", "NO");
 
   iColorDlgInit_Defaults(colordlg_data);
 
@@ -1093,6 +1092,7 @@ Iclass* iupColorDlgNewClass(void)
   ic->Map = iColorDlgMapMethod;
 
   ic->name = "colordlg";
+  ic->cons = "ColorDlg";
   ic->nativetype = IUP_TYPEDIALOG;
   ic->is_interactive = 1;
   ic->childtype = IUP_CHILDNONE;
@@ -1113,7 +1113,7 @@ Iclass* iupColorDlgNewClass(void)
   return ic;
 }
 
-Ihandle* IupColorDlg(void)
+IUP_API Ihandle* IupColorDlg(void)
 {
   return IupCreate("colordlg");
 }

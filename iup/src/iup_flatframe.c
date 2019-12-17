@@ -140,7 +140,7 @@ static int iFlatFrameRedraw_CB(Ihandle* ih)
     iupFlatDrawIcon(ih, dc, frame_width + x_off, frame_width,
                     ih->currentwidth - 2 * frame_width, title_h - title_line,
                     img_position, spacing, title_alignment, IUP_ALIGN_ATOP, horiz_padding, vert_padding,
-                    titleimage, make_inactive, title, text_flags, text_orientation, titlecolor, NULL, active);
+                    titleimage, make_inactive, title, text_flags, text_orientation, titlecolor, backcolor, active);
   }
 
   iupdrvDrawFlush(dc);
@@ -217,7 +217,7 @@ static int iFlatFrameSetAttribPostRedraw(Ihandle* ih, const char* value)
 /******************************************************************************/
 
 
-Ihandle* IupFlatFrame(Ihandle* child)
+IUP_API Ihandle* IupFlatFrame(Ihandle* child)
 {
   void *children[2];
   children[0] = (void*)child;
@@ -230,6 +230,7 @@ Iclass* iupFlatFrameNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("backgroundbox"));
 
   ic->name = "flatframe";
+  ic->cons = "FlatFrame";
   ic->format = "h"; /* one Ihandle* */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDMANY+1;   /* 1 child */
@@ -241,6 +242,7 @@ Iclass* iupFlatFrameNewClass(void)
 
   /* replace IupCanvas behavior */
   iupClassRegisterReplaceAttribFlags(ic, "BORDER", IUPAF_READONLY);
+  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iupFlatSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
 
   /* replace IupBackgroundBox behavior */
   iupClassRegisterAttribute(ic, "DECORATION", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
@@ -266,7 +268,7 @@ Iclass* iupFlatFrameNewClass(void)
   iupClassRegisterAttribute(ic, "TITLETEXTORIENTATION", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "FRAME", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "FRAMECOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "DLGFGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FRAMECOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "160 160 160", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FRAMEWIDTH", NULL, NULL, IUPAF_SAMEASSYSTEM, "1", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FRAMESPACE", NULL, NULL, IUPAF_SAMEASSYSTEM, "2", IUPAF_NO_INHERIT);
 

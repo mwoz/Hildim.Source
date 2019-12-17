@@ -387,6 +387,9 @@ static int iExpanderAnimateTimer_CB(Ihandle* animate_timer)
   int height;
   int current_frame = frame_time != 0 ? time_delay / frame_time : 0;  /* safety check */
 
+  if (num_frames == 0)
+    return IUP_DEFAULT;
+
   if (closing)
     height = (final_height*(num_frames - current_frame)) / num_frames;
   else
@@ -1026,10 +1029,6 @@ static int iExpanderSetBarSizeAttrib(Ihandle* ih, const char* value)
     ih->data->bar_size = -1;
   else
     iupStrToInt(value, &ih->data->bar_size);  /* must manually update layout */
-  if (!ih->data->bar_size) {
-	  Ihandle* expand_button = ih->firstchild;
-	  IupSetAttribute(expand_button, "VISIBLE", "NO");
-  }
   return 0; /* do not store value in hash table */
 }
 
@@ -1651,7 +1650,7 @@ Iclass* iupExpanderNewClass(void)
   return ic;
 }
 
-Ihandle* IupExpander(Ihandle* child)
+IUP_API Ihandle* IupExpander(Ihandle* child)
 {
   void *children[2];
   children[0] = (void*)child;

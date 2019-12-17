@@ -223,14 +223,14 @@ static void iScrollBoxUpdateVisibleScrollArea(Ihandle* ih, int view_width, int v
   then it has scrollbars
   but this affects the opposite direction */
 
-  if (view_width > ih->currentwidth)  /* check for horizontal scrollbar */
+  if (view_width > ih->currentwidth && sb_horiz)  /* check for horizontal scrollbar */
     canvas_height -= sb_size;                /* affect vertical size */
-  if (view_height > ih->currentheight)
+  if (view_height > ih->currentheight && sb_vert)
     canvas_width -= sb_size;
 
-  if (view_width <= ih->currentwidth && view_width > canvas_width)
+  if (view_width <= ih->currentwidth && view_width > canvas_width && sb_horiz)
     canvas_height -= sb_size;
-  if (view_height <= ih->currentheight && view_height > canvas_height)
+  if (view_height <= ih->currentheight && view_height > canvas_height && sb_vert)
     canvas_width -= sb_size;
 
   if (canvas_width < 0) canvas_width = 0;
@@ -369,6 +369,7 @@ static int iScrollBoxCreateMethod(Ihandle* ih, void** params)
   IupSetCallback(ih, "MOTION_CB",    (Icallback)iScrollBoxMotion_CB);
 
   IupSetAttribute(ih, "CANFOCUS", "NO");
+  IupSetAttribute(ih, "WHEELDROPFOCUS", "YES");
 
   if (params)
   {
@@ -383,7 +384,8 @@ Iclass* iupScrollBoxNewClass(void)
 {
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
-  ic->name   = "scrollbox";
+  ic->name = "scrollbox";
+  ic->cons = "ScrollBox";
   ic->format = "h";   /* one Ihandle* */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDMANY+1;  /* 1 child */
@@ -401,12 +403,8 @@ Iclass* iupScrollBoxNewClass(void)
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "EXPAND", iScrollBoxGetExpandAttrib, iScrollBoxSetExpandAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "CLIENTOFFSET", iupBaseGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
-  {
-    IattribGetFunc drawsize_get = NULL;
-    iupClassRegisterGetAttribute(ic, "DRAWSIZE", &drawsize_get, NULL, NULL, NULL, NULL);
-    iupClassRegisterAttribute(ic, "CLIENTSIZE", drawsize_get, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
-  }
+  iupClassRegisterAttribute(ic, "CLIENTOFFSET", iupBaseCanvasGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CLIENTSIZE", iupBaseCanvasGetClientSizeAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_READONLY | IUPAF_NO_INHERIT);
 
   /* Native Container */
   iupClassRegisterAttribute(ic, "CHILDOFFSET", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -432,7 +430,7 @@ Iclass* iupScrollBoxNewClass(void)
   return ic;
 }
 
-Ihandle* IupScrollBox(Ihandle* child)
+IUP_API Ihandle* IupScrollBox(Ihandle* child)
 {
   void *children[2];
   children[0] = (void*)child;

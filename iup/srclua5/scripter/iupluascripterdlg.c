@@ -595,9 +595,9 @@ static int multitext_valuechanged_cb(Ihandle* multitext)
   if (IupGetInt(multitext, "AUTOCOMPLETION"))
   {
     const char *t;
-    int pos = IupGetInt(multitext, "CARETPOS");
-    char *text = IupGetAttribute(multitext, "VALUE");
-    text[pos + 1] = '\0';
+    char *text = IupGetAttribute(multitext, "LINEVALUE");
+    int col = IupGetInt2(multitext, "CARET");
+    text[col + 1] = '\0';
     t = getLastNonAlphaNumeric(text);
     if (t != NULL && *t != '\n' && *t != 0)
     {
@@ -725,10 +725,9 @@ static int item_folding_action_cb(Ihandle* ih)
       IupSetAttribute(multitext, "PROPERTY", "fold=1");
       IupSetAttribute(multitext, "MARGINWIDTH3", FOLDING_MARGIN);
       IupSetAttribute(multitext, "_IUP_FOLDDING", "1");
+      IupSetAttribute(multitext, "FOLDALL", "EXPAND");
     }
   }
-
-  IupSetAttribute(multitext, "FOLDALL", "EXPAND");
 
   IupConfigSetVariableStr(config, "LuaScripter", "Folding", IupGetAttribute(ih, "VALUE"));
 
@@ -1142,6 +1141,7 @@ static int multitext_map_cb(Ihandle* multitext)
     IupSetAttribute(multitext, "MARGINWIDTH3", FOLDING_MARGIN);
     IupSetAttribute(multitext, "PROPERTY", "fold=1");
     IupSetAttribute(multitext, "_IUP_FOLDDING", "1");
+    IupSetAttribute(multitext, "FOLDALL", "EXPAND");
   }
   else
   {
@@ -1149,7 +1149,6 @@ static int multitext_map_cb(Ihandle* multitext)
     IupSetAttribute(multitext, "PROPERTY", "fold=0");
     IupSetAttribute(multitext, "_IUP_FOLDDING", NULL);
   }
-  IupSetAttribute(multitext, "FOLDALL", "EXPAND");
 
   return IUP_DEFAULT;
 }
@@ -1325,6 +1324,9 @@ static int iLuaScripterDlgCreateMethod(Ihandle* ih, void** params)
   IupSetCallback(ih, "NEWTEXT_CB", (Icallback)newtext_cb);
   IupSetCallback(ih, "NEWFILENAME_CB", (Icallback)newfilename_cb);
 
+  /* Call NEW_TEXT_CB because the first tab was already created */
+  newtext_cb(ih, get_current_multitext(ih));
+
   /* Additional toolbar buttons */
   toolbar = IupGetChild(IupGetChild(ih, 0), 0);
   iupLuaScripterDebuggerAddToolbarButtons(toolbar);
@@ -1402,6 +1404,7 @@ static Iclass* iupLuaScripterDlgNewClass(void)
   ic->Create = iLuaScripterDlgCreateMethod;
 
   ic->name = "luascripterdlg";
+  ic->cons = "LuaScripterDlg";
   ic->nativetype = IUP_TYPEDIALOG;
   ic->is_interactive = 1;
   ic->childtype = IUP_CHILDNONE;
@@ -1458,7 +1461,7 @@ void IupLuaScripterDlgOpen(lua_State *L)
 }
 
 /* TODO:
-- condicional Breakpoints, Hit Count, When Hit
+- ** condicional Breakpoints, Hit Count, When Hit
 - sub-folder level for Projects
 - multi-language (Portuguese, Spanish)
 - detachable Console, Debug, Breakpoints (problem with IupGetDialogChild(NAME))?

@@ -36,10 +36,11 @@ static int winButtonGetBorder(void)
   return 4;
 }
 
-void iupdrvButtonAddBorders(int *x, int *y)
+void iupdrvButtonAddBorders(Ihandle* ih, int *x, int *y)
 {
   /* LAYOUT_DECORATION_ESTIMATE */
   int border_size = winButtonGetBorder() * 2;
+  (void)ih;
   (*x) += border_size;
   (*y) += border_size;
 }
@@ -534,8 +535,10 @@ static int winButtonMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:
     {
+      iupwinFlagButtonDown(ih, msg);
+
       /* Process BUTTON_CB */
-      iupwinButtonDown(ih, msg, wp, lp);
+      (void)iupwinButtonDown(ih, msg, wp, lp); /* ignore return value */
 
       /* Feedback will NOT be done when not receiving the focus or when in double click */
       if ((msg==WM_LBUTTONDOWN && !iupAttribGetBoolean(ih, "CANFOCUS")) ||
@@ -551,8 +554,14 @@ static int winButtonMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT
   case WM_MBUTTONUP:
   case WM_RBUTTONUP:
     {
+      if (!iupwinFlagButtonUp(ih, msg))
+      {
+        *result = 0;
+        return 1;
+      }
+
       /* Process BUTTON_CB */
-      iupwinButtonUp(ih, msg, wp, lp);
+      (void)iupwinButtonUp(ih, msg, wp, lp); /* ignore return value */
       
       if (!iupObjectCheck(ih))
       {

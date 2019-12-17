@@ -134,9 +134,6 @@
     <ClCompile Include="..\src\win\iupwin_dialog.c">
       <Filter>src_controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\win\iupwin_filedlg.c">
-      <Filter>src_controls</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\win\iupwin_fontdlg.c">
       <Filter>src_controls</Filter>
     </ClCompile>
@@ -245,13 +242,16 @@
     <ClCompile Include="..\src\win\iupwin_draw_gdi.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\win\iupwin_draw_wdl.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\win\wdl\strokestyle.c">
       <Filter>wdl</Filter>
     </ClCompile>
     <ClCompile Include="..\src\win\iupwin_image_wdl.c">
+      <Filter>src_controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\win\iupwin_draw_wdl.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\win\iupwin_filedlg.c">
       <Filter>src_controls</Filter>
     </ClCompile>
   </ItemGroup>

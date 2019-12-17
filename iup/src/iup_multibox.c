@@ -480,17 +480,17 @@ static int iMultiBoxCreateMethod(Ihandle* ih, void** params)
 /******************************************************************************/
 
 
-Ihandle *IupMultiBoxv(Ihandle **children)
+IUP_API Ihandle* IupMultiBoxv(Ihandle **children)
 {
   return IupCreatev("multibox", (void**)children);
 }
 
-Ihandle*  IupMultiBoxV(Ihandle* child, va_list arglist)
+IUP_API Ihandle* IupMultiBoxV(Ihandle* child, va_list arglist)
 {
   return IupCreateV("multibox", child, arglist);
 }
 
-Ihandle *IupMultiBox(Ihandle* child, ...)
+IUP_API Ihandle* IupMultiBox(Ihandle* child, ...)
 {
   Ihandle *ih;
 
@@ -507,6 +507,7 @@ Iclass* iupMultiBoxNewClass(void)
   Iclass* ic = iupClassNew(NULL);
 
   ic->name = "multibox";
+  ic->cons = "MultiBox";
   ic->format = "g"; /* array of Ihandle */
   ic->nativetype = IUP_TYPEVOID;
   ic->childtype = IUP_CHILDMANY;  /* can have children */
@@ -549,7 +550,7 @@ Iclass* iupMultiBoxNewClass(void)
   iupClassRegisterAttribute(ic, "NGAPHORIZ", iMultiBoxGetGapHorizAttrib, iMultiBoxSetGapHorizAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NO_SAVE|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NCGAPHORIZ", iMultiBoxGetCGapHorizAttrib, iMultiBoxSetCGapHorizAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NO_SAVE|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "ORIENTATION", iMultiBoxGetOrientationAttrib, iMultiBoxSetOrientationAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ORIENTATION", iMultiBoxGetOrientationAttrib, iMultiBoxSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMCOL", iMultiBoxGetNumColAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NUMLIN", iMultiBoxGetNumLinAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 

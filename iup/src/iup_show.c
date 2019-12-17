@@ -6,7 +6,6 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-#include <Windows.h>
 
 #include "iup.h"
 
@@ -21,28 +20,8 @@
 #include "iup_drv.h"
 #include "iup_drvfont.h"
 
-void SciTE_NATIVEPARENT(Ihandle *ih)
-{
-	if (!IupGetAttribute(ih, "PARENT") && !IupGetAttribute(ih, "NATIVEPARENT"))
-	{
-		HWND hwnd = NULL;
 
-		DWORD p = GetCurrentProcessId();
-
-		for (;;){
-			hwnd = FindWindowEx(NULL, hwnd, L"HildiMWindow", NULL);
-			DWORD d = 0;
-			GetWindowThreadProcessId(hwnd, &d);
-			if (d == p) break;
-			if (!hwnd) break;
-		}
-		if (hwnd){
-			IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
-		}
-	}
-}
-
-void IupUnmap(Ihandle *ih)
+IUP_API void IupUnmap(Ihandle *ih)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))
@@ -74,7 +53,7 @@ void IupUnmap(Ihandle *ih)
   ih->handle = NULL;
 }
 
-int IupMap(Ihandle* ih)
+IUP_API int IupMap(Ihandle* ih)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))
@@ -98,7 +77,6 @@ int IupMap(Ihandle* ih)
     return IUP_NOERROR;
   }
 
-  SciTE_NATIVEPARENT(ih);
   /* parent must be mapped to map child */
   if (ih->parent && !(ih->parent->handle))
     return IUP_ERROR;
@@ -160,7 +138,7 @@ int IupMap(Ihandle* ih)
   return IUP_NOERROR;
 }
 
-int IupPopup(Ihandle *ih, int x, int y)
+IUP_API int IupPopup(Ihandle *ih, int x, int y)
 {
   int ret;
 
@@ -193,7 +171,7 @@ int IupPopup(Ihandle *ih, int x, int y)
   return IUP_NOERROR;
 }
 
-int IupShowXY(Ihandle *ih, int x, int y)
+IUP_API int IupShowXY(Ihandle *ih, int x, int y)
 {
   int ret;
 
@@ -221,7 +199,7 @@ int IupShowXY(Ihandle *ih, int x, int y)
   return IUP_NOERROR;
 }
 
-int IupShow(Ihandle* ih)
+IUP_API int IupShow(Ihandle* ih)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))
@@ -246,7 +224,7 @@ int IupShow(Ihandle* ih)
   return IUP_NOERROR;
 }
 
-int IupHide(Ihandle* ih)
+IUP_API int IupHide(Ihandle* ih)
 {
   iupASSERT(iupObjectCheck(ih));
   if (!iupObjectCheck(ih))

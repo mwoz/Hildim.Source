@@ -11,7 +11,9 @@
    and Windows system headers. */
 
 #include <windows.h>
+#include <ShlObj.h> /* for SHGetFolderPath */
 
+#include "iup_export.h"
 #include "iup_str.h"
 #include "iup_drvinfo.h"
 #include "iup_varg.h"
@@ -22,7 +24,7 @@
 #pragma warning( disable : 4996 )
 #endif
 
-char* iupdrvLocaleInfo(void)
+IUP_SDK_API char* iupdrvLocaleInfo(void)
 {
   CPINFOEXA info;
   GetCPInfoExA(CP_ACP, 0, &info);
@@ -32,7 +34,7 @@ char* iupdrvLocaleInfo(void)
 /* TODO: Since Windows 8.1/Visual Studio 2013 GetVersionEx is deprecated. 
          We can replace it using GetProductInfo. But for now leave it. */
 
-char *iupdrvGetSystemName(void)
+IUP_SDK_API char *iupdrvGetSystemName(void)
 {
   OSVERSIONINFOA osvi;
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
@@ -71,7 +73,7 @@ char *iupdrvGetSystemName(void)
   return "Windows";
 }
 
-char *iupdrvGetSystemVersion(void)
+IUP_SDK_API char *iupdrvGetSystemVersion(void)
 {
   char *str = iupStrGetMemory(256);
   OSVERSIONINFOEXA osvi;
@@ -87,7 +89,7 @@ char *iupdrvGetSystemVersion(void)
   sprintf(str, "%d.%d.%d", (int)osvi.dwMajorVersion, (int)osvi.dwMinorVersion, (int)osvi.dwBuildNumber);
 
   /* Display service pack (if any). */
-  if (osvi.szCSDVersion && osvi.szCSDVersion[0]!=0)
+  if (osvi.szCSDVersion[0] != 0)
   {
     strcat(str, " ");
     strcat(str, osvi.szCSDVersion);
@@ -103,12 +105,51 @@ char *iupdrvGetSystemVersion(void)
   return str;
 }
 
-int iupdrvSetCurrentDirectory(const char* path)
+/*
+Windows 7 and 10
+PreferencePath(0)=C:\Users\Tecgraf\
+PreferencePath(1)=C:\Users\Tecgraf\AppData\Roaming\
+
+Windows XP
+PreferencePath(0)=C:\Documents and Settings\Tecgraf\
+PreferencePath(1)=C:\Documents and Settings\Tecgraf\Application Data\
+*/
+
+IUP_SDK_API int iupdrvGetPreferencePath(char *filename, int use_system)
+{
+  char* homedrive;
+  char* homepath;
+
+  if (use_system)
+  {
+    if (SHGetFolderPathA(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, filename) == S_OK)
+    {
+      strcat(filename, "\\");
+      return 1;
+    }
+  }
+
+  homedrive = getenv("HOMEDRIVE");
+  homepath = getenv("HOMEPATH");
+  if (homedrive && homepath)
+  {
+    strcpy(filename, homedrive);
+    strcat(filename, homepath);
+    strcat(filename, "\\");
+    return 1;
+  }
+
+  filename[0] = '\0';
+  return 0;
+
+}
+
+IUP_SDK_API int iupdrvSetCurrentDirectory(const char* path)
 {
   return SetCurrentDirectoryA(path);
 }
 
-char* iupdrvGetCurrentDirectory(void)
+IUP_SDK_API char* iupdrvGetCurrentDirectory(void)
 {
   char* cur_dir = NULL;
 
@@ -123,7 +164,7 @@ char* iupdrvGetCurrentDirectory(void)
   return cur_dir;
 }
 
-void IupLogV(const char* type, const char* format, va_list arglist)
+IUP_API void IupLogV(const char* type, const char* format, va_list arglist)
 {
   HANDLE EventSource;
   WORD wtype = 0;
@@ -152,7 +193,7 @@ void IupLogV(const char* type, const char* format, va_list arglist)
   }
 }
 
-void IupLog(const char* type, const char* format, ...)
+IUP_API void IupLog(const char* type, const char* format, ...)
 {
   va_list arglist;
   va_start(arglist, format);

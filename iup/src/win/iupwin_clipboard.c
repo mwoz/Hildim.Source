@@ -465,7 +465,7 @@ static int winClipboardSetAddFormatAttrib(Ihandle *ih, const char *value)
 
 /******************************************************************************/
 
-Ihandle* IupClipboard(void)
+IUP_API Ihandle* IupClipboard(void)
 {
   return IupCreate("clipboard");
 }
@@ -476,7 +476,7 @@ Iclass* iupClipboardNewClass(void)
 
   ic->name = "clipboard";
   ic->format = NULL;  /* no parameters */
-  ic->nativetype = IUP_TYPECONTROL;
+  ic->nativetype = IUP_TYPEOTHER;
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 0;
 
@@ -498,7 +498,7 @@ Iclass* iupClipboardNewClass(void)
   iupClassRegisterAttribute(ic, "ADDFORMAT", NULL, winClipboardSetAddFormatAttrib, NULL, NULL, IUPAF_WRITEONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMAT", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMATAVAILABLE", winClipboardGetFormatAvailableAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "FORMATDATA", winClipboardGetFormatDataAttrib, winClipboardSetFormatDataAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FORMATDATA", winClipboardGetFormatDataAttrib, winClipboardSetFormatDataAttrib, NULL, NULL, IUPAF_NO_STRING|IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMATDATASIZE", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 
   return ic;

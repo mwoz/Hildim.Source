@@ -20,7 +20,7 @@
 #define REQUIRE(b)  {if (!(b)) goto cleanup;}
 #define REQUIRE_ARG(b)  {if (!(b)) goto cleanup_arg;}
 
-int IupScanf (const char *format, ...)
+IUP_API int IupScanf (const char *format, ...)
 {
   int i;
   int fields_out_count=(-1);    /* return code if not error (error <  0) */
@@ -169,8 +169,8 @@ int IupScanf (const char *format, ...)
       break;
     case 's':
       {
-        char *s=(char *)va_arg(va,char *);
-        iupStrCopyN(s, 4096, text[i]);
+        char *str=(char *)va_arg(va,char *);
+        iupStrCopyN(str, 4096, text[i]);
       }
       break;
     }

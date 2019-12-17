@@ -963,7 +963,7 @@ static int iMatrixListDrawImageCol(Ihandle *ih, ImatrixListData* mtxList, int li
     image_name = iupAttribGetStr(ih, attrib_name);  /* this will check for the default values also */
   }
 
-  image = iupImageGetHandle(image_name);
+  image = IupImageGetHandle(image_name);
   if (image)
   {
     int width  = IupGetInt(image, "WIDTH");
@@ -1345,7 +1345,7 @@ static int iMatrixListKeyAny_CB(Ihandle *ih, int key)
 ******************************************************************************/
 
 
-static void iMatrixListUnMapMethod(Ihandle* ih)
+static void iMatrixListDestroyMethod(Ihandle* ih)
 {
   ImatrixListData* mtxList = (ImatrixListData*)iupAttribGet(ih, "_IUPMTXLIST_DATA");
   free(mtxList);
@@ -1396,6 +1396,7 @@ Iclass* iupMatrixListNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("matrix"));
   
   ic->name = "matrixlist";
+  ic->cons = "MatrixList";
   ic->format = NULL; /* no parameters */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
@@ -1405,8 +1406,8 @@ Iclass* iupMatrixListNewClass(void)
   /* Class functions */
   ic->New    = iupMatrixListNewClass;
   ic->Create = iMatrixListCreateMethod;
-  ic->Map    = iMatrixListMapMethod;
-  ic->UnMap  = iMatrixListUnMapMethod;
+  ic->Destroy = iMatrixListDestroyMethod;
+  ic->Map = iMatrixListMapMethod;
 
   /* IupMatrixList Callbacks */
   iupClassRegisterCallback(ic, "IMAGEVALUECHANGED_CB", "ii");

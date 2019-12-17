@@ -479,7 +479,7 @@ char* iupMatrixGetFgColorStr(Ihandle* ih, int lin, int col)
 }
 
 /* Color attenuation factor in a marked cell, 20% darker */
-#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*9)/10))
+#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*8)/10))
 
 static void iMatrixAddMarkedAttenuation(Ihandle* ih, unsigned char *r, unsigned char *g, unsigned char *b)
 {
@@ -652,6 +652,8 @@ int iupMatrixGetFrameHorizColor(Ihandle* ih, int lin, int col, long *framecolor,
       color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", lin, col);
     if (!color)
       color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", lin, IUP_INVALID_ID);
+    if (!color)
+      color = iupAttribGetId2(ih, "FRAMEHORIZCOLOR", IUP_INVALID_ID, col);
     if (iupStrEqual(color, "BGCOLOR"))
       return 1;
     if (iupStrToRGB(color, &r, &g, &b))
@@ -678,6 +680,8 @@ int iupMatrixGetFrameVertColor(Ihandle* ih, int lin, int col, long *framecolor, 
       color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", lin, col);
     if (!color)
       color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", IUP_INVALID_ID, col);
+    if (!color)
+      color = iupAttribGetId2(ih, "FRAMEVERTCOLOR", lin, IUP_INVALID_ID);
     if (iupStrEqual(color, "BGCOLOR"))
       return 1;
     if (framecolor && iupStrToRGB(color, &r, &g, &b))

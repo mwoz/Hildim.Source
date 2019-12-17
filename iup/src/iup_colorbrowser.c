@@ -835,6 +835,7 @@ Iclass* iupColorBrowserNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "colorbrowser";
+  ic->cons = "ColorBrowser";
   ic->format = NULL; /* no parameters */
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
@@ -865,7 +866,7 @@ Iclass* iupColorBrowserNewClass(void)
   return ic;
 }
 
-Ihandle *IupColorBrowser(void)
+IUP_API Ihandle* IupColorBrowser(void)
 {
   return IupCreate("colorbrowser");
 }

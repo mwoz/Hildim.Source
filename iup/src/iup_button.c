@@ -149,7 +149,7 @@ static void iButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *ch
     has_border = 0;
 
   if (has_border)
-    iupdrvButtonAddBorders(&natural_w, &natural_h);
+    iupdrvButtonAddBorders(ih, &natural_w, &natural_h);
 
   natural_w += 2*ih->data->horiz_padding;
   natural_h += 2*ih->data->vert_padding;
@@ -162,7 +162,7 @@ static void iButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *ch
 /******************************************************************************/
 
 
-Ihandle* IupButton(const char* title, const char* action)
+IUP_API Ihandle* IupButton(const char* title, const char* action)
 {
   void *params[3];
   params[0] = (void*)title;
@@ -177,6 +177,7 @@ Iclass* iupButtonNewClass(void)
 
   ic->name = "button";
   ic->format = "sa"; /* one string, and one ACTION callback name */
+  ic->format_attr = "TITLE";
   ic->nativetype = IUP_TYPECONTROL;
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;

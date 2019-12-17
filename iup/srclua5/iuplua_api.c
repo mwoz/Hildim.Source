@@ -26,10 +26,17 @@
 static int SaveImageAsText(lua_State *L)
 {
   Ihandle *ih = iuplua_checkihandle(L, 1);
-  const char *file_name = luaL_checkstring(L, 2);
+  const char *filename = luaL_checkstring(L, 2);
   const char *format = luaL_checkstring(L, 3);
   const char *name = luaL_optstring(L, 4, NULL);
-  lua_pushboolean(L, IupSaveImageAsText(ih, file_name, format, name));
+  lua_pushboolean(L, IupSaveImageAsText(ih, filename, format, name));
+  return 1;
+}
+
+static int ImageGetHandle(lua_State *L)
+{
+  const char *name = luaL_checkstring(L, 1);
+  iuplua_pushihandle(L, IupImageGetHandle(name));
   return 1;
 }
 
@@ -792,6 +799,13 @@ static int VersionNumber(lua_State *L)
   return 1;
 }
 
+static int VersionShow(lua_State *L)
+{
+  (void)L;
+  IupVersionShow();
+  return 0;
+}
+
 static int GetNextChild(lua_State *L)
 {
   Ihandle* parent = iuplua_checkihandle(L,1);
@@ -847,12 +861,17 @@ static int GlobalsDialog(lua_State *L)
   return 1;
 }
 
-static int ElementPropertiesDialog(lua_State *L)
+static int ClassInfoDialog(lua_State *L)
 {
-  iuplua_pushihandle(L,IupElementPropertiesDialog(iuplua_checkihandle(L,1)));
+  iuplua_pushihandle(L, IupClassInfoDialog(iuplua_checkihandleornil(L, 1)));
   return 1;
 }
 
+static int ElementPropertiesDialog(lua_State *L)
+{
+  iuplua_pushihandle(L, IupElementPropertiesDialog(iuplua_checkihandleornil(L, 1), iuplua_checkihandle(L, 2)));
+  return 1;
+}
 
 static int ConvertXYToPos(lua_State *L)
 {
@@ -977,6 +996,17 @@ static int UpdateChildren (lua_State *L)
 static int Redraw(lua_State *L)
 {
   IupRedraw(iuplua_checkihandle(L, 1), (int)luaL_checkinteger(L, 2));
+  return 0;
+}
+
+static int PostMessage(lua_State *L)
+{
+  Ihandle *ih = iuplua_checkihandle(L, 1);
+  const char *s = luaL_checkstring(L, 2);
+  int i = (int)luaL_checkinteger(L, 3);
+  double d = luaL_checknumber(L, 4);
+  void* p = lua_touserdata(L, 5);
+  IupPostMessage(ih, s, i, d, p);
   return 0;
 }
 
@@ -1146,11 +1176,14 @@ void iupluaapi_open(lua_State * L)
     {"GetChild", GetChild},
     {"GetChildPos", GetChildPos},
     {"VersionNumber", VersionNumber},
+    {"VersionShow", VersionShow},
     {"GetBrother", GetBrother},
     {"GetDialogChild", GetDialogChild},
     {"LayoutDialog", LayoutDialog},
-    {"GlobalsDialog", GlobalsDialog},
     {"ElementPropertiesDialog", ElementPropertiesDialog},
+    {"GlobalsDialog", GlobalsDialog},
+    {"ClassInfoDialog", ClassInfoDialog},
+    {"PostMessage", PostMessage},
     {"SetFocus", SetFocus},
     {"SetGlobal", SetGlobal},
     {"SetHandle", SetHandle},
@@ -1165,6 +1198,7 @@ void iupluaapi_open(lua_State * L)
     {"Update", Update},
     {"UpdateChildren", UpdateChildren},
     {"SaveImageAsText", SaveImageAsText},
+    {"ImageGetHandle", ImageGetHandle},
     {"Redraw", Redraw},
     {"ShowXY", ShowXY},
     {"StoreAttribute", StoreAttribute},

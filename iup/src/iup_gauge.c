@@ -25,7 +25,7 @@
 #include "iup_register.h"
 #include "iup_image.h"
 
-#define IGAUGE_DEFAULTCOLOR "64 96 192"
+#define IGAUGE_DEFAULTCOLOR "0 120 220"
 #define IGAUGE_DEFAULTSIZE  "120x14"
 #define IGAUGE_DASHED_GAP     3
 #define IGAUGE_DASHED_BLOCKS 20
@@ -114,17 +114,15 @@ static void iGaugeDrawText(Ihandle* ih, int xmid, int w, int h, long fgcolor)
 
 static int iGaugeRedraw_CB(Ihandle* ih)
 {
-  int border = ih->data->flat ? 1 : 3;
-  int xstart = ih->data->horiz_padding + border;
-  int ystart = ih->data->vert_padding + border;
-  int xend, yend, w, h;
+  char* backcolor = iupAttribGetStr(ih, "BACKCOLOR");
+  int border = ih->data->flat ? 1 : 2;
+  int xstart, xend, ystart, yend, w, h;
   long fgcolor = ih->data->fgcolor;
 
   IupDrawBegin(ih);
 
   IupDrawGetSize(ih, &w, &h);
 
-  iupDrawSetColor(ih, "DRAWCOLOR", ih->data->bgcolor);
   IupDrawParentBackground(ih);
 
   if (ih->data->flat)
@@ -134,16 +132,32 @@ static int iGaugeRedraw_CB(Ihandle* ih)
     IupDrawRectangle(ih, 0, 0, w - 1, h - 1);
   }
   else
-    iupDrawSunkenRect(ih, 0, 0, w - 1, h - 1,
-    ih->data->light_shadow, ih->data->mid_shadow, ih->data->dark_shadow);
+    iupDrawSunkenRect(ih, 0, 0, w - 1, h - 1, ih->data->light_shadow, ih->data->mid_shadow, ih->data->dark_shadow);
+
+  xstart = ih->data->horiz_padding + border;
+  ystart = ih->data->vert_padding + border;
+  xend = w - 1 - (ih->data->horiz_padding + border);
+  yend = h - 1 - (ih->data->vert_padding + border);
+
+  if (backcolor)
+  {
+    iupAttribSetStr(ih, "DRAWCOLOR", backcolor);
+    iupAttribSet(ih, "DRAWSTYLE", "FILL");
+    if (ih->data->orientation == IGAUGE_HORIZONTAL)
+      IupDrawRectangle(ih, xstart, ystart, xend, yend);
+    else
+      IupDrawRectangle(ih, xstart, ih->currentheight - ystart, xend, ih->currentheight - yend);
+  }
+
+  xstart++;
+  ystart++;
+  xend--;
+  yend--;
 
   if (!iupdrvIsActive(ih))
     fgcolor = iupDrawColorMakeInactive(fgcolor, ih->data->bgcolor);
 
   iupDrawSetColor(ih, "DRAWCOLOR", fgcolor);
-
-  xend = w - 1 - (ih->data->horiz_padding + border);
-  yend = h - 1 - (ih->data->vert_padding + border);
 
   if (ih->data->dashed)
   {
@@ -406,14 +420,15 @@ static int iGaugeCreateMethod(Ihandle* ih, void **params)
   IupSetAttribute(ih, "EXPAND", "NO");
 
   /* default values */
+  iupAttribSet(ih, "BACKCOLOR", "220 220 220");
   iupAttribSet(ih, "FGCOLOR", IGAUGE_DEFAULTCOLOR);
-  ih->data->fgcolor = iupDrawColor(64, 96, 192, 255);
+  ih->data->fgcolor = iupDrawColor(0, 120, 220, 255);
   ih->data->vmax = 1;
   ih->data->bgcolor = iupDrawColor(192, 192, 192, 255);
   ih->data->light_shadow = iupDrawColor(255, 255, 255, 255);
   ih->data->mid_shadow = iupDrawColor(192, 192, 192, 255);
   ih->data->dark_shadow = iupDrawColor(128, 128, 128, 255);
-  ih->data->flatcolor = iupDrawColor(164, 164, 164, 255);
+  ih->data->flatcolor = iupDrawColor(160, 160, 160, 255);
   ih->data->show_text = 1;
   ih->data->orientation = IGAUGE_HORIZONTAL;
 
@@ -442,6 +457,7 @@ Iclass* iupGaugeNewClass(void)
   /* replace IupCanvas behavior */
   iupClassRegisterReplaceAttribDef(ic, "BORDER", "NO", NULL);
   iupClassRegisterReplaceAttribFlags(ic, "BORDER", IUPAF_READONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterReplaceAttribDef(ic, "CANFOCUS", "NO", NULL);
 
   /* IupGauge only */
   iupClassRegisterAttribute(ic, "MIN", iGaugeGetMinAttrib, iGaugeSetMinAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -454,8 +470,9 @@ Iclass* iupGaugeNewClass(void)
   iupClassRegisterAttribute(ic, "SHOWTEXT", iGaugeGetShowTextAttrib, iGaugeSetShowTextAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "FGCOLOR", NULL, iGaugeSetFgColorAttrib, IGAUGE_DEFAULTCOLOR, NULL, IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "FLAT", iGaugeGetFlatAttrib, iGaugeSetFlatAttrib, NULL, NULL, IUPAF_NOT_MAPPED);
-  iupClassRegisterAttribute(ic, "FLATCOLOR", NULL, iGaugeSetFlatColorAttrib, IUPAF_SAMEASSYSTEM, "164 164 164", IUPAF_NOT_MAPPED);
+  iupClassRegisterAttribute(ic, "FLATCOLOR", NULL, iGaugeSetFlatColorAttrib, IUPAF_SAMEASSYSTEM, "160 160 160", IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "ORIENTATION", iGaugeGetOrientationAttrib, iGaugeSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "BACKCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   /* Overwrite IupCanvas Attributes */
   iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iGaugeSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
@@ -464,7 +481,7 @@ Iclass* iupGaugeNewClass(void)
   return ic;
 }
 
-Ihandle *IupGauge(void)
+IUP_API Ihandle* IupGauge(void)
 {
   return IupCreate("gauge");
 }

@@ -80,17 +80,20 @@
 #define WM_IUPCARET WM_APP+1   /* Custom IUP message */
 
 
-void iupdrvTextAddSpin(int *w, int h)
+void iupdrvTextAddSpin(Ihandle* ih, int *w, int h)
 {
   *w += h;
+  (void)ih;  
 }
 
-void iupdrvTextAddBorders(int *w, int *h)
+void iupdrvTextAddBorders(Ihandle* ih, int *w, int *h)
 {
+  /* Used also by IupCalendar and IupDatePick in Windows */
   /* LAYOUT_DECORATION_ESTIMATE */
   int border_size = 2 * 3;
   (*w) += border_size;
   (*h) += border_size;
+  (void)ih;  
 }
 
 static void winTextParseParagraphFormat(Ihandle* formattag, PARAFORMAT2 *paraformat, int convert2twips)
@@ -759,6 +762,71 @@ static TCHAR* winTextStrConvertToSystem(Ihandle* ih, const char* str)
 
   return iupwinStrToSystem(str);
 }
+
+static DWORD CALLBACK winTextWriteStreamCallback(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, PLONG pcb)
+{
+  HANDLE hFile = (HANDLE)dwCookie;
+
+  if (WriteFile(hFile, lpBuff, cb, (DWORD *)pcb, NULL))
+    return 0;
+
+  return (DWORD)-1;
+}
+
+static BOOL winTextWriteRtfToFile(HWND hwnd, TCHAR* pszFile)
+{
+  BOOL fSuccess = FALSE;
+
+  HANDLE hFile = CreateFile(pszFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    EDITSTREAM es = { 0 };
+
+    es.pfnCallback = winTextWriteStreamCallback;
+    es.dwCookie = (DWORD_PTR)hFile;
+
+    if (SendMessage(hwnd, EM_STREAMOUT, SF_RTF, (LPARAM)&es) && es.dwError == 0)
+      fSuccess = TRUE;
+
+    CloseHandle(hFile);
+  }
+
+  return fSuccess;
+
+}
+
+static DWORD CALLBACK winTextReadStreamCallback(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG cb, PLONG pcb)
+{
+  HANDLE hFile = (HANDLE)dwCookie;
+
+  if (ReadFile(hFile, lpBuff, cb, (DWORD *)pcb, NULL))
+    return 0;
+
+  return (DWORD)-1;
+}
+
+static BOOL winTextReadRtfFromFile(HWND hwnd, TCHAR* pszFile)
+{
+  BOOL fSuccess = FALSE;
+
+  HANDLE hFile = CreateFile(pszFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+  if (hFile != INVALID_HANDLE_VALUE)
+  {
+    EDITSTREAM es = { 0 };
+
+    es.pfnCallback = winTextReadStreamCallback;
+    es.dwCookie = (DWORD_PTR)hFile;
+
+    if (SendMessage(hwnd, EM_STREAMIN, SF_RTF, (LPARAM)&es) && es.dwError == 0)
+      fSuccess = TRUE;
+
+    CloseHandle(hFile);
+  }
+
+  return fSuccess;
+
+}
+
 
 /***********************************************************************************************/
 
@@ -1478,6 +1546,30 @@ static int winTextSetRemoveFormattingAttrib(Ihandle* ih, const char* value)
   return 0;
 }
 
+static int winTextSetLoadRtfAttrib(Ihandle* ih, const char* value)
+{
+  if (value)
+  {
+    if (winTextReadRtfFromFile(ih->handle, iupwinStrToSystemFilename(value)))
+      iupAttribSet(ih, "LOADRTFSTATUS", "OK");
+    else
+      iupAttribSet(ih, "LOADRTFSTATUS", "FAILED");
+  }
+  return 0;
+}
+
+static int winTextSetSaveRtfAttrib(Ihandle* ih, const char* value)
+{
+  if (value)
+  {
+    if (winTextWriteRtfToFile(ih->handle, iupwinStrToSystemFilename(value)))
+      iupAttribSet(ih, "SAVERTFSTATUS", "OK");
+    else
+      iupAttribSet(ih, "SAVERTFSTATUS", "FAILED");
+  }
+  return 0;
+}
+
 static int winTextSetOverwriteAttrib(Ihandle* ih, const char* value)
 {
   if (!ih->data->has_formatting)
@@ -1894,6 +1986,8 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:
     {
+      iupwinFlagButtonDown(ih, msg);
+
       if (iupwinButtonDown(ih, msg, wp, lp)==-1)
       {
         *result = 0;
@@ -1906,6 +2000,12 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
   case WM_RBUTTONUP:
   case WM_LBUTTONUP:
     {
+      if (!iupwinFlagButtonUp(ih, msg))
+      {
+        *result = 0;
+        return 1;
+      }
+
       if (iupwinButtonUp(ih, msg, wp, lp)==-1)
       {
         *result = 0;
@@ -1936,70 +2036,6 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       }
       break;
     }
-
-  case WM_NCPAINT:
-	  if (iupAttribGetBoolean(ih, "FLAT") && iupAttribGetBoolean(ih, "BORDER")) {
-		
-		  RECT rect;
-		  GetWindowRect(ih->handle, &rect);
-		  HDC hdc = GetWindowDC(ih->handle);
-
-		  //POINT cursor;
-		  //GetCursorPos(&cursor);
-
-		  //BOOL higlight = PtInRect(&rect, cursor);
-
-		  POINT line_poly[5];
-		  line_poly[0].x = 0;
-		  line_poly[0].y = 0;
-		  line_poly[1].x = rect.right - rect.left - 1;
-		  line_poly[1].y = 0;					 
-		  line_poly[2].x = rect.right - rect.left - 1;
-		  line_poly[2].y = rect.bottom - rect.top - 1;
-		  line_poly[3].x = 0;					 
-		  line_poly[3].y = rect.bottom - rect.top - 1;
-		  line_poly[4].x = 0;
-		  line_poly[4].y = 0;
-
-		  COLORREF RGBbordercolor, RGBbgcolor;
-		  unsigned char r, g , b ;
-		  iupwinGetColorRef(ih, "BORDERCOLOR", &RGBbordercolor);
-		  iupStrToRGB(iupBaseNativeParentGetBgColorAttrib(ih), &r, &g, &b);
-
-		  RGBbgcolor = RGB(r, g, b);
-
-		  HPEN hPen = CreatePen(PS_SOLID, 1, RGBbgcolor);
-		  HPEN hPen2 = CreatePen(PS_SOLID, 1, RGBbordercolor);
-		  HPEN hPenOld = SelectObject(hdc, hPen);
-
-		  Polyline(hdc, line_poly, 5);
-
-		  SelectObject(hdc, hPen2);
-		  DeleteObject(hPen);
-
-		  line_poly[0].x++;
-		  line_poly[0].y++;
-		  line_poly[1].x--;
-		  line_poly[1].y++;
-		  line_poly[2].x--;
-		  line_poly[2].y--;
-		  line_poly[3].x++;
-		  line_poly[3].y--;
-		  line_poly[4].x++;
-		  line_poly[4].y++;
-
-		  Polyline(hdc, line_poly, 5);
-
-		  SelectObject(hdc, hPenOld);
-		  DeleteObject(hPen2);
-
-		  ReleaseDC(ih->handle, hdc);
-
-		  *result = 0;
-		  return 1;
-	  }
-	  break;
-
   }
 
   if (ret)       /* if abort processing, then the result is 0 */
@@ -2304,6 +2340,10 @@ void iupdrvTextInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "CUEBANNER", NULL, winTextSetCueBannerAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FILTER", NULL, winTextSetFilterAttrib, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NOHIDESEL", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "LOADRTF", NULL, winTextSetLoadRtfAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SAVERTF", NULL, winTextSetSaveRtfAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "LOADRTFSTATUS", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SAVERTFSTATUS", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "CONTROLID", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 }

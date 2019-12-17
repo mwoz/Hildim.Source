@@ -38,13 +38,19 @@
 #define DT_HIDEPREFIX   0x00100000
 #endif
 
+void iupdrvLabelAddExtraPadding(Ihandle* ih, int *x, int *y)
+{
+  (void)ih;
+  (void)x;
+  (void)y;
+}
 
 static void winLabelDrawImage(Ihandle* ih, HDC hDC, int rect_width, int rect_height)
 {
   int xpad = ih->data->horiz_padding, 
       ypad = ih->data->vert_padding;
   int x, y, width, height, bpp;
-  HBITMAP hBitmap, hMask = NULL;
+  HBITMAP hBitmap;
   char *name;
   int make_inactive = 0;
 
@@ -85,9 +91,6 @@ static void winLabelDrawImage(Ihandle* ih, HDC hDC, int rect_width, int rect_hei
   y += ypad;
 
   iupwinDrawBitmap(hDC, hBitmap, x, y, width, height, width, height, bpp);
-
-  if (hMask)
-    DeleteObject(hMask);
 }
 
 static void winLabelDrawText(Ihandle* ih, HDC hDC, int rect_width, int rect_height, UINT itemState)
@@ -130,10 +133,7 @@ static void winLabelDrawText(Ihandle* ih, HDC hDC, int rect_width, int rect_heig
   /* WORDWRAP and ELLIPSIS */
   style |= ih->data->text_style;
 
-  if (iupAttribGetBoolean(IupGetDialog(ih), "CONTROL")) {
-    if(!iupAttribGetBoolean(ih, "FORCEMNEMONIC"))
-		style |= DT_HIDEPREFIX;
-  } else if (itemState & ODS_NOACCEL && !iupwinGetKeyBoardCues())  
+  if (itemState & ODS_NOACCEL && !iupwinGetKeyBoardCues())
     style |= DT_HIDEPREFIX;
 
   iupwinDrawText(hDC, title, x, y, width, height, hFont, fgcolor, style);
@@ -167,9 +167,7 @@ static void winLabelDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 
 static int winLabelSetTitleAttrib(Ihandle* ih, const char* value)
 {
-  if (!iupAttribGetBoolean(IupGetDialog(ih), "CONTROL"))
-    iupwinSetMnemonicTitle(ih, 0, value);
-
+  iupwinSetMnemonicTitle(ih, 0, value);
   iupwinSetTitleAttrib(ih, value);
   iupdrvPostRedraw(ih);
   return 1;
@@ -295,7 +293,10 @@ static int winLabelMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT 
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:
     {
-      iupwinButtonDown(ih, msg, wp, lp);
+      if (IupGetCallback(ih, "BUTTON_CB"))
+        SetCapture(ih->handle);
+
+      (void)iupwinButtonDown(ih, msg, wp, lp); /* ignore return value */
       break;
     }
   case WM_XBUTTONUP:
@@ -303,7 +304,10 @@ static int winLabelMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT 
   case WM_MBUTTONUP:
   case WM_RBUTTONUP:
     {
-      iupwinButtonUp(ih, msg, wp, lp);
+      if (IupGetCallback(ih, "BUTTON_CB") && GetCapture() == ih->handle)
+        ReleaseCapture();
+
+      (void)iupwinButtonUp(ih, msg, wp, lp); /* ignore return value */
       break;
     }
   case WM_MOUSEMOVE:

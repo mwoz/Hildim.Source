@@ -28,7 +28,7 @@
 #define ITOGGLE_MARGIN 2
 
 /* from IupRadio implementation */
-Ihandle *iupRadioFindToggleParent(Ihandle* ih_toggle);
+IUP_SDK_API Ihandle *iupRadioFindToggleParent(Ihandle* ih_toggle);
 
 
 struct _IcontrolData
@@ -163,7 +163,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
   if (bgimage)
   {
     int backimage_zoom = iupAttribGetBoolean(ih, "BACKIMAGEZOOM");
-    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, image_pressed, ih->data->highlighted, active, &make_inactive);
+    draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, image_pressed, ih->data->highlighted, 1, &make_inactive);
     if (backimage_zoom)
       iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, border_width, border_width, ih->currentwidth - border_width, ih->currentheight - border_width);
     else
@@ -397,6 +397,9 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
 
       if (!radio || ih != last_tg)
         iFlatToggleNotify(ih);
+
+      if (radio && ih == last_tg && iupAttribGetBoolean(ih, "SELECTEDNOTIFY")) /* pressed the selected toggle in a radio */
+        iFlatToggleNotify(ih);
     }
   }
 
@@ -464,13 +467,6 @@ static int iFlatToggleLeaveWindow_CB(Ihandle* ih)
 
 /***********************************************************************************************/
 
-
-static int iFlatToggleSetActiveAttrib(Ihandle* ih, const char* value)
-{
-  iupBaseSetActiveAttrib(ih, value);
-  iupdrvRedrawNow(ih);
-  return 0;
-}
 
 static int iFlatToggleSetAlignmentAttrib(Ihandle* ih, const char* value)
 {
@@ -693,8 +689,8 @@ static int iFlatToggleCreateMethod(Ihandle* ih, void** params)
   ih->data->check_spacing = 5;
 
   /* initial values - don't use default so they can be set to NULL */
-  iupAttribSet(ih, "HLCOLOR", "200 225 245");
-  iupAttribSet(ih, "PSCOLOR", "150 200 235");
+  iupAttribSet(ih, "HLCOLOR", IUP_FLAT_HIGHCOLOR);
+  iupAttribSet(ih, "PSCOLOR", IUP_FLAT_PRESSCOLOR);
 
   /* internal callbacks */
   IupSetCallback(ih, "ACTION", (Icallback)iFlatToggleRedraw_CB);
@@ -764,7 +760,9 @@ Iclass* iupFlatToggleNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
   ic->name = "flattoggle";
+  ic->cons = "FlatToggle";
   ic->format = "s"; /* one string */
+  ic->format_attr = "TITLE";
   ic->nativetype = IUP_TYPECANVAS;
   ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
@@ -784,7 +782,7 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
 
   /* Overwrite Visual */
-  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iFlatToggleSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iupFlatSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
 
   /* Special */
   iupClassRegisterAttribute(ic, "TITLE", NULL, iFlatToggleSetAttribPostRedraw, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
@@ -801,8 +799,9 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterAttribute(ic, "HASFOCUS", iFlatToggleGetHasFocusAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWBORDER", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SELECTEDNOTIFY", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "50 150 255", IUPAF_DEFAULT);  /* inheritable */
+  iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, IUP_FLAT_BORDERCOLOR, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERWIDTH", iFlatToggleGetBorderWidthAttrib, iFlatToggleSetBorderWidthAttrib, IUPAF_SAMEASSYSTEM, "1", IUPAF_DEFAULT);  /* inheritable */
@@ -865,7 +864,7 @@ Iclass* iupFlatToggleNewClass(void)
   return ic;
 }
 
-Ihandle* IupFlatToggle(const char* title)
+IUP_API Ihandle* IupFlatToggle(const char* title)
 {
   void *params[2];
   params[0] = (void*)title;
