@@ -1,6 +1,8 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+#include "../../HildimVer.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // Русский (Россия) resources
 
@@ -15,7 +17,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,10,0,0
- PRODUCTVERSION 4,2,0,0
+ PRODUCTVERSION VERSION_HILDIM_W
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -38,7 +40,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright © 2008-2019"
             VALUE "OriginalFilename", "shell.dll"
             VALUE "ProductName", "HildiM"
-            VALUE "ProductVersion", "4.2.0.0"
+            VALUE "ProductVersion", VERSION_HILDIM
         END
     END
     BLOCK "VarFileInfo"
@@ -54,17 +56,17 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE 
+1 TEXTINCLUDE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE 
+2 TEXTINCLUDE
 BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE 
+3 TEXTINCLUDE
 BEGIN
     "\r\n"
     "\0"

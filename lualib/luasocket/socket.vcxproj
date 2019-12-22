@@ -36,6 +36,7 @@
     <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="socket.rc" />
     <ResourceCompile Include="socket1.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
