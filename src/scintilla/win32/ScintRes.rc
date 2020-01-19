@@ -30,7 +30,7 @@ BEGIN
 			VALUE	"FileVersion", VERSION_SCINTILLA "\0"
 			VALUE	"InternalName",	"Scintilla\0"
 			VALUE	"LegalCopyright",	"Copyright 1998-2012 by Neil Hodgson\0"
-			VALUE	"OriginalFilename",	"Scintilla.DLL\0"
+			VALUE	"OriginalFilename",	"SciLexer.dll\0"
 			VALUE	"ProductName",	"HildiM\0"
 			VALUE	"ProductVersion",	VERSION_HILDIM "\0"
 		END
