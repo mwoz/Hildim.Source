@@ -144,7 +144,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 	}
 };
 
-class LexerFormEngine : public ILexer4 {
+class LexerFormEngine : public ILexer5 {
 	bool caseSensitive;
 	CharacterSet setFoldingWordsBegin;
 	WordList keywords[24];	//переданные нам вордлисты
@@ -250,11 +250,19 @@ public:
 	const char * SCI_METHOD DescriptionOfStyle(int style) {
 		return "";
 	}
+	// ILexer5 methods
+	const char * SCI_METHOD GetName() override {
+		return "formenjine";
+	}
+	int SCI_METHOD  GetIdentifier() override {
+		return SCLEX_FORMENJINE;
+	}
+	const char * SCI_METHOD PropertyGet(const char *key) override;
 
-	static ILexer4 *LexerFactoryFM() {
+	static ILexer5 *LexerFactoryFM() {
 		return new LexerFormEngine(true);
 	}
-	static ILexer4 *LexerFactoryCPPInsensitive() {
+	static ILexer5 *LexerFactoryCPPInsensitive() {
 		return new LexerFormEngine(false);
 	}
 
@@ -283,6 +291,10 @@ int SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
 		}
 	}
 	return firstModification;
+}
+
+const char * SCI_METHOD LexerFormEngine::PropertyGet(const char *key) {
+	return osFM.PropertyGet(key);
 }
 
  //Functor used to truncate history
