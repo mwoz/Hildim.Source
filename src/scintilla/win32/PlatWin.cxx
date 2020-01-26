@@ -752,12 +752,70 @@ void SurfaceGDI::AlphaRectangle(PRectangle rc, int cornerSize, ColourDesired fil
 		FrameRect(hdc, &rcw, brush);
 	}
 }
-
+/*
 void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> &stops, GradientOptions) {
 	// Would be better to average start and end.
 	const ColourAlpha colourAverage = stops[0].colour.MixedWith(stops[1].colour);
 	AlphaRectangle(rc, 0, colourAverage.GetColour(), colourAverage.GetAlpha(),
 		colourAverage.GetColour(), colourAverage.GetAlpha(), 0);
+}
+*/
+static ColourAlpha MixedWithC(ColourAlpha first, ColourAlpha other, float coef) {
+	coef = coef * 2;
+	const unsigned int red = (first.GetRed() * (2 - coef) + other.GetRed() * coef) / 2;
+	const unsigned int green = (first.GetGreen() * (2 - coef) + other.GetGreen()* coef) / 2;
+	const unsigned int blue = (first.GetBlue() * (2 - coef) + other.GetBlue()* coef) / 2;
+	const unsigned int alpha = (first.GetAlpha() * (2 - coef) + other.GetAlpha()* coef) / 2;
+	return ColourAlpha(red, green, blue, alpha);
+}
+void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> &stops, GradientOptions) {
+	// Would be better to average start and end.
+	const RECT rcw = RectFromPRectangle(rc);
+	HDC hMemDC = ::CreateCompatibleDC(hdc);
+	const int width = rcw.right - rcw.left;
+	const int height = rcw.bottom - rcw.top;
+	// Ensure not distorted too much by corners when small
+	//cornerSize = std::min(cornerSize, (std::min(width, height) / 2) - 2);
+	const BITMAPINFO bpih = { {sizeof(BITMAPINFOHEADER), width, height, 1, 32, BI_RGB, 0, 0, 0, 0, 0},
+		{{0, 0, 0, 0}} };
+	void *image = nullptr;
+	HBITMAP hbmMem = CreateDIBSection(hMemDC, &bpih,
+		DIB_RGB_COLORS, &image, NULL, 0);
+
+	if (hbmMem) {
+		HBITMAP hbmOld = SelectBitmap(hMemDC, hbmMem);
+
+		ColourAlpha clr1 = stops.size() == 3 ? stops[0].colour : stops[1].colour;
+		ColourAlpha clr2 = stops.size() == 3 ? stops[1].colour : stops[0].colour;
+		DWORD *pixels = static_cast<DWORD *>(image);
+		for (int y = 0; y < height; y++) {
+			float h = static_cast<float>(height);
+			float k;
+			if (stops.size() == 3) {
+				h = h / 2;
+				k = ((h - abs((float)y - h)) / h);
+			} else {
+				if (y <= h / 5)
+					k = (float)y / h * 5;
+				else {
+					k = (h - (float)y) / h * 5 / 4;
+				}
+			}
+			ColourAlpha line = MixedWithC(clr1, clr2, k * k);
+			const DWORD valFill = dwordMultiplied(line, line.GetAlpha());
+			for (int x = 0; x < width; x++) {
+				pixels[y*width + x] = valFill;
+			}
+		}
+
+		const BLENDFUNCTION merge = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+
+		AlphaBlend(hdc, rcw.left, rcw.top, width, height, hMemDC, 0, 0, width, height, merge);
+
+		SelectBitmap(hMemDC, hbmOld);
+		::DeleteObject(hbmMem);
+	}
+	::DeleteDC(hMemDC);
 }
 
 void SurfaceGDI::DrawRGBAImage(PRectangle rc, int width, int height, const unsigned char *pixelsImage) {

@@ -742,7 +742,8 @@ void SciTEBase::ReadProperties() {
 	else
 //!-end-[caret]
 	CallChildren(SCI_SETCARETFORE,
-	           ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+	CallChildren(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	CallChildren(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
 	CallChildren(SCI_SETADDITIONALSELECTIONTYPING, props.GetInt("selection.additional.typing", 1));

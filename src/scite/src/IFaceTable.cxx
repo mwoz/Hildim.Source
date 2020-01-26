@@ -144,6 +144,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"CARETSTYLE_BLOCK",2},
 	{"CARETSTYLE_INVISIBLE",0},
 	{"CARETSTYLE_LINE",1},
+	{"CARETSTYLE_OVERSTRIKE_BLOCK",0x10},
 	{"CARET_EVEN",0x08},
 	{"CARET_JUMPS",0x10},
 	{"CARET_SLOP",0x01},
@@ -320,6 +321,8 @@ static IFaceConstant ifaceConstants[] = {
 	{ "INDIC_DOTBOX",12 },
 	{ "INDIC_DOTS",10 },
 	{ "INDIC_FULLBOX",16 },
+	{ "INDIC_GRADIENT",20 },
+	{ "INDIC_GRADIENTCENTRE",21 },
 	{ "INDIC_HIDDEN",5 },
 	{ "INDIC_MAX",31 },
 	{ "INDIC_PLAIN",0 },
@@ -3191,7 +3194,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 286,
-	ifaceConstantCount = 2546,
+	ifaceConstantCount = 2549,
 	ifacePropertyCount = 210
 };
 
