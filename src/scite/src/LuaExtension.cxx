@@ -24,7 +24,6 @@
 #include "IFaceTable.h"
 #include "SciTEKeys.h"
 
-
 #include <regex>
 #include <map>
 
@@ -326,6 +325,29 @@ errr:
 	return 2;
 
 }
+
+
+static int cf_scite_Read(lua_State *L) {
+	FilePath filePath = GUI::StringFromUTF8(luaL_checkstring(L, 1));
+	Utf8_16_Read* convert;
+	char* data;
+	size_t len;
+	if (host->ReadForScript(filePath,(void**) &convert, &data, len)) {
+		char* c = convert->getNewBuf();
+		char* cc = new char[len + 1];
+		memcpy((void*)cc, (void*)c, len);
+		cc[len] = 0;
+		lua_pushstring(L, cc);
+		lua_pushnumber(L, convert->getEncoding()  );
+		delete[] cc;
+		delete convert;
+		delete[] data;
+		return 2;
+	}
+
+	return 0;	
+}
+
 
 static int cf_scite_compare_encoding_file(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
@@ -2378,6 +2400,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, sf_GetListHandlers);
 	lua_setfield(luaState, -2, "GetListHandlers");
+
+	lua_pushcfunction(luaState, cf_scite_Read);
+	lua_setfield(luaState, -2, "Read");
 
 	// buffers
 	lua_newtable(luaState);

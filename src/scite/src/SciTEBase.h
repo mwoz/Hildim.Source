@@ -685,6 +685,7 @@ protected:
 	void DiscoverIndentSetting();
 	SString DiscoverLanguage(const char *buf, size_t length);
 	void OpenFile(int fileSize, bool suppressMessage);
+	virtual bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile);
 	virtual void OpenUriList(const char *) {}
 	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter) = 0;
 	virtual bool SaveAsDialog() = 0;
@@ -995,3 +996,5 @@ inline bool isspacechar(unsigned char ch) {
     return (ch == ' ') || ((ch >= 0x09) && (ch <= 0x0d));
 }
 #endif
+
+static UniMode CodingCookieValue(const char *buf, size_t length);

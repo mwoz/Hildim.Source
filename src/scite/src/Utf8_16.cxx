@@ -72,7 +72,6 @@ size_t Utf8_16_Read::convert(char* buf, size_t len, bool reset) {
 			int newDataLen = 0;
 			int incompleteMultibyteChar = 0;
 			m_pNewBuf = reinterpret_cast<ubyte*>(wmc->encode(_encoding, 0, buf, static_cast<int32_t>(len), &newDataLen, &incompleteMultibyteChar));
-			int ttt = 12;
 			return len;
 		} else {
 		// Do nothing, pass through

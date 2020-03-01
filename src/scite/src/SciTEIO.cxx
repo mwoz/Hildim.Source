@@ -414,6 +414,28 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 	Redraw();
 }
 
+bool SciTEBase::ReadForScript(FilePath &fileCompare, void** c, char** data, size_t &lenFile) {
+	FILE *fp = fileCompare.Open(fileRead);
+	if (fp) {
+		fseek(fp, 0, SEEK_END);
+		long size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+
+		*data = new char[size];
+		Utf8_16_Read** convert = (Utf8_16_Read**)c;
+
+		lenFile = fread(*data, 1, size, fp);
+		UniMode codingCookie = CodingCookieValue(*data, lenFile);
+
+		*convert = new Utf8_16_Read(codingCookie == uni8Bit);
+		(*convert)->_encoding = filePath._encoding;
+
+		lenFile = (*convert)->convert(*data, lenFile);
+		fclose(fp);
+		return true;
+	}
+	return false;
+}
 
 int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 	FILE *fp = fileCompare.Open(fileRead);
