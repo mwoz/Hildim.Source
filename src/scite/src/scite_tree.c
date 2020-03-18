@@ -63,6 +63,13 @@ static int sctree_selection_cb(Ihandle *self, int p0, int p1) {
 	lua_pushinteger(L, p1);
 	return iuplua_call(L, 2);
 }
+static int sctree_showdragdrop_cb(Ihandle *self, int p0, int p1, int p2) {
+	lua_State *L = iuplua_call_start(self, "showdragdrop_cb");
+	lua_pushinteger(L, p0);
+	lua_pushinteger(L, p1);
+	lua_pushinteger(L, p2);
+	return iuplua_call(L, 3);
+}
 
 static int winTreeProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
@@ -303,6 +310,7 @@ Iclass* iupsc_TreeNewClass(void)
 	iupClassRegisterCallback(ic, "FLAT_BRANCHCLOSE_CB", "i");
 	iupClassRegisterCallback(ic, "FLAT_BRANCHOPEN_CB", "i");
 	iupClassRegisterCallback(ic, "FLAT_SELECTION_CB", "ii");
+	iupClassRegisterCallback(ic, "SHOWDRAGDROP_CB", "iii");
 
 	iupClassRegisterAttribute(ic, "RESETSCROLL", NULL, iscTreeSetResetScrollAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "FLAT_TOPITEM", NULL, iscTreeFlatTopitemAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
@@ -335,6 +343,7 @@ int iupsc_Treelua_open(lua_State * L)
 	iuplua_register_cb(L, "FLAT_BRANCHCLOSE_CB", (lua_CFunction)sctree_branchclose_cb, NULL);
 	iuplua_register_cb(L, "FLAT_BRANCHOPEN_CB", (lua_CFunction)sctree_branchopen_cb, NULL);
 	iuplua_register_cb(L, "FLAT_SELECTION_CB", (lua_CFunction)sctree_selection_cb, NULL);
+	iuplua_register_cb(L, "SHOWDRAGDROP_CB", (lua_CFunction)sctree_showdragdrop_cb, NULL);
 	iuplua_dostring(L,
 		"local ctrl = { nick = 'sc_tree', parent = iup.BOX, subdir = 'elem', creation = 'I',  funcname = 'sc_Tree', }; function ctrl.createElement(class, param) return iup.sc_Tree() end iup.RegisterWidget(ctrl); iup.SetClass(ctrl, 'iupWidget')",
 		"sc_tree.lua");
