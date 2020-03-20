@@ -5,9 +5,7 @@
  **/
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-#include <memory>
-#include <vector>
-#include <string>
+
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -106,7 +104,7 @@ public:
 	constexpr explicit Point(XYPOSITION x_=0, XYPOSITION y_=0) noexcept : x(x_), y(y_) {
 	}
 
-	static Point FromInts(int x_, int y_) noexcept {
+	static constexpr Point FromInts(int x_, int y_) noexcept {
 		return Point(static_cast<XYPOSITION>(x_), static_cast<XYPOSITION>(y_));
 	}
 
@@ -141,7 +139,7 @@ public:
 		left(left_), top(top_), right(right_), bottom(bottom_) {
 	}
 
-	static PRectangle FromInts(int left_, int top_, int right_, int bottom_) noexcept {
+	static constexpr PRectangle FromInts(int left_, int top_, int right_, int bottom_) noexcept {
 		return PRectangle(static_cast<XYPOSITION>(left_), static_cast<XYPOSITION>(top_),
 			static_cast<XYPOSITION>(right_), static_cast<XYPOSITION>(bottom_));
 	}
@@ -198,14 +196,6 @@ public:
 
 	bool operator==(const ColourDesired &other) const noexcept {
 		return co == other.co;
-	}
-
-	void Set(long lcol) {  ///!!!TODO! - Проанализировать использование и по возможности удалить
-		co = lcol;
-	}
-
-	void Set(unsigned int red, unsigned int green, unsigned int blue) {
-		co = red | (green << 8) | (blue << 16);
 	}
 
 	int AsInteger() const noexcept {
@@ -491,7 +481,7 @@ public:
 	static ListBox *Allocate();
 
 	void SetFont(Font &font) override =0;
-	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo = 0)=0;
+	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_)=0;
 	virtual void SetAverageCharWidth(int width)=0;
 	virtual void SetVisibleRows(int rows)=0;
 	virtual int GetVisibleRows() const=0;

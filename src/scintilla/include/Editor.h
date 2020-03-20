@@ -143,6 +143,18 @@ struct WrapPending {
 	}
 };
 
+struct CaretPolicy {
+	int policy;	// Combination from CARET_SLOP, CARET_STRICT, CARET_JUMPS, CARET_EVEN
+	int slop;	// Pixels for X, lines for Y
+	CaretPolicy(uptr_t policy_=0, sptr_t slop_=0) noexcept :
+		policy(static_cast<int>(policy_)), slop(static_cast<int>(slop_)) {}
+};
+
+struct CaretPolicies {
+	CaretPolicy x;
+	CaretPolicy y;
+};
+
 /**
  */
 class Editor : public EditModel, public DocWatcher {
@@ -167,7 +179,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -233,14 +244,9 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	SelectionText drag;
 
-	int caretXPolicy;
-	int caretXSlop;	///< Ensure this many pixels visible on both sides of caret
+	CaretPolicies caretPolicies;
 
-	int caretYPolicy;
-	int caretYSlop;	///< Ensure this many lines visible on both sides of caret
-
-	int visiblePolicy;
-	int visibleSlop;
+	CaretPolicy visiblePolicy;
 
 	Sci::Position searchAnchor;
 
@@ -306,7 +312,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 		return ((virtualSpaceOptions & SCVS_USERACCESSIBLE) != 0);
 	}
 	Sci::Position CurrentPosition() const;
-	bool SelectionEmpty() const;
+	bool SelectionEmpty() const noexcept;
 	SelectionPosition SelectionStart();
 	SelectionPosition SelectionEnd();
 	void SetRectangularRange();
@@ -322,11 +328,12 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void SetEmptySelection(Sci::Position currentPos_);
 	enum AddNumber { addOne, addEach };
 	void MultipleSelectAdd(AddNumber addNumber);
-	bool RangeContainsProtected(Sci::Position start, Sci::Position end) const;
-	bool SelectionContainsProtected();
+	bool RangeContainsProtected(Sci::Position start, Sci::Position end) const noexcept;
+	bool SelectionContainsProtected() const;
 	Sci::Position MovePositionOutsideChar(Sci::Position pos, Sci::Position moveDir, bool checkLineEnd=true) const;
 	SelectionPosition MovePositionOutsideChar(SelectionPosition pos, Sci::Position moveDir, bool checkLineEnd=true) const;
-	void MovedCaret(SelectionPosition newPos, SelectionPosition previousPos, bool ensureVisible);
+	void MovedCaret(SelectionPosition newPos, SelectionPosition previousPos,
+		bool ensureVisible, CaretPolicies policies);
 	void MovePositionTo(SelectionPosition newPos, Selection::selTypes selt=Selection::noSel, bool ensureVisible=true);
 	void MovePositionTo(Sci::Position newPos, Selection::selTypes selt=Selection::noSel, bool ensureVisible=true);
 	SelectionPosition MovePositionSoVisible(SelectionPosition pos, int moveDir);
@@ -357,7 +364,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 		xysVertical=0x2,
 		xysHorizontal=0x4,
 		xysDefault=xysUseMargin|xysVertical|xysHorizontal};
-	XYScrollPosition XYScrollToMakeVisible(const SelectionRange &range, const XYScrollOptions options);
+	XYScrollPosition XYScrollToMakeVisible(const SelectionRange &range,
+		const XYScrollOptions options, CaretPolicies policies);
 	void SetXYScroll(XYScrollPosition newXY);
 	void EnsureCaretVisible(bool useMargin=true, bool vert=true, bool horiz=true);
 	void ScrollRange(SelectionRange range);
@@ -424,8 +432,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, int modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers);
@@ -448,8 +454,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, int status) override;
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(int flags) noexcept;
 	void PageMove(int direction, Selection::selTypes selt=Selection::noSel, bool stuttered = false);
@@ -636,7 +640,7 @@ class AutoSurface {
 private:
 	std::unique_ptr<Surface> surf;
 public:
-	AutoSurface(Editor *ed, int technology = -1) {
+	AutoSurface(const Editor *ed, int technology = -1) {
 		if (ed->wMain.GetID()) {
 			surf.reset(Surface::Allocate(technology != -1 ? technology : ed->technology));
 			surf->Init(ed->wMain.GetID());

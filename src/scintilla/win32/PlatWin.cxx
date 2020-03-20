@@ -25,14 +25,13 @@
 #define NOMINMAX
 #endif
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0500
 #undef WINVER
-#define WINVER 0x0501
+#define WINVER 0x0500
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
 #include <windowsx.h>
-#include <UxTheme.h>
 
 #if !defined(DISABLE_D2D)
 #define USE_D2D 1
@@ -50,7 +49,6 @@
 #include "FontQuality.h"
 
 #include "PlatWin.h"
-#include "../include/Scintilla.h"
 
 #ifndef SPI_GETFONTSMOOTHINGCONTRAST
 #define SPI_GETFONTSMOOTHINGCONTRAST	0x200C
@@ -216,12 +214,12 @@ HFONT FormatAndMetrics::HFont() {
 #if defined(USE_D2D)
 	if (technology == SCWIN_TECH_GDI) {
 		if (0 == ::GetObjectW(hfont, sizeof(lf), &lf)) {
-			return 0;
+			return {};
 		}
 	} else {
 		const HRESULT hr = pTextFormat->GetFontFamilyName(lf.lfFaceName, LF_FACESIZE);
 		if (!SUCCEEDED(hr)) {
-			return 0;
+			return {};
 		}
 		lf.lfWeight = pTextFormat->GetFontWeight();
 		lf.lfItalic = pTextFormat->GetFontStyle() == DWRITE_FONT_STYLE_ITALIC;
@@ -229,7 +227,7 @@ HFONT FormatAndMetrics::HFont() {
 	}
 #else
 	if (0 == ::GetObjectW(hfont, sizeof(lf), &lf)) {
-		return 0;
+		return {};
 	}
 #endif
 	return ::CreateFontIndirectW(&lf);
@@ -509,29 +507,29 @@ void SurfaceGDI::Clear() noexcept {
 	if (penOld) {
 		::SelectObject(hdc, penOld);
 		::DeleteObject(pen);
-		penOld = 0;
+		penOld = {};
 	}
-	pen = 0;
+	pen = {};
 	if (brushOld) {
 		::SelectObject(hdc, brushOld);
 		::DeleteObject(brush);
-		brushOld = 0;
+		brushOld = {};
 	}
-	brush = 0;
+	brush = {};
 	if (fontOld) {
 		// Fonts are not deleted as they are owned by a Font object
 		::SelectObject(hdc, fontOld);
-		fontOld = 0;
+		fontOld = {};
 	}
 	if (bitmapOld) {
 		::SelectObject(hdc, bitmapOld);
 		::DeleteObject(bitmap);
-		bitmapOld = 0;
+		bitmapOld = {};
 	}
-	bitmap = 0;
+	bitmap = {};
 	if (hdcOwned) {
 		::DeleteDC(hdc);
-		hdc = 0;
+		hdc = {};
 		hdcOwned = false;
 	}
 }
@@ -546,7 +544,7 @@ bool SurfaceGDI::Initialised() {
 
 void SurfaceGDI::Init(WindowID) {
 	Release();
-	hdc = ::CreateCompatibleDC(NULL);
+	hdc = ::CreateCompatibleDC({});
 	hdcOwned = true;
 	::SetTextAlign(hdc, TA_BASELINE);
 }
@@ -559,7 +557,9 @@ void SurfaceGDI::Init(SurfaceID sid, WindowID) {
 
 void SurfaceGDI::InitPixMap(int width, int height, Surface *surface_, WindowID) {
 	Release();
-	SurfaceGDI *psurfOther = static_cast<SurfaceGDI *>(surface_);
+	SurfaceGDI *psurfOther = dynamic_cast<SurfaceGDI *>(surface_);
+	// Should only ever be called with a SurfaceGDI, not a SurfaceD2D
+	PLATFORM_ASSERT(psurfOther);
 	hdc = ::CreateCompatibleDC(psurfOther->hdc);
 	hdcOwned = true;
 	bitmap = ::CreateCompatibleBitmap(psurfOther->hdc, width, height);
@@ -573,8 +573,8 @@ void SurfaceGDI::PenColour(ColourDesired fore) {
 	if (pen) {
 		::SelectObject(hdc, penOld);
 		::DeleteObject(pen);
-		pen = 0;
-		penOld = 0;
+		pen = {};
+		penOld = {};
 	}
 	pen = ::CreatePen(0,1,fore.AsInteger());
 	penOld = SelectPen(hdc, pen);
@@ -584,8 +584,8 @@ void SurfaceGDI::BrushColour(ColourDesired back) noexcept {
 	if (brush) {
 		::SelectObject(hdc, brushOld);
 		::DeleteObject(brush);
-		brush = 0;
-		brushOld = 0;
+		brush = {};
+		brushOld = {};
 	}
 	// Only ever want pure, non-dithered brushes
 	const ColourDesired colourNearest = ColourDesired(::GetNearestColor(hdc, back.AsInteger()));
@@ -624,7 +624,7 @@ void SurfaceGDI::Polygon(Point *pts, size_t npts, ColourDesired fore, ColourDesi
 	BrushColour(back);
 	std::vector<POINT> outline;
 	for (size_t i=0; i<npts; i++) {
-		POINT pt = {static_cast<LONG>(pts[i].x), static_cast<LONG>(pts[i].y)};
+		POINT pt = POINTFromPoint(pts[i]);
 		outline.push_back(pt);
 	}
 	::Polygon(hdc, &outline[0], static_cast<int>(npts));
@@ -647,10 +647,11 @@ void SurfaceGDI::FillRectangle(PRectangle rc, ColourDesired back) {
 
 void SurfaceGDI::FillRectangle(PRectangle rc, Surface &surfacePattern) {
 	HBRUSH br;
-	if (static_cast<SurfaceGDI &>(surfacePattern).bitmap)
-		br = ::CreatePatternBrush(static_cast<SurfaceGDI &>(surfacePattern).bitmap);
-	else	// Something is wrong so display in red
+	if (SurfaceGDI *psgdi = dynamic_cast<SurfaceGDI *>(&surfacePattern); psgdi && psgdi->bitmap) {
+		br = ::CreatePatternBrush(psgdi->bitmap);
+	} else {	// Something is wrong so display in red
 		br = ::CreateSolidBrush(RGB(0xff, 0, 0));
+	}
 	const RECT rcw = RectFromPRectangle(rc);
 	::FillRect(hdc, &rcw, br);
 	::DeleteObject(br);
@@ -752,70 +753,12 @@ void SurfaceGDI::AlphaRectangle(PRectangle rc, int cornerSize, ColourDesired fil
 		FrameRect(hdc, &rcw, brush);
 	}
 }
-/*
+
 void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> &stops, GradientOptions) {
 	// Would be better to average start and end.
 	const ColourAlpha colourAverage = stops[0].colour.MixedWith(stops[1].colour);
 	AlphaRectangle(rc, 0, colourAverage.GetColour(), colourAverage.GetAlpha(),
 		colourAverage.GetColour(), colourAverage.GetAlpha(), 0);
-}
-*/
-static ColourAlpha MixedWithC(ColourAlpha first, ColourAlpha other, float coef) {
-	coef = coef * 2;
-	const unsigned int red = (first.GetRed() * (2 - coef) + other.GetRed() * coef) / 2;
-	const unsigned int green = (first.GetGreen() * (2 - coef) + other.GetGreen()* coef) / 2;
-	const unsigned int blue = (first.GetBlue() * (2 - coef) + other.GetBlue()* coef) / 2;
-	const unsigned int alpha = (first.GetAlpha() * (2 - coef) + other.GetAlpha()* coef) / 2;
-	return ColourAlpha(red, green, blue, alpha);
-}
-void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> &stops, GradientOptions) {
-	// Would be better to average start and end.
-	const RECT rcw = RectFromPRectangle(rc);
-	HDC hMemDC = ::CreateCompatibleDC(hdc);
-	const int width = rcw.right - rcw.left;
-	const int height = rcw.bottom - rcw.top;
-	// Ensure not distorted too much by corners when small
-	//cornerSize = std::min(cornerSize, (std::min(width, height) / 2) - 2);
-	const BITMAPINFO bpih = { {sizeof(BITMAPINFOHEADER), width, height, 1, 32, BI_RGB, 0, 0, 0, 0, 0},
-		{{0, 0, 0, 0}} };
-	void *image = nullptr;
-	HBITMAP hbmMem = CreateDIBSection(hMemDC, &bpih,
-		DIB_RGB_COLORS, &image, NULL, 0);
-
-	if (hbmMem) {
-		HBITMAP hbmOld = SelectBitmap(hMemDC, hbmMem);
-
-		ColourAlpha clr1 = stops.size() == 3 ? stops[0].colour : stops[1].colour;
-		ColourAlpha clr2 = stops.size() == 3 ? stops[1].colour : stops[0].colour;
-		DWORD *pixels = static_cast<DWORD *>(image);
-		for (int y = 0; y < height; y++) {
-			float h = static_cast<float>(height);
-			float k;
-			if (stops.size() == 3) {
-				h = h / 2;
-				k = ((h - abs((float)y - h)) / h);
-			} else {
-				if (y <= h / 5)
-					k = (float)y / h * 5;
-				else {
-					k = (h - (float)y) / h * 5 / 4;
-				}
-			}
-			ColourAlpha line = MixedWithC(clr1, clr2, k * k);
-			const DWORD valFill = dwordMultiplied(line, line.GetAlpha());
-			for (int x = 0; x < width; x++) {
-				pixels[y*width + x] = valFill;
-			}
-		}
-
-		const BLENDFUNCTION merge = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-
-		AlphaBlend(hdc, rcw.left, rcw.top, width, height, hMemDC, 0, 0, width, height, merge);
-
-		SelectBitmap(hMemDC, hbmOld);
-		::DeleteObject(hbmMem);
-	}
-	::DeleteDC(hMemDC);
 }
 
 void SurfaceGDI::DrawRGBAImage(PRectangle rc, int width, int height, const unsigned char *pixelsImage) {
@@ -837,15 +780,10 @@ void SurfaceGDI::DrawRGBAImage(PRectangle rc, int width, int height, const unsig
 			HBITMAP hbmOld = SelectBitmap(hMemDC, hbmMem);
 
 			for (int y=height-1; y>=0; y--) {
-				for (int x=0; x<width; x++) {
-					unsigned char *pixel = static_cast<unsigned char *>(image) + (y*width+x) * 4;
-					const unsigned char alpha = pixelsImage[3];
-					// Input is RGBA, output is BGRA with premultiplied alpha
-					pixel[2] = static_cast<unsigned char>((*pixelsImage++) * alpha / 255);
-					pixel[1] = static_cast<unsigned char>((*pixelsImage++) * alpha / 255);
-					pixel[0] = static_cast<unsigned char>((*pixelsImage++) * alpha / 255);
-					pixel[3] = *pixelsImage++;
-				}
+				// Bits flipped vertically
+				unsigned char *pixel = static_cast<unsigned char *>(image) + RGBAImage::bytesPerPixel * y * width;
+				RGBAImage::BGRAFromRGBA(pixel, pixelsImage, width);
+				pixelsImage += RGBAImage::bytesPerPixel * width;
 			}
 
 			const BLENDFUNCTION merge = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
@@ -1019,8 +957,8 @@ void SurfaceGDI::SetClip(PRectangle rc) {
 }
 
 void SurfaceGDI::FlushCachedState() {
-	pen = 0;
-	brush = 0;
+	pen = {};
+	brush = {};
 }
 
 void SurfaceGDI::SetUnicodeMode(bool unicodeMode_) {
@@ -1047,6 +985,7 @@ class SurfaceD2D : public Surface {
 	int codePageText;
 
 	ID2D1RenderTarget *pRenderTarget;
+	ID2D1BitmapRenderTarget *pBitmapRenderTarget;
 	bool ownRenderTarget;
 	int clipsActive;
 
@@ -1131,6 +1070,7 @@ SurfaceD2D::SurfaceD2D() noexcept :
 	codePageText = 0;
 
 	pRenderTarget = nullptr;
+	pBitmapRenderTarget = nullptr;
 	ownRenderTarget = false;
 	clipsActive = 0;
 
@@ -1162,10 +1102,13 @@ void SurfaceD2D::Clear() noexcept {
 			clipsActive--;
 		}
 		if (ownRenderTarget) {
+			pRenderTarget->EndDraw();
 			pRenderTarget->Release();
+			ownRenderTarget = false;
 		}
 		pRenderTarget = nullptr;
 	}
+	pBitmapRenderTarget = nullptr;
 }
 
 void SurfaceD2D::Release() {
@@ -1173,7 +1116,7 @@ void SurfaceD2D::Release() {
 }
 
 void SurfaceD2D::SetScale() {
-	HDC hdcMeasure = ::CreateCompatibleDC(NULL);
+	HDC hdcMeasure = ::CreateCompatibleDC({});
 	logPixelsY = ::GetDeviceCaps(hdcMeasure, LOGPIXELSY);
 	dpiScaleX = ::GetDeviceCaps(hdcMeasure, LOGPIXELSX) / 96.0f;
 	dpiScaleY = logPixelsY / 96.0f;
@@ -1202,8 +1145,9 @@ void SurfaceD2D::Init(SurfaceID sid, WindowID) {
 void SurfaceD2D::InitPixMap(int width, int height, Surface *surface_, WindowID) {
 	Release();
 	SetScale();
-	SurfaceD2D *psurfOther = static_cast<SurfaceD2D *>(surface_);
-	ID2D1BitmapRenderTarget *pCompatibleRenderTarget = nullptr;
+	SurfaceD2D *psurfOther = dynamic_cast<SurfaceD2D *>(surface_);
+	// Should only ever be called with a SurfaceD2D, not a SurfaceGDI
+	PLATFORM_ASSERT(psurfOther);
 	const D2D1_SIZE_F desiredSize = D2D1::SizeF(static_cast<float>(width), static_cast<float>(height));
 	D2D1_PIXEL_FORMAT desiredFormat;
 #ifdef __MINGW32__
@@ -1213,9 +1157,9 @@ void SurfaceD2D::InitPixMap(int width, int height, Surface *surface_, WindowID) 
 #endif
 	desiredFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
 	const HRESULT hr = psurfOther->pRenderTarget->CreateCompatibleRenderTarget(
-		&desiredSize, nullptr, &desiredFormat, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &pCompatibleRenderTarget);
+		&desiredSize, nullptr, &desiredFormat, D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &pBitmapRenderTarget);
 	if (SUCCEEDED(hr)) {
-		pRenderTarget = pCompatibleRenderTarget;
+		pRenderTarget = pBitmapRenderTarget;
 		pRenderTarget->BeginDraw();
 		ownRenderTarget = true;
 	}
@@ -1371,12 +1315,11 @@ void SurfaceD2D::FillRectangle(PRectangle rc, ColourDesired back) {
 }
 
 void SurfaceD2D::FillRectangle(PRectangle rc, Surface &surfacePattern) {
-	SurfaceD2D &surfOther = static_cast<SurfaceD2D &>(surfacePattern);
-	surfOther.FlushDrawing();
+	SurfaceD2D *psurfOther = dynamic_cast<SurfaceD2D *>(&surfacePattern);
+	PLATFORM_ASSERT(psurfOther && psurfOther->pBitmapRenderTarget);
+	psurfOther->FlushDrawing();
 	ID2D1Bitmap *pBitmap = nullptr;
-	ID2D1BitmapRenderTarget *pCompatibleRenderTarget = reinterpret_cast<ID2D1BitmapRenderTarget *>(
-		surfOther.pRenderTarget);
-	HRESULT hr = pCompatibleRenderTarget->GetBitmap(&pBitmap);
+	HRESULT hr = psurfOther->pBitmapRenderTarget->GetBitmap(&pBitmap);
 	if (SUCCEEDED(hr)) {
 		ID2D1BitmapBrush *pBitmapBrush = nullptr;
 		const D2D1_BITMAP_BRUSH_PROPERTIES brushProperties =
@@ -1497,18 +1440,8 @@ void SurfaceD2D::DrawRGBAImage(PRectangle rc, int width, int height, const unsig
 			rc.top += std::floor((rc.Height() - height) / 2);
 		rc.bottom = rc.top + height;
 
-		std::vector<unsigned char> image(height * width * 4);
-		for (int yPixel=0; yPixel<height; yPixel++) {
-			for (int xPixel = 0; xPixel<width; xPixel++) {
-				unsigned char *pixel = &image[0] + (yPixel*width + xPixel) * 4;
-				const unsigned char alpha = pixelsImage[3];
-				// Input is RGBA, output is BGRA with premultiplied alpha
-				pixel[2] = (*pixelsImage++) * alpha / 255;
-				pixel[1] = (*pixelsImage++) * alpha / 255;
-				pixel[0] = (*pixelsImage++) * alpha / 255;
-				pixel[3] = *pixelsImage++;
-			}
-		}
+		std::vector<unsigned char> image(RGBAImage::bytesPerPixel * height * width);
+		RGBAImage::BGRAFromRGBA(image.data(), pixelsImage, static_cast<ptrdiff_t>(height) * width);
 
 		ID2D1Bitmap *bitmap = nullptr;
 		const D2D1_SIZE_U size = D2D1::SizeU(width, height);
@@ -2052,14 +1985,14 @@ void SurfaceD2D::MeasureWidths(Font &font_, std::string_view text, XYPOSITION *p
 	}
 	// A cluster may be more than one WCHAR, such as for "ffi" which is a ligature in the Candara font
 	FLOAT position = 0.0f;
-	size_t ti=0;
-	for (size_t ci=0; ci<count; ci++) {
-		for (size_t inCluster=0; inCluster<clusterMetrics[ci].length; inCluster++) {
+	int ti=0;
+	for (unsigned int ci=0; ci<count; ci++) {
+		for (unsigned int inCluster=0; inCluster<clusterMetrics[ci].length; inCluster++) {
 			poses.buffer[ti++] = position + clusterMetrics[ci].width * (inCluster + 1) / clusterMetrics[ci].length;
 		}
 		position += clusterMetrics[ci].width;
 	}
-	PLATFORM_ASSERT(ti == static_cast<size_t>(tbuf.tlen));
+	PLATFORM_ASSERT(ti == tbuf.tlen);
 	if (unicodeMode) {
 		// Map the widths given for UTF-16 characters back onto the UTF-8 input string
 		int ui=0;
@@ -2070,7 +2003,7 @@ void SurfaceD2D::MeasureWidths(Font &font_, std::string_view text, XYPOSITION *p
 			if (byteCount == 4) {	// Non-BMP
 				ui++;
 			}
-			for (unsigned int bytePos=0; (bytePos<byteCount) && (i<text.length()); bytePos++) {
+			for (unsigned int bytePos=0; (bytePos<byteCount) && (i<text.length()) && (ui<tbuf.tlen); bytePos++) {
 				positions[i++] = poses.buffer[ui];
 			}
 			ui++;
@@ -2182,14 +2115,6 @@ Surface *Surface::Allocate(int technology) {
 #endif
 }
 
-namespace {
-
-HWND HwndFromWindowID(WindowID wid) noexcept {
-	return static_cast<HWND>(wid);
-}
-
-}
-
 Window::~Window() {
 }
 
@@ -2235,15 +2160,12 @@ void Window::SetPositionRelative(PRectangle rc, const Window *relativeTo) {
 	const LONG style = ::GetWindowLong(HwndFromWindowID(wid), GWL_STYLE);
 	if (style & WS_POPUP) {
 		POINT ptOther = {0, 0};
-		::ClientToScreen(HwndFromWindowID(relativeTo->GetID()), &ptOther);
+		::ClientToScreen(HwndFromWindow(*relativeTo), &ptOther);
 		rc.Move(static_cast<XYPOSITION>(ptOther.x), static_cast<XYPOSITION>(ptOther.y));
 
 		const RECT rcMonitor = RectFromPRectangle(rc);
-		//HMONITOR hMonitor = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTONEAREST);
-		
-		POINT ptTopLeft = { rc.left, rc.top }; //хотим получить именно тот монитор, в котором расположен верхний левый угол окна, в свою очередь привязанный к курсору
-		HMONITOR hMonitor = MonitorFromPoint(ptTopLeft, MONITOR_DEFAULTTONEAREST);
 
+		HMONITOR hMonitor = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTONEAREST);
 		// If hMonitor is NULL, that's just the main screen anyways.
 		const RECT rcWork = RectFromMonitor(hMonitor);
 
@@ -2296,7 +2218,7 @@ void Window::SetFont(Font &font) {
 namespace {
 
 void FlipBitmap(HBITMAP bitmap, int width, int height) noexcept {
-	HDC hdc = ::CreateCompatibleDC(NULL);
+	HDC hdc = ::CreateCompatibleDC({});
 	if (hdc) {
 		HBITMAP prevBmp = SelectBitmap(hdc, bitmap);
 		::StretchBlt(hdc, width - 1, 0, -width, height, hdc, 0, 0, width, height, SRCCOPY);
@@ -2442,7 +2364,7 @@ class ListBoxX : public ListBox {
 	int technology;
 	RGBAImageSet images;
 	LineToItem lti;
-	HWND lb, scb;
+	HWND lb;
 	bool unicodeMode;
 	int desiredVisibleRows;
 	unsigned int maxItemCharacters;
@@ -2476,7 +2398,6 @@ class ListBoxX : public ListBox {
 	void CentreItem(int n);
 	void Paint(HDC);
 	static LRESULT PASCAL ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 	static const Point ItemInset;	// Padding around whole item
 	static const Point TextInset;	// Padding around text
@@ -2496,7 +2417,7 @@ public:
 		}
 	}
 	void SetFont(Font &font) override;
-	void Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo) override;
+	void Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_) override;
 	void SetAverageCharWidth(int width) override;
 	void SetVisibleRows(int rows) override;
 	int GetVisibleRows() const override;
@@ -2517,12 +2438,6 @@ public:
 	void Draw(DRAWITEMSTRUCT *pDrawItem);
 	LRESULT WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StaticWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	Sci_ListColorsInfo* pListcolors;
-	void OnScrollChange();
-	void sc_OnPaint(HDC hdc, RECT *rcPaint, bool bDrag, int nTrackPos);
-	void sc_Paint(bool bDrag, int nTrackPos);
-	bool bBlockRedraw = false;
-
 };
 
 const Point ListBoxX::ItemInset(0, 0);
@@ -2534,15 +2449,14 @@ ListBox *ListBox::Allocate() {
 	return lb;
 }
 
-void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo) {
+void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHeight_, bool unicodeMode_, int technology_) {
 	parent = &parent_;
 	ctrlID = ctrlID_;
 	location = location_;
 	lineHeight = lineHeight_;
 	unicodeMode = unicodeMode_;
 	technology = technology_;
-	pListcolors = (Sci_ListColorsInfo*)pColorInfo;
-	HWND hwndParent = HwndFromWindowID(parent->GetID());
+	HWND hwndParent = HwndFromWindow(*parent);
 	HINSTANCE hinstanceParent = GetWindowInstance(hwndParent);
 	// Window created as popup so not clipped within parent client area
 	wid = ::CreateWindowEx(
@@ -2553,9 +2467,9 @@ void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHei
 		hinstanceParent,
 		this);
 
-	POINT locationw = {static_cast<LONG>(location.x), static_cast<LONG>(location.y)};
+	POINT locationw = POINTFromPoint(location);
 	::MapWindowPoints(hwndParent, NULL, &locationw, 1);
-	location = Point::FromInts(locationw.x, locationw.y);
+	location = PointFromPOINT(locationw);
 }
 
 void ListBoxX::SetFont(Font &font) {
@@ -2602,7 +2516,7 @@ PRectangle ListBoxX::GetDesiredRect() {
 	if (widestItem) {
 		len = static_cast<int>(strlen(widestItem));
 		if (unicodeMode) {
-			const TextWide tbuf(widestItem, len, unicodeMode);
+			const TextWide tbuf(widestItem, unicodeMode);
 			::GetTextExtentPoint32W(hdc, tbuf.buffer, tbuf.tlen, &textSize);
 		} else {
 			::GetTextExtentPoint32A(hdc, widestItem, len, &textSize);
@@ -2662,9 +2576,6 @@ void ListBoxX::Select(int n) {
 	::SendMessage(lb, LB_SETCURSEL, n, 0);
 	OnSelChange();
 	SetRedraw(true);
-	OnScrollChange();
-	if (pListcolors->inizialized)
-		sc_Paint(false, 0);
 }
 
 int ListBoxX::GetSelection() {
@@ -2881,7 +2792,7 @@ void ListBoxX::ResizeToCursor() {
 	PRectangle rc = GetPosition();
 	POINT ptw;
 	::GetCursorPos(&ptw);
-	const Point pt = Point::FromInts(ptw.x, ptw.y) + dragOffset;
+	const Point pt = PointFromPOINT(ptw) + dragOffset;
 
 	switch (resizeHit) {
 		case HTLEFT:
@@ -3066,14 +2977,21 @@ void ListBoxX::Paint(HDC hDC) {
 }
 
 LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-	if (!prevWndProc)
-		prevWndProc = ::DefWindowProc;
 	try {
 		ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
 		switch (iMessage) {
 		case WM_ERASEBKGND:
 			return TRUE;
+
+		case WM_PAINT: {
+				PAINTSTRUCT ps;
+				HDC hDC = ::BeginPaint(hWnd, &ps);
+				if (lbx) {
+					lbx->Paint(hDC);
+				}
+				::EndPaint(hWnd, &ps);
+			}
+			return 0;
 
 		case WM_MOUSEACTIVATE:
 			// This prevents the view activating when the scrollbar is clicked
@@ -3106,20 +3024,14 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 		case WM_MBUTTONDOWN:
 			// disable the scroll wheel button click action
 			return 0;
-
-		case WM_VSCROLL:
-		case LB_SETCURSEL:
-		{
-			LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-			lbx->OnScrollChange();
-			return res;
-		}
-		
-			break;
 		}
 
+		WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		if (prevWndProc) {
 			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-
+		} else {
+			return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
+		}
 	} catch (...) {
 	}
 	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
@@ -3128,46 +3040,26 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	switch (iMessage) {
 	case WM_CREATE: {
-			HINSTANCE hinstanceParent = GetWindowInstance(HwndFromWindowID(parent->GetID()));
+			HINSTANCE hinstanceParent = GetWindowInstance(HwndFromWindow(*parent));
 			// Note that LBS_NOINTEGRALHEIGHT is specified to fix cosmetic issue when resizing the list
 			// but has useful side effect of speeding up list population significantly
 			lb = ::CreateWindowEx(
 				0, TEXT("listbox"), TEXT(""),
-				WS_CHILD | WS_VISIBLE | //WS_VSCROLL |
+				WS_CHILD | WS_VSCROLL | WS_VISIBLE |
 				LBS_OWNERDRAWFIXED | LBS_NODATA | LBS_NOINTEGRALHEIGHT,
 				0, 0, 150,80, hWnd,
 				reinterpret_cast<HMENU>(static_cast<ptrdiff_t>(ctrlID)),
 				hinstanceParent,
 				0);
-			scb = CreateWindowEx(
-				0, TEXT("Scrollbar"), TEXT(""),
-				WS_CHILD | WS_VISIBLE | SBS_VERT | SBS_RIGHTALIGN,
-				0, 0, 150, 65, hWnd,
-				reinterpret_cast<HMENU>(static_cast<ptrdiff_t>(ctrlID)),
-				hinstanceParent,
-				0); 
 			WNDPROC prevWndProc = SubclassWindow(lb, ControlWndProc);
 			::SetWindowLongPtr(lb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
-			prevWndProc = SubclassWindow(scb, ScrollWndProc);
-			::SetWindowLongPtr(scb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
-			SetWindowTheme(scb, L"", L"");
 		}
 		break;
 
 	case WM_SIZE:
 		if (lb) {
 			SetRedraw(false);
-			SCROLLINFO si;
-			si.cbSize = sizeof(SCROLLINFO);
-			si.fMask = SIF_PAGE | SIF_RANGE;
-			si.nMin = 0;
-			si.nMax = ControlWndProc(lb, LB_GETCOUNT, 0, 0) - 1;
-			si.nPage = HIWORD(lParam) / ItemHeight();
-			::SetScrollInfo(scb, SB_CTL, &si, false);
-
-			int sWidth = si.nMax > (int)si.nPage ? 15 : 0;
-			::SetWindowPos(lb, 0, 0, 0, LOWORD(lParam) - sWidth, HIWORD(lParam), SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE);
-			::SetWindowPos(scb, 0, LOWORD(lParam) - sWidth,0, sWidth, HIWORD(lParam), SWP_NOZORDER|SWP_NOACTIVATE );
+			::SetWindowPos(lb, 0, 0,0, LOWORD(lParam), HIWORD(lParam), SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOMOVE);
 			// Ensure the selection remains visible
 			CentreItem(GetSelection());
 			SetRedraw(true);
@@ -3184,7 +3076,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 	case WM_COMMAND:
 		// This is not actually needed now - the registered double click action is used
 		// directly to action a choice from the list.
-		::SendMessage(HwndFromWindowID(parent->GetID()), iMessage, wParam, lParam);
+		::SendMessage(HwndFromWindow(*parent), iMessage, wParam, lParam);
 		break;
 
 	case WM_MEASUREITEM: {
@@ -3264,68 +3156,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 				wheelDelta = wheelDelta % WHEEL_DELTA;
 			else
 				wheelDelta = - (-wheelDelta % WHEEL_DELTA);
-			OnScrollChange();
-			if (pListcolors->inizialized)
-				sc_Paint(false, 0);
 		}
-		break;
-	case WM_NCPAINT:
-	{
-		if (!pListcolors->inizialized)
-			return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
-		
-		RECT rect, rdraw;
-		HDC hdc = ::GetWindowDC(hWnd);
-
-		GetWindowRect(hWnd, &rect);
-
-		HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
-		::SetWindowRgn(hWnd, hrgn, false);
-		DeleteObject(hrgn);
-
-		HPEN p = CreatePen(PS_SOLID, 1, pListcolors->border);
-		HPEN penOld = static_cast<HPEN>(SelectObject(hdc, p));
-		Rectangle(hdc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
-		SelectObject(hdc, penOld);
-		DeleteObject(p);
-
-		HBRUSH b = CreateSolidBrush(pListcolors->borderbak);
-		int borderX = ::GetSystemMetrics(SM_CXSIZEFRAME);
-		int borderY = ::GetSystemMetrics(SM_CYSIZEFRAME);
-
-		rdraw = { 1, 1, rect.right - rect.left - 2, borderY };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { 1, 1, borderX , rect.bottom - rect.top - 2 };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { rect.right - rect.left - borderX , 1, rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { 1, rect.bottom - rect.top - borderY , rect.right - rect.left - 1, rect.bottom - rect.top - 1 };
-		FillRect(hdc, &rdraw, b);
-
-		DeleteObject(b);
-
-		ReleaseDC(hWnd, hdc);
-		return 0;
-		}
-	case WM_VSCROLL:
-	{
-		SHORT pos = HIWORD(wParam);
-		SHORT flag = LOWORD(wParam);
-		int r = ControlWndProc(lb, iMessage, wParam, lParam);
-
-		if (!pListcolors->inizialized)
-			return r;
-
-		if(bBlockRedraw)
-			::DefWindowProcW(scb, WM_SETREDRAW, 1, 0);
-		sc_Paint((flag == SB_THUMBPOSITION || flag == SB_THUMBTRACK), pos);
-		
-		if(bBlockRedraw)
-			::DefWindowProcW(scb, WM_SETREDRAW, 0, 0);
-		return r;
-
-	}
-
 		break;
 
 	default:
@@ -3391,7 +3222,7 @@ void Menu::Destroy() {
 void Menu::Show(Point pt, Window &w) {
 	::TrackPopupMenu(static_cast<HMENU>(mid),
 		TPM_RIGHTBUTTON, static_cast<int>(pt.x - 4), static_cast<int>(pt.y), 0,
-		HwndFromWindowID(w.GetID()), nullptr);
+		HwndFromWindow(w), nullptr);
 	Destroy();
 }
 
@@ -3538,155 +3369,6 @@ void Platform_Finalise(bool fromDllMain) {
 		::DestroyCursor(reverseArrowCursor);
 	ListBoxX_Unregister();
 	::DeleteCriticalSection(&crPlatformLock);
-}
-
-void ListBoxX::OnScrollChange() {
-	int ind = ControlWndProc(lb, LB_GETTOPINDEX, 0, 0);
-	::SetScrollPos(scb, SB_CTL, ind, !pListcolors->inizialized);
-}
-
-void ListBoxX::sc_Paint(bool bDrag, int nTrackPos) {
-	HDC hdc = ::GetDC(scb);
-	RECT r;
-	::GetClientRect(scb, &r);
-	sc_OnPaint(hdc, &r, bDrag, nTrackPos);
-
-	ReleaseDC(scb, hdc);
-}
-
-bool PointInRect(POINT *p, RECT *r) {
-	return (r->left <= p->x) && (p->x <= r->right) && (r->top <= p->y) && (p->y <= r->bottom);
-}
-
-void ListBoxX::sc_OnPaint(HDC hDC, RECT *rcPaint, bool bDrag, int nTrackPos) {
-	int w = rcPaint->right - rcPaint->left;
-	int h = rcPaint->bottom - rcPaint->top;
-
-	HDC hdc = ::CreateCompatibleDC(hDC);
-	HBITMAP hBitmap = ::CreateCompatibleBitmap(hDC, w, h);
-	HBITMAP hBitmapOld = SelectBitmap(hdc, hBitmap);
-
-	HBRUSH b = CreateSolidBrush(pListcolors->scrollbak);
-	::FillRect(hdc, rcPaint, b);
-	::DeleteObject(b);
-
-	HBRUSH b_fore = CreateSolidBrush(pListcolors->scroll);
-	HBRUSH b_hl = CreateSolidBrush(pListcolors->scrollhl);
-	HBRUSH b_press = CreateSolidBrush(pListcolors->scrollpress);
-
-	RECT r;
-	r.left = rcPaint->left + 2;
-	r.right = rcPaint->right - 2;
-
-
-	int count = ControlWndProc(lb, LB_GETCOUNT, 0, 0);
-	int hs = h - 2 * w;
-	int lenT = hs  * (rcPaint->bottom - rcPaint ->top)/ (count * ItemHeight()); ;
-	int hTop = hs  * ControlWndProc(lb, LB_GETTOPINDEX, 0, 0) / count;
-	r.top = rcPaint->top + w + hTop;
-	r.bottom = rcPaint->top + w + hTop + lenT;
-
-	POINT curPos;
-	::GetCursorPos(&curPos);
-	SHORT bPress = ::GetAsyncKeyState(VK_LBUTTON);
-
-	::MapWindowPoints(NULL, scb, &curPos, 1);
-
-	b = b_fore;
-	if (PointInRect(&curPos, &r) || bDrag) {
-		b = (bDrag || bPress) ? b_press : b_hl;
-	}
-
-	::FillRect(hdc, &r, b);
-
-	int w2 = w / 2;
-	POINT line_poly[3] = { {rcPaint->left + 1, rcPaint->top + w2 + 2},
-	{ rcPaint->right - 1, rcPaint->top + w2 + 2 },
-	{ rcPaint->left + w2, rcPaint->top + 2} };
-
-	r.top = 0;
-	r.bottom = w;
-	b = b_fore;
-	if (PointInRect(&curPos, &r)) {
-		b = (bPress) ? b_press : b_hl;
-	}
-
-	HBRUSH hBrushOld = (HBRUSH)SelectObject(hdc, b);
-	BeginPath(hdc);
-	Polygon(hdc, line_poly, 3);
-	EndPath(hdc);
-	FillPath(hdc);
-	
-	POINT line_poly2[3] = { { rcPaint->left + 2, rcPaint->bottom - w2 - 2 },
-	{ rcPaint->right - 2, rcPaint->bottom - w2 - 2 },
-	{ rcPaint->left + w2, rcPaint->bottom - 3 } };
-
-	r.top = rcPaint->bottom - w;
-	r.bottom = rcPaint->bottom;
-	b = b_fore;
-	if (PointInRect(&curPos, &r)) {
-		b = (bPress) ? b_press : b_hl;
-	}
-
-	BeginPath(hdc);
-	Polygon(hdc, line_poly2, 3);
-	EndPath(hdc);
-	FillPath(hdc);
-
-	SelectObject(hdc, hBrushOld);
-	::DeleteObject(b_fore);
-	::DeleteObject(b_hl);
-	::DeleteObject(b_press);
-
-	::BitBlt(hDC, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
-
-	::SelectObject(hdc, GetStockFont(WHITE_BRUSH));
-	SelectBitmap(hdc, hBitmapOld);
-	::DeleteObject(hBitmap);
-	::DeleteDC(hdc);
-
-}
-
-LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-	ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
-	switch (iMessage) {
-	case WM_PAINT:
-	{
-		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-		lbx->sc_OnPaint(hdc, &ps.rcPaint, false, 0);
-
-		EndPaint(hWnd, &ps);
-	}
-	break;
-	case WM_LBUTTONUP:
-	case WM_LBUTTONDBLCLK:
-	case WM_LBUTTONDOWN:
-	case WM_MOUSEMOVE:
-	{
-		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		if (iMessage == WM_MOUSEMOVE && !::GetAsyncKeyState(VK_LBUTTON)) {
-			int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-			lbx->sc_Paint(false, 0);
-			return res;
-		}
-
-		::DefWindowProcW(hWnd, WM_SETREDRAW, 0, 0);
-		lbx->bBlockRedraw = true;
-		int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-		::DefWindowProcW(hWnd, WM_SETREDRAW, 1, 0);
-		lbx->bBlockRedraw = false;
-		if(!::GetAsyncKeyState(VK_LBUTTON))
-			lbx->sc_Paint(false, 0);
-
-		return res;
-	}
-	}
-	return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
 }
 
 }

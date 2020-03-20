@@ -477,12 +477,6 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCI_CALLTIPSETFOREHLT 2207
 #define SCI_CALLTIPUSESTYLE 2212
 #define SCI_CALLTIPSETPOSITION 2213
-#define SCI_CALLTIPADDHLT 44029
-#define SCI_CALLTIPCLEARHLT 44030
-#define SCI_CALLTIPUPDATEHLT 44031
-#define SCI_CALLTIPSETWORDWRAP 44032
-#define SCI_SETMOUSECAPTURE 44033
-#define SCI_SETFOLDHIGHLIGHTCOLOUR 44034
 #define SCI_VISIBLEFROMDOCLINE 2220
 #define SCI_DOCLINEFROMVISIBLE 2221
 #define SCI_WRAPCOUNT 2235
@@ -1013,7 +1007,7 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCI_GETLEXER 4002
 #define SCI_COLOURISE 4003
 #define SCI_SETPROPERTY 4004
-#define KEYWORDSET_MAX 20
+#define KEYWORDSET_MAX 8
 #define SCI_SETKEYWORDS 4005
 #define SCI_SETLEXERLANGUAGE 4006
 #define SCI_LOADLEXERLIBRARY 4007
@@ -1141,9 +1135,6 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCN_AUTOCCOMPLETED 2030
 #define SCN_MARGINRIGHTCLICK 2031
 #define SCN_AUTOCSELECTIONCHANGE 2032
-#define SCN_CLICK 2061
-#define SCN_MOUSEBUTTONUP 2062
-#define SCN_AUTOCUPDATED 2038
 #ifndef SCI_DISABLE_PROVISIONAL
 #define SC_BIDIRECTIONAL_DISABLED 0
 #define SC_BIDIRECTIONAL_L2R 1
@@ -1164,37 +1155,6 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 /* These structures are defined to be exactly the same shape as the Win32
  * CHARRANGE, TEXTRANGE, FINDTEXTEX, FORMATRANGE, and NMHDR structs.
  * So older code that treats Scintilla as a RichEdit will work. */
-
-
-#define SCI_POSTPONECHECKRELOAD 3989 
-#define SCI_MARGINCONTEXTMENU 3990 
-#define SCI_SETSCROLLINFO 3991 
-#define SCI_GETSCROLLINFO 3992 
-#define SCI_FINDPROGRESS 3993 
-#define SCI_POSTCALBACK 3994 
-#define SCN_KEYCOMMAND 3995 
-#define SCI_PRIVATELEXERCALLSTR 3996 
-#define SCN_COLORIZED 3997 
-#define SCN_NOTYFY_OUTPUTCMD 3998 
-#define SCN_NOTYFY_OUTPUTEXIT 3999 
-#define SCI_LISTCUSTOMCOLORS 5000
-
-#if defined(__cplusplus) && defined(SCI_NAMESPACE)
-namespace Scintilla {
-#endif
-
-struct Sci_ListColorsInfo {
-	bool inizialized = false;
-	unsigned long border;
-	unsigned long borderbak;
-	unsigned long scrollbak;
-	unsigned long scroll;
-	unsigned long scrollhl;
-	unsigned long scrollpress;
-	int scrollsize;
-	
-};
-
 
 struct Sci_CharacterRange {
 	Sci_PositionCR cpMin;
