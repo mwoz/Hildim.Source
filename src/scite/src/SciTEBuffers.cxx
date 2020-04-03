@@ -464,7 +464,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		layout.OnOpenClose(startSide);
 
 	wEditor.Call(WM_SETREDRAW, 0);
-	UpdateBuffersCurrent();
+	if(!bExit)
+		UpdateBuffersCurrent();
+
 	buffers.SetCurrent(index);
 	if (updateStack) {
 		buffers.MoveToStackTop(index);
@@ -960,7 +962,7 @@ const char* SciTEBase::GetPropClr(const char* propName, char* buff, const char* 
 
 
 void SciTEBase::BuffersMenu(bool mousedrag) {
-	UpdateBuffersCurrent();
+	//UpdateBuffersCurrent();
 	static char tabForeColor[16];
 	static char tabROColor[16];
 	static char tabActBackColor[16];
