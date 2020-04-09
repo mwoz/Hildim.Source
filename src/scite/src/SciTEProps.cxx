@@ -1217,12 +1217,12 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
-	wEditor.Call(SCI_SETSCROLLWIDTH, 100);
-	wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	wOutput.Call(SCI_SETSCROLLWIDTH, 100);
-	wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
-	wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wEditor.Call(SCI_SETSCROLLWIDTH, 100);
+	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wOutput.Call(SCI_SETSCROLLWIDTH, 100);
+	//wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
+	//wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
@@ -1400,7 +1400,8 @@ void SciTEBase::ReadPropertiesInitial() {
 		indentExamine : SC_IV_NONE);
 
 	wEditor.Call(SCI_SETVIEWEOL, props.GetInt("view.eol"));
-	wEditor.Call(SCI_SETZOOM, props.GetInt("magnification"));
+	wEditorL.Call(SCI_SETZOOM, props.GetInt("magnification"));
+	wEditorR.Call(SCI_SETZOOM, props.GetInt("right.magnification"));
 	wOutput.Call(SCI_SETZOOM, props.GetInt("output.magnification"));
 	wFindRes.Call(SCI_SETZOOM, props.GetInt("findres.magnification"));
 	wEditor.Call(SCI_SETWRAPMODE, wrap ? wrapStyle : SC_WRAP_NONE);

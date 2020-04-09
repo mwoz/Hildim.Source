@@ -3938,7 +3938,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		else{
 			int zoom = wEditor.Call(SCI_GETZOOM);
-			props.SetInteger("magnification", zoom);
+			if (wEditor.GetWindowIdm() == IDM_SRCWIN)
+				props.SetInteger("magnification", zoom);
+			else
+				props.SetInteger("right.magnification", zoom);
 			props.SetInteger("print.magnification", zoom);
 			wEditor.Call(SCI_SETPRINTMAGNIFICATION, zoom);
 		}

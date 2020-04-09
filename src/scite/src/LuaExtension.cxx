@@ -1190,6 +1190,11 @@ static int bf_get_buffer_name(lua_State *L){
 	return 1;
 }
 
+static int bf_save_cobuffer_pos(lua_State *L){
+	host->UpdateBuffersCoCurrent();
+	return 1;
+}
+
 static int bf_get_cobuffer_name(lua_State *L){
 	char c[2000];
 	host->GetCoBufferName(c);
@@ -2426,6 +2431,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "ClearFileTimeAt");
 	lua_pushcfunction(luaState, bf_current);
 	lua_setfield(luaState, -2, "GetCurrent");
+	lua_pushcfunction(luaState, bf_save_cobuffer_pos);
+	lua_setfield(luaState, -2, "SaveCoBuffPos");
 
 	lua_pushcfunction(luaState, bf_get_buffer_side);
 	lua_setfield(luaState, -2, "GetBufferSide");
@@ -3172,7 +3179,8 @@ bool LuaExtension::OnDoubleClick(int modifiers) {
 			lua_pushboolean(luaState, (SCMOD_SHIFT & modifiers) != 0 ? 1 : 0); // shift/lock
 			lua_pushboolean(luaState, (SCMOD_CTRL  & modifiers) != 0 ? 1 : 0); // control
 			lua_pushboolean(luaState, (SCMOD_ALT   & modifiers) != 0 ? 1 : 0); // alt
-			handled = call_function(luaState, 3);
+			lua_pushboolean(luaState, (SCMOD_META   & modifiers) != 0 ? 1 : 0); // middle
+			handled = call_function(luaState, 4);
 		} else {
 			lua_pop(luaState, 1);
 		}
@@ -3190,7 +3198,8 @@ bool LuaExtension::OnClick(int modifiers) {
 			lua_pushboolean(luaState, (SCMOD_SHIFT & modifiers) != 0 ? 1 : 0); // shift/lock
 			lua_pushboolean(luaState, (SCMOD_CTRL  & modifiers) != 0 ? 1 : 0); // control
 			lua_pushboolean(luaState, (SCMOD_ALT   & modifiers) != 0 ? 1 : 0); // alt
-			handled = call_function(luaState, 3);
+			lua_pushboolean(luaState, (SCMOD_META   & modifiers) != 0 ? 1 : 0); // middle
+			handled = call_function(luaState, 4);
 		} else {
 			lua_pop(luaState, 1);
 		}
@@ -3221,7 +3230,7 @@ bool LuaExtension::OnMouseButtonUp(int modifiers) {
 	if (luaState) {
 		lua_getglobal(luaState, "OnMouseButtonUp");
 		if (lua_isfunction(luaState, -1)) {
-			lua_pushboolean(luaState, (SCMOD_CTRL  & modifiers) != 0 ? 1 : 0); // control
+			lua_pushnumber(luaState, modifiers); // control
 			handled = call_function(luaState, 1);
 		} else {
 			lua_pop(luaState, 1);

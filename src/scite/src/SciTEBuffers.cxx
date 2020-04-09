@@ -510,6 +510,16 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 }
 
+void SciTEBase::UpdateBuffersCoCurrent() {
+	int index = buffers.GetDocumentByName(wEditor.GetCoBuffPointer());
+	if (index < 0)
+		return;
+
+	buffers.buffers[index].selection.cpMin = wEditor.coEditor.Call(SCI_GETSELECTIONSTART);
+	buffers.buffers[index].selection.cpMax = wEditor.coEditor.Call(SCI_GETSELECTIONEND);
+	buffers.buffers[index].scrollPosition = wEditor.coEditor.Call(SCI_DOCLINEFROMVISIBLE, wEditor.coEditor.Call(SCI_GETFIRSTVISIBLELINE));
+}
+
 void SciTEBase::UpdateBuffersCurrent() {
 	int currentbuf = buffers.Current();
 

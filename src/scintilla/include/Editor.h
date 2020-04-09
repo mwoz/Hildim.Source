@@ -433,8 +433,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, bool shift, bool ctrl, bool alt); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, bool ctrl); //!-add-[OnMouseButtonUp]
+	void NotifyClick(Point pt, int modifiers); //!-add-[OnClick]
+	void NotifyMouseButtonUp(Point pt, int ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, int modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers);

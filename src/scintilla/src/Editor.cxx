@@ -2396,23 +2396,22 @@ void Editor::NotifyDoubleClick(Point pt, int modifiers) {
 	NotifyParent(scn);
 }
 //!-start-[OnClick]
-void Editor::NotifyClick(Point pt, bool shift, bool ctrl, bool alt) {
+void Editor::NotifyClick(Point pt, int modifiers) {
 	SCNotification scn = {0};
 	scn.nmhdr.code = SCN_CLICK;
 	scn.line = LineFromLocation(pt);
 	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (shift ? SCI_SHIFT : 0) | (ctrl ? SCI_CTRL : 0) |
-		(alt ? SCI_ALT : 0);
+	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
 //!-end-[OnClick]
 //!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, bool ctrl) {
+void Editor::NotifyMouseButtonUp(Point pt, int ctrl) {
 	SCNotification scn = {0};
 	scn.nmhdr.code = SCN_MOUSEBUTTONUP;
 	scn.line = LineFromLocation(pt);
 	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = (ctrl ? SCI_CTRL : 0);
+	scn.modifiers = ctrl;
 	NotifyParent(scn);
 }
 //!-end-[OnMouseButtonUp]
@@ -4559,9 +4558,10 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	SetHoverIndicatorPoint(pt);
 	//Platform::DebugPrintf("ButtonDown %d %d = %d alt=%d %d\n", curTime, lastClickTime, curTime - lastClickTime, alt, inDragDrop);
 	ptMouseLast = pt;
-	const bool ctrl = (modifiers & SCI_CTRL) != 0;
-	const bool shift = (modifiers & SCI_SHIFT) != 0;
-	const bool alt = (modifiers & SCI_ALT) != 0;
+	const bool nmid = (modifiers & SCMOD_META) == 0;
+	const bool ctrl = nmid && ((modifiers & SCI_CTRL) != 0);
+	const bool shift = nmid && ((modifiers & SCI_SHIFT)) != 0;
+	const bool alt = nmid && ((modifiers & SCI_ALT)) != 0;
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false, AllowVirtualSpace(virtualSpaceOptions, alt));
 	newPos = MovePositionOutsideChar(newPos, sel.MainCaret() - newPos.Position());
 	SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
@@ -4735,7 +4735,7 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, int modifie
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, shift, ctrl, alt); //!-add-[OnClick]
+	if (notifyClick) NotifyClick(pt, modifiers); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, int modifiers) {
@@ -4939,6 +4939,7 @@ void Editor::ButtonMoveWithModifiers(Point pt, unsigned int, int modifiers) {
 
 void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers) {
 	//Platform::DebugPrintf("ButtonUp %d %d\n", HaveMouseCapture(), inDragDrop);
+	const bool nmid = (modifiers & SCMOD_META) == 0;
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false,
 		AllowVirtualSpace(virtualSpaceOptions, sel.IsRectangular()));
 	if (hoverIndicatorPos != INVALID_POSITION)
@@ -4954,7 +4955,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 		hotSpotClickPos = INVALID_POSITION;
 		SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
 		newCharPos = MovePositionOutsideChar(newCharPos, -1);
-		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers & SCI_CTRL);
+		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers);
 	}
 	if (HaveMouseCapture()) {
 		if (PointInSelMargin(pt)) {
@@ -4973,7 +4974,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 			if (selStart < selEnd) {
 				if (drag.Length()) {
 					const Sci::Position length = drag.Length();
-					if (modifiers & SCI_CTRL) {
+					if ((modifiers & SCI_CTRL) && nmid) {
 						const Sci::Position lengthInserted = pdoc->InsertString(
 							newPos.Position(), drag.Data(), length);
 						if (lengthInserted > 0) {
@@ -5023,7 +5024,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 		inDragDrop = ddNone;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, modifiers & SCI_CTRL); //!-add-[OnMouseButtonUp]
+	NotifyMouseButtonUp(pt, modifiers); //!-add-[OnMouseButtonUp]
 }
 
 bool Editor::Idle() {
@@ -5760,6 +5761,7 @@ void Editor::StyleSetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 }
 
 sptr_t Editor::StyleGetMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
+	PLATFORM_ASSERT(wParam < vs.styles.size());
 	vs.EnsureStyle(wParam);
 	switch (iMessage) {
 	case SCI_STYLEGETFORE:

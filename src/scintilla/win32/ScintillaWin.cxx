@@ -1378,6 +1378,7 @@ void ScintillaWin::SizeWindow() {
 
 sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	switch (iMessage) {
+	case WM_MBUTTONDOWN:
 	case WM_LBUTTONDOWN: {
 			// For IME, set the composition string as the result string.
 			IMContext imc(MainHWND());
@@ -1391,13 +1392,14 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 			//	KeyboardIsKeyDown(VK_MENU));
 			::SetFocus(MainHWND());
 			ButtonDownWithModifiers(PointFromLParam(lParam), ::GetMessageTime(),
-						MouseModifiers(wParam));
+						MouseModifiers(wParam) | ((iMessage == WM_MBUTTONDOWN) ? SCMOD_META : 0));
 		}
 		break;
 
+	case WM_MBUTTONUP:
 	case WM_LBUTTONUP:
 		ButtonUpWithModifiers(PointFromLParam(lParam),
-				      ::GetMessageTime(), MouseModifiers(wParam));
+				      ::GetMessageTime(), MouseModifiers(wParam) | ((iMessage == WM_MBUTTONUP) ? SCMOD_META : 0));
 		break;
 
 	case WM_RBUTTONDOWN: {
@@ -1882,6 +1884,8 @@ sptr_t ScintillaWin::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lParam
 		case WM_MOUSEMOVE:
 		case WM_MOUSELEAVE:
 		case WM_MOUSEWHEEL:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
 			return MouseMessage(iMessage, wParam, lParam);
 
 		case WM_SETCURSOR:

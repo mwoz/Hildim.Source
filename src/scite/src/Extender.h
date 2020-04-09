@@ -42,6 +42,7 @@ public:
 	virtual void ClearBufferFileTime(int i) = 0;
 	virtual int GetBufferFileTime(int i) = 0;
 	virtual bool GetBuffersSavedState(int i) = 0;
+	virtual void UpdateBuffersCoCurrent(void) = 0;
 	virtual void SetAcceleratorTable(void *h) = 0;
 	virtual void EnsureVisible() = 0;
 	virtual void HideForeReolad(int close) = 0;

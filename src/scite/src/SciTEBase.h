@@ -590,6 +590,7 @@ protected:
 	sptr_t GetDocumentAt(int index);
 	
 	void UpdateBuffersCurrent();
+	void UpdateBuffersCoCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
