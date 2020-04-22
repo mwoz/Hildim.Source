@@ -149,6 +149,7 @@ public:
 	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
+	virtual void OnChangeFocus(int, int) {};
 	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) { return 0; }
 	virtual GUI::gui_string LocalizeText(const char* msg) { GUI::gui_string s; return s; }
 };

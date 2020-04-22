@@ -484,6 +484,11 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	if (!bExit) {
 		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
 		RestoreState(bufferNext, switchTab);
+		if (startSide == buffers.buffers[index].editorSide) {
+			wEditor.Call(SCI_SETSCROLLWIDTH, 100);
+			wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+			wEditor.Call(SCI_SCROLLCARET);
+		}
 
 		if (lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
@@ -491,10 +496,15 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		DisplayAround(bufferNext);
 
 		CheckMenus();
-	} else if (startSide == buffers.buffers[index].editorSide )
+	} else if (startSide == buffers.buffers[index].editorSide) {
 		ReadProperties();
-	else
+		wEditor.Call(SCI_SETSCROLLWIDTH, 100);
+		wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+		wEditor.Call(SCI_SCROLLCARET);
+	}
+	else {
 		RestoreState(bufferNext, switchTab);
+	}
 
 	if (extender) {
 		extender->OnSwitchFile(filePath.AsUTF8().c_str());
@@ -700,6 +710,7 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
 	if (setCaption)
 		SetWindowName();
 	ReadProperties();
+
 	if (CurrentBuffer()->unicodeMode != uni8Bit) {
 		// Override the code page if Unicode
 		codePage = SC_CP_UTF8;

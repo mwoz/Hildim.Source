@@ -615,7 +615,6 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 	}
 
 	switch (cmdID) {
-
 	case IDM_SRCWIN:
 	case IDM_RUNWIN:
 	case IDM_COSRCWIN:
@@ -623,9 +622,11 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 		if (HIWORD(wParam) == SCEN_SETFOCUS) {
 			wFocus = reinterpret_cast<HWND>(lParam);
 			CheckMenus();
+			extender->OnChangeFocus(cmdID, 1);
 		}
 		if (HIWORD(wParam) == SCEN_KILLFOCUS) {
 			CheckMenus();
+			extender->OnChangeFocus(cmdID, 0);
 		}
 		break;
 

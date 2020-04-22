@@ -1590,8 +1590,27 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 		return CallWindowProc(oldProc, hwnd, msg, wp, lp);
 	}
 }
+
 static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
+	case WM_TIMER:
+	{
+		POINT cursor;
+		GetCursorPos(&cursor);
+		MapWindowPoints(NULL, ih->handle, &cursor, 1);
+
+		int w, h, w1, h1;
+		iupStrToIntInt(iupBaseGetCurrentSizeAttrib(ih), &w, &h, 'x');
+
+		RECT rect;
+		SetRect(&rect, 0, 0, w, h);
+		if (!PtInRect(&rect, cursor)) {
+			KillTimer(cbstatic, 1);
+			iupdrvPostRedraw(ih);
+			IupRedraw(ih, 1);
+		}
+	}
+		break;
 	case WM_PAINT:
 		if (iupAttribGetBoolean(ih->parent, "FLAT")){
 			BOOL bEdit = ih->data->has_editbox;
@@ -1616,12 +1635,18 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		
 			unsigned char r = 0, g = 0, b = 0;
 
-			if (higlight)
+			if (higlight) {
 				bgcolor = IupGetAttribute(ih, "HLCOLOR");
-			else if (bEdit)
+				SetTimer(cbstatic, 1, 300, NULL);
+			}
+			else if (bEdit) {
 				bgcolor = IupGetAttribute(ih, "TXTBGCOLOR");
-			else
+				KillTimer(cbstatic, 1);
+			}
+			else {
 				bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
+				KillTimer(cbstatic, 1);
+			}
  
 			iupStrToRGB(bgcolor, &r, &g, &b);
 			RGBbgcolor = RGB(r, g, b);
@@ -1758,6 +1783,11 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
 
   switch (msg)
   {
+  case WM_ACTIVATEAPP:
+  {
+	  int ttt = 99;
+  }
+	  break;
   case WM_LBUTTONDBLCLK:
   case WM_MBUTTONDBLCLK:
   case WM_RBUTTONDBLCLK:

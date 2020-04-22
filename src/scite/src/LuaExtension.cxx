@@ -3399,8 +3399,11 @@ int LuaExtension::OnMenuChar(int flag, const char* key) {
 	return CallNamedFunction("event_MenuChar", flag, key);
 }
 
-void LuaExtension::OnMouseHook(int x, int y){
+void LuaExtension::OnMouseHook(int x, int y) {
 	CallNamedFunction("event_MenuMouseHook", x, y);
+}
+void LuaExtension::OnChangeFocus(int src, int focus) {
+	CallNamedFunction("OnChangeFocus", src, focus);
 }
 
 bool LuaExtension::OnDrawClipboard(int flag){

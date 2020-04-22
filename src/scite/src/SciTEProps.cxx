@@ -1217,8 +1217,10 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
-	//wEditor.Call(SCI_SETSCROLLWIDTH, 100);
+	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);
+	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
 	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wEditor.Call(SCI_SETXOFFSET, hpos);
 	//wOutput.Call(SCI_SETSCROLLWIDTH, 100);
 	//wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 	//wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
