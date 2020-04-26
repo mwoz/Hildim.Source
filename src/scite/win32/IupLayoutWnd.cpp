@@ -1271,9 +1271,9 @@ void drawWinBtn(HDC hDC, HBITMAP hBitmap, int x, int y) {
 	DeleteDC(hMemDC);
 }
 
-bool IupLayoutWnd::HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr) {
-	RECT r = { rect->right - rect->left - (captWidth + 10) * iBtn , 0, 
-		rect->right - rect->left - (captWidth + 10) * (iBtn - 1) , captWidth };
+bool IupLayoutWnd::HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr, int rx, int ry) {
+	RECT r = { rect->right - rect->left - (captWidth + 10) * iBtn + 2 * rx, ry,
+		rect->right - rect->left - (captWidth + 10) * (iBtn - 1) + 2 * rx, captWidth + ry };
 	bool rez = (r.left <= p->x) && (r.right > p->x) && (r.top <= p->y) && (r.bottom >= p->y);
 	if (rez && clr) {
 		rez = ((iBtn == 1 && nBtn == HTCLOSE) || (iBtn == 2 && nBtn == HTMAXBUTTON) || (iBtn == 3 && nBtn == HTMINBUTTON));
@@ -1287,8 +1287,20 @@ bool IupLayoutWnd::HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF 
 }
 
 LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
+	WINDOWPLACEMENT wp;
+	::GetWindowPlacement(hwnd, &wp);
 	RECT rect;
 	GetWindowRect(hwnd, &rect);
+
+	int rx = 0, ry = 0;
+    if (wp.showCmd == SW_SHOWMAXIMIZED) {
+		rx = GetSystemMetrics(SM_CXSIZEFRAME) + 1;
+		ry = GetSystemMetrics(SM_CYSIZEFRAME) + 1;
+		rect.left += rx;
+		rect.right -= rx;
+		rect.top += ry;
+		rect.bottom -= ry;
+	}
 	mouse.x -= rect.left;
 	mouse.y -= rect.top;
 	TRACKMOUSEEVENT tme;
@@ -1298,11 +1310,11 @@ LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
 	tme.dwHoverTime = HOVER_DEFAULT;
 	TrackMouseEvent(&tme);
 
-	if (HilightBtn(&rect, &mouse, NULL, 1, NULL))
+	if (HilightBtn(&rect, &mouse, NULL, 1, NULL, rx, ry))
 		return HTCLOSE;
-	if (HilightBtn(&rect, &mouse, NULL, 2, NULL))
+	if (HilightBtn(&rect, &mouse, NULL, 2, NULL, rx, ry))
 		return HTMAXBUTTON;
-	if (HilightBtn(&rect, &mouse, NULL, 3, NULL))
+	if (HilightBtn(&rect, &mouse, NULL, 3, NULL, rx, ry))
 		return HTMINBUTTON;
 	return HTCAPTION;
 
@@ -1312,7 +1324,7 @@ LRESULT IupLayoutWnd::OnNcMouseMove(HWND hwnd, int iBtn) {
 		nBtn = iBtn;
 		if (nBtnPressed != iBtn)
 			nBtnPressed = 0;
-		OnNcPaint(hwnd, true);
+		OnNcPaint(hwnd, true, true);
 	}
 	return 0;
 }
@@ -1348,7 +1360,7 @@ void IupLayoutWnd::SetTitle(const GUI::gui_char *s) {
 	OnNcPaint((HWND)((SciTEWin*)pSciteWin)->GetID(), TRUE);
 }
 
-LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
+LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv, BOOL bOnlyBtns) {
 	WINDOWPLACEMENT wp;
 	::GetWindowPlacement(hwnd, &wp);
 	static int bRedraw = -1;
@@ -1364,7 +1376,18 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	bool bActive = ((hwnd == ::GetForegroundWindow()) && bActiv);
 
 	GetWindowRect(hwnd, &rect);
-	HRGN hrgn = CreateRectRgn(0, 0, rect.right - rect.left, rect.bottom - rect.top);
+	int rx = 0, ry = 0;
+	if (wp.showCmd == SW_SHOWMAXIMIZED) {
+		rx = GetSystemMetrics(SM_CXSIZEFRAME) + 1;
+		ry = GetSystemMetrics(SM_CYSIZEFRAME) + 1;
+		rect.left += rx;
+		rect.right -= rx;
+		rect.top += ry;
+		rect.bottom -= ry;
+	}
+
+	HRGN hrgn = CreateRectRgn(rx, ry, rect.right - rect.left + rx, rect.bottom - rect.top + ry);
+
 	b = CreateSolidBrush(GetColorRef("CAPTBGCOLOR"));
 	::SetWindowRgn(hwnd, hrgn, false);
 
@@ -1376,58 +1399,64 @@ LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv) {
 	//int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
 
 	RECT rdraw;
-	if (wp.showCmd == SW_SHOWNORMAL) {
-		rdraw = { 0, 0, borderX, rect.bottom - rect.top };
+	if (!bOnlyBtns) {
+		if (wp.showCmd == SW_SHOWNORMAL) {
+			rdraw = { 0, 0, borderX, rect.bottom - rect.top };
+			FillRect(hdc, &rdraw, b);
+			rdraw = { rect.right - rect.left - borderX, 0, rect.right - rect.left, rect.bottom - rect.top };
+			FillRect(hdc, &rdraw, b);
+			rdraw = { 0, rect.bottom - rect.top - borderY, rect.right - rect.left, rect.bottom - rect.top };
+			FillRect(hdc, &rdraw, b);
+		}
+		rdraw = { 0, 0, rect.right - rect.left + rx, captWidth };
 		FillRect(hdc, &rdraw, b);
-		rdraw = { rect.right -rect.left - borderX, 0, rect.right - rect.left, rect.bottom - rect.top };
-		FillRect(hdc, &rdraw, b);
-		rdraw = { 0, rect.bottom - rect.top - borderY, rect.right - rect.left, rect.bottom - rect.top };
-		FillRect(hdc, &rdraw, b);
-	}
-	rdraw = { 0, 0, rect.right - rect.left, captWidth };
-	FillRect(hdc, &rdraw, b);
 
-	DeleteObject(b); 
-	
+		DeleteObject(b);
 
-	if (captWidth > 30) {
-		if(!hicon)
-			hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
-		::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
+
+		if (captWidth > 30) {
+			if (!hicon)
+				hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
+			::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
+		} else {
+			if (!hicon)
+				hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
+			::DrawIconEx(hdc, 6, 8, hicon, 16, 16, 0, NULL, DI_NORMAL);
+
+		}
+
+		char* font;
+		font = IupGetGlobal("DEFAULTFONT");
+
+		HFONT hFont = (HFONT)iupwinGetHFont(font);
+		SelectObject(hdc, hFont);
+		SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
+		SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
+
+		rdraw = { 40, 4, rect.right - rect.left - captWidth * 3 - 30, captWidth };
+
+		::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER);
+
+		//rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
 	} else {
-		if (!hicon)
-			hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
-		::DrawIconEx(hdc, 6, 8, hicon, 16, 16, 0, NULL, DI_NORMAL);
-
+		RECT rdraw = { rect.right - rect.left - (captWidth + 10) * 3 + 2 * rx, ry,
+			rect.right - rect.left + 2 * rx, captWidth + ry };
+		FillRect(hdc, &rdraw, b);
 	}
-	
-	char* font;
-	font = IupGetGlobal("DEFAULTFONT");
-	
-	HFONT hFont = (HFONT)iupwinGetHFont(font);
-	SelectObject(hdc, hFont);
-	SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
-	SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
-	
-	rdraw = {40, 4, rect.right - rect.left - captWidth * 3 - 30, captWidth};
-	
-	::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER) ; 
-
-	rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
 
 	COLORREF hl = GetColorRef("HLCOLOR");
 
-	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl);
+	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl, rx, ry);
 	HBITMAP hb = (HBITMAP)iupImageGetImage(bHl ? "CLOSE_H_µ": "CLOSE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2, (captWidth - 10) / 2 + 1);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
 
-	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl);
+	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl, rx, ry);
 	hb = (HBITMAP)iupImageGetImage(wp.showCmd == SW_SHOWNORMAL ? (bHl ? "MAXIMISE_H_µ" : "MAXIMISE_µ") : (bHl ? "NORMAL_H_µ" : "NORMAL_µ"), NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2, (captWidth - 10) / 2 + 1);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
 
-	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl);
+	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl, rx, ry);
 	hb = (HBITMAP)iupImageGetImage(bHl ? "MINIMISE_H_µ" : "MINIMISE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2, (captWidth - 10) / 2 + 1);
+	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
 
 
 	if (bActive && wp.showCmd == SW_SHOWNORMAL) {

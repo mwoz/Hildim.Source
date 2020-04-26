@@ -378,7 +378,7 @@ public:
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
 	LRESULT OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
-	LRESULT OnNcPaint(HWND hwnd, BOOL bActiv);
+	LRESULT OnNcPaint(HWND hwnd, BOOL bActiv, BOOL bOnlyBtns = false);
 	LRESULT OnNcHitTest(HWND hwnd, POINT cursor);
 	LRESULT OnNcMouseMove(HWND hwnd, int iBtn);
 	LRESULT OnNcLMouseDown(HWND hwnd, int iBtn);
@@ -396,7 +396,7 @@ private:
 	LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void PropGet(const char *name, const char *defoult, char* buff);
-	bool HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr);
+	bool HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr, int rx, int ry);
 	int captWidth = 32;
 	int nBtn = 0;
 	int nBtnPressed = 0;
