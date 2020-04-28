@@ -17,7 +17,7 @@ class AutoComplete {
 	std::string stopChars;
 	std::string fillUpChars;
 	char separator;
-	char typesep; // Type seperator
+	char typesep; // Type separator
 	enum { maxItemLen=1000 };
 	std::vector<int> sortMatrix;
 
@@ -28,7 +28,7 @@ public:
 	std::unique_ptr<ListBox> lb;
 	Sci::Position posStart;
 	Sci::Position startLen;
-	/// Should autocompletion be canceled if editor's currentPos <= startPos?
+	/// Should autocompletion be cancelled if editor's currentPos <= startPos?
 	bool cancelAtStartPos;
 	bool autoHide;
 	bool dropRestOfWord;
@@ -40,8 +40,6 @@ public:
 	 *  SC_ORDER_CUSTOM:      Handle non-alphabetical entries; start up performance cost for generating a sorted lookup table
 	 */
 	int autoSort;
-
-	Sci_ListColorsInfo listcolors;
 
 	AutoComplete();
 	~AutoComplete();
