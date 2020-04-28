@@ -2717,14 +2717,10 @@ static IFaceFunction ifaceFunctions[] = {
 	{"BraceHighlightIndicator", 2498, iface_void, {iface_bool, iface_int}},
 	{"BraceMatch", 2353, iface_position, {iface_position, iface_void}},
 	{"CallTipActive", 2202, iface_bool, {iface_void, iface_void}},
-	{"CallTipAddHlt", 4027, iface_void, {iface_int, iface_int}},
 	{"CallTipCancel", 2201, iface_void, {iface_void, iface_void}},
-	{"CallTipClearHlt", 4028, iface_void, {iface_void, iface_void}},
 	{"CallTipPosStart", 2203, iface_position, {iface_void, iface_void}},
 	{"CallTipSetHlt", 2204, iface_void, {iface_int, iface_int}},
-	{"CallTipSetWordWrap", 4030, iface_void, {iface_int, iface_void}},
 	{"CallTipShow", 2200, iface_void, {iface_position, iface_string}},
-	{"CallTipUpdateHlt", 4029, iface_void, {iface_void, iface_void}},
 	{"CanPaste", 2173, iface_bool, {iface_void, iface_void}},
 	{"CanRedo", 2016, iface_bool, {iface_void, iface_void}},
 	{"CanUndo", 2174, iface_bool, {iface_void, iface_void}},
@@ -3193,7 +3189,7 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 286,
+	ifaceFunctionCount = 282,
 	ifaceConstantCount = 2549,
 	ifacePropertyCount = 210
 };

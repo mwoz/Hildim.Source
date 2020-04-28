@@ -934,11 +934,6 @@ void SciTEBase::ReadProperties() {
 
 	calltipEndDefinition = FindLanguageProperty("calltip.*.end.definition");
 
-//!-start-[BetterCalltips]
-	int calltipWordWrap = FindIntLanguageProperty("calltip.*.word.wrap");
-	wEditor.Call(SCI_CALLTIPSETWORDWRAP, calltipWordWrap > 0 ? calltipWordWrap : 0);
-//!-end-[BetterCalltips]
-
 	sprintf(key, "autocomplete.%s.start.characters", language.c_str());
 	autoCompleteStartCharacters = props.GetExpanded(key);
 	if (autoCompleteStartCharacters == "")
