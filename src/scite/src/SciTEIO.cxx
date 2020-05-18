@@ -524,6 +524,8 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	CurrentBuffer()->overrideExtension = "";
 	wEditor.SetBuffPointer(&absPath);
 	ReadProperties();
+	wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	wEditor.Call(SCI_SETSCROLLWIDTH, 100);
 	SetIndentSettings();
 	SetEol();
 	UpdateBuffersCurrent();

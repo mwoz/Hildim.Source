@@ -2855,8 +2855,10 @@ static IFaceFunction ifaceFunctions[] = {
 	{"MarkerDeleteHandle", 2018, iface_void, {iface_int, iface_void}},
 	{"MarkerEnableHighlight", 2293, iface_void, {iface_bool, iface_void}},
 	{"MarkerGet", 2046, iface_int, {iface_int, iface_void}},
+	{"MarkerHandleFromLine", 2732, iface_int, {iface_int, iface_int}},
 	{"MarkerLineFromHandle", 2017, iface_int, {iface_int, iface_void}},
 	{"MarkerNext", 2047, iface_int, {iface_int, iface_int}},
+	{"MarkerNumberFromLine", 2733, iface_int, {iface_int, iface_int}}, 
 	{"MarkerPrevious", 2048, iface_int, {iface_int, iface_int}},
 	{"MarkerSymbolDefined", 2529, iface_int, {iface_int, iface_void}},
 	{"MoveCaretInsideView", 2401, iface_void, {iface_void, iface_void}},
@@ -3189,7 +3191,7 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 282,
+	ifaceFunctionCount = 284,
 	ifaceConstantCount = 2549,
 	ifacePropertyCount = 210
 };

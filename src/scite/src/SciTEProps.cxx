@@ -1216,10 +1216,10 @@ void SciTEBase::ReadProperties() {
 	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
 	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 	//wEditor.Call(SCI_SETXOFFSET, hpos);
-	//wOutput.Call(SCI_SETSCROLLWIDTH, 100);
-	//wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	//wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
-	//wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	wOutput.Call(SCI_SETSCROLLWIDTH, 100);
+	wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
+	wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
