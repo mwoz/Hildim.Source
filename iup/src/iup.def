@@ -92,6 +92,7 @@ IupFlatTabsV
 IupFlatTabsv
 IupFlatToggle
 IupFlatVal
+IupFlatTree
 IupFlush
 IupFontDlg    
 IupFrame
@@ -144,6 +145,7 @@ IupGetParamV
 IupGetParamv
 IupGetParent
 IupGetRGB
+IupGetRGBA
 IupGetRGBId
 IupGetRGBId2
 IupGetText
@@ -248,6 +250,7 @@ IupSetLanguage
 IupSetLanguagePack
 IupSetLanguageString
 IupSetRGB
+IupSetRGBA
 IupSetRGBId
 IupSetRGBId2
 IupSetStrAttribute
@@ -373,6 +376,7 @@ iupBaseContainerGetExpandAttrib
 iupBaseContainerUpdateExpand
 iupBaseGetActiveAttrib
 iupBaseGetClientOffsetAttrib
+iupBaseGetClientSizeAttrib
 iupBaseGetCurrentSizeAttrib
 iupBaseGetExpandAttrib
 iupBaseGetRasterSizeAttrib
@@ -385,7 +389,12 @@ iupBaseNativeParentGetBgColorAttrib
 iupBaseNoSaveCheck
 iupBaseRegisterCommonAttrib
 iupBaseRegisterCommonCallbacks
+iupBaseRegisterBaseCallbacks
 iupBaseRegisterVisualAttrib
+iupBaseSetCPaddingAttrib
+iupBaseGetCPaddingAttrib
+iupBaseSetCSpacingAttrib
+iupBaseGetCSpacingAttrib
 iupBaseSetActiveAttrib
 iupBaseSetCurrentSize
 iupBaseSetExpandAttrib
@@ -476,6 +485,9 @@ iupFlatScrollBarSetChildrenPosition
 iupFlatScrollBarSetPos
 iupFlatScrollBarWheelUpdate
 iupFlatSetActiveAttrib
+iupFlatItemSetTipAttrib
+iupFlatItemResetTip
+iupFlatItemSetTip
 iupFocusCanAccept
 iupFocusNextInteractive
 iupFontParsePango
@@ -570,6 +582,7 @@ iupStrPrintfDoubleLocale
 iupStrProcessMnemonic
 iupStrRemove
 iupStrReplace
+iupStrReplaceReserved
 iupStrReturnBoolean
 iupStrReturnChecked
 iupStrReturnDouble

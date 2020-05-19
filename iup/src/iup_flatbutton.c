@@ -43,7 +43,8 @@ struct _IcontrolData
   /* aux */
   int has_focus,
     highlighted,
-    pressed;
+    pressed,
+    inside_action;
 };
 
 
@@ -80,7 +81,8 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
       bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
   }
 
-  if (ih->data->pressed || (selected && !ih->data->highlighted))
+    if (ih->data->pressed || (selected && !ih->data->highlighted))
+//  if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted))
   {
     char* presscolor = iupAttribGetStr(ih, "PSCOLOR");
     if (presscolor)
@@ -111,6 +113,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
     char* bordercolor = iupAttribGetStr(ih, "BORDERCOLOR");
 
     if (ih->data->pressed || (selected && !ih->data->highlighted))
+//    if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted))
     {
       char* presscolor = iupAttribGetStr(ih, "BORDERPSCOLOR");
       if (presscolor)
@@ -129,6 +132,7 @@ static int iFlatButtonRedraw_CB(Ihandle* ih)
   }
 
   /* simulate pressed when selected and has images (but colors and borders are not included) */
+//  image_pressed = ih->data->pressed && ih->data->highlighted;
   image_pressed = ih->data->pressed;
   if (selected && !ih->data->pressed && (bgimage || image))
     image_pressed = 1;
@@ -196,17 +200,18 @@ static void iFlatButtonNotify(Ihandle* ih, int is_toggle)
   if (cb)
   {
     /* to avoid double calls when a dialog is displayed */
-    if (!iupAttribGet(ih, "_IUPFLATBUT_INSIDE_ACTION"))
+    if (!ih->data->inside_action)
     {
       int ret;
-      iupAttribSet(ih, "_IUPFLATBUT_INSIDE_ACTION", "1");
+
+      ih->data->inside_action = 1;
 
       ret = cb(ih);
       if (ret == IUP_CLOSE)
         IupExitLoop();
 
       if (ret != IUP_IGNORE && iupObjectCheck(ih))
-        iupAttribSet(ih, "_IUPFLATBUT_INSIDE_ACTION", NULL);
+        ih->data->inside_action = 0;
     }
   }
 
@@ -234,6 +239,7 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       int selected = iupAttribGetInt(ih, "VALUE");
       Ihandle* last_tg = NULL;
 
+//      if (!pressed && ih->data->highlighted)  /* released inside the button area */
       if (!pressed)
       {
         if (selected)  /* was ON */
@@ -270,6 +276,7 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       ih->data->pressed = pressed;
       iupdrvRedrawNow(ih);
 
+//      if (!pressed && ih->data->highlighted)  /* released inside the button area */
       if (!pressed)
       {
         if (last_tg && ih != last_tg)
@@ -284,7 +291,8 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
       ih->data->pressed = pressed;
       iupdrvRedrawNow(ih);
 
-	  if (!pressed && (!iup_isbutton1(status) || (x >= 0 && y >= 0 && x <= ih->currentwidth && y <= ih->currentheight))) 
+//      if (!pressed && ih->data->highlighted)  /* released inside the button area */
+      if (!pressed)
         iFlatButtonNotify(ih, 0);
     }
   }
@@ -316,6 +324,44 @@ static int iFlatButtonFocus_CB(Ihandle* ih, int focus)
 
   ih->data->has_focus = focus;
   iupdrvRedrawNow(ih);
+
+  return IUP_DEFAULT;
+}
+
+static int iFlatButtonMotion_CB(Ihandle* ih, int x, int y, char* status)
+{
+  int redraw = 0;
+  IFniis cb = (IFniis)IupGetCallback(ih, "FLAT_MOTION_CB");
+  if (cb)
+  {
+    if (cb(ih, x, y, status) == IUP_IGNORE)
+      return IUP_DEFAULT;
+  }
+
+  if (iup_isbutton1(status))
+  {
+    /* handle when mouse is pressed and moved to/from inside the canvas */
+    if (x < 0 || x > ih->currentwidth - 1 ||
+        y < 0 || y > ih->currentheight - 1)
+    {
+      if (ih->data->highlighted)
+      {
+        redraw = 1;
+        ih->data->highlighted = 0;
+      }
+    }
+    else
+    {
+      if (!ih->data->highlighted)
+      {
+        redraw = 1;
+        ih->data->highlighted = 1;
+      }
+    }
+  }
+
+  if (redraw)
+    iupdrvRedrawNow(ih);
 
   return IUP_DEFAULT;
 }
@@ -378,6 +424,9 @@ static char* iFlatButtonGetAlignmentAttrib(Ihandle *ih)
 
 static int iFlatButtonSetPaddingAttrib(Ihandle* ih, const char* value)
 {
+  if (iupStrEqual(value, "DEFAULTBUTTONPADDING"))
+    value = IupGetGlobal("DEFAULTBUTTONPADDING");
+
   iupStrToIntInt(value, &ih->data->horiz_padding, &ih->data->vert_padding, 'x');
   if (ih->handle)
     iupdrvRedrawNow(ih);
@@ -555,6 +604,7 @@ static int iFlatButtonCreateMethod(Ihandle* ih, void** params)
   /* internal callbacks */
   IupSetCallback(ih, "ACTION", (Icallback)iFlatButtonRedraw_CB);
   IupSetCallback(ih, "BUTTON_CB", (Icallback)iFlatButtonButton_CB);
+  IupSetCallback(ih, "MOTION_CB", (Icallback)iFlatButtonMotion_CB);
   IupSetCallback(ih, "FOCUS_CB", (Icallback)iFlatButtonFocus_CB);
   IupSetCallback(ih, "LEAVEWINDOW_CB", iFlatButtonLeaveWindow_CB);
   IupSetCallback(ih, "ENTERWINDOW_CB", iFlatButtonEnterWindow_CB);
@@ -631,6 +681,7 @@ Iclass* iupFlatButtonNewClass(void)
   /* Callbacks */
   iupClassRegisterCallback(ic, "FLAT_ACTION", "");
   iupClassRegisterCallback(ic, "FLAT_BUTTON_CB", "iiiis");
+  iupClassRegisterCallback(ic, "FLAT_MOTION_CB", "iis");
   iupClassRegisterCallback(ic, "FLAT_FOCUS_CB", "i");
   iupClassRegisterCallback(ic, "FLAT_ENTERWINDOW_CB", "ii");
   iupClassRegisterCallback(ic, "FLAT_LEAVEWINDOW_CB", "");
@@ -648,7 +699,9 @@ Iclass* iupFlatButtonNewClass(void)
   iupClassRegisterAttribute(ic, "TOGGLE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "ALIGNMENT", iFlatButtonGetAlignmentAttrib, iFlatButtonSetAlignmentAttrib, "ACENTER:ACENTER", NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "PADDING", iFlatButtonGetPaddingAttrib, iFlatButtonSetPaddingAttrib, IUPAF_SAMEASSYSTEM, "0x0", IUPAF_NOT_MAPPED);
+  iupClassRegisterAttribute(ic, "CPADDING", iupBaseGetCPaddingAttrib, iupBaseSetCPaddingAttrib, NULL, NULL, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "SPACING", iFlatButtonGetSpacingAttrib, iFlatButtonSetSpacingAttrib, IUPAF_SAMEASSYSTEM, "2", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CSPACING", iupBaseGetCSpacingAttrib, iupBaseSetCSpacingAttrib, NULL, NULL, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED);
   iupClassRegisterAttribute(ic, "IGNORERADIO", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HIGHLIGHTED", iFlatButtonGetHighlightedAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "PRESSED", iFlatButtonGetPressedAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);

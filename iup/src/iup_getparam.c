@@ -1859,6 +1859,9 @@ Iclass* iupParamNewClass(void)
   ic->Create = iParamCreateMethod;
   ic->Map = iupBaseTypeVoidMapMethod;
 
+  /* Base Callbacks */
+  iupBaseRegisterBaseCallbacks(ic);
+
   iupClassRegisterAttribute(ic, "LABEL", NULL, NULL, NULL, NULL, IUPAF_IHANDLE|IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CONTROL", NULL, NULL, NULL, NULL, IUPAF_IHANDLE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "AUXCONTROL", NULL, NULL, NULL, NULL, IUPAF_IHANDLE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
@@ -1963,9 +1966,10 @@ Iclass* iupParamBoxNewClass(void)
   ic->SetChildrenCurrentSize = iParamBoxSetChildrenCurrentSizeMethod;
   ic->SetChildrenPosition = iParamBoxSetChildrenPositionMethod;
 
-  /* Common Callbacks */
-  iupClassRegisterCallback(ic, "MAP_CB", "");
-  iupClassRegisterCallback(ic, "UNMAP_CB", "");
+  /* Base Callbacks */
+  iupBaseRegisterBaseCallbacks(ic);
+
+  /* Callbacks */
   iupClassRegisterCallback(ic, "PARAM_CB", "iV");
 
   /* Common */
@@ -1973,7 +1977,7 @@ Iclass* iupParamBoxNewClass(void)
 
   /* Base Container */
   iupClassRegisterAttribute(ic, "EXPAND", iupBaseContainerGetExpandAttrib, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "CLIENTSIZE", iupBaseGetCurrentSizeAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CLIENTSIZE", iupBaseGetClientSizeAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CLIENTOFFSET", iupBaseGetClientOffsetAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "STATUS", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

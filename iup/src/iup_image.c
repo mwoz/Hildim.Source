@@ -21,7 +21,7 @@
 #include "iup_array.h"
 
 
-static void iDataResize(int src_width, int src_height, unsigned char *src_map, int dst_width, int dst_height, unsigned char *dst_map, int depth)
+static void iDataResizeRGBA(int src_width, int src_height, unsigned char *src_map, int dst_width, int dst_height, unsigned char *dst_map, int depth)
 {
   /* Do bilinear interpolation */
 
@@ -79,7 +79,7 @@ static void iDataResize(int src_width, int src_height, unsigned char *src_map, i
   free(T);
 }
 
-static void iDataStretch(int src_width, int src_height, unsigned char *src_map, int dst_width, int dst_height, unsigned char *dst_map)
+static void iDataStretchMap(int src_width, int src_height, unsigned char *src_map, int dst_width, int dst_height, unsigned char *dst_map)
 {
   int x, y, offset;
   double factor;
@@ -119,9 +119,9 @@ static void iImageResize(Ihandle* ih, int new_width, int new_height)
   unsigned char* new_imgdata = (unsigned char *)malloc(count);
 
   if (bpp == 8)
-    iDataStretch(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata);
+    iDataStretchMap(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata);
   else
-    iDataResize(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata, channels);
+    iDataResizeRGBA(ih->currentwidth, ih->currentheight, imgdata, new_width, new_height, new_imgdata, channels);
 
   ih->currentwidth = new_width;
   ih->currentheight = new_height;
@@ -201,6 +201,15 @@ IUP_SDK_API void iupImageStockSetNoResize(const char *name, iupImageStockCreateF
   iupTableSet(istock_table, name, (void*)istock, IUPTABLE_POINTER);
 }
 
+int iupIsHighDpi(void)
+{
+  int dpi = iupRound(iupdrvGetScreenDpi());
+  if (dpi > 144)
+    return 1;
+  else
+    return 0;
+}
+
 int iupImageStockGetSize(void)
 {
   char* stock_size = IupGetGlobal("IMAGESTOCKSIZE");
@@ -209,27 +218,24 @@ int iupImageStockGetSize(void)
     int size = 16;
     iupStrToInt(stock_size, &size);
 
-    if (size <= 16)
-      return 16;
-    else if (size <= 24)
+    /*  if (size <= 16)
+      return 16; */
+    if (size <= 24)
       return 24;
-    else if (size <= 32)
+    if (size <= 32)
       return 32;
-    else
-      return 48;
+    return 48;
   }
   else
   {
     int dpi = iupRound(iupdrvGetScreenDpi());
-
-    if (dpi <= 96)
-      return 16;
-    else if (dpi <= 144)
+    /*  if (dpi <= 96)
+      return 16; */
+    if (dpi <= 144)
       return 24;
-    else if (dpi <= 192)
+    if (dpi <= 192)
       return 32;
-    else
-      return 48;
+    return 48;
   }
 }
 
@@ -258,7 +264,7 @@ void iupImageStockGet(const char* name, Ihandle* *ih, const char* *native_name)
         int new_height = stock_size;
         int new_width = stock_size;
         if (istock->image->currentwidth != istock->image->currentheight)
-          new_width = (new_height * istock->image->currentwidth) / istock->image->currentheight;
+          new_width = (new_height * istock->image->currentwidth) / istock->image->currentheight; /* preserve height */
 
         iupAttribSet(istock->image, "SCALED", "Yes");
         iupAttribSetStrf(istock->image, "ORIGINALSCALE", "%dx%d", istock->image->currentwidth, istock->image->currentheight);
@@ -521,20 +527,29 @@ Ihandle* iupImageGetImageFromName(const char* name)
         int new_width = iupRound(scale*ih->currentwidth);
         int new_height = iupRound(scale*ih->currentheight);
 
-        iupAttribSet(ih, "SCALED", "Yes");
-        iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
-
-        iImageResize(ih, new_width, new_height);
-
-        if (hotspot)
+        if (new_height < 24)
         {
-          int x = 0, y = 0;
-          iupStrToIntInt(hotspot, &x, &y, ':');
+          new_height = 24;
+          new_width = (new_height * ih->currentwidth) / ih->currentheight;
+        }
 
-          x = iupRound(scale*x);
-          y = iupRound(scale*y);
+        if (new_width != ih->currentwidth || new_height != ih->currentheight)
+        {
+          iupAttribSet(ih, "SCALED", "Yes");
+          iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
 
-          iupAttribSetStrf(ih, "HOTSPOT", "%d:%d", x, y);
+          iImageResize(ih, new_width, new_height);
+
+          if (hotspot)
+          {
+            int x = 0, y = 0;
+            iupStrToIntInt(hotspot, &x, &y, ':');
+
+            x = iupRound(scale*x);
+            y = iupRound(scale*y);
+
+            iupAttribSetStrf(ih, "HOTSPOT", "%d:%d", x, y);
+          }
         }
       }
     }
@@ -713,7 +728,6 @@ void* iupImageGetImage(const char* name, Ihandle* ih_parent, int make_inactive, 
 
 void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
 {
-  void* handle;
   Ihandle *ih;
 
   if (!name)
@@ -723,6 +737,7 @@ void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
   if (!ih)
   {
     const char* native_name = NULL;
+    void* handle;
 
     /* Check in the system resources. */
     handle = iupdrvImageLoad(name, IUPIMAGE_IMAGE);
@@ -757,12 +772,12 @@ void iupImageGetInfo(const char* name, int *w, int *h, int *bpp)
 
 static Ihandle* iImageGetHandleFromImage(void* handle)
 {
-  Ihandle* ih = NULL;
-  int w, h, bpp, i;
+  int w, h, bpp;
   iupColor colors[256];
   int colors_count = 0;
   if (iupdrvImageGetRawInfo(handle, &w, &h, &bpp, colors, &colors_count))
   {
+    Ihandle* ih;
     unsigned char* imgdata;
 
     if (bpp == 32)
@@ -774,15 +789,17 @@ static Ihandle* iImageGetHandleFromImage(void* handle)
 
     if (bpp <= 8 && colors_count)
     {
+	  int i;
       for (i = 0; i < colors_count; i++)
         IupSetRGBId(ih, "", i, colors[i].r, colors[i].g, colors[i].b);
     }
 
     imgdata = (unsigned char*)iupAttribGet(ih, "WID");
     iupdrvImageGetData(handle, imgdata);
+	return ih;
   }
 
-  return ih;
+  return NULL;
 }
 
 IUP_API Ihandle* IupImageGetHandle(const char* name)
@@ -995,17 +1012,20 @@ static int iImageSetReshapeAttrib(Ihandle *ih, const char* value)
 
 static int iImageSetResizeAttrib(Ihandle *ih, const char* value)
 {
-  int w, h;
+  int new_width, new_height;
 
   if (iupAttribGet(ih, "_IUPIMAGE_LOADED_HANDLE") || iupAttribGet(ih, "_IUPIMAGE_LOADED_WD_HANDLE"))
     return 0;
 
-  if (iupStrToIntInt(value, &w, &h, 'x') == 2)
+  if (iupStrToIntInt(value, &new_width, &new_height, 'x') == 2)
   {
-    iupAttribSet(ih, "SCALED", "Yes");
-    iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
+    if (new_width != ih->currentwidth || new_height != ih->currentheight)
+    {
+      iupAttribSet(ih, "SCALED", "Yes");
+      iupAttribSetStrf(ih, "ORIGINALSCALE", "%dx%d", ih->currentwidth, ih->currentheight);
 
-    iImageResize(ih, w, h);
+      iImageResize(ih, new_width, new_height);
+    }
   }
   return 0;
 }
@@ -1019,6 +1039,37 @@ static char* iImageGetHeightAttrib(Ihandle *ih)
 {
   return iupStrReturnInt(ih->currentheight);
 }
+
+static char* iImageGetRasterSizeAttrib(Ihandle* ih)
+{
+  int width = ih->currentwidth;
+  int height = ih->currentheight;
+
+  if (width < 0) width = 0;
+  if (height < 0) height = 0;
+
+  if (width == 0 && height == 0)
+    return NULL;
+
+  return iupStrReturnIntInt(width, height, 'x');
+}
+
+static int iImageSetIdValueAttrib(Ihandle *ih, int id, const char* value)
+{
+  (void)ih;
+  (void)value;
+  (void)id;
+  /*  iupAttribSetStrId(ih, "", id, value); */
+  return 1;
+}
+
+static char* iImageGetIdValueAttrib(Ihandle *ih, int id)
+{
+  return iupAttribGetId(ih, "", id);
+}
+
+/***************************************************************************************************/
+
 
 static int iImageCreate(Ihandle* ih, void** params, int bpp)
 {
@@ -1161,8 +1212,9 @@ static Iclass* iImageNewClassBase(const char* name, const char* cons)
   iupClassRegisterAttribute(ic, "WID", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT | IUPAF_NO_STRING);
   iupClassRegisterAttribute(ic, "WIDTH", iImageGetWidthAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HEIGHT", iImageGetHeightAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "RASTERSIZE", iupBaseGetRasterSizeAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "RASTERSIZE", iImageGetRasterSizeAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "HANDLENAME", NULL, NULL, NULL, NULL, IUPAF_NO_SAVE | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "BPP", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHANNELS", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
@@ -1174,6 +1226,8 @@ static Iclass* iImageNewClassBase(const char* name, const char* cons)
   iupClassRegisterAttribute(ic, "RESIZE", NULL, iImageSetResizeAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SCALED", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "ORIGINALSCALE", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "AUTOSCALE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "DPI", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   return ic;
 }
@@ -1183,6 +1237,10 @@ Iclass* iupImageNewClass(void)
   Iclass* ic = iImageNewClassBase("image", NULL);
   ic->New = iupImageNewClass;
   ic->Create = iImageCreateMethod;
+  ic->has_attrib_id = 1;
+
+  iupClassRegisterAttributeId(ic, "IDVALUE", iImageGetIdValueAttrib, iImageSetIdValueAttrib, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+
   return ic;
 }
 

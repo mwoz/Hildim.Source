@@ -216,10 +216,10 @@ void iupMatrixAuxUpdateScrollPos(Ihandle* ih, int m)
    Depends on the first visible column/line.  */
 void iupMatrixAuxUpdateLast(ImatLinColData *p)
 {
-  int i, sum = 0;
-
   if (p->current_visible_size > 0)
   {
+    int i, sum = 0;
+
     /* Find which is the last column/line.
        Start in the first visible and continue adding the widths
        up to the visible size */
@@ -250,7 +250,7 @@ void iupMatrixAuxUpdateLast(ImatLinColData *p)
   }
 }
 
-/* Fill the sizes vector with the width/heigh of all the columns/lines.
+/* Fill the sizes array with the width/heigh of all the columns/lines.
    Calculate the value of total_visible_size */
 static void iMatrixAuxFillSizeVec(Ihandle* ih, int m)
 {

@@ -77,6 +77,7 @@ int iupspacelua_open(lua_State * L);
 int iupflatlistlua_open(lua_State * L);
 int iupflatvallua_open(lua_State * L);
 int iupthreadlua_open(lua_State * L);
+int iupflattreelua_open(lua_State * L);
 
 void iupgetparamlua_open (lua_State * L);
 void iupconfiglua_open(lua_State * L);
@@ -88,7 +89,7 @@ int iupluaScanf(lua_State *L);
 void iupluaapi_open(lua_State * L);
 
 
-#define IUPLUA_SDK_API 
+#define IUPLUA_SDK_API IUPLUA_API
 
             /*     Registration    */
 

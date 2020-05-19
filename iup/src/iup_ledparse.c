@@ -35,15 +35,6 @@ static int iparse_saveinfo = 0;
 
 IUP_SDK_API const char* iupLoadLed(const char *filename, const char *buffer, int save_info)
 {
-  iupASSERT(buffer != NULL || filename != NULL);
-  if (!buffer && !filename)
-  {
-    if (buffer)
-      return "invalid buffer";
-    else
-      return "invalid file name";
-  }
-
   iparse_saveinfo = save_info;
 
   iparse_error = iupLexStart(filename, buffer);
@@ -69,11 +60,19 @@ IUP_SDK_API const char* iupLoadLed(const char *filename, const char *buffer, int
 
 IUP_API char* IupLoad(const char *filename)
 {
+  iupASSERT(filename != NULL);
+  if (!filename)
+    return "invalid file name";
+
   return (char*)iupLoadLed(filename, NULL, 0);  /* no save info */
 }
 
 IUP_API char* IupLoadBuffer(const char *buffer)
 {
+  iupASSERT(buffer != NULL);
+  if (!buffer)
+    return "invalid buffer";
+
   return (char*)iupLoadLed(NULL, buffer, 0);  /* no save info */
 }
 
@@ -113,9 +112,11 @@ static void* iParseExp(void)
     IPARSE_RETURN_IF_ERROR_FREE(iparse_error, nm);
     if (ih)
     {
-      if (iparse_saveinfo && IupGetHandle(nm))
+      if (iparse_saveinfo)
       {
-        IPARSE_RETURN_IF_ERROR_FREE(iParseError(IPARSE_SYMBEXIST, nm), nm);
+        Ihandle* old_ih = IupGetHandle(nm);
+        if (iupObjectCheck(old_ih))  /* error only if old handle is still valid */
+          IPARSE_RETURN_IF_ERROR_FREE(iParseError(IPARSE_SYMBEXIST, nm), nm);
       }
 
       IupSetHandle(nm, ih);

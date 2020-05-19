@@ -272,7 +272,6 @@ IUP_SDK_API void iupStrCopyN(char* dst_str, int dst_max_size, const char* src_st
 IUP_SDK_API char* iupStrDupUntil(const char **str, char c)
 {
   const char *p_str;
-  char *new_str;
   if (!str || str[0]==0)
     return NULL;
 
@@ -281,6 +280,7 @@ IUP_SDK_API char* iupStrDupUntil(const char **str, char c)
     return NULL;
   else
   {
+    char *new_str;
     int i;
     int sl = (int)(p_str - (*str));
 
@@ -299,7 +299,7 @@ IUP_SDK_API char* iupStrDupUntil(const char **str, char c)
 
 static char *iStrDupUntilNoCase(char **str, char sep)
 {
-  char *p_str,*new_str;
+  char *p_str;
   if (!str || str[0]==0)
     return NULL;
 
@@ -312,6 +312,7 @@ static char *iStrDupUntilNoCase(char **str, char sep)
     return NULL;
   else
   {
+    char *new_str;
     int i;
     int sl=(int)(p_str - (*str));
 
@@ -400,10 +401,9 @@ IUP_SDK_API char *iupStrGetMemory(int size)
   static int buffers_sizes[MAX_BUFFERS];
   static int buffers_index = -1;
 
-  int i;
-
   if (size == -1) /* Frees memory */
   {
+    int i;
     buffers_index = -1;
     for (i = 0; i < MAX_BUFFERS; i++)
     {
@@ -455,10 +455,10 @@ IUP_SDK_API char *iupStrGetMemory(int size)
 
 IUP_SDK_API char* iupStrReturnStrf(const char* format, ...)
 {
-  char* str = iupStrGetMemory(1024);
+  char* str = iupStrGetMemory(10240);
   va_list arglist;
   va_start(arglist, format);
-  vsnprintf(str, 1024, format, arglist);
+  vsnprintf(str, 10240, format, arglist);
   va_end(arglist);
   return str;
 }
@@ -987,6 +987,34 @@ IUP_SDK_API int iupStrReplace(char* str, char src, char dst)
   return i;
 }
 
+static int iStrIsReserved(char c)
+{
+  /* can only has letters or numbers as characters, or underscore */
+  if (c < '0' ||
+    (c > '9' && c < 'A') ||
+      (c > 'Z' && c < 'a' && c != '_') ||
+      c > 'z')
+    return 1;
+
+  return 0;
+}
+
+IUP_SDK_API void iupStrReplaceReserved(char* str, char c)
+{
+  if (!str)
+    return;
+
+  while (*str)
+  {
+    if (iStrIsReserved(*str))
+    {
+      *str = c;
+    }
+    str++;
+  }
+}
+
+
 IUP_SDK_API void iupStrToUnix(char* str)
 {
   char* p_str = str;
@@ -1315,8 +1343,8 @@ static char* iStrLatin1toUTF8(char* s, char c)
     /* all 11 bit codepoints (0x0 -- 0x7ff) fit within a 2byte utf8 char
      * firstbyte  = 110 +xxxxx := 0xc0 + (char >> 6) MSB
      * secondbyte = 10 +xxxxxx := 0x80 + (char & 63) LSB */
-    *s = 0xc0 | (uc >> 6) & 0x1F; s++;  /* 2+1+5 bits */
-    *s = 0x80 | (uc & 0x3F);            /* 1+1+6 bits */
+    *s = 0xc0 | ((uc >> 6) & 0x1F); s++;  /* 2+1+5 bits */
+    *s = 0x80 | (uc & 0x3F);              /* 1+1+6 bits */
   }
   return s;
 }

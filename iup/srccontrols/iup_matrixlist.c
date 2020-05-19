@@ -329,6 +329,13 @@ static void iMatrixListUpdateItemBgColor(Ihandle* ih, int lin, const char* bgcol
 
 static void iMatrixListUpdateItemFgColor(Ihandle* ih, int lin, const char* fgcolor, int itemactive)
 {
+  if (lin == ih->data->lines.focus_cell)
+  {
+    char* focuscolor = IupGetAttribute(ih, "FOCUSFGCOLOR");
+    if (focuscolor)
+      fgcolor = focuscolor;
+  }
+
   if (!fgcolor)
     fgcolor = IupGetAttribute(ih, "FGCOLOR");
 
@@ -662,11 +669,20 @@ static int iMatrixListSetFocusColorAttrib(Ihandle* ih, const char* value)
   return 1;
 }
 
+static int iMatrixListSetFocusFgColorAttrib(Ihandle* ih, const char* value)
+{
+  int lin = ih->data->lines.focus_cell;
+  int itemactive = IupGetIntId(ih, "ITEMACTIVE", lin);
+  iupAttribSetStr(ih, "FOCUSFGCOLOR", value);
+  iMatrixListUpdateItemFgColor(ih, lin, iupAttribGetId(ih, "ITEMFGCOLOR", lin), itemactive);
+  return 1;
+}
+
 static int iMatrixListSetTitleAttrib(Ihandle* ih, const char* value)
 {
   ImatrixListData* mtxList = (ImatrixListData*)iupAttribGet(ih, "_IUPMTXLIST_DATA");
   if (!ih->handle)
-    iupAttribSetId2(ih, "", 0, mtxList->label_col, value);
+    iupAttribSetStrId2(ih, "", 0, mtxList->label_col, value);
   else
   {
     iupMatrixSetValue(ih, 0, mtxList->label_col, value, 0);
@@ -1449,6 +1465,7 @@ Iclass* iupMatrixListNewClass(void)
   iupClassRegisterAttribute(ic, "IMAGEDEL",     NULL, NULL, IUPAF_SAMEASSYSTEM, "MTXLIST_IMG_DEL",     IUPAF_IHANDLENAME|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "IMAGEADD",     NULL, NULL, IUPAF_SAMEASSYSTEM, "MTXLIST_IMG_ADD",     IUPAF_IHANDLENAME|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FOCUSCOLOR",   NULL, iMatrixListSetFocusColorAttrib, IUPAF_SAMEASSYSTEM, "255 235 155", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FOCUSFGCOLOR", NULL, iMatrixListSetFocusFgColorAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "EDITABLE",   iMatrixListGetEditableAttrib, iMatrixListSetEditableAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHOWDELETE",   NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);

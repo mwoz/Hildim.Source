@@ -103,7 +103,7 @@ static char* iBackgroundBoxGetClientSizeAttrib(Ihandle* ih)
 
   if (iupAttribGetBoolean(ih, "DECORATION"))
   {
-    int decorwidth, decorheight;
+    int decorwidth = 0, decorheight = 0;
     IupGetIntInt(ih, "DECORSIZE", &decorwidth, &decorheight);
     width -= decorwidth;
     height -= decorheight;
@@ -136,7 +136,7 @@ static void iBackgroundBoxComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, 
 
       if (iupAttribGetBoolean(ih, "DECORATION"))
       {
-        int decorwidth, decorheight;
+        int decorwidth = 0, decorheight = 0;
         IupGetIntInt(ih, "DECORSIZE", &decorwidth, &decorheight);
         width += decorwidth;
         height += decorheight;
@@ -168,7 +168,7 @@ static void iBackgroundBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
       if (iupAttribGetBoolean(ih, "DECORATION"))
       {
-        int decorwidth, decorheight;
+        int decorwidth = 0, decorheight = 0;
         IupGetIntInt(ih, "DECORSIZE", &decorwidth, &decorheight);
         width -= decorwidth;
         height -= decorheight;
@@ -196,7 +196,7 @@ static void iBackgroundBoxSetChildrenPositionMethod(Ihandle* ih, int x, int y)
 
     if (iupAttribGetBoolean(ih, "DECORATION"))
     {
-      int decor_x, decor_y;
+      int decor_x = 0, decor_y = 0;
       IupGetIntInt(ih, "DECOROFFSET", &decor_x, &decor_y);
       x += decor_x;
       y += decor_y;
