@@ -347,6 +347,20 @@ static void iFlatTreeInitializeImages(void)
 /********************** Utilities **********************/
 
 
+static int iFlatTreeFindUserDataId(Ihandle* ih, void* userdata)
+{
+  iFlatTreeNode **nodes = iupArrayGetData(ih->data->node_array);
+  int i, count = iupArrayCount(ih->data->node_array);
+
+  for (i = 0; i < count; i++)
+  {
+    if (nodes[i]->userdata == userdata)
+      return i;
+  }
+
+  return -1;
+}
+
 static void iFlatTreeSetNodeDrawFont(Ihandle* ih, iFlatTreeNode *node, const char* font)
 {
   if (node->font)
@@ -1239,13 +1253,15 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
       if (py1 > 0 && py1 < ih->currentheight)
         iupdrvDrawLine(dc, px1, py1, px2, py2, line_rgba, IUP_DRAW_STROKE_DOT, 1);
 
-      if (!node->brother)
+      if (!node->brother)  /* on the last child draw the vertical line */
       {
         px1 = node_x - (ih->data->indentation / 2);
         py1 = y - ih->data->spacing;
         px2 = px1;   /* vertical line */
         py2 = node_y + node_h / 2;
-        if ((py1 > 0 && py1 < ih->currentheight) || (py2 > 0 && py2 < ih->currentheight))
+        if ((py1 >= 0 && py1 < ih->currentheight) || 
+            (py2 >= 0 && py2 < ih->currentheight) ||
+            (py1 < 0 && py2 >= ih->currentheight))
           iupdrvDrawLine(dc, px1, py1, px2, py2, line_rgba, IUP_DRAW_STROKE_DOT, 1);
       }
     }
@@ -1688,6 +1704,9 @@ static void iFlatTreeSelectNodeInteract(Ihandle* ih, int id, int ctrlPressed, in
       int start, end;
       Iarray* unsel_array = NULL;
       Iarray* sel_array = NULL;
+
+      if (ih->data->last_selected_id == -1)
+        return;
 
       if (multi_un_cb || sel_cb)
         unsel_array = iupArrayCreate(10, sizeof(int));
@@ -2145,8 +2164,7 @@ static int iFlatTreeButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 
         /* single click in the image+title area */
 
-        if (ih->data->show_dragdrop)
-          ih->data->dragged_id = id;
+        ih->data->dragged_id = id;
 
         iFlatTreeSelectNodeInteract(ih, id, iup_iscontrol(status), iup_isshift(status));
 
@@ -2194,8 +2212,11 @@ static int iFlatTreeMotion_CB(Ihandle* ih, int x, int y, char* status)
 
   if (ih->data->mark_mode == IFLATTREE_MARK_MULTIPLE && !ih->data->show_dragdrop)
   {
-    /* multiple selection while dragging when SHOWDRAGDROP=NO */
-    iFlatTreeSelectNodeInteract(ih, id, 0, 1);
+    if (ih->data->last_selected_id == ih->data->dragged_id)
+    {
+      /* multiple selection while dragging when SHOWDRAGDROP=NO */
+      iFlatTreeSelectNodeInteract(ih, id, 0, 1);
+    }
   }
 
   if (y < 0 || y > ih->currentheight)
@@ -2298,15 +2319,23 @@ static int iFlatTreeFocus_CB(Ihandle* ih, int focus)
   return IUP_DEFAULT;
 }
 
+static int iFlatTreeScroll_CB(Ihandle* ih, int action, float posx, float posy)
+{
+  (void)action;
+  (void)posx;
+  (void)posy;
+  iupdrvRedrawNow(ih);  /* so FLATSCROLLBAR can also work */
+  return IUP_DEFAULT;
+}
+
 static void iFlatTreeScrollFocusVisible(Ihandle* ih, int direction)
 {
   /* make sure focus node is visible */
   int posy, node_y, node_height;
   int dy = IupGetInt(ih, "DY");
-  int ymin = IupGetInt(ih, "YMIN");
   int ymax = IupGetInt(ih, "YMAX");
 
-  if (dy >= (ymax - ymin))
+  if (dy >= ymax)
   {
     IupRedraw(ih, 0);
     return;
@@ -3684,7 +3713,7 @@ static int iFlatTreeGetChildCount(iFlatTreeNode *node)
   while (child)
   {
     if (child->first_child)
-      count += iFlatTreeGetChildCount(child->first_child);
+      count += iFlatTreeGetChildCount(child);
     count++;
     child = child->brother;
   }
@@ -3931,6 +3960,8 @@ static void iFlatTreeDestroyMethod(Ihandle* ih)
     iFlatTreeRemoveNode(ih, ih->data->root_node->first_child, noderemoved_cb);
   }
 
+  iupFlatScrollBarRelease(ih);
+
   iupArrayDestroy(ih->data->node_array);
 
   free(ih->data->root_node);
@@ -3977,6 +4008,7 @@ static int iFlatTreeCreateMethod(Ihandle* ih, void** params)
   ih->data->button_size = high_dpi ? 16 : 9;
   ih->data->dragover_id = -1;
   ih->data->dragged_id = -1;
+  ih->data->last_selected_id = -1;
 
   ih->data->root_node = (iFlatTreeNode*)malloc(sizeof(iFlatTreeNode));
   memset(ih->data->root_node, 0, sizeof(iFlatTreeNode));
@@ -3989,6 +4021,7 @@ static int iFlatTreeCreateMethod(Ihandle* ih, void** params)
   ih->data->node_array = iupArrayCreate(10, sizeof(iFlatTreeNode*));
 
   IupSetCallback(ih, "_IUP_XY2POS_CB", (Icallback)iFlatTreeConvertXYToId);
+  IupSetCallback(ih, "_IUPTREE_FIND_USERDATA_CB", (Icallback)iFlatTreeFindUserDataId);
 
   /* internal callbacks */
   IupSetCallback(ih, "ACTION", (Icallback)iFlatTreeRedraw_CB);
@@ -3997,6 +4030,7 @@ static int iFlatTreeCreateMethod(Ihandle* ih, void** params)
   IupSetCallback(ih, "LEAVEWINDOW_CB", (Icallback)iFlatTreeLeaveWindow_CB);
   IupSetCallback(ih, "RESIZE_CB", (Icallback)iFlatTreeResize_CB);
   IupSetCallback(ih, "FOCUS_CB", (Icallback)iFlatTreeFocus_CB);
+  IupSetCallback(ih, "SCROLL_CB", (Icallback)iFlatTreeScroll_CB);
   IupSetCallback(ih, "K_CR", (Icallback)iFlatTreeKCr_CB);
   IupSetCallback(ih, "K_UP", (Icallback)iFlatTreeKUp_CB);
   IupSetCallback(ih, "K_sUP", (Icallback)iFlatTreeKUp_CB);

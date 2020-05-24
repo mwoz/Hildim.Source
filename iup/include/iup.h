@@ -45,6 +45,7 @@ IUP_API int       IupLoopStep      (void);
 IUP_API int       IupLoopStepWait  (void);
 IUP_API int       IupMainLoopLevel (void);
 IUP_API void      IupFlush         (void);
+void      IupFlushMouse    (void);
 IUP_API void      IupExitLoop      (void);
 IUP_API void      IupPostMessage   (Ihandle* ih, const char* s, int i, double d, void* p);
 
@@ -307,7 +308,7 @@ IUP_API void IupSetfAttributeId(Ihandle* ih, const char* name, int id, const cha
 IUP_API void IupStoreAttributeId2(Ihandle* ih, const char* name, int lin, int col, const char* value);
 IUP_API void IupSetfAttributeId2(Ihandle* ih, const char* name, int lin, int col, const char* format, ...);
 
-/* IupTree utilities */
+/* IupTree and IupFlatTree utilities (work for both) */
 IUP_API int   IupTreeSetUserId(Ihandle* ih, int id, void* userid);
 IUP_API void* IupTreeGetUserId(Ihandle* ih, int id);
 IUP_API int   IupTreeGetId(Ihandle* ih, void *userid);

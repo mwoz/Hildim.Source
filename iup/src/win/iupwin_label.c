@@ -133,7 +133,10 @@ static void winLabelDrawText(Ihandle* ih, HDC hDC, int rect_width, int rect_heig
   /* WORDWRAP and ELLIPSIS */
   style |= ih->data->text_style;
 
-  if (itemState & ODS_NOACCEL && !iupwinGetKeyBoardCues())
+  if (iupAttribGetBoolean(IupGetDialog(ih), "CONTROL")) {
+    if(!iupAttribGetBoolean(ih, "FORCEMNEMONIC"))
+		style |= DT_HIDEPREFIX;
+  } else if (itemState & ODS_NOACCEL && !iupwinGetKeyBoardCues())  
     style |= DT_HIDEPREFIX;
 
   iupwinDrawText(hDC, title, x, y, width, height, hFont, fgcolor, style);
@@ -167,7 +170,9 @@ static void winLabelDrawItem(Ihandle* ih, DRAWITEMSTRUCT *drawitem)
 
 static int winLabelSetTitleAttrib(Ihandle* ih, const char* value)
 {
+  if (!iupAttribGetBoolean(IupGetDialog(ih), "CONTROL"))
   iupwinSetMnemonicTitle(ih, 0, value);
+
   iupwinSetTitleAttrib(ih, value);
   iupdrvPostRedraw(ih);
   return 1;

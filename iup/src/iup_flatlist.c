@@ -174,6 +174,8 @@ static void iFlatListCalcItemMaxSize(Ihandle *ih, iFlatListItem* items, int coun
   *max_w = 0;
   *max_h = 0;
 
+  iupdrvFontGetCharSize(ih, NULL, max_h);
+
   for (i = 0; i < count; i++)
   {
     int item_width, item_height;
@@ -720,6 +722,15 @@ static int iFlatListFocus_CB(Ihandle* ih, int focus)
   ih->data->has_focus = focus;
   iupdrvRedrawNow(ih);
 
+  return IUP_DEFAULT;
+}
+
+static int iFlatListScroll_CB(Ihandle* ih, int action, float posx, float posy)
+{
+  (void)action;
+  (void)posx;
+  (void)posy;
+  iupdrvRedrawNow(ih);  /* so FLATSCROLLBAR can also work */
   return IUP_DEFAULT;
 }
 
@@ -1878,6 +1889,7 @@ static int iFlatListCreateMethod(Ihandle* ih, void** params)
   IupSetCallback(ih, "LEAVEWINDOW_CB", (Icallback)iFlatListLeaveWindow_CB);
   IupSetCallback(ih, "RESIZE_CB", (Icallback)iFlatListResize_CB);
   IupSetCallback(ih, "FOCUS_CB", (Icallback)iFlatListFocus_CB);
+  IupSetCallback(ih, "SCROLL_CB", (Icallback)iFlatListScroll_CB);
   IupSetCallback(ih, "K_UP", (Icallback)iFlatListKUp_CB);
   IupSetCallback(ih, "K_DOWN", (Icallback)iFlatListKDown_CB);
   IupSetCallback(ih, "K_sUP", (Icallback)iFlatListKUp_CB);

@@ -474,9 +474,9 @@ int iupMatrixSetAddLinAttrib(Ihandle* ih, const char* value)
   return 0;
 }
 
-int iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value)
+int iupMatrixSetDelLinhiddenAttrib(Ihandle* ih, const char* value)
 {
-  int base, focus_cell_changed=0, count, lines_num = ih->data->lines.num;
+	int base, focus_cell_changed = 0, count, lines_num = ih->data->lines.num;
 
   if (!ih->handle)  /* do not do the action before map */
     return 0;       /* allowing this method to be called before map will avoid its storage in the hash table */
@@ -485,26 +485,25 @@ int iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value)
     return 0;
 
   /* if the focus cell is after the removed area */
-  if (ih->data->lines.focus_cell >= base)
-  {
+	if (ih->data->lines.focus_cell >= base) {
     /* leave of the edition mode */
     iupMatrixEditHide(ih);
 
     /* if the focus cell is inside the removed area */
-    if (ih->data->lines.focus_cell <= base+count-1)
+		if (ih->data->lines.focus_cell <= base + count - 1)
       ih->data->lines.focus_cell = base;   /* move it to the first existent cell */
     else
       ih->data->lines.focus_cell -= count; /* move it to the same cell */
 
-    if (ih->data->lines.focus_cell >= lines_num-count)
-      ih->data->lines.focus_cell = lines_num-count-1;
+		if (ih->data->lines.focus_cell >= lines_num - count)
+			ih->data->lines.focus_cell = lines_num - count - 1;
     if (ih->data->lines.focus_cell <= 0)
       ih->data->lines.focus_cell = 1;
 
     focus_cell_changed = 1;
   }
 
-  iupMatrixMemReAllocLines(ih, lines_num, lines_num-count, base);
+	iupMatrixMemReAllocLines(ih, lines_num, lines_num - count, base);
 
   ih->data->lines.num -= count;
   ih->data->need_calcsize = 1;
@@ -514,6 +513,11 @@ int iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value)
 
   if (focus_cell_changed)
     iupMatrixAuxCallEnterCellCb(ih);
+}
+
+int iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value)
+{
+	iupMatrixSetDelLinhiddenAttrib(ih, value);
 
   iupMatrixDraw(ih, 1);
   return 0;

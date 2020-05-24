@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <Windows.h>
 
 #include "iup.h"
 
@@ -20,6 +21,26 @@
 #include "iup_drv.h"
 #include "iup_drvfont.h"
 
+void SciTE_NATIVEPARENT(Ihandle *ih)
+{
+	if (!IupGetAttribute(ih, "PARENT") && !IupGetAttribute(ih, "NATIVEPARENT"))
+	{
+		HWND hwnd = NULL;
+
+		DWORD p = GetCurrentProcessId();
+
+		for (;;){
+			hwnd = FindWindowEx(NULL, hwnd, L"HildiMWindow", NULL);
+			DWORD d = 0;
+			GetWindowThreadProcessId(hwnd, &d);
+			if (d == p) break;
+			if (!hwnd) break;
+		}
+		if (hwnd){
+			IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
+		}
+	}
+}
 
 IUP_API void IupUnmap(Ihandle *ih)
 {
@@ -77,6 +98,7 @@ IUP_API int IupMap(Ihandle* ih)
     return IUP_NOERROR;
   }
 
+  SciTE_NATIVEPARENT(ih);
   /* parent must be mapped to map child */
   if (ih->parent && !(ih->parent->handle))
     return IUP_ERROR;

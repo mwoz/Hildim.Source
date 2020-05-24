@@ -2244,6 +2244,24 @@ static void winTreeDragMove(Ihandle* ih, int x, int y)
     iupAttribSet(ih, "_IUPTREE_DROPITEM", NULL);
 }
 
+static int winTreeCallShowDragDrop(Ihandle* ih) 	
+{
+	IFniii cbShowDragDrop = (IFniii)IupGetCallback(ih, "SHOWDRAGDROP_CB");
+	if (cbShowDragDrop) {
+		int is_shift = 0;
+		int is_ctrl = 0;
+		if ((GetKeyState(VK_SHIFT) & 0x8000))
+			is_shift = 1;
+		if ((GetKeyState(VK_CONTROL) & 0x8000))
+			is_ctrl = 1;
+
+		int drag_id = iupTreeFindNodeId(ih, iupdrvTreeGetFocusNode(ih));
+		return cbShowDragDrop(ih, drag_id, is_shift, is_ctrl)!=IUP_IGNORE;
+	}
+
+	return IUP_CONTINUE; /* allow to move by default if callback not defined */
+}
+
 static void winTreeDragDrop(Ihandle* ih)
 {
   HTREEITEM	 hItemDrag     =  (HTREEITEM)iupAttribGet(ih, "_IUPTREE_DRAGITEM");
@@ -2475,7 +2493,7 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       if (wp == VK_RETURN)
       {
         HTREEITEM hItemFocus = iupdrvTreeGetFocusNode(ih);
-        if (winTreeCallBranchLeafCb(ih, hItemFocus, 1) != IUP_IGNORE)
+        if (winTreeCallBranchLeafCb(ih, hItemFocus, 0) != IUP_IGNORE)
         {
           if (winTreeIsBranch(ih, hItemFocus))
           {
@@ -2716,7 +2734,8 @@ static int winTreeMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
 
 static COLORREF winTreeInvertColor(COLORREF color)
 {
-  return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
+	return color;
+  //return RGB(~GetRValue(color), ~GetGValue(color), ~GetBValue(color));
 }
 
 static int winTreeWmNotify(Ihandle* ih, NMHDR* msg_info, int *result)

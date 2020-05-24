@@ -163,15 +163,15 @@ static int plot_predraw_cb(Ihandle *self, cdCanvas* cnv)
   return iuplua_call(L, 1);
 }
 
-static int plot_ytickformatnumber_cb(Ihandle *self, char * p0, char * p1, double p2, char * p3)
-{
-  int status;
-  lua_State *L = iuplua_call_start(self, "ytickformatnumber_cb");
-  lua_pushstring(L, p1);
-  lua_pushnumber(L, p2);
-  lua_pushstring(L, p3);
-  status = iuplua_call_raw(L, 3, 2);
-
+static int plot_ytickformatnumber_cb(Ihandle *self, char * p0, char * p1, double p2, char * p3)
+{
+  int status;
+  lua_State *L = iuplua_call_start(self, "ytickformatnumber_cb");
+  lua_pushstring(L, p1);
+  lua_pushnumber(L, p2);
+  lua_pushstring(L, p3);
+  status = iuplua_call_raw(L, 3, 2);
+
   if (status != LUA_OK)
     return IUP_DEFAULT;
   else
@@ -185,15 +185,15 @@ static int plot_ytickformatnumber_cb(Ihandle *self, char * p0, char * p1, double
   }
 }
 
-static int plot_xtickformatnumber_cb(Ihandle *self, char * p0, char * p1, double p2, char * p3)
-{
-  int status;
-  lua_State *L = iuplua_call_start(self, "xtickformatnumber_cb");
-  lua_pushstring(L, p1);
-  lua_pushnumber(L, p2);
-  lua_pushstring(L, p3);
-
-  status = iuplua_call_raw(L, 3, 2);
+static int plot_xtickformatnumber_cb(Ihandle *self, char * p0, char * p1, double p2, char * p3)
+{
+  int status;
+  lua_State *L = iuplua_call_start(self, "xtickformatnumber_cb");
+  lua_pushstring(L, p1);
+  lua_pushnumber(L, p2);
+  lua_pushstring(L, p3);
+
+  status = iuplua_call_raw(L, 3, 2);
   if (status != LUA_OK)
     return IUP_DEFAULT;
   else
@@ -205,8 +205,8 @@ static int plot_xtickformatnumber_cb(Ihandle *self, char * p0, char * p1, double
       iupStrCopyN(p0, 128, tmp_s);
     return tmp_i;
   }
-}
-
+}
+
 static int PlotBegin(lua_State *L)
 {
   Ihandle *ih = iuplua_checkihandle(L,1);
