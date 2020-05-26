@@ -96,7 +96,6 @@ struct _cdCanvas
   void   (*cxKillCanvas)(cdCtxCanvas* ctxcanvas);
   int    (*cxFont)(cdCtxCanvas* ctxcanvas, const char *type_face, int style, int size);
   void   (*cxPutImageRectMap)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char *index, const long *colors, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
-  void   (*cxPutImageRectRGB)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
 
   /* default implementation uses the simulation driver */
   void   (*cxGetFontDim)(cdCtxCanvas* ctxcanvas, int *max_width, int *height, int *ascent, int *descent);
@@ -107,6 +106,7 @@ struct _cdCanvas
   void   (*cxFlush)(cdCtxCanvas* ctxcanvas);
   void   (*cxClear)(cdCtxCanvas* ctxcanvas);
 
+  void   (*cxFPixel)(cdCtxCanvas* ctxcanvas, double x, double y, long color);
   void   (*cxFLine)(cdCtxCanvas* ctxcanvas, double x1, double y1, double x2, double y2);
   void   (*cxFPoly)(cdCtxCanvas* ctxcanvas, int mode, cdfPoint* points, int n);
   void   (*cxFRect)(cdCtxCanvas* ctxcanvas, double xmin, double xmax, double ymin, double ymax);
@@ -137,8 +137,14 @@ struct _cdCanvas
   long   (*cxForeground)(cdCtxCanvas* ctxcanvas, long color);
   void   (*cxTransform)(cdCtxCanvas* ctxcanvas, const double* matrix);
 
-  void   (*cxPutImageRectRGBA)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, const unsigned char *a, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
   void   (*cxGetImageRGB)(cdCtxCanvas* ctxcanvas, unsigned char *r, unsigned char *g, unsigned char *b, int x, int y, int w, int h);
+  void   (*cxPutImageRectRGB)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
+  void   (*cxPutImageRectRGBA)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, const unsigned char *a, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
+
+  void   (*cxFPutImageRectRGB)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+  void   (*cxFPutImageRectRGBA)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, const unsigned char* a, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+  void   (*cxFPutImageRectMap)(cdCtxCanvas* ctxcanvas, int iw, int ih, const unsigned char* index, const long* colors, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+
   void   (*cxScrollArea)(cdCtxCanvas* ctxcanvas, int xmin, int xmax, int ymin, int ymax, int dx, int dy);
 
   cdCtxImage* (*cxCreateImage)(cdCtxCanvas* ctxcanvas, int w, int h);
@@ -213,8 +219,8 @@ struct _cdCanvas
   int poly_mode, 
       poly_n,                /* current number of vertices */
       poly_size, fpoly_size; /* allocated number of vertices, only increases */
-  cdPoint* poly;             /* used during an integer polygon creation, only if ->Poly exists */
-  cdfPoint* fpoly;           /* used during an real polygon creation, only if ->fPoly exists */
+  cdPoint* poly;             /* used during an integer polygon creation */
+  cdfPoint* fpoly;           /* used during an real polygon creation, only if ->cxFPoly exists */
   int use_fpoly;
 
   /* last path */
@@ -238,6 +244,8 @@ struct _cdCanvas
   cdSimulation* simulation;
   cdCtxCanvas* ctxcanvas;
   cdContext* context;
+
+  void* userdata;
 };
 
 enum{CD_BASE_WIN, CD_BASE_X, CD_BASE_GDK, CD_BASE_HAIKU};
@@ -283,19 +291,38 @@ int cdStrLineCount(const char* str);
 char* cdStrDup(const char* str);
 char* cdStrDupN(const char* str, int len);
 int cdStrIsAscii(const char* str);
+char* cdStrConvertToUTF8(const char* str, int len, char* utf8_buffer, int *utf8_buffer_len, int utf8mode);
 void cdSetPaperSize(int size, double *w_pt, double *h_pt);
 int cdGetFontFileName(const char* type_face, char* filename);
 int cdGetFontFileNameDefault(const char *type_face, int style, char* filename);
 int cdGetFontFileNameSystem(const char *type_face, int style, char* filename);
 int cdStrTmpFileName(char* filename);
+int cdMakeDirectory(const char *path);
+int cdIsDirectory(const char* path);
+int cdRemoveDirectory(const char *path);
+void cdCopyFile(const char* srcFile, const char* destFile);
 
-void cdCanvasPoly(cdCanvas* canvas, int mode, cdPoint* points, int n);
-void cdCanvasGetArcBox(int xc, int yc, int w, int h, double a1, double a2, int *xmin, int *xmax, int *ymin, int *ymax);
-int cdCanvasGetArcPathF(const cdPoint* poly, double *xc, double *yc, double *w, double *h, double *a1, double *a2);
-int cdfCanvasGetArcPath(const cdfPoint* poly, double *xc, double *yc, double *w, double *h, double *a1, double *a2);
-int cdCanvasGetArcPath(const cdPoint* poly, int *xc, int *yc, int *w, int *h, double *a1, double *a2);
-void cdCanvasGetArcStartEnd(int xc, int yc, int w, int h, double a1, double a2, int *x1, int *y1, int *x2, int *y2);
-void cdfCanvasGetArcStartEnd(double xc, double yc, double w, double h, double a1, double a2, double *x1, double *y1, double *x2, double *y2);
+typedef struct _cdDirData
+{
+  const char* path;
+  char filename[1024];
+  int isDir;
+  int closed;
+  void* handle;
+} cdDirData;
+
+cdDirData* cdDirIterOpen(const char *path);
+int cdDirIter(cdDirData * dirData);
+void cdDirClose(cdDirData* dirData);
+
+void cdPoly(cdCanvas* canvas, int mode, cdPoint* points, int n);
+
+void cdGetArcBox(int xc, int yc, int w, int h, double a1, double a2, int *xmin, int *xmax, int *ymin, int *ymax);
+int cdGetArcPathF(const cdPoint* poly, double *xc, double *yc, double *w, double *h, double *a1, double *a2);
+int cdfGetArcPath(const cdfPoint* poly, double *xc, double *yc, double *w, double *h, double *a1, double *a2);
+int cdGetArcPath(const cdPoint* poly, int *xc, int *yc, int *w, int *h, double *a1, double *a2);
+void cdGetArcStartEnd(int xc, int yc, int w, int h, double a1, double a2, int *x1, int *y1, int *x2, int *y2);
+void cdfGetArcStartEnd(double xc, double yc, double w, double h, double a1, double a2, double *x1, double *y1, double *x2, double *y2);
 
 #define _cdCheckCanvas(_canvas) (_canvas!=NULL && ((unsigned char*)_canvas)[0] == 'C' && ((unsigned char*)_canvas)[1] == 'D')
 #define _cdSwapInt(_a,_b) {int _c=_a;_a=_b;_b=_c;}
@@ -315,7 +342,9 @@ void cdMatrixInverse(const double* matrix, double* inv_matrix);
 void cdfRotatePoint(cdCanvas* canvas, double x, double y, double cx, double cy, double *rx, double *ry, double sin_theta, double cos_theta);
 void cdRotatePoint(cdCanvas* canvas, int x, int y, int cx, int cy, int *rx, int *ry, double sin_teta, double cos_teta);
 void cdRotatePointY(cdCanvas* canvas, int x, int y, int cx, int cy, int *ry, double sin_theta, double cos_theta);
+void cdfRotatePointY(cdCanvas* canvas, double x, double y, double cx, double cy, double *ry, double sin_theta, double cos_theta);
 void cdTextTranslatePoint(cdCanvas* canvas, int x, int y, int w, int h, int baseline, int *rx, int *ry);
+void cdfTextTranslatePoint(cdCanvas* canvas, double x, double y, int w, int h, int baseline, double *rx, double *ry);
 void cdMovePoint(int *x, int *y, double dx, double dy, double sin_theta, double cos_theta);
 void cdfMovePoint(double *x, double *y, double dx, double dy, double sin_theta, double cos_theta);
 
@@ -356,47 +385,50 @@ int cdCalcZoom(int canvas_size, int cnv_rect_pos, int cnv_rect_size,
 /**************/
 
 /* sim.c */
+/* simulation base driver. */
 cdSimulation* cdCreateSimulation(cdCanvas* canvas);
 void cdKillSimulation(cdSimulation* simulation);
-void cdSimInitText(cdSimulation* simulation);
+void cdSimulationInitText(cdSimulation* simulation);
 
-/* Replacements for Text and Font using FreeType library */
 /* sim_text.c */
-void cdSimTextFT(cdCtxCanvas* ctxcanvas, int x, int y, const char *s, int len);
-int  cdSimFontFT(cdCtxCanvas* ctxcanvas, const char *type_face, int style, int size);
-void cdSimGetFontDimFT(cdCtxCanvas* ctxcanvas, int *max_width, int *height, int *ascent, int *descent);
-void cdSimGetTextSizeFT(cdCtxCanvas* ctxcanvas, const char *s, int len, int *width, int *height);
+/* Replacements for Text and Font using FreeType library */
+void cdSimulationText(cdCtxCanvas* ctxcanvas, int x, int y, const char *s, int len);
+int  cdSimulationFont(cdCtxCanvas* ctxcanvas, const char *type_face, int style, int size);
+void cdSimulationGetFontDim(cdCtxCanvas* ctxcanvas, int *max_width, int *height, int *ascent, int *descent);
+void cdSimulationGetTextSize(cdCtxCanvas* ctxcanvas, const char *s, int len, int *width, int *height);
+
+/* sim_linepolyfill.c */
+void cdfSimulationPoly(cdCtxCanvas* ctxcanvas, int mode, cdfPoint* fpoly, int n);
+void cdSimulationPoly(cdCtxCanvas* ctxcanvas, int mode, cdPoint* poly, int n);
 
 /* sim_primitives.c */
-
 /* Simulation functions that are >> independent << of the simulation base driver. */
+
 void cdSimMark(cdCanvas* canvas, int x, int y);
+void cdfSimMark(cdCanvas* canvas, double x, double y);
 void cdSimPutImageRectRGBA(cdCanvas* canvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, const unsigned char *a, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
 void cdSimPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
+void cdfSimPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+void cdfSimPutImageRectRGBA(cdCanvas* canvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, const unsigned char *a, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
 
-/* Simulation functions that are >> independent << of the simulation base driver.
-   All use the polygon method ->cxPoly only. */
+/* All these use cdPoly. */
 void cdSimLine(cdCtxCanvas* ctxcanvas, int x1, int y1, int x2, int y2);
 void cdSimRect(cdCtxCanvas* ctxcanvas, int xmin, int xmax, int ymin, int ymax);
 void cdSimBox(cdCtxCanvas* ctxcanvas, int xmin, int xmax, int ymin, int ymax);
 void cdSimArc(cdCtxCanvas* ctxcanvas, int xc, int yc, int width, int height, double angle1, double angle2);
 void cdSimSector(cdCtxCanvas* ctxcanvas, int xc, int yc, int width, int height, double angle1, double angle2);
 void cdSimChord(cdCtxCanvas* ctxcanvas, int xc, int yc, int width, int height, double angle1, double angle2);
-void cdSimPoly(cdCtxCanvas* ctxcanvas, int mode, cdPoint* points, int n);
-
 void cdSimPolyBezier(cdCanvas* canvas, const cdPoint* points, int n);
 void cdSimPolyPath(cdCanvas* canvas, const cdPoint* points, int n);
 
-/* Simulation functions that are >> independent << of the simulation base driver.
-   All use the polygon method ->cxFPoly only. */
+/* All these use the polygon method ->cxFPoly only. */
+/* can be used only by drivers that implement cxFPoly */
 void cdfSimLine(cdCtxCanvas* ctxcanvas, double x1, double y1, double x2, double y2);
 void cdfSimRect(cdCtxCanvas *ctxcanvas, double xmin, double xmax, double ymin, double ymax);
 void cdfSimBox(cdCtxCanvas *ctxcanvas, double xmin, double xmax, double ymin, double ymax);
 void cdfSimArc(cdCtxCanvas *ctxcanvas, double xc, double yc, double width, double height, double angle1, double angle2);
 void cdfSimSector(cdCtxCanvas *ctxcanvas, double xc, double yc, double width, double height, double angle1, double angle2);
 void cdfSimChord(cdCtxCanvas *ctxcanvas, double xc, double yc, double width, double height, double angle1, double angle2);
-void cdfSimPoly(cdCtxCanvas* ctxcanvas, int mode, cdfPoint* fpoly, int n);
-
 void cdfSimPolyBezier(cdCanvas* canvas, const cdfPoint* points, int n);
 void cdfSimPolyPath(cdCanvas* canvas, const cdfPoint* points, int n);
 

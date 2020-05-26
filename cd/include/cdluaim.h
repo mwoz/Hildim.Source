@@ -13,7 +13,6 @@ extern "C" {
 
 #ifdef LUA_TNONE  /* Lua 5 */
 int cdluaim_open(lua_State *L);
-int luaopen_cdluaim(lua_State *L);
 #endif
 
 #ifdef __cplusplus
@@ -21,4 +20,3 @@ int luaopen_cdluaim(lua_State *L);
 #endif
 
 #endif
-

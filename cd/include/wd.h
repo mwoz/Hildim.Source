@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+int  wdCanvasPlay(cdCanvas* canvas, cdContext *context, double xmin, double xmax, double ymin, double ymax, void *data);
+
 /* coordinate transformation */
 void wdCanvasWindow(cdCanvas* canvas, double xmin, double xmax, double  ymin, double ymax);
 void wdCanvasGetWindow(cdCanvas* canvas, double *xmin, double  *xmax,  double  *ymin, double *ymax);
@@ -44,10 +46,13 @@ void wdCanvasSector(cdCanvas* canvas, double xc, double yc, double w, double h, 
 void wdCanvasChord(cdCanvas* canvas, double xc, double yc, double w, double h, double angle1, double angle2);
 void wdCanvasText(cdCanvas* canvas, double x, double y, const char* s);
 
-void wdCanvasPutImageRect(cdCanvas* canvas, cdImage* image, double x, double y, int xmin, int xmax, int ymin, int ymax);
+void wdCanvasGetImageRGB(cdCanvas* canvas, unsigned char* r, unsigned char* g, unsigned char* b, double x, double y, int iw, int ih);
 void wdCanvasPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
 void wdCanvasPutImageRectRGBA(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, const unsigned char* a, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
 void wdCanvasPutImageRectMap(cdCanvas* canvas, int iw, int ih, const unsigned char* index, const long* colors, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+
+void wdCanvasPutImageRect(cdCanvas* canvas, cdImage* image, double x, double y, int xmin, int xmax, int ymin, int ymax);
+
 void wdCanvasPutBitmap(cdCanvas* canvas, cdBitmap* bitmap, double x, double y, double w, double h);
 
 /* attributes */

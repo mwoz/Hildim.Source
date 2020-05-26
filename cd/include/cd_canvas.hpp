@@ -1,6 +1,8 @@
 /** \file
  * \brief Canvas Class 
  *
+ * DEPRECATED API. USE NAMESPACE BASED CLASSES.
+ *
  * See Copyright Notice in cd.h
  */
  

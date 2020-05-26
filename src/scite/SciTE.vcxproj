@@ -172,7 +172,6 @@
     <ClInclude Include="src\scite_lua_win.h" />
     <ClInclude Include="src\scite_sbox.h" />
     <ClInclude Include="src\scite_scrollcanvas.h" />
-    <ClInclude Include="src\scite_tree.h" />
     <ClInclude Include="src\SString.h" />
     <ClInclude Include="src\StringHelpers.h" />
     <ClInclude Include="src\StringList.h" />
@@ -222,7 +221,6 @@
     <ClCompile Include="src\scite_images.c" />
     <ClCompile Include="src\scite_sbox.c" />
     <ClCompile Include="src\scite_scrollcanvas.c" />
-    <ClCompile Include="src\scite_tree.c" />
     <ClCompile Include="src\StringHelpers.cxx" />
     <ClCompile Include="src\StringList.cxx" />
     <ClCompile Include="src\StyleWriter.cxx" />

@@ -17,6 +17,8 @@ cdContext* cdContextDBufferRGB(void);
 #define CD_IMAGERGB cdContextImageRGB()
 #define CD_DBUFFERRGB cdContextDBufferRGB()
 
+/* DEPRECATED functions, use REDIMAGE, GREENIMAGE, 
+   BLUEIMAGE, and ALPHAIMAGE attributes. */
 unsigned char* cdRedImage(cdCanvas* cnv);
 unsigned char* cdGreenImage(cdCanvas* cnv);
 unsigned char* cdBlueImage(cdCanvas* cnv);

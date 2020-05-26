@@ -42,11 +42,13 @@ extern "C" {
 #include "scite_sbox.h"
 #include "scite_flattabs.h"
 #include "scite_scrollcanvas.h"
-#include "scite_tree.h"
 #include "scite_images.h"
 #include "../../iup/include/iup.h"
 #include "../../iup/include/iuplua.h"
 #include "../../iup/srccontrols/matrix/iupmat_getset.h"
+#include "../../cd/include/cd.h"
+#include "../../cd/include/cdlua.h"
+#include "../../cd/include/cdluaiup.h"
 }
 
 
@@ -2247,10 +2249,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iupFlattabsCtrllua_open(luaState);
 	IupScrollCanvasOpen();
 	iupIupScrollCanvaslua_open(luaState);
-	Iupsc_TreeOpen();
-	iupsc_Treelua_open(luaState);
 	iupcontrolslua_open(luaState);
-
+	cdlua_open(luaState);
+	cdluaiup_open(luaState);
 	load_all_images_Images();
 
 

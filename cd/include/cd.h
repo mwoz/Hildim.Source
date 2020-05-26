@@ -16,12 +16,12 @@ extern "C" {
 #endif
 
 
-#define CD_NAME "CD - Canvas Draw"
-#define CD_DESCRIPTION "A 2D Graphics Library"
-#define CD_COPYRIGHT    "Copyright (C) 1994-2014 Tecgraf, PUC-Rio."
-#define CD_VERSION "5.8"              /* bug fixes are reported only by cdVersion functions */
-#define CD_VERSION_NUMBER 508000
-#define CD_VERSION_DATE "2014/07/25"  /* does not include bug fix releases */
+#define CD_NAME "CD - A 2D Graphics Library"
+#define CD_DESCRIPTION "Vector Graphics Toolkit with Device Independent Output"
+#define CD_COPYRIGHT "Copyright (C) 1994-2020 Tecgraf/PUC-Rio"
+#define CD_VERSION "5.13"              /* bug fixes are reported only by cdVersion functions */
+#define CD_VERSION_NUMBER 513000
+#define CD_VERSION_DATE "2020/05/18"  /* does not include bug fix releases */
 
 typedef struct _cdContext cdContext;
 typedef struct _cdCanvas cdCanvas;
@@ -73,7 +73,7 @@ void     cdCanvasSetfAttribute(cdCanvas* canvas, const char* name, const char* f
 char*    cdCanvasGetAttribute(cdCanvas* canvas, const char* name);
 
 /* interpretation */
-int  cdCanvasPlay(cdCanvas* canvas, cdContext *context, int xmin, int xmax, int ymin, int ymax, void *data);
+int cdCanvasPlay(cdCanvas* canvas, cdContext *context, int xmin, int xmax, int ymin, int ymax, void *data);
 
 /* coordinate transformation */
 void cdCanvasGetSize(cdCanvas* canvas, int *width, int *height, double *width_mm, double *height_mm);
@@ -114,6 +114,8 @@ int  cdCanvasRegionCombineMode(cdCanvas* canvas, int mode);
 /* primitives */
 void cdCanvasPixel(cdCanvas* canvas, int x, int y, long color);
 void cdCanvasMark(cdCanvas* canvas, int x, int y);
+void cdfCanvasPixel(cdCanvas* canvas, double x, double y, long color);
+void cdfCanvasMark(cdCanvas* canvas, double x, double y);
 
 void cdCanvasBegin(cdCanvas* canvas, int mode);
 void cdCanvasPathSet(cdCanvas* canvas, int action);
@@ -195,26 +197,33 @@ void cdfCanvasGetVectorTextBox(cdCanvas* canvas, double x, double y, const char 
 void cdCanvasGetFontDim(cdCanvas* canvas, int *max_width, int *height, int *ascent, int *descent);
 void cdCanvasGetTextSize(cdCanvas* canvas, const char* s, int *width, int *height);
 void cdCanvasGetTextBox(cdCanvas* canvas, int x, int y, const char* s, int *xmin, int *xmax, int *ymin, int *ymax);
+void cdfCanvasGetTextBox(cdCanvas* canvas, double x, double y, const char *s, double *xmin, double *xmax, double *ymin, double *ymax);
 void cdCanvasGetTextBounds(cdCanvas* canvas, int x, int y, const char* s, int *rect);
+void cdfCanvasGetTextBounds(cdCanvas* canvas, double x, double y, const char *s, double *rect);
 int  cdCanvasGetColorPlanes(cdCanvas* canvas);
 
 /* color */
 void cdCanvasPalette(cdCanvas* canvas, int n, const long *palette, int mode);
 
 /* client images */
-void cdCanvasGetImageRGB(cdCanvas* canvas, unsigned char* r, unsigned char* g, unsigned char* b, int x, int y, int w, int h);
+void cdCanvasGetImageRGB(cdCanvas* canvas, unsigned char* r, unsigned char* g, unsigned char* b, int x, int y, int iw, int ih);
+
 void cdCanvasPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
 void cdCanvasPutImageRectRGBA(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, const unsigned char* a, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
 void cdCanvasPutImageRectMap(cdCanvas* canvas, int iw, int ih, const unsigned char* index, const long* colors, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax);
 
-/* server images */
+void cdfCanvasPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+void cdfCanvasPutImageRectRGBA(cdCanvas* canvas, int iw, int ih, const unsigned char* r, const unsigned char* g, const unsigned char* b, const unsigned char* a, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+void cdfCanvasPutImageRectMap(cdCanvas* canvas, int iw, int ih, const unsigned char* index, const long* colors, double x, double y, double w, double h, int xmin, int xmax, int ymin, int ymax);
+
+/* server images - deprecated (use double buffer drivers) */
 cdImage* cdCanvasCreateImage(cdCanvas* canvas, int w, int h);
 void cdKillImage(cdImage* image);
 void cdCanvasGetImage(cdCanvas* canvas, cdImage* image, int x, int y);
 void cdCanvasPutImageRect(cdCanvas* canvas, cdImage* image, int x, int y, int xmin, int xmax, int ymin, int ymax);
 void cdCanvasScrollArea(cdCanvas* canvas, int xmin, int xmax, int ymin, int ymax, int dx, int dy);
 
-/* bitmap */
+/* bitmap - deprecated (use imImage) */
 cdBitmap* cdCreateBitmap(int w, int h, int type);
 cdBitmap* cdInitBitmap(int w, int h, int type, ...);
 void cdKillBitmap(cdBitmap* bitmap);
@@ -226,9 +235,11 @@ void cdBitmapRGB2Map(cdBitmap* bitmap_rgb, cdBitmap* bitmap_map);
 
 /* color */
 long cdEncodeColor(unsigned char red, unsigned char green, unsigned char blue);
-void cdDecodeColor(long color, unsigned char* red, unsigned char* green, unsigned char* blue);
-unsigned char cdDecodeAlpha(long color);
+long cdEncodeColorAlpha(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha);
 long cdEncodeAlpha(long color, unsigned char alpha);
+void cdDecodeColor(long color, unsigned char* red, unsigned char* green, unsigned char* blue);
+void cdDecodeColorAlpha(long color, unsigned char* red, unsigned char* green, unsigned char* blue, unsigned char* alpha);
+unsigned char cdDecodeAlpha(long color);
 
 #define cdAlpha(_)    (unsigned char)(~(((_) >> 24) & 0xFF))
 #define cdReserved(_) (unsigned char)(((_) >> 24) & 0xFF)
@@ -236,7 +247,7 @@ long cdEncodeAlpha(long color, unsigned char alpha);
 #define cdGreen(_)    (unsigned char)(((_) >>  8) & 0xFF)
 #define cdBlue(_)     (unsigned char)(((_) >>  0) & 0xFF)
 
-/* client image color convertion */
+/* client image color conversion */
 void cdRGB2Map(int width, int height, const unsigned char* red, const unsigned char* green, const unsigned char* blue, unsigned char* index, int pal_size, long *color);
 
 
@@ -268,7 +279,8 @@ enum {                          /* clip mode */
  CD_CLIPOFF,
  CD_CLIPAREA,
  CD_CLIPPOLYGON,
- CD_CLIPREGION
+ CD_CLIPREGION,
+ CD_CLIPPATH
 };
 
 enum {                          /* region combine mode */
@@ -371,7 +383,8 @@ enum {                          /* interior style */
  CD_HATCH,
  CD_STIPPLE,
  CD_PATTERN,
- CD_HOLLOW
+ CD_HOLLOW,
+ CD_CUSTOMPATTERN     /* used only in ContextPlus drivers */
 };
 
 enum {                          /* text alignment */
@@ -492,8 +505,8 @@ typedef int(*cdSizeCB)(cdCanvas *canvas, int w, int h, double w_mm, double h_mm)
 #define  CD_DARK_GRAY     0x808080L   /* 128,128,128 */
 #define  CD_GRAY          0xC0C0C0L   /* 192,192,192 */
 
-/* some usefull conversion factors */
-#define CD_MM2PT     2.834645669   /* milimeters to points (pt = CD_MM2PT * mm) */
+/* some useful conversion factors */
+#define CD_MM2PT     2.834645669   /* millimeters to points (pt = CD_MM2PT * mm) */
 #define CD_RAD2DEG  57.295779513   /* radians to degrees (deg = CD_RAD2DEG * rad) */
 #define CD_DEG2RAD  0.01745329252  /* degrees to radians (rad = CD_DEG2RAD * deg) */
 
@@ -515,13 +528,9 @@ enum {
 #endif
 
 
-#ifndef CD_NO_OLD_INTERFACE
-#include "cd_old.h"
-#endif
-
 
 /******************************************************************************
-Copyright (C) 1994-2014 Tecgraf, PUC-Rio.
+Copyright (C) 1994-2020 Tecgraf/PUC-Rio.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

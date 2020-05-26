@@ -97,8 +97,12 @@ cdluaContext* cdlua_getcontext(lua_State* L, int param);
 lua_State* cdlua_getplaystate(void);
 void cdlua_setplaystate(lua_State* L);
 
+void cdlua_register_lib(lua_State *L, const luaL_Reg* funcs);
+void cdlua_register_funcs(lua_State *L, const luaL_Reg* funcs);
+
 void cdlua_kill_active(lua_State* L, cdCanvas* canvas);
 void cdlua_open_active(lua_State* L, cdluaLuaState* cdL);
+void cdlua_close_active(cdluaLuaState* cdL);
 
 void cdlua_open_canvas(lua_State* L);
 
@@ -118,6 +122,7 @@ cdImage* cdlua_checkimage(lua_State* L, int param);
 cdState* cdlua_checkstate(lua_State* L, int param);
 cdBitmap* cdlua_checkbitmap(lua_State* L, int param);
 
+void cdlua_pushcolor(lua_State* L, long color);
 void cdlua_pushpalette(lua_State* L, long* palette, int size);
 void cdlua_pushstipple(lua_State* L, unsigned char* stipple, int width, int height);
 void cdlua_pushpattern(lua_State* L, long int* pattern, int width, int height);
