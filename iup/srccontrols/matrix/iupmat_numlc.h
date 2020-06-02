@@ -15,6 +15,8 @@ int iupMatrixGetStartEnd(const char* value, int *base, int *count, int max, int 
 
 int  iupMatrixSetAddLinAttrib(Ihandle* ih, const char* value);
 int  iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value);
+int  iupMatrixSetDelLinhiddenAttrib(Ihandle* ih, const char* value);
+int  iupMatrixSetAddLinhiddenAttrib(Ihandle* ih, const char* value);
 int  iupMatrixSetAddColAttrib(Ihandle* ih, const char* value);
 int  iupMatrixSetDelColAttrib(Ihandle* ih, const char* value);
 

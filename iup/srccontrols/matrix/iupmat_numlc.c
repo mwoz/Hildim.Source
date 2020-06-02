@@ -434,7 +434,14 @@ int iupMatrixGetStartEnd(const char* value, int *base, int *count, int max, int 
   return 1;
 }
 
-int iupMatrixSetAddLinAttrib(Ihandle* ih, const char* value)
+int iupMatrixSetAddLinAttrib(Ihandle* ih, const char* value) {
+	iupMatrixSetAddLinhiddenAttrib(ih, value);
+
+	iupMatrixDraw(ih, 1);
+	return 0;
+}
+
+int iupMatrixSetAddLinhiddenAttrib(Ihandle* ih, const char* value)
 {
   int base, focus_cell_changed=0, count, lines_num = ih->data->lines.num;
 
@@ -470,7 +477,6 @@ int iupMatrixSetAddLinAttrib(Ihandle* ih, const char* value)
   if (focus_cell_changed)
     iupMatrixAuxCallEnterCellCb(ih);
 
-  iupMatrixDraw(ih, 1);
   return 0;
 }
 
@@ -513,6 +519,7 @@ int iupMatrixSetDelLinhiddenAttrib(Ihandle* ih, const char* value)
 
   if (focus_cell_changed)
     iupMatrixAuxCallEnterCellCb(ih);
+  return 0;
 }
 
 int iupMatrixSetDelLinAttrib(Ihandle* ih, const char* value)

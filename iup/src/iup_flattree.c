@@ -57,6 +57,7 @@ typedef struct _iFlatTreeNode
   int toggle_visible;  /* bool */
   int toggle_value;    /* bool */
   void* userdata;
+  char* extratext;
 
   /* aux */
   int id, depth, expanded;
@@ -1234,7 +1235,7 @@ static void iFlatTreeDrawToggle(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *nod
 }
 
 static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node, int x, int y, const char *fg_color, const char *bg_color, long line_rgba, const char *toggle_fgcolor, const char *toggle_bgcolor, int make_inactive, int active,
-                              int text_flags, const char *font, int focus_feedback, int hide_lines)
+                              int text_flags, const char *font, int focus_feedback, int hide_lines, int extatext_with)
 {
   int node_x = x + (node->depth * ih->data->indentation);
   int node_y = y;
@@ -1273,6 +1274,7 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
       const char *fore_color = (node->fg_color) ? node->fg_color : fg_color;
       const char *back_color = (node->bg_color) ? node->bg_color : bg_color;
       const char *image = iFlatTreeGetNodeImage(ih, node, 1);
+	  long  color_hl;
 
       iupImageGetInfo(image, &image_gap, NULL, NULL);
       image_gap += ih->data->icon_spacing;
@@ -1318,22 +1320,42 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
 
         iupStrToRGB(hlcolor, &red, &green, &blue);
         selcolor = iupDrawColor(red, green, blue, alpha);
+		if(extatext_with)
+		  color_hl = selcolor;
 
-        iupdrvDrawRectangle(dc, title_x, node_y, title_x + node->title_width - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
+        iupdrvDrawRectangle(dc, title_x, node_y, extatext_with ? ih->currentwidth : title_x + node->title_width - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
       }
 
       /* title focus */
-      if (ih->data->has_focus && ih->data->focus_id == node->id && focus_feedback)
+      if (ih->data->has_focus && ih->data->focus_id == node->id && focus_feedback && (!extatext_with))
         iupdrvDrawFocusRect(dc, title_x, node_y, title_x + node->title_width - 1, node_y + node_h - 1);
+   
+	  if (extatext_with) {
+	  	int extra_x = ih->currentwidth - extatext_with;
+	  	int px1 = extra_x + 5;
+	  	int py1 = node_y;
+	  	int px2 = px1;
+	  	int py2 = node_y + node_h + ih->data->spacing;  /* horizontal line */
+	  	//const char *fore_color = (node->fg_color) ? node->fg_color : fg_color;
+	    
+	  	iupdrvDrawRectangle(dc, extra_x , node_y, ih->currentwidth, node_y + node_h , iupDrawStrToColor(back_color, 0), IUP_DRAW_FILL, 1);
+	  	iupdrvDrawLine(dc, px1, py1, px2, py2, line_rgba, IUP_DRAW_STROKE_DOT, 1);
+	  	iupFlatDrawIcon(ih, dc, extra_x + 10, node_y, extatext_with, node_h,
+	  		IUP_IMGPOS_LEFT, 10, IUP_ALIGN_ALEFT, IUP_ALIGN_ACENTER, 0, 0,
+	  		NULL, make_inactive, node->extratext, text_flags, 0, fore_color, back_color, active);
+		if (ih->data->has_focus && ih->data->focus_id == node->id && focus_feedback) 
+			iupdrvDrawFocusRect(dc, title_x, node_y, ih->currentwidth - 1, node_y + node_h - 1);
+		if (node->selected)
+		    iupdrvDrawRectangle(dc, extra_x, node_y, ih->currentwidth, node_y + node_h - 1, color_hl, IUP_DRAW_FILL, 1);
+	  }
     }
-
     /* next node */
 
     node_y += node_h + ih->data->spacing;
 
     if (node->kind == IFLATTREE_BRANCH && node->state == IFLATTREE_EXPANDED && node->first_child)
       node_y = iFlatTreeDrawNodes(ih, dc, node->first_child, x, node_y, fg_color, bg_color, line_rgba, toggle_fgcolor, toggle_bgcolor, make_inactive, active,
-                                  text_flags, font, focus_feedback, hide_lines);
+                                  text_flags, font, focus_feedback, hide_lines, extatext_with);
 
     node = node->brother;
   }
@@ -1395,6 +1417,10 @@ static int iFlatTreeRedraw_CB(Ihandle* ih)
   int hide_buttons = iupAttribGetBoolean(ih, "HIDEBUTTONS");
   char* button_plus_image = iupAttribGet(ih, "BUTTONPLUSIMAGE");
   char* button_minus_image = iupAttribGet(ih, "BUTTONMINUSIMAGE");
+  int extatext_with = 0;
+  float exatratext_part = iupAttribGetFloat(ih, "EXTRATEXTWIDTH");
+  if (exatratext_part > 0 && exatratext_part < 1)
+	  extatext_with = ih->currentwidth * exatratext_part;
 
   IdrawCanvas* dc = iupdrvDrawCreateCanvas(ih);
 
@@ -1420,7 +1446,7 @@ static int iFlatTreeRedraw_CB(Ihandle* ih)
   node = ih->data->root_node->first_child;
 
   iFlatTreeDrawNodes(ih, dc, node, x, y, fg_color, bg_color, line_rgba, toggle_fgcolor, toggle_bgcolor, make_inactive, active,
-                     text_flags, font, focus_feedback, hide_lines);
+                     text_flags, font, focus_feedback, hide_lines, extatext_with);
 
   if (!hide_buttons)
     iFlatTreeDrawExpander(ih, dc, node, button_brdcolor, button_fgcolor, button_bgcolor, bg_color, x, y, button_plus_image, button_minus_image);
@@ -2106,8 +2132,12 @@ static int iFlatTreeButton_CB(Ihandle* ih, int button, int pressed, int x, int y
     image = iFlatTreeGetNodeImage(ih, node, 1);
     iupImageGetInfo(image, &img_w, NULL, NULL);
 
+	float exatratext_part = iupAttribGetFloat(ih, "EXTRATEXTWIDTH");
     xmin = node_x + toggle_gap;
-    xmax = xmin + img_w + ih->data->icon_spacing + node->title_width;
+	if (exatratext_part > 0 && exatratext_part < 1)
+	  xmax = ih->currentwidth;
+	else
+	  xmax = xmin + img_w + ih->data->icon_spacing + node->title_width;
 
     if (x > xmin && x < xmax)  /* inside image+title */
     {
@@ -3953,6 +3983,23 @@ static int iFlatTreeSetImageLeafAttrib(Ihandle* ih, const char* value)
    return 1;
  }
 
+ char* iFlatTreeGetExtraTextAttrib(Ihandle* ih, int id) {
+	 iFlatTreeNode *node = (iFlatTreeNode *)iFlatTreeGetNode(ih, id);
+	 if (!node)
+		 return NULL;
+
+	 return node->extratext;
+ }
+
+ static int iFlatTreeSetGetExtraTextAttrib(Ihandle* ih, int id, const char* value) {
+	 iFlatTreeNode *node = (iFlatTreeNode *)iFlatTreeGetNode(ih, id);
+	 if (!node)
+		 return 0;
+
+	 node->extratext = iupStrDup(value);
+	 iFlatTreeRedraw(ih, 0, 1);
+	 return 0;
+ }
 
 /*********************************  Methods  ************************************/
 
@@ -4221,6 +4268,10 @@ Iclass* iupFlatTreeNewClass(void)
   iupClassRegisterAttribute(ic, "SHOWDRAGDROP", iFlatTreeGetShowDragDropAttrib, iFlatTreeSetShowDragDropAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DRAGDROPTREE", NULL, iFlatTreeSetDragDropTreeAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "DROPEQUALDRAG", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+
+  /* External Text */
+  iupClassRegisterAttribute(ic, "EXTRATEXTWIDTH", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId(ic, "EXTRATEXT", iFlatTreeGetExtraTextAttrib, iFlatTreeSetGetExtraTextAttrib, NULL, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 
   /* Scrollbars */
   iupClassRegisterReplaceAttribDef(ic, "SCROLLBAR", "YES", NULL);  /* change the default to Yes */

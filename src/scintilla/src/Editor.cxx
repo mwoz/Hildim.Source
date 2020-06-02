@@ -5008,7 +5008,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, int modifiers
 					sel.RangeMain() =
 						SelectionRange(newPos, sel.Range(sel.Count() - 1).anchor);
 					InvalidateWholeSelection();
-				} else {
+				} else if(nmid) {
 					SetSelection(newPos, sel.RangeMain().anchor);
 				}
 			}

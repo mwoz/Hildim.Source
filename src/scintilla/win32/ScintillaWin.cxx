@@ -1413,7 +1413,7 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 
 			// Windows might send WM_MOUSEMOVE even though the mouse has not been moved:
 			// http://blogs.msdn.com/b/oldnewthing/archive/2003/10/01/55108.aspx
-			if (ptMouseLast != pt) {
+			if (ptMouseLast != pt && !(wParam & MK_MBUTTON)) {
 				SetTrackMouseLeaveEvent(true);
 				ButtonMoveWithModifiers(pt, ::GetMessageTime(), MouseModifiers(wParam));
 			}

@@ -448,8 +448,14 @@ int mesage_Field(lua_State* L){
 		lua_pushboolean(L, i);
 	}
 		break;
-	case VT_BSTR:
 	case VT_DATE:
+		{
+			ATL::COleDateTime dt;
+			d->GetValueAsDate(dt);
+			lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+		}
+		break;
+	case VT_BSTR:
 		lua_pushstring(L, d->GetValueText());
 		break;
 	default:
@@ -487,8 +493,14 @@ int mesage_GetPathValue(lua_State* L)
 			lua_pushboolean(L, i);
 		}
 		break;
-	case VT_BSTR:
 	case VT_DATE:
+		{
+			ATL::COleDateTime dt;
+			d->GetValueAsDate(dt);
+			lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+		}
+		break;
+	case VT_BSTR:
 		lua_pushstring(L, d->GetValueText());
 		break;
 	default:
