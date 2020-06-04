@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "mblua.h"
-#include "tlx_lib/tlxMessage.h"
+#include "TLX_LIB/tlxMessage.h"
 #include "MessageBus/mbTransport.h"
 #include "L_mbConnector.h"
 #include "mblua_util.h"
@@ -544,6 +544,158 @@ int mesage_Destroy(lua_State* L)
 
  typedef void _PF(int, int, const char*);
 
+ int mesage_RelecordsetCounts(lua_State* L)
+{
+	 CMessage* msg = cmessage_arg(L, "mesage_RelecordsetCounts");
+	 CRecordset* rs = msg->GetRecordset();
+	 if (!rs)
+		 return 0;
+	 lua_pushinteger(L, rs->GetColumnCount());
+	 lua_pushinteger(L, rs->GetRecordCount());
+	 return 2;
+}
+ int mesage_RelecordsetColumn(lua_State* L)
+{
+	 CMessage* msg = cmessage_arg(L, "mesage_RelecordsetColumn");
+	 CRecordset* rs = msg->GetRecordset();
+	 if (!rs)
+		 return 0;
+	 int col = luaL_checkint(L, 2);
+	 lua_pushstring(L, rs->GetColumn(col)->GetName());
+	 return 1;
+}
+ int mesage_RelecordsetGetRecord(lua_State* L)
+{
+	 CMessage* msg = cmessage_arg(L, "mesage_RelecordsetGetRecord");
+	 CRecordset* rs = msg->GetRecordset();
+	 if (!rs)
+		 return 0;
+	 int row = luaL_checkint(L, 2);
+
+	 CString strId;
+	 COleVariant value;
+	 CRecordsetReader reader = rs->CreateReader();
+	 for (int i = 0; i <= row; i++) {
+		 if (!reader.MoveNext())
+			 return 0;
+	 }
+
+	 lua_createtable(L, rs->GetColumnCount(), 0);
+
+	 char* type;
+	 for (int i = 0; i < rs->GetColumnCount(); i++) {
+		 lua_pushinteger(L, i + 1);
+		 lua_createtable(L, 0, 3);
+
+		 reader.GetValue(i, value);
+		 switch (value.vt) {
+		 case VT_R8:
+		 {
+			 type = "R8";
+			 lua_pushnumber(L, value.dblVal);
+		 }
+		 break;
+		 case VT_I4:
+		 {
+			 type = "I4";
+			 lua_pushinteger(L, value.lVal);
+		 }
+		 break;
+		 case VT_BOOL:
+		 {
+			 type = "BOOL";
+			 lua_pushboolean(L, (value.boolVal == VARIANT_TRUE));
+		 }
+		 break;
+		 case VT_DATE:
+		 {
+			 type = "DATE";
+			 ATL::COleDateTime dt = value.date;
+			 lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+		 }
+		 break;
+		 case VT_BSTR:
+		 {
+			 type = "BSTR";
+			 CStringEx str = value.bstrVal;
+			 lua_pushstring(L, str);
+		 }
+			 break;
+		 default:
+			 type = "NULL";
+			 lua_pushnil(L);
+		 }
+		 lua_setfield(L, -2, "value");
+		 
+		 lua_pushstring(L, rs->GetColumn(i)->GetName());
+		 lua_setfield(L, -2, "title");
+
+		 lua_pushstring(L, type);
+		 lua_setfield(L, -2, "type");
+
+		 lua_settable(L, -3);
+
+	 }
+	 return 1;
+}
+
+ int mesage_Relecordset2Msg(lua_State* L) {
+	 CMessage* msg = cmessage_arg(L, "mesage_Relecordset2Msg");
+	 CRecordset* rs = msg->GetRecordset();
+	 if (!rs)
+		 return 0;
+
+	 CMessage* pMsg = new CMessage();
+	 CString strId;
+	 COleVariant value; 
+
+	 CRecordsetReader reader = rs->CreateReader();
+	 while (reader.MoveNext()) {
+		 CMessage* pRowMsg = new CMessage();
+		 strId.Format(_T("%i"), pMsg->GetMsgsCount());
+		 pRowMsg->id(strId);
+
+		 for (int i = 0; i < rs->GetColumnCount(); i++) {
+			 reader.GetValue(i, value);
+			 pRowMsg->AddDatum(rs->GetColumn(i)->GetName(), value);
+		 }
+		 pMsg->AttachMsg(pRowMsg);
+	 }
+	 wrap_cmsg(L, pMsg);
+	 return 1;
+ }
+
+ void SetBstrCell(_PF *pFunc, int i, int j, bool bUnic, CStringEx& sVal) {
+	 if (bUnic) {
+		 //const char * str = d->GetValueText();
+		 int result_u, result_c;
+		 result_u = MultiByteToWideChar(CP_ACP, 0, sVal, -1, 0, 0);
+		 if (!result_u) 
+			 return ; 
+
+		 wchar_t *ures = new wchar_t[result_u];
+		 if (!MultiByteToWideChar(CP_ACP, 0, sVal, -1, ures, result_u)) {
+			 delete[] ures;
+			 return;
+		 }
+		 result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
+		 if (!result_c) {
+			 delete[] ures;
+			 return;
+		 }
+		 char *cres = new char[result_c];
+		 if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
+			 delete[] cres;
+			 return;
+		 }
+		 delete[] ures;
+		 pFunc(i + 1, j + 1, cres);
+		 delete[] cres;
+	 } else {
+		 pFunc(i + 1, j + 1, sVal);
+	 }
+ }
+
 int mesage_FillList(lua_State* L) {
 	CMessage* msg = cmessage_arg(L, "mesage_FillList");
 
@@ -587,89 +739,147 @@ int mesage_FillList(lua_State* L) {
 	}
 	if (lua_isboolean(L, 7))
 		setNull = lua_toboolean(L, 7);
-
-	int msgCnt = msg->GetMsgsCount();
 	char buf[256];
-	
-	for (int i = 0; i < msgCnt; i++) {
-		if (setNum) {
-			_ltoa(i + firstLine, buf, 10);
-			pFunc(i + firstLine, 0, buf);
-		}
-		for (int j = 0; j < nFields; j++) {
-			
-			CDatum *d = msg->GetMsg(i)->GetDatum(fMap[j] - 1);
+	CRecordset* rs = msg->GetRecordset();
+	if (rs) {
+		int msgCnt = rs->GetRecordCount();
+		CRecordsetReader reader = rs->CreateReader();
+		COleVariant value;
+		for (int i = 0; i < msgCnt; i++) {
+			if (setNum) {
+				_ltoa(i + firstLine, buf, 10);
+				pFunc(i + firstLine, 0, buf);
+			}
+			reader.MoveNext();
+			for (int j = 0; j < nFields; j++) {
+				reader.GetValue(fMap[j] - 1, value);
 
-			const char *out = NULL;
-			if (d) {
-				switch (d->GetVarType()) {
+				const char *out = NULL;
+
+				switch (value.vt) {
 				case VT_R8:
 				{
-					double v;
-					d->GetValueAsDouble(v);
-					sprintf(buf, "%.9f", v);
+					sprintf(buf, "%.9f", value.dblVal);
 					out = buf;
 				}
 				break;
 				case VT_I4:
 				{
-					long v;
-					d->GetValueAsLong(v);
-					_ltoa(v, buf, 10);
+					_ltoa(value.lVal, buf, 10);
 					out = buf;
 				}
 				break;
 				case VT_BOOL:
 				{
-					bool v;
-					d->GetValueAsBool(v);
-					out = v ? "<true>" : "<false>";
+					out = value.boolVal ? "<true>" : "<false>";
 				}
 				break;
 				case VT_DATE:
 				{
-					ATL::COleDateTime dt;
-					d->GetValueAsDate(dt);
+					ATL::COleDateTime dt = value.date;
 					strcpy(buf, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
 					out = buf;
 				}
 				break;
 				case VT_BSTR:
-					if (fUtf[j]) {
-						//const char * str = d->GetValueText();
-						int result_u, result_c;
-						result_u = MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, 0, 0);
-						if (!result_u) { return 0; }
-						wchar_t *ures = new wchar_t[result_u];
-						if (!MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, ures, result_u)) {
-							delete[] ures;
-							break;
-						}
-						result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
-						if (!result_c) {
-							delete[] ures;
-							break;
-						}
-						char *cres = new char[result_c];
-						if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
-							delete[] cres;
-							break;
-						}
-						delete[] ures;
-						pFunc(i + 1, j + 1, cres);
-						delete[] cres;
-					} else {
-						pFunc(i + 1, j + 1, d->GetValueText());
-					}
-					break;
+				{
+					SetBstrCell(pFunc, i, j, fUtf[j], CStringEx(value.bstrVal));
+				}
+				break;
 				case VT_NULL:
-					if(setNull)
+					if (setNull)
 						out = "<null>";
 					break;
 				}
+				if (out)
+					pFunc(i + firstLine, j + firstCol, out);
 			}
-			if(out)
-				pFunc(i + firstLine, j + firstCol, out);
+		}
+	} else {
+
+		int msgCnt = msg->GetMsgsCount();
+
+		for (int i = 0; i < msgCnt; i++) {
+			if (setNum) {
+				_ltoa(i + firstLine, buf, 10);
+				pFunc(i + firstLine, 0, buf);
+			}
+			for (int j = 0; j < nFields; j++) {
+
+				CDatum *d = msg->GetMsg(i)->GetDatum(fMap[j] - 1);
+
+				const char *out = NULL;
+				if (d) {
+					switch (d->GetVarType()) {
+					case VT_R8:
+					{
+						double v;
+						d->GetValueAsDouble(v);
+						sprintf(buf, "%.9f", v);
+						out = buf;
+					}
+					break;
+					case VT_I4:
+					{
+						long v;
+						d->GetValueAsLong(v);
+						_ltoa(v, buf, 10);
+						out = buf;
+					}
+					break;
+					case VT_BOOL:
+					{
+						bool v;
+						d->GetValueAsBool(v);
+						out = v ? "<true>" : "<false>";
+					}
+					break;
+					case VT_DATE:
+					{
+						ATL::COleDateTime dt;
+						d->GetValueAsDate(dt);
+						strcpy(buf, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+						out = buf;
+					}
+					break;
+					case VT_BSTR:
+						SetBstrCell(pFunc, i, j, fUtf[j], d->GetValueText());
+//						if (fUtf[j]) {
+//							//const char * str = d->GetValueText();
+//							int result_u, result_c;
+//							result_u = MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, 0, 0);
+//							if (!result_u) { return 0; }
+//							wchar_t *ures = new wchar_t[result_u];
+//							if (!MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, ures, result_u)) {
+//								delete[] ures;
+//								break;
+//							}
+//							result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
+//							if (!result_c) {
+//								delete[] ures;
+//								break;
+//							}
+//							char *cres = new char[result_c];
+//							if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
+//								delete[] cres;
+//								break;
+//							}
+//							delete[] ures;
+//							pFunc(i + 1, j + 1, cres);
+//							delete[] cres;
+//						} else {
+//							pFunc(i + 1, j + 1, d->GetValueText());
+//						}
+						break;
+					case VT_NULL:
+						if (setNull)
+							out = "<null>";
+						break;
+					}
+				}
+				if (out)
+					pFunc(i + firstLine, j + firstCol, out);
+			}
 		}
 	}
 	delete[] fMap;
@@ -908,6 +1118,10 @@ luaL_Reg message_methods[] = {
 	{ "AddFieldBinary", mesage_AddFieldBinary },
 	{ "SaveFieldBinary", mesage_SaveFieldBinary },
 	{ "FillList", mesage_FillList },
+	{ "RS2Msg", mesage_Relecordset2Msg },
+	{ "RSCounts", mesage_RelecordsetCounts },
+	{ "RSColumn", mesage_RelecordsetColumn },
+	{ "RSGetRecord", mesage_RelecordsetGetRecord },
 	{"__gc", mesage_gc},
 	//{ "CopyFrom", mesage_CopyFrom },
 	{NULL, NULL},

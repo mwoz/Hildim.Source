@@ -54,12 +54,6 @@
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.cpp">
       <Filter>Source Files\mb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\Http\ServerSocket.cpp">
       <Filter>Source Files\mb</Filter>
     </ClCompile>
@@ -104,12 +98,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WMIquery.cpp">
       <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransportBase.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMFSocketStream.cpp">
-      <Filter>Header Files\mb</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysData.cpp">
       <Filter>Source Files\mb</Filter>
@@ -175,12 +163,6 @@
       <Filter>Header Files\mb</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.h">
       <Filter>Header Files\mb</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\Http\ServerSocket.h">

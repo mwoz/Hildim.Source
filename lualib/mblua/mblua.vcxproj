@@ -287,7 +287,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransportBase.cpp" />
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMFSocketStream.cpp" />
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysData.cpp" />
     <ClCompile Include="L_mbConnector.cpp" />
     <ClCompile Include="mblua.cpp" />
@@ -403,34 +402,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">true</BrowseInformation>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</BrowseInformation>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.cpp">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">true</BrowseInformation>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</BrowseInformation>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -629,8 +600,6 @@
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransport.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\md5.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\MemCompress.h" />
-    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrDTF.h" />
-    <ClInclude Include="..\..\..\CommonLib\Common_CPP\RTR\rtrMF.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\Http\ServerSocket.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\StatHtmlGen.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\stmStreamBuffer.h" />
