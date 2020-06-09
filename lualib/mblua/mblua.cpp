@@ -542,7 +542,7 @@ int mesage_Destroy(lua_State* L)
 	return 0;
 }
 
- typedef void _PF(int, int, const char*);
+ typedef void _PF(void* ,int, int, const char*);
 
  int mesage_RelecordsetCounts(lua_State* L)
 {
@@ -665,7 +665,7 @@ int mesage_Destroy(lua_State* L)
 	 return 1;
  }
 
- void SetBstrCell(_PF *pFunc, int i, int j, bool bUnic, CStringEx& sVal) {
+ void SetBstrCell(_PF *pFunc, void* pList, int i, int j, bool bUnic, CStringEx& sVal) {
 	 if (bUnic) {
 		 //const char * str = d->GetValueText();
 		 int result_u, result_c;
@@ -689,17 +689,17 @@ int mesage_Destroy(lua_State* L)
 			 return;
 		 }
 		 delete[] ures;
-		 pFunc(i + 1, j + 1, cres);
+		 pFunc(pList, i + 1, j + 1, cres);
 		 delete[] cres;
 	 } else {
-		 pFunc(i + 1, j + 1, sVal);
+		 pFunc(pList, i + 1, j + 1, sVal);
 	 }
  }
 
 int mesage_FillList(lua_State* L) {
 	CMessage* msg = cmessage_arg(L, "mesage_FillList");
 
-	_PF *pFunc = (_PF*)lua_touserdata(L, 2);
+    luaL_checkudata(L, 2, "iupHandle");
 
 	int firstLine = luaL_checkint(L, 3);
 	int firstCol = luaL_checkint(L, 4);
@@ -739,16 +739,80 @@ int mesage_FillList(lua_State* L) {
 	}
 	if (lua_isboolean(L, 7))
 		setNull = lua_toboolean(L, 7);
-	char buf[256];
+
+	lua_getglobal(L, "scite");
+	lua_getfield(L, -1, "GetListHandlers");
+	lua_pushvalue(L, 2);
+	if(lua_pcall(L, 1, 2, 0) != LUA_OK)
+		throw_L_error(L, "mesage_FillList:Internal error");
+
+	_PF *pFunc = (_PF*)lua_touserdata(L, -2);
+	void* pList = lua_touserdata(L, -1);
+
+	int msgCnt;
 	CRecordset* rs = msg->GetRecordset();
+	if (rs) 
+		msgCnt = rs->GetRecordCount();
+	else
+		msgCnt = msg->GetMsgsCount();
+
+	lua_settop(L, 2);
+	lua_getglobal(L, "iup");
+	lua_getfield(L, -1, "GetAttribute");
+	lua_pushvalue(L, 2);
+	lua_pushstring(L, "NUMCOL");
+
+	if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+		throw_L_error(L, "mesage_FillList:Internal error");
+
+
+	const char* pCh;
+	pCh = lua_tostring(L, -1);
+	int curCol = atoi(pCh);
+	if(curCol < nFields)
+		throw_L_error(L, "mesage_FillList:not enough columns");
+
+
+	lua_settop(L, 3);
+	lua_getfield(L, -1, "GetAttribute");
+	lua_pushvalue(L, 2);
+	lua_pushstring(L, "NUMLIN");
+
+	if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+		throw_L_error(L, "mesage_FillList:Internal error");
+	pCh = lua_tostring(L, -1);
+	
+	
+	char buf[256];
+
+	lua_settop(L, 3);
+	lua_getfield(L, -1, "SetAttribute");
+	lua_pushvalue(L, 2);
+	lua_pushstring(L, "DELLIN");
+
+	strcpy(buf, "1-");
+	strcat(buf, pCh);
+	lua_pushstring(L, buf);
+	if (lua_pcall(L, 3, 0, 0) != LUA_OK)
+		throw_L_error(L, "mesage_FillList:Internal error");
+
+	lua_settop(L, 3);
+	lua_getfield(L, -1, "SetAttribute");
+	lua_pushvalue(L, 2);
+	lua_pushstring(L, "ADDLIN");
+	strcpy(buf, "1-");
+	itoa(msgCnt, buf + 2, 10); 
+	lua_pushstring(L, buf);
+	if (lua_pcall(L, 3, 0, 0) != LUA_OK)
+		throw_L_error(L, "mesage_FillList:Internal error");
+
 	if (rs) {
-		int msgCnt = rs->GetRecordCount();
 		CRecordsetReader reader = rs->CreateReader();
 		COleVariant value;
 		for (int i = 0; i < msgCnt; i++) {
 			if (setNum) {
 				_ltoa(i + firstLine, buf, 10);
-				pFunc(i + firstLine, 0, buf);
+				pFunc(pList, i + firstLine, 0, buf);
 			}
 			reader.MoveNext();
 			for (int j = 0; j < nFields; j++) {
@@ -783,7 +847,7 @@ int mesage_FillList(lua_State* L) {
 				break;
 				case VT_BSTR:
 				{
-					SetBstrCell(pFunc, i, j, fUtf[j], CStringEx(value.bstrVal));
+					SetBstrCell(pFunc, pList, i, j, fUtf[j], CStringEx(value.bstrVal));
 				}
 				break;
 				case VT_NULL:
@@ -792,17 +856,15 @@ int mesage_FillList(lua_State* L) {
 					break;
 				}
 				if (out)
-					pFunc(i + firstLine, j + firstCol, out);
+					pFunc(pList, i + firstLine, j + firstCol, out);
 			}
 		}
 	} else {
 
-		int msgCnt = msg->GetMsgsCount();
-
 		for (int i = 0; i < msgCnt; i++) {
 			if (setNum) {
 				_ltoa(i + firstLine, buf, 10);
-				pFunc(i + firstLine, 0, buf);
+				pFunc(pList, i + firstLine, 0, buf);
 			}
 			for (int j = 0; j < nFields; j++) {
 
@@ -843,33 +905,7 @@ int mesage_FillList(lua_State* L) {
 					}
 					break;
 					case VT_BSTR:
-						SetBstrCell(pFunc, i, j, fUtf[j], d->GetValueText());
-//						if (fUtf[j]) {
-//							//const char * str = d->GetValueText();
-//							int result_u, result_c;
-//							result_u = MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, 0, 0);
-//							if (!result_u) { return 0; }
-//							wchar_t *ures = new wchar_t[result_u];
-//							if (!MultiByteToWideChar(CP_ACP, 0, d->GetValueText(), -1, ures, result_u)) {
-//								delete[] ures;
-//								break;
-//							}
-//							result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
-//							if (!result_c) {
-//								delete[] ures;
-//								break;
-//							}
-//							char *cres = new char[result_c];
-//							if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
-//								delete[] cres;
-//								break;
-//							}
-//							delete[] ures;
-//							pFunc(i + 1, j + 1, cres);
-//							delete[] cres;
-//						} else {
-//							pFunc(i + 1, j + 1, d->GetValueText());
-//						}
+						SetBstrCell(pFunc, pList, i, j, fUtf[j], d->GetValueText());
 						break;
 					case VT_NULL:
 						if (setNull)
@@ -878,7 +914,7 @@ int mesage_FillList(lua_State* L) {
 					}
 				}
 				if (out)
-					pFunc(i + firstLine, j + firstCol, out);
+					pFunc(pList, i + firstLine, j + firstCol, out);
 			}
 		}
 	}

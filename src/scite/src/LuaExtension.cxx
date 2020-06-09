@@ -2149,17 +2149,15 @@ int OnParamKeyPress(int c, int press) {
 	return 0;
 }
 
-static Ihandle *IH;
-void setListVal(int lin, int col, const char* value) {
-	iupMatrixSetValue(IH, lin, col, value, 0);
+
+void setListVal(void* IH, int lin, int col, const char* value) {
+	iupMatrixSetValue((Ihandle*)IH, lin, col, value, 0);
 }
 
 int sf_GetListHandlers(lua_State *L) {
-	IH = iuplua_checkihandle(L, 1);
-	void(*pFunc)(int, int, const char*);
-	pFunc = setListVal;
-	lua_pushlightuserdata(L, (void*)pFunc);
-	return 1;
+	lua_pushlightuserdata(L, (void*)setListVal);
+	lua_pushlightuserdata(L, (void*)iuplua_checkihandle(L, 1));
+	return 2;
 }
 
 static int cf_editor_reload_startup_script(lua_State*); //!-add-[StartupScriptReload]
