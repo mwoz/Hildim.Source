@@ -3641,6 +3641,10 @@ static int iFlatTreeSetImageAttrib(Ihandle* ih, int id, const char* value)
 
   if (node->image)
     free(node->image);
+
+  if (!IupGetHandle(value))
+	  return 0;
+
   node->image = iupStrDup(value);
 
   iFlatTreeUpdateNodeSize(ih, node);
@@ -4271,7 +4275,7 @@ Iclass* iupFlatTreeNewClass(void)
 
   /* External Text */
   iupClassRegisterAttribute(ic, "EXTRATEXTWIDTH", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttributeId(ic, "EXTRATEXT", iFlatTreeGetExtraTextAttrib, iFlatTreeSetGetExtraTextAttrib, NULL, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttributeId(ic, "EXTRATEXT", iFlatTreeGetExtraTextAttrib, iFlatTreeSetGetExtraTextAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 
   /* Scrollbars */
   iupClassRegisterReplaceAttribDef(ic, "SCROLLBAR", "YES", NULL);  /* change the default to Yes */

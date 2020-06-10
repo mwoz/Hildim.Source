@@ -892,7 +892,7 @@ static char ColourisePropsLine( // return last style //!-change-[PropsColouriseF
 					}
 					int len=0, fin=0;
 					if ((*keywordlists[0]).InListPartly(lineBuffer, '~', len, fin)) {
-						chAttr = SCE_PROPS_KEYSSET0;
+						chAttr = SCE_PROPS_KEYSSET0; 
 					}
 					else if ((*keywordlists[1]).InListPartly(lineBuffer, '~', len, fin)) {
 						chAttr = SCE_PROPS_KEYSSET1;
