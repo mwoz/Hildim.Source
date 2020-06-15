@@ -236,7 +236,7 @@ luaL_Reg luaspell_methods[] = {
 
 static void createMetatable(lua_State *L, const char *name, luaL_Reg *methods) {
 	luaL_newmetatable(L, name);
-	luaL_register(L, NULL, methods);
+	luaL_setfuncs(L, methods, 0);
 	lua_getfield(L, -1, "__index");
 	if (lua_isnil(L, -1)) {
 		lua_pop(L, 1);
@@ -251,7 +251,7 @@ extern "C" __declspec(dllexport) int luaopen_luahunspell(lua_State *L) {
 		//setlocale(LC_ALL, "");
 
 	createMetatable(L, MT, spell_methods);
-	luaL_register(L, "luahunspell", luaspell_methods);
+	luaL_setfuncs(L, luaspell_methods, 0);
 
 		///lua_pushcfunction(L, g_spell);
 		return 1;

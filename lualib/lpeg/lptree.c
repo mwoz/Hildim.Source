@@ -1,5 +1,5 @@
 /*
-** $Id: lptree.c,v 1.22 2016/09/13 18:10:22 roberto Exp $
+** $Id: lptree.c $
 ** Copyright 2013, Lua.org & PUC-Rio  (see 'lpeg.html' for license)
 */
 
@@ -21,7 +21,7 @@
 /* number of siblings for each tree */
 const byte numsiblings[] = {
   0, 0, 0,	/* char, set, any */
-  0, 0,		/* true, false */
+  0, 0,		/* true, false */	
   1,		/* rep */
   2, 2,		/* seq, choice */
   1, 1,		/* not, and */
@@ -55,7 +55,7 @@ static void fixonecall (lua_State *L, int postable, TTree *g, TTree *t) {
   int n;
   lua_rawgeti(L, -1, t->key);  /* get rule's name */
   lua_gettable(L, postable);  /* query name in position table */
-  n = (int)lua_tonumber(L, -1);  /* get (absolute) position */
+  n = lua_tonumber(L, -1);  /* get (absolute) position */
   lua_pop(L, 1);  /* remove position */
   if (n == 0) {  /* no position? */
     lua_rawgeti(L, -1, t->key);  /* get rule's name again */
@@ -575,8 +575,8 @@ static int lp_star (lua_State *L) {
   TTree *tree1 = getpatt(L, 1, &size1);
   if (n >= 0) {  /* seq tree1 (seq tree1 ... (seq tree1 (rep tree1))) */
     TTree *tree = newtree(L, (n + 1) * (size1 + 1));
-    //if (nullable(tree1))
-    //  luaL_error(L, "loop body may accept empty string");
+    if (nullable(tree1))
+      luaL_error(L, "loop body may accept empty string");
     while (n--)  /* repeat 'n' times */
       tree = seqaux(tree, tree1, size1);
     tree->tag = TRep;
@@ -716,6 +716,7 @@ static int capture_aux (lua_State *L, int cap, int labelidx) {
 
 /*
 ** Fill a tree with an empty capture, using an empty (TTrue) sibling.
+** (The 'key' field must be filled by the caller to finish the tree.)
 */
 static TTree *auxemptycap (TTree *tree, int cap) {
   tree->tag = TCapture;
@@ -726,15 +727,17 @@ static TTree *auxemptycap (TTree *tree, int cap) {
 
 
 /*
-** Create a tree for an empty capture
+** Create a tree for an empty capture.
 */
-static TTree *newemptycap (lua_State *L, int cap) {
-  return auxemptycap(newtree(L, 2), cap);
+static TTree *newemptycap (lua_State *L, int cap, int key) {
+  TTree *tree = auxemptycap(newtree(L, 2), cap);
+  tree->key = key;
+  return tree;
 }
 
 
 /*
-** Create a tree for an empty capture with an associated Lua value
+** Create a tree for an empty capture with an associated Lua value.
 */
 static TTree *newemptycapkey (lua_State *L, int cap, int idx) {
   TTree *tree = auxemptycap(newtree(L, 2), cap);
@@ -794,22 +797,20 @@ static int lp_simplecapture (lua_State *L) {
 }
 
 
-static int lp_poscapture(lua_State *L) {
-	newemptycap(L, Cposition);
-	return 1;
+static int lp_poscapture (lua_State *L) {
+  newemptycap(L, Cposition, 0);
+  return 1;
 }
 
 static int lp_linescapture(lua_State *L) {
-	newemptycap(L, Clines);
+	newemptycap(L, Clines, 0);
 	return 1;
 }
 
-
 static int lp_argcapture (lua_State *L) {
   int n = (int)luaL_checkinteger(L, 1);
-  TTree *tree = newemptycap(L, Carg);
-  tree->key = n;
   luaL_argcheck(L, 0 < n && n <= SHRT_MAX, 1, "invalid argument index");
+  newemptycap(L, Carg, n);
   return 1;
 }
 
@@ -1276,7 +1277,7 @@ static struct luaL_Reg pattreg[] = {
   {"version", lp_version},
   {"setmaxstack", lp_setmax},
   {"type", lp_type},
-  {"Cl", lp_linescapture},
+  {"Cl", lp_linescapture},  
   {NULL, NULL}
 };
 
@@ -1301,8 +1302,7 @@ int luaopen_lpeg (lua_State *L) {
   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
   lua_setfield(L, LUA_REGISTRYINDEX, MAXSTACKIDX);
   luaL_setfuncs(L, metareg, 0);
-  //luaL_newlib(L, pattreg);
-  luaL_openlib(L, "lpeg", pattreg, 0);
+  luaL_newlib(L, pattreg);
   lua_pushvalue(L, -1);
   lua_setfield(L, -3, "__index");
   return 1;

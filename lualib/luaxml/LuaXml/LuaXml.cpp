@@ -427,7 +427,6 @@ int  luaopen_LuaXML_lib(lua_State* L) {
 		{ "registerCode", Xml_registerCode },
 		{ NULL, NULL }
 	};
-	luaL_register(L, "xml", funcs);
 	// register default codes:
 	if (!sv_code) {
 		sv_code = (char**)malloc(sv_code_capacity*sizeof(char*));
@@ -442,6 +441,8 @@ int  luaopen_LuaXML_lib(lua_State* L) {
 		//sv_code[sv_code_size++] = "'";
 		//sv_code[sv_code_size++] = "&apos;";
 	}
+	lua_newtable(L);
+	luaL_setfuncs(L, funcs, 0);
 	return 1;
 }
 

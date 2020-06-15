@@ -224,7 +224,7 @@ int do_Request(lua_State* L)
 			msg->InternalAddRef();
 		}
 
-		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkint(L,3), (void*)msg);
+		mb_handle h = mbTransport->mbRequest(cn,cmessage_arg(L, "do_Request",2),luaL_checkinteger(L,3), (void*)msg);
 		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
@@ -400,7 +400,7 @@ int mesage_FieldType(lua_State* L){
 	if (type == "string")
 		d = msg->GetDatum(luaL_checkstring(L, 2));
 	else
-		d = msg->GetDatum(luaL_checkint(L, 2));
+		d = msg->GetDatum(luaL_checkinteger(L, 2));
 
 	if (!d) return 0;	 
 	lua_pushstring(L, d->GetVarTypeText());
@@ -409,7 +409,7 @@ int mesage_FieldType(lua_State* L){
 }
 int mesage_FieldName(lua_State* L){
 	CMessage* msg = cmessage_arg(L, "mesage_Field");
-	int i = luaL_checkint(L, 2);
+	int i = luaL_checkinteger(L, 2);
 	CDatum* d = msg->GetDatum(i);
 	if (!d) return 0;
 	lua_pushstring(L, d->id());
@@ -422,7 +422,7 @@ int mesage_Field(lua_State* L){
 	if(type == "string")
 		d = msg->GetDatum(luaL_checkstring(L, 2));
 	else
-		d = msg->GetDatum(luaL_checkint(L, 2));
+		d = msg->GetDatum(luaL_checkinteger(L, 2));
 
 	if (!d) return 0;
 	switch (d->GetVarType())
@@ -560,7 +560,7 @@ int mesage_Destroy(lua_State* L)
 	 CRecordset* rs = msg->GetRecordset();
 	 if (!rs)
 		 return 0;
-	 int col = luaL_checkint(L, 2);
+	 int col = luaL_checkinteger(L, 2);
 	 lua_pushstring(L, rs->GetColumn(col)->GetName());
 	 return 1;
 }
@@ -570,7 +570,7 @@ int mesage_Destroy(lua_State* L)
 	 CRecordset* rs = msg->GetRecordset();
 	 if (!rs)
 		 return 0;
-	 int row = luaL_checkint(L, 2);
+	 int row = luaL_checkinteger(L, 2);
 
 	 CString strId;
 	 COleVariant value;
@@ -701,8 +701,8 @@ int mesage_FillList(lua_State* L) {
 
     luaL_checkudata(L, 2, "iupHandle");
 
-	int firstLine = luaL_checkint(L, 3);
-	int firstCol = luaL_checkint(L, 4);
+	int firstLine = luaL_checkinteger(L, 3);
+	int firstCol = luaL_checkinteger(L, 4);
 	bool setNum = false;
 	if (firstCol < 0) {
 		firstCol = firstCol * -1;
@@ -719,7 +719,7 @@ int mesage_FillList(lua_State* L) {
 
 	for (int i = 0; i < nFields; i++) {
 		lua_rawgeti(L, 5, i + 1);
-		fMap[i] = luaL_checkint(L, -1);
+		fMap[i] = luaL_checkinteger(L, -1);
 	}
 
 	if (lua_istable(L, 6)) {
@@ -728,7 +728,7 @@ int mesage_FillList(lua_State* L) {
 		
 		for (int i = 0; i < nFields; i++) {
 			lua_rawgeti(L, 6, i + 1);
-			fUtf[i] = (luaL_checkint(L, -1) != 0);
+			fUtf[i] = (luaL_checkinteger(L, -1) != 0);
 		}
 	} else {
 		bool b = lua_toboolean(L, 6);
@@ -940,7 +940,7 @@ int mesage_GetMessage(lua_State* L)
 int mesage_Message(lua_State* L)
 {
 	CMessage* msg = cmessage_arg(L,"mesage_Message");
-	int num = luaL_checkint(L,2);
+	int num = luaL_checkinteger(L,2);
 	CMessage* msgOut = msg->GetMsg(num);
 	if(msgOut)
 	{
@@ -1172,10 +1172,12 @@ int luaopen_mblua(lua_State *L)
 	// associated with this thread (the main GUI thread) to find a window
 	// matching the appropriate class name
 	sysLOGInit("", "", -1);
-	luaL_openlib (L, "mblua", mblua, 0);
 	luaL_newmetatable(L, MESSAGEOBJECT);  // create metatable for window objects
 	lua_pushvalue(L, -1);  // push metatable
 	lua_setfield(L, -2, "__index");  // metatable.__index = metatable
-	luaL_register(L, NULL, message_methods);
+	luaL_setfuncs(L, message_methods, 0);
+
+	lua_newtable(L);
+	luaL_setfuncs(L, mblua, 0);
 	return 1;
 }

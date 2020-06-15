@@ -2242,7 +2242,16 @@ LUACOM_API void luacom_open(lua_State *L)
   LUASTACK_SET(L);
 
   // creates LuaCOM library table
-  luaL_register(L, LIBNAME, functions_tb);
+  //luaL_openlib(L, LIBNAME, functions_tb, 0);
+
+  lua_getglobal(L, LIBNAME);
+  if (lua_isnil(L, -1)) {
+	  lua_pop(L, 1);
+	  lua_newtable(L);
+  }
+  luaL_setfuncs(L, functions_tb, 0);
+  lua_setglobal(L, LIBNAME);
+  lua_getglobal(L, LIBNAME);
 
   // prepares to store configuration table in
   // library table

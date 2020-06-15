@@ -836,7 +836,9 @@ LUASQL_API int luaopen_luasql_odbc (lua_State *L) {
 
 	luaL_setfuncs (L, driver, 0);
 	//luaL_register(L, "LUASQL", driver);
-	luaL_openlib(L, "luasql", driver, 0);
+
+	//luaL_setfuncs
+	//luaL_openlib(L, "luasql", driver, 0);
 	////luasql_set_info (L);
 	//lua_setglobal(L, "LUASQL");
 	return 1;

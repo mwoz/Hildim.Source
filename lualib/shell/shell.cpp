@@ -1550,10 +1550,12 @@ luaL_Reg proc_methods[] = {
 extern "C" __declspec(dllexport) int luaopen_shell( lua_State* L )
 {
 	::ZeroMemory(currentDir, MAX_PATH + 1);
-	luaL_register( L, "shell", shell );
 	luaL_newmetatable(L, SHELLPROCOBJECT);  // create metatable for window objects
 	lua_pushvalue(L, -1);  // push metatable
 	lua_setfield(L, -2, "__index");  // metatable.__index = metatable
-	luaL_register(L, NULL, proc_methods);
+	luaL_setfuncs(L, proc_methods, 0);
+
+	lua_newtable(L);
+	luaL_setfuncs( L, shell, 0);
 	return 1;
 }
