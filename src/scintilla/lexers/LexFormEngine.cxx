@@ -742,12 +742,20 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 		} else if (sc.ch == '#') {
 			sc.ForwardSetState(SCE_FM_VB_DEFAULT);
 		}
+	case SCE_FM_VB_UNACTIVE:
+		if (sc.atLineStart && !options.debugmode && sc.Match("\'#ENDDEBUG")) {
+			sc.Forward(10);
+			if (IsASpace(sc.ch)) {
+				sc.ForwardSetState(SCE_FM_VB_COMMENT);
+			}
+		}
 	}
 
 	if (sc.state == SCE_FM_VB_DEFAULT) {
 		if (sc.ch == '\'') {
 			sc.SetState(SCE_FM_VB_COMMENT);
 			if(visibleChars == 0 && options.debugmode){
+				bool atLineStart = sc.atLineStart;
 				sc.Forward();
 				if(sc.Match('#')){
 					sc.Forward();
@@ -771,6 +779,27 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 								sc.SetState(SCE_FM_VB_DEFAULT);
 							}
 						}
+					} else if (atLineStart) {
+						if (sc.Match("STARTDEBUG")) {
+							sc.Forward(10);
+							if (IsASpace(sc.ch)) {
+								sc.ChangeState(SCE_FM_PREPROCESSOR);
+								sc.SetState(SCE_FM_VB_DEFAULT);
+							}
+						} else if (sc.Match("ENDDEBUG")) {
+							sc.Forward(8);
+							if (IsASpace(sc.ch)) {
+								sc.ChangeState(SCE_FM_PREPROCESSOR);
+								sc.SetState(SCE_FM_VB_DEFAULT);
+							}
+						}
+					}
+				}
+			} else if (sc.atLineStart) {
+				if (sc.Match("\'#STARTDEBUG")) {
+					sc.Forward(12);
+					if (IsASpace(sc.ch)) {
+						sc.ChangeState(SCE_FM_VB_UNACTIVE);
 					}
 				}
 			}

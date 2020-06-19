@@ -939,6 +939,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_VB_STRING",14},
 	{"SCE_FM_VB_STRINGCONT",30},
 	{"SCE_FM_VB_STRINGEOL",19},
+	{"SCE_FM_VB_UNACTIVE",42},
 	{"SCE_FM_VB_UNKNOWNPROP",41},
 	{"SCE_FM_X_COMMENT",54},
 	{"SCE_FM_X_DEFAULT",49},
