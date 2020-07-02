@@ -4,10 +4,18 @@
  * See Copyright Notice in "iup.h"
  */
 
-#include <gtk/gtk.h>
 
+#ifdef IUPWEB_USE_DLOPEN
+#include "iupwebgtk_dlopen.h"
+#else
+#include <gtk/gtk.h>
+#ifdef USE_WEBKIT2
+#include <webkit2/webkit2.h>
+#else
 #include <webkit/webkit.h>
+#endif  
 #include <JavaScriptCore/JavaScript.h>
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,6 +43,82 @@
 #define WEBKIT_LOAD_FAILED 4
 #endif
 
+#ifdef IUPWEB_USE_DLOPEN
+#include <dlfcn.h>
+
+/* In my past experience with GTK, I don't think it is possible to unload the library.
+	 I don't know if WebKit is any better, but for now I am assuming it is not.
+	 So load it once and and never close for now.
+*/
+static void* s_webKitLibrary = NULL;
+
+/*
+	 Returns IUP_NOERROR on successful dlopen of libwebkitgtk.
+	 IUP_OPENED if already opened.
+	 IUP_ERROR on failure to load. Sets IupSetGlobal with key _IUP_WEBBROWSER_MISSING_DLL with a name of a missing libwekkitgtk.so.
+*/
+int IupGtkWebBrowserDLOpen()
+{
+  size_t i;
+  /* TODO: RTLD_LAZY or RTLD_NOW? 
+  const mode_flags = RTLD_NOW | RTLD_LOCAL;	*/
+  const mode_flags = RTLD_LAZY | RTLD_LOCAL;	
+  static const char* listOfWebKitNames[] =
+  {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    "libwebkitgtk-3.0.so",
+    "libwebkitgtk-3.0.so.0"
+#else
+    "libwebkitgtk-1.0.so",
+    "libwebkitgtk-1.0.so.0"
+#endif
+  };
+
+  if(NULL != s_webKitLibrary)
+  {
+    return IUP_OPENED;
+  }
+
+#define WEBKIT_NAMES_ARRAY_LENGTH (sizeof(listOfWebKitNames)/sizeof(*listOfWebKitNames))
+  for(i=0; i<WEBKIT_NAMES_ARRAY_LENGTH; i++)
+  {
+    s_webKitLibrary = dlopen(listOfWebKitNames[i], mode_flags);
+    if(NULL != s_webKitLibrary)
+    {
+      break;
+    }
+  }
+
+  if(NULL == s_webKitLibrary)
+  {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    IupSetGlobal("_IUP_WEBBROWSER_MISSING_DLL", "libwebkitgtk-3.0.so");
+#else
+    IupSetGlobal("_IUP_WEBBROWSER_MISSING_DLL", "libwebkitgtk-1.0.so");
+#endif
+    iupgtkWebBrowser_ClearDLSymbols();
+    return IUP_ERROR;
+  }
+  else
+  {
+    iupgtkWebBrowser_SetDLSymbols(s_webKitLibrary);
+    return IUP_NOERROR;
+  }
+}
+
+/*
+// Unused for now.
+static void Internal_UnloadLibrary()
+{
+  if(NULL != s_webKitLibrary)
+  {
+    dlclose(s_webKitLibrary);
+    s_webKitLibrary = NULL;
+  }
+}
+*/
+#endif /* IUPWEB_USE_DLOPEN */
+
 struct _IcontrolData 
 {
   int sb;    /* scrollbar configuration, valid only after map, use iupBaseGetScrollbar before map */
@@ -42,51 +126,87 @@ struct _IcontrolData
 
 static char* gtkWebBrowserGetItemHistoryAttrib(Ihandle* ih, int id)
 {
-  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list ((WebKitWebView*)ih->handle);
+#ifdef USE_WEBKIT2
+  WebKitBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list((WebKitWebView*)ih->handle);
+  WebKitBackForwardListItem* item = webkit_back_forward_list_get_nth_item(back_forward_list, id);
+#else
+  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list((WebKitWebView*)ih->handle);
   WebKitWebHistoryItem* item = webkit_web_back_forward_list_get_nth_item(back_forward_list, id);
+#endif
   if (item)
+#ifdef USE_WEBKIT2
+    return iupStrReturnStr(webkit_back_forward_list_item_get_uri(item));
+#else
     return iupStrReturnStr(webkit_web_history_item_get_uri(item));
+#endif
   else
     return NULL;
 }
 
 static char* gtkWebBrowserGetForwardCountAttrib(Ihandle* ih)
 {
-  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list ((WebKitWebView*)ih->handle);
+#ifdef USE_WEBKIT2
+  WebKitBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list ((WebKitWebView*)ih->handle);
+  return iupStrReturnInt(g_list_length(webkit_back_forward_list_get_back_list(back_forward_list)));
+#else
+  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list((WebKitWebView*)ih->handle);
   return iupStrReturnInt(webkit_web_back_forward_list_get_forward_length(back_forward_list));
+#endif
 }
 
 static char* gtkWebBrowserGetBackCountAttrib(Ihandle* ih)
 {
-  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list ((WebKitWebView*)ih->handle);
+#ifdef USE_WEBKIT2
+  WebKitBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list((WebKitWebView*)ih->handle);
+  return iupStrReturnInt(g_list_length(webkit_back_forward_list_get_forward_list(back_forward_list)));
+#else
+  WebKitWebBackForwardList *back_forward_list = webkit_web_view_get_back_forward_list((WebKitWebView*)ih->handle);
   return iupStrReturnInt(webkit_web_back_forward_list_get_back_length(back_forward_list));
+#endif
 }
 
 static int gtkWebBrowserSetHTMLAttrib(Ihandle* ih, const char* value)
 {
   if (value)
+#ifdef USE_WEBKIT2
+    webkit_web_view_load_html((WebKitWebView*)ih->handle, iupgtkStrConvertToSystem(value), NULL);
+#else
     webkit_web_view_load_string((WebKitWebView*)ih->handle, iupgtkStrConvertToSystem(value), "text/html", "UTF-8", "");
+#endif
   return 0; /* do not store value in hash table */
 }
 
 static int gtkWebBrowserSetCopyAttrib(Ihandle* ih, const char* value)
 {
+#ifdef USE_WEBKIT2
+  webkit_web_view_execute_editing_command((WebKitWebView*)ih->handle, WEBKIT_EDITING_COMMAND_COPY);
+#else
   webkit_web_view_copy_clipboard((WebKitWebView*)ih->handle);
+#endif
   (void)value;
   return 0;
 }
 
 static int gtkWebBrowserSetSelectAllAttrib(Ihandle* ih, const char* value)
 {
+#ifdef USE_WEBKIT2
+  webkit_web_view_execute_editing_command((WebKitWebView*)ih->handle, WEBKIT_EDITING_COMMAND_SELECT_ALL);
+#else
   webkit_web_view_select_all((WebKitWebView*)ih->handle);
+#endif
   (void)value;
   return 0;
 }
 
 static int gtkWebBrowserSetPrintAttrib(Ihandle* ih, const char* value)
 {
+#ifdef USE_WEBKIT2
+  WebKitPrintOperation *print_operation = webkit_print_operation_new((WebKitWebView*)ih->handle);
+  webkit_print_operation_print(print_operation);
+#else
   WebKitWebFrame* frame = webkit_web_view_get_main_frame((WebKitWebView*)ih->handle);
   webkit_web_frame_print(frame);
+#endif
   (void)value;
   return 0;
 }
@@ -107,6 +227,12 @@ static char* gtkWebBrowserGetZoomAttrib(Ihandle* ih)
 
 static char* gtkWebBrowserGetStatusAttrib(Ihandle* ih)
 {
+#ifdef USE_WEBKIT2
+  if (webkit_web_view_is_loading((WebKitWebView*)ih->handle))
+    return "LOADING";
+  else
+    return "COMPLETED";
+#else
   WebKitLoadStatus status = webkit_web_view_get_load_status((WebKitWebView*)ih->handle);
   if (status == WEBKIT_LOAD_FAILED)
     return "FAILED";
@@ -114,6 +240,7 @@ static char* gtkWebBrowserGetStatusAttrib(Ihandle* ih)
     return "COMPLETED";
   else
     return "LOADING";
+#endif
 }
 
 static int gtkWebBrowserSetReloadAttrib(Ihandle* ih, const char* value)
@@ -136,7 +263,22 @@ static int gtkWebBrowserSetBackForwardAttrib(Ihandle* ih, const char* value)
   if (iupStrToInt(value, &val))
   {
     /* Negative values represent steps backward while positive values represent steps forward. */
+#ifdef USE_WEBKIT2
+    if (val > 0)
+    {
+      int i;
+      for ( i = 0; i < val && webkit_web_view_can_go_forward((WebKitWebView*)ih->handle); i++)
+        webkit_web_view_go_forward((WebKitWebView*)ih->handle);
+    }
+    else if (val < 0)
+    {
+      int i;
+      for (i = 0; i < abs(val) && webkit_web_view_can_go_back((WebKitWebView*)ih->handle); i++)
+        webkit_web_view_go_back((WebKitWebView*)ih->handle);
+    }
+#else
     webkit_web_view_go_back_or_forward((WebKitWebView*)ih->handle, val);
+#endif
   }
   return 0; /* do not store value in hash table */
 }
@@ -180,13 +322,37 @@ static char* gtkWebBrowserGetValueAttrib(Ihandle* ih)
 
 /*********************************************************************************************/
 
+#ifdef USE_WEBKIT2
+static void gtkWebBrowserDocumentLoadFinished(WebKitWebView *web_view, WebKitLoadEvent load_event, Ihandle *ih)
+{
+  IFns cb = (IFns)IupGetCallback(ih, "COMPLETED_CB");
+
+  if (load_event != WEBKIT_LOAD_FINISHED)
+    return;
+
+  if (cb)
+    cb(ih, (char*)webkit_web_view_get_uri(web_view));
+}
+#else
 static void gtkWebBrowserDocumentLoadFinished(WebKitWebView *web_view, WebKitWebFrame *frame, Ihandle *ih)
 {
   IFns cb = (IFns)IupGetCallback(ih, "COMPLETED_CB");
   if (cb)
     cb(ih, (char*)webkit_web_frame_get_uri(frame));
 }
+#endif
 
+#ifdef USE_WEBKIT2
+static gboolean gtkWebBrowserLoadError(WebKitWebView *web_view, WebKitLoadEvent load_event,
+                                       gchar *failing_uri, GError *error, Ihandle *ih)
+{
+  IFns cb = (IFns)IupGetCallback(ih, "ERROR_CB");
+  if (cb)
+    cb(ih, failing_uri);
+
+  return FALSE;
+}
+#else
 static gboolean gtkWebBrowserLoadError(WebKitWebView *web_view, WebKitWebFrame *frame,
                                        gchar *uri, gpointer web_error, Ihandle *ih)
 {
@@ -196,7 +362,25 @@ static gboolean gtkWebBrowserLoadError(WebKitWebView *web_view, WebKitWebFrame *
 
   return FALSE;
 }
+#endif
 
+#ifdef USE_WEBKIT2
+static int gtkWebBrowserNavigate(WebKitWebView *web_view, WebKitPolicyDecision *decision,
+                                 WebKitPolicyDecisionType decision_type, Ihandle *ih)
+{
+  if (decision_type != WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION)
+    return FALSE;
+
+  IFns cb = (IFns)IupGetCallback(ih, "NAVIGATE_CB");
+  if (cb)
+  {
+    if (cb(ih, (char*)webkit_web_view_get_uri(web_view)) == IUP_IGNORE)
+      return FALSE;
+  }
+
+  return FALSE;
+}
+#else
 static int gtkWebBrowserNavigate(WebKitWebView *web_view, WebKitWebFrame *frame, WebKitNetworkRequest *request,
                                  WebKitWebNavigationAction *navigation_action, WebKitWebPolicyDecision *policy_decision, Ihandle *ih)
 {
@@ -236,8 +420,19 @@ static int gtkWebBrowserNavigate(WebKitWebView *web_view, WebKitWebFrame *frame,
 
   return FALSE;
 }
+#endif
 
-static WebKitWebView* gtkWebBrowserNewWindow(WebKitWebView  *web_view, WebKitWebFrame *frame, Ihandle *ih)
+#ifdef USE_WEBKIT2
+static WebKitWebView* gtkWebBrowserNewWindow(WebKitWebView *web_view, WebKitNavigationAction *navigation_action, Ihandle *ih)
+{
+  IFns cb = (IFns)IupGetCallback(ih, "NEWWINDOW_CB");
+  if (cb)
+    cb(ih, (char*)webkit_web_view_get_uri(web_view));
+
+  return web_view;
+}
+#else
+static WebKitWebView* gtkWebBrowserNewWindow(WebKitWebView *web_view, WebKitWebFrame *frame, Ihandle *ih)
 {
   IFns cb = (IFns)IupGetCallback(ih, "NEWWINDOW_CB");
   if (cb)
@@ -245,6 +440,7 @@ static WebKitWebView* gtkWebBrowserNewWindow(WebKitWebView  *web_view, WebKitWeb
 
   return web_view;
 }
+#endif
 
 /*********************************************************************************************/
 
@@ -307,9 +503,21 @@ static int gtkWebBrowserMapMethod(Ihandle* ih)
   g_signal_connect(G_OBJECT(ih->handle), "show-help",          G_CALLBACK(iupgtkShowHelp),        ih);
 
   g_signal_connect(G_OBJECT(ih->handle), "create-web-view", G_CALLBACK(gtkWebBrowserNewWindow), ih);
+#ifdef USE_WEBKIT2
+  g_signal_connect(G_OBJECT(ih->handle), "decide-policy", G_CALLBACK(gtkWebBrowserNavigate), ih);
+#else
   g_signal_connect(G_OBJECT(ih->handle), "navigation-policy-decision-requested", G_CALLBACK(gtkWebBrowserNavigate), ih);
+#endif
+#ifdef USE_WEBKIT2
+  g_signal_connect(G_OBJECT(ih->handle), "load-failed", G_CALLBACK(gtkWebBrowserLoadError), ih);
+#else
   g_signal_connect(G_OBJECT(ih->handle), "load-error", G_CALLBACK(gtkWebBrowserLoadError), ih);
+#endif
+#ifdef USE_WEBKIT2
+  g_signal_connect(G_OBJECT(ih->handle), "load-changed", G_CALLBACK(gtkWebBrowserDocumentLoadFinished), ih);
+#else
   g_signal_connect(G_OBJECT(ih->handle), "document-load-finished", G_CALLBACK(gtkWebBrowserDocumentLoadFinished), ih);
+#endif
 
   gtk_widget_realize((GtkWidget*)scrolled_window);
   gtk_widget_realize(ih->handle);
@@ -347,9 +555,10 @@ Iclass* iupWebBrowserNewClass(void)
   Iclass* ic = iupClassNew(NULL);
 
   ic->name = "webbrowser";
+  ic->cons = "WebBrowser";
   ic->format = NULL; /* no parameters */
   ic->nativetype  = IUP_TYPECONTROL;
-  ic->childtype   = IUP_CHILDNONE;
+  ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
   ic->has_attrib_id = 1;   /* has attributes with IDs that must be parsed */
 

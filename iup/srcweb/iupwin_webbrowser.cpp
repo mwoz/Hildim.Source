@@ -28,8 +28,10 @@
 #include "iup_drvfont.h"
 
 /* Exported from "iupwin_str.c" */
-extern "C" WCHAR* iupwinStrChar2Wide(const char* str);
-extern "C" char*  iupwinStrWide2Char(const WCHAR* wstr);
+extern "C" {
+  IUP_DRV_API WCHAR* iupwinStrChar2Wide(const char* str);
+  IUP_DRV_API char*  iupwinStrWide2Char(const WCHAR* wstr);
+}
 
 #include <atlbase.h>
 #include <atlcom.h>
@@ -39,6 +41,15 @@ extern "C" char*  iupwinStrWide2Char(const WCHAR* wstr);
 #include <exdispid.h>  /* DISPID_*   */
 
 using namespace ATL;
+
+
+static BSTR winStrChar2BStr(const char* str)
+{
+  WCHAR* wstr = iupwinStrChar2Wide(str);
+  BSTR bstr = SysAllocString(wstr);
+  if (wstr) free(wstr);
+  return bstr;
+}
 
 // Should have only one instance of a class
 // derived from CAtlModule in a project.
@@ -156,28 +167,28 @@ public:
   }
 };
 
-static void VariantBStr(VARIANT *var, WCHAR* wstr)
+static void winVariantBStr(VARIANT *var, BSTR bstr)
 {
   VariantInit(var);
   var->vt = VT_BSTR;
-  var->bstrVal = wstr;
+  var->bstrVal = bstr;
 }
 
-static void VariantLong(VARIANT *var, LONG val)
+static void winVariantLong(VARIANT *var, LONG val)
 {
   VariantInit(var);
   var->vt = VT_I4;
   var->lVal = val;
 }
 
-static SAFEARRAY* VariantSafeArray(const WCHAR* wstr)
+static SAFEARRAY* winVariantSafeArray(BSTR bstr)
 {
   VARIANT *param;
   SAFEARRAY *sfArray;
   sfArray = SafeArrayCreateVector(VT_VARIANT, 0, 1);    // must call SafeArrayDestroy
   SafeArrayAccessData(sfArray,(LPVOID*) &param);
   param->vt = VT_BSTR;
-  param->bstrVal = SysAllocString(wstr);
+  param->bstrVal = bstr;
   SafeArrayUnaccessData(sfArray);
   return sfArray;
 }
@@ -248,7 +259,9 @@ static int winWebBrowserSetHTMLAttrib(Ihandle* ih, const char* value)
   {
     iupAttribSet(ih, "_IUPWEB_FAILED", NULL);
     iupAttribSet(ih, "_IUPWEB_IGNORE_NAVIGATE", "1");
-    pweb->Navigate(L"about:blank", NULL, NULL, NULL, NULL);
+    BSTR url = SysAllocString(L"about:blank");
+    pweb->Navigate(url, NULL, NULL, NULL, NULL);
+    SysFreeString(url);
     IupFlush();
     iupAttribSet(ih, "_IUPWEB_IGNORE_NAVIGATE", NULL);
 
@@ -258,18 +271,18 @@ static int winWebBrowserSetHTMLAttrib(Ihandle* ih, const char* value)
 	IHTMLDocument2 *htmlDoc2;
   lpDispatch->QueryInterface(IID_IHTMLDocument2, (void**)&htmlDoc2);
 
-  WCHAR* wvalue = iupwinStrChar2Wide(value);
+  BSTR bvalue = winStrChar2BStr(value);
 
-  SAFEARRAY *sfArray = VariantSafeArray(wvalue);
+  SAFEARRAY *sfArray = winVariantSafeArray(bvalue);
 
 	htmlDoc2->write(sfArray);
 	htmlDoc2->close();
 
   /* Releases */
   SafeArrayDestroy(sfArray);
+  SysFreeString(bvalue);
   htmlDoc2->Release();
   lpDispatch->Release();
-  free(wvalue);
   
   return 0; /* do not store value in hash table */
 }
@@ -307,7 +320,7 @@ static int winWebBrowserSetZoomAttrib(Ihandle* ih, const char* value)
     IWebBrowser2 *pweb = (IWebBrowser2*)iupAttribGet(ih, "_IUPWEB_BROWSER");
 
     VARIANT var;
-    VariantLong(&var, (LONG)zoom);
+    winVariantLong(&var, (LONG)zoom);
 
     // OLECMDID_OPTICAL_ZOOM = VT_I4 (LONG) parameter in the range of 10 to 1000 (percent).
     pweb->ExecWB(OLECMDID_OPTICAL_ZOOM, OLECMDEXECOPT_DONTPROMPTUSER, &var, NULL);
@@ -320,7 +333,7 @@ static char* winWebBrowserGetZoomAttrib(Ihandle* ih)
   IWebBrowser2 *pweb = (IWebBrowser2*)iupAttribGet(ih, "_IUPWEB_BROWSER");
 
   VARIANT var;
-  VariantLong(&var, 0);
+  winVariantLong(&var, 0);
 
   pweb->ExecWB(OLECMDID_OPTICAL_ZOOM, OLECMDEXECOPT_DONTPROMPTUSER, NULL, &var);
 
@@ -353,7 +366,7 @@ static IHTMLElement* winWebBrowserFindElement(Ihandle* ih, const char* element_i
         for (int i = 0; i < nLength; i++)
         {
           VARIANT vIdx;
-          VariantLong(&vIdx, (LONG)i);
+          winVariantLong(&vIdx, (LONG)i);
 
           IDispatch* pElemDispatch = NULL;
           IHTMLElement * pElem = NULL;
@@ -411,9 +424,9 @@ static int winWebBrowserSetInnerTextAttrib(Ihandle* ih, const char* value)
       IHTMLElement* pElem = winWebBrowserFindElement(ih, element_id);
       if (pElem)
       {
-        WCHAR* wvalue = iupwinStrChar2Wide(value);
-        pElem->put_innerText(wvalue);
-        free(wvalue);
+        BSTR bvalue = winStrChar2BStr(value);
+        pElem->put_innerText(bvalue);
+        SysFreeString(bvalue);
         pElem->Release();
       }
     }
@@ -429,12 +442,12 @@ static char* winWebBrowserGetInnerTextAttrib(Ihandle* ih)
     IHTMLElement* pElem = winWebBrowserFindElement(ih, element_id);
     if (pElem)
     {
-      WCHAR* wvalue = NULL;
-      if (!FAILED(pElem->get_innerText(&wvalue)))
+      BSTR bvalue = NULL;
+      if (!FAILED(pElem->get_innerText(&bvalue)))
       {
-        char* str = iupwinStrWide2Char(wvalue);
+        char* str = iupwinStrWide2Char(bvalue);
         char* value = iupStrReturnStr(str);
-        SysFreeString(wvalue);
+        SysFreeString(bvalue);
         free(str);
         pElem->Release();
         return value;
@@ -457,16 +470,16 @@ static int winWebBrowserSetAttributeAttrib(Ihandle* ih, const char* value)
       IHTMLElement* pElem = winWebBrowserFindElement(ih, element_id);
       if (pElem)
       {
-        WCHAR* wname = iupwinStrChar2Wide(attribute_name);
-        WCHAR* wvalue = iupwinStrChar2Wide(value);
+        BSTR bname = winStrChar2BStr(attribute_name);
+        BSTR bvalue = winStrChar2BStr(value);
 
         VARIANT var;
-        VariantBStr(&var, wvalue);
+        winVariantBStr(&var, bvalue);
 
-        pElem->setAttribute(wname, var, 1);  // case sensitive search
+        pElem->setAttribute(bname, var, 1);  // case sensitive search
 
-        free(wvalue);
-        free(wname);
+        SysFreeString(bvalue);
+        SysFreeString(bname);
         pElem->Release();
       }
     }
@@ -483,19 +496,19 @@ static char* winWebBrowserGetAttributeAttrib(Ihandle* ih)
     IHTMLElement* pElem = winWebBrowserFindElement(ih, element_id);
     if (pElem)
     {
-      WCHAR* wname = iupwinStrChar2Wide(attribute_name);
+      BSTR bname = winStrChar2BStr(attribute_name);
       VARIANT var;
       VariantInit(&var);
-      if (!FAILED(pElem->getAttribute(wname, 1, &var)) && var.bstrVal)  // case sensitive search
+      if (!FAILED(pElem->getAttribute(bname, 1, &var)) && var.bstrVal)  // case sensitive search
       {
         char* str = iupwinStrWide2Char(var.bstrVal);
         char* value = iupStrReturnStr(str);
         free(str);
-        free(wname);
+        SysFreeString(bname);
         pElem->Release();
         return value;
       }
-      free(wname);
+      SysFreeString(bname);
       pElem->Release();
     }
   }
@@ -578,17 +591,17 @@ static int winWebBrowserSetValueAttrib(Ihandle* ih, const char* value)
   if (value)
   {
     IWebBrowser2 *pweb = (IWebBrowser2*)iupAttribGet(ih, "_IUPWEB_BROWSER");
-    WCHAR* wvalue = iupwinStrChar2Wide(value);
+    BSTR bvalue = winStrChar2BStr(value);
+    BSTR btarget = SysAllocString(L"_top");
 
     VARIANT var;
-    VariantInit(&var);  /* Initialize our variant */
-    var.vt = VT_ARRAY | VT_UI1;
-    var.bstrVal = L"_top";
+    winVariantBStr(&var, btarget);
 
     iupAttribSet(ih, "_IUPWEB_FAILED", NULL);
 
-    pweb->Navigate(wvalue, NULL, &var, NULL, NULL);
-    free(wvalue);
+    pweb->Navigate(bvalue, NULL, &var, NULL, NULL);
+    SysFreeString(bvalue);
+    SysFreeString(btarget);
   }
   return 0;
 }
@@ -671,9 +684,10 @@ Iclass* iupWebBrowserNewClass(void)
   Iclass* ic = iupClassNew(iupRegisterFindClass("olecontrol"));
 
   ic->name = "webbrowser";
+  ic->cons = "WebBrowser";
   ic->format = NULL; /* no parameters */
   ic->nativetype = IUP_TYPECANVAS;
-  ic->childtype  = IUP_CHILDNONE;
+  ic->childtype = IUP_CHILDNONE;
   ic->is_interactive = 1;
 
   /* Class functions */
@@ -719,3 +733,20 @@ Iclass* iupWebBrowserNewClass(void)
 
   return ic;
 }
+
+#if 0
+// HRESULT error code processing, useful for debugging
+#include <comdef.h>
+DWORD Win32FromHResult(HRESULT hr)
+{
+  if ((hr & 0xFFFF0000) == MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, 0))
+    return HRESULT_CODE(hr);
+  if (hr == S_OK)
+    return ERROR_SUCCESS;
+  // Not a Win32 HRESULT so return a generic error code.
+  return ERROR_CAN_NOT_COMPLETE;
+}
+_com_error error(Win32FromHResult(err));
+LPCTSTR errorText = error.ErrorMessage();
+MessageBox(NULL, errorText, "Error", MB_OK | MB_ICONERROR);
+#endif

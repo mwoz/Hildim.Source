@@ -12,6 +12,7 @@
 #include <string>
 #include <io.h>  
 #include <fcntl.h>  
+#include <activscp.h>
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -32,8 +33,162 @@ CString m_strLan = "xxx";
 CString m_strNetwork = "xxx";
 CString m_strService = "xxx";
 
+class CSimpleScriptSite :
+	public IActiveScriptSite,
+	public IActiveScriptSiteWindow
+{
+public:
+	CSimpleScriptSite(lua_State* pL) : m_cRefCount(1), m_hWnd(NULL), L(pL) {}
+
+	// IUnknown
+
+	STDMETHOD_(ULONG, AddRef)();
+	STDMETHOD_(ULONG, Release)();
+	STDMETHOD(QueryInterface)(REFIID riid, void **ppvObject);
+
+	// IActiveScriptSite
+
+	STDMETHOD(GetLCID)(LCID *plcid) { *plcid = 0; return S_OK; }
+	STDMETHOD(GetItemInfo)(LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti) { return TYPE_E_ELEMENTNOTFOUND; }
+	STDMETHOD(GetDocVersionString)(BSTR *pbstrVersion) { *pbstrVersion = SysAllocString(L"1.0"); return S_OK; }
+	STDMETHOD(OnScriptTerminate)(const VARIANT *pvarResult, const EXCEPINFO *pexcepinfo) { return S_OK; }
+	STDMETHOD(OnStateChange)(SCRIPTSTATE ssScriptState) { return S_OK; }
+	STDMETHOD(OnScriptError)(IActiveScriptError *pError) {
+		DWORD dwCookie;
+		long lChar;
+		ULONG ulLineNo;
+		BSTR bstrSource = NULL;
+		EXCEPINFO ei;
+
+		pError->GetSourcePosition(&dwCookie, &ulLineNo, &lChar);
+		pError->GetSourceLineText(&bstrSource);
+		pError->GetExceptionInfo(&ei);
+		lua_pushstring(L, CString(ei.bstrSource));
+		lua_pushstring(L, CString(ei.bstrDescription));
+		lua_pushinteger(L, ulLineNo + 1);
+		lua_pushinteger(L, lChar);
+		isError = true;
+		return S_OK; 
+	
+	}
+	STDMETHOD(OnEnterScript)(void) { return S_OK; }
+	STDMETHOD(OnLeaveScript)(void) { return S_OK; }
+
+	// IActiveScriptSiteWindow
+
+	STDMETHOD(GetWindow)(HWND *phWnd) { *phWnd = m_hWnd; return S_OK; }
+	STDMETHOD(EnableModeless)(BOOL fEnable) { return S_OK; }
+
+	// Miscellaneous
+
+	HRESULT SetWindow(HWND hWnd) { m_hWnd = hWnd; return S_OK; }
+
+public:
+	LONG m_cRefCount;
+	HWND m_hWnd;
+	bool isError = false;
+	lua_State* L;
+};
+
+STDMETHODIMP_(ULONG) CSimpleScriptSite::AddRef() {
+	return InterlockedIncrement(&m_cRefCount);
+}
+
+STDMETHODIMP_(ULONG) CSimpleScriptSite::Release() {
+	if (!InterlockedDecrement(&m_cRefCount)) {
+		delete this;
+		return 0;
+	}
+	return m_cRefCount;
+}
+
+STDMETHODIMP CSimpleScriptSite::QueryInterface(REFIID riid, void **ppvObject) {
+	if (riid == IID_IUnknown || riid == IID_IActiveScriptSiteWindow) {
+		*ppvObject = (IActiveScriptSiteWindow *)this;
+		AddRef();
+		return NOERROR;
+	}
+	if (riid == IID_IActiveScriptSite) {
+		*ppvObject = (IActiveScriptSite *)this;
+		AddRef();
+		return NOERROR;
+	}
+	return E_NOINTERFACE;
+}
 
 
+static int do_CheckVbScript(lua_State* L) {
+	HRESULT hr;
+	CLSID clsid;
+	char* strerror = NULL;
+	// Active Scripting
+	hr = CLSIDFromProgID(L"VBScript", &clsid);
+	if (FAILED(hr)) {
+		return 0;
+	}
+
+	CSimpleScriptSite* pScriptSite = new CSimpleScriptSite(L);
+	CComPtr<IActiveScript> spVBScript;
+	CComPtr<IActiveScriptParse> spVBScriptParse;
+	hr = spVBScript.CoCreateInstance(OLESTR("VBScript"));
+	if (FAILED(hr)) {
+		strerror = "Internal Error 1";
+		goto err;
+	}
+	hr = spVBScript->SetScriptSite(pScriptSite);
+	if (FAILED(hr)) {
+		strerror = "Internal Error 2";
+		goto err;
+	}
+
+	hr = spVBScript->QueryInterface(&spVBScriptParse);
+	if (FAILED(hr)) {
+		return 0;
+	}
+	hr = spVBScriptParse->InitNew();
+	if (FAILED(hr)) {
+		strerror = "Internal Error 3";
+		goto err;
+	}
+
+	EXCEPINFO ei = { };
+
+	const char *code = lua_tostring(L, 1);
+
+	int result_u;
+	result_u = MultiByteToWideChar(CP_ACP, 0, code, -1, 0, 0);
+	if (!result_u)
+		return 0;
+
+	wchar_t *wcode = new wchar_t[result_u];
+	if (!MultiByteToWideChar(CP_ACP, 0, code, -1, wcode, result_u)) {
+		delete[] wcode;
+		strerror = "Internal Error 4";
+		goto err;
+	}
+	//LPOLESTR wcode2 = OLESTR("MsgBox \"Hello World! The current time is: \"");
+	hr = spVBScriptParse->ParseScriptText(wcode, NULL, NULL, NULL, 0, 0, 0, NULL, &ei);
+	//hr = spVBScriptParse->ParseScriptText(OLESTR("MsgBox \"Hello World! The current time is: \" & Now"), NULL, NULL, NULL, 0, 0, 0, &result, &ei);
+	bool isErr = pScriptSite->isError;
+	spVBScriptParse = NULL;
+	spVBScript = NULL;
+	pScriptSite->Release();
+	pScriptSite = NULL;
+
+	delete[] wcode;
+
+	if (isErr)
+		return 4;
+
+	if (FAILED(hr)) {
+		strerror = "Internal Error 5";
+		goto err;
+	}
+	return 0;
+err: 
+	lua_pushstring(L, strerror);
+	return 1;
+}
 
 //
 //TODO: If this DLL is dynamically linked against the MFC DLLs,
@@ -1128,6 +1283,7 @@ luaL_Reg mblua[] = {
 	{"Destroy",do_Destroy},
 	{ "CheckXML",do_CheckXML },
 	{"GetGuid",do_GetGuid },
+	{"CheckVbScript",do_CheckVbScript },
 	{NULL, NULL},
 };
 luaL_Reg message_methods[] = {

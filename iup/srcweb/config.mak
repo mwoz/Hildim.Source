@@ -7,6 +7,10 @@ LDIR = ../lib/$(TEC_UNAME)
 LIBS = iup
 SRC = iup_webbrowser.c
 
+ifeq ($(findstring Win, $(TEC_SYSNAME)), )
+  DEPENDDIR = dep
+endif
+
 ifneq ($(findstring Win, $(TEC_SYSNAME)), )
   SRC += iupwin_webbrowser.cpp
   LIBS += iupole comsuppw
@@ -31,7 +35,12 @@ else
     LINK_WEBKIT = Yes
     
     ifdef USE_GTK3
-      STDINCS += $(GTK)/include/webkitgtk-3.0
+      ifneq ($(findstring Linux5, $(TEC_UNAME)), )
+        STDINCS += $(GTK)/include/webkitgtk-4.0
+        DEFINES += USE_WEBKIT2
+      else
+        STDINCS += $(GTK)/include/webkitgtk-3.0
+      endif
     else 
       STDINCS += $(GTK)/include/webkitgtk-1.0
     endif

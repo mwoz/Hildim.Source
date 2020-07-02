@@ -1156,10 +1156,16 @@ static int winListCtlColor(Ihandle* ih, HDC hdc, LRESULT *result)
 {
   COLORREF cr;
 
-  if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+  if (ih->data->call_listbox  && iupwinGetColorRef(ih, "FGCOLORLIST", &cr))
     SetTextColor(hdc, cr);
-
-  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
+  else if (iupwinGetColorRef(ih, "FGCOLOR", &cr))
+    SetTextColor(hdc, cr);
+  if (ih->data->call_listbox && iupwinGetColorRef(ih, "BGCOLORLIST", &cr)) {
+	  SetBkColor(hdc, cr);
+	  SetDCBrushColor(hdc, cr);
+	  *result = (LRESULT)GetStockObject(DC_BRUSH);
+	  return 1;
+  }else  if (iupwinGetColorRef(ih, "BGCOLOR", &cr))
   {
     SetBkColor(hdc, cr);
     SetDCBrushColor(hdc, cr);
@@ -1587,7 +1593,8 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
   if (ret)
     return result;
 	else {
-		return CallWindowProc(oldProc, hwnd, msg, wp, lp);
+	  ih->data->call_listbox = 0;
+	  return CallWindowProc(oldProc, hwnd, msg, wp, lp);
 	}
 }
 
@@ -1783,11 +1790,6 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
 
   switch (msg)
   {
-  case WM_ACTIVATEAPP:
-  {
-	  int ttt = 99;
-  }
-	  break;
   case WM_LBUTTONDBLCLK:
   case WM_MBUTTONDBLCLK:
   case WM_RBUTTONDBLCLK:
@@ -1839,8 +1841,10 @@ static LRESULT CALLBACK winListComboListWndProc(HWND hwnd, UINT msg, WPARAM wp, 
 
   if (ret)
     return result;
-  else
-    return CallWindowProc(oldProc, hwnd, msg, wp, lp);
+  else {
+	  ih->data->call_listbox = 1;
+	  return CallWindowProc(oldProc, hwnd, msg, wp, lp);
+  }
 }
 
 static int winListMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result)
