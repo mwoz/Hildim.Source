@@ -170,7 +170,7 @@ void iupdrvDialogGetPosition(Ihandle *ih, InativeHandle* handle, int *x, int *y)
 void iupdrvDialogSetPosition(Ihandle *ih, int x, int y)
 {
   /* Only moves the window and places it at the top of the Z order. */
-  SetWindowPos(ih->handle, HWND_TOP, x, y, 0, 0, SWP_NOSIZE);
+  SetWindowPos(ih->handle, HWND_TOP, x, y, 0, 0, SWP_NOSIZE|(iupAttribGetBoolean(ih, "SHOWNOACTIVATE")? SWP_NOACTIVATE:0));
 }
 
 static void winDialogGetWindowDecor(Ihandle* ih, int *border, int *caption, int menu)
@@ -286,6 +286,9 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
 
   if (iupAttribGetBoolean(ih, "FULLSCREEN"))
     return 1;
+  no_activate = iupAttribGetBoolean(ih, "SHOWNOACTIVATE");
+  if (no_activate)
+    ih->data->cmd_show = SW_SHOWNOACTIVATE;
 
   placement = iupAttribGet(ih, "PLACEMENT");
   if (!placement)
@@ -310,9 +313,6 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
     return 1;
   }
 
-  no_activate = iupAttribGetBoolean(ih, "SHOWNOACTIVATE");
-  if (no_activate)
-    ih->data->cmd_show = SW_SHOWNOACTIVATE;
 
   if (iupStrEqualNoCase(placement, "MAXIMIZED"))
   {

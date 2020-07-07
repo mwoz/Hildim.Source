@@ -430,7 +430,7 @@ static void iDialogAfterShow(Ihandle* ih)
     }
 
     /* do it only if show_cb did NOT changed the current focus */
-    if (old_focus == IupGetFocus())
+    if (old_focus == IupGetFocus() && !iupAttribGetBoolean(ih, "SHOWNOACTIVATE"))
     {
       Ihandle *startfocus = IupGetAttributeHandle(ih, "STARTFOCUS");
       if (startfocus)
