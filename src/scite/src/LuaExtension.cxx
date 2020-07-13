@@ -1108,22 +1108,6 @@ static int cf_global_print(lua_State *L) {
 	return 0;
 }
 
-static int cf_iup_reattach_wnd_to(lua_State *L){
-	Ihandle *ih = iuplua_checkihandle(L, 1);
-	SString sWnd = luaL_checkstring(L, 2);	   
-	HWND hChild = NULL;
-	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
-	hChild = ::FindWindowEx(hChild, NULL, NULL, L"Source");
-	HWND hChild1 = ::FindWindowEx(hChild, NULL, NULL, NULL);
-	HWND hChild2 = ::FindWindowEx(hChild, hChild1, NULL, NULL);
-	HWND hChild3 = ::FindWindowEx(hChild, hChild2, NULL, NULL);
-	HWND h = (HWND)IupGetAttribute(ih, "HWND");
-	::SetParent(hChild3, h);
-	::SetWindowLong(h, GWL_STYLE, ::GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN );
-	::MoveWindow(hChild3, 0, 0, 200, 200,true);
-	return 1;
-}
-
 static int cf_perform_grep_ex(lua_State *L){
 	const char *p = luaL_checkstring(L, 1);
 	const char *w = luaL_checkstring(L, 2);
@@ -2042,38 +2026,12 @@ static int cf_iup_KeyCodeToName(lua_State *L){
 	lua_pushfstring(L, iupKeyCodeToName(k));
 	return 1;
 }
-static int cf_iup_set_nativeparent(lua_State *L){
-	Ihandle *ih = iuplua_checkihandle(L, 1);
-	SString sWnd = luaL_checkstring(L, 2);
-	
-	HWND hwnd = NULL;
-	if (sWnd != "SCITE"){
-		Ihandle *hSub = IupGetDialogChild(hLayout, sWnd.c_str());
-		hwnd = (HWND)IupGetAttribute(hSub, "HWND");
-	}
-	else{
-		DWORD p = ::GetCurrentProcessId();
-
-		for (;;){
-			hwnd = ::FindWindowEx(NULL, hwnd, L"HildiMWindow", NULL);
-			DWORD d = 0;
-			::GetWindowThreadProcessId(hwnd, &d);
-			if (d == p) break;
-			if (!hwnd) break;
-		}
-	}
-	IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
-
-	return 1;
-}
 
 void ContinueInit(void* h){
 	if (h) hLayout = (Ihandle*)h;
 	lua_getglobal(luaState, "iup");
 	lua_pushcfunction(luaState, cf_iup_get_layout);
 	lua_setfield(luaState, -2, "GetLayout");
-	lua_pushcfunction(luaState, cf_iup_set_nativeparent);
-	lua_setfield(luaState, -2, "SetNativeparent");
 	lua_pushcfunction(luaState, cf_iup_KeyCodeToName);
 	lua_setfield(luaState, -2, "KeyCodeToName");
 	lua_pop(luaState, 1);
@@ -2251,12 +2209,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	cdlua_open(luaState);
 	cdluaiup_open(luaState);
 	load_all_images_Images();
-
-
-	lua_getglobal(luaState, "iup");
-	lua_pushcfunction(luaState, cf_iup_reattach_wnd_to);
-	lua_setfield(luaState, -2, "ReattachWndTo");
-	lua_pop(luaState, 1);
+	IupSetGlobal("GLOBALWNDCLASS", "HildiMWindow");
 
 	lua_register(luaState, "_ALERT", cf_global_print);
 
@@ -2796,6 +2749,10 @@ bool LuaExtension::OnSave(const char *filename) {
 bool LuaExtension::OnChar(char ch) {
 	char chs[2] = {ch, '\0'};
 	return CallNamedFunction("OnChar", chs);
+}
+
+void LuaExtension::OnSize() {
+	CallNamedFunction("OnSize");
 }
 
 bool LuaExtension::OnSavePointReached() {

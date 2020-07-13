@@ -170,7 +170,10 @@ void iupdrvDialogGetPosition(Ihandle *ih, InativeHandle* handle, int *x, int *y)
 void iupdrvDialogSetPosition(Ihandle *ih, int x, int y)
 {
   /* Only moves the window and places it at the top of the Z order. */
-  SetWindowPos(ih->handle, HWND_TOP, x, y, 0, 0, SWP_NOSIZE|(iupAttribGetBoolean(ih, "SHOWNOACTIVATE")? SWP_NOACTIVATE:0));
+  int flags = SWP_NOSIZE;
+  if (iupAttribGetBoolean(ih, "SHOWNOACTIVATE"))
+    flags |= SWP_NOACTIVATE;
+  SetWindowPos(ih->handle, HWND_TOP, x, y, 0, 0, flags);
 }
 
 static void winDialogGetWindowDecor(Ihandle* ih, int *border, int *caption, int menu)
@@ -279,16 +282,16 @@ void iupdrvDialogGetDecoration(Ihandle* ih, int *border, int *caption, int *menu
 int iupdrvDialogSetPlacement(Ihandle* ih)
 {
   char* placement;
-  int no_activate;
+  int no_activate = iupAttribGetBoolean(ih, "SHOWNOACTIVATE");
 
+  if (no_activate)
+    ih->data->cmd_show = SW_SHOWNOACTIVATE;
+  else
   ih->data->cmd_show = SW_SHOWNORMAL;
   ih->data->show_state = IUP_SHOW;
 
   if (iupAttribGetBoolean(ih, "FULLSCREEN"))
     return 1;
-  no_activate = iupAttribGetBoolean(ih, "SHOWNOACTIVATE");
-  if (no_activate)
-    ih->data->cmd_show = SW_SHOWNOACTIVATE;
 
   placement = iupAttribGet(ih, "PLACEMENT");
   if (!placement)
@@ -312,7 +315,6 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
     ih->data->show_state = IUP_MAXIMIZE;
     return 1;
   }
-
 
   if (iupStrEqualNoCase(placement, "MAXIMIZED"))
   {
@@ -1257,6 +1259,29 @@ static int winDialogMapMethod(Ihandle* ih)
   else
   {
     native_parent = iupDialogGetNativeParent(ih);
+	if (!native_parent) {
+		char *native_wnd_class = 0;
+		native_wnd_class = IupGetGlobal("WNDCLASS");
+		if (!native_wnd_class)
+			native_wnd_class = IupGetGlobal("GLOBALWNDCLASS");
+		if (native_wnd_class) {
+			HWND hwnd = NULL;
+
+			DWORD p = GetCurrentProcessId();
+
+			for (;;) {
+				hwnd = FindWindowExA(NULL, hwnd, native_wnd_class, NULL);
+				DWORD d = 0;
+				GetWindowThreadProcessId(hwnd, &d);
+				if (d == p) break;
+				if (!hwnd) break;
+			}
+			if (hwnd) {
+				IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
+				native_parent = hwnd;
+			}
+		}
+	}
 
     if (native_parent)
     {

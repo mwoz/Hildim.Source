@@ -45,7 +45,6 @@ IUP_API int       IupLoopStep      (void);
 IUP_API int       IupLoopStepWait  (void);
 IUP_API int       IupMainLoopLevel (void);
 IUP_API void      IupFlush         (void);
-void      IupFlushMouse    (void);
 IUP_API void      IupExitLoop      (void);
 IUP_API void      IupPostMessage   (Ihandle* ih, const char* s, int i, double d, void* p);
 

@@ -430,7 +430,7 @@ static void iDialogAfterShow(Ihandle* ih)
     }
 
     /* do it only if show_cb did NOT changed the current focus */
-    if (old_focus == IupGetFocus() && !iupAttribGetBoolean(ih, "SHOWNOACTIVATE"))
+    if (old_focus == IupGetFocus() && !iupAttribGetBoolean(ih, "SHOWNOFOCUS"))
     {
       Ihandle *startfocus = IupGetAttributeHandle(ih, "STARTFOCUS");
       if (startfocus)
@@ -540,12 +540,14 @@ int iupDialogPopup(Ihandle* ih, int x, int y)
 {
   if (iupClassObjectHasDlgPopup(ih))
   {
-    int ret;
+    int ret, automodal = IupGetInt(ih, "AUTOMODAL"); /* Used only for Windows MessageBox */
 
+    if (!automodal)
     iDialogSetModal(ih);  /* make sure all other dialogs are inactive */
 
     ret = iupClassObjectDlgPopup(ih, x, y);
 
+    if (!automodal)
     iDialogUnSetModal(ih);
 
     return ret;
@@ -1429,10 +1431,11 @@ Iclass* iupDialogNewClass(void)
   iupClassRegisterAttribute(ic, "DIALOGFRAME",  NULL, iDialogSetDialogFrameAttrib, NULL, NULL, IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "PARENTDIALOG", NULL, iDialogSetParentDialogAttrib, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SHRINK",       NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "STARTFOCUS",   NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "STARTFOCUS",   NULL, NULL, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "MODAL",        NULL, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "PLACEMENT",    NULL, NULL, "NORMAL", NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "NOFLUSH", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SHOWNOFOCUS", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "SIMULATEMODAL", NULL, iDialogSetSimulateModalAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CUSTOMFRAMESIMULATE", NULL, iDialogSetCustomFrameSimulateAttrib, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NOT_MAPPED);

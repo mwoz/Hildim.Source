@@ -17,7 +17,6 @@
 
 #include "iuplua.h"
 #include "il.h"
-#define LUA_VERSION_NUM		503
 
 
 static int CopyUserData2String(lua_State *L)

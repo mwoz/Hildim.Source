@@ -162,6 +162,8 @@ static int iGaugeRedraw_CB(Ihandle* ih)
 
   if (ih->data->dashed)
   {
+    if (ih->data->value != ih->data->vmin)
+    {
     int start = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xstart : ystart;
     int end = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xend : yend;
     double step = (double)(end - start + 1) / (double)IGAUGE_DASHED_BLOCKS;
@@ -169,9 +171,6 @@ static int iGaugeRedraw_CB(Ihandle* ih)
     double range = (double)((end - start + 1) * (ih->data->value - ih->data->vmin) / (ih->data->vmax - ih->data->vmin));
     int range_percent = (int)(100 * range);
     double i = 0;
-
-    if (ih->data->value == ih->data->vmin)
-      return IUP_DEFAULT;
 
     while (iupRound(100 * (i + step_fill)) <= range_percent)
     {
@@ -183,6 +182,7 @@ static int iGaugeRedraw_CB(Ihandle* ih)
         IupDrawRectangle(ih, xstart, ih->currentheight - (start + iupRound(i)),
                              xend, ih->currentheight - (start + iupRound(i + step_fill) - 1));
       i += step;
+      }
     }
   }
   else

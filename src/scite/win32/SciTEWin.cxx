@@ -1767,6 +1767,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		{
 			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 			layout.Fit();
+			extender->OnSize();
 			return r;
 		}
 		break;

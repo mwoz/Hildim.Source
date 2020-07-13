@@ -26,7 +26,7 @@
 #include "iup_key.h"
 
 
- /* from IupRadio implementation */
+/* from IupRadio implementation */
 IUP_SDK_API Ihandle *iupRadioFindToggleParent(Ihandle* ih_toggle);
 
 
@@ -51,7 +51,8 @@ struct _IcontrolData
 /****************************************************************/
 
 
-static int iFlatButtonRedraw_CB(Ihandle* ih) {
+static int iFlatButtonRedraw_CB(Ihandle* ih)
+{
 	char *image = iupAttribGet(ih, "IMAGE");
 	char* title = iupAttribGet(ih, "TITLE");
 	int active = IupGetInt(ih, "ACTIVE");  /* native implementation */
@@ -72,14 +73,16 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 
 	iupDrawParentBackground(dc, ih);
 
-	if (!bgcolor) {
+  if (!bgcolor)
+  {
 		if (draw_border)
 			bgcolor = iupFlatGetDarkerBgColor(ih);
 		else
 			bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
 	}
 
-	if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted)) {
+  if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted))
+  {
 		char* presscolor = iupAttribGetStr(ih, "PSCOLOR");
 		if (presscolor)
 			bgcolor = presscolor;
@@ -89,7 +92,9 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 			fgcolor = presscolor;
 
 		draw_border = 1;
-	} else if (ih->data->highlighted) {
+  }
+  else if (ih->data->highlighted)
+  {
 		char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
 		if (hlcolor)
 			bgcolor = hlcolor;
@@ -102,14 +107,18 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 	}
 
 	/* draw border - can still be removed by setting border_width=0 */
-	if (draw_border) {
+  if (draw_border)
+  {
 		char* bordercolor = iupAttribGetStr(ih, "BORDERCOLOR");
 
-		if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted)) {
+    if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted))
+    {
 			char* presscolor = iupAttribGetStr(ih, "BORDERPSCOLOR");
 			if (presscolor)
 				bordercolor = presscolor;
-		} else if (ih->data->highlighted) {
+    }
+    else if (ih->data->highlighted)
+    {
 			char* hlcolor = iupAttribGetStr(ih, "BORDERHLCOLOR");
 			if (hlcolor)
 				bordercolor = hlcolor;
@@ -126,19 +135,21 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 		image_pressed = 1;
 
 	/* draw background */
-	if (bgimage) {
+  if (bgimage)
+  {
 		int backimage_zoom = iupAttribGetBoolean(ih, "BACKIMAGEZOOM");
 		draw_image = iupFlatGetImageName(ih, "BACKIMAGE", bgimage, image_pressed, ih->data->highlighted, 1, &make_inactive);
 		if (backimage_zoom)
 			iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, border_width, border_width, ih->currentwidth - border_width, ih->currentheight - border_width);
 		else
 			iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, border_width, border_width, -1, -1);
-	} else
+  }
+  else
 		iupFlatDrawBox(dc, border_width, ih->currentwidth - 1 - border_width,
 			border_width, ih->currentheight - 1 - border_width,
 			bgcolor, NULL, 1);  /* background is always active */
 
-/* reserve space for focus feedback (after background draw) */
+  /* reserve space for focus feedback (after background draw) */
 	if (iupAttribGetBoolean(ih, "CANFOCUS") && focus_feedback)
 		border_width++;
 
@@ -149,10 +160,12 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 		ih->data->img_position, ih->data->spacing, ih->data->horiz_alignment, ih->data->vert_alignment, ih->data->horiz_padding, ih->data->vert_padding,
 		draw_image, make_inactive, title, text_flags, text_orientation, fgcolor, bgcolor, active);
 
-	if (fgimage) {
+  if (fgimage)
+  {
 		draw_image = iupFlatGetImageName(ih, "FRONTIMAGE", fgimage, image_pressed, ih->data->highlighted, active, &make_inactive);
 		iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, border_width, border_width, -1, -1);
-	} else if (!image && !title)  /* color only button */
+  }
+  else if (!image && !title)  /* color only button */
 	{
 		int space = border_width + 2;
 		iupFlatDrawBorder(dc, space, ih->currentwidth - 1 - space,
@@ -165,7 +178,8 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 	}
 
 
-	if (ih->data->has_focus && focus_feedback) {
+  if (ih->data->has_focus && focus_feedback)
+  {
 		border_width--;
 		iupdrvDrawFocusRect(dc, border_width, border_width, ih->currentwidth - 1 - border_width, ih->currentheight - 1 - border_width);
 	}
@@ -177,11 +191,14 @@ static int iFlatButtonRedraw_CB(Ihandle* ih) {
 	return IUP_DEFAULT;
 }
 
-static void iFlatButtonNotify(Ihandle* ih, int is_toggle) {
+static void iFlatButtonNotify(Ihandle* ih, int is_toggle)
+{
 	Icallback cb = IupGetCallback(ih, "FLAT_ACTION");
-	if (cb) {
+  if (cb)
+  {
 		/* to avoid double calls when a dialog is displayed */
-		if (!ih->data->inside_action) {
+    if (!ih->data->inside_action)
+    {
 			int ret;
 
 			ih->data->inside_action = 1;
@@ -195,49 +212,56 @@ static void iFlatButtonNotify(Ihandle* ih, int is_toggle) {
 		}
 	}
 
-	if (is_toggle) {
+  if (is_toggle)
+  {
 		if (iupObjectCheck(ih))
 			iupBaseCallValueChangedCb(ih);
 	}
 }
 
-static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int y, char* status) {
+static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int y, char* status)
+{
 	IFniiiis cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
-	if (cb) {
+  if (cb)
+  {
 		if (cb(ih, button, pressed, x, y, status) == IUP_IGNORE)
 			return IUP_DEFAULT;
 	}
 
-	if (button == IUP_BUTTON1) {
-		if (iupAttribGetBoolean(ih, "TOGGLE")) {
+  if (button == IUP_BUTTON1)
+  {
+    if (iupAttribGetBoolean(ih, "TOGGLE"))
+    {
 			Ihandle* radio = iupRadioFindToggleParent(ih);
-			int selected = iupAttribGetInt(ih, "VALUE");
 			Ihandle* last_tg = NULL;
 
 			if (!pressed && ih->data->highlighted)  /* released inside the button area */
 			{
+        int selected = iupAttribGetInt(ih, "VALUE");
 				if (selected)  /* was ON */
 				{
-					if (!radio) {
+          if (!radio)
 						iupAttribSet(ih, "VALUE", "OFF");
-						selected = 0;
-					} else
+          else
 						last_tg = ih;  /* to avoid the callback call */
-				} else  /* was OFF */
+        }
+        else  /* was OFF */
+        {
+          if (radio)
 				{
-					if (radio) {
 						last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLATBUTTON_LASTRADIO");
-						if (iupObjectCheck(last_tg) && last_tg != ih) {
+            if (iupObjectCheck(last_tg) && last_tg != ih)
+            {
 							iupAttribSet(last_tg, "VALUE", "OFF");
 							iupdrvRedrawNow(last_tg);
-						} else
+            }
+            else
 							last_tg = NULL;
 
 						iupAttribSet(radio, "_IUP_FLATBUTTON_LASTRADIO", (char*)ih);
 					}
 
 					iupAttribSet(ih, "VALUE", "ON");
-					selected = 1;
 				}
 			}
 
@@ -252,7 +276,9 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
 				if (!radio || ih != last_tg)
 					iFlatButtonNotify(ih, 1);
 			}
-		} else {
+    }
+    else
+    {
 			ih->data->pressed = pressed;
 			iupdrvRedrawNow(ih);
 
@@ -264,7 +290,8 @@ static int iFlatButtonButton_CB(Ihandle* ih, int button, int pressed, int x, int
 	return IUP_DEFAULT;
 }
 
-static int iFlatButtonActivate_CB(Ihandle* ih) {
+static int iFlatButtonActivate_CB(Ihandle* ih)
+{
 	char status[IUPKEY_STATUS_SIZE] = IUPKEY_STATUS_INIT;
 
 	iFlatButtonButton_CB(ih, IUP_BUTTON1, 1, 0, 0, status);
@@ -276,9 +303,11 @@ static int iFlatButtonActivate_CB(Ihandle* ih) {
 	return IUP_DEFAULT;
 }
 
-static int iFlatButtonFocus_CB(Ihandle* ih, int focus) {
+static int iFlatButtonFocus_CB(Ihandle* ih, int focus)
+{
 	IFni cb = (IFni)IupGetCallback(ih, "FLAT_FOCUS_CB");
-	if (cb) {
+  if (cb)
+  {
 		if (cb(ih, focus) == IUP_IGNORE)
 			return IUP_DEFAULT;
 	}
@@ -289,24 +318,32 @@ static int iFlatButtonFocus_CB(Ihandle* ih, int focus) {
 	return IUP_DEFAULT;
 }
 
-static int iFlatButtonMotion_CB(Ihandle* ih, int x, int y, char* status) {
+static int iFlatButtonMotion_CB(Ihandle* ih, int x, int y, char* status)
+{
 	int redraw = 0;
 	IFniis cb = (IFniis)IupGetCallback(ih, "FLAT_MOTION_CB");
-	if (cb) {
+  if (cb)
+  {
 		if (cb(ih, x, y, status) == IUP_IGNORE)
 			return IUP_DEFAULT;
 	}
 
-	if (iup_isbutton1(status)) {
+  if (iup_isbutton1(status))
+  {
 		/* handle when mouse is pressed and moved to/from inside the canvas */
 		if (x < 0 || x > ih->currentwidth - 1 ||
-			y < 0 || y > ih->currentheight - 1) {
-			if (ih->data->highlighted) {
+        y < 0 || y > ih->currentheight - 1)
+    {
+      if (ih->data->highlighted)
+      {
 				redraw = 1;
 				ih->data->highlighted = 0;
 			}
-		} else {
-			if (!ih->data->highlighted) {
+    }
+    else
+    {
+      if (!ih->data->highlighted)
+      {
 				redraw = 1;
 				ih->data->highlighted = 1;
 			}
@@ -319,9 +356,11 @@ static int iFlatButtonMotion_CB(Ihandle* ih, int x, int y, char* status) {
 	return IUP_DEFAULT;
 }
 
-static int iFlatButtonEnterWindow_CB(Ihandle* ih) {
+static int iFlatButtonEnterWindow_CB(Ihandle* ih)
+{
 	IFn cb = (IFn)IupGetCallback(ih, "FLAT_ENTERWINDOW_CB");
-	if (cb) {
+  if (cb)
+  {
 		if (cb(ih) == IUP_IGNORE)
 			return IUP_DEFAULT;
 	}
@@ -332,9 +371,11 @@ static int iFlatButtonEnterWindow_CB(Ihandle* ih) {
 	return IUP_DEFAULT;
 }
 
-static int iFlatButtonLeaveWindow_CB(Ihandle* ih) {
+static int iFlatButtonLeaveWindow_CB(Ihandle* ih)
+{
 	IFn cb = (IFn)IupGetCallback(ih, "FLAT_LEAVEWINDOW_CB");
-	if (cb) {
+  if (cb)
+  {
 		if (cb(ih) == IUP_IGNORE)
 			return IUP_DEFAULT;
 	}
@@ -349,7 +390,8 @@ static int iFlatButtonLeaveWindow_CB(Ihandle* ih) {
 /***********************************************************************************************/
 
 
-static int iFlatButtonSetAlignmentAttrib(Ihandle* ih, const char* value) {
+static int iFlatButtonSetAlignmentAttrib(Ihandle* ih, const char* value)
+{
 	char value1[30], value2[30];
 
 	iupStrToStrStr(value, value1, value2, ':');
@@ -363,13 +405,15 @@ static int iFlatButtonSetAlignmentAttrib(Ihandle* ih, const char* value) {
 	return 1;
 }
 
-static char* iFlatButtonGetAlignmentAttrib(Ihandle *ih) {
-	char* horiz_align2str[3] = { "ALEFT", "ACENTER", "ARIGHT" };
-	char* vert_align2str[3] = { "ATOP", "ACENTER", "ABOTTOM" };
+static char* iFlatButtonGetAlignmentAttrib(Ihandle *ih)
+{
+  char* horiz_align2str[3] = {"ALEFT", "ACENTER", "ARIGHT"};
+  char* vert_align2str[3] = {"ATOP", "ACENTER", "ABOTTOM"};
 	return iupStrReturnStrf("%s:%s", horiz_align2str[ih->data->horiz_alignment], vert_align2str[ih->data->vert_alignment]);
 }
 
-static int iFlatButtonSetPaddingAttrib(Ihandle* ih, const char* value) {
+static int iFlatButtonSetPaddingAttrib(Ihandle* ih, const char* value)
+{
 	if (iupStrEqual(value, "DEFAULTBUTTONPADDING"))
 		value = IupGetGlobal("DEFAULTBUTTONPADDING");
 
@@ -379,14 +423,16 @@ static int iFlatButtonSetPaddingAttrib(Ihandle* ih, const char* value) {
 	return 0;
 }
 
-static int iFlatButtonSetAttribPostRedraw(Ihandle* ih, const char* value) {
+static int iFlatButtonSetAttribPostRedraw(Ihandle* ih, const char* value)
+{
 	(void)value;
 	if (ih->handle)
 		iupdrvPostRedraw(ih);
 	return 1;
 }
 
-static char* iFlatButtonGetBgColorAttrib(Ihandle* ih) {
+static char* iFlatButtonGetBgColorAttrib(Ihandle* ih)
+{
 	char* value = iupAttribGet(ih, "BGCOLOR");
 	if (!value)
 		return iupBaseNativeParentGetBgColorAttrib(ih);
@@ -394,11 +440,13 @@ static char* iFlatButtonGetBgColorAttrib(Ihandle* ih) {
 		return value;
 }
 
-static char* iFlatButtonGetPaddingAttrib(Ihandle* ih) {
+static char* iFlatButtonGetPaddingAttrib(Ihandle* ih)
+{
 	return iupStrReturnIntInt(ih->data->horiz_padding, ih->data->vert_padding, 'x');
 }
 
-static int iFlatButtonSetImagePositionAttrib(Ihandle* ih, const char* value) {
+static int iFlatButtonSetImagePositionAttrib(Ihandle* ih, const char* value)
+{
 	ih->data->img_position = iupFlatGetImagePosition(value);
 
 	if (ih->handle)
@@ -407,51 +455,65 @@ static int iFlatButtonSetImagePositionAttrib(Ihandle* ih, const char* value) {
 	return 0;
 }
 
-static char* iFlatButtonGetImagePositionAttrib(Ihandle *ih) {
-	char* img_pos2str[4] = { "LEFT", "RIGHT", "TOP", "BOTTOM" };
+static char* iFlatButtonGetImagePositionAttrib(Ihandle *ih)
+{
+  char* img_pos2str[4] = {"LEFT", "RIGHT", "TOP", "BOTTOM"};
 	return iupStrReturnStr(img_pos2str[ih->data->img_position]);
 }
 
-static int iFlatButtonSetSpacingAttrib(Ihandle* ih, const char* value) {
+static int iFlatButtonSetSpacingAttrib(Ihandle* ih, const char* value)
+{
 	iupStrToInt(value, &ih->data->spacing);
 	if (ih->handle)
 		iupdrvRedrawNow(ih);
 	return 0;
 }
 
-static char* iFlatButtonGetSpacingAttrib(Ihandle *ih) {
+static char* iFlatButtonGetSpacingAttrib(Ihandle *ih)
+{
 	return iupStrReturnInt(ih->data->spacing);
 }
 
-static int iFlatButtonSetBorderWidthAttrib(Ihandle* ih, const char* value) {
+static int iFlatButtonSetBorderWidthAttrib(Ihandle* ih, const char* value)
+{
 	iupStrToInt(value, &ih->data->border_width);
 	if (ih->handle)
 		iupdrvRedrawNow(ih);
 	return 0;
 }
 
-static char* iFlatButtonGetBorderWidthAttrib(Ihandle *ih) {
+static char* iFlatButtonGetBorderWidthAttrib(Ihandle *ih)
+{
 	return iupStrReturnInt(ih->data->border_width);
 }
 
-static int iFlatButtonSetValueAttrib(Ihandle* ih, const char* value) {
-	if (iupAttribGetBoolean(ih, "TOGGLE")) {
+static int iFlatButtonSetValueAttrib(Ihandle* ih, const char* value)
+{
+  if (iupAttribGetBoolean(ih, "TOGGLE"))
+  {
 		Ihandle* radio = iupRadioFindToggleParent(ih);
-		if (radio) {
+    if (radio)
+    {
 			/* can only set Radio to ON */
-			if (iupStrEqualNoCase(value, "TOGGLE") || iupStrBoolean(value)) {
+      if (iupStrEqualNoCase(value, "TOGGLE") || iupStrBoolean(value))
+      {
 				Ihandle* last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLATBUTTON_LASTRADIO");
-				if (iupObjectCheck(last_tg) && last_tg != ih) {
+        if (iupObjectCheck(last_tg) && last_tg != ih)
+        {
 					iupAttribSet(last_tg, "VALUE", "OFF");
 					if (last_tg->handle)
 						iupdrvRedrawNow(last_tg);
 				}
 
 				iupAttribSet(radio, "_IUP_FLATBUTTON_LASTRADIO", (char*)ih);
-			} else
+      }
+      else
 				return 0;
-		} else {
-			if (iupStrEqualNoCase(value, "TOGGLE")) {
+    }
+    else
+    {
+      if (iupStrEqualNoCase(value, "TOGGLE"))
+      {
 				int oldcheck = iupAttribGetBoolean(ih, "VALUE");
 				if (oldcheck)
 					iupAttribSet(ih, "VALUE", "OFF");
@@ -469,27 +531,34 @@ static int iFlatButtonSetValueAttrib(Ihandle* ih, const char* value) {
 			iupdrvPostRedraw(ih);
 
 		return 1;
-	} else
+  }
+  else
 		return 0;
 }
 
-static char* iFlatButtonGetRadioAttrib(Ihandle* ih) {
-	if (iupAttribGetBoolean(ih, "TOGGLE")) {
+static char* iFlatButtonGetRadioAttrib(Ihandle* ih)
+{
+  if (iupAttribGetBoolean(ih, "TOGGLE"))
+  {
 		Ihandle* radio = iupRadioFindToggleParent(ih);
 		return iupStrReturnBoolean(radio != NULL);
-	} else
+  }
+  else
 		return NULL;
 }
 
-static char* iFlatButtonGetHighlightedAttrib(Ihandle* ih) {
+static char* iFlatButtonGetHighlightedAttrib(Ihandle* ih)
+{
 	return iupStrReturnBoolean(ih->data->highlighted);
 }
 
-static char* iFlatButtonGetPressedAttrib(Ihandle* ih) {
+static char* iFlatButtonGetPressedAttrib(Ihandle* ih)
+{
 	return iupStrReturnBoolean(ih->data->pressed);
 }
 
-static char* iFlatButtonGetHasFocusAttrib(Ihandle* ih) {
+static char* iFlatButtonGetHasFocusAttrib(Ihandle* ih)
+{
 	return iupStrReturnBoolean(ih->data->has_focus);
 }
 
@@ -497,8 +566,10 @@ static char* iFlatButtonGetHasFocusAttrib(Ihandle* ih) {
 /*****************************************************************************************/
 
 
-static int iFlatButtonCreateMethod(Ihandle* ih, void** params) {
-	if (params && params[0]) {
+static int iFlatButtonCreateMethod(Ihandle* ih, void** params)
+{
+  if (params && params[0])
+  {
 		iupAttribSetStr(ih, "TITLE", (char*)(params[0]));
 	}
 
@@ -533,11 +604,15 @@ static int iFlatButtonCreateMethod(Ihandle* ih, void** params) {
 	return IUP_NOERROR;
 }
 
-static int iFlatButtonMapMethod(Ihandle* ih) {
-	if (iupAttribGetBoolean(ih, "TOGGLE")) {
+static int iFlatButtonMapMethod(Ihandle* ih)
+{
+  if (iupAttribGetBoolean(ih, "TOGGLE"))
+  {
 		Ihandle* radio = iupRadioFindToggleParent(ih);
-		if (radio) {
-			if (!iupAttribGet(radio, "_IUP_FLATBUTTON_LASTRADIO")) {
+    if (radio)
+    {
+      if (!iupAttribGet(radio, "_IUP_FLATBUTTON_LASTRADIO"))
+      {
 				/* this is the first toggle in the radio, and then set it with VALUE=ON */
 				iupAttribSet(ih, "VALUE", "ON");
 			}
@@ -550,12 +625,14 @@ static int iFlatButtonMapMethod(Ihandle* ih) {
 	return IUP_NOERROR;
 }
 
-static void iFlatButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand) {
+static void iFlatButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
+{
 	int fit2backimage = iupAttribGetBoolean(ih, "FITTOBACKIMAGE");
 	char* bgimage = iupAttribGet(ih, "BACKIMAGE");
 	if (fit2backimage && bgimage)
 		iupImageGetInfo(bgimage, w, h, NULL);
-	else {
+  else
+  {
 		char* imagename = iupAttribGet(ih, "IMAGE");
 		char* title = iupAttribGet(ih, "TITLE");
 		double text_orientation = iupAttribGetDouble(ih, "TEXTORIENTATION");
@@ -573,7 +650,8 @@ static void iFlatButtonComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int
 /******************************************************************************/
 
 
-Iclass* iupFlatButtonNewClass(void) {
+Iclass* iupFlatButtonNewClass(void)
+{
 	Iclass* ic = iupClassNew(iupRegisterFindClass("canvas"));
 
 	ic->name = "flatbutton";
@@ -660,7 +738,8 @@ Iclass* iupFlatButtonNewClass(void) {
 	return ic;
 }
 
-IUP_API Ihandle* IupFlatButton(const char* title) {
+IUP_API Ihandle* IupFlatButton(const char* title)
+{
 	void *params[2];
 	params[0] = (void*)title;
 	params[1] = NULL;

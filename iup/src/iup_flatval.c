@@ -57,7 +57,11 @@ static void iFlatValGetHandlerSize(Ihandle* ih, int is_horizontal, int *width, i
 {
   char *image = iupAttribGet(ih, "IMAGE");
   if (image)
+  {
+    *width = 0;
+    *height = 0;
     iupImageGetInfo(image, width, height, NULL);
+  }
   else
   {
     int handler_size = iupAttribGetInt(ih, "HANDLERSIZE");
@@ -271,7 +275,7 @@ static int iFlatValRedraw_CB(Ihandle* ih)
 
   if (image)
   {
-    int x, y, width, height;
+    int x, y, width = 0, height = 0;
     iupImageGetInfo(image, &width, &height, NULL);
 
     /* always center the image */
