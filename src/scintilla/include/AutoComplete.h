@@ -41,8 +41,6 @@ public:
 	 */
 	int autoSort;
 
-	Sci_ListColorsInfo listcolors;
-
 	AutoComplete();
 	~AutoComplete();
 

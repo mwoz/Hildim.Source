@@ -137,6 +137,7 @@ Document::Document(int options) :
 	perLineData[ldState] = std::make_unique<LineState>();
 	perLineData[ldMargin] = std::make_unique<LineAnnotation>();
 	perLineData[ldAnnotation] = std::make_unique<LineAnnotation>();
+	perLineData[ldEOLAnnotation] = std::make_unique<LineAnnotation>();
 
 	decorations = DecorationListCreate(IsLarge());
 
@@ -210,6 +211,10 @@ LineAnnotation *Document::Margins() const noexcept {
 
 LineAnnotation *Document::Annotations() const noexcept {
 	return dynamic_cast<LineAnnotation *>(perLineData[ldAnnotation].get());
+}
+
+LineAnnotation *Document::EOLAnnotations() const noexcept {
+	return dynamic_cast<LineAnnotation *>(perLineData[ldEOLAnnotation].get());
 }
 
 int Document::LineEndTypesSupported() const {
@@ -1170,11 +1175,11 @@ int Document::SafeSegment(const char *text, int length, int lengthSegment) const
 
 EncodingFamily Document::CodePageFamily() const noexcept {
 	if (SC_CP_UTF8 == dbcsCodePage)
-		return efUnicode;
+		return EncodingFamily::unicode;
 	else if (dbcsCodePage)
-		return efDBCS;
+		return EncodingFamily::dbcs;
 	else
-		return efEightBit;
+		return EncodingFamily::eightBit;
 }
 
 void Document::ModifiedAt(Sci::Position pos) noexcept {
@@ -1216,7 +1221,7 @@ bool Document::DeleteChars(Sci::Position pos, Sci::Position len) {
 			bool startSequence = false;
 			const char *text = cb.DeleteChars(pos, len, startSequence);
 			if (startSavePoint && cb.IsCollectingUndo())
-				NotifySavePoint(!startSavePoint);
+				NotifySavePoint(false);
 			if ((pos < LengthNoExcept()) || (pos == 0))
 				ModifiedAt(pos);
 			else
@@ -1268,7 +1273,7 @@ Sci::Position Document::InsertString(Sci::Position position, const char *s, Sci:
 	bool startSequence = false;
 	const char *text = cb.InsertString(position, s, insertLength, startSequence);
 	if (startSavePoint && cb.IsCollectingUndo())
-		NotifySavePoint(!startSavePoint);
+		NotifySavePoint(false);
 	ModifiedAt(position);
 	NotifyModified(
 		DocModification(
@@ -1995,7 +2000,6 @@ Document::CharacterExtracted Document::ExtractCharacter(Sci::Position position) 
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         int flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = (flags & SCFIND_MATCHCASE) != 0;
@@ -2249,9 +2253,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			const Sci::Line lineEndStyled = SciLineFromPosition(GetEndStyled());
 			const Sci::Position endStyledTo = LineStart(lineEndStyled);
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2259,9 +2263,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2387,6 +2388,36 @@ void Document::AnnotationClearAll() {
 		AnnotationSetText(l, nullptr);
 	// Free remaining data
 	Annotations()->ClearAll();
+}
+
+StyledText Document::EOLAnnotationStyledText(Sci::Line line) const noexcept {
+	const LineAnnotation *pla = EOLAnnotations();
+	return StyledText(pla->Length(line), pla->Text(line),
+		pla->MultipleStyles(line), pla->Style(line), pla->Styles(line));
+}
+
+void Document::EOLAnnotationSetText(Sci::Line line, const char *text) {
+	if (line >= 0 && line < LinesTotal()) {
+		EOLAnnotations()->SetText(line, text);
+		const DocModification mh(SC_MOD_CHANGEEOLANNOTATION, LineStart(line),
+			0, 0, 0, line);
+		NotifyModified(mh);
+	}
+}
+
+void Document::EOLAnnotationSetStyle(Sci::Line line, int style) {
+	EOLAnnotations()->SetStyle(line, style);
+	const DocModification mh(SC_MOD_CHANGEEOLANNOTATION, LineStart(line),
+		0, 0, 0, line);
+	NotifyModified(mh);
+}
+
+void Document::EOLAnnotationClearAll() {
+	const Sci::Line maxEditorLine = LinesTotal();
+	for (Sci::Line l=0; l<maxEditorLine; l++)
+		EOLAnnotationSetText(l, nullptr);
+	// Free remaining data
+	EOLAnnotations()->ClearAll();
 }
 
 void Document::IncrementStyleClock() noexcept {
@@ -2626,7 +2657,7 @@ static char BraceOpposite(char ch) noexcept {
 }
 
 // TODO: should be able to extend styled region to find matching brace
-Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxReStyle*/) noexcept {
+Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxReStyle*/, Sci::Position startPos, bool useStartPos) noexcept {
 	const char chBrace = CharAt(position);
 	const char chSeek = BraceOpposite(chBrace);
 	if (chSeek == '\0')
@@ -2636,7 +2667,7 @@ Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxRe
 	if (chBrace == '(' || chBrace == '[' || chBrace == '{' || chBrace == '<')
 		direction = 1;
 	int depth = 1;
-	position = NextPosition(position, direction);
+	position = useStartPos ? startPos : NextPosition(position, direction);
 	while ((position >= 0) && (position < LengthNoExcept())) {
 		const char chAtPos = CharAt(position);
 		const int styAtPos = StyleIndexAt(position);
@@ -3114,11 +3145,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;

@@ -75,7 +75,7 @@ public:
 	const char *AppendAction(actionType at, Sci::Position position, const char *data, Sci::Position lengthData, bool &startSequence, bool mayCoalesce=true);
 
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void DropUndoSequence();
 	void DeleteUndoHistory();
 
@@ -173,7 +173,7 @@ public:
 	/// Setting styles for positions outside the range of the buffer is safe and has no effect.
 	/// @return true if the style of a character is changed.
 	bool SetStyleAt(Sci::Position position, char styleValue) noexcept;
-	bool SetStyleFor(Sci::Position position, Sci::Position lengthStyle, char styleValue);
+	bool SetStyleFor(Sci::Position position, Sci::Position lengthStyle, char styleValue) noexcept;
 
 	const char *DeleteChars(Sci::Position position, Sci::Position deleteLength, bool &startSequence);
 
@@ -195,7 +195,7 @@ public:
 	bool SetUndoCollection(bool collectUndo);
 	bool IsCollectingUndo() const noexcept;
 	void BeginUndoAction();
-	int EndUndoAction();
+	void EndUndoAction();
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory();
 

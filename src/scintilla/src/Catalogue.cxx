@@ -34,7 +34,7 @@ const LexerModule *Catalogue::Find(int language) {
 	return catalogueDefault.Find(language);
 }
 
-const LexerModule *Catalogue::Find(const char *languageName) {
+const LexerModule *Catalogue::Find(const char *languageName) noexcept {
 	return catalogueDefault.Find(languageName);
 }
 
@@ -103,7 +103,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmESCRIPT);
 	LINK_LEXER(lmF77);
 	LINK_LEXER(lmFlagShip);
-	LINK_LEXER(lmFormEngine);
 	LINK_LEXER(lmForth);
 	LINK_LEXER(lmFortran);
 	LINK_LEXER(lmFreeBasic);
@@ -164,7 +163,6 @@ int Scintilla_LinkLexers() {
 	LINK_LEXER(lmRust);
 	LINK_LEXER(lmSAS);
 	LINK_LEXER(lmScriptol);
-	LINK_LEXER(lmSearchResult);
 	LINK_LEXER(lmSmalltalk);
 	LINK_LEXER(lmSML);
 	LINK_LEXER(lmSorc);
