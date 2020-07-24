@@ -361,6 +361,11 @@ tLuaDispatch::Invoke(
     tUtil::log_verbose("tLuaDispatch", "Member '%s' called (0x%.8x)",
       funcinfo[index].name, dispidMember);
   }
+  if ((retval != S_OK) && pexcepinfo->bstrDescription) {
+	  lua_getglobal(L, "print"); 
+	  lua_pushstring(L, tUtil::bstr2string(pexcepinfo->bstrDescription));
+	  lua_pcall(L, 1, 0, 0);
+  }
 
   lua_settop(L, baseidx); // reset on exit
   return retval;

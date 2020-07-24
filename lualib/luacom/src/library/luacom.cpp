@@ -221,7 +221,7 @@ static int luacom_Connect(lua_State *L)
   try
   {
     tCOMPtr<ITypeInfo> pTypeinfo;
-    pTypeinfo.Attach(client->GetDefaultEventsInterface());
+	pTypeinfo.Attach(client->GetDefaultEventsInterface());                                
     CHK_LCOM_ERR(pTypeinfo, "Could not get default events interface.");
 
     /* gets a reference to the implementation */
@@ -244,7 +244,7 @@ static int luacom_Connect(lua_State *L)
     luacom_APIerror(L, e.getMessage());
     return 0;
   }
-
+  //client->Lock();
   LuaBeans::push(L, server); 
   lua_pushnumber(L, cookie);
   return 2;
@@ -1605,7 +1605,7 @@ static int tagmeth_gc(lua_State *L)
   assert(lcom);
 
   if(lcom != NULL) {
-    lcom->Unlock();
+     lcom->Unlock();
   }
 
   return 0;
