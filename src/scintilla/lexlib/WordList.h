@@ -31,6 +31,9 @@ public:
 	bool InListAbbreviated(const char *s, const char marker) const noexcept;
 	bool InListAbridged(const char *s, const char marker) const noexcept;
 	const char *WordAt(int n) const noexcept;
+	bool InMultiWordsList(const char *s, const char marker, bool &eq, bool &begin); //!-add-[InMultiWordsList]
+	bool InMultiWordsList(const char *s, const char marker, bool &eq, bool &begin, const char* &keyword_end); //!-add-[InMultiWordsList]
+	bool InListPartly(const char *s, const char marker, int &mainLen, int &finLen); //!-add-[InMultiWordsList]
 };
 
 }
