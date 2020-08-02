@@ -425,10 +425,15 @@ static char* winClipboardGetFormatDataStringAttrib(Ihandle *ih)
 
 static int winClipboardSetFormatDataStringAttrib(Ihandle *ih, const char *value)
 {
-  int len;
+  if (value)
+  {
+    int len = (int)strlen(value);
   TCHAR* wstr = iupwinStrToSystemLen(value, &len);
-  iupAttribSetInt(ih, "FORMATDATASIZE", len+1);  /* include terminator */
+    iupAttribSetInt(ih, "FORMATDATASIZE", len + 1);  /* include terminator */
   return winClipboardSetFormatDataAttrib(ih, (char*)wstr);
+  }
+  else
+    return winClipboardSetFormatDataAttrib(ih, NULL);
 }
 
 static int winClipboardIsAvailable(UINT format_id)

@@ -227,7 +227,7 @@ static const char* getChildType(int childtype)
   }
 }
 
-void iupClassInfoGetDesc(Iclass* ic, Ihandle* ih, const char* attrib_name)
+IUP_SDK_API void iupClassInfoGetDesc(Iclass* ic, Ihandle* ih, const char* attrib_name)
 {
   char constructor[50];
 
@@ -286,10 +286,13 @@ static int classesList_ActionCB (Ihandle *ih, char *className, int pos, int stat
     IupSetAttribute(listCallbacks, "REMOVEITEM", NULL);
 
     cb_n = IupGetClassCallbacks(className, attr_names, total_n);
-    qsort(attr_names, cb_n, sizeof(char*), compare_names);
+    if (cb_n > 0)
+    {
+      qsort(attr_names, cb_n, sizeof(char*), compare_names);
 
-    for (i = 0; i < cb_n; i++)
-      IupSetAttribute(listCallbacks, "APPENDITEM", attr_names[i]);
+      for (i = 0; i < cb_n; i++)
+        IupSetAttribute(listCallbacks, "APPENDITEM", attr_names[i]);
+    }
 
     /***********************************/
 
@@ -322,7 +325,7 @@ static void PopulateListOfClasses(Ihandle* ih)
   free(list);
 }
 
-void iupClassInfoShowHelp(const char* className)
+IUP_SDK_API void iupClassInfoShowHelp(const char* className)
 {
   char url[1024];
   char* folder = "elem";
@@ -341,13 +344,25 @@ void iupClassInfoShowHelp(const char* className)
             iupStrEqual(className, "tuioclient") ||
             iupStrEqual(className, "webbrowser"))
             folder = "ctrl";
-  else if (className[0] == 'G' && className[1] == 'L')
+  else if (className[0] == 'g' && className[1] == 'l')
     folder = "gl";
 
   if (iupStrEqualPartial(className, "mgl") ||
       iupStrEqual(className, "plot") ||
       iupStrEqual(className, "scintilla"))
       sep = "_";
+
+  /* filename fixes */
+  if (iupStrEqualPartial(className, "imagergb"))
+    className = "image";
+  else if (iupStrEqual(className, "spinbox"))
+    className = "spin";
+  else if (iupStrEqual(className, "olecontrol"))
+    className = "ole";
+  else if (iupStrEqual(className, "tuioclient"))
+    className = "tuio";
+  else if (iupStrEqual(className, "webbrowser"))
+    className = "web";
 
   /* sprintf(url, "http://www.tecgraf.puc-rio.br/iup/en/%s/iup%s%s.html", folder, sep, className); -- direct page version */
   sprintf(url, "http://www.tecgraf.puc-rio.br/iup/index.html?url=%s/iup%s%s.html", folder, sep, className);
