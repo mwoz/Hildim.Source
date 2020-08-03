@@ -734,10 +734,10 @@ IUP_SDK_API void iupdrvDrawText(IdrawCanvas* dc, const char* text, int len, int 
     if (text_orientation)
     {
       if (layout_center)
-	  {
-		  gdiRotateWorld(dc->hBitmapDC, x + layout_w / 2, y + layout_h / 2, -IUP_DEG2RAD*text_orientation);  /* counterclockwise */
-		  gdiTranslateWorld(dc->hBitmapDC, (w - layout_w) / 2, (h - layout_h) / 2);  /* append the transform */
-	  }
+      {
+        gdiRotateWorld(dc->hBitmapDC, x + layout_w / 2, y + layout_h / 2, -IUP_DEG2RAD*text_orientation);  /* counterclockwise */
+        gdiTranslateWorld(dc->hBitmapDC, (w - layout_w) / 2, (h - layout_h) / 2);  /* append the transform */
+      }
       else
         gdiRotateWorld(dc->hBitmapDC, x, y, -IUP_DEG2RAD*text_orientation);  /* counterclockwise */
     }

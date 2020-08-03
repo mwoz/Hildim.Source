@@ -76,6 +76,4 @@ typedef int    (*IFniid)(Ihandle*, int, int, double);  /* numericsetvalue_cb */
 
 typedef void (*IFniiv)(Ihandle*, int, int, void*);  /* android_onactivityresult_cb */
 
-typedef int(*IFnCiiiiiss)(Ihandle*, struct _cdCanvas*, int, int, int, int, int, const char*,const char*);  /* draw_cb */
-
 #endif

@@ -386,7 +386,6 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
         }
 
         iupAttribSet(ih, "VALUE", "ON");
-        selected = 1;
       }
     }
 

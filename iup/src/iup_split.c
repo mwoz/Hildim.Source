@@ -36,7 +36,6 @@ struct _IcontrolData
   int orientation;  /* one of the types: ISPLIT_VERT, ISPLIT_HORIZ */
   int val;  /* split value: 0-1000, default 500 */
   int min, max;  /* used only to crop val */
-  int popside, hidden, hiddenGap;
 };
 
 
@@ -273,10 +272,10 @@ static int iSplitMotion_CB(Ihandle* bar, int x, int y, char *status)
       if (old_val != ih->data->val)
         iupBaseCallValueChangedCb(ih);
 
-      if (ih->data->layoutdrag || ih->data->popside)
+      if (ih->data->layoutdrag)
       {
         IupRefreshChildren(ih);
-		IupFlushMouse();
+        IupFlush();
       }
       else
         iSplitSetBarPosition(ih);
@@ -293,11 +292,7 @@ static int iSplitMotion_CB(Ihandle* bar, int x, int y, char *status)
 static int iSplitButton_CB(Ihandle* bar, int button, int pressed, int x, int y, char* status)
 {
   Ihandle* ih = bar->parent;
-  IFniiiis cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
-  if (cb) {
-	  if (cb(ih, button, pressed, x, y, status) == IUP_IGNORE)
-		  return IUP_DEFAULT;
-  }
+
   if (button!=IUP_BUTTON1)
     return IUP_DEFAULT;
 
@@ -573,43 +568,7 @@ static char* iSplitGetAutoHideAttrib(Ihandle* ih)
   return iupStrReturnBoolean (ih->data->autohide); 
 }
 
-static int iSplitSetPopupSideAttrip(Ihandle* ih, const char* value) {
-	int val = 0;
-	if (iupStrToInt(value, &val)) {
-		IupSetAttribute(ih->firstchild, "STYLE", val ? (val == 1? "LINE1":"LINE2") : "FILL");
-		IupSetAttribute(ih->firstchild, "COLOR", val ? IupGetAttribute(ih, "BORDERCOLOR") : IupGetAttribute(ih, "FILLCOLOR"));
-		if (!val) {
-			ih->data->hidden = 0;
-			IupRefreshChildren(ih);
-		} 
-			ih->data->popside = val;
-			IupRefreshChildren(ih);
-	}
-	return 0; /* do not store value in hash table */
-}
 
-static char* iSplitGetPopupSideAttrip(Ihandle* ih) {
-	return iupStrReturnInt(ih->data->popside);
-}
-
-static int iSplitSetHiddenAttrip(Ihandle* ih, const char* value) {
-	ih->data->hidden = iupStrBoolean(value);
-	IupRefreshChildren(ih);
-	return 0; /* do not store value in hash table */
-}
-
-static char* iSplitGetHiddenAttrip(Ihandle* ih) {
-	return iupStrReturnBoolean(ih->data->hidden);
-}
-
-static int iSplitSetHiddenGapAttrip(Ihandle* ih, const char* value) {
-	iupStrToInt(value, &ih->data->hiddenGap);
-	return 0; /* do not store value in hash table */
-}
-
-static char* iSplitGetHiddenGapAttrip(Ihandle* ih) {
-	return iupStrReturnInt(ih->data->hiddenGap);
-}
 /*****************************************************************************\
 |* Methods                                                                   *|
 \*****************************************************************************/
@@ -687,33 +646,12 @@ static void iSplitComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *chi
   *w = natural_w;
   *h = natural_h;
 }
-static void iSplitSetZOrderRecr(Ihandle *ih, char *hwnd, int bSetVisible);
-static void iSplitSetZOrderRecr(Ihandle *ih, char *hwnd, int bSetVisible) {
-	if (!ih) return;
-	if (iupStrEqual(ih->iclass->name, "expander") && iupStrEqual(IupGetAttribute(ih,"STATE"), "CLOSE")) {
-		return;
-	}
-	if (ih->handle && ih->handle != 0xffffffff) {
-		if (bSetVisible && iupStrEqual(hwnd, "TOP"))
-			IupSetAttribute(ih, "VISIBLE", "YES");
-		IupSetAttribute(ih, "ZORDER", hwnd);
-		if (bSetVisible && iupStrEqual(hwnd, "BOTTOM"))
-			IupSetAttribute(ih, "VISIBLE", "NO");
-	} else {
-		Ihandle *child = ih->firstchild;
-		while (child) {
-			iSplitSetZOrderRecr(child, hwnd, bSetVisible);
-			child = child->brother;
-		}
-	}
-}
 
 static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 {
   int old_val = ih->data->val;
   Ihandle *child1, *child2 = NULL;
   child1 = ih->firstchild->brother;
-  int popside = ih->data->popside;
   if (child1)
     child2 = child1->brother;
 
@@ -725,9 +663,9 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
     if (child1 && !(child1->flags & IUP_FLOATING_IGNORE))
     {
-      iupBaseSetCurrentSize(child1, popside == 2 ? (ih->currentwidth - ih->data->hiddenGap) :width1, ih->currentheight, shrink);
+      iupBaseSetCurrentSize(child1, width1, ih->currentheight, shrink);
 
-      if (!(child1->flags & IUP_FLOATING_IGNORE) && child1->currentwidth > width1 && !popside)
+      if (!(child1->flags & IUP_FLOATING_IGNORE) && child1->currentwidth > width1)
       {
         /* has a minimum size, must fix split value */
         width1 = child1->currentwidth;
@@ -742,18 +680,9 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
     if (child2 && !(child2->flags & IUP_FLOATING_IGNORE))
     {
       int width2 = iSplitGetWidth2(ih, width1);
-      iupBaseSetCurrentSize(child2, popside == 1 ? (ih->currentwidth - ih->data->hiddenGap) : width2, ih->currentheight, shrink);
-	  if (popside) {
-		  if (ih->data->hidden) {
-			  iSplitSetZOrderRecr(popside == 1 ? child1 : child2, "BOTTOM", !ih->data->hiddenGap);
-			  iSplitSetZOrderRecr(ih->firstchild, "BOTTOM", !ih->data->hiddenGap);
-		  } else {
-			  iSplitSetZOrderRecr(ih->firstchild, "TOP", !ih->data->hiddenGap);
-			  iSplitSetZOrderRecr(popside == 1 ? child1 : child2, "TOP", !ih->data->hiddenGap);
-		  }
-	  }
+      iupBaseSetCurrentSize(child2, width2, ih->currentheight, shrink);
 
-      if (child2->currentwidth > width2 && !popside)
+      if (child2->currentwidth > width2)
       {
         /* has a minimum size, must fix split value */
         width2 = child2->currentwidth;
@@ -761,16 +690,6 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
         iSplitCalcVal(ih, width1);
         if (child1)
           iupBaseSetCurrentSize(child1, width1, ih->currentheight, shrink);
-	  } else if (popside == 2 && width2 < ih->data->hiddenGap * 2) {
-		  width2 = ih->data->hiddenGap * 2;
-		  iSplitCalcVal(ih, ih->currentwidth - ih->data->barsize - width2);
-		  if (child2)
-			  iupBaseSetCurrentSize(child2, width2, ih->currentheight, shrink);
-	  } else if (popside == 1 && width1 < ih->data->hiddenGap * 2) {
-		width1 = ih->data->hiddenGap * 2;
-		iSplitCalcVal(ih, width1);
-		if (child1)
-			iupBaseSetCurrentSize(child1, width1, ih->currentheight, shrink);
       }
     }
   }
@@ -782,9 +701,9 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
     if (child1 && !(child1->flags & IUP_FLOATING_IGNORE))
     {
-      iupBaseSetCurrentSize(child1, ih->currentwidth, popside == 2 ? (ih->currentheight - ih->data->hiddenGap) : height1, shrink);
+      iupBaseSetCurrentSize(child1, ih->currentwidth, height1, shrink);
 
-      if (child1->currentheight > height1 && !popside)
+      if (child1->currentheight > height1)
       {
         /* has a minimum size, must fix split value */
         height1 = child1->currentheight;
@@ -799,18 +718,9 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
     if (child2 && !(child2->flags & IUP_FLOATING_IGNORE))
     {
       int height2 = iSplitGetHeight2(ih, height1);
-      iupBaseSetCurrentSize(child2, ih->currentwidth, popside == 1 ? (ih->currentheight - ih->data->hiddenGap) : height2, shrink);
-	  if (popside) {
-		  if (ih->data->hidden) {
-			  iSplitSetZOrderRecr(popside == 1 ? child1 : child2, "BOTTOM", !ih->data->hiddenGap);
-			  iSplitSetZOrderRecr(ih->firstchild, "BOTTOM", !ih->data->hiddenGap);
-		  } else {
-			  iSplitSetZOrderRecr(popside == 1 ? child1 : child2, "TOP", !ih->data->hiddenGap);
-			  iSplitSetZOrderRecr(ih->firstchild, "TOP", !ih->data->hiddenGap);
-		  }
-	  }
+      iupBaseSetCurrentSize(child2, ih->currentwidth, height2, shrink);
 
-      if (child2->currentheight > height2 && !popside)
+      if (child2->currentheight > height2)
       {
         /* has a minimum size, must fix split value */
         height2 = child2->currentheight;
@@ -821,9 +731,7 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
       }
     }
   }
-  if (!ih->data->hidden && IupGetAttribute(ih, "IUPUNDER")) {
-	  iSplitSetZOrderRecr(IupGetDialogChild(IupGetDialog(ih), IupGetAttribute(ih, "IUPUNDER")), "TOP", 0);
-  }
+
   if (old_val != ih->data->val)
     iupBaseCallValueChangedCb(ih);
 }
@@ -841,14 +749,13 @@ static void iSplitSetChildrenPositionMethod(Ihandle* ih, int x, int y)
       iupBaseSetPosition(child1, x, y);
 
     /* bar */
-	int xOrig = x;
     x += iSplitGetWidth1(ih);
     iupBaseSetPosition(ih->firstchild, x, y);
 
     if (child2 && !(child2->flags & IUP_FLOATING_IGNORE))
     {
       x += ih->data->barsize;
-      iupBaseSetPosition(child2, ih->data->popside == 1 ? xOrig + ih->data->hiddenGap: x, y);
+      iupBaseSetPosition(child2, x, y);
     }
   }
   else /* ISPLIT_HORIZ */
@@ -857,14 +764,13 @@ static void iSplitSetChildrenPositionMethod(Ihandle* ih, int x, int y)
       iupBaseSetPosition(child1, x, y);
 
     /* bar */
-	int yOrig = y;
     y += iSplitGetHeight1(ih);
     iupBaseSetPosition(ih->firstchild, x, y);
 
     if (child2 && !(child2->flags & IUP_FLOATING_IGNORE))
     {
       y += ih->data->barsize;
-      iupBaseSetPosition(child2, x, ih->data->popside == 1 ? yOrig + ih->data->hiddenGap: y);
+      iupBaseSetPosition(child2, x, y);
     }
   }
 }
@@ -883,9 +789,6 @@ static int iSplitCreateMethod(Ihandle* ih, void** params)
   ih->data->showgrip = 1;
   ih->data->min = 0; 
   ih->data->max = 1000;
-  ih->data->popside = 0;
-  ih->data->hidden = 0;
-  ih->data->hiddenGap = 0;
 
   bar = IupFlatSeparator();
   iupChildTreeAppend(ih, bar);  /* bar will always be the firstchild */
@@ -935,7 +838,6 @@ Iclass* iupSplitNewClass(void)
 
   /* Callbacks */
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
-  iupClassRegisterCallback(ic, "FLAT_BUTTON_CB", "iiiis");
 
   /* Common */
   iupBaseRegisterCommonAttrib(ic);
@@ -958,13 +860,11 @@ Iclass* iupSplitNewClass(void)
   iupClassRegisterAttribute(ic, "SHOWGRIP", iSplitGetShowGripAttrib, iSplitSetShowGripAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BARSIZE", iSplitGetBarSizeAttrib, iSplitSetBarSizeAttrib, IUPAF_SAMEASSYSTEM, "5", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "POPUPSIDE", iSplitGetPopupSideAttrip, iSplitSetPopupSideAttrip, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "HIDDEN", iSplitGetHiddenAttrip, iSplitSetHiddenAttrip, NULL, NULL, IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "HIDDENGAP", iSplitGetHiddenGapAttrip, iSplitSetHiddenGapAttrip, NULL, NULL, IUPAF_NO_INHERIT);
+
   return ic;
 }
 
-Ihandle* IupSplit(Ihandle* child1, Ihandle* child2)
+IUP_API Ihandle* IupSplit(Ihandle* child1, Ihandle* child2)
 {
   void *children[3];
   children[0] = (void*)child1;

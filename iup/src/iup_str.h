@@ -331,7 +331,7 @@ IUP_SDK_API void iupStrFileNameSplit(const char* filename, char* path, char* tit
 
 /** Returns a filename for a temporary file.
  * A file with the result name is created and must be removed after use.
-  * \ingroup str */
+ * \ingroup str */
 IUP_SDK_API int iupStrTmpFileName(char* filename, const char* prefix);
 
 

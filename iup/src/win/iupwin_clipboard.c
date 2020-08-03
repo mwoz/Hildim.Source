@@ -428,9 +428,9 @@ static int winClipboardSetFormatDataStringAttrib(Ihandle *ih, const char *value)
   if (value)
   {
     int len = (int)strlen(value);
-  TCHAR* wstr = iupwinStrToSystemLen(value, &len);
+    TCHAR* wstr = iupwinStrToSystemLen(value, &len);
     iupAttribSetInt(ih, "FORMATDATASIZE", len + 1);  /* include terminator */
-  return winClipboardSetFormatDataAttrib(ih, (char*)wstr);
+    return winClipboardSetFormatDataAttrib(ih, (char*)wstr);
   }
   else
     return winClipboardSetFormatDataAttrib(ih, NULL);

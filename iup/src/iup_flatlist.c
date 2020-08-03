@@ -350,17 +350,17 @@ static int iFlatListRedraw_CB(Ihandle* ih)
       if (a != 0)
       {
         long selcolor;
-      unsigned char red, green, blue;
-      char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
+        unsigned char red, green, blue;
+        char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
 
-      if (ih->data->show_dragdrop && ih->data->dragover_pos == i + 1)
+        if (ih->data->show_dragdrop && ih->data->dragover_pos == i + 1)
           a = (2 * a) / 3;
 
-      iupStrToRGB(hlcolor, &red, &green, &blue);
-      selcolor = iupDrawColor(red, green, blue, a);
+        iupStrToRGB(hlcolor, &red, &green, &blue);
+        selcolor = iupDrawColor(red, green, blue, a);
 
-      iupdrvDrawRectangle(dc, x, y, x + ih->data->line_width - 1, y + ih->data->line_height - 1, selcolor, IUP_DRAW_FILL, 1);
-    }
+        iupdrvDrawRectangle(dc, x, y, x + ih->data->line_width - 1, y + ih->data->line_height - 1, selcolor, IUP_DRAW_FILL, 1);
+      }
     }
 
     if (ih->data->has_focus && ih->data->focus_pos == i+1 && focus_feedback)
