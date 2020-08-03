@@ -287,7 +287,7 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
   if (no_activate)
     ih->data->cmd_show = SW_SHOWNOACTIVATE;
   else
-    ih->data->cmd_show = SW_SHOWNORMAL;
+  ih->data->cmd_show = SW_SHOWNORMAL;
   ih->data->show_state = IUP_SHOW;
 
   if (iupAttribGetBoolean(ih, "FULLSCREEN"))
@@ -580,7 +580,7 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
         cb(ih, active);
       }
 
-      if (!iupwin_comctl32ver6) /* visual style not active */
+      if (!iupwin_comctl32ver6 || cb) /* visual style not active */
       {
         DefWindowProc(ih->handle, msg, wp, (LPARAM)-1);  /* use -1 to not repaint the nonclient area */
 
@@ -1259,6 +1259,29 @@ static int winDialogMapMethod(Ihandle* ih)
   else
   {
     native_parent = iupDialogGetNativeParent(ih);
+	if (!native_parent) {
+		char *native_wnd_class = 0;
+		native_wnd_class = IupGetGlobal("WNDCLASS");
+		if (!native_wnd_class)
+			native_wnd_class = IupGetGlobal("GLOBALWNDCLASS");
+		if (native_wnd_class) {
+			HWND hwnd = NULL;
+
+			DWORD p = GetCurrentProcessId();
+
+			for (;;) {
+				hwnd = FindWindowExA(NULL, hwnd, native_wnd_class, NULL);
+				DWORD d = 0;
+				GetWindowThreadProcessId(hwnd, &d);
+				if (d == p) break;
+				if (!hwnd) break;
+			}
+			if (hwnd) {
+				IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
+				native_parent = hwnd;
+			}
+		}
+	}
 
     if (native_parent)
     {

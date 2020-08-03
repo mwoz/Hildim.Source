@@ -517,7 +517,7 @@ static int iLayoutPropertiesList3_CB(Ihandle *list3, char *text, int item, int s
       if (cb_name)
         IupSetfAttribute(txt, "VALUE", "NULL [\"%s\"]", cb_name);
       else
-        IupSetAttribute(txt, "VALUE", "NULL");
+      IupSetAttribute(txt, "VALUE", "NULL");
     }
   }
   return IUP_DEFAULT;

@@ -1,6 +1,6 @@
 /*
  * THREADING.C                        Copyright (c) 2007-08, Asko Kauppi
- *                                    Copyright (C) 2009-14, Benoit Germain
+ *                                    Copyright (C) 2009-19, Benoit Germain
  *
  * Lua Lanes OS threading specific code.
  *
@@ -34,6 +34,19 @@ THE SOFTWARE.
 
 ===============================================================================
 */
+#if defined(__linux__)
+
+# ifndef _GNU_SOURCE // definition by the makefile can cause a redefinition error
+# define _GNU_SOURCE // must be defined before any include
+# endif // _GNU_SOURCE
+
+# ifdef __ANDROID__
+#  include <android/log.h>
+#  define LOG_TAG "LuaLanes"
+# endif // __ANDROID__
+
+#endif // __linux__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -56,6 +69,10 @@ THE SOFTWARE.
 */
 #ifdef PLATFORM_LINUX
   volatile bool_t sudo;
+#endif
+
+#ifdef PLATFORM_OSX
+# include "threading_osx.h"
 #endif
 
 /* Linux with older glibc (such as Debian) don't have pthread_setname_np, but have prctl
@@ -324,6 +341,13 @@ void THREAD_SET_PRIORITY( int prio)
 	}
 }
 
+void THREAD_SET_AFFINITY( unsigned int aff)
+{
+	if( !SetThreadAffinityMask( GetCurrentThread(), aff))
+	{
+		FAIL( "THREAD_SET_AFFINITY", GetLastError());
+	}
+}
 
 bool_t THREAD_WAIT_IMPL( THREAD_T *ref, double secs)
 {
@@ -491,7 +515,7 @@ bool_t THREAD_WAIT_IMPL( THREAD_T *ref, double secs)
 	void SIGNAL_FREE( SIGNAL_T *ref )
 	{
 		// nothing to do
-		ref;
+		(void)ref;
 	}
 
 	bool_t SIGNAL_WAIT( SIGNAL_T *ref, MUTEX_T *mu_ref, time_d abs_secs)
@@ -546,6 +570,7 @@ bool_t THREAD_WAIT_IMPL( THREAD_T *ref, double secs)
   // On Linux, SCHED_RR and su privileges are required..  !-(
   //
   #include <errno.h>
+  #include <sched.h>
 
 #	if (defined(__MINGW32__) || defined(__MINGW64__)) && defined pthread_attr_setschedpolicy
 #	if pthread_attr_setschedpolicy( A, S) == ENOTSUP
@@ -781,7 +806,9 @@ void THREAD_CREATE( THREAD_T* ref, THREAD_RETURN_T (*func)( void*), void* data, 
 		// "The specified scheduling parameters are only used if the scheduling
 		//  parameter inheritance attribute is PTHREAD_EXPLICIT_SCHED."
 		//
+#if !defined __ANDROID__ || ( defined __ANDROID__ && __ANDROID_API__ >= 28 )
 		PT_CALL( pthread_attr_setinheritsched( &a, PTHREAD_EXPLICIT_SCHED));
+#endif
 
 #ifdef _PRIO_SCOPE
 		PT_CALL( pthread_attr_setscope( &a, _PRIO_SCOPE));
@@ -862,6 +889,26 @@ void THREAD_SET_PRIORITY( int prio)
 	}
 }
 
+void THREAD_SET_AFFINITY( unsigned int aff)
+{
+	cpu_set_t cpuset;
+	int bit = 0;
+	CPU_ZERO( &cpuset);
+	while( aff != 0)
+	{
+		if( aff & 1)
+		{
+			CPU_SET( bit, &cpuset);
+		}
+		++ bit;
+		aff >>= 1;
+	}
+#ifdef __ANDROID__
+	PT_CALL( sched_setaffinity( pthread_self(), sizeof(cpu_set_t), &cpuset));
+#else
+	PT_CALL( pthread_setaffinity_np( pthread_self(), sizeof(cpu_set_t), &cpuset));
+#endif
+}
 
  /*
   * Wait for a thread to finish.
@@ -931,15 +978,23 @@ bool_t THREAD_WAIT( THREAD_T *ref, double secs , SIGNAL_T *signal_ref, MUTEX_T *
   }
 	//
   void THREAD_KILL( THREAD_T *ref ) {
+#ifdef __ANDROID__
+	  __android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Cannot kill thread!");
+#else
     pthread_cancel( *ref );
+#endif
   }
 
 	void THREAD_MAKE_ASYNCH_CANCELLABLE()
 	{
+#ifdef __ANDROID__
+	__android_log_print(ANDROID_LOG_WARN, LOG_TAG, "Cannot make thread async cancellable!");
+#else
 		// that's the default, but just in case...
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 		// we want cancellation to take effect immediately if possible, instead of waiting for a cancellation point (which is the default)
 		pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+#endif
 	}
 
 	void THREAD_SETNAME( char const* _name)
@@ -959,7 +1014,7 @@ bool_t THREAD_WAIT( THREAD_T *ref, double secs , SIGNAL_T *signal_ref, MUTEX_T *
 #elif defined PLATFORM_OSX
 		pthread_setname_np(_name);
 #elif defined PLATFORM_WIN32 || defined PLATFORM_POCKETPC
-		// no API in win32-pthread yet :-(
+		PT_CALL( pthread_setname_np( pthread_self(), _name));
 #endif
 	}
 #endif // THREADAPI == THREADAPI_PTHREAD

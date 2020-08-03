@@ -763,7 +763,7 @@ static char* iFlatValGetBorderWidthAttrib(Ihandle *ih)
 static void iFlatValComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
   int natural_w = 0,
-      natural_h = 0;
+    natural_h = 0;
   int fit2backimage = iupAttribGetBoolean(ih, "FITTOBACKIMAGE");
   char* bgimage = iupAttribGet(ih, "BACKIMAGE");
 

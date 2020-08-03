@@ -543,12 +543,12 @@ int iupDialogPopup(Ihandle* ih, int x, int y)
     int ret, automodal = IupGetInt(ih, "AUTOMODAL"); /* Used only for Windows MessageBox */
 
     if (!automodal)
-      iDialogSetModal(ih);  /* make sure all other dialogs are inactive */
+    iDialogSetModal(ih);  /* make sure all other dialogs are inactive */
 
     ret = iupClassObjectDlgPopup(ih, x, y);
 
     if (!automodal)
-      iDialogUnSetModal(ih);
+    iDialogUnSetModal(ih);
 
     return ret;
   }

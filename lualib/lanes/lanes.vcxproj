@@ -20,20 +20,27 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="src\cancel.h" />
     <ClInclude Include="src\compat.h" />
     <ClInclude Include="src\deep.h" />
     <ClInclude Include="src\keeper.h" />
     <ClInclude Include="src\lanes.h" />
+    <ClInclude Include="src\lanes_private.h" />
     <ClInclude Include="src\macros_and_utils.h" />
+    <ClInclude Include="src\platform.h" />
     <ClInclude Include="src\threading.h" />
+    <ClInclude Include="src\threading_osx.h" />
     <ClInclude Include="src\tools.h" />
+    <ClInclude Include="src\uniquekey.h" />
     <ClInclude Include="src\universe.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\cancel.c" />
     <ClCompile Include="src\compat.c" />
     <ClCompile Include="src\deep.c" />
     <ClCompile Include="src\keeper.c" />
     <ClCompile Include="src\lanes.c" />
+    <ClCompile Include="src\linda.c" />
     <ClCompile Include="src\threading.c" />
     <ClCompile Include="src\tools.c" />
     <ClCompile Include="src\universe.c" />
@@ -103,7 +110,7 @@
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_DEBUG_SPEW;NDEBUG;LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -121,7 +128,7 @@
       </SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_DEBUG_SPEW;LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
