@@ -276,7 +276,8 @@ static int iSplitMotion_CB(Ihandle* bar, int x, int y, char *status)
       if (ih->data->layoutdrag || ih->data->popside)
       {
         IupRefreshChildren(ih);
-		IupFlush();
+		IupRedraw(ih, 1);
+		//IupFlush();
       }
       else
         iSplitSetBarPosition(ih);

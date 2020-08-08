@@ -44,6 +44,7 @@ static const char * const luaWordListDesc[] = {
 	"user3",
 	"user4",
 	"user5",
+	"Attributes",
 	0
 };
 
@@ -84,7 +85,7 @@ class LexerLua : public DefaultLexer {
 
 	OptionsLua options;
 	OptionsSetLua osLua;
-	WordList keywords[9];	//переданные нам вордлисты
+	WordList keywords[10];	//переданные нам вордлисты
 public:
 	
 	LexerLua() : DefaultLexer("lua", SCLEX_LUA) {}
@@ -350,6 +351,7 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 			}
 
 		} else if (sc.state == SCE_LUA_IDENTIFIER
+				|| sc.state == SCE_LUA_ATTRIBUTE
 				|| sc.state == SCE_LUA_WORD
 				|| sc.state == SCE_LUA_WORD2
 				|| sc.state == SCE_LUA_WORD3
@@ -378,20 +380,20 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 				if (keywords[0].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD);
 					if (strcmp(s, "goto") == 0) {	// goto <label> forward scan
-			sc.SetState(SCE_LUA_DEFAULT);
-				while (IsASpaceOrTab(sc.ch) && !sc.atLineEnd)
-					sc.Forward();
-				if (setWordStart.Contains(sc.ch)) {
-					sc.SetState(SCE_LUA_LABEL);
-					sc.Forward();
-					while (setWord.Contains(sc.ch))
-						sc.Forward();
-					sc.GetCurrent(s, sizeof(s));
+			            sc.SetState(SCE_LUA_DEFAULT);
+						while (IsASpaceOrTab(sc.ch) && !sc.atLineEnd)
+							sc.Forward();
+						if (setWordStart.Contains(sc.ch)) {
+							sc.SetState(SCE_LUA_LABEL);
+							sc.Forward();
+							while (setWord.Contains(sc.ch))
+								sc.Forward();
+							sc.GetCurrent(s, sizeof(s));
 							if (keywords[0].InList(s))
 								sc.ChangeState(SCE_LUA_WORD);
 						}
 						sc.SetState(SCE_LUA_DEFAULT);
-					}
+					} 
 				} else if (keywords[1].InList(s)) {
 					sc.ChangeState(SCE_LUA_WORD2);
 				} else if (keywords[2].InList(s)) {
@@ -568,6 +570,30 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 				sc.SetState(SCE_LUA_PREPROCESSOR);	// Obsolete since Lua 4.0, but still in old code
 			} else if (setLuaOperator.Contains(sc.ch)) {
 				sc.SetState(SCE_LUA_OPERATOR);
+				if (sc.ch == '<') {
+					Sci_PositionU pc = sc.currentPos;
+					int d = 0;
+					do {
+						sc.Forward();
+						d++;
+					} while (sc.ch == ' ' || sc.ch == '\t');
+					do {
+						sc.Forward();
+					} while (sc.ch >= 'a' && sc.ch <= 'z');
+					char s[100];
+					sc.GetCurrent(s, sizeof(s));
+					if (keywords[8].InList(s + d)) {
+						while (sc.ch == ' ' || sc.ch == '\t')
+							sc.Forward();
+						
+						if (sc.ch == '>') {
+							sc.ChangeState(SCE_LUA_ATTRIBUTE);
+							pc = NULL;
+						}
+					}
+					if(pc)
+						sc.MoveTo(pc);
+				}
 			}
 			if (sc.ch == ')' || sc.ch == ']') {
 				isSubObject = true;

@@ -501,6 +501,7 @@
 #define SCE_LUA_WORD7 18
 #define SCE_LUA_WORD8 19
 #define SCE_LUA_LABEL 20
+#define SCE_LUA_ATTRIBUTE 21
 #define SCE_ERR_DEFAULT 0
 #define SCE_ERR_PYTHON 1
 #define SCE_ERR_GCC 2

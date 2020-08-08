@@ -313,7 +313,7 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 
 	int dL, dR;
 	dL = 0, dR = 0;
-	if (highlight < 4) {
+	if (highlight < 4 && pos > 0) {
 		for (int i = pos; (i <= pos2) && i < size; i++) {
 			if (pixelMap[i].left) {
 				dL = 1;
@@ -327,9 +327,7 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 			}
 		}
 
-	} else 		{
-		int uuu = 0;
-	}
+	} 
 
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 	if (curLine >= 0) {
@@ -716,7 +714,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
 		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
 		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14],
-		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4];
+		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4], layoutdrag[4];
 	_itoa(::GetSystemMetrics(SM_CYSIZEFRAME), framesize, 10);
 
 	PropGet("layout.standard.decoration", "0", scrollsize);
@@ -737,6 +735,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	PropGet("layout.txtfgcolor", "0 0 0", scrTXTFGCOLOR);
 	PropGet("layout.txthlcolor", "15 60 195", scrTXTHLCOLOR);
 	PropGet("layout.txtinactivcolor", "70 70 70", scrTXTINACTIVCOLOR);
+	PropGet("layout.drag", "YES", layoutdrag);
 	PropGet("iup.scrollbarsize", "15", scrollsize);
 	((SciTEWin*)pSciteWin)->SetProperty("layout.wndframesize", framesize);
 
@@ -795,7 +794,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"SHOWGRIP", "NO",
 		"COLOR", scrSPLITCOLOR,
 		"BARSIZE", "0",
-		"LAYOUTDRAG", "NO",
+		"LAYOUTDRAG", layoutdrag,
 		"VALUE", "1000",
 		"MINSIZE", minSz,
 		"HISTORIZED", "NO",
@@ -815,7 +814,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 				"NAME", "LeftBarExpander",
 				"BARSIZE", "0",
 				"BARPOSITION", "LEFT",
-				"LAYOUTDRAG", "NO",
+				"LAYOUTDRAG", layoutdrag,
 				"MINSIZE", "x1",
 				"VALUE", "0",
 				"STATEREFRESH", "NO",
@@ -869,7 +868,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 							"COLOR", scrSPLITCOLOR,
 							"BARSIZE", "0",
 							"VALUE", "1000",
-							"LAYOUTDRAG", "NO",
+							"LAYOUTDRAG", layoutdrag,
 							"MINSIZE", "x1",
 							NULL),
 						IupSetAtt(NULL, IupCreatep("expander", NULL),
@@ -887,12 +886,13 @@ Ihandle* IupLayoutWnd::Create_dialog()
 						"COLOR", scrSPLITCOLOR,
 						"BARSIZE", "0",
 						"VALUE", "1000",
-						"LAYOUTDRAG", "NO",
+						"LAYOUTDRAG", layoutdrag,
 						"MINSIZE", "x1",
 						NULL),
 					NULL),
 				"ORIENTATION", "HORIZONTAL",
 				"NAME", "OverEditorsSplit",
+				"LAYOUTDRAG", layoutdrag,
 				"SHOWGRIP", "NO",
 				"COLOR", scrSPLITCOLOR,
 				"BARSIZE", "0",
@@ -922,7 +922,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 				"BORDERCOLOR", scrBORDERCOLOR,
 				"BARSIZE", "5",
 				"VALUE", "1000",
-				"LAYOUTDRAG", "NO",
+				"LAYOUTDRAG", layoutdrag,
 				"MINSIZE", "x1",
 				NULL),
 			NULL),
@@ -934,8 +934,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"BORDERCOLOR", scrBORDERCOLOR,
 			"BARSIZE", "0",
 			"VALUE", "0",
-			"LAYOUTDRAG", "NO",
-			//"MINSIZE", "x1",
+			"LAYOUTDRAG", layoutdrag,
 			NULL);
 
 	containers[2] = IupSetAtt(NULL, IupCreatep("hbox",
@@ -1006,7 +1005,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"SHOWGRIP", "NO",
 			"COLOR", scrSPLITCOLOR,
 			"BARSIZE", "5",
-			"LAYOUTDRAG", "NO",
+			"LAYOUTDRAG", layoutdrag,
 			NULL);
 
 	containers[9] = IupSetAtt(NULL, IupCreatep("scrollbox",
@@ -1024,7 +1023,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"SHOWGRIP", "NO",
 			"COLOR", scrSPLITCOLOR,
 			"BARSIZE", "0",
-			"LAYOUTDRAG", "NO",
+			"LAYOUTDRAG", layoutdrag,
 			"BGCOLOR", "255 255 255",
 			"VALUE", "1000",
 			NULL);
@@ -1070,7 +1069,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 			"FILLCOLOR", scrSPLITCOLOR,
 			"BORDERCOLOR", scrBORDERCOLOR ,
 			"BARSIZE", "5",
-			"LAYOUTDRAG", "NO",
+			"LAYOUTDRAG", layoutdrag,
 			NULL),
 		NULL),
 		"NAME", "SciteVB",
