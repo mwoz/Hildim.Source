@@ -3845,8 +3845,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 			w = &wOutput;
 		else if (notification->nmhdr.idFrom == IDM_FINDRESWIN)
 			w = &wFindRes;
-		else if (notification->nmhdr.idFrom == IDM_COSRCWIN)
-			w = &wEditor.coEditor;
 		else
 			w = &wEditor;
 		

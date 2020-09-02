@@ -676,7 +676,7 @@ protected:
 	void SetIndentSettings();
 	void SetEol();
 	void New();
-	void RestoreState(const Buffer &buffer, bool setCaption = true);
+	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
 	bool bBlockUIUpdate = false;
 	bool bBlockRedraw = false;

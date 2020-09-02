@@ -503,7 +503,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		wEditor.Call(SCI_SCROLLCARET);
 	}
 	else {
-		RestoreState(bufferNext, switchTab);
+		RestoreState(bufferNext, switchTab, true);
 	}
 
 	if (extender) {
@@ -706,7 +706,7 @@ void SciTEBase::New() {
 		extender->InitBuffer(buffers.Current());
 }
 
-void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
+void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption, bool scipCollapse) {
 	if (setCaption)
 		SetWindowName();
 	ReadProperties();
@@ -718,7 +718,8 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption) {
 	}
 	props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
 	isReadOnly = wEditor.Call(SCI_GETREADONLY);
-
+	if (scipCollapse)
+		return;
 	// check to see whether there is saved fold state, restore
 	for (size_t fold = 0; fold < buffer.foldState.size(); fold++) {
 		wEditor.Call(SCI_TOGGLEFOLD, buffer.foldState[fold]);

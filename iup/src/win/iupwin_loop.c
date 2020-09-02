@@ -190,7 +190,9 @@ IUP_API void IupFlush(void)
 
   while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
   {
-    if (winLoopProcessMessage(&msg) == IUP_CLOSE)
+	if (msg.message == WM_MOUSEMOVE)
+	  return IUP_DEFAULT;
+	if (winLoopProcessMessage(&msg) == IUP_CLOSE)
     {
       post_quit = 1;
       break;
