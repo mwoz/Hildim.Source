@@ -2209,7 +2209,6 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	cdlua_open(luaState);
 	cdluaiup_open(luaState);
 	load_all_images_Images();
-	IupSetGlobal("GLOBALWNDCLASS", "HildiMWindow");
 
 	lua_register(luaState, "_ALERT", cf_global_print);
 

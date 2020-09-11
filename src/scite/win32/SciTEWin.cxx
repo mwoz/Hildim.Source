@@ -1277,6 +1277,7 @@ void SciTEWin::CreateUI() {
 	if (!wSciTE.Created())
 		exit(FALSE);
 	jobQueue.hwnd = (HWND)wSciTE.GetID();
+	IupSetGlobal("DEFAULTNATUVEPARENT", (const char *)wSciTE.GetID());
 
 	SString pageSetup = props.Get("print.margins");
 	char val[32];

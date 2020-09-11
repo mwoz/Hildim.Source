@@ -1259,29 +1259,9 @@ static int winDialogMapMethod(Ihandle* ih)
   else
   {
     native_parent = iupDialogGetNativeParent(ih);
-	if (!native_parent) {
-		char *native_wnd_class = 0;
-		native_wnd_class = IupGetGlobal("WNDCLASS");
-		if (!native_wnd_class)
-			native_wnd_class = IupGetGlobal("GLOBALWNDCLASS");
-		if (native_wnd_class) {
-			HWND hwnd = NULL;
+	if (!native_parent)
+		native_parent = (HWND)IupGetGlobal("DEFAULTNATUVEPARENT");
 
-			DWORD p = GetCurrentProcessId();
-
-			for (;;) {
-				hwnd = FindWindowExA(NULL, hwnd, native_wnd_class, NULL);
-				DWORD d = 0;
-				GetWindowThreadProcessId(hwnd, &d);
-				if (d == p) break;
-				if (!hwnd) break;
-			}
-			if (hwnd) {
-				IupSetAttribute(ih, "NATIVEPARENT", (const char*)hwnd);
-				native_parent = hwnd;
-			}
-		}
-	}
 
     if (native_parent)
     {
