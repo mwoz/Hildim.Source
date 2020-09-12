@@ -2020,6 +2020,12 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCI_AUTOCSETMULTI",2636},
 	{"SCI_AUTOCSETSEPARATOR",2106},
 	{"SCI_AUTOCSETTYPESEPARATOR",2286},
+	{"SCI_BRACEBADLIGHT",2352},
+	{"SCI_BRACEBADLIGHTINDICATOR",2499},
+	{"SCI_BRACEHIGHLIGHT",2351},
+	{"SCI_BRACEHIGHLIGHTINDICATOR",2498},
+	{"SCI_BRACEMATCH",2353},
+	{"SCI_BRACEMATCHNEXT",2369},
 	{"SCI_CALLTIPSETBACK",2205},
 	{"SCI_CALLTIPSETFORE",2206},
 	{"SCI_CALLTIPSETFOREHLT",2207},
@@ -2106,6 +2112,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCI_GETMODIFY",2159},
 	{"SCI_GETMOUSEDOWNCAPTURES",2385},
 	{"SCI_GETMOUSEDWELLTIME",2265},
+	{"SCI_GETMULTIEDGECOLUMN",2749},
 	{"SCI_GETMULTIPASTE",2615},
 	{"SCI_GETMULTIPLESELECTION",2564},
 	{"SCI_GETOVERTYPE",2187},
@@ -2195,6 +2202,8 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCI_MARKERSETBACK",2042},
 	{"SCI_MARKERSETBACKSELECTED",2292},
 	{"SCI_MARKERSETFORE",2041},
+	{"SCI_MULTIEDGEADDLINE",2694},
+	{"SCI_MULTIEDGECLEARALL",2695},
 	{"SCI_OPTIONAL_START",3000},
 	{"SCI_RGBAIMAGESETHEIGHT",2625},
 	{"SCI_RGBAIMAGESETSCALE",2651},
@@ -2716,7 +2725,8 @@ static IFaceFunction ifaceFunctions[] = {
 	{"BraceBadLightIndicator", 2499, iface_void, {iface_bool, iface_int}},
 	{"BraceHighlight", 2351, iface_void, {iface_position, iface_position}},
 	{"BraceHighlightIndicator", 2498, iface_void, {iface_bool, iface_int}},
-	{"BraceMatch", 2353, iface_position, {iface_position, iface_void}},
+	{"BraceMatch", 2353, iface_position, {iface_position, iface_int}},
+	{"BraceMatchNext", 2369, iface_position, {iface_position, iface_position}},
 	{"CallTipActive", 2202, iface_bool, {iface_void, iface_void}},
 	{"CallTipCancel", 2201, iface_void, {iface_void, iface_void}},
 	{"CallTipPosStart", 2203, iface_position, {iface_void, iface_void}},
@@ -2794,6 +2804,7 @@ static IFaceFunction ifaceFunctions[] = {
 	{"GetLine", 2153, iface_int, {iface_int, iface_stringresult}},
 	{"GetLineSelEndPosition", 2425, iface_position, {iface_int, iface_void}},
 	{"GetLineSelStartPosition", 2424, iface_position, {iface_int, iface_void}},
+	{"GetMultiEdgecolumn", 2749, iface_position, {iface_int, iface_void}},
 	{"GetRangePointer", 2643, iface_int, {iface_int, iface_int}},
 	{"GetSelText", 2161, iface_int, {iface_void, iface_stringresult}},
 	{"GetStyledText", 2015, iface_int, {iface_void, iface_textrange}},
@@ -2865,6 +2876,8 @@ static IFaceFunction ifaceFunctions[] = {
 	{"MoveCaretInsideView", 2401, iface_void, {iface_void, iface_void}},
 	{"MoveSelectedLinesDown", 2621, iface_void, {iface_void, iface_void}},
 	{"MoveSelectedLinesUp", 2620, iface_void, {iface_void, iface_void}},
+	{"MultiEdgeAddline", 2694, iface_void, {iface_position, iface_colour}},
+	{"MultiEdgeClearAll", 2695, iface_void, {iface_void, iface_void}},
 	{"NewLine", 2329, iface_void, {iface_void, iface_void}},
 	{"Null", 2172, iface_void, {iface_void, iface_void}},
 	{"PageDown", 2322, iface_void, {iface_void, iface_void}},
@@ -3192,8 +3205,8 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 284,
-	ifaceConstantCount = 2549,
+	ifaceFunctionCount = 288,
+	ifaceConstantCount = 2558,
 	ifacePropertyCount = 210
 };
 
