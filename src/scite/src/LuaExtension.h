@@ -42,7 +42,7 @@ public:
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id);
 	virtual bool OnCallTipClick(int pos);
 //!	virtual bool OnUserListSelection(int listType, const char *selection);
-	virtual bool OnUserListSelection(int listType, const char *selection, int id); //!-change-[UserListItemID]
+	virtual bool OnUserListSelection(int listType, const char *selection, int id, int method); //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item);
 //!	virtual bool OnKey(int keyval, int modifiers);
 	virtual bool OnKey(int keyval, int modifiers, char ch); //!-change-[OnKey]

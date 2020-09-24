@@ -1285,7 +1285,14 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	WideChrToMyltiBate(search, searchString); 
 	SString os = "";
 	if (!(gf & grepStdOut)) {
-		os.append(">Search for \"").append(searchString.c_str()).append("\" in \"");
+		os.append(">Search");
+		if (gf & grepRegExp)
+			os.append(" RE");
+		if (gf & grepWholeWord)
+			os.append(" WW");
+		if (gf & grepMatchCase)
+			os.append(" MC");
+		os.append(" for \"").append(searchString.c_str()).append("\" in \"");
 
 		std::string dir = GUI::ConvertFromUTF8( GUI::UTF8FromString(directory), CP_ACP);
 		basePathLen = dir.length();

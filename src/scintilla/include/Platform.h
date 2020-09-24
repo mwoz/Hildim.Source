@@ -474,7 +474,7 @@ private:
 // ScintillaBase implements IListBoxDelegate to receive ListBoxEvents from a ListBox
 
 struct ListBoxEvent {
-	enum class EventType { selectionChange, doubleClick } event;
+	enum class EventType { selectionChange, doubleClick, contextMenu } event;
 	ListBoxEvent(EventType event_) noexcept : event(event_) {
 	}
 };

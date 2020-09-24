@@ -1514,6 +1514,23 @@ static bool CallNamedFunction(const char *name, int numberArg, const char *strin
 	return handled;
 }
 
+static bool CallNamedFunction(const char *name, int numberArg, const char *stringArg, int numberArg2, int numberArg3 ) {
+	bool handled = false;
+	if (luaState) {
+		lua_getglobal(luaState, name);
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushinteger(luaState, numberArg);
+			lua_pushstring(luaState, stringArg);
+			lua_pushinteger(luaState, numberArg2);
+			lua_pushinteger(luaState, numberArg3);
+			handled = call_function(luaState, 4);
+		} else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return handled;
+}
+
 //!-start-[macro]
 static bool CallNamedFunction(const char *name, const char *stringArg, const char *stringArg2) {
 	bool handled = false;
@@ -3217,15 +3234,11 @@ bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long l
 bool LuaExtension::OnCallTipClick(int pos) {
 	return CallNamedFunction("OnCallTipClick", pos, 0, 0);
 }
-/*!
-bool LuaExtension::OnUserListSelection(int listType, const char *selection) {
-	return CallNamedFunction("OnUserListSelection", listType, selection);
-}*/
-//!-start-[UserListItemID]
-bool LuaExtension::OnUserListSelection(int listType, const char *selection, int id) {
-	return CallNamedFunction("OnUserListSelection", listType, selection, id) != NULL;
+
+bool LuaExtension::OnUserListSelection(int listType, const char *selection, int id, int method) {
+	return CallNamedFunction("OnUserListSelection", listType, selection, id, method) != NULL;
 }
-//!-end-[UserListItemID]
+
 bool LuaExtension::OnNavigation(const char *item){
 	return CallNamedFunction("OnNavigation" ,item);
 }

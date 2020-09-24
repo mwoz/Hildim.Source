@@ -2636,6 +2636,7 @@ class ListBoxX : public ListBox {
 	void SetRedraw(bool on) noexcept;
 	void OnDoubleClick();
 	void OnSelChange();
+	void OnContextMenu();
 	void ResizeToCursor();
 	void StartResize(WPARAM);
 	LRESULT NcHitTest(WPARAM, LPARAM) const;
@@ -3190,6 +3191,13 @@ void ListBoxX::OnSelChange() {
 	}
 }
 
+void ListBoxX::OnContextMenu() {
+	if (delegate) {
+		ListBoxEvent event(ListBoxEvent::EventType::contextMenu);
+		delegate->ListNotify(&event);
+	}
+}
+
 POINT ListBoxX::GetClientExtent() const noexcept {
 	RECT rc;
 	::GetWindowRect(HwndFromWindowID(wid), &rc);
@@ -3246,6 +3254,7 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 			// This prevents the view activating when the scrollbar is clicked
 			return MA_NOACTIVATE;
 
+		case WM_RBUTTONDOWN:
 		case WM_LBUTTONDOWN: {
 				// We must take control of selection to prevent the ListBox activating
 				// the popup
@@ -3269,6 +3278,12 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 				}
 			}
 			return 0;
+		case WM_RBUTTONUP:{
+				if (lbx) {
+					lbx->OnContextMenu();
+				}
+			}
+		return 0;
 
 		case WM_MBUTTONDOWN:
 			// disable the scroll wheel button click action
@@ -3493,7 +3508,6 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 
 		}
 		break;
-
 	default:
 		return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
 	}

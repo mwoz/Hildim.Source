@@ -1194,6 +1194,7 @@ typedef sptr_t (*SciFnDirect)(sptr_t ptr, unsigned int iMessage, uptr_t wParam, 
 #define SCN_COLORIZED 3997 
 #define SCN_NOTYFY_OUTPUTCMD 3998 
 #define SCN_NOTYFY_OUTPUTEXIT 3999 
+#define SCN_LISTCONTEXTMENU 4000
 #define SCI_LISTCUSTOMCOLORS 5000
 
 #if defined(__cplusplus) && defined(SCI_NAMESPACE)

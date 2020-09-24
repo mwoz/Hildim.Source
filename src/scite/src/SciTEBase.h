@@ -583,7 +583,7 @@ protected:
 
 	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
 
-	enum { bufferMax = 100 };
+	enum { bufferMax = 1000 };
 	BufferList buffers;
 
 	// Handle buffers

@@ -1739,7 +1739,8 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 			allNumber = false;
 		}
 	}
-	if (startword == current || allNumber) {
+	//if (startword == current || allNumber) {
+	if (current - startword < props.GetInt("autocompleteword.startcount", 1) || allNumber) {
 		if (wEditor.Call(SCI_AUTOCACTIVE))
 			wEditor.Call(SCI_AUTOCCANCEL);
 		return true;
@@ -3601,6 +3602,15 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCEN_KILLFOCUS:
 		CheckMenus();
 		break;
+	case SCN_LISTCONTEXTMENU:	{
+		POINT pt;
+		::GetCursorPos(&pt);
+		if(notification->listType)
+			extender->OnContextMenu(pt.x, pt.y, "USERLIST");
+		else
+			extender->OnContextMenu(pt.x, pt.y, "AUTOCLIST");
+	}
+		break;
 
 	case SCN_STYLENEEDED: {
 			if (extender) {
@@ -3873,7 +3883,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_USERLISTSELECTION: {
 			if (extender && notification->wParam > 2)
-				extender->OnUserListSelection(notification->wParam, notification->text, notification->position+1); //!-change-[UserListItemID]
+				extender->OnUserListSelection(notification->wParam, notification->text, notification->position+1, notification->listCompletionMethod); //!-change-[UserListItemID]
 		}
 		break;
 
@@ -3963,6 +3973,8 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 	SString mnuFake = "";
 	if (wSource.GetID() == wOutput.GetID())
 		extender->OnContextMenu(pt.x, pt.y, "OUTPUT");
+	else if (wSource.GetID() == wFindRes.GetID() && isMargin)
+		extender->OnContextMenu(pt.x, pt.y, "FINDRESMARGIN");
 	else if (wSource.GetID() == wFindRes.GetID())
 		extender->OnContextMenu(pt.x, pt.y, "FINDRES");
 	else if(isMargin)

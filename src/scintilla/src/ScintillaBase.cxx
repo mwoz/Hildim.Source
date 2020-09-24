@@ -216,6 +216,13 @@ void ScintillaBase::ListNotify(ListBoxEvent *plbe) {
 	case ListBoxEvent::EventType::doubleClick:
 		AutoCompleteCompleted(0, SC_AC_DOUBLECLICK);
 		break;
+	case ListBoxEvent::EventType::contextMenu:
+		SCNotification scn = {};
+		scn.nmhdr.code = SCN_LISTCONTEXTMENU;
+		scn.wParam = listType;
+		scn.listType = listType;
+		NotifyParent(scn);
+		break;
 	}
 }
 

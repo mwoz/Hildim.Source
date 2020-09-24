@@ -116,8 +116,7 @@ public:
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) { return false; }
 	virtual bool OnMacro(const char *, unsigned int, unsigned int, const char *) { return false; }
-//!	virtual bool OnUserListSelection(int, const char *) { return false; }
-	virtual bool OnUserListSelection(int, const char *,int) { return false; } //!-change-[UserListItemID]
+	virtual bool OnUserListSelection(int, const char *,int, int) { return false; } //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item) { return false; }
 	virtual bool OnMenuCommand(int, int) { return false; } //!-add-[OnMenuCommand]
 	virtual const char *OnSendEditor(unsigned int, unsigned int, const char *) { return 0; } //!-add-[OnSendEditor]
