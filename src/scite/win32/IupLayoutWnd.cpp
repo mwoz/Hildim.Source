@@ -202,8 +202,10 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 	sb_colorsetting *cs;
 	if (side == 1)
 		cs = &leftClr;
-	else
+	else if (side == 2)
 		cs = &rightClr;
+	else
+		cs = &middleClr;
 	if (markerid < 0) {
 		cs->size = 0;
 		cs->mask = 0;
@@ -245,6 +247,15 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	int clrId, lineFrom;
 	int clrNew, lineFromNew;
 	clrId = 0; lineFrom = 0;
+	int mid1, mid2;
+	if (rightClr.size > 0) {
+		mid1 = round((sb_size - 1) / 3);
+		mid2 = round((sb_size - 1) / 3 * 2);
+	} else {
+		mid1 = round((sb_size - 1) / 2);
+		mid2 = size - 1;
+	}
+
 	for (int i = 0; i < size; i++) {
 		bool nedDraw = false;
 		clrNew = pixelMap[i].left;
@@ -272,16 +283,50 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 					lineTo++;
 			}
 
-			iupdrvDrawRectangle(dc, 0, lineFrom, 5, lineTo, leftClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+			iupdrvDrawRectangle(dc, 0, lineFrom, mid1, lineTo, leftClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
 		}
 		clrId = clrNew;
 		lineFrom = lineFromNew;
+	}
+	if (rightClr.size > 0) {
+		clrId = 0; lineFrom = 0;
+		for (int i = 0; i < size; i++) {
+			bool nedDraw = false;
+			clrNew = pixelMap[i].right;
+			lineFromNew = lineFrom;
+			if (clrNew) {
+				if (clrId == clrNew) {
+					//nothing todo
+				} else {
+					if (clrId)
+						nedDraw = true;
+					lineFromNew = sb_size + i;
+
+				}
+			} else {
+				if (clrId)
+					nedDraw = true;
+			}
+			if (nedDraw) {
+				int lineTo = sb_size + i - 1;
+				if (lineTo - lineFrom < 3) {
+					int idStart = lineFrom - sb_size;
+					if ((idStart > 0) && !pixelMap[idStart - 1].right)
+						lineFrom--;
+					if ((lineTo - lineFrom < 3) && (i < size - 1) && !pixelMap[i].right)
+						lineTo++;
+				}
+				iupdrvDrawRectangle(dc, mid1 + 1, lineFrom, sb_size - 1, lineTo, rightClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+			}
+			clrId = clrNew;
+			lineFrom = lineFromNew;
+		}
 	}
 
 	clrId = 0; lineFrom = 0;
 	for (int i = 0; i < size; i++) {
 		bool nedDraw = false;
-		clrNew = pixelMap[i].right;
+		clrNew = pixelMap[i].middle;
 		lineFromNew = lineFrom;
 		if (clrNew) {
 			if (clrId == clrNew) {
@@ -300,12 +345,12 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 			int lineTo = sb_size + i - 1;
 			if (lineTo - lineFrom < 3) {
 				int idStart = lineFrom - sb_size;
-				if ((idStart > 0) && !pixelMap[idStart - 1].right)
+				if ((idStart > 0) && !pixelMap[idStart - 1].middle)
 					lineFrom--;
-				if ((lineTo - lineFrom < 3) && (i < size - 1) && !pixelMap[i].right)
+				if ((lineTo - lineFrom < 3) && (i < size - 1) && !pixelMap[i].middle)
 					lineTo++;
 			}
-			iupdrvDrawRectangle(dc, 6, lineFrom, sb_size-1, lineTo, rightClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
+			iupdrvDrawRectangle(dc, mid1 + 1, lineFrom, mid2, lineTo, middleClr.clr[clrId - 1], IUP_DRAW_FILL, 1);
 		}
 		clrId = clrNew;
 		lineFrom = lineFromNew;
@@ -377,6 +422,24 @@ void IupChildWnd::resetPixelMap() {
 						pixelMap[i].left = id + 1;
 				}
 			}
+			if (curMark & middleClr.mask) {
+				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+				int id = -1;
+				for (int i = 0; i < middleClr.size; i++) {
+					if (curMark & (1 << middleClr.id[i])) {
+						id = i;
+						break;
+					}
+				}
+				assert(id > -1);
+
+				int pFirst = round(vLine * lineheightPx);
+				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				for (int i = pFirst; i <= pLast; i++) {
+					if (!pixelMap[i].middle || pixelMap[i].middle > id + 1)
+						pixelMap[i].middle = id + 1;
+				}
+			}
 			if (curMark & rightClr.mask) {
 				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int id = -1;
@@ -396,7 +459,7 @@ void IupChildWnd::resetPixelMap() {
 				}
 			}
 			int annotLines;
-			if ((rightClr.annotation || leftClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
+			if ((rightClr.annotation || leftClr.annotation || middleClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
 				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int pFirst = round((vLine + 1) * lineheightPx);
 				int pLast = max(pFirst, round((vLine + annotLines + 1) * lineheightPx));
@@ -405,6 +468,8 @@ void IupChildWnd::resetPixelMap() {
 						pixelMap[i].right = rightClr.annotation;
 					if (leftClr.annotation && (!pixelMap[i].left || pixelMap[i].left > leftClr.annotation))
 						pixelMap[i].left = leftClr.annotation;
+					if (middleClr.annotation && (!pixelMap[i].middle || pixelMap[i].middle > middleClr.annotation))
+						pixelMap[i].middle = middleClr.annotation;
 				}
 
 			}

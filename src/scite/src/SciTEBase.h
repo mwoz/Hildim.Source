@@ -305,7 +305,7 @@ public:
 		pSearcher = pSearcher_;
 	}
 };
-typedef struct sb_colors { long left; long right; } sb_colors;
+typedef struct sb_colors { long left; long right; long middle; } sb_colors;
 struct sb_colorsetting {
 	int size;
 	int id[10];
@@ -352,6 +352,7 @@ private:
 
 	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
 	sb_colorsetting rightClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
+	sb_colorsetting middleClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
 	DWORD markerMaskAll = 0;
 	bool bBlockFlatCollback = false;
 
