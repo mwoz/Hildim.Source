@@ -1157,6 +1157,11 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 	if (lineBuffer[0] == '>') {
 		// Command or return status
 		return SCE_ERR_CMD;
+	} else if (strstr(lineBuffer, "<<<!") &&
+		strstr(lineBuffer, "!>>>") &&
+		strstr(lineBuffer, "<<<!") < strstr(lineBuffer, "!>>>")) {
+		startValue = (int)(strstr(lineBuffer, "<<<!") - lineBuffer);
+		return SCE_ERR_ATRIUM_WARNING;
 	} else if (lineBuffer[0] == '<') {
 		// Diff removal.
 		return SCE_ERR_DIFF_DELETION;
@@ -1185,10 +1190,10 @@ static int RecogniseErrorListLine(const char *lineBuffer, unsigned int lengthLin
 	} else if (strstr(lineBuffer, " in ") && strstr(lineBuffer, " on line ")) {
 		return SCE_ERR_PHP;
 	} else if ((strstart(lineBuffer, "Error ") ||
-	            strstart(lineBuffer, "Warning ")) &&
-	           strstr(lineBuffer, " at (") &&
-	           strstr(lineBuffer, ") : ") &&
-	           (strstr(lineBuffer, " at (") < strstr(lineBuffer, ") : "))) {
+		strstart(lineBuffer, "Warning ")) &&
+		strstr(lineBuffer, " at (") &&
+		strstr(lineBuffer, ") : ") &&
+		(strstr(lineBuffer, " at (") < strstr(lineBuffer, ") : "))) {
 		// Intel Fortran Compiler error/warning message
 		return SCE_ERR_IFC;
 	} else if (strstart(lineBuffer, "Error ")) {
@@ -1422,13 +1427,19 @@ static void ColouriseErrorListLine(
 	int startValue = -1;
 	int style = RecogniseErrorListLine(lineBuffer, lengthLine, startValue);
 	if (valueSeparate && (startValue >= 0)) {
-		styler.ColourTo(endPos - (lengthLine - startValue), style);
-//!-start-[FindResultListStyle]
-		if (isFindList) {
-			ColouriseFindListLine(lineBuffer + startValue, lengthLine - startValue + 1, endPos - lengthLine + startValue, endPos, findValue, styler);
-		} else
-//!-end-[FindResultListStyle]
-		styler.ColourTo(endPos, SCE_ERR_VALUE);
+		if (style == SCE_ERR_ATRIUM_WARNING) {
+			styler.ColourTo(endPos - (lengthLine - startValue), SCE_ERR_DEFAULT);
+			startValue = (int)(strstr(lineBuffer, "!>>>") - lineBuffer) + 4;
+			styler.ColourTo(endPos - (lengthLine - startValue), style);
+		} else {
+			styler.ColourTo(endPos - (lengthLine - startValue), style);
+			//!-start-[FindResultListStyle]
+			if (isFindList) {
+				ColouriseFindListLine(lineBuffer + startValue, lengthLine - startValue + 1, endPos - lengthLine + startValue, endPos, findValue, styler);
+			} else
+				//!-end-[FindResultListStyle]
+				styler.ColourTo(endPos, SCE_ERR_VALUE);
+		}
 	} else {
 //!-start-[FindResultListStyle]
 		if (valueSeparate && style == SCE_ERR_CMD) {

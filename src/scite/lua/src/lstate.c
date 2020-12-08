@@ -186,20 +186,26 @@ void luaE_freeCI (lua_State *L) {
 
 
 /*
-** free half of the CallInfo structures not in use by a thread
+** free half of the CallInfo structures not in use by a thread,
+** keeping the first one.
 */
 void luaE_shrinkCI (lua_State *L) {
-  CallInfo *ci = L->ci;
+  CallInfo *ci = L->ci->next;  /* first free CallInfo */
   CallInfo *next;
-  CallInfo *next2;  /* next's next */
+  if (ci == NULL)
+    return;  /* no extra elements */
   L->nCcalls += L->nci;  /* add removed elements back to 'nCcalls' */
-  /* while there are two nexts */
-  while ((next = ci->next) != NULL && (next2 = next->next) != NULL) {
+  while ((next = ci->next) != NULL) {  /* two extra elements? */
+    CallInfo *next2 = next->next;  /* next's next */
     ci->next = next2;  /* remove next from the list */
-    next2->previous = ci;
-    luaM_free(L, next);  /* free next */
     L->nci--;
-    ci = next2;  /* keep next's next */
+    luaM_free(L, next);  /* free next */
+    if (next2 == NULL)
+      break;  /* no more elements */
+    else {
+      next2->previous = ci;
+      ci = next2;  /* continue */
+    }
   }
   L->nCcalls -= L->nci;  /* adjust result */
 }
@@ -295,6 +301,7 @@ static void preinit_thread (lua_State *L, global_State *g) {
   L->openupval = NULL;
   L->status = LUA_OK;
   L->errfunc = 0;
+  L->oldpc = 0;
 }
 
 
@@ -312,9 +319,10 @@ static void close_state (lua_State *L) {
 
 
 LUA_API lua_State *lua_newthread (lua_State *L) {
-  global_State *g = G(L);
+  global_State *g;
   lua_State *L1;
   lua_lock(L);
+  g = G(L);
   luaC_checkGC(L);
   /* create new thread */
   L1 = &cast(LX *, luaM_newobject(L, LUA_TTHREAD, sizeof(LX)))->l;
@@ -356,19 +364,18 @@ int lua_resetthread (lua_State *L) {
   CallInfo *ci;
   int status;
   lua_lock(L);
-  ci = &L->base_ci;
-  status = luaF_close(L, L->stack, CLOSEPROTECT);
+  L->ci = ci = &L->base_ci;  /* unwind CallInfo list */
   setnilvalue(s2v(L->stack));  /* 'function' entry for basic 'ci' */
+  ci->func = L->stack;
+  ci->callstatus = CIST_C;
+  status = luaF_close(L, L->stack, CLOSEPROTECT);
   if (status != CLOSEPROTECT)  /* real errors? */
     luaD_seterrorobj(L, status, L->stack + 1);
   else {
     status = LUA_OK;
     L->top = L->stack + 1;
   }
-  ci->callstatus = CIST_C;
-  ci->func = L->stack;
   ci->top = L->top + LUA_MINSTACK;
-  L->ci = ci;
   L->status = status;
   lua_unlock(L);
   return status;
@@ -390,6 +397,7 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->allgc = obj2gco(L);  /* by now, only object is the main thread */
   L->next = NULL;
   g->Cstacklimit = L->nCcalls = LUAI_MAXCSTACK + CSTACKERR;
+  incnny(L);  /* main thread is always non yieldable */
   g->frealloc = f;
   g->ud = ud;
   g->warnf = NULL;
@@ -405,8 +413,8 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
   g->gckind = KGC_INC;
   g->gcemergency = 0;
   g->finobj = g->tobefnz = g->fixedgc = NULL;
-  g->survival = g->old = g->reallyold = NULL;
-  g->finobjsur = g->finobjold = g->finobjrold = NULL;
+  g->firstold1 = g->survival = g->old1 = g->reallyold = NULL;
+  g->finobjsur = g->finobjold1 = g->finobjrold = NULL;
   g->sweepgc = NULL;
   g->gray = g->grayagain = NULL;
   g->weak = g->ephemeron = g->allweak = NULL;
@@ -431,8 +439,8 @@ LUA_API lua_State *lua_newstate (lua_Alloc f, void *ud) {
 
 
 LUA_API void lua_close (lua_State *L) {
-  L = G(L)->mainthread;  /* only the main thread can be closed */
   lua_lock(L);
+  L = G(L)->mainthread;  /* only the main thread can be closed */
   close_state(L);
 }
 
