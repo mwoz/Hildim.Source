@@ -5,9 +5,7 @@
  **/
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-#include <memory>
-#include <vector>
-#include <string>
+
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -200,14 +198,6 @@ public:
 		return co == other.co;
 	}
 
-	void Set(long lcol) {  ///!!!TODO! - Проанализировать использование и по возможности удалить
-		co = lcol;
-	}
-
-	void Set(unsigned int red, unsigned int green, unsigned int blue) {
-		co = red | (green << 8) | (blue << 16);
-	}
-		
 	constexpr int AsInteger() const noexcept {
 		return co;
 	}
@@ -474,7 +464,7 @@ private:
 // ScintillaBase implements IListBoxDelegate to receive ListBoxEvents from a ListBox
 
 struct ListBoxEvent {
-	enum class EventType { selectionChange, doubleClick, contextMenu } event;
+	enum class EventType { selectionChange, doubleClick } event;
 	ListBoxEvent(EventType event_) noexcept : event(event_) {
 	}
 };
@@ -491,7 +481,7 @@ public:
 	static ListBox *Allocate();
 
 	void SetFont(Font &font) override =0;
-	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo = 0)=0;
+	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_)=0;
 	virtual void SetAverageCharWidth(int width)=0;
 	virtual void SetVisibleRows(int rows)=0;
 	virtual int GetVisibleRows() const=0;
