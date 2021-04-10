@@ -12,7 +12,8 @@
 
 #if _WIN32
 #define EXPORT_FUNCTION __declspec(dllexport)
-#define CALLING_CONVENTION __stdcall
+//#define CALLING_CONVENTION __stdcall
+#define CALLING_CONVENTION __cdecl 
 #else
 #define EXPORT_FUNCTION __attribute__((visibility("default")))
 #define CALLING_CONVENTION
@@ -70,6 +71,7 @@ extern LexerModule lmErrorList;
 extern LexerModule lmESCRIPT;
 extern LexerModule lmF77;
 extern LexerModule lmFlagShip;
+extern LexerModule lmFormEngine;
 extern LexerModule lmForth;
 extern LexerModule lmFortran;
 extern LexerModule lmFreeBasic;
@@ -130,6 +132,7 @@ extern LexerModule lmRegistry;
 extern LexerModule lmRuby;
 extern LexerModule lmRust;
 extern LexerModule lmSAS;
+extern LexerModule lmSearchResult;
 extern LexerModule lmScriptol;
 extern LexerModule lmSmalltalk;
 extern LexerModule lmSML;
@@ -214,6 +217,7 @@ void AddEachLexer() {
 	catalogueLexilla.AddLexerModule(&lmESCRIPT);
 	catalogueLexilla.AddLexerModule(&lmF77);
 	catalogueLexilla.AddLexerModule(&lmFlagShip);
+	catalogueLexilla.AddLexerModule(&lmFormEngine);
 	catalogueLexilla.AddLexerModule(&lmForth);
 	catalogueLexilla.AddLexerModule(&lmFortran);
 	catalogueLexilla.AddLexerModule(&lmFreeBasic);
@@ -274,6 +278,7 @@ void AddEachLexer() {
 	catalogueLexilla.AddLexerModule(&lmRuby);
 	catalogueLexilla.AddLexerModule(&lmRust);
 	catalogueLexilla.AddLexerModule(&lmSAS);
+	catalogueLexilla.AddLexerModule(&lmSearchResult);
 	catalogueLexilla.AddLexerModule(&lmScriptol);
 	catalogueLexilla.AddLexerModule(&lmSmalltalk);
 	catalogueLexilla.AddLexerModule(&lmSML);

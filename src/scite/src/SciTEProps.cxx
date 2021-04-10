@@ -21,8 +21,12 @@
 #include <vector>
 #include <map>
 
+#include "ILexer.h"
+
 #include "Scintilla.h"
 #include "SciLexer.h"
+#include "Lexilla.h"
+#include "../Access/LexillaAccess.h"
 
 #include "GUI.h"
 
@@ -647,6 +651,8 @@ SString SciTEBase::GetFileNameProperty(const char *name) {
 void SciTEBase::ReadProperties() {
 	if (extender)
 		extender->Clear();
+	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
+	Lexilla::Load(".");
 
 	SString fileNameForExtension = ExtensionFileName();
 
@@ -657,10 +663,11 @@ void SciTEBase::ReadProperties() {
 	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
 	if (language.length()) {
 		if (language.startswith("script_")) {
-			wEditor.Call(SCI_SETLEXER, SCLEX_CONTAINER);
+			wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
 		} else {
 			if (lexLanguage != lexLPeg) {
-				wEditor.CallString(SCI_SETLEXERLANGUAGE, 0, language.c_str());
+				Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
+				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 				int lex = wEditor.Call(SCI_GETLEXER);
 				if (lex != SCLEX_NULL && strcmp(language.c_str(), "lpeg") == 0) {
 					lexLPeg = lex;
@@ -680,9 +687,11 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 
-	wOutput.Call(SCI_SETLEXER, SCLEX_ERRORLIST);
+	Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
+	wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 
-	wFindRes.Call(SCI_SETLEXER, SCLEX_SEARCHRESULT);
+	plexer = Lexilla::MakeLexer("searchResult");
+	wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 
 	SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
 	wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());

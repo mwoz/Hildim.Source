@@ -2367,6 +2367,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 	SciTEWin MainWind(extender, advProps);
 	SciTEWin::Register(hInstance);
 
+	Lexilla::SetDefaultDirectory(GetSciTEPath(FilePath()).AsUTF8());
+
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
 	if (hmod == NULL) {
 		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  SciTE will now close"),

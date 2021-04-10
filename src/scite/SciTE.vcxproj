@@ -64,7 +64,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)/</ObjectFileName>
@@ -101,7 +101,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;NDEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\scintilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -133,6 +133,8 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\lexilla\access\LexillaAccess.h" />
+    <ClInclude Include="Access\LexillaAccess.h" />
     <ClInclude Include="lua\include\lauxlib.h" />
     <ClInclude Include="lua\src\lapi.h" />
     <ClInclude Include="lua\src\lcode.h" />
@@ -205,6 +207,8 @@
     <Image Include="win32\word.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\lexilla\access\LexillaAccess.cxx" />
+    <ClCompile Include="Access\LexillaAccess.cxx" />
     <ClCompile Include="src\Encoding.cpp" />
     <ClCompile Include="src\Exporters.cxx" />
     <ClCompile Include="src\FilePath.cxx" />

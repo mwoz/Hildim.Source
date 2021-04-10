@@ -61,7 +61,11 @@ typedef HANDLE HTHEME;
 #include <dir.h>
 #endif
 
+#include "ILexer.h"
+
 #include "Scintilla.h"
+#include "Lexilla.h"
+#include "../Access/LexillaAccess.h"
 
 #include "GUI.h"
 

@@ -1817,10 +1817,10 @@ static void ColouriseNullDoc(unsigned int startPos, int length, int, WordList *[
 }
 
 //!LexerModule lmBatch(SCLEX_BATCH, ColouriseBatchDoc, "batch", 0, batchWordListDesc);
-LexerModule lmBatch(SCLEX_BATCH, ColouriseBatchDoc, "batch", FoldBatchDoc, batchWordListDesc); //!-change-[BatchLexerImprovement]
-LexerModule lmDiff(SCLEX_DIFF, ColouriseDiffDoc, "diff", FoldDiffDoc, emptyWordListDesc);
+//LexerModule lmBatch(SCLEX_BATCH, ColouriseBatchDoc, "batch", FoldBatchDoc, batchWordListDesc); //!-change-[BatchLexerImprovement]
+//LexerModule lmDiff(SCLEX_DIFF, ColouriseDiffDoc, "diff", FoldDiffDoc, emptyWordListDesc);
 //!LexerModule lmProps(SCLEX_PROPERTIES, ColourisePropsDoc, "props", FoldPropsDoc, emptyWordListDesc);
-LexerModule lmProps(SCLEX_PROPERTIES, ColourisePropsDoc, "props", FoldPropsDoc, propsWordListDesc); //!-change-[PropsKeysSets]
-LexerModule lmMakeOters(SCLEX_MAKEFILE, ColouriseMakeDoc, "makefile", 0, emptyWordListDesc);
-LexerModule lmErrorList(SCLEX_ERRORLIST, ColouriseErrorListDoc, "errorlist", 0, emptyWordListDesc);
-LexerModule lmNull(SCLEX_NULL, ColouriseNullDoc, "null");
+//LexerModule lmProps(SCLEX_PROPERTIES, ColourisePropsDoc, "props", FoldPropsDoc, propsWordListDesc); //!-change-[PropsKeysSets]
+//LexerModule lmMakeOters(SCLEX_MAKEFILE, ColouriseMakeDoc, "makefile", 0, emptyWordListDesc);
+//LexerModule lmErrorList(SCLEX_ERRORLIST, ColouriseErrorListDoc, "errorlist", 0, emptyWordListDesc);
+//LexerModule lmNull(SCLEX_NULL, ColouriseNullDoc, "null");
