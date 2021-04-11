@@ -661,23 +661,27 @@ void SciTEBase::ReadProperties() {
 	if (modulePath.length())
 	    wEditor.CallString(SCI_LOADLEXERLIBRARY, 0, modulePath.c_str());
 	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
+	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0); 
+
 	if (language.length()) {
-		if (language.startswith("script_")) {
-			wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
-		} else {
-			if (lexLanguage != lexLPeg) {
-				Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
-				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-				int lex = wEditor.Call(SCI_GETLEXER);
-				if (lex != SCLEX_NULL && strcmp(language.c_str(), "lpeg") == 0) {
-					lexLPeg = lex;
-					wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, "container");
-				}
+		if (strcmp(language.c_str(), languageCurrent.c_str())) {
+			if (language.startswith("script_")) {
+				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
 			} else {
-				wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, language.c_str());
+				if (lexLanguage != lexLPeg) {
+					Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
+						wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+						int lex = wEditor.Call(SCI_GETLEXER);
+						if (lex != SCLEX_NULL && strcmp(language.c_str(), "lpeg") == 0) {
+							lexLPeg = lex;
+								wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, "container");
+						}
+				} else {
+					wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, language.c_str());
+				}
 			}
 		}
-	} else {
+	} else if (languageCurrent.length()) {
 		wEditor.Call(SCI_SETLEXER, SCLEX_NULL);
 	}
 
@@ -687,11 +691,14 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 
-	Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
-	wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+	languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
+	if (strcmp("errorlist", languageCurrent.c_str())) {
+		Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
+		wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 
-	plexer = Lexilla::MakeLexer("searchResult");
-	wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+		plexer = Lexilla::MakeLexer("searchResult");
+		wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+	}
 
 	SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
 	wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());
@@ -703,6 +710,7 @@ void SciTEBase::ReadProperties() {
 		SString kw = props.GetNewExpand(kwk.c_str(), fileNameForExtension.c_str());
 		wEditor.CallString(SCI_SETKEYWORDS, wl, kw.c_str());
 	}
+
 
 	FilePath homepath = GetSciteDefaultHome();
 	props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
