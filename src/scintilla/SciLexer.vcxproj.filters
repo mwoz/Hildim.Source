@@ -117,15 +117,15 @@
     <ClCompile Include="src\CharacterSet.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Geometry.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ILexer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Scintilla.h">
@@ -279,6 +279,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\CharacterSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Debugging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

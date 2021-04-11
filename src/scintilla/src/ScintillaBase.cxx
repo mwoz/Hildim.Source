@@ -15,9 +15,13 @@
 #include <string_view>
 #include <vector>
 #include <map>
+#include <set>
+#include <optional>
 #include <algorithm>
 #include <memory>
 
+#include "Debugging.h"
+#include "Geometry.h"
 #include "Platform.h"
 
 #include "ILoader.h"
@@ -164,7 +168,6 @@ int ScintillaBase::KeyCommand(unsigned int iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case SCI_TAB:
-		case SCI_BACKTAB:
 			AutoCompleteCompleted(0, SC_AC_TAB);
 			return 0;
 		case SCI_NEWLINE:
@@ -204,13 +207,6 @@ void ScintillaBase::ListNotify(ListBoxEvent *plbe) {
 		break;
 	case ListBoxEvent::EventType::doubleClick:
 		AutoCompleteCompleted(0, SC_AC_DOUBLECLICK);
-		break;
-	case ListBoxEvent::EventType::contextMenu:
-		SCNotification scn = {};
-		scn.nmhdr.code = SCN_LISTCONTEXTMENU;
-		scn.wParam = listType;
-		scn.listType = listType;
-		NotifyParent(scn);
 		break;
 	}
 }
@@ -265,6 +261,14 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	ac.Start(wMain, idAutoComplete, sel.MainCaret(), PointMainCaret(),
 				lenEntered, vs.lineHeight, IsUnicodeMode(), technology);
 
+	ListOptions options{
+		vs.ElementColour(SC_ELEMENT_LIST),
+		vs.ElementColour(SC_ELEMENT_LIST_BACK),
+		vs.ElementColour(SC_ELEMENT_LIST_SELECTED),
+		vs.ElementColour(SC_ELEMENT_LIST_SELECTED_BACK)
+	};
+	ac.lb->SetOptions(options);
+
 	const PRectangle rcClient = GetClientRectangle();
 	Point pt = LocationFromPosition(sel.MainCaret() - lenEntered);
 	PRectangle rcPopupBounds = wMain.GetMonitorRect(pt);
@@ -296,7 +300,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	rcac.right = rcac.left + widthLB;
 	rcac.bottom = static_cast<XYPOSITION>(std::min(static_cast<int>(rcac.top) + heightLB, static_cast<int>(rcPopupBounds.bottom)));
 	ac.lb->SetPositionRelative(rcac, &wMain);
-	ac.lb->SetFont(vs.styles[STYLE_DEFAULT].font);
+	ac.lb->SetFont(vs.styles[STYLE_DEFAULT].font.get());
 	const unsigned int aveCharWidth = static_cast<unsigned int>(vs.styles[STYLE_DEFAULT].aveCharWidth);
 	ac.lb->SetAverageCharWidth(aveCharWidth);
 	ac.lb->SetDelegate(this);
@@ -382,13 +386,6 @@ void ScintillaBase::AutoCompleteCharacterDeleted() {
 		AutoCompleteCancel();
 	} else {
 		AutoCompleteMoveToCurrentWord();
-//!-start-[autocompleteword.incremental]
-		SCNotification scn = {0};
-		scn.nmhdr.code = SCN_AUTOCUPDATED;
-		scn.wParam = 0;
-		scn.listType = 0;
-		NotifyParent(scn);
-//!-end-[autocompleteword.incremental]
 	}
 	SCNotification scn = {};
 	scn.nmhdr.code = SCN_AUTOCCHARDELETED;
@@ -418,7 +415,6 @@ void ScintillaBase::AutoCompleteCompleted(char ch, unsigned int completionMethod
 	scn.position = firstPos;
 	scn.lParam = firstPos;
 	scn.text = selected.c_str();
-	scn.position = item; //!-add-[UserListItemID]
 	NotifyParent(scn);
 
 	if (!ac.Active())
@@ -497,13 +493,6 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 		rc.top += offset;
 		rc.bottom += offset;
 	}
-//!-start-[BetterCalltips]
-	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
-//!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, &wMain);
@@ -604,14 +593,22 @@ LexState::LexState(Document *pdoc_) noexcept : LexInterface(pdoc_) {
 
 LexState::~LexState() {
 	if (instance) {
-		instance->Release();
+		try {
+			instance->Release();
+		} catch (...) {
+			// ILexer5::Release must not throw, ignore if it does.
+		}
 		instance = nullptr;
 	}
 }
 
 void LexState::SetInstance(ILexer5 *instance_) {
 	if (instance) {
-		instance->Release();
+		try {
+			instance->Release();
+		} catch (...) {
+			// ILexer5::Release must not throw, ignore if it does.
+		}
 		instance = nullptr;
 	}
 	instance = instance_;
@@ -852,9 +849,6 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		AutoCompleteStart(static_cast<Sci::Position>(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
-	case SCI_PASTE:
-		ac.Cancel();
-		return Editor::WndProc(iMessage, wParam, lParam);
 	case SCI_AUTOCCANCEL:
 		ac.Cancel();
 		break;
@@ -1057,7 +1051,6 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		} else {
 			DocumentLexState()->Colourise(static_cast<Sci::Position>(wParam), lParam);
 		}
-		NotifyColorized(wParam, lParam);
 		Redraw();
 		break;
 
@@ -1084,7 +1077,6 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 		return StringResult(lParam, DocumentLexState()->GetName());
 
 	case SCI_PRIVATELEXERCALL:
-	case SCI_PRIVATELEXERCALLSTR:
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), PtrFromSPtr(lParam)));
 
@@ -1153,19 +1145,6 @@ sptr_t ScintillaBase::WndProc(unsigned int iMessage, uptr_t wParam, sptr_t lPara
 	case SCI_DESCRIPTIONOFSTYLE:
 		return StringResult(lParam, DocumentLexState()->
 				    DescriptionOfStyle(static_cast<int>(wParam)));
-
-	case SCI_LISTCUSTOMCOLORS:
-	{
-		Sci_ListColorsInfo *ci = (Sci_ListColorsInfo*)wParam;
-		ac.listcolors.inizialized = ci->inizialized;
-		ac.listcolors.border = ci->border;
-		ac.listcolors.borderbak = ci->borderbak;
-		ac.listcolors.scroll = ci->scroll;
-		ac.listcolors.scrollbak = ci->scrollbak;
-		ac.listcolors.scrollhl = ci->scrollhl;
-		ac.listcolors.scrollpress = ci->scrollpress;
-		ac.listcolors.scrollsize = ci->scrollsize;
-	}
 
 	default:
 		return Editor::WndProc(iMessage, wParam, lParam);

@@ -356,7 +356,7 @@ public:
 	}
 	bool IsCollectingUndo() const noexcept { return cb.IsCollectingUndo(); }
 	void BeginUndoAction() { cb.BeginUndoAction(); }
-	int EndUndoAction() { return cb.EndUndoAction(); }
+	void EndUndoAction() { cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const noexcept { return cb.IsSavePoint(); }
@@ -439,7 +439,7 @@ public:
 
 	bool MatchesWordOptions(bool word, bool wordStart, Sci::Position pos, Sci::Position length) const;
 	bool HasCaseFolder() const noexcept;
-	void SetCaseFolder(CaseFolder *pcf_) noexcept;
+	void SetCaseFolder(std::unique_ptr<CaseFolder> pcf_) noexcept;
 	Sci::Position FindText(Sci::Position minPos, Sci::Position maxPos, const char *search, int flags, Sci::Position *length);
 	const char *SubstituteByPosition(const char *text, Sci::Position *length);
 	int LineCharacterIndex() const noexcept;
@@ -448,8 +448,8 @@ public:
 	Sci::Line LinesTotal() const noexcept;
 
 	void SetDefaultCharClasses(bool includeWordClass);
-	void SetCharClasses(const unsigned char *chars, CharClassify::cc newCharClass);
-	int GetCharsOfClass(CharClassify::cc characterClass, unsigned char *buffer) const;
+	void SetCharClasses(const unsigned char *chars, CharacterClass newCharClass);
+	int GetCharsOfClass(CharacterClass characterClass, unsigned char *buffer) const;
 	void SetCharacterCategoryOptimization(int countCharacters);
 	int CharacterCategoryOptimization() const noexcept;
 	void SCI_METHOD StartStyling(Sci_Position position) override;
@@ -492,7 +492,7 @@ public:
 	bool AddWatcher(DocWatcher *watcher, void *userData);
 	bool RemoveWatcher(DocWatcher *watcher, void *userData);
 
-	CharClassify::cc WordCharacterClass(unsigned int ch) const;
+	CharacterClass WordCharacterClass(unsigned int ch) const;
 	bool IsWordPartSeparator(unsigned int ch) const;
 	Sci::Position WordPartLeft(Sci::Position pos) const;
 	Sci::Position WordPartRight(Sci::Position pos) const;
@@ -594,7 +594,6 @@ public:
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyLexerChanged(Document *doc, void *userData) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, int status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }
