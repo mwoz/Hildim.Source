@@ -184,5 +184,51 @@ public:
 bool IsDBCSLeadByte(int codePage, char ch);
 
 }
+constexpr const float componentMaximum = 255.0f;
+class ColourDesired {
+	int co;
+public:
+	constexpr explicit ColourDesired(int co_ = 0) noexcept : co(co_) {}
 
+	constexpr ColourDesired(unsigned int red, unsigned int green, unsigned int blue) noexcept :
+		co(red | (green << 8) | (blue << 16)) {}
+
+	constexpr bool operator==(const ColourDesired &other) const noexcept {
+		return co == other.co;
+	}
+
+	void Set(long lcol) {  ///!!!TODO! - Проанализировать использование и по возможности удалить
+		co = lcol;
+	}
+
+	void Set(unsigned int red, unsigned int green, unsigned int blue) {
+		co = red | (green << 8) | (blue << 16);
+	}
+
+	constexpr int AsInteger() const noexcept {
+		return co;
+	}
+
+	// Red, green and blue values as bytes 0..255
+	constexpr unsigned char GetRed() const noexcept {
+		return co & 0xff;
+	}
+	constexpr unsigned char GetGreen() const noexcept {
+		return (co >> 8) & 0xff;
+	}
+	constexpr unsigned char GetBlue() const noexcept {
+		return (co >> 16) & 0xff;
+	}
+
+	// Red, green and blue values as float 0..1.0
+	constexpr float GetRedComponent() const noexcept {
+		return GetRed() / componentMaximum;
+	}
+	constexpr float GetGreenComponent() const noexcept {
+		return GetGreen() / componentMaximum;
+	}
+	constexpr float GetBlueComponent() const noexcept {
+		return GetBlue() / componentMaximum;
+	}
+};
 #endif

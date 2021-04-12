@@ -67,6 +67,11 @@ int RecogniseErrorListLine(const char *lineBuffer, Sci_PositionU lengthLine, Sci
 	if (lineBuffer[0] == '>') {
 		// Command or return status
 		return SCE_ERR_CMD;
+	} else if (strstr(lineBuffer, "<<<!") &&
+		strstr(lineBuffer, "!>>>") &&
+		strstr(lineBuffer, "<<<!") < strstr(lineBuffer, "!>>>")) {
+		startValue = (int)(strstr(lineBuffer, "<<<!") - lineBuffer);
+		return SCE_ERR_ATRIUM_WARNING;
 	} else if (lineBuffer[0] == '<') {
 		// Diff removal.
 		return SCE_ERR_DIFF_DELETION;
@@ -368,8 +373,14 @@ void ColouriseErrorListLine(
 		styler.ColourTo(endPos, portionStyle);
 	} else {
 		if (valueSeparate && (startValue >= 0)) {
+			if (style == SCE_ERR_ATRIUM_WARNING) {
+				styler.ColourTo(endPos - (lengthLine - startValue), SCE_ERR_DEFAULT);
+				startValue = (int)(strstr(lineBuffer.c_str(), "!>>>") - lineBuffer.c_str()) + 4;
+				styler.ColourTo(endPos - (lengthLine - startValue), style);
+			} else {
 			styler.ColourTo(endPos - (lengthLine - startValue), style);
 			styler.ColourTo(endPos, SCE_ERR_VALUE);
+			}
 		} else {
 			styler.ColourTo(endPos, style);
 		}
@@ -386,7 +397,7 @@ void ColouriseErrorListDoc(Sci_PositionU startPos, Sci_Position length, int, Wor
 	//	diagnostics, style the path and line number separately from the rest of the
 	//	line with style 21 used for the rest of the line.
 	//	This allows matched text to be more easily distinguished from its location.
-	const bool valueSeparate = styler.GetPropertyInt("lexer.errorlist.value.separate", 0) != 0;
+	const bool valueSeparate = styler.GetPropertyInt("lexer.errorlist.value.separate", 1) != 0;
 
 	// property lexer.errorlist.escape.sequences
 	//	Set to 1 to interpret escape sequences.

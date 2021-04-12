@@ -7,7 +7,7 @@
 
 #include <time.h>
 
-#include "Platform.h" //!-add-[no_wornings]
+//#include "Platform.h" //!-add-[no_wornings]
 #include "SciTEWin.h"
 #include "Windowsx.h"
 

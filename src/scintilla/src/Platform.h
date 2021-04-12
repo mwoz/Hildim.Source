@@ -5,7 +5,9 @@
  **/
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
-
+#include <memory>
+#include <vector>
+#include <string>
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
@@ -293,7 +295,7 @@ private:
 // ScintillaBase implements IListBoxDelegate to receive ListBoxEvents from a ListBox
 
 struct ListBoxEvent {
-	enum class EventType { selectionChange, doubleClick } event;
+	enum class EventType { selectionChange, doubleClick, contextMenu } event;
 	ListBoxEvent(EventType event_) noexcept : event(event_) {
 	}
 };
@@ -317,7 +319,7 @@ public:
 	static std::unique_ptr<ListBox> Allocate();
 
 	virtual void SetFont(const Font *font)=0;
-	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_)=0;
+	virtual void Create(Window &parent, int ctrlID, Point location, int lineHeight_, bool unicodeMode_, int technology_, void* pColorInfo = 0)=0;
 	virtual void SetAverageCharWidth(int width)=0;
 	virtual void SetVisibleRows(int rows)=0;
 	virtual int GetVisibleRows() const=0;

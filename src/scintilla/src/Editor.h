@@ -189,6 +189,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	int cursorMode;
 
 	bool hasFocus;
+	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -436,6 +437,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
+	void NotifyClick(Point pt, int modifiers); //!-add-[OnClick]
+	void NotifyMouseButtonUp(Point pt, int ctrl); //!-add-[OnMouseButtonUp]
 	virtual void NotifyDoubleClick(Point pt, int modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, int modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, int modifiers);
@@ -458,6 +461,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, int status) override;
 	void NotifyMacroRecord(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
+	void NotifyColorized(uptr_t wParam, uptr_t lParam);
+	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(int flags) noexcept;
 	void PageMove(int direction, Selection::SelTypes selt=Selection::SelTypes::none, bool stuttered = false);

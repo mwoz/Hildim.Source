@@ -53,7 +53,7 @@ const GUI::gui_char menuAccessIndicator[] = GUI_TEXT("_");
 #include <commctrl.h>
 
 const GUI::gui_char menuAccessIndicator[] = GUI_TEXT("&");
-#include "platform.h" //!-add-[StyleDefault]
+//#include "platform.h" //!-add-[StyleDefault]
 
 #endif
 
@@ -656,10 +656,6 @@ void SciTEBase::ReadProperties() {
 
 	SString fileNameForExtension = ExtensionFileName();
 
-	SString modulePath = props.GetNewExpand("lexerpath.",
-	    fileNameForExtension.c_str());
-	if (modulePath.length())
-	    wEditor.CallString(SCI_LOADLEXERLIBRARY, 0, modulePath.c_str());
 	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
 	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0); 
 
@@ -668,21 +664,13 @@ void SciTEBase::ReadProperties() {
 			if (language.startswith("script_")) {
 				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
 			} else {
-				if (lexLanguage != lexLPeg) {
-					Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
-						wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-						int lex = wEditor.Call(SCI_GETLEXER);
-						if (lex != SCLEX_NULL && strcmp(language.c_str(), "lpeg") == 0) {
-							lexLPeg = lex;
-								wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, "container");
-						}
-				} else {
-					wEditor.CallString(SCI_PRIVATELEXERCALL, SCI_SETLEXERLANGUAGE, language.c_str());
-				}
+
+				Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
+				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 			}
 		}
 	} else if (languageCurrent.length()) {
-		wEditor.Call(SCI_SETLEXER, SCLEX_NULL);
+		wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
 	}
 
 	props.Set("Language", language.c_str());
@@ -1020,8 +1008,8 @@ void SciTEBase::ReadProperties() {
 	bufferedDraw = props.GetInt("buffered.draw", 1);
 	wEditor.Call(SCI_SETBUFFEREDDRAW, bufferedDraw);
 
-	twoPhaseDraw = props.GetInt("two.phase.draw", 1);
-	wEditor.Call(SCI_SETTWOPHASEDRAW, twoPhaseDraw);
+	//twoPhaseDraw = props.GetInt("two.phase.draw", 1);
+	//wEditor.Call(SCI_SETTWOPHASEDRAW, twoPhaseDraw);
 
 	wEditor.Call(SCI_SETLAYOUTCACHE, props.GetInt("cache.layout", SC_CACHE_CARET));
 	wOutput.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
