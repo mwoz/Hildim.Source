@@ -61,13 +61,28 @@ std::wstring WideStringFromUTF8(std::string_view sv) {
 
 #endif
 
+// Turn off deprecation checks as LexillaAccess deprecates its wrapper over
+// the deprecated LexerNameFromID. Thus use within LexillaAccess is intentional.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#else
+#pragma warning(disable: 4996)
+#endif
+
 std::string directoryLoadDefault;
 std::string lastLoaded;
-std::vector<Lexilla::CreateLexerFn> fnCLs;
-std::vector<Lexilla::GetLibraryPropertyNamesFn> fnGLPNs;
+
+struct LexLibrary {
+	Lexilla::CreateLexerFn fnCL;
+	Lexilla::LexerNameFromIDFn fnLNFI;
+	Lexilla::GetLibraryPropertyNamesFn fnGLPN;
+	Lexilla::SetLibraryPropertyFn fnSLP;
+	std::string nameSpace;
+};
+std::vector<LexLibrary> libraries;
+
 std::vector<std::string> lexers;
 std::vector<std::string> libraryProperties;
-std::vector<Lexilla::SetLibraryPropertyFn> fnSLPs;
 
 Function FindSymbol(Module m, const char *symbol) noexcept {
 #if _WIN32
@@ -90,6 +105,10 @@ bool NameContainsDot(std::string_view path) noexcept {
 	return false;
 }
 
+constexpr bool HasPrefix(std::string_view s, std::string_view prefix) noexcept {
+	return (s.size() >= prefix.size()) && (prefix == s.substr(0, prefix.size()));
+}
+
 }
 
 void Lexilla::SetDefault(CreateLexerFn pCreate) noexcept {
@@ -102,15 +121,13 @@ void Lexilla::SetDefaultDirectory(std::string_view directory) {
 
 bool Lexilla::Load(std::string_view sharedLibraryPaths) {
 	if (sharedLibraryPaths == lastLoaded) {
-		return !fnCLs.empty();
+		return !libraries.empty();
 	}
 
 	std::string_view paths = sharedLibraryPaths;
 	lexers.clear();
 
-	fnCLs.clear();
-	fnGLPNs.clear();
-	fnSLPs.clear();
+	libraries.clear();
 	while (!paths.empty()) {
 		const size_t separator = paths.find_first_of(';');
 		std::string path(paths.substr(0, separator));
@@ -154,36 +171,46 @@ bool Lexilla::Load(std::string_view sharedLibraryPaths) {
 			}
 			CreateLexerFn fnCL = FunctionPointer<CreateLexerFn>(
 				FindSymbol(lexillaDL, LEXILLA_CREATELEXER));
-			if (fnCL) {
-				fnCLs.push_back(fnCL);
-			}
+			LexerNameFromIDFn fnLNFI = FunctionPointer<LexerNameFromIDFn>(
+				FindSymbol(lexillaDL, LEXILLA_LEXERNAMEFROMID));
 			GetLibraryPropertyNamesFn fnGLPN = FunctionPointer<GetLibraryPropertyNamesFn>(
 				FindSymbol(lexillaDL, LEXILLA_GETLIBRARYPROPERTYNAMES));
-			if (fnGLPN) {
-				fnGLPNs.push_back(fnGLPN);
-			}
 			SetLibraryPropertyFn fnSLP = FunctionPointer<SetLibraryPropertyFn>(
 				FindSymbol(lexillaDL, LEXILLA_SETLIBRARYPROPERTY));
-			if (fnSLP) {
-				fnSLPs.push_back(fnSLP);
+			GetNameSpaceFn fnGNS = FunctionPointer<GetNameSpaceFn>(
+				FindSymbol(lexillaDL, LEXILLA_GETNAMESPACE));
+			std::string nameSpace;
+			if (fnGNS) {
+				nameSpace = fnGNS();
+				nameSpace += LEXILLA_NAMESPACE_SEPARATOR;
 			}
+			LexLibrary lexLib {
+				fnCL,
+				fnLNFI,
+				fnGLPN,
+				fnSLP,
+				nameSpace
+			};
+			libraries.push_back(lexLib);
 		}
 	}
 	lastLoaded = sharedLibraryPaths;
 
 	std::set<std::string> nameSet;
-	for (GetLibraryPropertyNamesFn fnGLPN : fnGLPNs) {
-		const char *cpNames = fnGLPN();
-		if (cpNames) {
-			std::string_view names = cpNames;
-			while (!names.empty()) {
-				const size_t separator = names.find_first_of('\n');
-				std::string name(names.substr(0, separator));
-				nameSet.insert(name);
-				if (separator == std::string::npos) {
-					names.remove_prefix(names.size());
-				} else {
-					names.remove_prefix(separator + 1);
+	for (const LexLibrary &lexLib : libraries) {
+		if (lexLib.fnGLPN) {
+			const char *cpNames = lexLib.fnGLPN();
+			if (cpNames) {
+				std::string_view names = cpNames;
+				while (!names.empty()) {
+					const size_t separator = names.find_first_of('\n');
+					std::string name(names.substr(0, separator));
+					nameSet.insert(name);
+					if (separator == std::string::npos) {
+						names.remove_prefix(names.size());
+					} else {
+						names.remove_prefix(separator + 1);
+					}
 				}
 			}
 		}
@@ -191,15 +218,29 @@ bool Lexilla::Load(std::string_view sharedLibraryPaths) {
 	// Standard Lexilla does not have any properties so can't be added to set.
 	libraryProperties = std::vector<std::string>(nameSet.begin(), nameSet.end());
 
-	return !fnCLs.empty();
+	return !libraries.empty();
 }
 
 Scintilla::ILexer5 *Lexilla::MakeLexer(std::string_view languageName) {
 	std::string sLanguageName(languageName);	// Ensure NUL-termination
-	for (CreateLexerFn fnCL : fnCLs) {
-		Scintilla::ILexer5 *pLexer = fnCL(sLanguageName.c_str());
-		if (pLexer) {
-			return pLexer;
+	// First, try to match namespace then name suffix
+	for (const LexLibrary &lexLib : libraries) {
+		if (lexLib.fnCL && !lexLib.nameSpace.empty()) {
+			if (HasPrefix(languageName, lexLib.nameSpace)) {
+				Scintilla::ILexer5 *pLexer = lexLib.fnCL(sLanguageName.substr(lexLib.nameSpace.size()).c_str());
+				if (pLexer) {
+					return pLexer;
+				}
+			}
+		}
+	}
+	// If no match with namespace, try to just match name
+	for (const LexLibrary &lexLib : libraries) {
+		if (lexLib.fnCL) {
+			Scintilla::ILexer5 *pLexer = lexLib.fnCL(sLanguageName.c_str());
+			if (pLexer) {
+				return pLexer;
+			}
 		}
 	}
 	if (pCreateLexerDefault) {
@@ -218,13 +259,27 @@ std::vector<std::string> Lexilla::Lexers() {
 	return lexers;
 }
 
+std::string Lexilla::NameFromID(int identifier) {
+	for (const LexLibrary &lexLib : libraries) {
+		if (lexLib.fnLNFI) {
+			const char *name = lexLib.fnLNFI(identifier);
+			if (name) {
+				return name;
+			}
+		}
+	}
+	return std::string();
+}
+
 std::vector<std::string> Lexilla::LibraryProperties() {
 	return libraryProperties;
 }
 
 void Lexilla::SetProperty(const char *key, const char *value) {
-	for (SetLibraryPropertyFn fnSLP : fnSLPs) {
-		fnSLP(key, value);
+	for (const LexLibrary &lexLib : libraries) {
+		if (lexLib.fnSLP) {
+			lexLib.fnSLP(key, value);
+		}
 	}
 	// Standard Lexilla does not have any properties so don't set.
 }
