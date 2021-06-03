@@ -866,10 +866,11 @@ protected:
 	SString ExtensionFileName();
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
 	void ForwardPropertyToEditor(const char *key);
-	void DefineMarker(int marker, int markerType, Colour fore, Colour back);
+	void DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back);
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
 	virtual void ReadProperties();
+	virtual void ReadPropertiesEx();
 	void SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd);
 	void SetStyleFor(GUI::ScintillaWindow &win, const char *language);
 	void ReloadProperties();

@@ -422,16 +422,19 @@ void SciTEBase::ForwardPropertyToEditor(const char *key) {
 		reinterpret_cast<uptr_t>(key), value.c_str());
 }
 
-void SciTEBase::DefineMarker(int marker, int markerType, Colour fore, Colour back) {
-	wEditor.Call(SCI_MARKERDEFINE, marker, markerType);
-	wEditor.Call(SCI_MARKERSETFORE, marker, fore);
-	wEditor.Call(SCI_MARKERSETBACK, marker, back);
-	wOutput.Call(SCI_MARKERDEFINE, marker, markerType);
-	wOutput.Call(SCI_MARKERSETFORE, marker, fore);
-	wOutput.Call(SCI_MARKERSETBACK, marker, back);
-	wFindRes.Call(SCI_MARKERDEFINE, marker, markerType);
-	wFindRes.Call(SCI_MARKERSETFORE, marker, fore);
-	wFindRes.Call(SCI_MARKERSETBACK, marker, back);
+void SciTEBase::DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back) {
+	if (main) {
+		wEditor.Call(SCI_MARKERDEFINE, marker, markerType);
+		wEditor.Call(SCI_MARKERSETFORE, marker, fore);
+		wEditor.Call(SCI_MARKERSETBACK, marker, back);
+	} else {
+		wOutput.Call(SCI_MARKERDEFINE, marker, markerType);
+		wOutput.Call(SCI_MARKERSETFORE, marker, fore);
+		wOutput.Call(SCI_MARKERSETBACK, marker, back);
+		wFindRes.Call(SCI_MARKERDEFINE, marker, markerType);
+		wFindRes.Call(SCI_MARKERSETFORE, marker, fore);
+		wFindRes.Call(SCI_MARKERSETBACK, marker, back);
+	}
 }
 
 static int FileLength(const char *path) {
@@ -657,7 +660,7 @@ void SciTEBase::ReadProperties() {
 	SString fileNameForExtension = ExtensionFileName();
 
 	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
-	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0); 
+	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 
 	if (language.length()) {
 		if (strcmp(language.c_str(), languageCurrent.c_str())) {
@@ -679,20 +682,20 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 
-	languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
-	if (strcmp("errorlist", languageCurrent.c_str())) {
-		Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
-		wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+	// languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
+	// if (strcmp("errorlist", languageCurrent.c_str())) {
+		// Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
+		// wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 
-		plexer = Lexilla::MakeLexer("searchResult");
-		wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-	}
+		// plexer = Lexilla::MakeLexer("searchResult");
+		// wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+	// }
 
 	SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
 	wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());
 
 	for (int wl = 1; wl <= KEYWORDSET_MAX; wl++) {
-		SString kwk(wl+1);
+		SString kwk(wl + 1);
 		kwk += '.';
 		kwk.insert(0, "keywords");
 		SString kw = props.GetNewExpand(kwk.c_str(), fileNameForExtension.c_str());
@@ -700,17 +703,18 @@ void SciTEBase::ReadProperties() {
 	}
 
 
-	FilePath homepath = GetSciteDefaultHome();
-	props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
-	homepath = GetSciteUserHome();
-	props.Set("SciteUserHome", homepath.AsUTF8().c_str());
+	// FilePath homepath = GetSciteDefaultHome();
+	// props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
+	// homepath = GetSciteUserHome();
+	// props.Set("SciteUserHome", homepath.AsUTF8().c_str());
 
-	for (size_t i=0; propertiesToForward[i]; i++) {
-		ForwardPropertyToEditor(propertiesToForward[i]);
+	for (size_t i = 0; propertiesToForward[i]; i++) {
+		wEditor.CallString(SCI_SETPROPERTY,
+			reinterpret_cast<uptr_t>(propertiesToForward[i]), props.GetExpanded(propertiesToForward[i]).c_str());
 	}
 
-	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
-	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
+	// FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
+	// props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
 
 	wEditor.Call(SCI_SETOVERTYPE, props.GetInt("change.overwrite.enable", 1) + 2); //-add-[ignore_overstrike_change]
 
@@ -721,11 +725,11 @@ void SciTEBase::ReadProperties() {
 	}
 	props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
 	wEditor.Call(SCI_SETCODEPAGE, codePage);
-	int outputCodePage = props.GetInt("output.code.page", codePage);
-	wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
-	wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
+	// int outputCodePage = props.GetInt("output.code.page", codePage);
+	// wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
+	// wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
 
-	characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
+	// characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
 
 #ifdef __unix__
 	SString localeCType = props.Get("LC_CTYPE");
@@ -735,79 +739,69 @@ void SciTEBase::ReadProperties() {
 		setlocale(LC_CTYPE, "C");
 #endif
 
-	wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
+	//wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
 
 //!-start-[caret]
 	SString tmp_str;
-	tmp_str=props.GetNewExpand("caret.fore.", fileNameForExtension.c_str());
+	tmp_str = props.GetNewExpand("caret.fore.", fileNameForExtension.c_str());
 	//Writing caret.fore.$(FilePattern) into tmp_str
 	//And test for existing
-	if(tmp_str.length())
-		wEditor.Call(SCI_SETCARETFORE,ColourFromString(tmp_str));
+	if (tmp_str.length())
+		wEditor.Call(SCI_SETCARETFORE, ColourFromString(tmp_str));
 	else
-//!-end-[caret]
-	CallChildren(SCI_SETCARETFORE,
-	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
-	CallChildren(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
+		//!-end-[caret]
+		wEditor.Call(SCI_SETCARETFORE,
+			ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+	wEditor.Call(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
-	CallChildren(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
-	CallChildren(SCI_SETADDITIONALSELECTIONTYPING, props.GetInt("selection.additional.typing", 1));
-	CallChildren(SCI_SETADDITIONALCARETSBLINK, props.GetInt("caret.additional.blinks", 1));
-	CallChildren(SCI_SETVIRTUALSPACEOPTIONS, props.GetInt("virtual.space"));
+	wEditor.Call(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
+	wEditor.Call(SCI_SETADDITIONALSELECTIONTYPING, props.GetInt("selection.additional.typing", 1));
+	wEditor.Call(SCI_SETADDITIONALCARETSBLINK, props.GetInt("caret.additional.blinks", 1));
+	wEditor.Call(SCI_SETVIRTUALSPACEOPTIONS, props.GetInt("virtual.space"));
 
 	wEditor.Call(SCI_SETMOUSEDWELLTIME,
-	           props.GetInt("dwell.period", SC_TIME_FOREVER), 0);
+		props.GetInt("dwell.period", SC_TIME_FOREVER), 0);
 
-//!-start-[caret]
-	tmp_str=props.GetNewExpand("caret.width.", fileNameForExtension.c_str());
-	if(tmp_str.length()){
-		wEditor.Call(SCI_SETCARETWIDTH, IntFromHexByte(tmp_str.c_str()));
-		wOutput.Call(SCI_SETCARETWIDTH, IntFromHexByte(tmp_str.c_str()));
-		wFindRes.Call(SCI_SETCARETWIDTH, IntFromHexByte(tmp_str.c_str()));
-	}
-	else{
-//!-end-[caret]
 
 	wEditor.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	wFindRes.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	}//!-add-[caret]
+	// wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
+	// wFindRes.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
+//!-add-[caret]
 
 	SString caretLineBack = props.Get("caret.line.back");
 	if (caretLineBack.length()) {
 		wEditor.Call(SCI_SETCARETLINEVISIBLE, 1);
 		wEditor.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	}
-	else {
+	} else {
 		wEditor.Call(SCI_SETCARETLINEVISIBLE, 0);
 	}
 	wEditor.Call(SCI_SETCARETLINEBACKALPHA,
 		props.GetInt("caret.line.back.alpha", SC_ALPHA_NOALPHA));
-	
-	caretLineBack = props.Get("findres.caret.line.back");
-	if (caretLineBack.length()) {
-		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
-		wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
-		wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	}
-	else {
-		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
-	}
-	wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
-		props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
 
-//!-start-[output.caret]  - не будем делать в поиске
-	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
+	// caretLineBack = props.Get("findres.caret.line.back");
+	// if (caretLineBack.length()) {
+		// wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
+		// wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
+		// wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
+	// }
+	// else {
+		// wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
+	// }
+	// wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
+		// props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
 
-	SString outputCaretLineBack = props.Get("output.caret.line.back");
-	if (outputCaretLineBack.length()) {
-		wOutput.Call(SCI_SETCARETLINEVISIBLE, 1);
-		wOutput.Call(SCI_SETCARETLINEBACK, ColourFromString(outputCaretLineBack));
-	} else {
-		wOutput.Call(SCI_SETCARETLINEVISIBLE, 0);
-	}
-	wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
-//!-end-[output.caret]
+	// //!-start-[output.caret]  - не будем делать в поиске
+		// wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
+
+		// SString outputCaretLineBack = props.Get("output.caret.line.back");
+		// if (outputCaretLineBack.length()) {
+			// wOutput.Call(SCI_SETCARETLINEVISIBLE, 1);
+			// wOutput.Call(SCI_SETCARETLINEBACK, ColourFromString(outputCaretLineBack));
+		// } else {
+			// wOutput.Call(SCI_SETCARETLINEVISIBLE, 0);
+		// }
+		// wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
+	//!-end-[output.caret]
 
 	SString controlCharSymbol = props.Get("control.char.symbol");
 	if (controlCharSymbol.length()) {
@@ -819,8 +813,8 @@ void SciTEBase::ReadProperties() {
 	SString caretPeriod = props.Get("caret.period");
 	if (caretPeriod.length()) {
 		wEditor.Call(SCI_SETCARETPERIOD, caretPeriod.value());
-		wOutput.Call(SCI_SETCARETPERIOD, caretPeriod.value());
-		wFindRes.Call(SCI_SETCARETPERIOD, caretPeriod.value());
+		// wOutput.Call(SCI_SETCARETPERIOD, caretPeriod.value());
+		// wFindRes.Call(SCI_SETCARETPERIOD, caretPeriod.value());
 	}
 
 	int caretSlop = props.GetInt("caret.policy.xslop", 1) ? CARET_SLOP : 0;
@@ -845,7 +839,605 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETEDGECOLUMN, props.GetInt("edge.column", 0));
 	wEditor.Call(SCI_SETEDGEMODE, props.GetInt("edge.mode", EDGE_NONE));
 	wEditor.Call(SCI_SETEDGECOLOUR,
-	           ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda)));
+		ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda)));
+
+	SString selFore = props.Get("selection.fore");
+	if (selFore.length()) {
+		wEditor.Call(SCI_SETSELFORE, 1, ColourFromString(selFore));
+	} else {
+		wEditor.Call(SCI_SETSELFORE, 0, 0);
+	}
+	SString selBack = props.Get("selection.back");
+	if (selBack.length()) {
+		wEditor.Call(SCI_SETSELBACK, 1, ColourFromString(selBack));
+	} else {
+		if (selFore.length())
+			wEditor.Call(SCI_SETSELBACK, 0, 0);
+		else	// Have to show selection somehow
+			wEditor.Call(SCI_SETSELBACK, 1, ColourRGB(0xC0, 0xC0, 0xC0));
+	}
+	int selectionAlpha = props.GetInt("selection.alpha", SC_ALPHA_NOALPHA);
+	wEditor.Call(SCI_SETSELALPHA, selectionAlpha);
+
+	SString selAdditionalFore = props.Get("selection.additional.fore");
+	if (selAdditionalFore.length()) {
+		wEditor.Call(SCI_SETADDITIONALSELFORE, ColourFromString(selAdditionalFore));
+	}
+	SString selAdditionalBack = props.Get("selection.additional.back");
+	if (selAdditionalBack.length()) {
+		wEditor.Call(SCI_SETADDITIONALSELBACK, ColourFromString(selAdditionalBack));
+	}
+	int selectionAdditionalAlpha = (selectionAlpha == SC_ALPHA_NOALPHA) ? SC_ALPHA_NOALPHA : selectionAlpha / 2;
+	wEditor.Call(SCI_SETADDITIONALSELALPHA, props.GetInt("selection.additional.alpha", selectionAdditionalAlpha));
+
+	SString foldColour = props.Get("fold.margin.colour");
+	if (foldColour.length()) {
+		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
+	} else {
+		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 0, 0);
+	}
+	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
+	if (foldHiliteColour.length()) {
+		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
+	} else {
+		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+	}
+	//!-start-[HighlightCurrFolder]
+	SString foldHighlightColour = props.Get("fold.highlight.colour");
+	if (foldHighlightColour.length()) {
+		wEditor.Call(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
+	} else {
+		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+	}
+	//!-end-[HighlightCurrFolder]
+
+	SString whitespaceFore = props.Get("whitespace.fore");
+	if (whitespaceFore.length()) {
+		wEditor.Call(SCI_SETWHITESPACEFORE, 1, ColourFromString(whitespaceFore));
+	} else {
+		wEditor.Call(SCI_SETWHITESPACEFORE, 0, 0);
+	}
+	SString whitespaceBack = props.Get("whitespace.back");
+	if (whitespaceBack.length()) {
+		wEditor.Call(SCI_SETWHITESPACEBACK, 1, ColourFromString(whitespaceBack));
+	} else {
+		wEditor.Call(SCI_SETWHITESPACEBACK, 0, 0);
+	}
+
+	char bracesStyleKey[200];
+	sprintf(bracesStyleKey, "braces.%s.style", language.c_str());
+	bracesStyle = props.GetInt(bracesStyleKey, 0);
+
+	char key[200];
+	SString sval;
+
+	//!-start-[BetterCalltips]
+		// sval = FindLanguageProperty("calltip.*.automatic", "1");
+		// callTipAutomatic = sval == "1";
+	// //!-end-[BetterCalltips]
+
+		// sval = FindLanguageProperty("calltip.*.ignorecase");
+		// callTipIgnoreCase = sval == "1";
+
+	// //!-start-[BetterCalltips]
+		// calltipShowPerPage = FindIntLanguageProperty("calltip.*.show.per.page", 1);
+		// if (calltipShowPerPage < 1) calltipShowPerPage = 1;
+	// //!-end-[BetterCalltips]
+
+		// calltipWordCharacters = FindLanguageProperty("calltip.*.word.characters",
+			// "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+
+		// calltipParametersStart = FindLanguageProperty("calltip.*.parameters.start", "(");
+		// calltipParametersEnd = FindLanguageProperty("calltip.*.parameters.end", ")");
+		// calltipParametersSeparators = FindLanguageProperty("calltip.*.parameters.separators", ",;");
+
+		// calltipEndDefinition = FindLanguageProperty("calltip.*.end.definition");
+
+		// sprintf(key, "autocomplete.%s.start.characters", language.c_str());
+		// autoCompleteStartCharacters = props.GetExpanded(key);
+		// if (autoCompleteStartCharacters == "")
+			// autoCompleteStartCharacters = props.GetExpanded("autocomplete.*.start.characters");
+		// // "" is a quite reasonable value for this setting
+
+	sprintf(key, "autocomplete.%s.fillups", language.c_str());
+	autoCompleteFillUpCharacters = props.GetExpanded(key);
+	if (autoCompleteFillUpCharacters == "")
+	autoCompleteFillUpCharacters =
+	props.GetExpanded("autocomplete.*.fillups");
+	wEditor.CallString(SCI_AUTOCSETFILLUPS, 0,
+		autoCompleteFillUpCharacters.c_str());
+
+	sprintf(key, "autocomplete.%s.ignorecase", "*");
+	sval = props.GetNewExpand(key);
+	autoCompleteIgnoreCase = sval == "1";
+	sprintf(key, "autocomplete.%s.ignorecase", language.c_str());
+	sval = props.GetNewExpand(key);
+	if (sval != "")
+	autoCompleteIgnoreCase = sval == "1";
+	wEditor.Call(SCI_AUTOCSETIGNORECASE, autoCompleteIgnoreCase ? 1 : 0);
+	// wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
+	// wFindRes.Call(SCI_AUTOCSETIGNORECASE, 1);
+
+	int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
+	wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
+
+	wEditor.Call(SCI_AUTOCSETCANCELATSTART, 0);
+	wEditor.Call(SCI_AUTOCSETDROPRESTOFWORD, 0);
+
+	if (firstPropertiesRead) {
+		ReadPropertiesInitial();
+		props.SetInteger("system.code.page", ::GetACP());
+	}
+
+	ReadFontProperties();
+	wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));
+	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
+
+	//wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
+	wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
+	wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
+
+	// jobQueue.clearBeforeExecute = props.GetInt("clear.before.execute");
+	// jobQueue.timeCommands = props.GetInt("time.commands");
+
+	int blankMarginLeft = props.GetInt("blank.margin.left", 1);
+	int blankMarginRight = props.GetInt("blank.margin.right", 1);
+	wEditor.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	wEditor.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+	// wOutput.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	// wOutput.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+	// wFindRes.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	// wFindRes.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+
+	wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
+
+	SString lineMarginProp = props.Get("line.margin.width");
+	lineNumbersWidth = lineMarginProp.value();
+	if (lineNumbersWidth == 0)
+	lineNumbersWidth = lineNumbersWidthDefault;
+	lineNumbersExpand = lineMarginProp.contains('+');
+
+	SetLineNumberWidth();
+
+	bufferedDraw = props.GetInt("buffered.draw", 1);
+	wEditor.Call(SCI_SETBUFFEREDDRAW, bufferedDraw);
+
+	//twoPhaseDraw = props.GetInt("two.phase.draw", 1);
+	//wEditor.Call(SCI_SETTWOPHASEDRAW, twoPhaseDraw);
+
+	wEditor.Call(SCI_SETLAYOUTCACHE, props.GetInt("cache.layout", SC_CACHE_CARET));
+	// wOutput.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
+	// wFindRes.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
+
+	bracesCheck = props.GetInt("braces.check");
+	bracesSloppy = props.GetInt("braces.sloppy");
+
+	wEditor.Call(SCI_SETCHARSDEFAULT);
+	wordCharacters = props.GetNewExpand("word.characters.", fileNameForExtension.c_str());
+	if (wordCharacters.length()) {
+		wEditor.CallString(SCI_SETWORDCHARS, 0, wordCharacters.c_str());
+	} else {
+		wordCharacters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	}
+	//!-start-[GetWordChars]
+	//	props.Set("CurrentWordCharacters", wordCharacters.c_str() );
+	//!-end-[GetWordChars]
+
+	whitespaceCharacters = props.GetNewExpand("whitespace.characters.", fileNameForExtension.c_str());
+	if (whitespaceCharacters.length()) {
+		wEditor.CallString(SCI_SETWHITESPACECHARS, 0, whitespaceCharacters.c_str());
+	}
+
+	SString viewIndentExamine = GetFileNameProperty("view.indentation.examine");
+	indentExamine = viewIndentExamine.length() ? viewIndentExamine.value() : SC_IV_REAL;
+	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides") ?
+		indentExamine : SC_IV_NONE);
+
+	wEditor.Call(SCI_SETTABINDENTS, props.GetInt("tab.indents", 1));
+	wEditor.Call(SCI_SETBACKSPACEUNINDENTS, props.GetInt("backspace.unindents", 1));
+
+	wEditor.Call(SCI_CALLTIPUSESTYLE, 32);
+
+	indentOpening = props.GetInt("indent.opening");
+	indentClosing = props.GetInt("indent.closing");
+	indentMaintain = props.GetNewExpand("indent.maintain.", fileNameForExtension.c_str()).value();
+
+	SString lookback = props.GetNewExpand("statement.lookback.", fileNameForExtension.c_str());
+	statementLookback = lookback.value();
+	statementIndent = GetStyleAndWords("statement.indent.");
+	statementEnd = GetStyleAndWords("statement.end.");
+	blockStart = GetStyleAndWords("block.start.");
+	blockEnd = GetStyleAndWords("block.end.");
+
+	SString list;
+	list = props.GetNewExpand("preprocessor.symbol.", fileNameForExtension.c_str());
+	preprocessorSymbol = list[0];
+	list = props.GetNewExpand("preprocessor.start.", fileNameForExtension.c_str());
+	preprocCondStart.Clear();
+	preprocCondStart.Set(list.c_str());
+	list = props.GetNewExpand("preprocessor.middle.", fileNameForExtension.c_str());
+	preprocCondMiddle.Clear();
+	preprocCondMiddle.Set(list.c_str());
+	list = props.GetNewExpand("preprocessor.end.", fileNameForExtension.c_str());
+	preprocCondEnd.Clear();
+	preprocCondEnd.Set(list.c_str());
+
+	wEditor.Call(SCI_SETWRAPVISUALFLAGS, props.GetInt("wrap.visual.flags"));
+	wEditor.Call(SCI_SETWRAPVISUALFLAGSLOCATION, props.GetInt("wrap.visual.flags.location"));
+	wEditor.Call(SCI_SETWRAPSTARTINDENT, props.GetInt("wrap.visual.startindent"));
+	wEditor.Call(SCI_SETWRAPINDENTMODE, props.GetInt("wrap.indent.mode"));
+
+	// if (props.GetInt("wrap.aware.home.end.keys",0)) {
+		// if (props.GetInt("vc.home.key", 1)) {
+			// AssignKey(SCK_HOME, 0, SCI_VCHOMEWRAP);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEWRAPEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
+		// } else {
+			// AssignKey(SCK_HOME, 0, SCI_HOMEWRAP);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEWRAPEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
+		// }
+		// AssignKey(SCK_END, 0, SCI_LINEENDWRAP);
+		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDWRAPEXTEND);
+	// } else {
+		// if (props.GetInt("vc.home.key", 1)) {
+			// AssignKey(SCK_HOME, 0, SCI_VCHOME);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
+		// } else {
+			// AssignKey(SCK_HOME, 0, SCI_HOME);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
+		// }
+		// AssignKey(SCK_END, 0, SCI_LINEEND);
+		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDEXTEND);
+	// }
+
+	// AssignKey('L', SCMOD_SHIFT | SCMOD_CTRL, SCI_LINEDELETE);
+
+	// scrollOutput = props.GetInt("output.scroll", 1);
+
+	wEditor.Call(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
+
+	// To put the folder markers in the line number region
+	//wEditor.Call(SCI_SETMARGINMASKN, 0, SC_MASK_FOLDERS);
+
+	wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_CHANGEFOLD);
+
+	if (0 == props.GetInt("undo.redo.lazy")) {
+		// Trap for insert/delete notifications (also fired by undo
+		// and redo) so that the buttons can be enabled if needed.
+		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
+			| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | wEditor.Call(SCI_GETMODEVENTMASK, 0));
+		wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
+			| SC_LASTSTEPINUNDOREDO | wOutput.Call(SCI_GETMODEVENTMASK, 0));
+		wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
+			| SC_LASTSTEPINUNDOREDO | wFindRes.Call(SCI_GETMODEVENTMASK, 0));
+
+		//SC_LASTSTEPINUNDOREDO is probably not needed in the mask; it
+		//doesn't seem to fire as an event of its own; just modifies the
+		//insert and delete events.
+	}
+
+	// Create a margin column for the folding symbols
+	wEditor.Call(SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
+
+	wEditor.Call(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
+
+	wEditor.Call(SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS);
+	wEditor.Call(SCI_SETMARGINSENSITIVEN, 2, 1);
+	if (props.GetInt("margin.bookmark.by.single.click", 1) == 1) //!-add-[SetBookmark]
+	wEditor.Call(SCI_SETMARGINSENSITIVEN, 1, 1);	//!-add-[SetBookmark]
+
+	 switch (props.GetInt("fold.symbols")) {
+	 case 0:
+		 // Arrow pointing right for contracted folders, arrow pointing down for expanded
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
+		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_ARROW,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
+		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					 
+		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
+		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));					  
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));					  
+		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 break;
+	 case 1:
+		 // Plus for contracted folders, minus for expanded
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_PLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 break;
+	 case 2:
+		 // Like a flattened tree control using circular headers and curved joins
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 break;
+	 case 3:
+		 // Like a flattened tree control using square headers
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 break;
+	 }
+
+	wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
+		ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
+	wEditor.Call(SCI_MARKERSETBACK, markerBookmark,
+		ColourOfProperty(props, "bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
+	wEditor.Call(SCI_MARKERSETALPHA,
+		props.GetInt("bookmark.alpha", SC_ALPHA_NOALPHA));
+	SString bookMarkXPM = props.Get("bookmark.pixmap");
+	if (bookMarkXPM.length()) {
+		wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
+			bookMarkXPM.c_str());
+	} else if (props.Get("bookmark.fore").length()) {
+		wEditor.Call(SCI_MARKERDEFINE, markerBookmark, SC_MARK_CIRCLE);
+	} else {
+		// No bookmark.fore setting so display default pixmap.
+		wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
+			reinterpret_cast<char *>(bookmarkBluegem));
+	}
+
+	wEditor.Call(SCI_MARKERSETBACK, markerNotSaved,
+		ColourOfProperty(props, "marker.notsaved.back", ColourRGB(0xff, 0x70, 0x70)));
+	wEditor.Call(SCI_MARKERDEFINE, markerNotSaved, SC_MARK_LEFTRECT);
+	wEditor.Call(SCI_MARKERSETBACK, markerSaved,
+		ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
+	wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
+
+	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
+	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
+		"error.marker.fore", ColourRGB(0x7f, 0, 0)));
+	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
+		"error.marker.back", ColourRGB(0xff, 0xff, 0)));
+
+	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
+
+	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);
+	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
+	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wEditor.Call(SCI_SETXOFFSET, hpos);
+	// wOutput.Call(SCI_SETSCROLLWIDTH, 100);
+	// wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	// wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
+	// wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+
+	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
+	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
+
+	// wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
+	// wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
+
+	if (extender) {
+		FilePath defaultDir = GetDefaultDirectory();
+		FilePath scriptPath;
+
+		// Check for an extension script
+		GUI::gui_string extensionFile = GUI::StringFromUTF8(
+			props.GetNewExpand("extension.", fileNameForExtension.c_str()).c_str());
+		if (extensionFile.length()) {
+			// find file in local directory
+			FilePath docDir = filePath.Directory();
+			if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
+				// Found file in document directory
+				extender->Load(scriptPath.AsUTF8().c_str());
+			} else if (Exists(defaultDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
+				// Found file in global directory
+				extender->Load(scriptPath.AsUTF8().c_str());
+			} else if (Exists(GUI_TEXT(""), extensionFile.c_str(), &scriptPath)) {
+				// Found as completely specified file name
+				extender->Load(scriptPath.AsUTF8().c_str());
+			}
+		}
+	}
+	if(firstPropertiesRead)
+		ReadPropertiesEx();
+
+	firstPropertiesRead = false;
+	needReadProperties = false;
+}
+
+void SciTEBase::ReadPropertiesEx() {
+	if (extender)
+		extender->Clear();
+	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
+	// Lexilla::Load(".");
+
+	// SString fileNameForExtension = ExtensionFileName();
+
+	// language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
+	// std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0); 
+
+	// if (language.length()) {
+		// if (strcmp(language.c_str(), languageCurrent.c_str())) {
+			// if (language.startswith("script_")) {
+				// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
+			// } else {
+
+				// Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
+				// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+			// }
+		// }
+	// } else if (languageCurrent.length()) {
+		// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
+	// }
+
+	// props.Set("Language", language.c_str());
+
+	// lexLanguage = wEditor.Call(SCI_GETLEXER);
+
+	// wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
+
+	std::string languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
+	if (strcmp("errorlist", languageCurrent.c_str())) {
+		Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
+		wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+
+		plexer = Lexilla::MakeLexer("searchResult");
+		wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
+	}
+
+	// SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
+	// wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());
+
+	// for (int wl = 1; wl <= KEYWORDSET_MAX; wl++) {
+		// SString kwk(wl+1);
+		// kwk += '.';
+		// kwk.insert(0, "keywords");
+		// SString kw = props.GetNewExpand(kwk.c_str(), fileNameForExtension.c_str());
+		// wEditor.CallString(SCI_SETKEYWORDS, wl, kw.c_str());
+	// }
+
+
+	FilePath homepath = GetSciteDefaultHome();
+	props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
+	homepath = GetSciteUserHome();
+	props.Set("SciteUserHome", homepath.AsUTF8().c_str());
+
+	for (size_t i=0; propertiesToForward[i]; i++) {
+		ForwardPropertyToEditor(propertiesToForward[i]);
+	}
+
+	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", ExtensionFileName().c_str()).c_str());
+	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
+
+	// wEditor.Call(SCI_SETOVERTYPE, props.GetInt("change.overwrite.enable", 1) + 2); //-add-[ignore_overstrike_change]
+
+	// codePage = props.GetInt("code.page");
+	// if (CurrentBuffer()->unicodeMode != uni8Bit) {
+		// // Override properties file to ensure Unicode displayed.
+		// codePage = SC_CP_UTF8;
+	// }
+	// props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
+	// wEditor.Call(SCI_SETCODEPAGE, codePage);
+	int outputCodePage = props.GetInt("output.code.page", codePage);
+	wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
+	wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
+
+	characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
+
+#ifdef __unix__
+	SString localeCType = props.Get("LC_CTYPE");
+	if (localeCType.length())
+		setlocale(LC_CTYPE, localeCType.c_str());
+	else
+		setlocale(LC_CTYPE, "C");
+#endif
+
+	wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
+
+//!-start-[caret]
+	// SString tmp_str;
+	// tmp_str=props.GetNewExpand("caret.fore.", fileNameForExtension.c_str());
+	// //Writing caret.fore.$(FilePattern) into tmp_str
+	// //And test for existing
+	// if(tmp_str.length())
+		// wEditor.Call(SCI_SETCARETFORE,ColourFromString(tmp_str));
+	// else
+//!-end-[caret]
+	CallChildren(SCI_SETCARETFORE,
+	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+	CallChildren(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
+
+	CallChildren(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
+	CallChildren(SCI_SETADDITIONALSELECTIONTYPING, props.GetInt("selection.additional.typing", 1));
+	CallChildren(SCI_SETADDITIONALCARETSBLINK, props.GetInt("caret.additional.blinks", 1));
+	CallChildren(SCI_SETVIRTUALSPACEOPTIONS, props.GetInt("virtual.space"));
+
+	wEditor.Call(SCI_SETMOUSEDWELLTIME,
+	           props.GetInt("dwell.period", SC_TIME_FOREVER), 0);
+
+
+	// wEditor.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
+	// wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
+	CallChildren(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
+	//!-add-[caret]
+
+	// SString caretLineBack = props.Get("caret.line.back");
+	// if (caretLineBack.length()) {
+		// wEditor.Call(SCI_SETCARETLINEVISIBLE, 1);
+		// wEditor.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
+	// }
+	// else {
+		// wEditor.Call(SCI_SETCARETLINEVISIBLE, 0);
+	// }
+	// wEditor.Call(SCI_SETCARETLINEBACKALPHA,
+		// props.GetInt("caret.line.back.alpha", SC_ALPHA_NOALPHA));
+	
+	SString caretLineBack = props.Get("findres.caret.line.back");
+	if (caretLineBack.length()) {
+		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
+		wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
+		wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
+	}
+	else {
+		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
+	}
+	wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
+		props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
+
+//!-start-[output.caret]  - не будем делать в поиске
+	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
+
+	SString outputCaretLineBack = props.Get("output.caret.line.back");
+	if (outputCaretLineBack.length()) {
+		wOutput.Call(SCI_SETCARETLINEVISIBLE, 1);
+		wOutput.Call(SCI_SETCARETLINEBACK, ColourFromString(outputCaretLineBack));
+	} else {
+		wOutput.Call(SCI_SETCARETLINEVISIBLE, 0);
+	}
+	wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
+//!-end-[output.caret]
+
+	// SString controlCharSymbol = props.Get("control.char.symbol");
+	// if (controlCharSymbol.length()) {
+		// wEditor.Call(SCI_SETCONTROLCHARSYMBOL, static_cast<unsigned char>(controlCharSymbol[0]));
+	// } else {
+		// wEditor.Call(SCI_SETCONTROLCHARSYMBOL, 0);
+	// }
+
+	SString caretPeriod = props.Get("caret.period");
+	if (caretPeriod.length()) {
+		// wEditor.Call(SCI_SETCARETPERIOD, caretPeriod.value());
+		// wOutput.Call(SCI_SETCARETPERIOD, caretPeriod.value());
+		CallChildren(SCI_SETCARETPERIOD, caretPeriod.value());
+	}
+
+	// int caretSlop = props.GetInt("caret.policy.xslop", 1) ? CARET_SLOP : 0;
+	// int caretZone = props.GetInt("caret.policy.width", 50);
+	// int caretStrict = props.GetInt("caret.policy.xstrict") ? CARET_STRICT : 0;
+	// int caretEven = props.GetInt("caret.policy.xeven", 1) ? CARET_EVEN : 0;
+	// int caretJumps = props.GetInt("caret.policy.xjumps") ? CARET_JUMPS : 0;
+	// wEditor.Call(SCI_SETXCARETPOLICY, caretStrict | caretSlop | caretEven | caretJumps, caretZone);
+
+	// caretSlop = props.GetInt("caret.policy.yslop", 1) ? CARET_SLOP : 0;
+	// caretZone = props.GetInt("caret.policy.lines");
+	// caretStrict = props.GetInt("caret.policy.ystrict") ? CARET_STRICT : 0;
+	// caretEven = props.GetInt("caret.policy.yeven", 1) ? CARET_EVEN : 0;
+	// caretJumps = props.GetInt("caret.policy.yjumps") ? CARET_JUMPS : 0;
+	// wEditor.Call(SCI_SETYCARETPOLICY, caretStrict | caretSlop | caretEven | caretJumps, caretZone);
+
+	// int visibleStrict = props.GetInt("visible.policy.strict") ? VISIBLE_STRICT : 0;
+	// int visibleSlop = props.GetInt("visible.policy.slop", 1) ? VISIBLE_SLOP : 0;
+	// int visibleLines = props.GetInt("visible.policy.lines");
+	// wEditor.Call(SCI_SETVISIBLEPOLICY, visibleStrict | visibleSlop, visibleLines);
+
+	// wEditor.Call(SCI_SETEDGECOLUMN, props.GetInt("edge.column", 0));
+	// wEditor.Call(SCI_SETEDGEMODE, props.GetInt("edge.mode", EDGE_NONE));
+	// wEditor.Call(SCI_SETEDGECOLOUR,
+	           // ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda)));
 
 	SString selFore = props.Get("selection.fore");
 	if (selFore.length()) {
@@ -945,161 +1537,161 @@ void SciTEBase::ReadProperties() {
 		autoCompleteStartCharacters = props.GetExpanded("autocomplete.*.start.characters");
 	// "" is a quite reasonable value for this setting
 
-	sprintf(key, "autocomplete.%s.fillups", language.c_str());
-	autoCompleteFillUpCharacters = props.GetExpanded(key);
-	if (autoCompleteFillUpCharacters == "")
-		autoCompleteFillUpCharacters =
-			props.GetExpanded("autocomplete.*.fillups");
-	wEditor.CallString(SCI_AUTOCSETFILLUPS, 0,
-		autoCompleteFillUpCharacters.c_str());
+	// sprintf(key, "autocomplete.%s.fillups", language.c_str());
+	// autoCompleteFillUpCharacters = props.GetExpanded(key);
+	// if (autoCompleteFillUpCharacters == "")
+		// autoCompleteFillUpCharacters =
+			// props.GetExpanded("autocomplete.*.fillups");
+	// wEditor.CallString(SCI_AUTOCSETFILLUPS, 0,
+		// autoCompleteFillUpCharacters.c_str());
 
-	sprintf(key, "autocomplete.%s.ignorecase", "*");
-	sval = props.GetNewExpand(key);
-	autoCompleteIgnoreCase = sval == "1";
-	sprintf(key, "autocomplete.%s.ignorecase", language.c_str());
-	sval = props.GetNewExpand(key);
-	if (sval != "")
-		autoCompleteIgnoreCase = sval == "1";
-	wEditor.Call(SCI_AUTOCSETIGNORECASE, autoCompleteIgnoreCase ? 1 : 0);
-	wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
-	wFindRes.Call(SCI_AUTOCSETIGNORECASE, 1);
+	// sprintf(key, "autocomplete.%s.ignorecase", "*");
+	// sval = props.GetNewExpand(key);
+	// autoCompleteIgnoreCase = sval == "1";
+	// sprintf(key, "autocomplete.%s.ignorecase", language.c_str());
+	// sval = props.GetNewExpand(key);
+	// if (sval != "")
+		// autoCompleteIgnoreCase = sval == "1";
+	// wEditor.Call(SCI_AUTOCSETIGNORECASE, autoCompleteIgnoreCase ? 1 : 0);
+	// wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
+	// wFindRes.Call(SCI_AUTOCSETIGNORECASE, 1);
 
-	int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
-	wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
+	// int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
+	// wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
 
-	wEditor.Call(SCI_AUTOCSETCANCELATSTART, 0);
-	wEditor.Call(SCI_AUTOCSETDROPRESTOFWORD, 0);
+	// wEditor.Call(SCI_AUTOCSETCANCELATSTART, 0);
+	// wEditor.Call(SCI_AUTOCSETDROPRESTOFWORD, 0);
 
-	if (firstPropertiesRead) {
-		ReadPropertiesInitial();
-		props.SetInteger("system.code.page", ::GetACP());
-	}
+	// if (firstPropertiesRead) {
+		// ReadPropertiesInitial();
+		// props.SetInteger("system.code.page", ::GetACP());
+	// }
 
-	ReadFontProperties();
-	wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));		
-	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
+	//ReadFontProperties();   !!!!!!!!!!!
+	// wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));		
+	// wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
 
-	//wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
-	wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
-	wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
+	// //wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
+	// wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
+	// wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
 
 	jobQueue.clearBeforeExecute = props.GetInt("clear.before.execute");
 	jobQueue.timeCommands = props.GetInt("time.commands");
 
 	int blankMarginLeft = props.GetInt("blank.margin.left", 1);
 	int blankMarginRight = props.GetInt("blank.margin.right", 1);
-	wEditor.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	wEditor.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
-	wOutput.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	wOutput.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
-	wFindRes.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	wFindRes.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+	// wEditor.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	// wEditor.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+	// wOutput.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	// wOutput.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+	CallChildren(SCI_SETMARGINLEFT, 0, blankMarginLeft);
+	CallChildren(SCI_SETMARGINRIGHT, 0, blankMarginRight);
 
-	wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
+	// wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
 
-	SString lineMarginProp = props.Get("line.margin.width");
-	lineNumbersWidth = lineMarginProp.value();
-	if (lineNumbersWidth == 0)
-		lineNumbersWidth = lineNumbersWidthDefault;
-	lineNumbersExpand = lineMarginProp.contains('+');
+	// SString lineMarginProp = props.Get("line.margin.width");
+	// lineNumbersWidth = lineMarginProp.value();
+	// if (lineNumbersWidth == 0)
+		// lineNumbersWidth = lineNumbersWidthDefault;
+	// lineNumbersExpand = lineMarginProp.contains('+');
 
-	SetLineNumberWidth();
+	// SetLineNumberWidth();
 
-	bufferedDraw = props.GetInt("buffered.draw", 1);
-	wEditor.Call(SCI_SETBUFFEREDDRAW, bufferedDraw);
+	// bufferedDraw = props.GetInt("buffered.draw", 1);
+	// wEditor.Call(SCI_SETBUFFEREDDRAW, bufferedDraw);
 
 	//twoPhaseDraw = props.GetInt("two.phase.draw", 1);
 	//wEditor.Call(SCI_SETTWOPHASEDRAW, twoPhaseDraw);
 
-	wEditor.Call(SCI_SETLAYOUTCACHE, props.GetInt("cache.layout", SC_CACHE_CARET));
-	wOutput.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
-	wFindRes.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
+	// wEditor.Call(SCI_SETLAYOUTCACHE, props.GetInt("cache.layout", SC_CACHE_CARET));
+	// wOutput.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
+	CallChildren(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
 
-	bracesCheck = props.GetInt("braces.check");
-	bracesSloppy = props.GetInt("braces.sloppy");
+	// bracesCheck = props.GetInt("braces.check");
+	// bracesSloppy = props.GetInt("braces.sloppy");
 
-	wEditor.Call(SCI_SETCHARSDEFAULT);
-	wordCharacters = props.GetNewExpand("word.characters.", fileNameForExtension.c_str());
-	if (wordCharacters.length()) {
-		wEditor.CallString(SCI_SETWORDCHARS, 0, wordCharacters.c_str());
-	} else {
-		wordCharacters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	}
+	// wEditor.Call(SCI_SETCHARSDEFAULT);
+	// wordCharacters = props.GetNewExpand("word.characters.", fileNameForExtension.c_str());
+	// if (wordCharacters.length()) {
+		// wEditor.CallString(SCI_SETWORDCHARS, 0, wordCharacters.c_str());
+	// } else {
+		// wordCharacters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	// }
 //!-start-[GetWordChars]
 	props.Set("CurrentWordCharacters", wordCharacters.c_str() );
 //!-end-[GetWordChars]
 
-	whitespaceCharacters = props.GetNewExpand("whitespace.characters.", fileNameForExtension.c_str());
-	if (whitespaceCharacters.length()) {
-		wEditor.CallString(SCI_SETWHITESPACECHARS, 0, whitespaceCharacters.c_str());
-	}
+	// whitespaceCharacters = props.GetNewExpand("whitespace.characters.", fileNameForExtension.c_str());
+	// if (whitespaceCharacters.length()) {
+		// wEditor.CallString(SCI_SETWHITESPACECHARS, 0, whitespaceCharacters.c_str());
+	// }
 
-	SString viewIndentExamine = GetFileNameProperty("view.indentation.examine");
-	indentExamine = viewIndentExamine.length() ? viewIndentExamine.value() : SC_IV_REAL;
-	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides") ?
-		indentExamine : SC_IV_NONE);
+	// SString viewIndentExamine = GetFileNameProperty("view.indentation.examine");
+	// indentExamine = viewIndentExamine.length() ? viewIndentExamine.value() : SC_IV_REAL;
+	// wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides") ?
+		// indentExamine : SC_IV_NONE);
 
-	wEditor.Call(SCI_SETTABINDENTS, props.GetInt("tab.indents", 1));
-	wEditor.Call(SCI_SETBACKSPACEUNINDENTS, props.GetInt("backspace.unindents", 1));
+	// wEditor.Call(SCI_SETTABINDENTS, props.GetInt("tab.indents", 1));
+	// wEditor.Call(SCI_SETBACKSPACEUNINDENTS, props.GetInt("backspace.unindents", 1));
 
-	wEditor.Call(SCI_CALLTIPUSESTYLE, 32);
+	// wEditor.Call(SCI_CALLTIPUSESTYLE, 32);
 
-	indentOpening = props.GetInt("indent.opening");
-	indentClosing = props.GetInt("indent.closing");
-	indentMaintain = props.GetNewExpand("indent.maintain.", fileNameForExtension.c_str()).value();
+	// indentOpening = props.GetInt("indent.opening");
+	// indentClosing = props.GetInt("indent.closing");
+	// indentMaintain = props.GetNewExpand("indent.maintain.", fileNameForExtension.c_str()).value();
 
-	SString lookback = props.GetNewExpand("statement.lookback.", fileNameForExtension.c_str());
-	statementLookback = lookback.value();
-	statementIndent = GetStyleAndWords("statement.indent.");
-	statementEnd = GetStyleAndWords("statement.end.");
-	blockStart = GetStyleAndWords("block.start.");
-	blockEnd = GetStyleAndWords("block.end.");
+	// SString lookback = props.GetNewExpand("statement.lookback.", fileNameForExtension.c_str());
+	// statementLookback = lookback.value();
+	// statementIndent = GetStyleAndWords("statement.indent.");
+	// statementEnd = GetStyleAndWords("statement.end.");
+	// blockStart = GetStyleAndWords("block.start.");
+	// blockEnd = GetStyleAndWords("block.end.");
 
-	SString list;
-	list = props.GetNewExpand("preprocessor.symbol.", fileNameForExtension.c_str());
-	preprocessorSymbol = list[0];
-	list = props.GetNewExpand("preprocessor.start.", fileNameForExtension.c_str());
-	preprocCondStart.Clear();
-	preprocCondStart.Set(list.c_str());
-	list = props.GetNewExpand("preprocessor.middle.", fileNameForExtension.c_str());
-	preprocCondMiddle.Clear();
-	preprocCondMiddle.Set(list.c_str());
-	list = props.GetNewExpand("preprocessor.end.", fileNameForExtension.c_str());
-	preprocCondEnd.Clear();
-	preprocCondEnd.Set(list.c_str());
+	// SString list;
+	// list = props.GetNewExpand("preprocessor.symbol.", fileNameForExtension.c_str());
+	// preprocessorSymbol = list[0];
+	// list = props.GetNewExpand("preprocessor.start.", fileNameForExtension.c_str());
+	// preprocCondStart.Clear();
+	// preprocCondStart.Set(list.c_str());
+	// list = props.GetNewExpand("preprocessor.middle.", fileNameForExtension.c_str());
+	// preprocCondMiddle.Clear();
+	// preprocCondMiddle.Set(list.c_str());
+	// list = props.GetNewExpand("preprocessor.end.", fileNameForExtension.c_str());
+	// preprocCondEnd.Clear();
+	// preprocCondEnd.Set(list.c_str());
 
-	wEditor.Call(SCI_SETWRAPVISUALFLAGS, props.GetInt("wrap.visual.flags"));
-	wEditor.Call(SCI_SETWRAPVISUALFLAGSLOCATION, props.GetInt("wrap.visual.flags.location"));
- 	wEditor.Call(SCI_SETWRAPSTARTINDENT, props.GetInt("wrap.visual.startindent"));
- 	wEditor.Call(SCI_SETWRAPINDENTMODE, props.GetInt("wrap.indent.mode"));
+	// wEditor.Call(SCI_SETWRAPVISUALFLAGS, props.GetInt("wrap.visual.flags"));
+	// wEditor.Call(SCI_SETWRAPVISUALFLAGSLOCATION, props.GetInt("wrap.visual.flags.location"));
+ 	// wEditor.Call(SCI_SETWRAPSTARTINDENT, props.GetInt("wrap.visual.startindent"));
+ 	// wEditor.Call(SCI_SETWRAPINDENTMODE, props.GetInt("wrap.indent.mode"));
 
-	if (props.GetInt("wrap.aware.home.end.keys",0)) {
-		if (props.GetInt("vc.home.key", 1)) {
-			AssignKey(SCK_HOME, 0, SCI_VCHOMEWRAP);
-			AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEWRAPEXTEND);
-			AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		} else {
-			AssignKey(SCK_HOME, 0, SCI_HOMEWRAP);
-			AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEWRAPEXTEND);
-			AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		}
-		AssignKey(SCK_END, 0, SCI_LINEENDWRAP);
-		AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDWRAPEXTEND);
-	} else {
-		if (props.GetInt("vc.home.key", 1)) {
-			AssignKey(SCK_HOME, 0, SCI_VCHOME);
-			AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEEXTEND);
-			AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		} else {
-			AssignKey(SCK_HOME, 0, SCI_HOME);
-			AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEEXTEND);
-			AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		}
-		AssignKey(SCK_END, 0, SCI_LINEEND);
-		AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDEXTEND);
-	}
+	// if (props.GetInt("wrap.aware.home.end.keys",0)) {
+		// if (props.GetInt("vc.home.key", 1)) {
+			// AssignKey(SCK_HOME, 0, SCI_VCHOMEWRAP);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEWRAPEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
+		// } else {
+			// AssignKey(SCK_HOME, 0, SCI_HOMEWRAP);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEWRAPEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
+		// }
+		// AssignKey(SCK_END, 0, SCI_LINEENDWRAP);
+		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDWRAPEXTEND);
+	// } else {
+		// if (props.GetInt("vc.home.key", 1)) {
+			// AssignKey(SCK_HOME, 0, SCI_VCHOME);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
+		// } else {
+			// AssignKey(SCK_HOME, 0, SCI_HOME);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEEXTEND);
+			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
+		// }
+		// AssignKey(SCK_END, 0, SCI_LINEEND);
+		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDEXTEND);
+	// }
 
-	AssignKey('L', SCMOD_SHIFT | SCMOD_CTRL, SCI_LINEDELETE);
+	// AssignKey('L', SCMOD_SHIFT | SCMOD_CTRL, SCI_LINEDELETE);
 
 	scrollOutput = props.GetInt("output.scroll", 1);
 
@@ -1135,128 +1727,123 @@ void SciTEBase::ReadProperties() {
 	if (props.GetInt("margin.bookmark.by.single.click",1)==1) //!-add-[SetBookmark]
 		wEditor.Call(SCI_SETMARGINSENSITIVEN, 1, 1);	//!-add-[SetBookmark]
 
-	switch (props.GetInt("fold.symbols")) {
-	case 0:
-		// Arrow pointing right for contracted folders, arrow pointing down for expanded
-		DefineMarker(SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN,
-		             ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDER, SC_MARK_ARROW,
-		             ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY,
-		             ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY,
-		             ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY,
-		             ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY,
-		             ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		break;
-	case 1:
-		// Plus for contracted folders, minus for expanded
-		DefineMarker(SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDER, SC_MARK_PLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		DefineMarker(SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		break;
-	case 2:
-		// Like a flattened tree control using circular headers and curved joins
-		DefineMarker(SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		DefineMarker(SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		break;
-	case 3:
-		// Like a flattened tree control using square headers
-		DefineMarker(SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		DefineMarker(SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		break;
-	}
+	 switch (props.GetInt("fold.symbols")) {
+	 case 0:
+		 // Arrow pointing right for contracted folders, arrow pointing down for expanded
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN, ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		             
+		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_ARROW,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
+		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
+		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
+		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));		             
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));		              
+		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 break;
+	 case 1:
+		 // Plus for contracted folders, minus for expanded
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_PLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
+		 break;
+	 case 2:
+		 // Like a flattened tree control using circular headers and curved joins
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
+		 break;
+	 case 3:
+		 // Like a flattened tree control using square headers
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
+		 break;
+	 }
 
-	wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
-		ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
-	wEditor.Call(SCI_MARKERSETBACK, markerBookmark,
-		ColourOfProperty(props, "bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
-	wEditor.Call(SCI_MARKERSETALPHA,
-		props.GetInt("bookmark.alpha", SC_ALPHA_NOALPHA));
-	SString bookMarkXPM = props.Get("bookmark.pixmap");
-	if (bookMarkXPM.length()) {
-		wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
-			bookMarkXPM.c_str());
-	} else if (props.Get("bookmark.fore").length()) {
-		wEditor.Call(SCI_MARKERDEFINE, markerBookmark, SC_MARK_CIRCLE);
-	} else {
-		// No bookmark.fore setting so display default pixmap.
-		wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
-			reinterpret_cast<char *>(bookmarkBluegem));
-	}
+	// wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
+		// ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
+	// wEditor.Call(SCI_MARKERSETBACK, markerBookmark,
+		// ColourOfProperty(props, "bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
+	// wEditor.Call(SCI_MARKERSETALPHA,
+		// props.GetInt("bookmark.alpha", SC_ALPHA_NOALPHA));
+	// SString bookMarkXPM = props.Get("bookmark.pixmap");
+	// if (bookMarkXPM.length()) {
+		// wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
+			// bookMarkXPM.c_str());
+	// } else if (props.Get("bookmark.fore").length()) {
+		// wEditor.Call(SCI_MARKERDEFINE, markerBookmark, SC_MARK_CIRCLE);
+	// } else {
+		// // No bookmark.fore setting so display default pixmap.
+		// wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
+			// reinterpret_cast<char *>(bookmarkBluegem));
+	// }
 
-	wEditor.Call(SCI_MARKERSETBACK, markerNotSaved,
-		ColourOfProperty(props, "marker.notsaved.back", ColourRGB(0xff, 0x70, 0x70)));
-	wEditor.Call(SCI_MARKERDEFINE, markerNotSaved, SC_MARK_LEFTRECT);
-	wEditor.Call(SCI_MARKERSETBACK, markerSaved,
-		ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
-	wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
+	// wEditor.Call(SCI_MARKERSETBACK, markerNotSaved,
+		// ColourOfProperty(props, "marker.notsaved.back", ColourRGB(0xff, 0x70, 0x70)));
+	// wEditor.Call(SCI_MARKERDEFINE, markerNotSaved, SC_MARK_LEFTRECT);
+	// wEditor.Call(SCI_MARKERSETBACK, markerSaved,
+		// ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
+	// wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
 
-	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
-	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
-		"error.marker.fore", ColourRGB(0x7f, 0, 0)));
-	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
-		"error.marker.back", ColourRGB(0xff, 0xff, 0)));
+	// wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
+	// wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
+		// "error.marker.fore", ColourRGB(0x7f, 0, 0)));
+	// wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
+		// "error.marker.back", ColourRGB(0xff, 0xff, 0)));
 
-	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
+	// wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
 	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);
 	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
 	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 	//wEditor.Call(SCI_SETXOFFSET, hpos);
-	wOutput.Call(SCI_SETSCROLLWIDTH, 100);
-	wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
-	wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wOutput.Call(SCI_SETSCROLLWIDTH, 100);
+	CallChildren(SCI_SETSCROLLWIDTHTRACKING, 1);
+	//wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
+	CallChildren(SCI_SETSCROLLWIDTHTRACKING, 1);
 
-	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
-	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
+	// wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
+	// wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 
-	wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
-	wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
+	// wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
+	CallChildren(SCI_SETUNDOCOLLECTION, 0);
 
-	if (extender) {
-		FilePath defaultDir = GetDefaultDirectory();
-		FilePath scriptPath;
+	// if (extender) {
+		// FilePath defaultDir = GetDefaultDirectory();
+		// FilePath scriptPath;
 
-		// Check for an extension script
-		GUI::gui_string extensionFile = GUI::StringFromUTF8(
-			props.GetNewExpand("extension.", fileNameForExtension.c_str()).c_str());
-		if (extensionFile.length()) {
-			// find file in local directory
-			FilePath docDir = filePath.Directory();
-			if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
-				// Found file in document directory
-				extender->Load(scriptPath.AsUTF8().c_str());
-			} else if (Exists(defaultDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
-				// Found file in global directory
-				extender->Load(scriptPath.AsUTF8().c_str());
-			} else if (Exists(GUI_TEXT(""), extensionFile.c_str(), &scriptPath)) {
-				// Found as completely specified file name
-				extender->Load(scriptPath.AsUTF8().c_str());
-			}
-		}
-	}
-	firstPropertiesRead = false;
-	needReadProperties = false;
+		// // Check for an extension script
+		// GUI::gui_string extensionFile = GUI::StringFromUTF8(
+			// props.GetNewExpand("extension.", fileNameForExtension.c_str()).c_str());
+		// if (extensionFile.length()) {
+			// // find file in local directory
+			// FilePath docDir = filePath.Directory();
+			// if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
+				// // Found file in document directory
+				// extender->Load(scriptPath.AsUTF8().c_str());
+			// } else if (Exists(defaultDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
+				// // Found file in global directory
+				// extender->Load(scriptPath.AsUTF8().c_str());
+			// } else if (Exists(GUI_TEXT(""), extensionFile.c_str(), &scriptPath)) {
+				// // Found as completely specified file name
+				// extender->Load(scriptPath.AsUTF8().c_str());
+			// }
+		// }
+	// }
+	// firstPropertiesRead = false;
+	// needReadProperties = false;
 }
+
 
 void SciTEBase::ReadFontProperties() {
 	char key[200];
