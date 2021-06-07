@@ -64,6 +64,9 @@ typedef HANDLE HTHEME;
 #include "ILexer.h"
 
 #include "Scintilla.h"
+#include "ScintillaTypes.h"
+#include "ScintillaMessages.h"
+#include "ScintillaStructures.h"
 #include "Lexilla.h"
 #include "../Access/LexillaAccess.h"
 

@@ -1224,7 +1224,7 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	if (pW) {
 		::SetWindowPos((HWND)pW->GetID(), NULL, 0, 0, rc.right, rc.bottom, SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
 		if (!StandartWindowDecoration) {
-			Sci_ListColorsInfo ci;
+			Scintilla::Sci_ListColorsInfo ci;
 			ci.inizialized = true;
 			ci.border = GetColorRef("BORDERCOLOR");
 			ci.borderbak = GetColorRef("CAPTBGCOLOR");

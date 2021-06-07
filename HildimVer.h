@@ -1,3 +1,3 @@
-#define VERSION_HILDIM "5.4.1"
+#define VERSION_HILDIM "5.5.0"
 #define VERSION_IUP "3.30"
-#define VERSION_HILDIM_W 5,4,1,0
+#define VERSION_HILDIM_W 5,5,0,0

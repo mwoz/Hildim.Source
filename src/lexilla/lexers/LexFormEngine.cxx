@@ -53,6 +53,7 @@
 #include "DefaultLexer.h"
 
 using namespace Scintilla;
+using namespace Lexilla;
 
 
 // Options used for LexerCPP

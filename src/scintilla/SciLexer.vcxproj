@@ -16,8 +16,8 @@
     <ClCompile Include="src\CaseConvert.cxx" />
     <ClCompile Include="src\CaseFolder.cxx" />
     <ClCompile Include="src\CellBuffer.cxx" />
-    <ClCompile Include="src\CharacterCategory.cxx" />
-    <ClCompile Include="src\CharacterSet.cxx" />
+    <ClCompile Include="src\CharacterCategoryMap.cxx" />
+    <ClCompile Include="src\CharacterType.cxx" />
     <ClCompile Include="src\CharClassify.cxx" />
     <ClCompile Include="src\ContractionState.cxx" />
     <ClCompile Include="src\DBCS.cxx" />
@@ -48,14 +48,13 @@
     <ClCompile Include="win32\ScintillaWin.cxx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ScintillaStructures.h" />
     <ClInclude Include="src\AutoComplete.h" />
     <ClInclude Include="src\CallTip.h" />
     <ClInclude Include="src\CaseConvert.h" />
     <ClInclude Include="src\CaseFolder.h" />
     <ClInclude Include="src\Catalogue.h" />
     <ClInclude Include="src\CellBuffer.h" />
-    <ClInclude Include="src\CharacterCategory.h" />
-    <ClInclude Include="src\CharacterSet.h" />
     <ClInclude Include="src\CharClassify.h" />
     <ClInclude Include="src\ContractionState.h" />
     <ClInclude Include="src\DBCS.h" />
@@ -72,7 +71,6 @@
     <ClInclude Include="include\ILoader.h" />
     <ClInclude Include="src\Geometry.h" />
     <ClInclude Include="src\Indicator.h" />
-    <ClInclude Include="src\IntegerRectangle.h" />
     <ClInclude Include="src\KeyMap.h" />
     <ClInclude Include="src\LineMarker.h" />
     <ClInclude Include="src\MarginView.h" />

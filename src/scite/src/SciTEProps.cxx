@@ -713,8 +713,8 @@ void SciTEBase::ReadProperties() {
 			reinterpret_cast<uptr_t>(propertiesToForward[i]), props.GetExpanded(propertiesToForward[i]).c_str());
 	}
 
-	// FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
-	// props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
+	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
+	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
 
 	wEditor.Call(SCI_SETOVERTYPE, props.GetInt("change.overwrite.enable", 1) + 2); //-add-[ignore_overstrike_change]
 
