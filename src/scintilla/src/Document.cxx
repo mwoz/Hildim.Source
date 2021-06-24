@@ -525,7 +525,7 @@ static bool IsSubordinate(FoldLevel levelStart, FoldLevel levelTry) noexcept {
 }
 
 Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> level, Sci::Line lastLine) {
-	if (level == static_cast<FoldLevel>(-1))
+	if (level == static_cast<FoldLevel>(-1) || !level)
 		level = LevelNumberPart(GetFoldLevel(lineParent));
 
 //	if (!level)
