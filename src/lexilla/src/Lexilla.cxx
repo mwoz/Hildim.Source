@@ -13,8 +13,7 @@
 
 #if _WIN32
 #define EXPORT_FUNCTION __declspec(dllexport)
-//#define CALLING_CONVENTION __stdcall
-#define CALLING_CONVENTION __cdecl 
+#define CALLING_CONVENTION __stdcall
 #else
 #define EXPORT_FUNCTION __attribute__((visibility("default")))
 #define CALLING_CONVENTION
@@ -72,7 +71,6 @@ extern LexerModule lmErrorList;
 extern LexerModule lmESCRIPT;
 extern LexerModule lmF77;
 extern LexerModule lmFlagShip;
-extern LexerModule lmFormEngine;
 extern LexerModule lmForth;
 extern LexerModule lmFortran;
 extern LexerModule lmFreeBasic;
@@ -134,7 +132,6 @@ extern LexerModule lmRegistry;
 extern LexerModule lmRuby;
 extern LexerModule lmRust;
 extern LexerModule lmSAS;
-extern LexerModule lmSearchResult;
 extern LexerModule lmScriptol;
 extern LexerModule lmSmalltalk;
 extern LexerModule lmSML;
@@ -220,7 +217,6 @@ void AddEachLexer() {
 		&lmESCRIPT,
 		&lmF77,
 		&lmFlagShip,
-		&lmFormEngine,
 		&lmForth,
 		&lmFortran,
 		&lmFreeBasic,
@@ -282,7 +278,6 @@ void AddEachLexer() {
 		&lmRuby,
 		&lmRust,
 		&lmSAS,
-		&lmSearchResult,
 		&lmScriptol,
 		&lmSmalltalk,
 		&lmSML,

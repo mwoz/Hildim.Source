@@ -201,7 +201,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	Scintilla::CursorShape cursorMode;
 
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -448,8 +447,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, Scintilla::CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, KeyMod modifiers); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, KeyMod ctrl); //!-add-[OnMouseButtonUp]	
 	virtual void NotifyDoubleClick(Point pt, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, Scintilla::KeyMod modifiers);
@@ -472,8 +469,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) override;
 	void NotifyMacroRecord(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(Scintilla::Update flags) noexcept;
 	void PageMove(int direction, Selection::SelTypes selt=Selection::SelTypes::none, bool stuttered = false);
@@ -627,6 +622,26 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	}
 	static const char *ConstCharPtrFromUPtr(Scintilla::uptr_t wParam) noexcept {
 		return static_cast<const char *>(PtrFromUPtr(wParam));
+	}
+
+	static constexpr Scintilla::sptr_t SPtrFromUPtr(Scintilla::uptr_t wParam) noexcept {
+		return static_cast<Scintilla::sptr_t>(wParam);
+	}
+	static constexpr Sci::Position PositionFromUPtr(Scintilla::uptr_t wParam) noexcept {
+		return SPtrFromUPtr(wParam);
+	}
+	static constexpr Sci::Line LineFromUPtr(Scintilla::uptr_t wParam) noexcept {
+		return SPtrFromUPtr(wParam);
+	}
+	Point PointFromParameters(Scintilla::uptr_t wParam, Scintilla::sptr_t lParam) const noexcept {
+		return Point(static_cast<XYPOSITION>(wParam) - vs.ExternalMarginWidth(), static_cast<XYPOSITION>(lParam));
+	}
+
+	constexpr std::optional<FoldLevel> OptionalFoldLevel(Scintilla::sptr_t lParam) {
+		if (lParam >= 0) {
+			return static_cast<FoldLevel>(lParam);
+		}
+		return std::nullopt;
 	}
 
 	static Scintilla::sptr_t StringResult(Scintilla::sptr_t lParam, const char *val) noexcept;

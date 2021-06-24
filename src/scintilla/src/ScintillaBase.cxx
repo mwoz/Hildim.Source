@@ -167,7 +167,6 @@ int ScintillaBase::KeyCommand(Message iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case Message::Tab:
-		case Message::BackTab:
 			AutoCompleteCompleted(0, CompletionMethods::Tab);
 			return 0;
 		case Message::NewLine:
@@ -207,13 +206,6 @@ void ScintillaBase::ListNotify(ListBoxEvent *plbe) {
 		break;
 	case ListBoxEvent::EventType::doubleClick:
 		AutoCompleteCompleted(0, CompletionMethods::DoubleClick);
-		break;
-	case ListBoxEvent::EventType::contextMenu:
-		NotificationData scn = {};
-		scn.nmhdr.code = Notification::ListContextMenu;
-		scn.wParam = listType;
-		scn.listType = listType;
-		NotifyParent(scn);
 		break;
 	}
 }
@@ -308,7 +300,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	rcac.bottom = static_cast<XYPOSITION>(std::min(static_cast<int>(rcac.top) + heightLB, static_cast<int>(rcPopupBounds.bottom)));
 	ac.lb->SetPositionRelative(rcac, &wMain);
 	ac.lb->SetFont(vs.styles[StyleDefault].font.get());
-	const unsigned int aveCharWidth = static_cast<unsigned int>(vs.styles[StyleDefault].aveCharWidth);
+	const int aveCharWidth = static_cast<int>(vs.styles[StyleDefault].aveCharWidth);
 	ac.lb->SetAverageCharWidth(aveCharWidth);
 	ac.lb->SetDelegate(this);
 
@@ -319,7 +311,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	const int heightAlloced = static_cast<int>(rcList.bottom - rcList.top);
 	widthLB = std::max(widthLB, static_cast<int>(rcList.right - rcList.left));
 	if (maxListWidth != 0)
-		widthLB = std::min(widthLB, static_cast<int>(aveCharWidth)*maxListWidth);
+		widthLB = std::min(widthLB, aveCharWidth*maxListWidth);
 	// Make an allowance for large strings in list
 	rcList.left = pt.x - ac.lb->CaretFromEdge();
 	rcList.right = rcList.left + widthLB;
@@ -393,13 +385,6 @@ void ScintillaBase::AutoCompleteCharacterDeleted() {
 		AutoCompleteCancel();
 	} else {
 		AutoCompleteMoveToCurrentWord();
-//!-start-[autocompleteword.incremental]
-		NotificationData scn = {0};
-		scn.nmhdr.code = Notification::AutoUpdated;
-		scn.wParam = 0;
-		scn.listType = 0;
-		NotifyParent(scn);
-//!-end-[autocompleteword.incremental]
 	}
 	NotificationData scn = {};
 	scn.nmhdr.code = Notification::AutoCCharDeleted;
@@ -429,7 +414,6 @@ void ScintillaBase::AutoCompleteCompleted(char ch, CompletionMethods completionM
 	scn.position = firstPos;
 	scn.lParam = firstPos;
 	scn.text = selected.c_str();
-	scn.position = item; //!-add-[UserListItemID]
 	NotifyParent(scn);
 
 	if (!ac.Active())
@@ -509,13 +493,6 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 		rc.top += offset;
 		rc.bottom += offset;
 	}
-//!-start-[BetterCalltips]
-	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
-//!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, &wMain);
@@ -869,12 +846,8 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	switch (iMessage) {
 	case Message::AutoCShow:
 		listType = 0;
-		AutoCompleteStart(static_cast<Sci::Position>(wParam), ConstCharPtrFromSPtr(lParam));
+		AutoCompleteStart(PositionFromUPtr(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
-
-	case Message::Paste:
-		ac.Cancel();
-		return Editor::WndProc(iMessage, wParam, lParam);
 
 	case Message::AutoCCancel:
 		ac.Cancel();
@@ -1034,19 +1007,19 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case Message::CallTipSetBack:
-		ct.colourBG = ColourRGBA::FromRGB(static_cast<int>(wParam));
+		ct.colourBG = ColourRGBA::FromIpRGB(SPtrFromUPtr(wParam));
 		vs.styles[StyleCallTip].back = ct.colourBG;
 		InvalidateStyleRedraw();
 		break;
 
 	case Message::CallTipSetFore:
-		ct.colourUnSel = ColourRGBA::FromRGB(static_cast<int>(wParam));
+		ct.colourUnSel = ColourRGBA::FromIpRGB(SPtrFromUPtr(wParam));
 		vs.styles[StyleCallTip].fore = ct.colourUnSel;
 		InvalidateStyleRedraw();
 		break;
 
 	case Message::CallTipSetForeHlt:
-		ct.colourSel = ColourRGBA::FromRGB(static_cast<int>(wParam));
+		ct.colourSel = ColourRGBA::FromIpRGB(SPtrFromUPtr(wParam));
 		InvalidateStyleRedraw();
 		break;
 
@@ -1073,12 +1046,11 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case Message::Colourise:
 		if (DocumentLexState()->UseContainerLexing()) {
-			pdoc->ModifiedAt(static_cast<Sci::Position>(wParam));
+			pdoc->ModifiedAt(PositionFromUPtr(wParam));
 			NotifyStyleToNeeded((lParam == -1) ? pdoc->Length() : lParam);
 		} else {
-			DocumentLexState()->Colourise(static_cast<Sci::Position>(wParam), lParam);
+			DocumentLexState()->Colourise(PositionFromUPtr(wParam), lParam);
 		}
-		NotifyColorized(wParam, lParam);
 		Redraw();
 		break;
 
@@ -1105,11 +1077,10 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return StringResult(lParam, DocumentLexState()->GetName());
 
 	case Message::PrivateLexerCall:
-	case Message::PrivateLexerCallStr:
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), PtrFromSPtr(lParam)));
 
-#ifdef INCLUDE_DEPRECATED_FEATURES_
+#ifdef INCLUDE_DEPRECATED_FEATURES
 	case SCI_GETSTYLEBITSNEEDED:
 		return 8;
 #endif
@@ -1174,19 +1145,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::DescriptionOfStyle:
 		return StringResult(lParam, DocumentLexState()->
 				    DescriptionOfStyle(static_cast<int>(wParam)));
-
-	case Message::ListCustomColors:
-	{
-		Sci_ListColorsInfo *ci = (Sci_ListColorsInfo*)wParam;
-		ac.listcolors.inizialized = ci->inizialized;
-		ac.listcolors.border = ci->border;
-		ac.listcolors.borderbak = ci->borderbak;
-		ac.listcolors.scroll = ci->scroll;
-		ac.listcolors.scrollbak = ci->scrollbak;
-		ac.listcolors.scrollhl = ci->scrollhl;
-		ac.listcolors.scrollpress = ci->scrollpress;
-		ac.listcolors.scrollsize = ci->scrollsize;
-	}
 
 	default:
 		return Editor::WndProc(iMessage, wParam, lParam);

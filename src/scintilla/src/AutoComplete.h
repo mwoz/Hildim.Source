@@ -41,7 +41,6 @@ public:
 	 */
 	Scintilla::Ordering autoSort;
 
-	Sci_ListColorsInfo listcolors;
 	AutoComplete();
 	~AutoComplete();
 
