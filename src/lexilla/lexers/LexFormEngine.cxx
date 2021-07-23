@@ -116,9 +116,6 @@ static const char *const fnWordLists[] = {
 	"functionsEx",
 	0,
 };
-enum SelectState{
-	Empty, Start, Next, End
-};
 
 struct OptionsSetFM : public OptionSet<OptionsFM> {
 	OptionsSetFM() {
@@ -162,7 +159,6 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc);
 	bool PlainFold(unsigned int startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler);
-	SelectState selectionState = Empty;
 public:
 	LexerFormEngine(bool caseSensitive_) :
 	    setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
@@ -990,6 +986,10 @@ public:
 		styler.SetLevel(currentLine, iLevel);
 		prevLevel = iLevel;
 	}
+	void SetLevel(int ln, int iLevel){
+		styler.SetLevel(ln, iLevel);
+		prevLevel = iLevel;
+	}
 	void Forward(int n);
 	void Forward();
 	void GetRangeLowered(unsigned int start,unsigned int end,char *s,unsigned int len);
@@ -997,7 +997,7 @@ public:
 	int MatchLowerStyledLine(unsigned int line, const char *mtch, const int style, IDocument *pAccess);
 	bool Skip();
 	void WalkToEOL();
-
+	bool FindThen();
 };
 
 void FoldContext::Forward(int n){
@@ -1018,10 +1018,10 @@ void FoldContext::Forward(){
 		visibleChars = 0;
 		if (currentPos < endPos) {
 			currentLine++;
-
-		if ((currentLevel & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
-			currentLevel = SC_FOLDLEVELBASE;
-		prevLevel = currentLevel;
+			startLineResolved = true;
+			if ((currentLevel & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
+				currentLevel = SC_FOLDLEVELBASE;
+			prevLevel = currentLevel;
 			//currentLevel = styler.LevelAt(currentLine);
 		}
 	}else if(visibleChars || !isspacechar(ch)) visibleChars++;
@@ -1102,6 +1102,20 @@ void FoldContext::WalkToEOL(){
 		GetNextChar(currentPos + ((ch >= 0x100) ? 1 : 0));
 	}
 }
+bool FoldContext::FindThen() {
+	char s[100];
+	do {
+		while (Skip()) {
+			if (style == SCE_FM_VB_KEYWORD) {//остановились перед каким-то ключевым словом = прчтем его
+				GetNextLowered(s, 100);
+			} else if (style != SCE_FM_VB_DEFAULT && style != SCE_FM_VB_COMMENT) {//остановились перед чем-то отличным от пустого пространства- значит прочитанное слово нам не нужно
+				s[0] = 0;
+			}
+		}
+		if (More()) Forward();
+	} while ((style == SCE_FM_VB_STRINGCONT || style == SCE_FM_VB_AFTERSTRINGCONT) && More());
+	return !strcmp(s, "then");
+}
 bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler){
 
 	FoldContext fc(startPos, length, styler, options.foldCompact);
@@ -1167,29 +1181,16 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 			switch(fc.style){
 			case SCE_FM_VB_DEFAULT:
 				if(!fc.visibleChars)continue;
-				selectionState = Next;
 				break;
 			case SCE_FM_VB_KEYWORD:
 				if(!fc.visibleChars){//Нашли ключквое слово в начале строки
 					char s[100];
 					fc.GetNextLowered(s,100);
 					if(!strcmp(s, "if")){ //фолдим только если есть последнее Then
-						do{
-							while(fc.Skip()){
-								if(fc.style == SCE_FM_VB_KEYWORD){//остановились перед каким-то ключевым словом = прчтем его
-									fc.GetNextLowered(s,100);
-								}else if(fc.style != SCE_FM_VB_DEFAULT && fc.style != SCE_FM_VB_COMMENT){//остановились перед чем-то отличным от пустого пространства- значит прочитанное слово нам не нужно
-									s[0] = 0;
-								}
-							}
-							if(fc.More()) fc.Forward();
-						}
-						while((fc.style == SCE_FM_VB_STRINGCONT || fc.style == SCE_FM_VB_AFTERSTRINGCONT)&& fc.More());
-						if(!strcmp(s, "then")){//нашли then -действительно нужно фолдить
+						if(fc.FindThen()){//нашли then -действительно нужно фолдить
 							fc.currentLevel += 2;
 							blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
 						}
-						selectionState = Next;
 					}else if(!strcmp(s, "on") && options.foldonerror){
 						do{
 							while(fc.Skip()){
@@ -1206,70 +1207,37 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 							fc.currentLevel--;
 						}
 					}else if(!strcmp(s, "select")){
-						fc.currentLevel ++;
-						selectionState = Start;
+						fc.currentLevel +=2;
+						blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
 					}else if(wFold.InList(s)){//начало фолдинга - do function sub for with property while
 						fc.currentLevel++;
-						selectionState = Next;
 					}
 					else if (!strcmp(s, "case")){
-						if (selectionState == Empty && fc.currentLine > 0 && !fc.startLineResolved) {
-							int strOut = 1;
-							selectionState = Start;
-							for (int j = 1; strOut; j++) {
-								strOut = fc.MatchLowerStyledLine(j, "select", SCE_FM_VB_KEYWORD, pAccess);
-								if(strOut && (strOut != SCE_FM_VB_COMMENT && strOut != SCE_FM_VB_DEFAULT)) {
-									selectionState = End;
-									break;
-								}
-							}
+						if (!fc.startLineResolved)
+							return false;
+						if ((fc.currentLine != blockReFoldLine)) {
+							fc.SetLevel(fc.currentLine, fc.currentLevel - 1); //Фолдим, если не фолдили в прошлой строке
 						}
-						if (selectionState == Start){
-							fc.currentLevel++;
-						}else{
-							fc.SetCurLevel(fc.currentLevel - 1);
-						}
-						selectionState = Next;
+						blockReFoldLine = fc.currentLine + 1;//в следующей строке тоже не рефолдим
 					}
 					else if (wRefold.InList(s) && options.foldAtElse ){//промежуточный фолдинг для ифа и свитча - case else elseif
-						if (!fc.startLineResolved) {
-							char *then = "then";
-							int lEnd = pAccess->LineEnd(fc.currentLine - 1);
-							bool bFind = false;
-							for (int ls = pAccess->LineStart(fc.currentLine - 1); ls <= lEnd; ls++) {
-								if (styler.StyleAt(ls) == SCE_FM_VB_KEYWORD && lEnd - ls >= 4) {
-									bFind = true;
-									for (int i = 0; i < 4; i++) {
-										if (then[i] != static_cast<char>(tolower(styler.SafeGetCharAt(ls + i)))) {
-											bFind = false;
-											break;
-										}
-									}
-									if (bFind) {
-										blockReFoldLine = fc.currentLine;
-										break;
-									}
-								}
+						if (!fc.startLineResolved)
+							return false;
+						int ln = fc.currentLine;
+						if (!strcmp(s, "elseif") && !fc.FindThen()) {
+							//break;
+						} else {
+							if ((ln != blockReFoldLine)) {
+								fc.SetLevel(ln, fc.currentLevel - 1); //Фолдим, если не фолдили в прошлой строке
 							}
-							fc.startLineResolved = true;
+							blockReFoldLine = fc.currentLine + 1;//в следующей строке тоже не рефолдим
 						}
-						if(fc.currentLine != blockReFoldLine){
-							fc.SetCurLevel(fc.currentLevel - 1); //Фолдим, если не фолдили в прошлой строке
-						}
-						blockReFoldLine= fc.currentLine + 1;//в следующей строке тоже не рефолдим
-						selectionState = Next;
 					}else if(wUnfold.InList(s)){//конец фолдинга - end next wend loop
 						if (!strcmp(s, "end") && fc.ch != ' ')
 							break;
-						selectionState = Next;
 						if(fc.Skip()){//точно нашли кусок в другом стиле на этой строке
 							if(fc.style == SCE_FM_VB_KEYWORD){
 								fc.GetNextLowered(s, 100);
-								if (!strcmp(s, "select")){
-									if(fc.MatchLowerStyledLine(1, "case", SCE_FM_VB_KEYWORD, pAccess))
-										fc.SetCurLevel(fc.currentLevel - 1);
-									selectionState = End;
-								}
 								if(!strcmp(s, "if") || !strcmp(s, "select")){
 									fc.currentLevel--;
 								}
@@ -1280,7 +1248,8 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 				}
 				break;
 			case SCE_FM_VB_AFTERSTRINGCONT:
-				if(!fc.startLineResolved)return false;
+				if(!fc.startLineResolved)
+					return false;
 				break;
 			case SCE_FM_VB_COMMENT:
 				if(!fc.visibleChars && options.foldComment  ){
@@ -1325,7 +1294,6 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 				}
 				continue;
 			default:
-				selectionState = Next;
 				break;
 			}
 			fc.WalkToEOL(); //закончили обработку бэйсиковской строки
@@ -1341,7 +1309,6 @@ void SCI_METHOD LexerFormEngine::Fold(unsigned int startPos, int length, int ini
 
 	int unShift = 0;
 	LexAccessor styler(pAccess);
-	selectionState = Empty;
 	while(!PlainFold(startPos, length, initStyle, pAccess, styler)){
 		//Возможно разрешить фолдинг начиная с данной строки не удасться, и тогда нам нужно перезапустить фолдинг со строчки выше
 		int prevLine = pAccess ->LineFromPosition(startPos) - 1;

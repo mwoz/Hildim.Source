@@ -529,8 +529,14 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
+	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		EnsureStyledTo(LineStart(lineMaxSubord + 2));
+		if (lineMaxSubord >= lineMaxStyled) {
+			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
+			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
+				lineMaxStyled = lookLastLine;
+			EnsureStyledTo(LineStart(lineMaxStyled + 2));
+		}
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
