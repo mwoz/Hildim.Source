@@ -64,7 +64,6 @@ struct OptionsFM {
 	bool foldAtElse;
 	bool foldcdata;
 	bool debugmode;
-	bool foldonerror;
 	bool frozen;  //флаг для временного отключения на время загрузки хелплистов
 	std::string debugsuffix;
 	OptionsFM() {
@@ -74,7 +73,6 @@ struct OptionsFM {
 		foldAtElse = false;
 		debugmode = false;
 		foldcdata = false;
-		foldonerror = false;
 		frozen = false;
 		debugsuffix = "";
 	}
@@ -128,7 +126,6 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 			"at the end of a section that should fold.");
 
 		DefineProperty("fold.compact", &OptionsFM::foldCompact);
-		DefineProperty("fold.onerror", &OptionsFM::foldonerror);
 		DefineProperty("fold.cdata", &OptionsFM::foldcdata);
 		DefineProperty("precompiller.debugmode", &OptionsFM::debugmode);
 		DefineProperty("precompiller.debugsuffix", &OptionsFM::debugsuffix);
@@ -1018,7 +1015,7 @@ void FoldContext::Forward(){
 		visibleChars = 0;
 		if (currentPos < endPos) {
 			currentLine++;
-			startLineResolved = true;
+			//startLineResolved = true;
 			if ((currentLevel & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
 				currentLevel = SC_FOLDLEVELBASE;
 			prevLevel = currentLevel;
@@ -1190,21 +1187,6 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 						if(fc.FindThen()){//нашли then -действительно нужно фолдить
 							fc.currentLevel += 2;
 							blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
-						}
-					}else if(!strcmp(s, "on") && options.foldonerror){
-						do{
-							while(fc.Skip()){
-								if(fc.style == SCE_FM_VB_KEYWORD){//остановились перед каким-то ключевым словом = прчтем его
-									fc.GetNextLowered(s,100);
-								}
-							}
-							if(fc.More()) fc.Forward();
-						}
-						while((fc.style == SCE_FM_VB_STRINGCONT || fc.style == SCE_FM_VB_AFTERSTRINGCONT)&& fc.More());
-						if(!strcmp(s, "next")){//нашли then -действительно нужно фолдить
-							fc.currentLevel ++;
-						}else if(!strcmp(s,"goto")){
-							fc.currentLevel--;
 						}
 					}else if(!strcmp(s, "select")){
 						fc.currentLevel +=2;

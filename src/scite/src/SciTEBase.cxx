@@ -1746,11 +1746,15 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		return true;
 	}
 	SString root = line.substr(startword, current - startword);
-	SString rootU = root;
+	//SString rootU = root;
 	if (CurrentBuffer()->unicodeMode) {
 		std::string enc = GUI::ConvertToUTF8(root.c_str(), ::GetACP());
 		root = enc.c_str();
 	}
+	if (wEditor.Call(SCI_AUTOCACTIVE)) {
+		wEditor.CallString(SCI_AUTOCSELECT, NULL, root.c_str());
+		return true;
+	} 
 	int doclen = LengthDocument();
 	Sci_TextToFind ft = {{0, 0}, 0, {0, 0}};
 	ft.lpstrText = const_cast<char*>(root.c_str());
@@ -1774,7 +1778,7 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 	const int flagsE = SCFIND_REGEXP | SCFIND_CXX11REGEX;
 
 
-	int posCurrentWord = wEditor.Call(SCI_GETCURRENTPOS) - root.length();
+	//int posCurrentWord = wEditor.Call(SCI_GETCURRENTPOS) - root.length();
 	unsigned int minWordLength = 0;
 	unsigned int nwords = 0;
 
@@ -1826,15 +1830,14 @@ bool SciTEBase::StartAutoCompleteWord(bool onlyOneWord) {
 		char *words = wl.GetNearestWords("", 0, autoCompleteIgnoreCase);
 		SString acText(words);
 		// Use \n as word separator
-		acText.substitute(' ', '\n');
+		char sep = (props.GetInt("autocompleteword.startcount", 1) == 1 && props.GetInt("autocompleteword.useabrev")) ? '\t' : '\n';
+		acText.substitute(' ', sep);
 		// Return spaces from \001
 		acText.substitute('\001', ' ');
-		if (wEditor.Call(SCI_AUTOCACTIVE)) {
-			wEditor.CallString(SCI_AUTOCSELECT, NULL, root.c_str());
-		} else {
-			wEditor.Call(SCI_AUTOCSETSEPARATOR, '\n');
-			wEditor.CallString(SCI_AUTOCSHOW, root.length(), acText.c_str());
-		}
+
+		wEditor.Call(SCI_AUTOCSETSEPARATOR, sep);
+		wEditor.CallString(SCI_AUTOCSHOW, root.length(), acText.c_str());
+
 		delete []words;
 	} else {
 		wEditor.Call(SCI_AUTOCCANCEL);
