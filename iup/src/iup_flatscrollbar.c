@@ -144,7 +144,7 @@ static int iFlatScrollBarCalcHandler(int size, int arrow_size, int max, int d, i
     return 0;
 
   d_p = (d * range_p) / max;
-  if (d_p < sb_size/3) d_p = sb_size/3;
+  if (d_p < sb_size) d_p = sb_size;
 
   pos_p = (pos * (range_p - d_p)) / (max - d);
   pos_p += arrow_size;
@@ -253,13 +253,8 @@ static void iFlatScrollBarDrawVertical(Ihandle* sb_vert, IdrawCanvas* dc, int ac
   }
 
   /* draw handler */
-  if (iFlatScrollBarCalcHandler(height, arrow_size, ymax, dy, sb_size, posy, &pos1, &pos2)) {
-	  IFnCiiiiiss cb = (IFnCiiiiiss)IupGetCallback(sb_vert->parent, "VSCROLLDRAW_CB");
-	  if (cb) {
-		  cb(sb_vert->parent, (void*)dc, sb_size, ymax, pos1, pos2, highlight, fgcolor_drag, bgcolor);
-	  } else
+  if (iFlatScrollBarCalcHandler(height, arrow_size, ymax, dy, sb_size, posy, &pos1, &pos2))
     iupFlatDrawBox(dc, 2, sb_size - 1 - 2, pos1, pos2, fgcolor_drag, bgcolor, active);
-  }
 }
 
 static void iFlatScrollBarDrawHorizontal(Ihandle* sb_horiz, IdrawCanvas* dc, int active, const char* fgcolor, const char* bgcolor, int pressed,
@@ -599,55 +594,12 @@ static int iFlatScrollBarMoveY(Ihandle* sb_vert, int diff, int start_posy)
   return 0;
 }
 
-static int iFlatScrollBarFloatTimerPress_CB(Ihandle* timer);
 static int iFlatScrollBarButton_CB(Ihandle* sb_ih, int button, int press, int x, int y)
 {
   iFlatScrollBarUpdateInteractive(sb_ih->parent);
-  Ihandle* timerPress = (Ihandle*)iupAttribGet(sb_ih->parent, "_IUP_FLOATTIMERPRESS");
-  if (!timerPress) {
-	  timerPress = IupTimer();
-	  IupSetCallback(timerPress, "ACTION_CB", iFlatScrollBarFloatTimerPress_CB);
-	  iupAttribSet(timerPress, "TIME", "500");
-	  iupAttribSet(sb_ih->parent, "_IUP_FLOATTIMERPRESS", (char*)timerPress);
-	  iupAttribSet(timerPress, "_CMD", (char*)SB_NONE);
-  }
 
   if (button != IUP_BUTTON1)
   {
-	  if (!press) {
-		  IupSetFocus(sb_ih->parent);
-		  IFniis cb = (IFniis)IupGetCallback(sb_ih->parent, "CONTEXTMENU_CB");
-		  if (cb) {
-			  char* type;
-			  int sb_size = iupAttribGetInt(sb_ih->parent, "SCROLLBARSIZE");
-			  int arrow_size = sb_size;
-			  if (!iupAttribGetInt(sb_ih->parent, "SHOWARROWS"))
-				  arrow_size = 0;
-
-
-			  int sx, sy, s, coord, max;
-			  IupGetIntInt(sb_ih->parent, "RASTERSIZE", &sx, &sy);
-			  if (iupAttribGet(sb_ih, "SB_VERT")) {
-				  coord = y - arrow_size;
-				  if (coord <= 0)
-					  goto brk;
-				  type = "SB_VERT";
-				  max = iupAttribGetInt(sb_ih->parent, "YMAX");
-				  s = sy - arrow_size* 2 - (iupAttribGetBoolean(iFlatScrollBarGetHorizontal(sb_ih->parent), "VISIBLE") ? sb_size : 0);
-			  } else {
-				  coord = x - arrow_size;
-				  if (coord <= 0)
-					  goto brk;
-				  type = "SB_HORIZ";
-				  max = iupAttribGetInt(sb_ih->parent, "XMAX");
-				  s = sx - arrow_size * 2 - (iupAttribGetBoolean(iFlatScrollBarGetHorizontal(sb_ih->parent), "VISIBLE") ? sb_size : 0);
-			  }
-			  if (s > coord) {
-				  cb(sb_ih->parent, button, (int)(((double)max/s)*coord), type);
-			  }
-		  }
-	  }
-brk:
     iupAttribSetInt(sb_ih, "_IUP_PRESSED_HANDLER", SB_NONE);
     return IUP_DEFAULT;
   }
@@ -674,28 +626,6 @@ brk:
 
     if (handler != SB_NONE)
     {
-		int bRepit = 0;
-		if (handler == IUP_SBRIGHT || handler == IUP_SBPGRIGHT ||
-			handler == IUP_SBLEFT || handler == IUP_SBPGLEFT) {
-			iFlatScrollBarPressX(sb_ih, handler);
-			bRepit = 1;
-		}
-		else if (handler == IUP_SBDN || handler == IUP_SBPGDN ||
-			handler == IUP_SBUP || handler == IUP_SBPGUP) {
-			iFlatScrollBarPressY(sb_ih, handler);
-			bRepit = 1;
-		}
-		if (bRepit) {
-			iFlatScrollBarNotify(sb_ih->parent, handler);
-			int prevCmd = (int)iupAttribGet(timerPress, "_CMD");
-			if (prevCmd == SB_NONE || prevCmd == handler) {
-				iupAttribSet(timerPress, "_SB_IH", (char*)sb_ih);
-				iupAttribSet(timerPress, "_BUTTON", (char*)button);
-				IupSetAttribute(timerPress, "RUN", "YES");
-				if(prevCmd == SB_NONE)
-					iupAttribSet(timerPress, "_CMD", (char*)handler);
-			}
-		}
       iupdrvRedrawNow(sb_ih);
       return IUP_DEFAULT;
     }
@@ -705,14 +635,15 @@ brk:
     int press_handler = iupAttribGetInt(sb_ih, "_IUP_PRESSED_HANDLER");
     int handler = iFlatScrollBarGetHandler(sb_ih, x, y);
 
-	if (handler != SB_NONE && handler == press_handler) {
+    if (handler != SB_NONE && handler == press_handler)
+    {
       if (handler == IUP_SBRIGHT || handler == IUP_SBPGRIGHT ||
-			handler == IUP_SBLEFT || handler == IUP_SBPGLEFT ||
-			handler == IUP_SBDN || handler == IUP_SBPGDN ||
-			handler == IUP_SBUP || handler == IUP_SBPGUP) {
-		}
-	} else {
-		 if (handler == IUP_SBDRAGH)
+          handler == IUP_SBLEFT || handler == IUP_SBPGLEFT)
+        iFlatScrollBarPressX(sb_ih, handler);
+      else if (handler == IUP_SBDN || handler == IUP_SBPGDN ||
+          handler == IUP_SBUP || handler == IUP_SBPGUP)
+        iFlatScrollBarPressY(sb_ih, handler);
+      else if (handler == IUP_SBDRAGH)
         handler = IUP_SBPOSH;
       else if (handler == IUP_SBDRAGV)
         handler = IUP_SBPOSV;
@@ -720,11 +651,6 @@ brk:
       iFlatScrollBarNotify(sb_ih->parent, handler);
     }
     iupAttribSetInt(sb_ih, "_IUP_PRESSED_HANDLER", SB_NONE);
-	IupSetAttribute(timerPress, "RUN", "NO");
-	IupSetAttribute(timerPress, "TIME", "500");
-	iupAttribSet(timerPress, "_CMD", (char*)SB_NONE);
-
-	IupSetFocus(sb_ih->parent);
 
     if (handler != SB_NONE)
     {
@@ -734,22 +660,6 @@ brk:
   }
 
   return IUP_DEFAULT;
-}
-
-static int iFlatScrollBarFloatTimerPress_CB(Ihandle* timer) {
-	Ihandle* sb_ih = (Ihandle*)iupAttribGet(timer, "_SB_IH");
-	int button = (int)iupAttribGet(timer, "_BUTTON");
-	int x, y, xS, yS;
-	IupGetIntInt(NULL, "CURSORPOS", &x, &y);
-	xS = IupGetInt(sb_ih, "X");
-	yS = IupGetInt(sb_ih, "Y");
-
-	IupSetAttribute(timer, "RUN", "NO");
-	IupSetAttribute(timer, "TIME", "50");
-
-	iFlatScrollBarButton_CB(sb_ih, button, 1, x - xS, y - yS);
-
-	return IUP_DEFAULT;
 }
 
 static int iFlatScrollBarMotion_CB(Ihandle *sb_ih, int x, int y, char* status)
@@ -1326,10 +1236,6 @@ IUP_SDK_API void iupFlatScrollBarRelease(Ihandle* ih)
 
 IUP_SDK_API void iupFlatScrollBarRegister(Iclass* ic)
 {
-  //iupClassRegisterCallback(ic, "FLATSCROLL_CB", "");
-  iupClassRegisterCallback(ic, "VSCROLLDRAW_CB", "iiiiiiv");
-  iupClassRegisterCallback(ic, "CONTEXTMENU_CB", "iiis");
-
   iupClassRegisterGetAttribute(ic, "DX", NULL, &iupCanvasSetDXAttrib, NULL, NULL, NULL);
   iupClassRegisterGetAttribute(ic, "DY", NULL, &iupCanvasSetDYAttrib, NULL, NULL, NULL);
   iupClassRegisterGetAttribute(ic, "POSX", &iupCanvasGetPosXAttrib, &iupCanvasSetPosXAttrib, NULL, NULL, NULL);

@@ -203,7 +203,7 @@ static int iFlatValRedraw_CB(Ihandle* ih)
   char* bordercolor = iupAttribGetStr(ih, "BORDERCOLOR");
   char* sliderbordercolor = iupAttribGetStr(ih, "SLIDERBORDERCOLOR");
   char* slidercolor = iupAttribGetStr(ih, "SLIDERCOLOR");
-  int active = iupAttribGetInt(ih, "ACTIVE");
+  int active = IupGetInt(ih, "ACTIVE");
   char* bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
   int slider_size = iupAttribGetInt(ih, "SLIDERSIZE");
   int border_width = iupAttribGetInt(ih, "BORDERWIDTH");
@@ -336,6 +336,14 @@ static int iFlatValRedraw_CB(Ihandle* ih)
   return IUP_DEFAULT;
 }
 
+static void iFlatCallValueChangedCb(Ihandle* ih)
+{
+  IFni cb = (IFni)IupGetCallback(ih, "VALUECHANGING_CB");
+  if (cb) cb(ih, 0);
+
+  iupBaseCallValueChangedCb(ih);
+}
+
 static int iFlatValButton_CB(Ihandle* ih, int button, int pressed, int x, int y, char* status)
 {
   IFniiiis button_cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
@@ -381,7 +389,7 @@ static int iFlatValButton_CB(Ihandle* ih, int button, int pressed, int x, int y,
         dy = (is_horizontal) ? 0 : (y > handPos) ? pginc : -pginc;
 
         if (iFlatValMoveHandler(ih, dx, dy))
-          iupBaseCallValueChangedCb(ih);
+          iFlatCallValueChangedCb(ih);
       }
       ih->data->pressed = 0;
     }
@@ -522,7 +530,7 @@ static int iFlatValKUp_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : -inc;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -541,7 +549,7 @@ static int iFlatValKDown_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : inc;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -578,7 +586,7 @@ static int iFlatValKHome_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : handPos - p1;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -598,7 +606,7 @@ static int iFlatValKEnd_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : handPos - p2;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -617,7 +625,7 @@ static int iFlatValKPgUp_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : -pginc;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -636,7 +644,7 @@ static int iFlatValKPgDn_CB(Ihandle* ih)
   dy = (is_horizontal) ? 0 : pginc;
 
   if (iFlatValMoveHandler(ih, dx, dy))
-    iupBaseCallValueChangedCb(ih);
+    iFlatCallValueChangedCb(ih);
 
   IupUpdate(ih);
 
@@ -763,7 +771,7 @@ static char* iFlatValGetBorderWidthAttrib(Ihandle *ih)
 static void iFlatValComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *children_expand)
 {
   int natural_w = 0,
-    natural_h = 0;
+      natural_h = 0;
   int fit2backimage = iupAttribGetBoolean(ih, "FITTOBACKIMAGE");
   char* bgimage = iupAttribGet(ih, "BACKIMAGE");
 
@@ -872,17 +880,17 @@ Iclass* iupFlatValNewClass(void)
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
   iupClassRegisterCallback(ic, "VALUECHANGING_CB", "i");
 
-  iupClassRegisterAttribute(ic, "BGCOLOR", iupBaseNativeParentGetBgColorAttrib, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE | IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "BGCOLOR", iupBaseNativeParentGetBgColorAttrib, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_SAVE);
   iupClassRegisterAttribute(ic, "ACTIVE", iupBaseGetActiveAttrib, iupFlatSetActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT);
 
   /* IupFlatVal only */
   iupClassRegisterAttribute(ic, "MIN", iFlatValGetMinAttrib, iFlatValSetMinAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "MAX", iFlatValGetMaxAttrib, iFlatValSetMaxAttrib, IUPAF_SAMEASSYSTEM, "1", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "VALUE", iFlatValGetValueAttrib, iFlatValSetValueAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "ORIENTATION", iFlatValGetOrientationAttrib, iFlatValSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "PAGESTEP", iFlatValGetPageStepAttrib, iFlatValSetPageStepAttrib, NULL, NULL, IUPAF_NO_INHERIT);  /* force new default value */
-  iupClassRegisterAttribute(ic, "STEP", iFlatValGetStepAttrib, iFlatValSetStepAttrib, NULL, NULL, IUPAF_NO_INHERIT);   /* force new default value */
-  iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ORIENTATION", iFlatValGetOrientationAttrib, iFlatValSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "HORIZONTAL", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "PAGESTEP", iFlatValGetPageStepAttrib, iFlatValSetPageStepAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);  /* force new default value */
+  iupClassRegisterAttribute(ic, "STEP", iFlatValGetStepAttrib, iFlatValSetStepAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);   /* force new default value */
+  iupClassRegisterAttribute(ic, "FOCUSFEEDBACK", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HASFOCUS", iFlatValGetHasFocusAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "SLIDERSIZE", NULL, NULL, IUPAF_SAMEASSYSTEM, "5", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HANDLERSIZE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
@@ -890,8 +898,8 @@ Iclass* iupFlatValNewClass(void)
   iupClassRegisterAttribute(ic, "BORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, IUP_FLAT_BORDERCOLOR, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "BORDERHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
-  iupClassRegisterAttribute(ic, "BORDERWIDTH", iFlatValGetBorderWidthAttrib, iFlatValSetBorderWidthAttrib, IUPAF_SAMEASSYSTEM, "1", IUPAF_DEFAULT);  /* inheritable */
-  iupClassRegisterAttribute(ic, "FGCOLOR", NULL, iFlatValSetAttribPostRedraw, "0 120 220", NULL, IUPAF_NOT_MAPPED);  /* force the new default value */
+  iupClassRegisterAttribute(ic, "BORDERWIDTH", iFlatValGetBorderWidthAttrib, iFlatValSetBorderWidthAttrib, IUPAF_SAMEASSYSTEM, "1", IUPAF_NOT_MAPPED);  /* inheritable */
+  iupClassRegisterAttribute(ic, "FGCOLOR", NULL, iFlatValSetAttribPostRedraw, "0 120 220", NULL, IUPAF_DEFAULT);  /* force the new default value */
   iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "PSCOLOR", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);  /* inheritable */
   iupClassRegisterAttribute(ic, "SLIDERBORDERCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "160 160 160", IUPAF_DEFAULT);  /* inheritable */

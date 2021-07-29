@@ -89,8 +89,7 @@ int iupluaScanf(lua_State *L);
 void iupluaapi_open(lua_State * L);
 
 
-#define IUPLUA_SDK_API 
-//#define IUPLUA_SDK_API IUPLUA_API
+#define IUPLUA_SDK_API IUPLUA_API
 
             /*     Registration    */
 

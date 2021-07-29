@@ -27,7 +27,7 @@
 
 
 enum { ISEPARATOR_VERT, ISEPARATOR_HORIZ };
-enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP, ISEPARATOR_EMPTY, ISEPARATOR_LINE1, ISEPARATOR_LINE2};
+enum { ISEPARATOR_FILL, ISEPARATOR_LINE, ISEPARATOR_SUNKENLINE, ISEPARATOR_DUALLINES, ISEPARATOR_GRIP, ISEPARATOR_EMPTY };
 
 struct _IcontrolData
 {
@@ -136,29 +136,6 @@ static int iFlatSeparatorRedraw_CB(Ihandle* ih)
         iupdrvDrawLine(dc, 0, y + 1, w - 1, y + 1, sunken_color, IUP_DRAW_STROKE, 1);
       }
     }
-	else if (ih->data->style == ISEPARATOR_LINE1)
-	{
-		if (ih->data->orientation == ISEPARATOR_VERT) {
-			x = ih->data->barsize - 1;
-
-			iupdrvDrawLine(dc, x, 0, x, h - 1, color, IUP_DRAW_STROKE, 1);
-		} else {
-			y = ih->data->barsize - 1;
-
-			iupdrvDrawLine(dc, 0, y, w - 1, y, color, IUP_DRAW_STROKE, 1);
-		}
-	}
-	else if (ih->data->style == ISEPARATOR_LINE2) {
-		if (ih->data->orientation == ISEPARATOR_VERT) {
-			x = 0;
-
-			iupdrvDrawLine(dc, x, 0, x, h - 1, color, IUP_DRAW_STROKE, 1);
-		} else {
-			y = 0;
-
-			iupdrvDrawLine(dc, 0, y, w - 1, y, color, IUP_DRAW_STROKE, 1);
-		}
-	}
     else /* ISEPARATOR_LINE */
     {
       if (ih->data->orientation == ISEPARATOR_VERT)
@@ -238,10 +215,6 @@ static int iFlatSeparatorSetStyleAttrib(Ihandle* ih, const char* value)
     ih->data->style = ISEPARATOR_EMPTY;
   else if (iupStrEqualNoCase(value, "GRIP"))
     ih->data->style = ISEPARATOR_GRIP;
-  else if (iupStrEqualNoCase(value, "LINE1"))
-	  ih->data->style = ISEPARATOR_LINE1;
-  else if (iupStrEqualNoCase(value, "LINE2"))
-	  ih->data->style = ISEPARATOR_LINE2;
   else
     ih->data->style = ISEPARATOR_SUNKENLINE;
   IupUpdate(ih);
@@ -325,7 +298,7 @@ Iclass* iupFlatSeparatorNewClass(void)
 
   iupClassRegisterAttribute(ic, "ORIENTATION", iFlatSeparatorGetOrientationAttrib, iFlatSeparatorSetOrientationAttrib, IUPAF_SAMEASSYSTEM, "VERTICAL", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "STYLE", iFlatSeparatorGetStyleAttrib, iFlatSeparatorSetStyleAttrib, IUPAF_SAMEASSYSTEM, "SUNKENLINE", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-  iupClassRegisterAttribute(ic, "COLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "160, 160, 160", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "COLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "160, 160, 160", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BARSIZE", iFlatSeparatorGetBarSizeAttrib, iFlatSeparatorSetBarSizeAttrib, IUPAF_SAMEASSYSTEM, "5", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
   return ic;

@@ -164,24 +164,24 @@ static int iGaugeRedraw_CB(Ihandle* ih)
   {
     if (ih->data->value != ih->data->vmin)
     {
-    int start = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xstart : ystart;
-    int end = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xend : yend;
-    double step = (double)(end - start + 1) / (double)IGAUGE_DASHED_BLOCKS;
-    double step_fill = step - IGAUGE_DASHED_GAP;
-    double range = (double)((end - start + 1) * (ih->data->value - ih->data->vmin) / (ih->data->vmax - ih->data->vmin));
-    int range_percent = (int)(100 * range);
-    double i = 0;
+      int start = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xstart : ystart;
+      int end = (ih->data->orientation == IGAUGE_HORIZONTAL) ? xend : yend;
+      double step = (double)(end - start + 1) / (double)IGAUGE_DASHED_BLOCKS;
+      double step_fill = step - IGAUGE_DASHED_GAP;
+      double range = (double)((end - start + 1) * (ih->data->value - ih->data->vmin) / (ih->data->vmax - ih->data->vmin));
+      int range_percent = (int)(100 * range);
+      double i = 0;
 
-    while (iupRound(100 * (i + step_fill)) <= range_percent)
-    {
-      iupAttribSet(ih, "DRAWSTYLE", "FILL");
-      if (ih->data->orientation == IGAUGE_HORIZONTAL)
-        IupDrawRectangle(ih, start + iupRound(i), ih->currentheight - ystart,
-                             start + iupRound(i + step_fill) - 1, ih->currentheight - yend);
-      else
-        IupDrawRectangle(ih, xstart, ih->currentheight - (start + iupRound(i)),
-                             xend, ih->currentheight - (start + iupRound(i + step_fill) - 1));
-      i += step;
+      while (iupRound(100 * (i + step_fill)) <= range_percent)
+      {
+        iupAttribSet(ih, "DRAWSTYLE", "FILL");
+        if (ih->data->orientation == IGAUGE_HORIZONTAL)
+          IupDrawRectangle(ih, start + iupRound(i), ih->currentheight - ystart,
+                               start + iupRound(i + step_fill) - 1, ih->currentheight - yend);
+        else
+          IupDrawRectangle(ih, xstart, ih->currentheight - (start + iupRound(i)),
+                               xend, ih->currentheight - (start + iupRound(i + step_fill) - 1));
+        i += step;
       }
     }
   }

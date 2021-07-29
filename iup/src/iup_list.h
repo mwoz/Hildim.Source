@@ -42,20 +42,18 @@ int iupdrvListSetImageHandle(Ihandle* ih, int id, void* hImage);
 
 struct _IcontrolData 
 {
-	int sb,  /* scrollbar configuration, can be changed only before map */
-		nc,
-		spacing,
-		horiz_padding,
-		vert_padding,
-		last_caret_pos,
-		is_multiple,
-		is_dropdown,
-		has_editbox,
-		maximg_w, maximg_h, /* used only in Windows */
-		show_image,
-		show_dragdrop,
-		block_sel,
-		call_listbox;
+  int sb,  /* scrollbar configuration, can be changed only before map */
+      nc,
+      spacing,
+      horiz_padding, 
+      vert_padding,
+      last_caret_pos,
+      is_multiple,
+      is_dropdown,
+      has_editbox,
+      maximg_w, maximg_h, /* used only in Windows */
+      show_image,
+      show_dragdrop;
   Imask* mask;
 };
 

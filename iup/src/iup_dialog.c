@@ -543,12 +543,12 @@ int iupDialogPopup(Ihandle* ih, int x, int y)
     int ret, automodal = IupGetInt(ih, "AUTOMODAL"); /* Used only for Windows MessageBox */
 
     if (!automodal)
-    iDialogSetModal(ih);  /* make sure all other dialogs are inactive */
+      iDialogSetModal(ih);  /* make sure all other dialogs are inactive */
 
     ret = iupClassObjectDlgPopup(ih, x, y);
 
     if (!automodal)
-    iDialogUnSetModal(ih);
+      iDialogUnSetModal(ih);
 
     return ret;
   }
@@ -1395,13 +1395,13 @@ Iclass* iupDialogNewClass(void)
   iupClassRegisterAttribute(ic, "EXPAND", iupBaseContainerGetExpandAttrib, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
 
   /* Native Container */
-  iupClassRegisterAttribute(ic, "CHILDOFFSET", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CHILDOFFSET", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   /* Visual */
   iupBaseRegisterVisualAttrib(ic);
 
   /* Dialog only */
-  iupClassRegisterAttribute(ic, "NACTIVE", iupBaseGetActiveAttrib, iDialogSetNActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_DEFAULT | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "NACTIVE", iupBaseGetActiveAttrib, iDialogSetNActiveAttrib, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
 
   /* Drag&Drop */
   iupdrvRegisterDragDropAttrib(ic);

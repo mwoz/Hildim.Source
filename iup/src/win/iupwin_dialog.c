@@ -287,7 +287,7 @@ int iupdrvDialogSetPlacement(Ihandle* ih)
   if (no_activate)
     ih->data->cmd_show = SW_SHOWNOACTIVATE;
   else
-  ih->data->cmd_show = SW_SHOWNORMAL;
+    ih->data->cmd_show = SW_SHOWNORMAL;
   ih->data->show_state = IUP_SHOW;
 
   if (iupAttribGetBoolean(ih, "FULLSCREEN"))
@@ -580,7 +580,7 @@ static int winDialogCustomFrameProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp,
         cb(ih, active);
       }
 
-      if (!iupwin_comctl32ver6 || cb) /* visual style not active */
+      if (!iupwin_comctl32ver6) /* visual style not active */
       {
         DefWindowProc(ih->handle, msg, wp, (LPARAM)-1);  /* use -1 to not repaint the nonclient area */
 
@@ -1259,9 +1259,6 @@ static int winDialogMapMethod(Ihandle* ih)
   else
   {
     native_parent = iupDialogGetNativeParent(ih);
-	if (!native_parent)
-		native_parent = (HWND)IupGetGlobal("DEFAULTNATUVEPARENT");
-
 
     if (native_parent)
     {
@@ -2142,7 +2139,7 @@ void iupdrvDialogInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "MAXIMIZEATDIALOG", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "MAXIMIZEDIALOG", NULL, NULL, NULL, NULL, IUPAF_NO_DEFAULTVALUE | IUPAF_IHANDLENAME | IUPAF_NO_INHERIT);
 
-  iupClassRegisterAttribute(ic, "COMPOSITED", NULL, NULL, NULL, NULL, IUPAF_NOT_MAPPED);
+  iupClassRegisterAttribute(ic, "COMPOSITED", NULL, NULL, NULL, NULL, IUPAF_DEFAULT);
 
   iupClassRegisterAttribute(ic, "CONTROL", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "HELPBUTTON", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
