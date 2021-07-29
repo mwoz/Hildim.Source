@@ -381,6 +381,7 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
         }
 
         ih->data->value = 1;
+        selected = 1;
       }
     }
 

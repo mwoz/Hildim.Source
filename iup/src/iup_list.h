@@ -53,7 +53,9 @@ struct _IcontrolData
       has_editbox,
       maximg_w, maximg_h, /* used only in Windows */
       show_image,
-      show_dragdrop;
+		show_dragdrop,
+		block_sel,
+		call_listbox;
   Imask* mask;
 };
 

@@ -123,6 +123,14 @@ static iRegisteredGlobal global_attribs[] = {
   { NULL, 0, 0, 0, 0 }
 };
 
+static int iGlobalsCompareRegisteredNames(const void* i1, const void* i2)
+{
+  iRegisteredGlobal ih1 = *((iRegisteredGlobal*)i1);
+  iRegisteredGlobal ih2 = *((iRegisteredGlobal*)i2);
+  char* name1 = ih1.name;
+  char* name2 = ih2.name;
+  return strcmp(name1, name2);
+}
 static int iGlobalGetRegisteredAttributesCount(void)
 {
   int count = 0;
@@ -229,7 +237,7 @@ static void iGlobalsUpdate(Ihandle* dlg)
   }
 
   total_count = iGlobalGetRegisteredAttributesCount();
-  
+  qsort(global_attribs, total_count, sizeof(iRegisteredGlobal), iGlobalsCompareRegisteredNames);
   j = 0;
   for (i = 0; i < total_count; i++)
   {
