@@ -529,8 +529,14 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
+	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		EnsureStyledTo(LineStart(lineMaxSubord + 2));
+		if (lineMaxSubord >= lineMaxStyled) {
+			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
+			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
+				lineMaxStyled = lookLastLine;
+			EnsureStyledTo(LineStart(lineMaxStyled + 2));
+		}
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
@@ -2032,6 +2038,7 @@ bool SplitMatch(const SplitView &view, size_t start, std::string_view text) noex
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         FindOption flags, Sci::Position *length) {
+if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = FlagSet(flags, FindOption::MatchCase);
@@ -2349,9 +2356,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
-		if (pli && !pli->UseContainerLexing()) {
 			const Sci::Line lineEndStyled = SciLineFromPosition(GetEndStyled());
 			const Sci::Position endStyledTo = LineStart(lineEndStyled);
+		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2359,6 +2366,9 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
+		}
+		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
+			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -3250,9 +3260,11 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error &) {
+	} catch (std::regex_error & rerr) {
+		rerr;
 		// Failed to create regular expression
-		throw RegexError();
+		//throw RegexError();
+		return -1;
 	} catch (...) {
 		// Failed in some other way
 		return -1;
