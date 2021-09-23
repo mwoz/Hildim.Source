@@ -2390,7 +2390,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	LRESULT r = pSciTEWin->NotifyGetMsgProc(nCode, wParam, lParam);
-	return CallNextHookEx(mouseHook, nCode, wParam, lParam) || r;
+	return CallNextHookEx(macroHook, nCode, wParam, lParam) || r;
 }
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)

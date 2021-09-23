@@ -1815,8 +1815,8 @@ void SciTEBase::ReadPropertiesEx() {
 	// wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	// wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 
-	// wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
-	CallChildren(SCI_SETUNDOCOLLECTION, 0);
+	wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
+	wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
 
 	// if (extender) {
 		// FilePath defaultDir = GetDefaultDirectory();

@@ -31,7 +31,7 @@
 #define NOMINMAX
 #endif
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x06000
 #undef WINVER
 #define WINVER 0x0501
 #define WIN32_LEAN_AND_MEAN 1
@@ -326,6 +326,7 @@ class ScintillaWin :
 	SetCoalescableTimerSig SetCoalescableTimerFn;
 
 	unsigned int linesPerScroll;	///< Intellimouse support
+	unsigned int charsPerScroll;	
 	int wheelDelta; ///< Wheel delta from roll
 
 	UINT dpi = USER_DEFAULT_SCREEN_DPI;
@@ -530,6 +531,7 @@ ScintillaWin::ScintillaWin(HWND hwnd) {
 	SetCoalescableTimerFn = nullptr;
 
 	linesPerScroll = 0;
+	charsPerScroll = 0;
 	wheelDelta = 0;   // Wheel delta from roll
 
 	dpi = DpiForWindow(hwnd);
@@ -1512,6 +1514,41 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 		MouseLeave();
 		return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 
+	case WM_MOUSEHWHEEL:
+		if (!mouseWheelCaptures) {
+			// if the mouse wheel is not captured, test if the mouse
+			// pointer is over the editor window and if not, don't
+			// handle the message but pass it on.
+			RECT rc;
+			GetWindowRect(MainHWND(), &rc);
+			const POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+			if (!PtInRect(&rc, pt))
+				return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+		}
+		// if autocomplete list active - ничего не делаем - он узкий))
+		if (ac.Active()) {
+			break;
+		}
+		wheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+		if (std::abs(wheelDelta) >= WHEEL_DELTA && charsPerScroll > 0) {
+			Sci::Position charsToScroll = charsPerScroll;
+			if (charsToScroll == 0) {
+				charsToScroll = 1;
+			}
+			charsToScroll *= (wheelDelta / WHEEL_DELTA);
+			if (wheelDelta >= 0)
+				wheelDelta = wheelDelta % WHEEL_DELTA;
+			else
+				wheelDelta = -(-wheelDelta % WHEEL_DELTA);
+
+			if ((wParam & MK_CONTROL) || (wParam & MK_SHIFT)) {
+				return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+			} else {
+				// Scroll
+				HorizontalScrollTo(xOffset + charsToScroll * (11 + vs.zoomLevel)); 
+			}
+		}	
+		return 0;
 	case WM_MOUSEWHEEL:
 		if (!mouseWheelCaptures) {
 			// if the mouse wheel is not captured, test if the mouse
@@ -1534,8 +1571,11 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 		// (A good idea for datazoom would be to "fold" or "unfold" details.
 		// i.e. if datazoomed out only class structures are visible, when datazooming in the control
 		// structures appear, then eventually the individual statements...)
-		if (wParam & MK_SHIFT) {
-			return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
+		if (wParam & (MK_SHIFT)){
+			wParam = wParam & (~MK_SHIFT);
+			wheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
+			wParam = MAKELONG(LOWORD(wParam), wheelDelta);
+			return MouseMessage(WM_MOUSEHWHEEL, wParam, lParam);
 		}
 		// Either SCROLL or ZOOM. We handle the wheel steppings calculation
 		wheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
@@ -1551,8 +1591,8 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 				wheelDelta = wheelDelta % WHEEL_DELTA;
 			else
 				wheelDelta = -(-wheelDelta % WHEEL_DELTA);
-
-			if (wParam & MK_CONTROL) {
+			WORD dd = LOWORD(wParam);
+			if (wParam & (MK_CONTROL | MK_MBUTTON)) {
 				// Zoom! We play with the font sizes in the styles.
 				// Number of steps/line is ignored, we just care if sizing up or down
 				if (linesToScroll < 0) {
@@ -1606,9 +1646,9 @@ sptr_t ScintillaWin::KeyMessage(unsigned int iMessage, uptr_t wParam, sptr_t lPa
 
 	case WM_CHAR:
 		if (((wParam >= 128) || !iscntrl(static_cast<int>(wParam))) || !lastKeyDownConsumed) {
-				if (wParam < 32 && wParam > 0 && KeyboardIsKeyDown(VK_CONTROL))
-					return 0;
-				wchar_t wcs[3] = {static_cast<wchar_t>(wParam), 0};
+			if (wParam < 32 && wParam > 0 && KeyboardIsKeyDown(VK_CONTROL))
+				return 0;
+			wchar_t wcs[3] = {static_cast<wchar_t>(wParam), 0};
 			unsigned int wclen = 1;
 			if (IS_HIGH_SURROGATE(wcs[0])) {
 				// If this is a high surrogate character, we need a second one
@@ -1972,6 +2012,7 @@ sptr_t ScintillaWin::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		case WM_MOUSEMOVE:
 		case WM_MOUSELEAVE:
 		case WM_MOUSEWHEEL:
+		case WM_MOUSEHWHEEL:
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:		
 			return MouseMessage(msg, wParam, lParam);
@@ -3166,6 +3207,7 @@ LRESULT ScintillaWin::ImeOnReconvert(LPARAM lParam) {
 void ScintillaWin::GetIntelliMouseParameters() noexcept {
 	// This retrieves the number of lines per scroll as configured in the Mouse Properties sheet in Control Panel
 	::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &linesPerScroll, 0);
+	::SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0, &charsPerScroll, 0);
 }
 
 void ScintillaWin::CopyToGlobal(GlobalMemory &gmUnicode, const SelectionText &selectedText) {

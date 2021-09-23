@@ -448,6 +448,11 @@ int mesage_ToString(lua_State* L)
 	lua_pushstring(L, cmessage_arg(L, "mesage_ToString")->ToString());
 	return 1;
 }
+int message_GetWireText(lua_State* L)
+{
+	lua_pushstring(L, (CString)cmessage_arg(L, "mesage_GetWireText")->vbsGetWireText());
+	return 1;
+}
 int mesage_Subjects(lua_State* L)
 {
 	CString type2 = luaL_typename(L,2);
@@ -1288,6 +1293,7 @@ luaL_Reg mblua[] = {
 };
 luaL_Reg message_methods[] = {
 	{"ToString",mesage_ToString},
+	{"GetWireText",message_GetWireText},
 	{"Subjects",mesage_Subjects},//Send, replay -  и в аргументах и в результате
 	{"Counts",mesage_Counts},//FieldCount, MessageCount
 	{"SetPathValue",mesage_SetPathValue},

@@ -479,7 +479,7 @@ char* iupMatrixGetFgColorStr(Ihandle* ih, int lin, int col)
 }
 
 /* Color attenuation factor in a marked cell, 20% darker */
-#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*8)/10))
+#define IMAT_ATENUATION(_x)    ((unsigned char)(((_x)*9)/10))
 
 static void iMatrixAddMarkedAttenuation(Ihandle* ih, unsigned char *r, unsigned char *g, unsigned char *b)
 {

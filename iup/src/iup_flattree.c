@@ -1321,12 +1321,12 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
                       NULL, make_inactive, node->title, text_flags, 0, fore_color, back_color, active);
 
       /* title selection */
+      long selcolor = 0;
       if (node->selected || (ih->data->show_dragdrop && ih->data->dragover_id == node->id))
       {
         unsigned char alpha = (unsigned char)iupAttribGetInt(ih, "HLCOLORALPHA");
         if (alpha != 0)
         {
-          long selcolor;
           unsigned char red, green, blue;
           char* hlcolor = iupAttribGetStr(ih, "HLCOLOR");
 
@@ -1336,7 +1336,8 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
           iupStrToRGB(hlcolor, &red, &green, &blue);
           selcolor = iupDrawColor(red, green, blue, alpha);
 
-          iupdrvDrawRectangle(dc, title_x, node_y, title_x + node->title_width - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
+		  if(!ih->data->extratext_width || !node->selected)
+           iupdrvDrawRectangle(dc, title_x, node_y, title_x + node->title_width - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
         }
       }
 
@@ -1347,8 +1348,10 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
   	  if (ih->data->extratext_width)
       {
   	    int extra_x = ih->currentwidth - ih->data->extratext_width;
-  	  
-	      iupdrvDrawRectangle(dc, extra_x , node_y, ih->currentwidth, node_y + node_h , iupDrawStrToColor(bg_color, 0), IUP_DRAW_FILL, 1);
+		  if(node->selected && selcolor)
+			iupdrvDrawRectangle(dc, title_x, node_y, ih->currentwidth - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
+		  else  
+		    iupdrvDrawRectangle(dc, extra_x , node_y, ih->currentwidth, node_y + node_h , iupDrawStrToColor(bg_color, 0), IUP_DRAW_FILL, 1);
 
         if (node->extratext)
         {
@@ -2166,8 +2169,8 @@ static int iFlatTreeButton_CB(Ihandle* ih, int button, int pressed, int x, int y
     image = iFlatTreeGetNodeImage(ih, node, 1);
     iupImageGetInfo(image, &img_w, NULL, NULL);
 
-    xmin = node_x + toggle_gap;
-    xmax = xmin + img_w + ih->data->icon_spacing + node->title_width;
+    xmin = node_x + toggle_gap; 
+	xmax = ih->data->extratext_width ? ih->currentwidth : xmin + img_w + ih->data->icon_spacing + node->title_width;
 
     if (x > xmin && x < xmax)  /* inside image+title */
     {

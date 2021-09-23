@@ -176,6 +176,7 @@
     <ClCompile Include="..\lexers\LexCrontab.cxx" />
     <ClCompile Include="..\lexers\LexCsound.cxx" />
     <ClCompile Include="..\lexers\LexCSS.cxx" />
+    <ClCompile Include="..\lexers\LexCubeFormula.cxx" />
     <ClCompile Include="..\lexers\LexD.cxx" />
     <ClCompile Include="..\lexers\LexDataflex.cxx" />
     <ClCompile Include="..\lexers\LexDiff.cxx" />
@@ -265,6 +266,7 @@
     <ClCompile Include="..\lexers\LexVerilog.cxx" />
     <ClCompile Include="..\lexers\LexVHDL.cxx" />
     <ClCompile Include="..\lexers\LexVisualProlog.cxx" />
+    <ClCompile Include="..\lexers\LexWireText.cxx" />
     <ClCompile Include="..\lexers\LexX12.cxx" />
     <ClCompile Include="..\lexers\LexYAML.cxx" />
     <ClCompile Include="..\lexlib\*.cxx" />

@@ -58,6 +58,7 @@ extern LexerModule lmCPP;
 extern LexerModule lmCPPNoCase;
 extern LexerModule lmCsound;
 extern LexerModule lmCss;
+extern LexerModule lmCubeFormula;
 extern LexerModule lmD;
 extern LexerModule lmDataflex;
 extern LexerModule lmDiff;
@@ -158,6 +159,7 @@ extern LexerModule lmVBScript;
 extern LexerModule lmVerilog;
 extern LexerModule lmVHDL;
 extern LexerModule lmVisualProlog;
+extern LexerModule lmWireFormat;
 extern LexerModule lmX12;
 extern LexerModule lmXML;
 extern LexerModule lmYAML;
@@ -206,6 +208,7 @@ void AddEachLexer() {
 		&lmCPPNoCase,
 		&lmCsound,
 		&lmCss,
+		&lmCubeFormula,
 		&lmD,
 		&lmDataflex,
 		&lmDiff,
@@ -306,6 +309,7 @@ void AddEachLexer() {
 		&lmVerilog,
 		&lmVHDL,
 		&lmVisualProlog,
+		&lmWireFormat,
 		&lmX12,
 		&lmXML,
 		&lmYAML,

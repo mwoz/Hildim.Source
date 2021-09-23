@@ -75,7 +75,7 @@ struct OptionsFM {
 		foldComment = false;
 		foldCompact = false;
 		foldAtElse = false;
-		debugmode = false;
+		debugmode = true;
 		foldcdata = false;
 		frozen = false;
 		debugsuffix = "";
@@ -670,6 +670,8 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 		// Also accepts A-F for hex. numbers
 		if (!IsANumberChar(sc.ch) && !(tolower(sc.ch) >= 'a' && tolower(sc.ch) <= 'f')) {
 			sc.SetState(SCE_FM_VB_DEFAULT);
+		} else if (isoperator(static_cast<char>(sc.ch))) {
+			sc.SetState(SCE_FM_VB_OPERATOR);
 		}
 	break;
 	case SCE_FM_VB_STRING:
