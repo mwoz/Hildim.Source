@@ -11,18 +11,20 @@
 
 #include <algorithm>
 #include <iterator>
+#include <memory>
 
 #include "WordList.h"
 
 using namespace Lexilla;
 
+namespace {
+
 /**
  * Creates an array that points into each word in the string and puts \0 terminators
  * after each word.
  */
-static char **ArrayFromWordList(char *wordlist, size_t slen, int *len, bool onlyLineEnds = false) {
-	int prev = '\n';
-	int words = 0;
+std::unique_ptr<char *[]> ArrayFromWordList(char *wordlist, size_t slen, size_t *len, bool onlyLineEnds = false) {
+	size_t words = 0;
 	// For rapid determination of whether a character is a separator, build
 	// a look up table.
 	bool wordSeparator[256] = {};	// Initialise all to false.
@@ -32,26 +34,27 @@ static char **ArrayFromWordList(char *wordlist, size_t slen, int *len, bool only
 		wordSeparator[static_cast<unsigned int>(' ')] = true;
 		wordSeparator[static_cast<unsigned int>('\t')] = true;
 	}
+	unsigned char prev = '\n';
 	for (int j = 0; wordlist[j]; j++) {
-		const int curr = static_cast<unsigned char>(wordlist[j]);
+		const unsigned char curr = wordlist[j];
 		if (!wordSeparator[curr] && wordSeparator[prev])
 			words++;
 		prev = curr;
 	}
-	char **keywords = new char *[words + 1];
-	int wordsStore = 0;
+	std::unique_ptr<char *[]> keywords = std::make_unique<char *[]>(words + 1);
+	size_t wordsStore = 0;
 	if (words) {
-		prev = '\0';
+		unsigned char previous = '\0';
 		for (size_t k = 0; k < slen; k++) {
 			if (!wordSeparator[static_cast<unsigned char>(wordlist[k])]) {
-				if (!prev) {
+				if (!previous) {
 					keywords[wordsStore] = &wordlist[k];
 					wordsStore++;
 				}
 			} else {
 				wordlist[k] = '\0';
 			}
-			prev = wordlist[k];
+			previous = wordlist[k];
 		}
 	}
 	assert(wordsStore < (words + 1));
@@ -60,8 +63,14 @@ static char **ArrayFromWordList(char *wordlist, size_t slen, int *len, bool only
 	return keywords;
 }
 
-WordList::WordList(bool onlyLineEnds_) :
-	words(0), list(0), len(0), onlyLineEnds(onlyLineEnds_) {
+bool cmpWords(const char *a, const char *b) noexcept {
+	return strcmp(a, b) < 0;
+}
+
+}
+
+WordList::WordList(bool onlyLineEnds_) noexcept :
+	words(nullptr), list(nullptr), len(0), onlyLineEnds(onlyLineEnds_) {
 	// Prevent warnings by static analyzers about uninitialized starts.
 	starts[0] = -1;
 }
@@ -77,7 +86,7 @@ WordList::operator bool() const noexcept {
 bool WordList::operator!=(const WordList &other) const noexcept {
 	if (len != other.len)
 		return true;
-	for (int i=0; i<len; i++) {
+	for (size_t i=0; i<len; i++) {
 		if (strcmp(words[i], other.words[i]) != 0)
 			return true;
 	}
@@ -85,70 +94,44 @@ bool WordList::operator!=(const WordList &other) const noexcept {
 }
 
 int WordList::Length() const noexcept {
-	return len;
+	return static_cast<int>(len);
 }
 
 void WordList::Clear() noexcept {
-	if (words) {
-		delete []list;
-		delete []words;
-	}
-	words = nullptr;
+	delete []list;
 	list = nullptr;
+	delete []words;
+	words = nullptr;
 	len = 0;
 }
 
-#ifdef _MSC_VER
-
-static bool cmpWords(const char *a, const char *b) {
-	return strcmp(a, b) < 0;
-}
-
-#else
-
-static int cmpWords(const void *a, const void *b) {
-	return strcmp(*static_cast<const char * const *>(a), *static_cast<const char * const *>(b));
-}
-
-static void SortWordList(char **words, unsigned int len) {
-	qsort(words, len, sizeof(*words), cmpWords);
-}
-
-#endif
-
 bool WordList::Set(const char *s) {
 	const size_t lenS = strlen(s) + 1;
-	char *listTemp = new char[lenS];
-	memcpy(listTemp, s, lenS);
-	int lenTemp = 0;
-	char **wordsTemp = ArrayFromWordList(listTemp, lenS - 1, &lenTemp, onlyLineEnds);
-#ifdef _MSC_VER
-	std::sort(wordsTemp, wordsTemp + lenTemp, cmpWords);
-#else
-	SortWordList(wordsTemp, lenTemp);
-#endif
+	std::unique_ptr<char[]> listTemp = std::make_unique<char[]>(lenS);
+	memcpy(listTemp.get(), s, lenS);
+	size_t lenTemp = 0;
+	std::unique_ptr<char *[]> wordsTemp = ArrayFromWordList(listTemp.get(), lenS - 1, &lenTemp, onlyLineEnds);
+	std::sort(wordsTemp.get(), wordsTemp.get() + lenTemp, cmpWords);
 
 	if (lenTemp == len) {
 		bool changed = false;
-		for (int i = 0; i < lenTemp; i++) {
+		for (size_t i = 0; i < lenTemp; i++) {
 			if (strcmp(words[i], wordsTemp[i]) != 0) {
 				changed = true;
 				break;
 			}
 		}
 		if (!changed) {
-			delete []listTemp;
-			delete []wordsTemp;
 			return false;
 		}
 	}
 
 	Clear();
-	words = wordsTemp;
-	list = listTemp;
+	words = wordsTemp.release();
+	list = listTemp.release();
 	len = lenTemp;
 	std::fill(starts, std::end(starts), -1);
-	for (int l = len - 1; l >= 0; l--) {
+	for (int l = static_cast<int>(len - 1); l >= 0; l--) {
 		unsigned char indexChar = words[l][0];
 		starts[indexChar] = l;
 	}
@@ -313,141 +296,3 @@ const char *WordList::WordAt(int n) const noexcept {
 	return words[n];
 }
 
-//!-start-[InMultiWordsList]
-/** like InList, but string can be a part of multi words keyword expresion.
-* eg. the keyword "begin of" is defined as "begin~of". If input string is
-* "begin of" then return true, eq = true and begin = false, if input string
-* is "begin" then return true, eq = false and begin = true.
-* The marker is ~ in this case.
-*/
-bool WordList::InMultiWordsList(
-	const char *s,
-	const char marker,
-	bool &eq,
-	bool &begin) {
-	eq = begin = false;
-	if (0 == words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-/** like InList, but string can be a part of multi words keyword expresion.
-* eg. the keyword "begin of" is defined as "begin~of". If input string is
-* "begin of" then return true, eq = true and begin = false, if input string
-* is "begin" then return true, eq = false and begin = true.
-* The marker is ~ in this case.
-*/
-bool WordList::InMultiWordsList(
-	const char *s,
-	const char marker,
-	bool &eq,
-	bool &begin,
-	const char* &keyword_end) {
-	eq = begin = false;
-	if (0 == words || !*s) {
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar && (!eq || !begin)) {
-			const char *a = words[j] + 1;
-			const char *b = s + 1;
-			while (*a && ((*a == *b) || (*a == marker && *b == ' '))) {
-				a++;
-				b++;
-			}
-			if (!*b) {
-				if (!*a) eq = true;
-				else if (*a == marker) {
-					begin = true;
-					keyword_end = a + 1;
-				}
-			}
-			j++;
-		}
-	}
-	return (eq || begin);
-}
-/** similar to InList, but keyword can be a substring of word s.
-* eg. the keyword define is defined as def~ or def~e. This means the word must
-* start with def and finished with e to be a keyword, but also may have any
-* symbols instead of marker.
-* The marker is ~ in this case.
-* Returns in mainLen - the length of starting part and in finLen - final part.
-*/
-bool WordList::InListPartly(const char *s, const char marker, int &mainLen, int &finLen) {
-	if (0 == words || !*s) {
-		mainLen = finLen = 0;
-		return false;
-	}
-	unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while ((unsigned char)words[j][0] == firstChar) {
-			if (s[1] == words[j][1]) {
-				const char *a = words[j] + 1;
-				const char *b = s + 1;
-				mainLen = finLen = 0;
-				while (*a && *a != marker && *a == *b) {
-					a++;
-					b++;
-					mainLen++;
-				}
-				if (!*a && !*b)
-					return true;
-				if (*a == marker) {
-					while (*a) a++;
-					while (*b) b++;
-					finLen = -1;
-					while (*a != marker && *a == *b) {
-						a--;
-						b--;
-						finLen++;
-					}
-					if (*a == marker)
-						return true;
-				}
-			}
-			j++;
-		}
-	}
-	j = starts['^'];
-	if (j >= 0) {
-		while (words[j][0] == '^') {
-			const char *a = words[j] + 1;
-			const char *b = s;
-			mainLen = finLen = 0;
-			while (*a && *a == *b) {
-				a++;
-				b++;
-				mainLen++;
-			}
-			if (!*a)
-				return true;
-			j++;
-		}
-	}
-	mainLen = finLen = 0;
-	return false;
-}
-//!-end-[InMultiWordsList]

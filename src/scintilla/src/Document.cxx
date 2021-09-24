@@ -51,6 +51,16 @@
 using namespace Scintilla;
 using namespace Scintilla::Internal;
 
+LexInterface::LexInterface(Document *pdoc_) noexcept : pdoc(pdoc_), performingStyle(false) {
+}
+
+LexInterface::~LexInterface() noexcept = default;
+
+void LexInterface::SetInstance(ILexer5 *instance_) {
+	instance.reset(instance_);
+	pdoc->LexerChanged();
+}
+
 void LexInterface::Colourise(Sci::Position start, Sci::Position end) {
 	if (pdoc && instance && !performingStyle) {
 		// Protect against reentrance, which may occur, for example, when
@@ -84,6 +94,10 @@ LineEndType LexInterface::LineEndTypesSupported() {
 		return static_cast<LineEndType>(instance->LineEndTypesSupported());
 	}
 	return LineEndType::Default;
+}
+
+bool LexInterface::UseContainerLexing() const noexcept {
+	return !instance;
 }
 
 ActionDuration::ActionDuration(double duration_, double minDuration_, double maxDuration_) noexcept :
@@ -529,14 +543,8 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
-	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		if (lineMaxSubord >= lineMaxStyled) {
-			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
-			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
-				lineMaxStyled = lookLastLine;
-			EnsureStyledTo(LineStart(lineMaxStyled + 2));
-		}
+		EnsureStyledTo(LineStart(lineMaxSubord + 2));
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
@@ -2038,7 +2046,6 @@ bool SplitMatch(const SplitView &view, size_t start, std::string_view text) noex
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         FindOption flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = FlagSet(flags, FindOption::MatchCase);
@@ -2074,7 +2081,7 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 			const unsigned char charStartSearch =  search[0];
 			if (forward && ((0 == dbcsCodePage) || (CpUtf8 == dbcsCodePage && !UTF8IsTrailByte(charStartSearch)))) {
 				// This is a fast case where there is no need to test byte values to iterate
-				// so becomes the equivalent of a memchr+memcmp loop. 
+				// so becomes the equivalent of a memchr+memcmp loop.
 				// UTF-8 search will not be self-synchronizing when starts with trail byte
 				const std::string_view suffix(search + 1, lengthFind - 1);
 				while (pos < endSearch) {
@@ -2356,9 +2363,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			const Sci::Line lineEndStyled = SciLineFromPosition(GetEndStyled());
 			const Sci::Position endStyledTo = LineStart(lineEndStyled);
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2366,9 +2373,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2808,11 +2812,6 @@ Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxRe
 class BuiltinRegex : public RegexSearchBase {
 public:
 	explicit BuiltinRegex(CharClassify *charClassTable) : search(charClassTable) {}
-	BuiltinRegex(const BuiltinRegex &) = delete;
-	BuiltinRegex(BuiltinRegex &&) = delete;
-	BuiltinRegex &operator=(const BuiltinRegex &) = delete;
-	BuiltinRegex &operator=(BuiltinRegex &&) = delete;
-	~BuiltinRegex() override = default;
 
 	Sci::Position FindText(Document *doc, Sci::Position minPos, Sci::Position maxPos, const char *s,
                         bool caseSensitive, bool word, bool wordStart, FindOption flags,
@@ -3209,7 +3208,7 @@ bool MatchOnLines(const Document *doc, const Regex &regexp, const RESearchRange 
 	}
 #endif
 	if (matched) {
-		for (size_t co = 0; co < match.size(); co++) {
+		for (size_t co = 0; co < match.size() && co < RESearch::MAXTAG; co++) {
 			search.bopat[co] = match[co].first.Pos();
 			search.eopat[co] = match[co].second.PosRoundUp();
 			const Sci::Position lenMatch = search.eopat[co] - search.bopat[co];
@@ -3260,11 +3259,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;

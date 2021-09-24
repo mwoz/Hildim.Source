@@ -272,6 +272,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_STYLEGETWEIGHT 2064
 #define SCI_STYLESETCHARACTERSET 2066
 #define SCI_STYLESETHOTSPOT 2409
+#define SCI_STYLESETCHECKMONOSPACED 2254
+#define SCI_STYLEGETCHECKMONOSPACED 2255
 #define SC_ELEMENT_LIST 0
 #define SC_ELEMENT_LIST_BACK 1
 #define SC_ELEMENT_LIST_SELECTED 2
@@ -291,6 +293,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_ELEMENT_WHITE_SPACE_BACK 61
 #define SC_ELEMENT_HOT_SPOT_ACTIVE 70
 #define SC_ELEMENT_HOT_SPOT_ACTIVE_BACK 71
+#define SC_ELEMENT_FOLD_LINE 80
+#define SC_ELEMENT_HIDDEN_LINE 81
 #define SCI_SETELEMENTCOLOUR 2753
 #define SCI_GETELEMENTCOLOUR 2754
 #define SCI_RESETELEMENTCOLOUR 2755
@@ -310,6 +314,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_SETSELECTIONLAYER 2763
 #define SCI_GETCARETLINELAYER 2764
 #define SCI_SETCARETLINELAYER 2765
+#define SCI_GETCARETLINEHIGHLIGHTSUBLINE 2773
+#define SCI_SETCARETLINEHIGHLIGHTSUBLINE 2774
 #define SCI_SETCARETFORE 2069
 #define SCI_ASSIGNCMDKEY 2070
 #define SCI_CLEARCMDKEY 2071
@@ -537,8 +543,6 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_CALLTIPSETFOREHLT 2207
 #define SCI_CALLTIPUSESTYLE 2212
 #define SCI_CALLTIPSETPOSITION 2213
-#define SCI_SETMOUSECAPTURE 44033
-#define SCI_SETFOLDHIGHLIGHTCOLOUR 44034
 #define SCI_VISIBLEFROMDOCLINE 2220
 #define SCI_DOCLINEFROMVISIBLE 2221
 #define SCI_WRAPCOUNT 2235
@@ -1110,7 +1114,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_GETLEXER 4002
 #define SCI_COLOURISE 4003
 #define SCI_SETPROPERTY 4004
-#define KEYWORDSET_MAX 16
+#define KEYWORDSET_MAX 8
 #define SCI_SETKEYWORDS 4005
 #define SCI_GETPROPERTY 4008
 #define SCI_GETPROPERTYEXPANDED 4009
@@ -1238,9 +1242,6 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCN_AUTOCCOMPLETED 2030
 #define SCN_MARGINRIGHTCLICK 2031
 #define SCN_AUTOCSELECTIONCHANGE 2032
-#define SCN_CLICK 2061
-#define SCN_MOUSEBUTTONUP 2062
-#define SCN_AUTOCUPDATED 2038
 #ifndef SCI_DISABLE_PROVISIONAL
 #define SC_BIDIRECTIONAL_DISABLED 0
 #define SC_BIDIRECTIONAL_L2R 1
@@ -1255,21 +1256,6 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 /* These structures are defined to be exactly the same shape as the Win32
  * CHARRANGE, TEXTRANGE, FINDTEXTEX, FORMATRANGE, and NMHDR structs.
  * So older code that treats Scintilla as a RichEdit will work. */
-
-
-#define SCI_POSTPONECHECKRELOAD 3989 
-#define SCI_MARGINCONTEXTMENU 3990 
-#define SCI_SETSCROLLINFO 3991 
-#define SCI_GETSCROLLINFO 3992 
-#define SCI_FINDPROGRESS 3993 
-#define SCI_POSTCALBACK 3994 
-#define SCN_KEYCOMMAND 3995 
-#define SCI_PRIVATELEXERCALLSTR 3996 
-#define SCN_COLORIZED 3997 
-#define SCN_NOTYFY_OUTPUTCMD 3998 
-#define SCN_NOTYFY_OUTPUTEXIT 3999 
-#define SCN_LISTCONTEXTMENU 4000
-#define SCI_LISTCUSTOMCOLORS 5000
 
 struct Sci_CharacterRange {
 	Sci_PositionCR cpMin;

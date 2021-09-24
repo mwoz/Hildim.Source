@@ -79,9 +79,6 @@ public:
 
 	std::unique_ptr<BidiData> bidiData;
 
-	// Hotspot support
-	Range hotspot;
-
 	// Wrapped line support
 	int widthLine;
 	int lines;
@@ -212,13 +209,21 @@ typedef std::map<unsigned int, Representation> MapRepresentation;
 class SpecialRepresentations {
 	MapRepresentation mapReprs;
 	short startByteHasReprs[0x100] {};
+	bool crlf = false;
 public:
 	void SetRepresentation(std::string_view charBytes, std::string_view value);
 	void SetRepresentationAppearance(std::string_view charBytes, RepresentationAppearance appearance);
 	void SetRepresentationColour(std::string_view charBytes, ColourRGBA colour);
 	void ClearRepresentation(std::string_view charBytes);
+	const Representation *GetRepresentation(std::string_view charBytes) const;
 	const Representation *RepresentationFromCharacter(std::string_view charBytes) const;
 	bool Contains(std::string_view charBytes) const;
+	bool ContainsCrLf() const noexcept {
+		return crlf;
+	}
+	bool MayContain(unsigned char ch) const noexcept {
+		return startByteHasReprs[ch] != 0;
+	}
 	void Clear();
 };
 

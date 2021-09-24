@@ -476,10 +476,7 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-int UndoHistory::EndUndoAction() {
-	int res = undoSequenceDepth;
-	if (!res)
-		return res;
+void UndoHistory::EndUndoAction() {
 	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
@@ -491,7 +488,6 @@ int UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
-	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -527,7 +523,7 @@ void UndoHistory::TentativeCommit() {
 }
 
 bool UndoHistory::TentativeActive() const noexcept {
-	return tentativePoint >= 0; 
+	return tentativePoint >= 0;
 }
 
 int UndoHistory::TentativeSteps() noexcept {
@@ -1285,8 +1281,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-int CellBuffer::EndUndoAction() {
-	return uh.EndUndoAction();
+void CellBuffer::EndUndoAction() {
+	uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {

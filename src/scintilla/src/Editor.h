@@ -188,6 +188,10 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	Window wMain;	///< The Scintilla parent window
 	Window wMargin;	///< May be separate when using a scroll view for wMain
 
+	// Optimization that avoids superfluous invalidations
+	bool redrawPendingText = false;
+	bool redrawPendingMargin = false;
+
 	/** Style resources may be expensive to allocate so are cached between uses.
 	 * When a style attribute is changed, this cache is flushed. */
 	bool stylesValid;
@@ -201,7 +205,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	Scintilla::CursorShape cursorMode;
 
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -448,8 +451,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, Scintilla::CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, KeyMod modifiers); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, KeyMod ctrl); //!-add-[OnMouseButtonUp]	
 	virtual void NotifyDoubleClick(Point pt, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, Scintilla::KeyMod modifiers);
@@ -472,8 +473,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) override;
 	void NotifyMacroRecord(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(Scintilla::Update flags) noexcept;
 	void PageMove(int direction, Selection::SelTypes selt=Selection::SelTypes::none, bool stuttered = false);
@@ -586,7 +585,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	bool PositionIsHotspot(Sci::Position position) const;
 	bool PointIsHotspot(Point pt);
 	void SetHotSpotRange(const Point *pt);
-	Range GetHotSpotRange() const noexcept override;
 	void SetHoverIndicatorPosition(Sci::Position position);
 	void SetHoverIndicatorPoint(Point pt);
 
@@ -642,7 +640,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 		return Point(static_cast<XYPOSITION>(wParam) - vs.ExternalMarginWidth(), static_cast<XYPOSITION>(lParam));
 	}
 
-	constexpr std::optional<FoldLevel> OptionalFoldLevel(Scintilla::sptr_t lParam) {
+	static constexpr std::optional<FoldLevel> OptionalFoldLevel(Scintilla::sptr_t lParam) {
 		if (lParam >= 0) {
 			return static_cast<FoldLevel>(lParam);
 		}
