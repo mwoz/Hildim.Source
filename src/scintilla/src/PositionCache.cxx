@@ -892,7 +892,6 @@ void PositionCache::MeasureWidths(Surface *surface, const ViewStyle &vstyle, uns
 			return;
 		}
 	}
-
 	size_t probe = pces.size();	// Out of bounds
 	if ((!pces.empty()) && (sv.length() < 30)) {
 		// Only store short strings in the cache so it doesn't churn with
