@@ -71,7 +71,7 @@ struct OptionsCF {
 #define KW_KEYWORDS 0
 #define KW_FUNCTIONS 1
 
-static const char *const fnWordLists[] = {
+static const char* const cfWordLists[] = {
 	"Functions",
 	"Keywords",
 	0,
@@ -80,7 +80,7 @@ static const char *const fnWordLists[] = {
 struct OptionsSetCF : public OptionSet<OptionsCF> {
 	OptionsSetCF() {
 
-		DefineWordListSets(fnWordLists);
+		DefineWordListSets(cfWordLists);
 	}
 };
 
@@ -115,7 +115,7 @@ public:
 		reCase("^[ \t]*case\\W", std::regex::ECMAScript),
 		reIfElse("^[ \t]*else(if)?\\W", std::regex::ECMAScript),
 		reComment("^[ \t]*'", std::regex::ECMAScript),
-		caseSensitive(caseSensitive_){
+		caseSensitive(caseSensitive_) {
 			wRefold.Set("else elseif");
 			wFold.Set("do function sub for with private public property class while");
 			wUnfold.Set("end next wend loop");
@@ -129,27 +129,27 @@ public:
 	int SCI_METHOD Version() const {
 		return lvRelease4;
 	}
-	const char * SCI_METHOD PropertyNames() {
+	const char* SCI_METHOD PropertyNames() {
 		return osFM.PropertyNames();
 	}
-	int SCI_METHOD PropertyType(const char *name) {
+	int SCI_METHOD PropertyType(const char* name) {
 		return osFM.PropertyType(name);
 	}
-	const char * SCI_METHOD DescribeProperty(const char *name) {
+	const char* SCI_METHOD DescribeProperty(const char* name) {
 		return osFM.DescribeProperty(name);
 	}
-	int SCI_METHOD PropertySet(const char *key, const char *val);
-	const char * SCI_METHOD DescribeWordListSets() {
+	int SCI_METHOD PropertySet(const char* key, const char* val);
+	const char* SCI_METHOD DescribeWordListSets() {
 		return osFM.DescribeWordListSets();
 	}
-	int SCI_METHOD WordListSet(int n, const char *wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	int SCI_METHOD WordListSet(int n, const char* wl);
+	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess);
+	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument* pAccess);
 
-	void * SCI_METHOD PrivateCall(int cmd, void * pnt) {
-		if(cmd < 32){
-			const char *wl = reinterpret_cast<char *>(pnt);
-			WordListSet(cmd,wl);
+	void* SCI_METHOD PrivateCall(int cmd, void* pnt) {
+		if (cmd < 32) {
+			const char* wl = reinterpret_cast<char*>(pnt);
+			WordListSet(cmd, wl);
 		}
 		return 0;
 	}
@@ -176,49 +176,49 @@ public:
 
 	void SCI_METHOD FreeSubStyles()  noexcept override {}
 
-	void SCI_METHOD SetIdentifiers(int, const char *)  noexcept override {}
+	void SCI_METHOD SetIdentifiers(int, const char*)  noexcept override {}
 
 	int SCI_METHOD DistanceToSecondaryStyles()  noexcept override {
 		return 0;
 	}
 
-	const char * SCI_METHOD GetSubStyleBases()  noexcept override {
+	const char* SCI_METHOD GetSubStyleBases()  noexcept override {
 		return { 0 };
 	}
 	int SCI_METHOD NamedStyles()  noexcept override {
 		return 0;
 	}
 
-	const char * SCI_METHOD NameOfStyle(int style) {
+	const char* SCI_METHOD NameOfStyle(int style) {
 		return "";
 	}
 
-	const char * SCI_METHOD TagsOfStyle(int style) {
+	const char* SCI_METHOD TagsOfStyle(int style) {
 		return "";
 	}
 
-	const char * SCI_METHOD DescriptionOfStyle(int style) {
+	const char* SCI_METHOD DescriptionOfStyle(int style) {
 		return "";
 	}
 	// ILexer5 methods
-	const char * SCI_METHOD GetName() override {
+	const char* SCI_METHOD GetName() override {
 		return "cubeformula";
 	}
 	int SCI_METHOD  GetIdentifier() override {
 		return SCLEX_CUBEFORMULA;
 	}
-	const char * SCI_METHOD PropertyGet(const char *key) override;
+	const char* SCI_METHOD PropertyGet(const char* key) override;
 
-	static ILexer5 *LexerFactoryCubeFormula() {
+	static ILexer5* LexerFactoryCubeFormula() {
 		return new LexerCubeFormula(true);
 	}
-	static ILexer5 *LexerFactoryCPPInsensitive() {
+	static ILexer5* LexerFactoryCPPInsensitive() {
 		return new LexerCubeFormula(false);
 	}
 
 };
 
-int SCI_METHOD LexerCubeFormula::PropertySet(const char *key, const char *val) {
+int SCI_METHOD LexerCubeFormula::PropertySet(const char* key, const char* val) {
 	if (osFM.PropertySet(&options, key, val)) {
 		if (!strcmp(key, "precompiller.debugsuffix")) {
 			wDebug.Set(val);
@@ -228,8 +228,8 @@ int SCI_METHOD LexerCubeFormula::PropertySet(const char *key, const char *val) {
 	return -1;
 }
 
-int SCI_METHOD LexerCubeFormula::WordListSet(int n, const char *wl) {
-	WordList *wordListN = 0;
+int SCI_METHOD LexerCubeFormula::WordListSet(int n, const char* wl) {
+	WordList* wordListN = 0;
 	wordListN = &keywords[n];
 	int firstModification = -1;
 	if (wordListN) {
@@ -243,14 +243,14 @@ int SCI_METHOD LexerCubeFormula::WordListSet(int n, const char *wl) {
 	return firstModification;
 }
 
-const char * SCI_METHOD LexerCubeFormula::PropertyGet(const char *key) {
+const char* SCI_METHOD LexerCubeFormula::PropertyGet(const char* key) {
 	return osFM.PropertyGet(key);
 }
 
- //Functor used to truncate history
+//Functor used to truncate history
 
 
-void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess) {
 
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
@@ -263,10 +263,12 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 			if (keywords[KW_KEYWORDS].InList(s)) {
 				sc.ChangeState(SCE_CF_KEYWORD);
 				sc.SetState(SCE_CF_DEFAULT);
-			} else if (keywords[KW_FUNCTIONS].InList(s)) {
+			}
+			else if (keywords[KW_FUNCTIONS].InList(s)) {
 				sc.ChangeState(SCE_CF_FUNCTION);
 				sc.SetState(SCE_CF_DEFAULT);
-			} else {
+			}
+			else {
 				sc.ChangeState(SCE_CF_DEFAULT);
 			}
 		}
@@ -275,7 +277,8 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 			if (sc.ch == '\"') {
 				if (sc.chNext == '\"') {
 					sc.Forward();
-				} else {
+				}
+				else {
 					sc.ForwardSetState(SCE_CF_DEFAULT);
 				}
 			}
@@ -295,12 +298,12 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 			}
 			break;
 		case SCE_CF_PARAMETR:
-			if((!iswordchar(sc.ch))) {
+			if ((!iswordchar(sc.ch))) {
 				sc.SetState(SCE_CF_DEFAULT);
 			}
 			break;
 		case SCE_CF_OPERATOR:
-			if(!IsOperator(sc.ch)) {
+			if (!IsOperator(sc.ch)) {
 				sc.SetState(SCE_CF_DEFAULT);
 			}
 			
@@ -321,15 +324,18 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 			{
 				if (isdigit(sc.ch)) {
 					sc.SetState(SCE_CF_NUMBER);
-				} else if (IsOperator(sc.ch)) {
+				}
+				else if (IsOperator(sc.ch)) {
 					if (sc.ch == '/' && sc.chNext == '/') {
 						sc.SetState(SCE_CF_COMMENT);
 						sc.Forward();
 						sc.Forward();
-					} else {
+					}
+					else {
 						sc.SetState(SCE_CF_OPERATOR);
 					}
-				} else if (iswordchar(sc.ch) && !iswordchar(sc.chPrev)) {
+				}
+				else if (iswordchar(sc.ch) && !iswordchar(sc.chPrev)) {
 					sc.SetState(SCE_CF_IDENTIFIER);
 				}
 			}
@@ -342,7 +348,7 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 
 
 
-void SCI_METHOD LexerCubeFormula::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerCubeFormula::Fold(unsigned int startPos, int length, int initStyle, IDocument* pAccess) {
 	
 
 
@@ -351,5 +357,5 @@ void SCI_METHOD LexerCubeFormula::Fold(unsigned int startPos, int length, int in
 
 
 
-LexerModule lmCubeFormula(SCLEX_CUBEFORMULA, LexerCubeFormula::LexerFactoryCubeFormula, "cubeformula", fnWordLists);
+LexerModule lmCubeFormula(SCLEX_CUBEFORMULA, LexerCubeFormula::LexerFactoryCubeFormula, "cubeformula", cfWordLists);
 

@@ -13,7 +13,7 @@
         <dpiAware>true</dpiAware>
     </asmv3:windowsSettings>
 </asmv3:application>
-<dependency>
+<!--<dependency>
     <dependentAssembly>
         <assemblyIdentity
             type="win32"
@@ -24,6 +24,6 @@
             language="*"
         />
     </dependentAssembly>
-</dependency>
+</dependency>-->
 
 </assembly>

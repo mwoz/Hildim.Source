@@ -384,8 +384,7 @@ public:
 	LRESULT OnNcMouseMove(HWND hwnd, int iBtn);
 	LRESULT OnNcLMouseDown(HWND hwnd, int iBtn);
 	LRESULT OnNcLMouseUp(HWND hwnd, int iBtn);
-	bool FullScreen = false;
-	bool StandartWindowDecoration = false;
+	bool FullScreen = false; 
 	void SetTitle(const GUI::gui_char *s);
 	mapsICW childMap;
 private:

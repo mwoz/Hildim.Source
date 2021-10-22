@@ -242,6 +242,7 @@
     <ClCompile Include="..\lexers\LexRaku.cxx" />
     <ClCompile Include="..\lexers\LexRebol.cxx" />
     <ClCompile Include="..\lexers\LexRegistry.cxx" />
+    <ClCompile Include="..\lexers\LexRubrica.cxx" />
     <ClCompile Include="..\lexers\LexRuby.cxx" />
     <ClCompile Include="..\lexers\LexRust.cxx" />
     <ClCompile Include="..\lexers\LexSAS.cxx" />

@@ -1327,6 +1327,22 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   {
     switch (msg)
     {
+	case WM_NCHITTEST:
+	{
+		COMBOBOXINFO boxinfo;
+
+		ZeroMemory(&boxinfo, sizeof(COMBOBOXINFO));
+		boxinfo.cbSize = sizeof(COMBOBOXINFO);
+
+		GetComboBoxInfo(ih->handle, &boxinfo);
+		Ihandle* ihc = iupwinHandleGet(boxinfo.hwndCombo);
+		if (!iupAttribGetBoolean(ihc, "__HIGLIGHT")) {
+			IupRedraw(ihc, 1);
+		}
+		KillTimer(boxinfo.hwndCombo, 1);
+		SetTimer(boxinfo.hwndCombo, 1, 100, NULL);
+	}
+	break;
 	case EM_SETSEL:
 		if (ih->data->block_sel) 
 			return 1;
@@ -1593,7 +1609,9 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
 	case WM_TIMER:
+	case  WM_MOUSELEAVE:
 	{
+		KillTimer(cbstatic, 1);
 		POINT cursor;
 		GetCursorPos(&cursor);
 		MapWindowPoints(NULL, ih->handle, &cursor, 1);
@@ -1604,12 +1622,27 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		RECT rect;
 		SetRect(&rect, 0, 0, w, h);
 		if (!PtInRect(&rect, cursor)) {
-			KillTimer(cbstatic, 1);
-			iupdrvPostRedraw(ih);
 			IupRedraw(ih, 1);
 		}
 	}
 		break;
+	case  WM_NCHITTEST:
+		if (!iupAttribGetBoolean(ih, "__HIGLIGHT")) {
+		   IupRedraw(ih, 1);
+	    }
+		KillTimer(cbstatic, 1);
+		SetTimer(cbstatic, 1, 100, NULL);
+		break;
+	case  WM_ERASEBKGND:
+		if (!ih->data->has_editbox) {
+			IupRedraw(ih, 1);
+		}
+		break;
+
+	case WM_KILLFOCUS:
+		return 1;
+		break;
+
 	case WM_PAINT:
 		if (iupAttribGetBoolean(ih->parent, "FLAT")){
 			BOOL bEdit = ih->data->has_editbox;
@@ -1636,15 +1669,12 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 			if (higlight) {
 				bgcolor = IupGetAttribute(ih, "HLCOLOR");
-				SetTimer(cbstatic, 1, 300, NULL);
 			}
 			else if (bEdit) {
 				bgcolor = IupGetAttribute(ih, "TXTBGCOLOR");
-				KillTimer(cbstatic, 1);
 			}
 			else {
 				bgcolor = iupBaseNativeParentGetBgColorAttrib(ih);
-				KillTimer(cbstatic, 1);
 			}
  
 			iupStrToRGB(bgcolor, &r, &g, &b);
@@ -1654,7 +1684,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 			HPEN hPen, hPenOld;
 			HBRUSH hBrush, hBrushOld;
-			POINT line_poly[3];		
+			POINT line_poly[3];	
+			IupSetAttribute(ih, "__HIGLIGHT", higlight ? "YES" : "NO");
 			if (higlight) {
 				iupStrToRGB(IupGetAttribute(ih, "BORDERHLCOLOR"), &r, &g, &b);
 				RGBbordercolor = RGB(r, g, b);
@@ -2161,11 +2192,9 @@ static int winListMapMethod(Ihandle* ih)
       SendMessage(ih->handle, CB_LIMITTEXT, 0, 0L);
 		IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC));
 		SetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
-
-
     }else {
-	  IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC));
-	  SetWindowLongPtr(boxinfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
+	  IupSetCallback(ih, "_IUPWIN_STATICOLDWNDPROC_CB", (Icallback)GetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC));
+	  SetWindowLongPtr(boxinfo.hwndCombo, GWLP_WNDPROC, (LONG_PTR)winListStaticWndProc);
     }
   }
 

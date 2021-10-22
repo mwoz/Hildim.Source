@@ -778,18 +778,17 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	
 	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
 		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
-		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14],
+		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14], scrTIPFGCOLOR[14], scrTIPBGCOLOR[14],
 		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4], layoutdrag[4];
 	_itoa(::GetSystemMetrics(SM_CYSIZEFRAME), framesize, 10);
-
-	PropGet("layout.standard.decoration", "0", scrollsize);
-	StandartWindowDecoration = (_atoi64(scrollsize) == 1);
 
 	PropGet("layout.splittercolor", "220 220 220", scrSPLITCOLOR);
 	PropGet("layout.scroll.forecolor", "190 190 190", scrFORECOLOR);
 	PropGet("layout.scroll.presscolor", "150 150 150", scrPRESSCOLOR);
 	PropGet("layout.scroll.highcolor", "170 170 170", scrHIGHCOLOR);
 	PropGet("layout.scroll.backcolor", "240 240 240", scrBACKCOLOR);
+	PropGet("layout.tip.backcolor", "255 255 225", scrTIPBGCOLOR);
+	PropGet("layout.tip.forecolor", "0 0 0", scrTIPFGCOLOR);
 
 	PropGet("layout.hlcolor", "200 225 245", scrHLCOLOR);
 	PropGet("layout.borderhlcolor", "50 150 255", scrBORDERHLCOLOR);
@@ -1165,6 +1164,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"SCR_PRESSCOLOR", scrPRESSCOLOR,
 		"SCR_HIGHCOLOR", scrHIGHCOLOR,
 		"SCR_BACKCOLOR", scrBACKCOLOR,
+		"TIPBGCOLOR", scrTIPBGCOLOR,
+		"TIPFGCOLOR", scrTIPFGCOLOR,
 		NULL);
 	//IupSetGlobal("DLGBGCOLOR", "0 0 250");
 	//IupSetGlobal("MENUBGCOLOR", "0 255 255");
@@ -1223,19 +1224,19 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 	::GetWindowRect(GetChildHWND(name), &rc);
 	if (pW) {
 		::SetWindowPos((HWND)pW->GetID(), NULL, 0, 0, rc.right, rc.bottom, SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
-		if (!StandartWindowDecoration) {
-			Scintilla::Sci_ListColorsInfo ci;
-			ci.inizialized = true;
-			ci.border = GetColorRef("BORDERCOLOR");
-			ci.borderbak = GetColorRef("CAPTBGCOLOR");
-			ci.scroll = GetColorRef("SCR_FORECOLOR");
-			ci.scrollbak = GetColorRef("SCR_BACKCOLOR");
-			ci.scrollhl = GetColorRef("SCR_HIGHCOLOR");
-			ci.scrollpress = GetColorRef("SCR_PRESSCOLOR");
-			ci.scrollsize = 15;
 
-			pW->Call(SCI_LISTCUSTOMCOLORS, (WPARAM)&ci);
-		}
+		Scintilla::Sci_ListColorsInfo ci;
+		ci.inizialized = true;
+		ci.border = GetColorRef("BORDERCOLOR");
+		ci.borderbak = GetColorRef("CAPTBGCOLOR");
+		ci.scroll = GetColorRef("SCR_FORECOLOR");
+		ci.scrollbak = GetColorRef("SCR_BACKCOLOR");
+		ci.scrollhl = GetColorRef("SCR_HIGHCOLOR");
+		ci.scrollpress = GetColorRef("SCR_PRESSCOLOR");
+		ci.scrollsize = 15;
+
+		pW->Call(SCI_LISTCUSTOMCOLORS, (WPARAM)&ci);
+
 	}
 }
 
@@ -1329,7 +1330,7 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
 	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
-	if (bCalcValidRects && !FullScreen && !StandartWindowDecoration ) {
+	if (bCalcValidRects && !FullScreen ) {
 
 		lpncsp->rgrc[0].top = lpncsp->rgrc[1].top + captWidth;
 		borderX = lpncsp->rgrc[0].left - lpncsp->rgrc[1].left;
@@ -1397,7 +1398,7 @@ LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
 
 }
 LRESULT IupLayoutWnd::OnNcMouseMove(HWND hwnd, int iBtn) {
-	if (iBtn != nBtn && !StandartWindowDecoration) {
+	if (iBtn != nBtn) {
 		nBtn = iBtn;
 		if (nBtnPressed != iBtn)
 			nBtnPressed = 0;

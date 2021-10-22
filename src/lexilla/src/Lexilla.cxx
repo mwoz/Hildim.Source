@@ -132,6 +132,7 @@ extern LexerModule lmR;
 extern LexerModule lmRaku;
 extern LexerModule lmREBOL;
 extern LexerModule lmRegistry;
+extern LexerModule lmRubrica;
 extern LexerModule lmRuby;
 extern LexerModule lmRust;
 extern LexerModule lmSAS;
@@ -282,6 +283,7 @@ void AddEachLexer() {
 		&lmRaku,
 		&lmREBOL,
 		&lmRegistry,
+		&lmRubrica,
 		&lmRuby,
 		&lmRust,
 		&lmSAS,

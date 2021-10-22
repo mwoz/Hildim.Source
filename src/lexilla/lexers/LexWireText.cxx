@@ -51,7 +51,7 @@ using namespace Lexilla;
 
 #define KW_TYPES 0
 
-static const char *const fnWordLists[] = {
+static const char *const wfWordLists[] = {
 	"Types",
 	0,
 };
@@ -314,5 +314,5 @@ void SCI_METHOD LexerWireFormat::Fold(unsigned int startPos, int length, int ini
 
 }
 
-LexerModule lmWireFormat(SCLEX_WIREFORMAT, LexerWireFormat::LexerFactoryWireFormat, "wireformat", fnWordLists);
+LexerModule lmWireFormat(SCLEX_WIREFORMAT, LexerWireFormat::LexerFactoryWireFormat, "wireformat", wfWordLists);
 
