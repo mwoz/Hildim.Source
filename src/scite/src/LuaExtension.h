@@ -67,7 +67,8 @@ public:
 	virtual int OnMenuChar(int flag, const char* key);
 	virtual bool OnDrawClipboard(int flag);
 	virtual void OnRightEditorVisibility(bool show);
-	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag);
+	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag);
+	virtual void OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow);
 	virtual bool OnAutocSelection(int method, int firstPos);
 	virtual void OnCommandLine(const char* line);
 	virtual void OnChangeFocus(int, int);

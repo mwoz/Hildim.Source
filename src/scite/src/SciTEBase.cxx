@@ -1020,7 +1020,7 @@ static bool IsBrace(char ch) {
  * @return @c true if inside a bracket pair.
  */
 bool SciTEBase::FindMatchingBracePosition(bool editor, int &braceAtCaret, int &braceOpposite, bool sloppy) {
-	int maskStyle = (1 << wEditor.Call(SCI_GETSTYLEBITSNEEDED)) - 1;
+	//int maskStyle = (1 << wEditor.Call(SCI_GETSTYLEBITSNEEDED)) - 1;
 	bool isInside = false;
 //!	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;			  !!!TODO!!! -
 	GUI::ScintillaWindow &win = editor ? reinterpret_cast<GUI::ScintillaWindow&>(wEditor) : wOutput; //!-change-[OnSendEditor]
@@ -1029,7 +1029,7 @@ bool SciTEBase::FindMatchingBracePosition(bool editor, int &braceAtCaret, int &b
 	if (win.Send(SCI_GETSELECTIONNCARETVIRTUALSPACE, mainSel, 0) > 0)
 		return false;
 
-	int bracesStyleCheck = editor ? bracesStyle : 0;
+	int bracesStyleCheck = editor ? bracesStyle : 0; 
 	int caretPos = win.Send(SCI_GETCURRENTPOS, 0, 0);
 	braceAtCaret = -1;
 	braceOpposite = -1;
@@ -1041,7 +1041,7 @@ bool SciTEBase::FindMatchingBracePosition(bool editor, int &braceAtCaret, int &b
 		// Check to ensure not matching brace that is part of a multibyte character
 		if (win.Send(SCI_POSITIONBEFORE, caretPos) == (caretPos - 1)) {
 			charBefore = acc[caretPos - 1];
-			styleBefore = static_cast<char>(acc.StyleAt(caretPos - 1) & maskStyle);
+			styleBefore = static_cast<char>(acc.StyleAt(caretPos - 1) ); //& maskStyle
 		}
 	}
 	// Priority goes to character before caret
@@ -1061,7 +1061,7 @@ bool SciTEBase::FindMatchingBracePosition(bool editor, int &braceAtCaret, int &b
 		// Check to ensure not matching brace that is part of a multibyte character
 		if (win.Send(SCI_POSITIONAFTER, caretPos) == (caretPos + 1)) {
 			char charAfter = acc[caretPos];
-			char styleAfter = static_cast<char>(acc.StyleAt(caretPos) & maskStyle);
+			char styleAfter = static_cast<char>(acc.StyleAt(caretPos)); // & maskStyle
 			if (charAfter && IsBrace(charAfter) && ((styleAfter == bracesStyleCheck) || (!bracesStyle))) {
 				braceAtCaret = caretPos;
 				isAfter = false;
@@ -2675,6 +2675,11 @@ void SciTEBase::Close_script() {
 
 void SciTEBase::SetLineNumberWidth() {
 	if (lineNumbers) {
+		int pixelWidth = 0;
+		DWORD foldMode = props.GetInt("fold.flags");
+		if ((foldMode & SC_FOLDFLAG_LEVELNUMBERS) || (foldMode & SC_FOLDFLAG_LINESTATE)) {
+			pixelWidth = wEditor.CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, " HW9999999");
+		} 
 		int lineNumWidth = lineNumbersWidth;
 
 		if (lineNumbersExpand) {
@@ -2695,8 +2700,8 @@ void SciTEBase::SetLineNumberWidth() {
 		}
 
 		// The 4 here allows for spacing: 1 pixel on left and 3 on right.
-		int pixelWidth = 4 + lineNumWidth * wEditor.CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, "9");
-
+		pixelWidth += 4 + lineNumWidth * wEditor.CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, "9");
+		
 		wEditor.Call(SCI_SETMARGINWIDTHN, 0, pixelWidth);
 	} else {
 		wEditor.Call(SCI_SETMARGINWIDTHN, 0, 0);
@@ -3035,7 +3040,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_LINENUMBERMARGIN:
-		lineNumbers = !lineNumbers;
+		lineNumbers = props.GetInt("line.margin.visible");
 		SetLineNumberWidth();
 		CheckMenus();
 		break;
@@ -3842,11 +3847,17 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 			FoldChanged(notification->line,
 			        notification->foldLevelNow, notification->foldLevelPrev, w);
+			sptr_t p = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETCURRENTPOS), 0);
+			if (p == notification->line - 1 || p == notification->line){
+				extender->OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+					notification->foldLevelPrev, notification->foldLevelNow);
+			}
 		}
-		if(!bBlockTextChangeNotify && 0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) &&
-			(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
-			extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
-				notification->text, notification->linesAdded, notification->modificationType);
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
+			if (!bBlockTextChangeNotify && 0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))){
+				extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+					notification->linesAdded, notification->modificationType);
+			}
 		}
 		break;
 
@@ -4256,7 +4267,8 @@ void SciTEBase::Trace(const char *s) {
 	OutputAppendStringSynchronised(s);
 	for (int i = 0; wEditor.Call(SCI_ENDUNDOACTION) > 0;)//
 	{
-		OutputAppendStringSynchronised("\n!!!Warning!!! ENDUNDOACTION by Trace");
+		if(props.GetInt("warning.undoaction") == 0)
+			OutputAppendStringSynchronised("\n!!!Warning!!! ENDUNDOACTION by Trace");
 	}	
 	if(!bFinalise)
 		EnsureVisible();

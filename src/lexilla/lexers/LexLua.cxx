@@ -675,13 +675,16 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 			if ((levelCurrent > levelPrev) && (visibleChars > 0)) {
 				lev |= SC_FOLDLEVELHEADERFLAG;
 			}
+
+			if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
+				levelCurrent = SC_FOLDLEVELBASE;
+
+			lev |= (levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16;
 			if (lev != styler.LevelAt(lineCurrent)) {
 				styler.SetLevel(lineCurrent, lev);
 			}
 			lineCurrent++;
 
-			if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
-				levelCurrent = SC_FOLDLEVELBASE;
 
 			levelPrev = levelCurrent;
 			visibleChars = 0;
@@ -693,7 +696,9 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
 
 	int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
-	styler.SetLevel(lineCurrent, levelPrev | flagsNext);
+	if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
+		levelCurrent = SC_FOLDLEVELBASE;
+	styler.SetLevel(lineCurrent, levelPrev | ((levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16) | flagsNext);
 }
 
 namespace {

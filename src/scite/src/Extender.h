@@ -145,7 +145,8 @@ public:
 	virtual int OnMenuChar(int flag, const char* key) { return 0; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
-	virtual void OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) { return; };
+	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag) { return; };
+	virtual void OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
 	virtual void OnChangeFocus(int, int) {};

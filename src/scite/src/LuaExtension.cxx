@@ -3382,8 +3382,12 @@ void LuaExtension::OnRightEditorVisibility(bool show) {
 	CallNamedFunction("OnRightEditorVisibility", show, 0);
 }
 
-void LuaExtension::OnTextChanged(int position, int leg, const char* text, int linesAdded, int flag) {
+void LuaExtension::OnTextChanged(int position, int leg, int linesAdded, int flag) {
 	CallNamedFunction("OnTextChanged", position, flag, linesAdded, leg);
+}
+
+void LuaExtension::OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) {
+	CallNamedFunction("OnCurrentLineFold", line, foldLevelPrev, foldLevelNow);
 }
 
 bool LuaExtension::OnAutocSelection(int method, int firstPos) {

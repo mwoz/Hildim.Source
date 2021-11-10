@@ -2642,6 +2642,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SC_MOD_CHANGESTYLE",0x4},
 	{"SC_MOD_CONTAINER",0x40000},
 	{"SC_MOD_DELETETEXT",0x2},
+	{"SC_MOD_INSERTCHECK",0x100000},
 	{"SC_MOD_INSERTTEXT",0x1},
 	{"SC_MOD_LEXERSTATE",0x80000},
 	{"SC_MULTILINEUNDOREDO",0x1000},
@@ -3286,7 +3287,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 318,
-	ifaceConstantCount = 2565,
+	ifaceConstantCount = 2566,
 	ifacePropertyCount = 249
 };
 
