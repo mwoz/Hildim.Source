@@ -42,7 +42,6 @@ public:
 	 */
 	Scintilla::Ordering autoSort;
 
-	Sci_ListColorsInfo listcolors;
 	AutoComplete();
 	// Deleted so AutoComplete objects can not be copied.
 	AutoComplete(const AutoComplete &) = delete;
