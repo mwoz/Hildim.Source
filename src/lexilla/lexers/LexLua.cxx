@@ -625,6 +625,7 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
+	int levelMinCurrent = levelCurrent;
 	char chNext = styler[startPos];
 	const bool foldCompact = options.foldCompact;
 	int styleNext = styler.StyleAt(startPos);
@@ -655,6 +656,9 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 			}
 		} else if (style == SCE_LUA_OPERATOR) {
 			if (ch == '{' || ch == '(') {
+				if (options.foldAtElse && levelMinCurrent > levelCurrent) {
+					levelMinCurrent = levelCurrent;
+				}
 				levelCurrent++;
 			} else if (ch == '}' || ch == ')') {
 				levelCurrent--;
@@ -669,11 +673,14 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 
 		if (atEOL) {
 			int lev = levelPrev;
+			if (options.foldAtElse) {
+				lev = levelMinCurrent;
+			}
+			if ((levelCurrent > lev) && (visibleChars > 0)) {
+				lev |= SC_FOLDLEVELHEADERFLAG;
+			}
 			if (visibleChars == 0 && foldCompact) {
 				lev |= SC_FOLDLEVELWHITEFLAG;
-			}
-			if ((levelCurrent > levelPrev) && (visibleChars > 0)) {
-				lev |= SC_FOLDLEVELHEADERFLAG;
 			}
 
 			if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
@@ -687,6 +694,7 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 
 
 			levelPrev = levelCurrent;
+			levelMinCurrent = levelPrev;
 			visibleChars = 0;
 		}
 		if (!isspacechar(ch)) {
