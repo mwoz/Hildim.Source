@@ -623,7 +623,9 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 	const Sci_PositionU lengthDoc = startPos + length;
 	int visibleChars = 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
-	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
+	int levelPrev = SC_FOLDLEVELBASE;
+	if (lineCurrent > 0)
+		levelPrev = (styler.LevelAt(lineCurrent - 1) >> 16) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
 	int levelMinCurrent = levelCurrent;
 	char chNext = styler[startPos];
@@ -637,23 +639,35 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 		styleNext = styler.StyleAt(i + 1);
 		const bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
 		if (style == SCE_LUA_WORD) {
-			if (ch == 'i' || ch == 'd' || ch == 'f' || ch == 'e' || ch == 'r' || ch == 'u') {
-				char s[10] = "";
-				for (Sci_PositionU j = 0; j < 8; j++) {
-					if (!iswordchar(styler[i + j])) {
+			//if (ch == 'i' || ch == 'd' || ch == 'f' || ch == 'e' || ch == 'r' || ch == 'u') {
+				char s[100] = "";
+				s[99] = '\0';
+				Sci_PositionU j = i + 98;
+				Sci_PositionU i0 = i;
+				for (; i < j; i++) {
+					if (!iswordchar(styler[i])) {
+						s[i - i0] = '\0';
+						i--;
+						chNext = styler.SafeGetCharAt(i + 1);
+						styleNext = styler.StyleAt(i + 1);
 						break;
 					}
-					s[j] = styler[i + j];
-					s[j + 1] = '\0';
+					s[i - i0] = styler[i];					
 				}
 
 				if ((strcmp(s, "if") == 0) || (strcmp(s, "do") == 0) || (strcmp(s, "function") == 0) || (strcmp(s, "repeat") == 0)) {
+					if (options.foldAtElse && levelMinCurrent > levelCurrent) {
+						levelMinCurrent = levelCurrent;
+					}
 					levelCurrent++;
-				}
-				if ((strcmp(s, "end") == 0) || (strcmp(s, "elseif") == 0) || (strcmp(s, "until") == 0)) {
+				}else if ((strcmp(s, "end") == 0) || (strcmp(s, "until") == 0)) {
 					levelCurrent--;
+				} if ((strcmp(s, "else") == 0) || (strcmp(s, "elseif") == 0)) {
+					if (options.foldAtElse && levelMinCurrent >= levelCurrent) {
+						levelMinCurrent = levelCurrent - 1;
+					}
 				}
-			}
+			//}
 		} else if (style == SCE_LUA_OPERATOR) {
 			if (ch == '{' || ch == '(') {
 				if (options.foldAtElse && levelMinCurrent > levelCurrent) {
@@ -663,12 +677,16 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 			} else if (ch == '}' || ch == ')') {
 				levelCurrent--;
 			}
-		} else if (style == SCE_LUA_LITERALSTRING || style == SCE_LUA_COMMENT) {
-			if (ch == '[') {
-				levelCurrent++;
-			} else if (ch == ']') {
-				levelCurrent--;
+		} 
+		if ((styleNext == SCE_LUA_LITERALSTRING && style != SCE_LUA_LITERALSTRING) 
+			|| (styleNext == SCE_LUA_COMMENT && style != SCE_LUA_COMMENT)) {
+			if (options.foldAtElse && levelMinCurrent > levelCurrent) {
+				levelMinCurrent = levelCurrent;
 			}
+			levelCurrent++;
+		} else  if ((styleNext != SCE_LUA_LITERALSTRING && style == SCE_LUA_LITERALSTRING && ch ==']') 
+			|| (styleNext != SCE_LUA_COMMENT && style == SCE_LUA_COMMENT && ch == ']')) {
+			levelCurrent--;
 		}
 
 		if (atEOL) {
@@ -703,10 +721,10 @@ void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle,
 	}
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
 
-	int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
-	if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
-		levelCurrent = SC_FOLDLEVELBASE;
-	styler.SetLevel(lineCurrent, levelPrev | ((levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16) | flagsNext);
+	//int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
+	//if ((levelCurrent & SC_FOLDLEVELNUMBERMASK) < SC_FOLDLEVELBASE)
+	//	levelCurrent = SC_FOLDLEVELBASE;
+	//styler.SetLevel(lineCurrent, (options.foldAtElse ? levelMinCurrent : levelPrev) | ((levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16) | flagsNext);
 }
 
 namespace {

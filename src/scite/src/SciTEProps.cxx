@@ -1203,6 +1203,18 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
 		"error.marker.back", ColourRGB(0xff, 0xff, 0)));
 
+	wEditor.Call(SCI_MARKERDEFINE, markerBreakPoint, SC_MARK_ARROW);
+	wEditor.Call(SCI_MARKERSETFORE, markerBreakPoint, ColourOfProperty(props,
+		"breakpoint.marker.fore", ColourRGB(0x7f, 0, 0x7f)));
+	wEditor.Call(SCI_MARKERSETBACK, markerBreakPoint, ColourOfProperty(props,
+		"breakpoint.marker.back", ColourRGB(0xff, 0, 0)));
+
+	wEditor.Call(SCI_MARKERDEFINE, markerVertAlign, SC_MARK_VLINE);
+	wEditor.Call(SCI_MARKERSETFORE, markerVertAlign, ColourOfProperty(props,
+		"vertalign.marker.fore", ColourRGB(0x0, 0, 0x7f)));
+	//wEditor.Call(SCI_MARKERSETBACK, markerBreakPoint, ColourOfProperty(props,
+	//	"breakpoint.marker.back", ColourRGB(0xff, 0, 0)));
+
 	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
 	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);

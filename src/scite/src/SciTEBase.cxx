@@ -3848,7 +3848,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			FoldChanged(notification->line,
 			        notification->foldLevelNow, notification->foldLevelPrev, w);
 			sptr_t p = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETCURRENTPOS), 0);
-			if (p == notification->line - 1 || p == notification->line){
+			if (p == notification->line + 1 || p == notification->line){
 				extender->OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
 					notification->foldLevelPrev, notification->foldLevelNow);
 			}
@@ -3875,7 +3875,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 			if (!handled) {
 //!-start-[SetBookmark]
-				if (notification->margin == 1) {
+				if (notification->margin == 1 && !notification->modifiers) {
 					int lineClick = int(wEditor.Call(SCI_LINEFROMPOSITION, notification->position));
 					BookmarkToggle(lineClick); 
 				}

@@ -341,10 +341,12 @@ static IFaceConstant ifaceConstants[] = {
 	{"INVALID_POSITION",-1},
 	{"KEYWORDSET_MAX",20},
 	{"MARKER_BOOKMARK", 2},
+	{"MARKER_BREAKPOINT", 4},
 	{"MARKER_ERROR", 3},
 	{"MARKER_MAX",31},
 	{"MARKER_NOTSAVED", 1},
 	{"MARKER_SAVED", 0},
+	{"MARKER_VERTALIGN", 5 },
 	{"SCEN_CHANGE",768},
 	{"SCEN_KILLFOCUS",256},
 	{"SCEN_SETFOCUS",512},
@@ -909,7 +911,6 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_SQL_DEFAULT_PREF_DATATYPE",95},
 	{"SCE_FM_SQL_FMPARAMETR",97},
 	{"SCE_FM_SQL_FUNCTION",93},
-	{"SCE_FM_SQL_FUNCTIONSEX",99},
 	{"SCE_FM_SQL_GLOBAL_VARIABLE",92},
 	{"SCE_FM_SQL_GLOBAL_VARIABLE_2",98},
 	{"SCE_FM_SQL_IDENTIFIER",86},
@@ -930,7 +931,6 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_VB_DEFAULT",10},
 	{"SCE_FM_VB_ERROR",26},
 	{"SCE_FM_VB_FUNCTIONS",20},
-	{"SCE_FM_VB_FUNCTIONSEX",40},
 	{"SCE_FM_VB_HEXNUMBER",27},
 	{"SCE_FM_VB_IDENTIFIER",17},
 	{"SCE_FM_VB_KEYWORD",13},
@@ -1363,11 +1363,14 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_MSSQL_GLOBAL_VARIABLE",12},
 	{"SCE_MSSQL_IDENTIFIER",6},
 	{"SCE_MSSQL_LINE_COMMENT",2},
+	{"SCE_MSSQL_LINE_COMMENT_EX",20},
+	{"SCE_MSSQL_M4KBRASHES",19},
+	{"SCE_MSSQL_M4KEYS",18},
 	{"SCE_MSSQL_NUMBER",3},
 	{"SCE_MSSQL_OPERATOR",5},
 	{"SCE_MSSQL_STATEMENT",9},
-	{"SCE_MSSQL_STORED_PROCEDURE",14},
 	{"SCE_MSSQL_STRING",4},
+	{"SCE_MSSQL_SYSMCONSTANTS",17},
 	{"SCE_MSSQL_SYSTABLE",11},
 	{"SCE_MSSQL_VARIABLE",7},
 	{"SCE_MYSQL_COMMENT",1},
@@ -3287,7 +3290,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 318,
-	ifaceConstantCount = 2566,
+	ifaceConstantCount = 2571,
 	ifacePropertyCount = 249
 };
 

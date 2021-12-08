@@ -424,7 +424,7 @@ protected:
 	enum { importCmdID = IDM_IMPORT };
 
 	enum { indicatorMatch = INDIC_CONTAINER };
-	enum {markerSaved  = 0, markerNotSaved, markerBookmark, markerError};
+	enum {markerSaved  = 0, markerNotSaved, markerBookmark, markerError, markerBreakPoint, markerVertAlign};
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 

@@ -251,7 +251,9 @@ const char* SCI_METHOD LexerCubeFormula::PropertyGet(const char* key) {
 
 
 void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess) {
-
+	if (initStyle == SCE_CF_COMMENT)
+		initStyle = SCE_CF_DEFAULT;
+	
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 	
@@ -328,8 +330,7 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 				else if (IsOperator(sc.ch)) {
 					if (sc.ch == '/' && sc.chNext == '/') {
 						sc.SetState(SCE_CF_COMMENT);
-						sc.Forward();
-						sc.Forward();
+						sc.Forward(2);
 					}
 					else {
 						sc.SetState(SCE_CF_OPERATOR);

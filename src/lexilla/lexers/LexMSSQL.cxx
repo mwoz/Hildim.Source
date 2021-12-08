@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <regex>
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -40,6 +41,7 @@ using namespace Lexilla;
 #define KW_MSSQL_STORED_PROCEDURES  5
 #define KW_MSSQL_OPERATORS          6
 #define KW_MSSQL_M4KEYS             7
+#define KW_MSSQL_INDENT_CLASS       8
 
 static const char * const sqlWordListDesc[] = {
 	"Statements",
@@ -90,8 +92,8 @@ class LexerMSSQL : public DefaultLexer {
 
 	OptionsMSSQL options;
 	OptionsSetMSSQL osMSSQL;
-	WordList keywords[8];	//переданные нам вордлисты
-
+	WordList keywords[9];	//переданные нам вордлисты
+	const std::regex reCreateFold, reRegisterMacto;
 	class StyleContextEx : public StyleContext
 	{
 	public:
@@ -111,7 +113,10 @@ class LexerMSSQL : public DefaultLexer {
 
 
 public:
-	LexerMSSQL() : DefaultLexer("sql", SCLEX_MSSQL) {}
+	LexerMSSQL() : DefaultLexer("sql", SCLEX_MSSQL), 
+		reCreateFold("^\\s*(proc\\W)|(procedure\\W)|(trigger\\W)|(view\\W)|(function\W)|(table\\s+\\w)", std::regex::ECMAScript),
+		reRegisterMacto("^\\s*__REGISTER_(REPORT)|(PLUGIN)|(WIZARD)|(FORM)_", std::regex::ECMAScript)
+	{}
 
 	~LexerMSSQL() {}
 	void SCI_METHOD Release() {
@@ -174,7 +179,7 @@ const char * SCI_METHOD LexerMSSQL::PropertyGet(const char *key) {
 
 int SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
 	int firstModification = -1;
-	if (n < 8) {
+	if (n < 9) {
 		WordList *wordListN = 0;
 		wordListN = &keywords[n];
 		if (wordListN) {
@@ -300,9 +305,10 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 		if (sc.state == SCE_MSSQL_DEFAULT || sc.state == SCE_MSSQL_DEFAULT_PREF_DATATYPE) {
 			int stateTmp = sc.state;
 			sc.ChangeState(SCE_MSSQL_DEFAULT);
-			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l' && 
-			  (styler.SafeGetCharAt(sc.currentPos + 3) == ' ' || styler.SafeGetCharAt(sc.currentPos + 3) == '\t' || styler.SafeGetCharAt(sc.currentPos + 3) == '\n')) {	
-				sc.SetStateEx(SCE_MSSQL_LINE_COMMENT_EX);
+			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l') { 
+				char c = styler.SafeGetCharAt(sc.currentPos + 3);
+				if(c == ' ' || c == '\t' || c == '\r' || c == '\n') 	
+					sc.SetStateEx(SCE_MSSQL_LINE_COMMENT_EX);
 			}else if (sc.ch == '_' && sc.chNext == '_'){
 				sc.SetStateEx(SCE_MSSQL_SYSMCONSTANTS);
 			}else if (iswordstart(sc.ch)) {
@@ -376,11 +382,17 @@ void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyl
 	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
 	Sci_Position lineCurrent = styler.GetLine(startPos);
-	int levelPrev = styler.LevelAt(lineCurrent) & SC_FOLDLEVELNUMBERMASK;
+	int levelPrev = SC_FOLDLEVELBASE;
+	if (lineCurrent > 0)
+		levelPrev = (styler.LevelAt(lineCurrent - 1) >> 16) & SC_FOLDLEVELNUMBERMASK;
 	int levelCurrent = levelPrev;
+	int levelMinCurrent = levelPrev;
 	char chNext = styler[startPos];
 	bool inComment = (styler.StyleAt(startPos - 1) == SCE_MSSQL_COMMENT);
 	char s[15];
+	int lineState = 0;
+	if (lineCurrent > 0)
+		lineState = styler.GetLineState(lineCurrent - 1) & 0x1000000;
 	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
@@ -388,123 +400,138 @@ void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyl
 		bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
         // Comment folding
 		if (foldComment) {
-			if (!inComment && (style == SCE_MSSQL_COMMENT))
+			if (!inComment && (style == SCE_MSSQL_COMMENT)) {
+				if (levelMinCurrent > levelCurrent) 
+					levelMinCurrent = levelCurrent;
 				levelCurrent++;
+			}
 			else if (inComment && (style != SCE_MSSQL_COMMENT))
 				levelCurrent--;
 			inComment = (style == SCE_MSSQL_COMMENT);
 		}
 		if (style == SCE_MSSQL_M4KBRASHES){
-			if (ch == '{')
+			if (ch == '{') {
+				if (visibleChars) {
+					std::string s = styler.GetRange(i - visibleChars, i);
+					if (std::regex_search(s, reRegisterMacto)) {
+						lineState |= 0x1000000;
+					}
+				}
+				if (levelMinCurrent > levelCurrent) 
+					levelMinCurrent = levelCurrent;
 				levelCurrent++;
-			else
+			}
+			else {
 				if ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)
-						levelCurrent--;
-		}if (style == SCE_MSSQL_STATEMENT) {
-            // Folding between begin or case and end
-			char c = static_cast<char>(tolower(ch));
-			if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
-				Sci_PositionU j;
-                for (j = 0; j < 6; j++) {
-					if (!iswordchar(styler[i + j])) {
-						break;
-					}
-					s[j] = static_cast<char>(tolower(styler[i + j]));
-					s[j + 1] = '\0';
-                }
-				Sci_PositionU ii = i + j;
-
-				if ((strcmp(s, "begin") == 0) || (strcmp(s, "case") == 0)) {
-					levelCurrent++;
-					Sci_PositionU l;
-					char sNext[200];
-					sNext[0] = '\0';
-					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
-					if (l < 200)
-					{
-						unsigned int k;
-						for (k = 0; k < 200; k++)
-						{
-							if (!iswordchar(styler[ii + k + l])) break;
-							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
-							sNext[k] = styler[ii + k + l];
-							sNext[k + 1] = '\0';
-						}
-						_strlwr_s(sNext, 200);
-						if ((strcmp(sNext, "transaction") == 0)){//не фолдим начало транзакции
-							levelCurrent--;
-						}
-					}
-				}
-				else if (strcmp(s, "create") == 0){
-					Sci_PositionU  l;
-					char sNext[200];
-					sNext[0] = '\0';
-					for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
-					if (l < 200)
-					{
-						Sci_PositionU  k;
-						for (k = 0; k < 200; k++)
-						{
-							if (!iswordchar(styler[ii + k + l])) break;
-							if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
-							sNext[k] = styler[ii + k + l];
-							sNext[k + 1] = '\0';
-						}
-						_strlwr_s(sNext, 200);
-						if ((strcmp(sNext, "proc") == 0) || (strcmp(sNext, "procedure") == 0) || (strcmp(sNext, "table") == 0) || (strcmp(sNext, "trigger") == 0) || (strcmp(sNext, "view") == 0) || (strcmp(sNext, "function") == 0)){//не фолдим начало транзакции
-							levelCurrent++;	   //if (levelCurrent == (styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK))
-						}
-
-				}
-				}
-				else if (strcmp(s, "end") == 0 && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
 					levelCurrent--;
+				lineState &= ~0x1000000;
+			}
+		}
+		if (!(lineState & 0x1000000)) {
+			if (style == SCE_MSSQL_STATEMENT) {
+				if (!visibleChars) {
+					char lvl = 0;
+					std::string s = styler.GetRangeLowered(i, styler.LineEnd(lineCurrent) + 1);
+					keywords[KW_MSSQL_INDENT_CLASS].InClassificator(s.c_str(), lvl);
+					if (lvl)
+						lineState |= lvl << 20;
+
 				}
-				else if (strcmp(s, "go") == 0){
-					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+				// Folding between begin or case and end
+				char c = static_cast<char>(tolower(ch));
+				if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
+					Sci_PositionU j;
+					for (j = 0; j < 6; j++) {
+						if (!iswordchar(styler[i + j])) {
+							break;
+						}
+						s[j] = static_cast<char>(tolower(styler[i + j]));
+						s[j + 1] = '\0';
+					}
+					Sci_PositionU ii = i + j;
+
+					if ((strcmp(s, "begin") == 0) || (strcmp(s, "case") == 0)) {
+						if (levelMinCurrent > levelCurrent)
+							levelMinCurrent = levelCurrent;
+						levelCurrent++;
+						Sci_PositionU l;
+						char sNext[200];
+						sNext[0] = '\0';
+						for (l = 0; l < 200 && (styler[ii + l] == ' ' || styler[ii + l] == '\t' || styler[ii + l] == '\n' || styler[ii + l] == '\r'); l++); //Проматываем пробелы между словами
+						if (l < 200) {
+							unsigned int k;
+							for (k = 0; k < 200; k++) {
+								if (!iswordchar(styler[ii + k + l])) break;
+								if (styler.StyleAt(ii + k + l) != SCE_MSSQL_STATEMENT) break;
+								sNext[k] = styler[ii + k + l];
+								sNext[k + 1] = '\0';
+							}
+							_strlwr_s(sNext, 200);
+							if ((strcmp(sNext, "transaction") == 0)) {//не фолдим начало транзакции
+								levelCurrent--;
+							}
+						}
+					} else if (strcmp(s, "create") == 0) {
+						std::string s = styler.GetRangeLowered(i, styler.LineEnd(lineCurrent) + 1);
+						if (std::regex_search(s, reCreateFold)) {//не фолдим создание транзакций и временных таблиц						
+							if (levelMinCurrent > levelCurrent)
+								levelMinCurrent = levelCurrent;
+							levelCurrent++;
+						}
+					} else if (strcmp(s, "end") == 0 && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
+						levelCurrent--;
+					} else if (strcmp(s, "go") == 0) {
+						levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+					}
+				}
+			} else if (style == SCE_MSSQL_OPERATOR) {
+				if (styler[i] == ')')
+					levelCurrent--;
+				else if (styler[i] == '(') {
+					if (levelMinCurrent > levelCurrent)
+						levelMinCurrent = levelCurrent;
+					levelCurrent++;
+				}
+			} else if (style == SCE_MSSQL_SYSMCONSTANTS) {
+				char c = static_cast<char>(tolower(ch));
+				if (c == '_') {
+					Sci_PositionU j;
+					for (j = 0; j < 13; j++) {
+						if (!iswordchar(styler[i + j])) {
+							break;
+						}
+						s[j] = static_cast<char>(tolower(styler[i + j]));
+						s[j + 1] = '\0';
+					}
+					if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0) {
+						levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+					}
 				}
 			}
-		}else if (style == SCE_MSSQL_OPERATOR) {
-			if (styler[i] == ')')
-					levelCurrent--;
-			else if (styler[i] == '(')
-				levelCurrent++;
-		}else if (style == SCE_MSSQL_SYSMCONSTANTS) {
-			char c = static_cast<char>(tolower(ch));
-			if (c == '_' ) {
-				Sci_PositionU j;
-				for (j = 0; j < 13; j++) {
-					if (!iswordchar(styler[i + j])) {
-						break;
-					}
-					s[j] = static_cast<char>(tolower(styler[i + j]));
-					s[j + 1] = '\0';
-				}
-				if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0){
-					levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
-				}
-            }
-        }
+		}
 		if (atEOL) {
-			int lev = levelPrev;
+			styler.SetLineState(lineCurrent, lineState);
+			lineState &= 0x1000000;
+			int lev = levelMinCurrent;
+			if ((levelCurrent > lev) && (visibleChars > 0))
+				lev |= SC_FOLDLEVELHEADERFLAG;
 			if (visibleChars == 0 && foldCompact)
 				lev |= SC_FOLDLEVELWHITEFLAG;
-			if ((levelCurrent > levelPrev) && (visibleChars > 0))
-				lev |= SC_FOLDLEVELHEADERFLAG;
+			lev |= levelCurrent << 16;
 			if (lev != styler.LevelAt(lineCurrent)) {
 				styler.SetLevel(lineCurrent, lev);
 			}
 			lineCurrent++;
 			levelPrev = levelCurrent;
+			levelMinCurrent = levelCurrent;
 			visibleChars = 0;
 		}
 		if (!isspacechar(ch))
 			visibleChars++;
 	}
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
-	int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
-	styler.SetLevel(lineCurrent, levelPrev | flagsNext);
+	// int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
+	// styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
 LexerModule lmMSSQL(SCLEX_MSSQL, LexerMSSQL::LexerFactoryMSSQL, "mssql", sqlWordListDesc);

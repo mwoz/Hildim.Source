@@ -183,7 +183,6 @@ int SCI_METHOD LexerWireFormat::WordListSet(int n, const char *wl) {
 
 
 void SCI_METHOD LexerWireFormat::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
-
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 
@@ -212,6 +211,20 @@ void SCI_METHOD LexerWireFormat::Lex(unsigned int startPos, int length, int init
 		if (isspacechar(sc.ch))
 			continue;
 		switch (sc.state) {
+		case SCE_WF_FIELDNAME:
+			switch (sc.ch) {
+			case '=':
+				sc.SetState(SCE_WF_OPERATOR);
+				break;
+			}
+			break;
+		case SCE_WF_MSGNAME:
+			switch (sc.ch) {
+			case '(':
+				sc.SetState(SCE_WF_OPERATOR);
+			break;
+			}
+			break;
 		case SCE_WF_DEFAULT:
 			switch (sc.ch) {
 			case ':':
