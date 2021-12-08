@@ -1272,10 +1272,7 @@ void SCI_METHOD LexerHTML::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				if ((levelCurrent > levelPrev) && (visibleChars > 0))
 					lev |= SC_FOLDLEVELHEADERFLAG;
 
-				lev |= (levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16;
-				if (lev != styler.LevelAt(lineCurrent)) {
-					styler.SetLevel(lineCurrent, lev);
-				}
+				styler.SetLevel(lineCurrent, lev);
 				visibleChars = 0;
 				levelPrev = levelCurrent;
 			}
@@ -2615,7 +2612,7 @@ void SCI_METHOD LexerHTML::Lex(Sci_PositionU startPos, Sci_Position length, int 
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
 	if (fold) {
 		const int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
-		styler.SetLevel(lineCurrent, levelPrev | ((levelCurrent & SC_FOLDLEVELNUMBERMASK) << 16) | flagsNext);
+		styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 	}
 	styler.Flush();
 }
