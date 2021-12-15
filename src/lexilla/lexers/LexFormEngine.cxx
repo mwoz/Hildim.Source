@@ -102,6 +102,7 @@ struct OptionsFM {
 #define KW_MSSQL_FUNCTIONS 12
 #define KW_MSSQL_STORED_PROCEDURES 13
 #define KW_MSSQL_INDENT_CLASS 14
+#define KW_MSSQL_RADIUS 16
 #define KW_CF_FUNCTIONS 15
 
 static const char *const fnWordLists[] = {
@@ -121,6 +122,7 @@ static const char *const fnWordLists[] = {
 	"SQLFunctions",
 	"Constants",
 	"functionsEx",
+	"RadiusKeyWords",
 	0,
 };
 
@@ -151,7 +153,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 class LexerFormEngine : public ILexer5 {
 	bool caseSensitive;
 	CharacterSet setFoldingWordsBegin;
-	WordList keywords[24];	//переданные нам вордлисты
+	WordList keywords[17];	//переданные нам вордлисты
 	WordList wRefold; //начала фолдинга
 	WordList wFold;   //продолжения ифов и свитчей
 	WordList wUnfold; //окончания конструкций
@@ -399,17 +401,30 @@ void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc)
 	case SCE_FM_SQL_IDENTIFIER:
 		{
 			char s[256];
-			sc.GetCurrentLowered(s, sizeof(s));
-			if (keywords[KW_MSSQL_STATEMENTS].InList(s)) {
-				sc.ChangeState(SCE_FM_SQL_STATEMENT);
-			} else if (keywords[KW_MSSQL_DATA_TYPES].InList(s)) {
-				sc.ChangeState(SCE_FM_SQL_DATATYPE);
-			} else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s)) {
-				sc.ChangeState(SCE_FM_SQL_SYSTABLE);
-			} else if (keywords[KW_MSSQL_FUNCTIONS].InList(s)) {
-				sc.ChangeState(SCE_FM_SQL_FUNCTION);
-			}else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s)) {
-				sc.ChangeState(SCE_FM_SQL_STORED_PROCEDURE);
+			sc.GetCurrent(s, sizeof(s));
+			if (s[0] == '_' && s[1] == '_') {
+				if (keywords[KW_MSSQL_RADIUS].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_RADIUSKEYWORDS);
+				}
+			} else {
+				char *c = s;
+				while (*c) {
+					if (*c >= 'A' && *s <= 'Z') {
+						*c += 'a' - 'A';
+					}
+					++c;
+				}
+				if (keywords[KW_MSSQL_STATEMENTS].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_STATEMENT);
+				} else if (keywords[KW_MSSQL_DATA_TYPES].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_DATATYPE);
+				} else if (keywords[KW_MSSQL_SYSTEM_TABLES].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_SYSTABLE);
+				} else if (keywords[KW_MSSQL_FUNCTIONS].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_FUNCTION);
+				} else if (keywords[KW_MSSQL_STORED_PROCEDURES].InList(s)) {
+					sc.ChangeState(SCE_FM_SQL_STORED_PROCEDURE);
+				}
 			}
 			sc.SetState(SCE_FM_SQL_DEFAULT);
 		}

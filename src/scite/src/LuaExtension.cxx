@@ -1681,7 +1681,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 
 	if (needStringResult) {
 		int stringResultLen = host->Send(p, func.value, params[0], 0);
-		if (stringResultLen > 0) {
+		if (stringResultLen >= 0) {
 			// not all string result methods are guaranteed to add a null terminator
 			stringResult = new char[stringResultLen+1];
 			if (stringResult) {

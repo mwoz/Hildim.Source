@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "WordList.h"
+#include "CharacterSet.h"
 
 using namespace Lexilla;
 
@@ -296,3 +297,38 @@ const char *WordList::WordAt(int n) const noexcept {
 	return words[n];
 }
 
+bool WordList::InClassificator(const char *s, char &cOut) {
+	cOut = 0;
+	if (!words)
+		return false;
+	const unsigned char firstChar = s[0];
+	int j = starts[firstChar];
+	if (j >= 0) {
+		while (words[j][0] == firstChar) {
+			if (s[1] == words[j][1]) {
+				const char *a = words[j] + 1;
+				const char *b = s + 1;
+				bool sep = (*a == '~');
+				while ((*a && *a == *b || (sep && (*b == ' ' || *b == '\t')))) {
+					a++;
+					b++;
+					while (sep && (*b == ' ' || *b == '\t'))
+						b++;
+					sep = (*a == '~');
+				}
+				if (!*b ||!iswordchar(*b)) {
+					if (!*a)
+						return true;
+					if (*a == ':') {
+						a++; 
+						cOut = static_cast<char>(atoi(a));
+						return true;
+					}
+				}
+			}
+			j++;
+		}
+	}
+
+	return false;
+}
