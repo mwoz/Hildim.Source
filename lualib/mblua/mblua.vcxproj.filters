@@ -102,6 +102,9 @@
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\sysData.cpp">
       <Filter>Source Files\mb</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\MessageBus\mbTransportBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mblua.def">

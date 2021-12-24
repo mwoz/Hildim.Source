@@ -375,7 +375,7 @@ public:
 	void OnIdle();
 	void OnSwitchFile(int editorSide);
 	void OnOpenClose(int editorSide);
-	COLORREF GetColorRef(char* name);
+	COLORREF GetColorRef(const char* name);
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
 	LRESULT OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);

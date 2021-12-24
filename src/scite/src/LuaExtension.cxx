@@ -304,23 +304,25 @@ static int cf_scite_save_encoding_file(lua_State *L) {
 		err += fPath.Directory().AsUTF8();
 		goto errr;
 	}
-	FILE *f = fPath.Open(fileWrite);
+	{
+		FILE* f = fPath.Open(fileWrite);
 
-	if (f) {
-		Utf8_16_Write convert;
-		convert.setEncoding(static_cast<Utf8_16::encodingType>(encoding));
-		convert.setfile(f);
-		size_t written = convert.fwrite(body, lstrlenA(body));
-		convert.fclose();
-		if (written) {
-			lua_pushboolean(L, true);
-			return 1;
+		if (f) {
+			Utf8_16_Write convert;
+			convert.setEncoding(static_cast<Utf8_16::encodingType>(encoding));
+			convert.setfile(f);
+			size_t written = convert.fwrite(body, lstrlenA(body));
+			convert.fclose();
+			if (written) {
+				lua_pushboolean(L, true);
+				return 1;
+			}
+			err = "SaveEncodingFile: Error when save ";
+			err += fPath.AsUTF8();
 		}
-		err = "SaveEncodingFile: Error when save ";
+		err = "SaveEncodingFile: Can't open ";
 		err += fPath.AsUTF8();
 	}
-	err = "SaveEncodingFile: Can't open ";
-	err += fPath.AsUTF8();
 errr:
 	lua_pushboolean(L, false);
 	lua_pushstring(L, err.c_str());
@@ -370,18 +372,21 @@ static int cf_scite_compare_encoding_file(lua_State *L) {
 		err += fPath.Directory().AsUTF8();
 		goto errr;
 	}
-	int result = host->CompareFile(fPath, body);
+	{
+		int result = host->CompareFile(fPath, body);
 
-	if (!result) {
-		lua_pushboolean(L, true);
-		lua_pushstring(L, err.c_str());
-		return 2;
-	}
-	if (result == 2) {
-		err = "CompareEncodingFile: Can't open ";
-		err += fPath.AsUTF8();
-	} else {
-		err = "Different";
+		if (!result) {
+			lua_pushboolean(L, true);
+			lua_pushstring(L, err.c_str());
+			return 2;
+		}
+		if (result == 2) {
+			err = "CompareEncodingFile: Can't open ";
+			err += fPath.AsUTF8();
+		}
+		else {
+			err = "Different";
+		}
 	}
 errr:
 	lua_pushboolean(L, false);

@@ -3526,7 +3526,7 @@ void SciTEBase::NewLineInOutput() {
 		else if (cmd.lowercase() == "###p")
 			curOutMode = outluaPrint;
 		else if (cmd.lowercase() == "###?") {
-			char *c;
+			const char *c;
 			switch (curOutMode)
 			{
 			case SciTEBase::outConsole:

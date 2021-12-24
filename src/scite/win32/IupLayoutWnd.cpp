@@ -1313,9 +1313,9 @@ LRESULT PASCAL IupLayoutWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 	
 }
 
-COLORREF IupLayoutWnd::GetColorRef(char* name) {
+COLORREF IupLayoutWnd::GetColorRef(const char* name) {
 	COLORREF cr;
-	iupwinGetColorRef(hMain, name, &cr);
+	iupwinGetColorRef(hMain, (char *)name, &cr);
 	return cr;
 }
 
