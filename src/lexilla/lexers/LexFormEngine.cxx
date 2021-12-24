@@ -299,7 +299,7 @@ int SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
 	WordList *wordListN = 0;
 	wordListN = &keywords[n];
 	int firstModification = -1;
-	if (wordListN) {
+	if (wordListN && n < 17) {
 		WordList wlNew;
 		wlNew.Set(wl);
 		if (*wordListN != wlNew) {

@@ -2331,6 +2331,7 @@ LUACOM_API void luacom_open(lua_State *L)
   idxDispatch = (void*)&luacom_runningInprocess;
 
   LUASTACK_CLEAN(L, 0);
+  lua_getglobal(L, "luacom");
 }
 
 

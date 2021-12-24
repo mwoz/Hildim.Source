@@ -697,7 +697,7 @@ void SciTEBase::ReadProperties() {
 	int maxN = KEYWORDSET_MAX;
 	SString maxS = props.GetNewExpand("max.keywords.", fileNameForExtension.c_str());
 	if(maxS.length())
-		maxN = maxS.value();
+		maxN = maxS.value() - 1;
 	for (int wl = 1; wl <= maxN; wl++) {
 		SString kwk(wl + 1);
 		kwk += '.';

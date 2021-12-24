@@ -416,6 +416,7 @@ typedef struct tagENUMINFO
 {
 	// In Parameters
 	DWORD PId;
+	char className[50];
 
 	// Out Parameters
 	HWND  hWnd;
@@ -452,29 +453,27 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 	// compare the process ID with the one given as search parameter
 	if (pInfo->PId == pid)
 	{
-		// look for the visibility first
-		if (::IsWindowVisible(hWnd))
-		{
-			// look for the title next
-			if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0)
-			{
-				pInfo->hWnd = hWnd;
+		char s[50];
+		if(pInfo->className)
+			::RealGetWindowClassA(hWnd, s, 50);
+		if (!pInfo->className || !strcmp(s, pInfo->className)) {
+			// look for the visibility first
+			if (::IsWindowVisible(hWnd)) {
+				// look for the title next
+				if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0) {
+					pInfo->hWnd = hWnd;
 
-				// we have found the right window
-				return(FALSE);
+						// we have found the right window
+						return(FALSE);
+				} else
+					pInfo->hEmptyWnd = hWnd;
+			} else {
+				// look for the title next
+				if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0) {
+					pInfo->hInvisibleWnd = hWnd;
+				} else
+					pInfo->hEmptyInvisibleWnd = hWnd;
 			}
-			else
-				pInfo->hEmptyWnd = hWnd;
-		}
-		else
-		{
-			// look for the title next
-			if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0)
-			{
-				pInfo->hInvisibleWnd = hWnd;
-			}
-			else
-				pInfo->hEmptyInvisibleWnd = hWnd;
 		}
 	}
 
@@ -533,6 +532,11 @@ static int activate_proc_wnd(lua_State *L)
 	PId = (DWORD)luaL_checknumber(L, 1);
 	// set the search parameters 
 	EnumInfo.PId = PId;
+	EnumInfo.className[0] = 0;
+	const char *s = luaL_checkstring(L, 2);
+	if (s) {
+		strncpy(EnumInfo.className, s, 50);
+	}
 
 	// set the return parameters to default values
 	EnumInfo.hWnd = NULL;
