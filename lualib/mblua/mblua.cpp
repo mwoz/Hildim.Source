@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "TLX_LIB/CrashStat.h"
 #include "mblua.h"
 #include "TLX_LIB/tlxMessage.h"
 #include "MessageBus/mbTransport.h"
@@ -271,7 +272,7 @@ int do_CreateMessageLite(lua_State* L)
 }
 
 int do_GetGuid(lua_State* L) 	{
-	CString s = mbTransport->mbCreateInbox();
+	CString s = mbTransport->mbCreateInbox(false);
 	s.Replace("_INBOX.", "");
 	lua_pushfstring(L, s);
 	return 1;
@@ -450,7 +451,7 @@ int mesage_ToString(lua_State* L)
 }
 int message_GetWireText(lua_State* L)
 {
-	lua_pushstring(L, (CString)cmessage_arg(L, "mesage_GetWireText")->vbsGetWireText());
+	lua_pushstring(L, (CString)cmessage_arg(L, "mesage_GetWireText")->GetWireText());
 	return 1;
 }
 int mesage_Subjects(lua_State* L)
