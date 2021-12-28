@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectName>pdflib</ProjectName>
+    <ProjectGuid>{8441F69D-7135-ABCD-1234-45C6123C8467}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\lib\Debug\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\lib\Debug_64\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\obj\Debug\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\obj\Debug_64\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\src\pdflib\font;..\src\pdflib\pdcore;..\src\pdflib\pdflib;..\..\zlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NO_vsnprintf;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>..\obj\pdflib/pdflib.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <Culture>0x0416</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\src\pdflib\font;..\src\pdflib\pdcore;..\src\pdflib\pdflib;..\..\zlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NO_vsnprintf;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>..\obj\pdflib/pdflib.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <Culture>0x0416</Culture>
+    </ResourceCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\pdflib\pdflib\pdflib.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_cid.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_corefont.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_font.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_hostfont.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_pdffont.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_truetype.c" />
+    <ClCompile Include="..\src\pdflib\font\ft_type1.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_aes.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_aescbc.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_arc4.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_chartabs.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_contain.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_core.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_crypt.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_ctype.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_digsig.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_ebcdic.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_encoding.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_file.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_geom.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_md5.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_optparse.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_output.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_resource.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_scan.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_scope.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_string.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_unicode.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_util.c" />
+    <ClCompile Include="..\src\pdflib\pdcore\pc_xmp.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_actions.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_afm.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_annots.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_bmp.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_ccitt.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_cid.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_color.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_document.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_draw.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_encoding.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_filter.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_font.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_gif.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_gstate.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_hyper.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_icclib.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_image.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_jpeg.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_jpx.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_kerning.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_mbox.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_object.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_opi.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_page.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_params.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_pattern.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_pfm.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_photoshp.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_png.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_shading.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_subsett.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_tagged.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_template.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_text.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_tiff.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_truetype.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_type1.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_type3.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_util.c" />
+    <ClCompile Include="..\src\pdflib\pdflib\p_xgstate.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\pdflib\font\ft_cid.h" />
+    <ClInclude Include="..\src\pdflib\font\ft_corefont.h" />
+    <ClInclude Include="..\src\pdflib\font\ft_font.h" />
+    <ClInclude Include="..\src\pdflib\font\ft_generr.h" />
+    <ClInclude Include="..\src\pdflib\font\ft_pdffont.h" />
+    <ClInclude Include="..\src\pdflib\font\ft_truetype.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_aes.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_aeslocal.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_arc4.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_chartabs.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_classic.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_config.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_contain.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_core.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_crypt.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_ctype.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_digsig.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_ebcdic.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_encoding.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_exports.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_file.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_generr.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_geom.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_md5.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_optparse.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_output.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_prefix.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_pstok.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_resource.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scan.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scantok.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scope.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_strconst.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_string.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_unicode.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_util.h" />
+    <ClInclude Include="..\src\pdflib\pdcore\pc_xmp.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_color.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_defopt.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_font.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_generr.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_hkscmyk.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_hkslab.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_icc.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_icc9809.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_icclib.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_image.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_intern.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_keyconn.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_layer.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_page.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_pantlab.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_params.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\p_tagged.h" />
+    <ClInclude Include="..\src\pdflib\pdflib\pdflib.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,15 @@
+EXPORTS
+  cdlua_open
+  cdlua_close
+  cdlua_getcanvas
+  cdlua_addcontext
+  cdlua_getplaystate
+  cdlua_getstate
+  cdlua_checkcanvas
+  cdlua_pushcanvas
+  luaopen_cdlua
+  cdlua_pushbitmap
+  cdlua_checkbitmap
+  cdlua_checkimage
+  cdlua_register_lib
+  cdlua_register_funcs

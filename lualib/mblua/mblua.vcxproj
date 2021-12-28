@@ -27,7 +27,7 @@
     <SccProvider>SubversionScc</SccProvider>
     <Keyword>MFCProj</Keyword>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '16.0'">10.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '15.0'">10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '15.0'">10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'" Label="Configuration">
@@ -144,13 +144,15 @@
       <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib\zlib1.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -193,7 +195,7 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib\zlib1.lib</AdditionalDependencies>
       <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="SIM">
+      <UniqueIdentifier>{01d2debc-4038-4853-b8a4-10ee1d5693ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV">
+      <UniqueIdentifier>{17aca01c-4d68-4c72-aa80-5de4b9432403}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\SVG">
+      <UniqueIdentifier>{d08377e6-948b-4bbf-bb0a-00e505bfa17b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\CGM">
+      <UniqueIdentifier>{b6cf3252-1432-494b-91dc-db5dd8264eb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\INTCGM">
+      <UniqueIdentifier>{97d4a7d6-910c-43df-aa61-242b72fadafe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\INTCGM\INC">
+      <UniqueIdentifier>{a08b1d7f-9748-4132-9506-3121521b0447}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{1e0658ed-7606-4d61-8d9c-ad5262d42e42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\PPTX">
+      <UniqueIdentifier>{0d5bf3c4-3fc1-43bc-b02d-352ed6a59790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DRV\MINIZIP">
+      <UniqueIdentifier>{c876d88b-49c3-4aeb-ac67-c2d4d5cdbbc9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\sim\cd_truetype.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sim\cdfontex.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sim\sim.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sim\sim_linepolyfill.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sim\sim_primitives.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sim\sim_text.c">
+      <Filter>SIM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdcgm.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cddebug.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cddgn.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cddxf.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdirgb.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdmf.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdpicture.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdps.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\svg\cdsvg.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\svg\base64.c">
+      <Filter>DRV\SVG</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\svg\lodepng.c">
+      <Filter>DRV\SVG</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cgm.c">
+      <Filter>DRV\CGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cd_intcgm.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_bin_get.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_bin_parse.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_list.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_play.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_sism.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_txt_get.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\intcgm\cgm_txt_parse.c">
+      <Filter>DRV\INTCGM</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cd.c" />
+    <ClCompile Include="..\src\cd_active.c" />
+    <ClCompile Include="..\src\cd_attributes.c" />
+    <ClCompile Include="..\src\cd_bitmap.c" />
+    <ClCompile Include="..\src\cd_image.c" />
+    <ClCompile Include="..\src\cd_primitives.c" />
+    <ClCompile Include="..\src\cd_text.c" />
+    <ClCompile Include="..\src\cd_util.c" />
+    <ClCompile Include="..\src\cd_vectortext.c" />
+    <ClCompile Include="..\src\rgb2map.c" />
+    <ClCompile Include="..\src\wd.c" />
+    <ClCompile Include="..\src\wdhdcpy.c" />
+    <ClCompile Include="..\src\drv\pptx.c">
+      <Filter>DRV\PPTX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cdpptx.c">
+      <Filter>DRV</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minizip\minizip.c">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minizip\zip.c">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minizip\ioapi.c">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minizip\miniunzip.c">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minizip\unzip.c">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\sim\cd_truetype.h">
+      <Filter>SIM</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sim\sim.h">
+      <Filter>SIM</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\svg\base64.h">
+      <Filter>DRV\SVG</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\svg\lodepng.h">
+      <Filter>DRV\SVG</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\drv\cgm.h">
+      <Filter>DRV\CGM</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intcgm\cgm_bin_get.h">
+      <Filter>DRV\INTCGM\INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intcgm\cgm_list.h">
+      <Filter>DRV\INTCGM\INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intcgm\cgm_play.h">
+      <Filter>DRV\INTCGM\INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intcgm\cgm_txt_get.h">
+      <Filter>DRV\INTCGM\INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\intcgm\cgm_types.h">
+      <Filter>DRV\INTCGM\INC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cd.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cd_old.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cd_private.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdcgm.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdclipbd.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cddbuf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cddebug.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cddgn.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cddxf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdemf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdimage.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdirgb.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdmf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdmf_private.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdnative.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdpicture.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdprint.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdps.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdsvg.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdwmf.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\wd.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\wd_old.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\drv\pptx.h">
+      <Filter>DRV\PPTX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minizip\ioapi.h">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minizip\zip.h">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minizip\unzip.h">
+      <Filter>DRV\MINIZIP</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

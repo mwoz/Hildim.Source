@@ -1,0 +1,13 @@
+#This builds all the Lua libraries of the folder for 1 uname
+
+# Building for the default (USE_LUA51) 
+# or for the defined at the environment
+
+tecmake $1 MF=cdlua5 $2 $3 $4 $5 $6 $7 $8
+tecmake $1 MF=cdluaim5 $2 $3 $4 $5 $6 $7 $8
+tecmake $1 MF=cdluapdf5 $2 $3 $4 $5 $6 $7 $8
+tecmake $1 MF=cdluagl5 $2 $3 $4 $5 $6 $7 $8
+
+# XRender and Cairo are NOT available in AIX, IRIX and SunOS
+# It is available in Linux and FreeBSD
+tecmake $1 MF=cdluacontextplus5 $2 $3 $4 $5 $6 $7 $8

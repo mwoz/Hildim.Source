@@ -1,0 +1,7 @@
+$(OBJDIR)/cdluaim5.o: lua5/cdluaim5.c /tecgraf/im/include/im.h \
+ /tecgraf/im/include/im_image.h ../include/cd.h ../include/cdirgb.h \
+ ../include/cdim.h ../include/wd.h ../include/wd_old.h \
+ /tecgraf/lua54/include/lua.h /tecgraf/lua54/include/luaconf.h \
+ /tecgraf/lua54/include/lauxlib.h /tecgraf/lua54/include/lua.h \
+ /tecgraf/im/include/imlua.h ../include/cdlua.h \
+ ../include/cdlua5_private.h

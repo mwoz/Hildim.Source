@@ -1,0 +1,34 @@
+$(OBJDIR)/cdgl.o: drv/cdgl.c /tecgraf/ftgl/include/FTGL/ftgl.h \
+ /usr/include/freetype2/freetype/freetype.h \
+ /usr/include/freetype2/freetype/config/ftconfig.h \
+ /usr/include/freetype2/freetype/config/ftoption.h \
+ /usr/include/freetype2/freetype/config/ftstdlib.h \
+ /usr/include/freetype2/freetype/fterrors.h \
+ /usr/include/freetype2/freetype/ftmoderr.h \
+ /usr/include/freetype2/freetype/fterrdef.h \
+ /usr/include/freetype2/freetype/fttypes.h \
+ /usr/include/freetype2/freetype/ftsystem.h \
+ /usr/include/freetype2/freetype/ftimage.h \
+ /usr/include/freetype2/freetype/ftglyph.h \
+ /usr/include/freetype2/freetype/ftoutln.h \
+ /tecgraf/ftgl/include/FTGL/FTPoint.h /tecgraf/ftgl/include/FTGL/FTBBox.h \
+ /tecgraf/ftgl/include/FTGL/FTBuffer.h \
+ /tecgraf/ftgl/include/FTGL/FTGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTBitmapGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTBufferGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTExtrdGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTOutlineGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTPixmapGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTPolyGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTTextureGlyph.h \
+ /tecgraf/ftgl/include/FTGL/FTFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLBitmapFont.h \
+ /tecgraf/ftgl/include/FTGL/FTBufferFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLExtrdFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLOutlineFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLPixmapFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLPolygonFont.h \
+ /tecgraf/ftgl/include/FTGL/FTGLTextureFont.h \
+ /tecgraf/ftgl/include/FTGL/FTLayout.h \
+ /tecgraf/ftgl/include/FTGL/FTSimpleLayout.h ../include/cd.h \
+ ../include/cd_private.h ../include/cdgl.h

@@ -1,0 +1,8 @@
+EXPORTS
+  cdContextDirect2DNativeWindow
+  cdContextDirect2DImage
+  cdContextDirect2DImageRGB
+  cdContextDirect2DDBuffer
+  cdContextDirect2DPrinter
+  cdInitDirect2D
+  cdFinishDirect2D

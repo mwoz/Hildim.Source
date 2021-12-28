@@ -1,0 +1,30 @@
+$(OBJDIR)/cdlua5.o: lua5/cdlua5.c ../include/cd.h ../include/cdgdiplus.h \
+ ../include/cdnative.h ../include/cdps.h /tecgraf/lua52/include/lua.h \
+ /tecgraf/lua52/include/luaconf.h /tecgraf/lua52/include/lauxlib.h \
+ /tecgraf/lua52/include/lua.h ../include/cdlua.h \
+ ../include/cdlua5_private.h
+$(OBJDIR)/cdvoid5.o: lua5/cdvoid5.c ../include/cd.h ../include/cd_private.h \
+ /tecgraf/lua52/include/lua.h /tecgraf/lua52/include/luaconf.h \
+ /tecgraf/lua52/include/lauxlib.h /tecgraf/lua52/include/lua.h \
+ ../include/cdlua5_private.h
+$(OBJDIR)/cdlua5ctx.o: lua5/cdlua5ctx.c ../include/cd.h ../include/wd.h \
+ ../include/wd_old.h ../include/cdimage.h ../include/cdirgb.h \
+ ../include/cddxf.h ../include/cddgn.h ../include/cdcgm.h \
+ ../include/cdwmf.h ../include/cdemf.h ../include/cdnative.h \
+ ../include/cdprint.h ../include/cdclipbd.h ../include/cdmf.h \
+ ../include/cdps.h ../include/cdsvg.h ../include/cdpptx.h \
+ ../include/cddbuf.h ../include/cddebug.h ../include/cdpicture.h \
+ /tecgraf/lua52/include/lua.h /tecgraf/lua52/include/luaconf.h \
+ /tecgraf/lua52/include/lauxlib.h /tecgraf/lua52/include/lua.h \
+ ../include/cdlua.h ../include/cdlua5_private.h
+$(OBJDIR)/cdlua5_active.o: lua5/cdlua5_active.c ../include/cd.h ../include/wd.h \
+ ../include/wd_old.h ../include/cdirgb.h ../include/cd_old.h \
+ ../include/wd_old.h /tecgraf/lua52/include/lua.h \
+ /tecgraf/lua52/include/luaconf.h /tecgraf/lua52/include/lauxlib.h \
+ /tecgraf/lua52/include/lua.h ../include/cdlua.h \
+ ../include/cdlua5_private.h lua5/cdvoid5.h
+$(OBJDIR)/cdlua5_canvas.o: lua5/cdlua5_canvas.c ../include/cd.h ../include/wd.h \
+ ../include/wd_old.h ../include/cdirgb.h /tecgraf/lua52/include/lua.h \
+ /tecgraf/lua52/include/luaconf.h /tecgraf/lua52/include/lauxlib.h \
+ /tecgraf/lua52/include/lua.h ../include/cdlua.h \
+ ../include/cdlua5_private.h

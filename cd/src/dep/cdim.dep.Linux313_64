@@ -1,0 +1,4 @@
+$(OBJDIR)/cdim.o: drv/cdim.c /tecgraf/im/include/im.h \
+ /tecgraf/im/include/im_image.h ../include/cd.h ../include/wd.h \
+ ../include/wd_old.h ../include/cd_private.h ../include/cdirgb.h \
+ ../include/cdim.h

@@ -1,0 +1,408 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="pdflib">
+      <UniqueIdentifier>{e5db93a7-1c6a-413b-a102-a44cafee707a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\font">
+      <UniqueIdentifier>{40752f41-ec43-4be4-adc7-390d0abbb571}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\font\inc">
+      <UniqueIdentifier>{73699f6d-1636-44b4-b803-31a9c3ec7f76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\pdcore">
+      <UniqueIdentifier>{481eb93f-e631-4667-80e8-3fcc71385fb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\pdcore\inc">
+      <UniqueIdentifier>{51d4deed-e3b6-41c9-b456-67afdbed5fc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\pdflib">
+      <UniqueIdentifier>{1505907e-42b1-4139-9c3c-5b635a341517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pdflib\pdflib\inc">
+      <UniqueIdentifier>{370fd95e-016e-4bd7-9a90-011f6ad0446f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\pdflib\pdflib\pdflib.c">
+      <Filter>pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_cid.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_corefont.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_font.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_hostfont.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_pdffont.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_truetype.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\font\ft_type1.c">
+      <Filter>pdflib\font</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_aes.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_aescbc.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_arc4.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_chartabs.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_contain.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_core.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_crypt.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_ctype.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_digsig.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_ebcdic.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_encoding.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_file.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_geom.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_md5.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_optparse.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_output.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_resource.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_scan.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_scope.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_string.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_unicode.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_util.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdcore\pc_xmp.c">
+      <Filter>pdflib\pdcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_actions.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_afm.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_annots.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_bmp.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_ccitt.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_cid.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_color.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_document.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_draw.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_encoding.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_filter.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_font.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_gif.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_gstate.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_hyper.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_icclib.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_image.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_jpeg.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_jpx.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_kerning.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_mbox.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_object.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_opi.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_page.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_params.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_pattern.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_pfm.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_photoshp.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_png.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_shading.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_subsett.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_tagged.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_template.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_text.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_tiff.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_truetype.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_type1.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_type3.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_util.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdflib\pdflib\p_xgstate.c">
+      <Filter>pdflib\pdflib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\pdflib\font\ft_cid.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\font\ft_corefont.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\font\ft_font.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\font\ft_generr.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\font\ft_pdffont.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\font\ft_truetype.h">
+      <Filter>pdflib\font\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_aes.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_aeslocal.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_arc4.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_chartabs.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_classic.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_config.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_contain.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_core.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_crypt.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_ctype.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_digsig.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_ebcdic.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_encoding.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_exports.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_file.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_generr.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_geom.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_md5.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_optparse.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_output.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_prefix.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_pstok.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_resource.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scan.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scantok.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_scope.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_strconst.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_string.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_unicode.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_util.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdcore\pc_xmp.h">
+      <Filter>pdflib\pdcore\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_color.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_defopt.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_font.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_generr.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_hkscmyk.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_hkslab.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_icc.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_icc9809.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_icclib.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_image.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_intern.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_keyconn.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_layer.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_page.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_pantlab.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_params.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\p_tagged.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pdflib\pdflib\pdflib.h">
+      <Filter>pdflib\pdflib\inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{8b21839a-b2e4-43ab-a3aa-bc4828bcfb5b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\x11\cdx11.c" />
+    <ClCompile Include="..\src\x11\cdxclp.c" />
+    <ClCompile Include="..\src\x11\cdxdbuf.c" />
+    <ClCompile Include="..\src\x11\cdximg.c" />
+    <ClCompile Include="..\src\x11\cdxnative.c" />
+    <ClCompile Include="..\src\x11\xvertex.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuildStep Include="..\src\x11\cdx11.h">
+      <Filter>inc</Filter>
+    </CustomBuildStep>
+    <CustomBuildStep Include="..\src\x11\xvertex.h">
+      <Filter>inc</Filter>
+    </CustomBuildStep>
+  </ItemGroup>
+</Project>

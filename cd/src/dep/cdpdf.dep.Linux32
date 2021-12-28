@@ -1,0 +1,2 @@
+$(OBJDIR)/cdpdf.o: drv/cdpdf.c ../include/cd.h ../include/cd_private.h \
+ ../include/cdpdf.h pdflib/pdflib/pdflib.h

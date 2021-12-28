@@ -1,0 +1,10 @@
+EXPORTS
+  cdContextImImage
+  cdCanvasPutImImage
+  cdCanvasPatternImImage
+  cdCanvasStippleImImage
+  cdCanvasGetImImage
+  cdfCanvasPutImImage
+  wdCanvasPutImImage
+  wdCanvasGetImImage
+  

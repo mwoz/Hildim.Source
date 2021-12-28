@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{d5842216-d403-4568-b6de-84bcbb9a5266}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{ca68ccc9-0bd5-46de-b65e-7bdbc8bbf23f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\cairo\cdcairoctx.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\cdcairo.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\cairo\cdcairo.c" />
+    <ClCompile Include="..\src\cairo\cdcairodbuf.c" />
+    <ClCompile Include="..\src\cairo\cdcairoemf.c" />
+    <ClCompile Include="..\src\cairo\cdcairoimg.c" />
+    <ClCompile Include="..\src\cairo\cdcairoirgb.c" />
+    <ClCompile Include="..\src\cairo\cdcaironative_gdk.c" />
+    <ClCompile Include="..\src\cairo\cdcaironative_win32.c" />
+    <ClCompile Include="..\src\cairo\cdcaironative_x11.c" />
+    <ClCompile Include="..\src\cairo\cdcairopdf.c" />
+    <ClCompile Include="..\src\cairo\cdcairoplus.c" />
+    <ClCompile Include="..\src\cairo\cdcairoprn_win32.c" />
+    <ClCompile Include="..\src\cairo\cdcairops.c" />
+    <ClCompile Include="..\src\cairo\cdcairosvg.c" />
+    <ClCompile Include="..\src\cairo\cdcairoprn_gtk.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\cairo\cdcairo.def" />
+  </ItemGroup>
+</Project>

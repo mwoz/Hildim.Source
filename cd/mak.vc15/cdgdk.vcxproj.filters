@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{31aaeaf6-eb15-4560-a3ea-acedba4b378e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="null">
+      <UniqueIdentifier>{d4213684-9cb9-4993-971f-ed88348af9fe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\gdk\cdgdk.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\drv\cd0emf.c">
+      <Filter>null</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cd0prn.c">
+      <Filter>null</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drv\cd0wmf.c">
+      <Filter>null</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gdk\cdgdk.c" />
+    <ClCompile Include="..\src\gdk\cdgdkclp.c" />
+    <ClCompile Include="..\src\gdk\cdgdkdbuf.c" />
+    <ClCompile Include="..\src\gdk\cdgdkimg.c" />
+    <ClCompile Include="..\src\gdk\cdgdknative.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\cdgdk.def" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+$(OBJDIR)/cdluapdf5.o: lua5/cdluapdf5.c ../include/cd.h ../include/cdpdf.h \
+ /tecgraf/lua53/include/lua.h /tecgraf/lua53/include/luaconf.h \
+ /tecgraf/lua53/include/lauxlib.h /tecgraf/lua53/include/lua.h \
+ ../include/cdlua.h ../include/cdluapdf.h ../include/cdlua5_private.h

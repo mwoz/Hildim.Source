@@ -1,0 +1,11 @@
+EXPORTS
+  cdContextCairoImage
+  cdContextCairoImageRGB
+  cdContextCairoPS
+  cdContextCairoNativeWindow
+  cdContextCairoDBuffer
+  cdContextCairoSVG
+  cdContextCairoPDF
+  cdContextCairoPrinter
+  cdContextCairoEMF
+  
