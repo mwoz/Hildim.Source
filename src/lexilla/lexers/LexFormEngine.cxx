@@ -1236,7 +1236,7 @@ public:
 	bool GetNextLowered(char *s,unsigned int len);
 	int MatchLowerStyledLine(unsigned int line, IDocument *pAccess);
 	bool Skip();
-	void WalkToEOL();
+	void WalkToEOL(bool to2Dot=true);
 	bool FindThen();
 	void FoldContext::UpAll() {
 		currentLevel++;
@@ -1344,11 +1344,11 @@ bool FoldContext::Skip(){
 	}
 	return startstyle != style;
 }
-void FoldContext::WalkToEOL(){
+void FoldContext::WalkToEOL(bool to2Dot){
 	//while(!atLineEnd && currentPos < endPos && (ch != ':' || style != SCE_FM_VB_OPERATOR)){
 	while(!atLineEnd && currentPos < endPos){
 		bool found2dot = false;
-		if (ch == ':' && style == SCE_FM_VB_OPERATOR)
+		if (to2Dot && ch == ':' && style == SCE_FM_VB_OPERATOR)
 			found2dot = true;
 		
 		atLineStart = atLineEnd;
@@ -1401,7 +1401,7 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 	}
 
 	FoldContext fc(startPos, length, styler, options.foldCompact, options.foldAtElse);
-
+	bool to2Dot = true;
 	int blockReFoldLine = -1;
 	int processComment = 0;
 	if (options.foldComment && fc.currentLine) {
@@ -1516,7 +1516,8 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					} else if (!strcmp(s, "select")) {
 						fc.currentLevel += 2;
 						blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
-					} else if (wFold.InList(s)) {//начало фолдинга - do function sub for with property while
+						to2Dot = false;
+ 					} else if (wFold.InList(s)) {//начало фолдинга - do function sub for with property while
 						fc.Up();
 					} else if (!strcmp(s, "case")) {
 						fc.DecreaseLevel(FM_NEXTFOLD); 
@@ -1586,14 +1587,14 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					} else {
 						processComment++;
 					}	
-					fc.WalkToEOL();	
+					fc.WalkToEOL(to2Dot);
 					continue;	
 				}
 			default:
 				break;
 			}
 			processComment = 0;
-			fc.WalkToEOL(); //закончили обработку бэйсиковской строки
+			fc.WalkToEOL(to2Dot); //закончили обработку бэйсиковской строки
 			break;
 		case TYPE_WIREFORMAT:
 		{
