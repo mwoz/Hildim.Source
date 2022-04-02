@@ -12,6 +12,7 @@
 #define FM_STARTCDATA 0x400
 #define FM_ENDCDATA 0x800
 #define FM_PREVCDATA 0x1000
+#define FM_DBLINDENT 0x2000
 #define FM_TYPEMASK 0x0F
 
 // Internal state, highlighted as number
@@ -1512,11 +1513,13 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 						if (fc.FindThen()) {//нашли then -действительно нужно фолдить
 							fc.currentLevel += 2;
 							blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
+							fc.AddFlag(FM_DBLINDENT);
 						}
 					} else if (!strcmp(s, "select")) {
 						fc.currentLevel += 2;
 						blockReFoldLine = fc.currentLine + 1;//в следующей строке не фолдим IfElse
 						to2Dot = false;
+						fc.AddFlag(FM_DBLINDENT);
  					} else if (wFold.InList(s)) {//начало фолдинга - do function sub for with property while
 						fc.Up();
 					} else if (!strcmp(s, "case")) {
