@@ -168,7 +168,6 @@ int ScintillaBase::KeyCommand(Message iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case Message::Tab:
-		case Message::BackTab:
 			AutoCompleteCompleted(0, CompletionMethods::Tab);
 			return 0;
 		case Message::NewLine:
@@ -208,13 +207,6 @@ void ScintillaBase::ListNotify(ListBoxEvent *plbe) {
 		break;
 	case ListBoxEvent::EventType::doubleClick:
 		AutoCompleteCompleted(0, CompletionMethods::DoubleClick);
-		break;
-	case ListBoxEvent::EventType::contextMenu:
-		NotificationData scn = {};
-		scn.nmhdr.code = Notification::ListContextMenu;
-		scn.wParam = listType;
-		scn.listType = listType;
-		NotifyParent(scn);
 		break;
 	}
 }
@@ -395,13 +387,6 @@ void ScintillaBase::AutoCompleteCharacterDeleted() {
 		AutoCompleteCancel();
 	} else {
 		AutoCompleteMoveToCurrentWord();
-//!-start-[autocompleteword.incremental]
-		NotificationData scn = {0};
-		scn.nmhdr.code = Notification::AutoUpdated;
-		scn.wParam = 0;
-		scn.listType = 0;
-		NotifyParent(scn);
-//!-end-[autocompleteword.incremental]
 	}
 	NotificationData scn = {};
 	scn.nmhdr.code = Notification::AutoCCharDeleted;
@@ -431,7 +416,6 @@ void ScintillaBase::AutoCompleteCompleted(char ch, CompletionMethods completionM
 	scn.position = firstPos;
 	scn.lParam = firstPos;
 	scn.text = selected.c_str();
-	scn.position = item; //!-add-[UserListItemID]
 	NotifyParent(scn);
 
 	if (!ac.Active())
@@ -481,22 +465,20 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 	// StyleDefault for the face name, size and character set. Also use it
 	// for the foreground and background colour.
 	const int ctStyle = ct.UseStyleCallTip() ? StyleCallTip : StyleDefault;
+	const Style &style = vs.styles[ctStyle];
 	if (ct.UseStyleCallTip()) {
-		ct.SetForeBack(vs.styles[StyleCallTip].fore, vs.styles[StyleCallTip].back);
+		ct.SetForeBack(style.fore, style.back);
 	}
 	if (wMargin.Created()) {
 		pt = pt + GetVisibleOriginInMain();
 	}
+	AutoSurface surfaceMeasure(this);
 	PRectangle rc = ct.CallTipStart(sel.MainCaret(), pt,
 		vs.lineHeight,
 		defn,
-		vs.styles[ctStyle].fontName,
-		vs.styles[ctStyle].sizeZoomed,
 		CodePage(),
-		vs.styles[ctStyle].characterSet,
-		vs.technology,
-		vs.localeName.c_str(),
-		wMain);
+		surfaceMeasure,
+		style.font);
 	// If the call-tip window would be out of the client
 	// space
 	const PRectangle rcClient = GetClientRectangle();
@@ -511,13 +493,6 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 		rc.top += offset;
 		rc.bottom += offset;
 	}
-//!-start-[BetterCalltips]
-	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
-//!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, &wMain);
@@ -845,10 +820,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		AutoCompleteStart(PositionFromUPtr(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
-	case Message::Paste:
-		ac.Cancel();
-		return Editor::WndProc(iMessage, wParam, lParam);
-
 	case Message::AutoCCancel:
 		ac.Cancel();
 		break;
@@ -1084,7 +1055,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return StringResult(lParam, DocumentLexState()->GetName());
 
 	case Message::PrivateLexerCall:
-	case Message::PrivateLexerCallStr:
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), PtrFromSPtr(lParam)));
 
@@ -1153,19 +1123,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::DescriptionOfStyle:
 		return StringResult(lParam, DocumentLexState()->
 				    DescriptionOfStyle(static_cast<int>(wParam)));
-
-	case Message::ListCustomColors:
-	{
-		Sci_ListColorsInfo *ci = (Sci_ListColorsInfo*)wParam;
-		ac.listcolors.inizialized = ci->inizialized;
-		ac.listcolors.border = ci->border;
-		ac.listcolors.borderbak = ci->borderbak;
-		ac.listcolors.scroll = ci->scroll;
-		ac.listcolors.scrollbak = ci->scrollbak;
-		ac.listcolors.scrollhl = ci->scrollhl;
-		ac.listcolors.scrollpress = ci->scrollpress;
-		ac.listcolors.scrollsize = ci->scrollsize;
-	}
 
 	default:
 		return Editor::WndProc(iMessage, wParam, lParam);

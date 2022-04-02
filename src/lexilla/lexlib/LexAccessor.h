@@ -7,7 +7,7 @@
 
 #ifndef LEXACCESSOR_H
 #define LEXACCESSOR_H
-#include <string>
+
 namespace Lexilla {
 
 enum class EncodingType { eightBit, unicode, dbcs };
@@ -120,6 +120,15 @@ public:
 	char StyleAt(Sci_Position position) const {
 		return pAccess->StyleAt(position);
 	}
+	// Return style value from buffer when in buffer, else retrieve from document.
+	// This is faster and can avoid calls to Flush() as that may be expensive.
+	int BufferStyleAt(Sci_Position position) const {
+		const Sci_Position index = position - startPosStyling;
+		if (index >= 0 && index < validLen) {
+			return static_cast<unsigned char>(styleBuf[index]);
+		}
+		return static_cast<unsigned char>(pAccess->StyleAt(position));
+	}
 	Sci_Position GetLine(Sci_Position position) const {
 		return pAccess->LineFromPosition(position);
 	}
@@ -162,7 +171,7 @@ public:
 	void ColourTo(Sci_PositionU pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
-			//assert(pos >= startSeg);
+			assert(pos >= startSeg);
 			if (pos < startSeg) {
 				return;
 			}
