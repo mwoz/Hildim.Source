@@ -533,7 +533,8 @@ void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyl
 			levelPrev = levelCurrent;
 			levelMinCurrent = levelCurrent;
 			visibleChars = 0;
-		}
+		} else if(i == endPos - 1)
+			styler.SetLineState(lineCurrent, lineState);
 		if (!isspacechar(ch))
 			visibleChars++;
 	}

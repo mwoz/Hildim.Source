@@ -20,6 +20,8 @@
 #include "StyleWriter.h"
 #include "Extender.h"
 #include "LuaExtension.h"
+//#include "uiautomationclient.h"
+//#include "winerror.h"
 
 #include "IFaceTable.h"
 #include "SciTEKeys.h"
@@ -788,9 +790,56 @@ static int sf_BlockUpdate(lua_State* L) {
 }
 
 static int cf_editor_set_foreground(lua_State* L) {
+
 	HWND hChild = NULL;
 	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
-	::SwitchToThisWindow(hChild, false);
+	WINDOWPLACEMENT placement{};
+	placement.length = sizeof(placement);
+	
+	if (!GetWindowPlacement(hChild, &placement)) {
+		lua_pushstring(L, "Failed to window placement!");
+		return 1;
+	}	
+		
+	
+	
+	bool minimized = placement.showCmd == SW_SHOWMINIMIZED;
+	if (minimized) {
+		ShowWindow(hChild, SW_RESTORE);
+		placement.showCmd = SW_RESTORE;
+	}
+	HWND hCurrWnd;
+	int iMyTID;
+	int iCurrTID;
+	char* er = NULL;
+
+	hCurrWnd = ::GetForegroundWindow();
+	if (!hCurrWnd && !er)
+		er = "Coud not GetForegroundWindow";
+	iMyTID = GetCurrentThreadId();
+	iCurrTID = GetWindowThreadProcessId(hCurrWnd, 0);
+	if (!iCurrTID && !er)
+		er = "Coud not GetWindowThreadProcessId";
+
+	BOOL b = AttachThreadInput(iMyTID, iCurrTID, TRUE);
+	if (!iCurrTID && !er)
+		er = "Coud not AttachThreadInput";
+
+	// hWnd - дескриптор окна.
+	int i;
+	for (i = 0; i < 10 && hChild != ::GetForegroundWindow(); i++) {
+		Sleep(2);
+		SwitchToThisWindow(hChild, true);
+	}
+	if (!er && hChild != ::GetForegroundWindow())
+		er = "Coud not SwitchToThisWindow";
+
+	AttachThreadInput(iMyTID, iCurrTID, FALSE);
+
+	if (er) {
+		lua_pushstring(L, er);
+		return 1;
+	}
 	return 0;
 }
 

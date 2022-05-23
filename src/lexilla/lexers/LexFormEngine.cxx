@@ -1237,7 +1237,7 @@ public:
 	bool GetNextLowered(char *s,unsigned int len);
 	int MatchLowerStyledLine(unsigned int line, IDocument *pAccess);
 	bool Skip();
-	void WalkToEOL(bool to2Dot=true);
+	bool WalkToEOL(bool to2Dot=true);
 	bool FindThen();
 	void FoldContext::UpAll() {
 		currentLevel++;
@@ -1257,6 +1257,9 @@ void FoldContext::Forward(int n){
 }
 void FoldContext::Forward(){
 	if (atLineEnd) {
+		if (currentPos == endPos && lineFlag) {
+			lineFlag |= (lineFlag >> 4);
+		}
 		lineFlag |= GetSector(style);
 		styler.SetLineState(currentLine, lineFlag);
 		lineFlag = lineFlag & FM_STARTCDATA ? FM_PREVCDATA : 0;
@@ -1345,7 +1348,7 @@ bool FoldContext::Skip(){
 	}
 	return startstyle != style;
 }
-void FoldContext::WalkToEOL(bool to2Dot){
+bool FoldContext::WalkToEOL(bool to2Dot){
 	//while(!atLineEnd && currentPos < endPos && (ch != ':' || style != SCE_FM_VB_OPERATOR)){
 	while(!atLineEnd && currentPos < endPos){
 		bool found2dot = false;
@@ -1356,14 +1359,17 @@ void FoldContext::WalkToEOL(bool to2Dot){
 		currentPos++;
 		if (ch >= 0x100)
 			currentPos++;
+					
 		ch = chNext;
 		GetNextChar(currentPos + ((ch >= 0x100) ? 1 : 0));
 		style = styler.StyleAt(currentPos) & 0xFF;
+		
 		if (found2dot) {
 			visibleChars = 0;
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 bool FoldContext::FindThen() {
 	char s[100];
@@ -1440,8 +1446,8 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 			}
 		}
 	}
-	
-	for (bool doing = fc.More(); doing; doing = fc.More(), fc.Forward()) {
+	bool found2dot = false;//При найденном двоеточии не двгиемся вперед!
+	for (bool doing = fc.More(); doing; doing = fc.More(), found2dot ? (found2dot = false): fc.Forward()) {
 		int sector = GetSector(fc.style);
 		if (fc.atLineStart) 
 			fc.AddFlag(sector<<4);
@@ -1590,14 +1596,14 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 					} else {
 						processComment++;
 					}	
-					fc.WalkToEOL(to2Dot);
+					found2dot = fc.WalkToEOL(to2Dot);
 					continue;	
 				}
 			default:
 				break;
 			}
 			processComment = 0;
-			fc.WalkToEOL(to2Dot); //закончили обработку бэйсиковской строки
+			found2dot = fc.WalkToEOL(to2Dot); //закончили обработку бэйсиковской строки
 			break;
 		case TYPE_WIREFORMAT:
 		{
