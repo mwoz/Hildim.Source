@@ -127,7 +127,6 @@ Editor::Editor() : durationWrapOneByte(0.000001, 0.00000001, 0.00001) {
 
 	cursorMode = CursorShape::Normal;
 
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = Status::Ok;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -1835,18 +1834,30 @@ void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 // This is mostly copied from the Paint method but with some things omitted
 // such as the margin markers, line numbers, selection and caret
 // Should be merged back into a combined Draw method.
-Sci::Position Editor::FormatRange(bool draw, const RangeToFormat *pfr) {
-	if (!pfr)
+Sci::Position Editor::FormatRange(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam) {
+	if (!lParam)
 		return 0;
-
-	AutoSurface surface(pfr->hdc, this, Technology::Default);
-	if (!surface)
-		return 0;
-	AutoSurface surfaceMeasure(pfr->hdcTarget, this, Technology::Default);
-	if (!surfaceMeasure) {
-		return 0;
+	const bool draw = wParam != 0;
+	void *ptr = PtrFromSPtr(lParam);
+	if (iMessage == Message::FormatRange) {
+		RangeToFormat *pfr = static_cast<RangeToFormat *>(ptr);
+		CharacterRangeFull chrg{ pfr->chrg.cpMin,pfr->chrg.cpMax };
+		AutoSurface surface(pfr->hdc, this, Technology::Default);
+		AutoSurface surfaceMeasure(pfr->hdcTarget, this, Technology::Default);
+		if (!surface || !surfaceMeasure) {
+			return 0;
+		}
+		return view.FormatRange(draw, chrg, pfr->rc, surface, surfaceMeasure, *this, vs);
+	} else {
+		// FormatRangeFull
+		RangeToFormatFull *pfr = static_cast<RangeToFormatFull *>(ptr);
+		AutoSurface surface(pfr->hdc, this, Technology::Default);
+		AutoSurface surfaceMeasure(pfr->hdcTarget, this, Technology::Default);
+		if (!surface || !surfaceMeasure) {
+			return 0;
+		}
+		return view.FormatRange(draw, pfr->chrg, pfr->rc, surface, surfaceMeasure, *this, vs);
 	}
-	return view.FormatRange(draw, pfr, surface, surfaceMeasure, *this, vs);
 }
 
 long Editor::TextWidth(uptr_t style, const char *text) {
@@ -1862,7 +1873,7 @@ long Editor::TextWidth(uptr_t style, const char *text) {
 // Empty method is overridden on GTK+ to show / hide scrollbars
 void Editor::ReconfigureScrollBars() {}
 
-void Editor::SetScrollBars() {
+void Editor::ChangeScrollBars() {
 	RefreshStyleData();
 
 	const Sci::Line nMax = MaxScrollPos();
@@ -1884,6 +1895,11 @@ void Editor::SetScrollBars() {
 			Redraw();
 	}
 	//Platform::DebugPrintf("end max = %d page = %d\n", nMax, nPage);
+}
+
+void Editor::SetScrollBars() {
+	// Overridden on GTK to defer to idle
+	ChangeScrollBars();
 }
 
 void Editor::ChangeSize() {
@@ -2370,18 +2386,6 @@ void Editor::NotifyStyleNeeded(Document *, void *, Sci::Position endStyleNeeded)
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	NotificationData scn = { 0 };
-	scn.nmhdr.code = Notification::Colorized;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
-}
 void Editor::NotifyLexerChanged(Document *, void *) {
 }
 
@@ -2421,26 +2425,6 @@ void Editor::NotifyDoubleClick(Point pt, KeyMod modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, KeyMod modifiers) {
-	NotificationData scn = {0};
-	scn.nmhdr.code = Notification::Click;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = modifiers;
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, KeyMod ctrl) {
-	NotificationData scn = {0};
-	scn.nmhdr.code = Notification::MouseButtonUp;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = ctrl;
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyHotSpotDoubleClicked(Sci::Position position, KeyMod modifiers) {
 	NotificationData scn = {};
@@ -2626,7 +2610,7 @@ constexpr Sci::Position MovePositionForDeletion(Sci::Position position, Sci::Pos
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate((Update)((unsigned int)Update::Content | ((unsigned int)mh.modificationType << 4)));
+	ContainerNeedsUpdate(Update::Content);
 	if (paintState == PaintState::painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3138,8 +3122,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!ћой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3758,11 +3742,6 @@ int Editor::DelWordOrLine(Message iMessage) {
 }
 
 int Editor::KeyCommand(Message iMessage) {
-	NotificationData scn = { 0 };
-	scn.nmhdr.code = Notification::KeyCommand;
-	scn.wParam = (uptr_t)iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case Message::LineDown:
 		CursorUpOrDown(1, Selection::SelTypes::none);
@@ -3891,7 +3870,6 @@ int Editor::KeyCommand(Message iMessage) {
 		PageMove(1, Selection::SelTypes::rectangle);
 		break;
 	case Message::EditToggleOvertype:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ContainerNeedsUpdate(Update::Selection);
 		ShowCaretAtCurrentPosition();
@@ -4015,9 +3993,6 @@ int Editor::KeyCommand(Message iMessage) {
 	default:
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -4026,7 +4001,6 @@ int Editor::KeyDefault(Keys, KeyMod) {
 }
 
 int Editor::KeyDownWithModifiers(Keys key, KeyMod modifiers, bool *consumed) {
-	if(key!=(Keys)0x11 && modifiers!= SCI_CTRL)
 	DwellEnd(false);
 	const Message msg = kmap.Find(key, modifiers);
 	if (msg != static_cast<Message>(0)) {
@@ -4122,17 +4096,9 @@ void Editor::Indent(bool forwards) {
 	ContainerNeedsUpdate(Update::Selection);
 }
 
-class CaseFolderASCII : public CaseFolderTable {
-public:
-	CaseFolderASCII() noexcept {
-		StandardASCII();
-	}
-};
-
-
 std::unique_ptr<CaseFolder> Editor::CaseFolderForEncoding() {
 	// Simple default that only maps ASCII upper case to lower case.
-	return std::make_unique<CaseFolderASCII>();
+	return std::make_unique<CaseFolderTable>();
 }
 
 /**
@@ -4145,6 +4111,37 @@ Sci::Position Editor::FindText(
     sptr_t lParam) {	///< @c Sci_TextToFind structure: The text to search for in the given range.
 
 	TextToFind *ft = static_cast<TextToFind *>(PtrFromSPtr(lParam));
+	Sci::Position lengthFound = strlen(ft->lpstrText);
+	if (!pdoc->HasCaseFolder())
+		pdoc->SetCaseFolder(CaseFolderForEncoding());
+	try {
+		const Sci::Position pos = pdoc->FindText(
+			static_cast<Sci::Position>(ft->chrg.cpMin),
+			static_cast<Sci::Position>(ft->chrg.cpMax),
+			ft->lpstrText,
+			static_cast<FindOption>(wParam),
+			&lengthFound);
+		if (pos != -1) {
+			ft->chrgText.cpMin = static_cast<Sci_PositionCR>(pos);
+			ft->chrgText.cpMax = static_cast<Sci_PositionCR>(pos + lengthFound);
+		}
+		return pos;
+	} catch (RegexError &) {
+		errorStatus = Status::RegEx;
+		return -1;
+	}
+}
+
+/**
+ * Search of a text in the document, in the given range.
+ * @return The position of the found text, -1 if not found.
+ */
+Sci::Position Editor::FindTextFull(
+    uptr_t wParam,		///< Search modes : @c FindOption::MatchCase, @c FindOption::WholeWord,
+    ///< @c FindOption::WordStart, @c FindOption::RegExp or @c FindOption::Posix.
+    sptr_t lParam) {	///< @c Sci_TextToFindFull structure: The text to search for in the given range.
+
+	TextToFindFull *ft = static_cast<TextToFindFull *>(PtrFromSPtr(lParam));
 	Sci::Position lengthFound = strlen(ft->lpstrText);
 	if (!pdoc->HasCaseFolder())
 		pdoc->SetCaseFolder(CaseFolderForEncoding());
@@ -4601,21 +4598,15 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, KeyMod modi
 	SetHoverIndicatorPoint(pt);
 	//Platform::DebugPrintf("ButtonDown %d %d = %d alt=%d %d\n", curTime, lastClickTime, curTime - lastClickTime, alt, inDragDrop);
 	ptMouseLast = pt;
-	const bool nmid = (int)(modifiers & SCI_META) == 0;
-	const bool ctrl = nmid && ((int)(modifiers & SCI_CTRL) != 0);
-	const bool shift = nmid && ((int)(modifiers & SCI_SHIFT)) != 0;
-	const bool alt = nmid && ((int)(modifiers & SCI_ALT)) != 0;
-	
-	//const bool ctrl = FlagSet(modifiers, KeyMod::Ctrl);
-	//const bool shift = FlagSet(modifiers, KeyMod::Shift);
-	//const bool alt = FlagSet(modifiers, KeyMod::Alt);
+	const bool ctrl = FlagSet(modifiers, KeyMod::Ctrl);
+	const bool shift = FlagSet(modifiers, KeyMod::Shift);
+	const bool alt = FlagSet(modifiers, KeyMod::Alt);
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false, AllowVirtualSpace(virtualSpaceOptions, alt));
 	newPos = MovePositionOutsideChar(newPos, sel.MainCaret() - newPos.Position());
 	SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = DragDrop::none;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4776,14 +4767,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, KeyMod modi
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, modifiers); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, KeyMod modifiers) {
@@ -4985,7 +4974,6 @@ void Editor::ButtonMoveWithModifiers(Point pt, unsigned int, KeyMod modifiers) {
 
 void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifiers) {
 	//Platform::DebugPrintf("ButtonUp %d %d\n", HaveMouseCapture(), inDragDrop);
-	const bool nmid = (int)(modifiers & SCI_META) == 0;
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false,
 		AllowVirtualSpace(virtualSpaceOptions, sel.IsRectangular()));
 	if (hoverIndicatorPos != Sci::invalidPosition)
@@ -5001,7 +4989,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 		hotSpotClickPos = Sci::invalidPosition;
 		SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
 		newCharPos = MovePositionOutsideChar(newCharPos, -1);
-		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers);
+		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers & KeyMod::Ctrl);
 	}
 	if (HaveMouseCapture()) {
 		if (PointInSelMargin(pt)) {
@@ -5020,7 +5008,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 			if (selStart < selEnd) {
 				if (drag.Length()) {
 					const Sci::Position length = drag.Length();
-					if (FlagSet(modifiers, KeyMod::Ctrl) && nmid) {
+					if (FlagSet(modifiers, KeyMod::Ctrl)) {
 						const Sci::Position lengthInserted = pdoc->InsertString(
 							newPos.Position(), drag.Data(), length);
 						if (lengthInserted > 0) {
@@ -5054,7 +5042,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 					sel.RangeMain() =
 						SelectionRange(newPos, sel.Range(sel.Count() - 1).anchor);
 					InvalidateWholeSelection();
-				} else if(nmid) {
+				} else {
 					SetSelection(newPos, sel.RangeMain().anchor);
 				}
 			}
@@ -5070,7 +5058,6 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 		inDragDrop = DragDrop::none;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, modifiers); //!-add-[OnMouseButtonUp]
 }
 
 bool Editor::Idle() {
@@ -5107,7 +5094,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case TickReason::scroll:
 			// Auto scroll
-			//ButtonMoveWithModifiers(ptMouseLast, 0, KeyMod::Norm);
+			ButtonMoveWithModifiers(ptMouseLast, 0, KeyMod::Norm);
 			break;
 		case TickReason::widen:
 			SetScrollBars();
@@ -5585,12 +5572,14 @@ void Editor::EnsureLineVisible(Sci::Line lineDoc, bool enforcePolicy) {
 }
 
 void Editor::FoldAll(FoldAction action) {
-	pdoc->EnsureStyledTo(pdoc->Length());
 	const Sci::Line maxLine = pdoc->LinesTotal();
 	bool expanding = action == FoldAction::Expand;
+	if (!expanding) {
+		pdoc->EnsureStyledTo(pdoc->Length());
+	}
 	if (action == FoldAction::Toggle) {
 		// Discover current state
-		for (int lineSeek = 0; lineSeek < maxLine; lineSeek++) {
+		for (Sci::Line lineSeek = 0; lineSeek < maxLine; lineSeek++) {
 			if (LevelIsHeader(pdoc->GetFoldLevel(lineSeek))) {
 				expanding = !pcs->GetExpanded(lineSeek);
 				break;
@@ -5599,9 +5588,8 @@ void Editor::FoldAll(FoldAction action) {
 	}
 	if (expanding) {
 		pcs->SetVisible(0, maxLine-1, true);
-		for (int line = 0; line < maxLine; line++) {
-			const FoldLevel levelLine = pdoc->GetFoldLevel(line);
-			if (LevelIsHeader(levelLine)) {
+		for (Sci::Line line = 0; line < maxLine; line++) {
+			if (!pcs->GetExpanded(line)) {
 				SetFoldExpanded(line, true);
 			}
 		}
@@ -5854,7 +5842,6 @@ void Editor::StyleSetMessage(Message iMessage, uptr_t wParam, sptr_t lParam) {
 }
 
 sptr_t Editor::StyleGetMessage(Message iMessage, uptr_t wParam, sptr_t lParam) {
-    PLATFORM_ASSERT(wParam < vs.styles.size());
 	vs.EnsureStyle(wParam);
 	switch (iMessage) {
 	case Message::StyleGetFore:
@@ -6300,6 +6287,9 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::FindText:
 		return FindText(wParam, lParam);
 
+	case Message::FindTextFull:
+		return FindTextFull(wParam, lParam);
+
 	case Message::GetTextRange: {
 			if (lParam == 0)
 				return 0;
@@ -6315,13 +6305,30 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 			return len; 	// Not including NUL
 		}
 
+	case Message::GetTextRangeFull: {
+			if (lParam == 0)
+				return 0;
+			TextRangeFull *tr = static_cast<TextRangeFull *>(PtrFromSPtr(lParam));
+			Sci::Position cpMax = tr->chrg.cpMax;
+			if (cpMax == -1)
+				cpMax = pdoc->Length();
+			PLATFORM_ASSERT(cpMax <= pdoc->Length());
+			const Sci::Position len = cpMax - tr->chrg.cpMin; 	// No -1 as cpMin and cpMax are referring to inter character positions
+			PLATFORM_ASSERT(len >= 0);
+			pdoc->GetCharRange(tr->lpstrText, tr->chrg.cpMin, len);
+			// Spec says copied text is terminated with a NUL
+			tr->lpstrText[len] = '\0';
+			return len; 	// Not including NUL
+		}
+
 	case Message::HideSelection:
 		view.hideSelection = wParam != 0;
 		Redraw();
 		break;
 
 	case Message::FormatRange:
-		return FormatRange(wParam != 0, static_cast<RangeToFormat *>(PtrFromSPtr(lParam)));
+	case Message::FormatRangeFull:
+		return FormatRange(iMessage, wParam, lParam);
 
 	case Message::GetMarginLeft:
 		return vs.leftMarginWidth;
@@ -6405,7 +6412,8 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return 0;
 
 	case Message::EndUndoAction:
-		return pdoc->EndUndoAction();
+		pdoc->EndUndoAction();
+		return 0;
 
 	case Message::GetCaretPeriod:
 		return caret.period;
@@ -8162,18 +8170,12 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case Message::SetOvertype:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
+		if (inOverstrike != (wParam != 0)) {
 			inOverstrike = wParam != 0;
 			ContainerNeedsUpdate(Update::Selection);
 			ShowCaretAtCurrentPosition();
 			SetIdle(true);
 		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_chang		
 		break;
 
 	case Message::GetOvertype:
@@ -8724,13 +8726,8 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case Message::ChangeLexerState:
-		pdoc->ChangeLexerState(static_cast<Sci::Position>(wParam), lParam);
+		pdoc->ChangeLexerState(PositionFromUPtr(wParam), lParam);
 		break;
-//!-start-[MouseClickHandled]
-	case Message::SetMouseCapture:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case Message::SetIdentifier:
 		SetCtrlID(static_cast<int>(wParam));

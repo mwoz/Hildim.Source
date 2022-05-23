@@ -205,7 +205,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	Scintilla::CursorShape cursorMode;
 
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -407,14 +406,15 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void PaintSelMargin(Surface *surfaceWindow, const PRectangle &rc);
 	void RefreshPixMaps(Surface *surfaceWindow);
 	void Paint(Surface *surfaceWindow, PRectangle rcArea);
-	Sci::Position FormatRange(bool draw, const Scintilla::RangeToFormat *pfr);
+	Sci::Position FormatRange(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
 	long TextWidth(Scintilla::uptr_t style, const char *text);
 
 	virtual void SetVerticalScrollPos() = 0;
 	virtual void SetHorizontalScrollPos() = 0;
 	virtual bool ModifyScrollBars(Sci::Line nMax, Sci::Line nPage) = 0;
 	virtual void ReconfigureScrollBars();
-	void SetScrollBars();
+	void ChangeScrollBars();
+	virtual void SetScrollBars();
 	void ChangeSize();
 
 	void FilterSelections();
@@ -452,8 +452,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, Scintilla::CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, KeyMod modifiers); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, KeyMod ctrl); //!-add-[OnMouseButtonUp]	
 	virtual void NotifyDoubleClick(Point pt, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, Scintilla::KeyMod modifiers);
@@ -476,8 +474,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyLexerChanged(Document *doc, void *userData) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) override;
 	void NotifyMacroRecord(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(Scintilla::Update flags) noexcept;
 	void PageMove(int direction, Selection::SelTypes selt=Selection::SelTypes::none, bool stuttered = false);
@@ -507,6 +503,7 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	virtual std::unique_ptr<CaseFolder> CaseFolderForEncoding();
 	Sci::Position FindText(Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
+	Sci::Position FindTextFull(Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
 	void SearchAnchor();
 	Sci::Position SearchText(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
 	Sci::Position SearchInTarget(const char *text, Sci::Position length);
@@ -693,7 +690,7 @@ private:
 public:
 	AutoSurface(const Editor *ed) :
 		surf(ed->CreateMeasurementSurface())  {
-		}
+	}
 	AutoSurface(SurfaceID sid, Editor *ed, std::optional<Scintilla::Technology> technology = {}) :
 		surf(ed->CreateDrawingSurface(sid, technology)) {
 	}
