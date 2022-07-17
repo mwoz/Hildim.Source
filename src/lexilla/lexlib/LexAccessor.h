@@ -7,7 +7,7 @@
 
 #ifndef LEXACCESSOR_H
 #define LEXACCESSOR_H
-#include <string>
+
 namespace Lexilla {
 
 enum class EncodingType { eightBit, unicode, dbcs };
@@ -69,6 +69,9 @@ public:
 		case 950:
 		case 1361:
 			encodingType = EncodingType::dbcs;
+			break;
+		default:
+			break;
 		}
 	}
 	char operator[](Sci_Position position) {
@@ -101,6 +104,7 @@ public:
 		return encodingType;
 	}
 	bool Match(Sci_Position pos, const char *s) {
+		assert(s);
 		for (int i=0; *s; i++) {
 			if (*s != SafeGetCharAt(pos+i))
 				return false;
@@ -174,7 +178,7 @@ public:
 	void ColourTo(Sci_PositionU pos, int chAttr) {
 		// Only perform styling if non empty range
 		if (pos != startSeg - 1) {
-			//assert(pos >= startSeg);
+			assert(pos >= startSeg);
 			if (pos < startSeg) {
 				return;
 			}

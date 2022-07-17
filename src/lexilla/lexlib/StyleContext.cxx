@@ -22,7 +22,7 @@
 using namespace Lexilla;
 
 StyleContext::StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-	int initStyle, LexAccessor &styler_, int chMask) :
+	int initStyle, LexAccessor &styler_, char chMask) :
 	styler(styler_),
 	multiByteAccess((styler.Encoding() == EncodingType::eightBit) ? nullptr : styler.MultiByteAccess()),
 	lengthDocument(static_cast<Sci_PositionU>(styler.Length())),
