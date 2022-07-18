@@ -388,7 +388,7 @@ bool ViewIsASCII(std::string_view text) {
 void LayoutSegments(IPositionCache *pCache,
 	Surface *surface,
 	const ViewStyle &vstyle,
-	LineLayout *ll,
+	LineLayout *ll, 
 	const std::vector<TextSegment> &segments,
 	std::atomic<uint32_t> &nextIndex,
 	const bool textUnicode,
@@ -1981,13 +1981,13 @@ static void DrawTranslucentSelection(Surface *surface, const EditModel &model, c
 					std::unique_ptr<IScreenLineLayout> slLayout = surface->Layout(&screenLine);
 
 					if (slLayout) {
-						const std::vector<Interval> intervals = slLayout->FindRangeIntervals(selectionStart, selectionEnd);
-						for (const Interval &interval : intervals) {
-							const XYPOSITION rcRight = interval.right + xStart;
-							const XYPOSITION rcLeft = interval.left + xStart;
-							const PRectangle rcSelection(rcLeft, rcLine.top, rcRight, rcLine.bottom);
-							surface->FillRectangleAligned(rcSelection, selectionBack);
-						}
+    					const std::vector<Interval> intervals = slLayout->FindRangeIntervals(selectionStart, selectionEnd);
+    					for (const Interval &interval : intervals) {
+    						const XYPOSITION rcRight = interval.right + xStart;
+    						const XYPOSITION rcLeft = interval.left + xStart;
+    						const PRectangle rcSelection(rcLeft, rcLine.top, rcRight, rcLine.bottom);
+    						surface->FillRectangleAligned(rcSelection, selectionBack);
+    					}
 					}
 
 					if (portion.end.VirtualSpace()) {
@@ -2358,7 +2358,7 @@ void EditView::DrawLine(Surface *surface, const EditModel &model, const ViewStyl
 
 	if (FlagSet(phase, DrawPhase::text)) {
 		if (!hideSelection) {
-			DrawTranslucentSelection(surface, model, vsDraw, ll, line, rcLine, subLine, lineRange, xStart, tabWidthMinimumPixels, Layer::UnderText);
+		  DrawTranslucentSelection(surface, model, vsDraw, ll, line, rcLine, subLine, lineRange, xStart, tabWidthMinimumPixels, Layer::UnderText);
 		}
 		DrawTranslucentLineState(surface, model, vsDraw, ll, line, rcLine, subLine, Layer::UnderText);
 		DrawForeground(surface, model, vsDraw, ll, lineVisible, rcLine, lineRange, posLineStart, xStart,
