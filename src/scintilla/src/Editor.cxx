@@ -4043,8 +4043,8 @@ int Editor::KeyDefault(Keys, KeyMod) {
 }
 
 int Editor::KeyDownWithModifiers(Keys key, KeyMod modifiers, bool *consumed) {
-	if(key!=(Keys)0x11 && modifiers!= SCI_CTRL)
-	DwellEnd(false);
+	if(key!=(Keys)0x10 && key!=(Keys)0x11 && key!=(Keys)0x12)
+		DwellEnd(false);
 	const Message msg = kmap.Find(key, modifiers);
 	if (msg != static_cast<Message>(0)) {
 		if (consumed)
