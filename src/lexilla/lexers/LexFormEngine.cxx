@@ -469,6 +469,11 @@ void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 			sc.SetState(SCE_FM_SQL_DEFAULT);
 		}
 		break;
+	case SCE_FM_SQL_PARAMETER:
+		if(!iswordchar(sc.ch)){
+			sc.SetState(SCE_FM_SQL_DEFAULT);
+		}
+		break;
 	case SCE_FM_SQL_COMMENT:
 		if (sc.ch == '/' && sc.chPrev == '*') {
 			sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
@@ -524,6 +529,8 @@ void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 			sc.SetState(SCE_FM_SQL_OPERATOR);
 		} else if (sc.ch == '@') {
 			sc.SetState(SCE_FM_SQL_VARIABLE);
+		} else if (sc.ch == ':') {
+			sc.SetState(SCE_FM_SQL_PARAMETER);
 		}  else if (sc.ch == '{') {
 			sc.SetState(SCE_FM_SQL_FMPARAMETR);
 		}

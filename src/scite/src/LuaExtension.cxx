@@ -527,6 +527,25 @@ static ExtensionAPI::Pane check_pane_object(lua_State *L, int index) {
 	return ExtensionAPI::paneOutput; // this line never reached
 }
 
+static int cf_pane_getstyle(lua_State *L) {
+	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	if (lua_gettop(L) >= 2) {
+		UINT cpPos = static_cast<UINT>(luaL_checknumber(L, 2));
+
+		if (cpPos >= 0) {
+			sptr_t st = host->Send(p,SCI_GETSTYLEAT, cpPos, cpPos);
+			if (st < 0)
+				st = st + 256;
+			lua_pushinteger(L, st);
+			return 1;
+		} else {
+			raise_error(L, "Invalid argument 1 for <pane>:getstyle.  Positive number or zero expected.");
+		}
+	} else {
+		raise_error(L, "Not enough arguments for <pane>:getstyle");
+	}
+	return 0;
+}
 static int cf_pane_line(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	if (lua_gettop(L) >= 2) {
@@ -2008,6 +2027,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		lua_setfield(L, -2, "append");
 		lua_pushcfunction(L, cf_pane_line);
 		lua_setfield(L, -2, "line");
+		lua_pushcfunction(L, cf_pane_getstyle);
+		lua_setfield(L, -2, "ustyle");
 
 //!-start-[EncodingToLua]
 		lua_pushcfunction(luaState, cf_pane_get_codepage);
