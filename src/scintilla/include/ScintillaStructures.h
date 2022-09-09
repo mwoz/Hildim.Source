@@ -82,6 +82,8 @@ struct NotifyHeader {
 	Notification code;
 };
 
+enum class Message;	// Declare in case ScintillaMessages.h not included
+
 struct NotificationData {
 	NotifyHeader nmhdr;
 	Position position;
@@ -122,17 +124,6 @@ struct NotificationData {
 	CharacterSource characterSource;	/* SCN_CHARADDED */
 };
 
-struct Sci_ListColorsInfo {
-	bool inizialized = false;
-	unsigned long border;
-	unsigned long borderbak;
-	unsigned long scrollbak;
-	unsigned long scroll;
-	unsigned long scrollhl;
-	unsigned long scrollpress;
-	int scrollsize;
-
-};
 }
 
 #endif

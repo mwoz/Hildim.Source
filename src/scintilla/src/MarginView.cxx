@@ -283,7 +283,11 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 		const bool firstSubLine = visibleLine == firstVisibleLine;
 		const bool lastSubLine = visibleLine == lastVisibleLine;
 
-		int marks = firstSubLine ? model.pdoc->GetMark(lineDoc) : 0;
+		int marks = model.GetMark(lineDoc);
+		if (!firstSubLine) {
+			// Mask off non-continuing marks
+			marks = marks & vs.maskDrawWrapped;
+		}
 
 		bool headWithTail = false;
 
@@ -338,7 +342,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 					char number[100] = "";
 					if (FlagSet(model.foldFlags, FoldFlag::LevelNumbers)) {
 						const FoldLevel lev = model.pdoc->GetFoldLevel(lineDoc);
-						sprintf(number, " %c%c %03X %03X",
+						sprintf(number, "%c%c %03X %03X",
 							LevelIsHeader(lev) ? 'H' : '_',
 							LevelIsWhitespace(lev) ? 'W' : '_',
 							LevelNumber(lev),
@@ -346,9 +350,9 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						sprintf(number, "  %0X", state);
+						sprintf(number, "%0X", state);
 					}
-					sNumber += number;
+					sNumber = number;
 				}
 				PRectangle rcNumber = rcMarker;
 				// Right justify
@@ -411,6 +415,24 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 							}
 						} else if (highlightDelimiter.IsTailOfFoldBlock(lineDoc)) {
 							part = LineMarker::FoldPart::tail;
+						}
+					}
+					if (vs.markers[markBit].markType == MarkerSymbol::Bar) {
+						const int mask = 1 << markBit;
+						const bool markBefore = firstSubLine ? (model.GetMark(lineDoc-1) & mask) : true;
+						const bool markAfter = lastSubLine ? (model.GetMark(lineDoc+1) & mask) : true;
+						if (markBefore) {
+							if (markAfter) {
+								part = LineMarker::FoldPart::body;
+							} else {
+								part = LineMarker::FoldPart::tail;
+							}
+						} else {
+							if (markAfter) {
+								part = LineMarker::FoldPart::head;
+							} else {
+								part = LineMarker::FoldPart::headWithTail;
+							}
 						}
 					}
 					vs.markers[markBit].Draw(surface, rcMarker, vs.styles[StyleLineNumber].font.get(), part, marginStyle.style);
