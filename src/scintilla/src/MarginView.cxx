@@ -342,7 +342,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 					char number[100] = "";
 					if (FlagSet(model.foldFlags, FoldFlag::LevelNumbers)) {
 						const FoldLevel lev = model.pdoc->GetFoldLevel(lineDoc);
-						sprintf(number, "%c%c %03X %03X",
+						sprintf(number, " %c%c %03X %03X",
 							LevelIsHeader(lev) ? 'H' : '_',
 							LevelIsWhitespace(lev) ? 'W' : '_',
 							LevelNumber(lev),
@@ -350,9 +350,9 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						sprintf(number, "%0X", state);
+						sprintf(number, "  %0X", state);
 					}
-					sNumber = number;
+					sNumber += number;
 				}
 				PRectangle rcNumber = rcMarker;
 				// Right justify

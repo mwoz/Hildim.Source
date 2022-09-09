@@ -120,6 +120,9 @@
     <ClCompile Include="src\CharacterType.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ChangeHistory.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -282,6 +285,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ScintillaStructures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ChangeHistory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -16,6 +16,7 @@
     <ClCompile Include="src\CaseConvert.cxx" />
     <ClCompile Include="src\CaseFolder.cxx" />
     <ClCompile Include="src\CellBuffer.cxx" />
+    <ClCompile Include="src\ChangeHistory.cxx" />
     <ClCompile Include="src\CharacterCategoryMap.cxx" />
     <ClCompile Include="src\CharacterType.cxx" />
     <ClCompile Include="src\CharClassify.cxx" />
@@ -55,6 +56,7 @@
     <ClInclude Include="src\CaseFolder.h" />
     <ClInclude Include="src\Catalogue.h" />
     <ClInclude Include="src\CellBuffer.h" />
+    <ClInclude Include="src\ChangeHistory.h" />
     <ClInclude Include="src\CharClassify.h" />
     <ClInclude Include="src\ContractionState.h" />
     <ClInclude Include="src\DBCS.h" />
