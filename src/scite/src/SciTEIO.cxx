@@ -402,6 +402,8 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 	if (!wEditor.Call(SCI_GETUNDOCOLLECTION)) {
 		wEditor.Call(SCI_SETUNDOCOLLECTION, 1); 
 	}
+	wEditor.Call(SCI_SETCHANGEHISTORY, (viewHisoryMarkers ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) : 0) | (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0));
+
 	// Flick focus to the output window and back to
 	// ensure palette realised correctly.
 	WindowSetFocus(wOutput);
@@ -602,7 +604,8 @@ void SciTEBase::CheckReload() {
 								MB_YESNO, filePath.AsInternal());
 						}
 						if (decision == IDYES) {
-							Open(filePath, static_cast<OpenFlags>(of | ofForceLoad));
+							//Open(filePath, static_cast<OpenFlags>(of | ofForceLoad));
+							Open(filePath, static_cast<OpenFlags>(ofForceLoad));
 							DisplayAround(rf);
 						}
 						CurrentBuffer()->fileModLastAsk = newModTime;

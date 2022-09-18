@@ -1213,6 +1213,8 @@
 #define IDM_NEXTFILESTACK               507
 #define IDM_MOVETABRIGHT                508
 #define IDM_MOVETABLEFT                 509
+#define IDM_VIEWHISTORYINDICATORS       510
+#define IDM_VIEWHISTORYMARKERS          511
 #define _WIN32_IE_IE20                  0x0200
 #define WM_MOUSEFIRST                   0x0200
 #define WM_MOUSEMOVE                    0x0200

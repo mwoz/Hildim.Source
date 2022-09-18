@@ -210,7 +210,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 		cs->size = 0;
 		cs->mask = 0;
 		cs->annotation = 0;
-	} else if (cs->size < 10) {
+	} else if (cs->size < 10 ||(markerid < 25 && markerid > 20)) {
 		if (markerid > MARKER_MAX) {
 			int i = 0;
 			iupStrToInt(value, &i);
@@ -689,6 +689,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		switch (notification->nmhdr.code) {
 		case SCN_MARGINCLICK:
 		case SCN_MODIFIED:
+		case SCN_SAVEPOINTLEFT:
+		case SCN_SAVEPOINTREACHED:
 				resetmap = true;
 			break;
 		}

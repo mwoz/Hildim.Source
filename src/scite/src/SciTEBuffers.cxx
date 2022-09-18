@@ -589,6 +589,7 @@ void SciTEBase::ClearDocument() {
 	wEditor.Call(SCI_CLEARALL);
 	wEditor.Call(SCI_EMPTYUNDOBUFFER);
 	wEditor.Call(SCI_SETUNDOCOLLECTION, 1);
+	wEditorR.Call(SCI_SETCHANGEHISTORY, (viewHisoryMarkers ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) : 0) | (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0));
 	wEditor.Call(SCI_SETSAVEPOINT);
 	wEditor.Call(SCI_SETREADONLY, isReadOnly);
 }

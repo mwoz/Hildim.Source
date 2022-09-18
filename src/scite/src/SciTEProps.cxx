@@ -1193,13 +1193,7 @@ void SciTEBase::ReadProperties() {
 		wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
 			reinterpret_cast<char *>(bookmarkBluegem));
 	}
-
-	wEditor.Call(SCI_MARKERSETBACK, markerNotSaved,
-		ColourOfProperty(props, "marker.notsaved.back", ColourRGB(0xff, 0x70, 0x70)));
-	wEditor.Call(SCI_MARKERDEFINE, markerNotSaved, SC_MARK_LEFTRECT);
-	wEditor.Call(SCI_MARKERSETBACK, markerSaved,
-		ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
-	wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
+	wEditor.Call(SCI_MARKERSETBACK, SC_MARKNUM_HISTORY_MODIFIED, ColourRGB(0xff, 0x80, 0x00));
 
 	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
 	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
@@ -1972,7 +1966,9 @@ void SciTEBase::SetPropertiesInitial() {
 	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
 
 	lineNumbers = props.GetInt("line.margin.visible");	
-	viewIndent = props. GetInt("view.indentation.guides");
+	viewIndent = props.GetInt("view.indentation.guides");
+	viewHisoryIndicators = props.GetInt("view.history.indicators");
+	viewHisoryMarkers = props.GetInt("view.history.markers", 1);
 	viewWs = props.GetInt("view.whitespace");
 
 	marginWidth = 0;

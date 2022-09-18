@@ -490,6 +490,8 @@ protected:
 	GUI::Window wIncrement;
 	bool viewWs;
 	bool viewIndent;
+	bool viewHisoryIndicators;
+	bool viewHisoryMarkers;
 	bool iuptbVisible;
 	SString sbValue;	///< Status bar text.
 	int sbNum;	///< Number of the currenly displayed status bar information.
@@ -805,7 +807,7 @@ protected:
 	int SaveAllBuffers(bool forceQuestion, bool alwaysYes = false);
 	void SaveTitledBuffers();
 	virtual void CopyAsRTF() {}
-	void SetLineNumberWidth();
+	void SetLineNumberWidth(ScintillaWindowEditor *pE = NULL);
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
 	void FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w);

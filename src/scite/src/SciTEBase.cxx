@@ -780,12 +780,16 @@ void SciTEBase::CallChildren(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 }
 
 void SciTEBase::ViewWhitespace(bool view) {
-	if (view && indentationWSVisible)
-		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);	  
-	else if (view)
-		wEditor.Call(SCI_SETVIEWWS, SCWS_VISIBLEAFTERINDENT);
-	else
-		wEditor.Call(SCI_SETVIEWWS, SCWS_INVISIBLE);
+	if (view && indentationWSVisible) {
+		wEditorL.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);
+		wEditorR.Call(SCI_SETVIEWWS, SCWS_VISIBLEALWAYS);
+	} else if (view){
+		wEditorL.Call(SCI_SETVIEWWS, SCWS_VISIBLEAFTERINDENT);
+		wEditorR.Call(SCI_SETVIEWWS, SCWS_VISIBLEAFTERINDENT);
+	} else {
+		wEditorL.Call(SCI_SETVIEWWS, SCWS_INVISIBLE);
+		wEditorR.Call(SCI_SETVIEWWS, SCWS_INVISIBLE);
+	}
 }
 
 StyleAndWords SciTEBase::GetStyleAndWords(const char *base) {
@@ -1602,7 +1606,8 @@ void SciTEBase::BookmarkNext(bool forwardScan, bool select) {
 
 void SciTEBase::Redraw() {
 	wSciTE.InvalidateAll();
-	wEditor.InvalidateAll();
+	wEditorL.InvalidateAll();
+	wEditorR.InvalidateAll();
 	wOutput.InvalidateAll();
 	wFindRes.InvalidateAll();
 }
@@ -2673,12 +2678,15 @@ void SciTEBase::Close_script() {
 	WindowSetFocus(wEditor); 
 }
 
-void SciTEBase::SetLineNumberWidth() {
+void SciTEBase::SetLineNumberWidth(ScintillaWindowEditor *pE) {
+	if (!pE)
+		pE = &wEditor;
+
 	if (lineNumbers) {
 		int pixelWidth = 0;
 		DWORD foldMode = props.GetInt("fold.flags");
 		if ((foldMode & SC_FOLDFLAG_LEVELNUMBERS) || (foldMode & SC_FOLDFLAG_LINESTATE)) {
-			pixelWidth = wEditor.CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, " HW9999999");
+			pixelWidth = pE->CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, " HW9999999");
 		} 
 		int lineNumWidth = lineNumbersWidth;
 
@@ -2686,7 +2694,7 @@ void SciTEBase::SetLineNumberWidth() {
 			// The margin size will be expanded if the current buffer's maximum
 			// line number would overflow the margin.
 
-			int lineCount = wEditor.Call(SCI_GETLINECOUNT);
+			int lineCount = pE->Call(SCI_GETLINECOUNT);
 
 			lineNumWidth = 1;
 			while (lineCount >= 10) {
@@ -2700,11 +2708,11 @@ void SciTEBase::SetLineNumberWidth() {
 		}
 
 		// The 4 here allows for spacing: 1 pixel on left and 3 on right.
-		pixelWidth += 4 + lineNumWidth * wEditor.CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, "9");
+		pixelWidth += 4 + lineNumWidth * pE->CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, "9");
 		
-		wEditor.Call(SCI_SETMARGINWIDTHN, 0, pixelWidth);
+		pE->Call(SCI_SETMARGINWIDTHN, 0, pixelWidth);
 	} else {
-		wEditor.Call(SCI_SETMARGINWIDTHN, 0, 0);
+		pE->Call(SCI_SETMARGINWIDTHN, 0, 0);
 	}
 }
 
@@ -3041,25 +3049,32 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_LINENUMBERMARGIN:
 		lineNumbers = props.GetInt("line.margin.visible");
-		SetLineNumberWidth();
+		SetLineNumberWidth(&wEditorL);
+		SetLineNumberWidth(&wEditorR);
 		CheckMenus();
 		break;
 
 	case IDM_SELMARGIN:
 		margin = !margin;
-		wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
+		wEditorL.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
+		wEditorR.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
 		CheckMenus();
 		break;
 
 	case IDM_FOLDMARGIN:
 		foldMargin = !foldMargin;
-		wEditor.Call(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
+		wEditorL.Call(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
+		wEditorR.Call(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
 		CheckMenus();
 		break;
 
 	case IDM_VIEWEOL:
-		wEditor.Call(SCI_SETVIEWEOL, !wEditor.Call(SCI_GETVIEWEOL));
+	{
+		int vol = !wEditor.Call(SCI_GETVIEWEOL);
+		wEditorL.Call(SCI_SETVIEWEOL, vol);
+		wEditorR.Call(SCI_SETVIEWEOL, vol);
 		CheckMenus();
+	}
 		break;
 
 	case IDM_VIEWTLBARIUP:
@@ -3141,10 +3156,24 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		CheckMenus();
 		Redraw();
 		break;
+	case IDM_VIEWHISTORYINDICATORS:
+	case IDM_VIEWHISTORYMARKERS:
+		if(cmdID == IDM_VIEWHISTORYINDICATORS)
+			viewHisoryIndicators = ((wEditor.Call(SCI_GETCHANGEHISTORY) & SC_CHANGE_HISTORY_INDICATORS) == 0);
+		else
+			viewHisoryMarkers = ((wEditor.Call(SCI_GETCHANGEHISTORY) & SC_CHANGE_HISTORY_MARKERS) == 0);
+		
+		wEditorL.Call(SCI_SETCHANGEHISTORY, (viewHisoryMarkers? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) :0)| (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0));
+		wEditorR.Call(SCI_SETCHANGEHISTORY, (viewHisoryMarkers? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) :0)| (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0));
+		
+		CheckMenus();
 
+		Redraw();
+		break;
 	case IDM_VIEWGUIDES: {
 			viewIndent = wEditor.Call(SCI_GETINDENTATIONGUIDES, 0, 0) == 0;
-			wEditor.Call(SCI_SETINDENTATIONGUIDES, viewIndent ? indentExamine : SC_IV_NONE);
+			wEditorL.Call(SCI_SETINDENTATIONGUIDES, viewIndent ? indentExamine : SC_IV_NONE);
+			wEditorR.Call(SCI_SETINDENTATIONGUIDES, viewIndent ? indentExamine : SC_IV_NONE);
 			CheckMenus();
 			Redraw();
 		}
@@ -3971,9 +4000,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 }
 
 void SciTEBase::CheckMenus() {
-	int iEOL = wEditor.Call(SCI_GETVIEWEOL);
 
 	props.SetInteger("view.whitespace", viewWs);
+	props.SetInteger("view.history.indicators", viewHisoryIndicators);
+	props.SetInteger("view.history.markers", viewHisoryMarkers);
 	props.SetInteger("view.indentation.guides", viewIndent);
 	props.SetInteger("line.margin.visible", lineNumbers);
 	props.SetInteger("findres.wrap", wrapFindRes);
