@@ -338,10 +338,11 @@ void SciTEBase::DiscoverIndentSetting() {
 
 void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 	FILE *fp = filePath.Open(fileRead);
+	wEditor.Call(SCI_SETCHANGEHISTORY, SC_CHANGE_HISTORY_DISABLED);
 	if (fp) {
 //!		Utf8_16_Read convert; //!-remove-[utf8.auto.check]
 		CurrentBuffer()->SetTimeFromFile();
-		wEditor.Call(SCI_BEGINUNDOACTION);	// Group together clear and insert
+		//wEditor.Call(SCI_BEGINUNDOACTION);	// Group together clear and insert
 		wEditor.Call(SCI_CLEARALL);
 		char data[blockSize];
 		size_t lenFile = fread(data, 1, sizeof(data), fp);
@@ -366,7 +367,8 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		}
 		bBlockTextChangeNotify = false;
 		fclose(fp);
-		wEditor.Call(SCI_ENDUNDOACTION);
+		//wEditor.Call(SCI_ENDUNDOACTION);
+
 		if (languageOverride.length()) {
 			CurrentBuffer()->overrideExtension = languageOverride;
 			ReadProperties();
@@ -386,9 +388,9 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		}
 		props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
 		wEditor.Call(SCI_SETCODEPAGE, codePage);
-
+	
 		DiscoverEOLSetting();
-
+	
 		if (props.GetInt("indent.auto")) {
 			DiscoverIndentSetting();
 		}
