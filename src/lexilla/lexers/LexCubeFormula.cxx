@@ -138,13 +138,13 @@ public:
 	const char* SCI_METHOD DescribeProperty(const char* name) {
 		return osFM.DescribeProperty(name);
 	}
-	int SCI_METHOD PropertySet(const char* key, const char* val);
+	Sci_Position SCI_METHOD PropertySet(const char* key, const char* val);
 	const char* SCI_METHOD DescribeWordListSets() {
 		return osFM.DescribeWordListSets();
 	}
-	int SCI_METHOD WordListSet(int n, const char* wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument* pAccess);
+	Sci_Position SCI_METHOD WordListSet(int n, const char* wl);
+	void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess);
+	void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess);
 
 	void* SCI_METHOD PrivateCall(int cmd, void* pnt) {
 		if (cmd < 32) {
@@ -218,7 +218,7 @@ public:
 
 };
 
-int SCI_METHOD LexerCubeFormula::PropertySet(const char* key, const char* val) {
+Sci_Position SCI_METHOD LexerCubeFormula::PropertySet(const char* key, const char* val) {
 	if (osFM.PropertySet(&options, key, val)) {
 		if (!strcmp(key, "precompiller.debugsuffix")) {
 			wDebug.Set(val);
@@ -228,7 +228,7 @@ int SCI_METHOD LexerCubeFormula::PropertySet(const char* key, const char* val) {
 	return -1;
 }
 
-int SCI_METHOD LexerCubeFormula::WordListSet(int n, const char* wl) {
+Sci_Position SCI_METHOD LexerCubeFormula::WordListSet(int n, const char* wl) {
 	WordList* wordListN = 0;
 	wordListN = &keywords[n];
 	int firstModification = -1;
@@ -250,7 +250,7 @@ const char* SCI_METHOD LexerCubeFormula::PropertyGet(const char* key) {
 //Functor used to truncate history
 
 
-void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int initStyle, IDocument* pAccess) {
+void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
 	if (initStyle == SCE_CF_COMMENT)
 		initStyle = SCE_CF_DEFAULT;
 	
@@ -349,7 +349,7 @@ void SCI_METHOD LexerCubeFormula::Lex(unsigned int startPos, int length, int ini
 
 
 
-void SCI_METHOD LexerCubeFormula::Fold(unsigned int startPos, int length, int initStyle, IDocument* pAccess) {
+void SCI_METHOD LexerCubeFormula::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
 	
 
 

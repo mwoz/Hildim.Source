@@ -173,7 +173,7 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD ColoriseCubeFormula(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc);
-	bool PlainFold(unsigned int startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler);
+	bool PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler);
 	const std::regex reSyntax;
 public:
 	LexerFormEngine(bool caseSensitive_) :
@@ -206,13 +206,13 @@ public:
 	const char * SCI_METHOD DescribeProperty(const char *name) {
 		return osFM.DescribeProperty(name);
 	}
-	int SCI_METHOD PropertySet(const char *key, const char *val);
+	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
 	const char * SCI_METHOD DescribeWordListSets() {
 		return osFM.DescribeWordListSets();
 	}
-	int SCI_METHOD WordListSet(int n, const char *wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	Sci_Position SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
 
 	void * SCI_METHOD PrivateCall(int cmd, void * pnt) {
 		if(cmd < 32){
@@ -286,7 +286,7 @@ public:
 
 };
 
-int SCI_METHOD LexerFormEngine::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerFormEngine::PropertySet(const char *key, const char *val) {
 	if (osFM.PropertySet(&options, key, val)) {
 		if (!strcmp(key, "precompiller.debugsuffix")) {
 			wDebug.Set(val);
@@ -296,7 +296,7 @@ int SCI_METHOD LexerFormEngine::PropertySet(const char *key, const char *val) {
 	return -1;
 }
 
-int SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
 	WordList *wordListN = 0;
 	wordListN = &keywords[n];
 	int firstModification = -1;
@@ -1038,7 +1038,7 @@ bool SCI_METHOD LexerFormEngine::ColoriseWireFormat(StyleContext &sc) {
 	return false;
 }
 
-void SCI_METHOD LexerFormEngine::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if(options.frozen) return;
 	LexAccessor styler(pAccess);
 
@@ -1402,7 +1402,7 @@ bool FoldContext::FindThen() {
 	return !strcmp(s, "then");
 }
 
-bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
+bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
 	
 	while ( initStyle == SCE_FM_VB_STRINGCONT) {
 		//¬озможно разрешить фолдинг начина€ с данной строки не удастьс€, и тогда нам нужно перезапустить фолдинг со строчки выше
@@ -1631,7 +1631,7 @@ bool LexerFormEngine::PlainFold(unsigned int startPos, int length, int initStyle
 	return true;
 }
 
-void SCI_METHOD LexerFormEngine::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerFormEngine::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if (!options.fold || options.frozen) return;
 
 	LexAccessor styler(pAccess);

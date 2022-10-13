@@ -90,13 +90,13 @@ public:
 	const char * SCI_METHOD DescribeProperty(const char *name) override {
 		return NULL;
 	}
-	int SCI_METHOD PropertySet(const char *key, const char *val);
+	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
 	const char * SCI_METHOD DescribeWordListSets() override {
 		return NULL;
 	}
-	int SCI_METHOD WordListSet(int n, const char *wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	Sci_Position SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
 
 	void * SCI_METHOD PrivateCall(int cmd, void * pnt) {
 		if(cmd < 32){
@@ -172,17 +172,17 @@ public:
 
 };
 
-int SCI_METHOD LexerWireFormat::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerWireFormat::PropertySet(const char *key, const char *val) {
 	return -1;
 }
 
-int SCI_METHOD LexerWireFormat::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerWireFormat::WordListSet(int n, const char *wl) {
 	return -1;
 }
  //Functor used to truncate history
 
 
-void SCI_METHOD LexerWireFormat::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerWireFormat::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
 
@@ -277,7 +277,7 @@ void SCI_METHOD LexerWireFormat::Lex(unsigned int startPos, int length, int init
 
 
 
-void SCI_METHOD LexerWireFormat::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerWireFormat::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int levelCurrent = SC_FOLDLEVELBASE;

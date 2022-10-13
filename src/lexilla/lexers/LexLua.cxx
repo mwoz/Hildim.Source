@@ -107,13 +107,13 @@ public:
 	const char * SCI_METHOD DescribeProperty(const char *name) {
 		return osLua.DescribeProperty(name);
 	}
-	int SCI_METHOD PropertySet(const char *key, const char *val);
+	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
 	const char * SCI_METHOD DescribeWordListSets() {
 		return osLua.DescribeWordListSets();
 	}
-	int SCI_METHOD WordListSet(int n, const char *wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	Sci_Position SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
 	const char * SCI_METHOD PropertyGet(const char *key) override;
 
 	static ILexer5 *LexerFactoryLua() {
@@ -134,7 +134,7 @@ static int LongDelimCheck(StyleContext &sc) {
 	return 0;
 }
 
-int SCI_METHOD LexerLua::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerLua::PropertySet(const char *key, const char *val) {
 	if (osLua.PropertySet(&options, key, val)) {
 		return 0;
 	}
@@ -145,7 +145,7 @@ const char * SCI_METHOD LexerLua::PropertyGet(const char *key) {
 	return osLua.PropertyGet(key);
 }
 
-int SCI_METHOD LexerLua::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerLua::WordListSet(int n, const char *wl) {
 	int firstModification = -1;
 	if (n < 9) {
 		WordList *wordListN = 0;
@@ -162,7 +162,7 @@ int SCI_METHOD LexerLua::WordListSet(int n, const char *wl) {
 	return firstModification;
 }
 
-void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess){
+void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess){
 	LexAccessor styler(pAccess);
 
 	// Accepts accented characters
@@ -614,7 +614,7 @@ void SCI_METHOD LexerLua::Lex(unsigned int startPos, int length, int initStyle, 
 	sc.Complete();
 }
 
-void SCI_METHOD LexerLua::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess){
+void SCI_METHOD LexerLua::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess){
 	if (!options.fold) 
 		return;
 

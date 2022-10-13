@@ -136,13 +136,13 @@ public:
 	const char * SCI_METHOD DescribeProperty(const char *name) {
 		return osMSSQL.DescribeProperty(name);
 	}
-	int SCI_METHOD PropertySet(const char *key, const char *val);
+	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
 	const char * SCI_METHOD DescribeWordListSets() {
 		return osMSSQL.DescribeWordListSets();
 	}
-	int SCI_METHOD WordListSet(int n, const char *wl);
-	void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
-	void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
+	Sci_Position SCI_METHOD WordListSet(int n, const char *wl);
+	void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
+	void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess);
 	const char * SCI_METHOD PropertyGet(const char *key) override;
 	
 	const char * SCI_METHOD GetName() override {
@@ -168,7 +168,7 @@ static bool isMSSQLOperator(char ch) {
 }
 
 
-int SCI_METHOD LexerMSSQL::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerMSSQL::PropertySet(const char *key, const char *val) {
 	if (osMSSQL.PropertySet(&options, key, val)) {
 		return 0;
 	}
@@ -179,7 +179,7 @@ const char * SCI_METHOD LexerMSSQL::PropertyGet(const char *key) {
 	return osMSSQL.PropertyGet(key);
 }
 
-int SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerMSSQL::WordListSet(int n, const char *wl) {
 	int firstModification = -1;
 	if (n < 10) {
 		WordList *wordListN = 0;
@@ -254,7 +254,7 @@ char LexerMSSQL::classifyWordSQL(Sci_PositionU start, LexAccessor &styler, Style
 	return chAttr;
 }
 
-void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerMSSQL::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	Accessor styler(pAccess, NULL);
 
 	styler.StartAt(startPos);
@@ -380,7 +380,7 @@ void SCI_METHOD LexerMSSQL::Lex(unsigned int startPos, int length, int initStyle
 	sc.Complete();
 }
 
-void SCI_METHOD LexerMSSQL::Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if (!options.fold)
 		return;
 	LexAccessor styler(pAccess);

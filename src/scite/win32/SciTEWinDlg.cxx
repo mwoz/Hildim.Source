@@ -305,7 +305,8 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 			res = ::GetSaveFileNameW(&ofn);
 		}
 		if (res) {
-			path = saveName;
+			//path = saveName;
+			path = ofn.lpstrFile;
 			if (nFilter) *nFilter = ofn.nFilterIndex;
 		}
 		dialogsOnScreen--;
