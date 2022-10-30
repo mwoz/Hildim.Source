@@ -15,7 +15,7 @@ DIR_BIN=../bin
 COMPONENT = $(DIR_BIN)/Scintilla.dll
 LIBSCI = $(DIR_BIN)/libscintilla.a
 
-WARNINGS = -Wpedantic -Wall -Wextra
+WARNINGS = -Wpedantic -Wall
 
 ifdef CLANG
 CXX = clang++

@@ -36,6 +36,7 @@ public:
 	bool InListAbbreviated(const char *s, const char marker) const noexcept;
 	bool InListAbridged(const char *s, const char marker) const noexcept;
 	const char *WordAt(int n) const noexcept;
+	bool InClassificator(const char *s, char &cOut);
 };
 
 }

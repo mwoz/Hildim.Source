@@ -335,14 +335,13 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 
 			const FoldLevel levelNum = LevelNumberPart(level);
 			const FoldLevel levelNextNum = LevelNumberPart(levelNext);
-
 			// Change needWhiteClosure and headWithTail if needed
 			if (LevelIsHeader(level)) {
 				needWhiteClosure = false;
 				if (!isExpanded) {
-					const Sci::Line firstFollowupLine = model.pcs->DocFromDisplay(model.pcs->DisplayFromDoc(lineDoc + 1));
-					const FoldLevel firstFollowupLineLevel = model.pdoc->GetFoldLevel(firstFollowupLine);
-					const FoldLevel secondFollowupLineLevelNum = LevelNumberPart(model.pdoc->GetFoldLevel(firstFollowupLine + 1));
+				const Sci::Line firstFollowupLine = model.pcs->DocFromDisplay(model.pcs->DisplayFromDoc(lineDoc + 1));
+				const FoldLevel firstFollowupLineLevel = model.pdoc->GetFoldLevel(firstFollowupLine);
+				const FoldLevel secondFollowupLineLevelNum = LevelNumberPart(model.pdoc->GetFoldLevel(firstFollowupLine + 1));
 					if (LevelIsWhitespace(firstFollowupLineLevel) &&
 						(levelNum > secondFollowupLineLevelNum))
 						needWhiteClosure = true;
@@ -376,7 +375,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 					char number[100] = "";
 					if (FlagSet(model.foldFlags, FoldFlag::LevelNumbers)) {
 						const FoldLevel lev = model.pdoc->GetFoldLevel(lineDoc);
-						sprintf(number, "%c%c %03X %03X",
+						sprintf(number, " %c%c %03X %03X",
 							LevelIsHeader(lev) ? 'H' : '_',
 							LevelIsWhitespace(lev) ? 'W' : '_',
 							LevelNumber(lev),
@@ -384,9 +383,9 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						sprintf(number, "%0X", state);
+						sprintf(number, "  %0X", state);
 					}
-					sNumber = number;
+					sNumber += number;
 				}
 				PRectangle rcNumber = rcMarker;
 				// Right justify
@@ -436,7 +435,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 			int marksBar = marks;
 			for (int markBit = 0; (markBit <= MarkerMax) && marksBar; markBit++) {
 				if ((marksBar & 1) && (vs.markers[markBit].markType == MarkerSymbol::Bar)) {
-					const int mask = 1 << markBit;
+						const int mask = 1 << markBit;
 					const bool markBefore = firstSubLine ? (model.GetMark(lineDoc - 1) & mask) : true;
 					const bool markAfter = lastSubLine ? (model.GetMark(lineDoc + 1) & mask) : true;
 					vs.markers[markBit].Draw(surface, rcMarker, vs.styles[StyleLineNumber].font.get(),
