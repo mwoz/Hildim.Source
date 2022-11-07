@@ -11,7 +11,9 @@
 #define GUI_H
 
 #include <algorithm>
-
+void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B);
+void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s);
+float clr_brightness(long clr);
 namespace GUI {
 
 class Point {

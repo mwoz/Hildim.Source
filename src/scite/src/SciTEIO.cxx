@@ -471,11 +471,6 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 	return result;
 }
 
-
-bool SciTEBase::PreOpenCheck(const GUI::gui_char *) {
-	return false;
-}
-
 bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	FilePath absPath = file.AbsolutePath();
 	int encoding = 0;

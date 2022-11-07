@@ -3904,7 +3904,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 			if (!handled) {
 //!-start-[SetBookmark]
-				if (notification->margin == 1 && !notification->modifiers) {
+				if (notification->margin < 2 && !notification->modifiers) {
 					int lineClick = int(wEditor.Call(SCI_LINEFROMPOSITION, notification->position));
 					BookmarkToggle(lineClick); 
 				}

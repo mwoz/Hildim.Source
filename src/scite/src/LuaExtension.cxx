@@ -354,6 +354,58 @@ static int cf_scite_Read(lua_State *L) {
 	return 0;	
 }
 
+// using http://www.easyrgb.com/index.php?X=MATH&H=01#text1
+static int cf_scite_RGB2LAB(lua_State *L) {
+	std::string err;
+	float R, G, B, l_s, a_s, b_s;
+	R = luaL_checkinteger(L, 1);
+	G = luaL_checkinteger(L, 2);
+	B = luaL_checkinteger(L, 3);
+	if ((R < 0 || R > 255) || (G < 0 || G > 255) || (B < 0 || B > 255)) {
+		err = "One from arguments (r,g,b) is negative or more then 255";
+		goto errr;
+	}
+
+	rgb2lab(R, G, B, l_s, a_s, b_s);
+
+	lua_pushnumber(L, l_s);
+	lua_pushnumber(L, a_s);
+	lua_pushnumber(L, b_s);
+	return 3;
+errr:
+	lua_pushboolean(L, false);
+	lua_pushstring(L, err.c_str());
+	return 2;
+}
+
+static int cf_scite_LAB2RGB(lua_State *L) {
+	std::string err;
+	float R, G, B, l_s, a_s, b_s;
+
+	l_s = luaL_checknumber(L, 1);
+	a_s = luaL_checknumber(L, 2);
+	b_s = luaL_checknumber(L, 3);
+
+	if (abs(a_s) > 128 || abs(b_s) > 128 ) {
+		err = "One from arguments (a_s, b_s) is less then -128 or more then 128";
+		goto errr;
+	}
+	if (abs(l_s - 50) > 50) {
+		err = "One from arguments (a_s, b_s) is negative or more then 100";
+		goto errr;
+	}
+
+	lab2rgb(l_s, a_s, b_s, R, G, B);
+
+	lua_pushinteger(L, R);
+	lua_pushinteger(L, G);
+	lua_pushinteger(L, B);
+	return 3;
+errr:
+	lua_pushboolean(L, false);
+	lua_pushstring(L, err.c_str());
+	return 2;
+}
 
 static int cf_scite_compare_encoding_file(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
@@ -2451,6 +2503,12 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_scite_Read);
 	lua_setfield(luaState, -2, "Read");
+
+	lua_pushcfunction(luaState, cf_scite_LAB2RGB);
+	lua_setfield(luaState, -2, "LAB2RGB");
+
+	lua_pushcfunction(luaState, cf_scite_RGB2LAB);
+	lua_setfield(luaState, -2, "RGB2LAB");
 
 	// buffers
 	lua_newtable(luaState);

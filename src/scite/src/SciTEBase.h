@@ -66,6 +66,7 @@ enum {
     menuHelp = 8
 };
 
+Colour invertColor(Colour clr);
 
 class RecentFile : public FilePath {
 public:
@@ -246,14 +247,15 @@ public:
 	bool visible;
 	bool changeable;
 	bool hotspot; //!-add-[StyleDefHotspot]
+	bool invertColors = false;
 	enum flags { sdNone = 0, sdFont = 0x1, sdSize = 0x2, sdFore = 0x4, sdBack = 0x8,
 	        sdBold = 0x10, sdItalics = 0x20, sdEOLFilled = 0x40, sdUnderlined = 0x80,
 //!	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400} specified;
 	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400, sdHotspot = 0x800} specified; //!-change-[StyleDefHotspot]
 	StyleDefinition(const char *definition);
 	bool ParseStyleDefinition(const char *definition);
-	long ForeAsLong() const;
-	long BackAsLong() const;
+	long ForeAsLong(bool useInv = true) const;
+	long BackAsLong(bool useInv = true) const;
 };
 
 struct StyleAndWords {
@@ -438,6 +440,8 @@ protected:
 	StringList apis;
 	SString apisFileNames;
 	SString functionDefinition;
+	bool invertColors = false;
+	bool hideHiddenStyles = false;
 
 	bool indentOpening;
 	bool indentClosing;
@@ -701,7 +705,6 @@ protected:
 	    ofPreserveUndo = 4,	// Do not delete undo history
 	    ofQuiet = 8		// Avoid "Could not open file" message
 	};
-	virtual bool PreOpenCheck(const GUI::gui_char *file);
 	bool Open(FilePath file, OpenFlags of = ofNone);
 	void Revert();
 	FilePath SaveName(const char *ext);
@@ -868,10 +871,12 @@ protected:
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
 	void ForwardPropertyToEditor(const char *key);
 	void DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back);
+	void SetFoldingMarkers(bool main);
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
 	virtual void ReadProperties();
 	virtual void ReadPropertiesEx();
+	void SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *colourProp, char *alphaProp);
 	void SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd);
 	void SetStyleFor(GUI::ScintillaWindow &win, const char *language);
 	void ReloadProperties();
@@ -993,7 +998,7 @@ const int blockSize = 131072;
 
 int ControlIDOfCommand(unsigned long);
 void LowerCaseString(char *s);
-long ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault);
+long ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault, bool invClr = false);
 void WindowSetFocus(GUI::ScintillaWindow &w);
 
 inline bool isspacechar(unsigned char ch) {

@@ -471,12 +471,11 @@ void MarginView::PaintMargin(Surface *surface, Sci::Line topLine, PRectangle rc,
 	const Point ptOrigin = model.GetVisibleOriginInMain();
 	for (const MarginStyle &marginStyle : vs.ms) {
 		if (marginStyle.width > 0) {
-
 			rcOneMargin.left = rcOneMargin.right;
 			rcOneMargin.right = rcOneMargin.left + marginStyle.width;
 
 			if (marginStyle.style != MarginType::Number) {
-				if (marginStyle.ShowsFolding()) {
+				if (marginStyle.ShowsFolding() && !(marginStyle.mask & 1)) {//Передаем в маску 1 если не хотим применять алгоритм сглаживания цвета в колонке фолдинга
 					// Required because of special way brush is created for selection margin
 					// Ensure patterns line up when scrolling with separate margin view
 					// by choosing correctly aligned variant.

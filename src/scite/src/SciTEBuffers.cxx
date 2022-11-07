@@ -596,7 +596,7 @@ void SciTEBase::ClearDocument() {
 }
 
 void SciTEBase::CreateBuffers() {
-	int buffersWanted = props.GetInt("buffers");
+	int buffersWanted = props.GetInt("buffers", 100);
 	if (buffersWanted > bufferMax) {
 		buffersWanted = bufferMax;
 	}

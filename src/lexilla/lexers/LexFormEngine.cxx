@@ -76,6 +76,7 @@ struct OptionsFM {
 	bool debugmode;
 	bool frozen;  //флаг для временного отключения на время загрузки хелплистов
 	std::string debugsuffix;
+	bool isSyslog;
 	OptionsFM() {
 		fold = false;
 		foldComment = false;
@@ -85,6 +86,7 @@ struct OptionsFM {
 		foldcdata = false;
 		frozen = false;
 		debugsuffix = "";
+		isSyslog = false;
 	}
 };
 
@@ -142,6 +144,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 		DefineProperty("precompiller.debugmode", &OptionsFM::debugmode);
 		DefineProperty("precompiller.debugsuffix", &OptionsFM::debugsuffix);
 		DefineProperty("lexer.formenjine.frozen", &OptionsFM::frozen);
+		DefineProperty("lexer.formenjine.syslog", &OptionsFM::isSyslog);
 
 
 		DefineProperty("fold.at.else", &OptionsFM::foldAtElse,
@@ -175,10 +178,12 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc);
 	bool PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler);
 	const std::regex reSyntax;
+	const std::regex reLogDate;
 public:
 	LexerFormEngine(bool caseSensitive_) :
 		setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
 		reSyntax(" syntax=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
+		reLogDate("^\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}:\\d{2} ", std::regex::ECMAScript),
 		caseSensitive(caseSensitive_){
 			wRefold.Set("else elseif");
 			wFold.Set("do function sub for with private public property class while");
@@ -410,7 +415,7 @@ void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc)
 			} else {
 				char *c = s;
 				while (*c) {
-					if (*c >= 'A' && *s <= 'Z') {
+					if (*c >= 'A' && *c <= 'Z') {
 						*c += 'a' - 'A';
 					}
 					++c;
@@ -1056,25 +1061,79 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 			styler.SetLineState(sc.currentLine, lineState);
 			lineState = 0;
 		}
-		if(sc.state == SCE_FM_DEFAULT){
+		if(sc.state == SCE_FM_DEFAULT && !options.isSyslog){
 			if(sc.ch == '<') sc.ChangeState(SCE_FM_X_DEFAULT);
 			else if(!IsASpace(sc.ch))sc.ChangeState(SCE_FM_VB_DEFAULT);
 		}
 		if(sc.Match("]]>")){
 			lineState |= FM_ENDCDATA;
-			sc.SetState(SCE_FM_CDATA);
-			continue;
+			if (options.isSyslog) {
+				if (sc.state != SCE_FM_CDATA) {
+					sc.SetState(SCE_FM_CDATA);
+					bool start = sc.atLineStart && isdigit(sc.GetRelative(3));
+					sc.Forward(3);
+					if (start) {
+						std::string test = styler.GetRange(sc.currentPos, sc.currentPos + 20);
+						if (std::regex_match(test, reLogDate)) {
+							sc.SetState(SCE_FM_LOGDATE);
+							sc.Forward(19);
+						}
+					}
+					sc.SetState(SCE_FM_DEFAULT);
+				}
+			} else {
+				sc.SetState(SCE_FM_CDATA);
+				continue;
+			}
+			
 		}
 		switch(GetSector(sc.state)){
 		case TYPE_SPACE:
 			if(sc.state == SCE_FM_CDATA){
 				if(sc.Match("['']") || sc.Match("[']")){
-					sc.ForwardSetState(SCE_FM_VB_COMMENT);
+					if (options.isSyslog) {
+						sc.Forward(3);
+						sc.ForwardSetState(SCE_FM_VB_DEFAULT);
+						ColoriseVBS(sc, visibleChars, fileNbDigits);
+					} else {
+						sc.ForwardSetState(SCE_FM_VB_COMMENT);
+					}
 				}else if(sc.Match("[--]")){
-					sc.ForwardSetState(SCE_FM_SQL_LINE_COMMENT);
-					sc.Forward((3));
+					if (options.isSyslog) {
+						sc.Forward((3));
+						sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
+						ColoriseSQL(sc);
+					} else {
+						sc.ForwardSetState(SCE_FM_SQL_LINE_COMMENT);
+						sc.Forward((3));
+					}
 				}else if(sc.Match("[<!--]-->")){
-					sc.ForwardSetState(SCE_FM_X_DEFAULT);
+					if (options.isSyslog) {
+						sc.Forward((8));
+						sc.ForwardSetState(SCE_FM_X_DEFAULT);
+						//ColoriseSQL(sc);
+					} else {
+						sc.ForwardSetState(SCE_FM_X_DEFAULT);
+					}
+				}else if(options.isSyslog){
+					if (sc.Match("CF]")) {
+						sc.Forward((3));
+						sc.ForwardSetState(SCE_FM_CF_DEFAULT);
+						ColoriseCubeFormula(sc);
+					} else if (sc.Match("WF]")) {
+						sc.Forward((3));
+						sc.ForwardSetState(SCE_FM_WF_DEFAULT);
+						ColoriseWireFormat(sc);
+					} else if (sc.Match("::")) {
+						std::string le = styler.GetRange(sc.currentPos, sc.lineEnd);
+						int p = le.find("::]");
+						if (p > 1) {
+							sc.Forward(p);
+							sc.ForwardSetState(SCE_FM_LOGLINK);
+						}
+					} else if (sc.ch == '\n' || sc.ch == '\r') {
+						sc.ChangeState(SCE_FM_DEFAULT);
+					}
 				}else if(sc.ch == '>'){
 					sc.ForwardSetState(SCE_FM_X_DEFAULT);
 				}else if(sc.chPrev == 'A' && sc.ch == '[') {
@@ -1104,6 +1163,10 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 							sc.ForwardSetState(SCE_FM_PLAINCDATA);
 					} else
 						sc.ForwardSetState(SCE_FM_PLAINCDATA);
+				}
+			} else if(options.isSyslog && sc.state == SCE_FM_DEFAULT) {// && sc.chPrev == '<'
+				if (sc.Match("<![CDATA[")) {
+					sc.SetState(SCE_FM_CDATA);
 				}
 			}
 			break;

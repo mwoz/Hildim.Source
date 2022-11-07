@@ -188,7 +188,6 @@ protected:
 	virtual void SaveAsPDF();
 	virtual void SaveAsTEX();
 	virtual void SaveAsXML();
-	virtual bool PreOpenCheck(const GUI::gui_char *file);
 	virtual bool IsStdinBlocked();
 
 	/// Print the current buffer.

@@ -12,6 +12,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <locale.h>
+#include <valarray>
+#include <cmath>
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4786)
@@ -150,11 +152,13 @@ static Colour ColourFromString(const SString &s) {
 	}
 }
 
-Colour ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault) {
+Colour ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault, bool invClr) {
 	SString colour = props.GetExpanded(key);
 	if (colour.length()) {
-		return ColourFromString(colour);
+		colourDefault = ColourFromString(colour);
 	}
+	if (invClr)
+		colourDefault = invertColor(colourDefault);
 	return colourDefault;
 }
 
@@ -188,7 +192,7 @@ const char *SciTEBase::GetNextPropItem(
 	return pNext;
 }
 
-StyleDefinition::StyleDefinition(const char *definition) :
+StyleDefinition::StyleDefinition(const char *definition):
 //!		size(0), fore("#000000"), back("#FFFFFF"),
 		size(0), fore(""), back(""), //!-change-[StyleDefault]
 		bold(false), italics(false), eolfilled(false), underlined(false),
@@ -311,31 +315,226 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 	delete []val;
 	return true;
 }
+float clr_brightness(long clr) {
+	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
+}
+void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
+	float var_R = R / 255.0;
+	float var_G = G / 255.0;
+	float var_B = B / 255.0;
+	if (var_R > 0.04045) var_R = pow(((var_R + 0.055) / 1.055), 2.4);
+	else                   var_R = var_R / 12.92;
+	if (var_G > 0.04045) var_G = pow(((var_G + 0.055) / 1.055), 2.4);
+	else                   var_G = var_G / 12.92;
+	if (var_B > 0.04045) var_B = pow(((var_B + 0.055) / 1.055), 2.4);
+	else                   var_B = var_B / 12.92;
+	var_R = var_R * 100.;
+	var_G = var_G * 100.;
+	var_B = var_B * 100.;
+	//Observer. = 2°, Illuminant = D65
+	float X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+	float Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+	float Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+	float var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
+	float var_Y = Y / 100.000;          //ref_Y = 100.000
+	float var_Z = Z / 108.883;          //ref_Z = 108.883
+	if (var_X > 0.008856) var_X = pow(var_X, (1. / 3.));
+	else                    var_X = (7.787 * var_X) + (16. / 116.);
+	if (var_Y > 0.008856) var_Y = pow(var_Y, (1. / 3.));
+	else                    var_Y = (7.787 * var_Y) + (16. / 116.);
+	if (var_Z > 0.008856) var_Z = pow(var_Z, (1. / 3.));
+	else                    var_Z = (7.787 * var_Z) + (16. / 116.);
+	l_s = (116. * var_Y) - 16.;
+	a_s = 500. * (var_X - var_Y);
+	b_s = 200. * (var_Y - var_Z);
 
-long StyleDefinition::ForeAsLong() const {
-	return ColourFromString(fore);
+	l_s = l_s < 0. ? 0. : l_s > 100. ? 100. : l_s;
+	a_s = a_s < -128. ? -128. : a_s > 128. ? 128 : a_s;
+	b_s = b_s < -128. ? -128. : b_s > 128. ? 128 : b_s;
 }
 
-long StyleDefinition::BackAsLong() const {
-	return ColourFromString(back);
+void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
+	float var_Y = (l_s + 16.) / 116.;
+	float var_X = a_s / 500. + var_Y;
+	float var_Z = var_Y - b_s / 200.;
+	if (pow(var_Y, 3) > 0.008856) var_Y = pow(var_Y, 3);
+	else                      var_Y = (var_Y - 16. / 116.) / 7.787;
+	if (pow(var_X, 3) > 0.008856) var_X = pow(var_X, 3);
+	else                      var_X = (var_X - 16. / 116.) / 7.787;
+	if (pow(var_Z, 3) > 0.008856) var_Z = pow(var_Z, 3);
+	else                      var_Z = (var_Z - 16. / 116.) / 7.787;
+	float X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
+	float Y = 100.000 * var_Y;   //ref_Y = 100.000
+	float Z = 108.883 * var_Z;    //ref_Z = 108.883
+	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
+	var_Y = Y / 100.;       //Y from 0 to 100.000
+	var_Z = Z / 100.;      //Z from 0 to 108.883
+	float var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
+	float var_G = var_X * -0.9689 + var_Y * 1.8758 + var_Z * 0.0415;
+	float var_B = var_X * 0.0557 + var_Y * -0.2040 + var_Z * 1.0570;
+	if (var_R > 0.0031308) var_R = 1.055 * pow(var_R, (1 / 2.4)) - 0.055;
+	else                     var_R = 12.92 * var_R;
+	if (var_G > 0.0031308) var_G = 1.055 * pow(var_G, (1 / 2.4)) - 0.055;
+	else                     var_G = 12.92 * var_G;
+	if (var_B > 0.0031308) var_B = 1.055 * pow(var_B, (1 / 2.4)) - 0.055;
+	else                     var_B = 12.92 * var_B;
+	R = var_R * 255.;
+	G = var_G * 255.;
+	B = var_B * 255.;
+	R = R > 255 ? 255 : R < 0 ? 0 : R;
+	G = G > 255 ? 255 : G < 0 ? 0 : G;
+	B = B > 255 ? 255 : B < 0 ? 0 : B;
 }
+
+Colour invertColor(Colour clr) {
+	if (!clr)
+		return 0xFFFFFF;
+	if (clr == 0xFFFFFF)
+		return 0;
+
+	float R = clr & 0x0000FF;
+	float G = (clr & 0x00FF00) >> 8;
+	float B = (clr & 0xFF0000) >> 16;
+
+	float l_s, a_s, b_s;
+
+	rgb2lab(R, G, B, l_s, a_s, b_s);
+
+	//if (isBg) {
+	//	// L = ((L - 100) / 100.) ^ 2 * 100
+	//	l_s = 100. - (pow((l_s / 100.), 5) * 100);
+	//} else {
+	//	//l_s = 100 - (pow(l_s / 100., 2) * 100);
+	//	l_s = 70. - ((l_s - 43.) / 43.) *((l_s - 43.) / 43.) *((l_s - 43.) / 43.) * 30.;
+	//}
+	l_s = l_s / 100.;
+	//l_s = (-lN*lN*lN + lN*lN - lN + 1) * 100;
+	//l_s = (-2.5*lN*lN*lN + 2.5*lN*lN - lN + 1) * 100;
+	//l_s = (-2.8*lN*lN*lN + 2.6*lN*lN - 0.8*lN + 1) * 100;
+	//l_s = (4*(1-lN)*lN*lN*lN - lN + 1) * 100;
+	l_s = ((2-2.3*l_s)*l_s*l_s*l_s - 0.7*l_s + 1) * 100;
+
+
+
+
+	//l_s = 50 - ((l_s - 50) / 50.) *((l_s - 50) / 50.) *((l_s - 50) / 50.) * 50;
+	//l_s = 70. - ((l_s - 43.) / 43.) *((l_s - 43.) / 43.) *((l_s - 43.) / 43.) * 30.;
+	//l_s = 80. - ((l_s - 39.) / 39.) *((l_s - 39.) / 39.) *((l_s - 39.) / 39.) * 20.;
+	//l_s = 30. - ((l_s - 57.) / 57.) *((l_s - 57.) / 57.) *((l_s - 57.) / 57.) * 70.;
+
+	//l_s = 100 - l_s;
+
+	//l_s = 50 * (1 + cos(3.14159265358979323846 * l_s* 0.01));
+	////////////////
+	lab2rgb(l_s, a_s, b_s, R, G, B);
+
+	return ColourRGB(R, G, B);
+}
+void correctForeColor(Colour &fore, DWORD back) {
+	float bBack = clr_brightness(back);
+	float bFore = clr_brightness(fore);
+	if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
+		fore = invertColor(fore);
+}
+Colour ColourRGBOrInvert(unsigned int red, unsigned int green, unsigned int blue, bool invert, bool isBG) {
+	if(!invert)
+		return ColourRGB(red, green, blue);
+}
+
+long StyleDefinition::ForeAsLong(bool useInv) const {
+	long l = ColourFromString(fore);
+	if (invertColors && useInv)
+		l = invertColor(l);
+	return l;
+}
+
+long StyleDefinition::BackAsLong(bool useInv) const {
+	long l = ColourFromString(back);
+	if (invertColors && useInv)
+		l = invertColor(l);
+	return l;
+}
+
 
 void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd) {
+	bool bSetClr = true;
 	if (style == STYLE_LINENUMBER) {
+		Colour fore, back;
+
+		bool needRecalc = false;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
-			COLORREF cr = layout.GetColorRef("TXTFGCOLOR");
-			if (cr)
-				win.Send(SCI_STYLESETFORE, style, cr);
+			fore = layout.GetColorRef("TXTFGCOLOR");
+			needRecalc = true;
+		} else {
+			fore = sd.ForeAsLong(false);
 		}
 		if (!(sd.specified & StyleDefinition::sdBack)) {
-			COLORREF cr = layout.GetColorRef("SCR_BACKCOLOR");
-			if(cr)
-				win.Send(SCI_STYLESETBACK, style, cr);
-			int iMrg = win.Call(SCI_GETMARGINS);
-			for (int i = 1; i < iMrg; i++) {
-				win.Call(SCI_SETMARGINBACKN, i, cr);
-			}
+			back = layout.GetColorRef("SCR_BACKCOLOR");
+			needRecalc = true;
+		} else {
+			back = sd.BackAsLong(false);
 		}
+		if (needRecalc) {
+			//float l_s, a_s, b_s;
+			//rgb2lab((back & 0x0000FF), ((back & 0x00FF00) >> 8), ((back & 0xFF0000) >> 16), l_s, a_s, b_s);
+
+
+			float bBack = clr_brightness(back);
+			float bFore = clr_brightness(fore);
+			if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
+				fore = invertColor(fore);
+
+		} else if (invertColors) {
+			fore = invertColor(fore);
+			back = invertColor(back);
+		}
+
+		//LineNumberColors(fore, back, sd);
+		win.Send(SCI_STYLESETFORE, style, fore);
+		win.Send(SCI_STYLESETBACK, style, back);
+		int iMrg = win.Call(SCI_GETMARGINS);
+		for (int i = 1; i < iMrg; i++) {
+			win.Call(SCI_SETMARGINBACKN, i, back);
+		}
+		bSetClr = false;
+	} else if (style == STYLE_CALLTIP) {
+		Colour fore, back;
+
+		bool needRecalc = false;
+		if (!(sd.specified & StyleDefinition::sdFore)) {
+			fore = layout.GetColorRef("TIPFGCOLOR");
+			needRecalc = true;
+		} else {
+			fore = sd.ForeAsLong(false);
+		}
+		if (!(sd.specified & StyleDefinition::sdBack)) {
+			back = layout.GetColorRef("TIPBGCOLOR");
+			needRecalc = true;
+		} else {
+			back = sd.BackAsLong(false);
+		}
+		if (needRecalc) {
+			//float l_s, a_s, b_s;
+			//rgb2lab((back & 0x0000FF), ((back & 0x00FF00) >> 8), ((back & 0xFF0000) >> 16), l_s, a_s, b_s);
+
+
+			float bBack = clr_brightness(back);
+			float bFore = clr_brightness(fore);
+			if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
+				fore = invertColor(fore);
+
+		} else if (invertColors) {
+			fore = invertColor(fore);
+			back = invertColor(back);
+		}
+
+
+
+		//LineNumberColors(fore, back, sd);
+		win.Send(SCI_STYLESETFORE, style, fore);
+		win.Send(SCI_STYLESETBACK, style, back);
+
+		bSetClr = false;
 	}
 	
 	if (sd.specified & StyleDefinition::sdItalics)
@@ -345,9 +544,9 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 	if (sd.specified & StyleDefinition::sdFont)
 		win.SendPointer(SCI_STYLESETFONT, style,
 			const_cast<char *>(sd.font.c_str()));
-	if (sd.specified & StyleDefinition::sdFore)
+	if (bSetClr && sd.specified & StyleDefinition::sdFore)
 		win.Send(SCI_STYLESETFORE, style, sd.ForeAsLong());
-	if (sd.specified & StyleDefinition::sdBack)
+	if (bSetClr && sd.specified & StyleDefinition::sdBack)
 		win.Send(SCI_STYLESETBACK, style, sd.BackAsLong());
 	if (sd.specified & StyleDefinition::sdSize)
 		win.Send(SCI_STYLESETSIZE, style, sd.size);
@@ -357,8 +556,11 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 		win.Send(SCI_STYLESETUNDERLINE, style, sd.underlined ? 1 : 0);
 	if (sd.specified & StyleDefinition::sdCaseForce)
 		win.Send(SCI_STYLESETCASE, style, sd.caseForce);
-	if (sd.specified & StyleDefinition::sdVisible)
-		win.Send(SCI_STYLESETVISIBLE, style, sd.visible ? 1 : 0);
+	if (sd.specified & StyleDefinition::sdVisible) {
+		props.SetInteger("hidden.styles.found", 1);
+		if (hideHiddenStyles)
+			win.Send(SCI_STYLESETVISIBLE, style, sd.visible ? 1 : 0);
+	}
 	if (sd.specified & StyleDefinition::sdChangeable)
 		win.Send(SCI_STYLESETCHANGEABLE, style, sd.changeable ? 1 : 0);
 //!-start-[StyleDefHotspot]
@@ -369,13 +571,17 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 }
 
 void SciTEBase::SetStyleFor(GUI::ScintillaWindow &win, const char *lang) {
+	if(win.GetID()==wEditor.GetID())
+		props.SetInteger("hidden.styles.found", 0);
 	for (int style = 0; style <= STYLE_MAX; style++) {
 		if (style != STYLE_DEFAULT) {
 			char key[200];
 			sprintf(key, "style.%s.%0d", lang, style);
 			SString sval = props.GetExpanded(key);
 			if (sval.length()) {
-				SetOneStyle(win, style, sval.c_str());
+				StyleDefinition sd(sval.c_str());
+				sd.invertColors = invertColors;
+				SetOneStyle(win, style, sd);
 			}
 		}
 	}
@@ -413,13 +619,65 @@ SString SciTEBase::ExtensionFileName() {
 }
 
 void SciTEBase::ForwardPropertyToEditor(const char *key) {
-	SString value = props.GetExpanded(key);
+	SString value;
+	if (*key == '$')
+		value = props.GetNewExpand(key + 1, ExtensionFileName().c_str());
+	else
+		value = props.GetExpanded(key);
 	wEditor.CallString(SCI_SETPROPERTY,
 	                 reinterpret_cast<uptr_t>(key), value.c_str());
 	wOutput.CallString(SCI_SETPROPERTY,
 		reinterpret_cast<uptr_t>(key), value.c_str());
 	wFindRes.CallString(SCI_SETPROPERTY,
 		reinterpret_cast<uptr_t>(key), value.c_str());
+}
+
+void SciTEBase::SetFoldingMarkers(bool main) {
+	Colour fore = layout.GetColorRef("SCR_FORECOLOR");  //props.GetInt("invert.lexer.colors") ? ColourRGB(0x80, 0x80, 0x80) : ColourRGB(0xff, 0xff, 0xff);
+	Colour back = layout.GetColorRef("TXTFGCOLOR"); //props.GetInt("invert.lexer.colors") ? ColourRGB(0xff, 0xff, 0xff) : ColourRGB(0x80, 0x80, 0x80);
+	correctForeColor(back, layout.GetColorRef("SCR_BACKCOLOR"));
+	switch (props.GetInt("fold.symbols")) {
+	case 0:
+		// Arrow pointing right for contracted folders, arrow pointing down for expanded
+		DefineMarker(main, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN, back, back);
+		DefineMarker(main, SC_MARKNUM_FOLDER, SC_MARK_ARROW, back, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, back, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, back, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, fore, back);
+		break;
+	case 1:
+		// Plus for contracted folders, minus for expanded
+		DefineMarker(main, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDER, SC_MARK_PLUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, fore, back);
+		break;
+	case 2:
+		// Like a flattened tree control using circular headers and curved joins
+		DefineMarker(main, SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, fore, back);
+		break;
+	case 3:
+		// Like a flattened tree control using square headers		
+		DefineMarker(main, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, fore, back);
+		DefineMarker(main, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, fore, back);
+		break;
+	}
 }
 
 void SciTEBase::DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back) {
@@ -546,6 +804,7 @@ static const char *propertiesToForward[] = {
 	"precompiller.debugsuffix",
 	"lexer.mssql.fold.brackets",
 	"lexer.mssql.fold.querry",
+	"$lexer.formenjine.syslog",
 
 //--Autogenerated -- end of automatically generated section
 
@@ -650,6 +909,27 @@ SString SciTEBase::GetFileNameProperty(const char *name) {
 		return props.Get(name);
 	}
 }
+void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *colourProp, char *alphaProp) {
+	SString clr = props.Get(colourProp);
+	if (clr.length()) {
+		Colour c = ColourFromString(clr);
+		int a = props.GetInt(alphaProp, 30) & 0xFF;
+		if (invertColors) {
+			c = invertColor(c);
+			a *= 2;
+		}
+		c |= a << 24;
+		if (!pWin)
+			CallChildren(SCI_SETELEMENTCOLOUR, elem, c);
+		else
+			pWin->Call(SCI_SETELEMENTCOLOUR, elem, c);
+	} else {
+		if (!pWin)
+			CallChildren(SCI_RESETELEMENTCOLOUR, elem);
+		else
+			pWin->Call(SCI_RESETELEMENTCOLOUR, elem);
+	}
+}
 
 void SciTEBase::ReadProperties() {
 	if (extender)
@@ -677,6 +957,8 @@ void SciTEBase::ReadProperties() {
 	}
 
 	props.Set("Language", language.c_str());
+	invertColors = props.GetInt("invert.lexer.colors");
+	hideHiddenStyles = props.GetInt("hide.hidden.styles");
 
 	lexLanguage = wEditor.Call(SCI_GETLEXER);
 
@@ -713,8 +995,12 @@ void SciTEBase::ReadProperties() {
 	// props.Set("SciteUserHome", homepath.AsUTF8().c_str());
 
 	for (size_t i = 0; propertiesToForward[i]; i++) {
-		wEditor.CallString(SCI_SETPROPERTY,
-			reinterpret_cast<uptr_t>(propertiesToForward[i]), props.GetExpanded(propertiesToForward[i]).c_str());
+		if(*propertiesToForward[i] == '$')
+			wEditor.CallString(SCI_SETPROPERTY,
+				reinterpret_cast<uptr_t>(propertiesToForward[i] + 1), props.GetNewExpand(propertiesToForward[i] + 1, ExtensionFileName().c_str()).c_str());
+		else
+			wEditor.CallString(SCI_SETPROPERTY,
+				reinterpret_cast<uptr_t>(propertiesToForward[i]), props.GetExpanded(propertiesToForward[i]).c_str());
 	}
 
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
@@ -755,7 +1041,7 @@ void SciTEBase::ReadProperties() {
 	else
 		//!-end-[caret]
 		wEditor.Call(SCI_SETCARETFORE,
-			ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+			ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0),invertColors));
 	wEditor.Call(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	wEditor.Call(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
@@ -768,44 +1054,8 @@ void SciTEBase::ReadProperties() {
 
 
 	wEditor.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	// wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	// wFindRes.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-//!-add-[caret]
 
-	SString caretLineBack = props.Get("caret.line.back");
-	if (caretLineBack.length()) {
-		wEditor.Call(SCI_SETCARETLINEVISIBLE, 1);
-		wEditor.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	} else {
-		wEditor.Call(SCI_SETCARETLINEVISIBLE, 0);
-	}
-	wEditor.Call(SCI_SETCARETLINEBACKALPHA,
-		props.GetInt("caret.line.back.alpha", SC_ALPHA_NOALPHA));
-
-	// caretLineBack = props.Get("findres.caret.line.back");
-	// if (caretLineBack.length()) {
-		// wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
-		// wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
-		// wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	// }
-	// else {
-		// wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
-	// }
-	// wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
-		// props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
-
-	// //!-start-[output.caret]  - не будем делать в поиске
-		// wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
-
-		// SString outputCaretLineBack = props.Get("output.caret.line.back");
-		// if (outputCaretLineBack.length()) {
-			// wOutput.Call(SCI_SETCARETLINEVISIBLE, 1);
-			// wOutput.Call(SCI_SETCARETLINEBACK, ColourFromString(outputCaretLineBack));
-		// } else {
-			// wOutput.Call(SCI_SETCARETLINEVISIBLE, 0);
-		// }
-		// wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
-	//!-end-[output.caret]
+	SetColourElement(&wEditor, SC_ELEMENT_CARET_LINE_BACK, "caret.line.back", "caret.line.back.alpha");
 
 	SString controlCharSymbol = props.Get("control.char.symbol");
 	if (controlCharSymbol.length()) {
@@ -817,8 +1067,6 @@ void SciTEBase::ReadProperties() {
 	SString caretPeriod = props.Get("caret.period");
 	if (caretPeriod.length()) {
 		wEditor.Call(SCI_SETCARETPERIOD, caretPeriod.value());
-		// wOutput.Call(SCI_SETCARETPERIOD, caretPeriod.value());
-		// wFindRes.Call(SCI_SETCARETPERIOD, caretPeriod.value());
 	}
 
 	int caretSlop = props.GetInt("caret.policy.xslop", 1) ? CARET_SLOP : 0;
@@ -843,57 +1091,37 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETEDGECOLUMN, props.GetInt("edge.column", 0));
 	wEditor.Call(SCI_SETEDGEMODE, props.GetInt("edge.mode", EDGE_NONE));
 	wEditor.Call(SCI_SETEDGECOLOUR,
-		ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda)));
+		ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda), invertColors));
 
-	SString selFore = props.Get("selection.fore");
-	if (selFore.length()) {
-		wEditor.Call(SCI_SETSELFORE, 1, ColourFromString(selFore));
-	} else {
-		wEditor.Call(SCI_SETSELFORE, 0, 0);
-	}
-	SString selBack = props.Get("selection.back");
-	if (selBack.length()) {
-		wEditor.Call(SCI_SETSELBACK, 1, ColourFromString(selBack));
-	} else {
-		if (selFore.length())
-			wEditor.Call(SCI_SETSELBACK, 0, 0);
-		else	// Have to show selection somehow
-			wEditor.Call(SCI_SETSELBACK, 1, ColourRGB(0xC0, 0xC0, 0xC0));
-	}
-	int selectionAlpha = props.GetInt("selection.alpha", SC_ALPHA_NOALPHA);
-	wEditor.Call(SCI_SETSELALPHA, selectionAlpha);
 
-	SString selAdditionalFore = props.Get("selection.additional.fore");
-	if (selAdditionalFore.length()) {
-		wEditor.Call(SCI_SETADDITIONALSELFORE, ColourFromString(selAdditionalFore));
-	}
-	SString selAdditionalBack = props.Get("selection.additional.back");
-	if (selAdditionalBack.length()) {
-		wEditor.Call(SCI_SETADDITIONALSELBACK, ColourFromString(selAdditionalBack));
-	}
-	int selectionAdditionalAlpha = (selectionAlpha == SC_ALPHA_NOALPHA) ? SC_ALPHA_NOALPHA : selectionAlpha / 2;
-	wEditor.Call(SCI_SETADDITIONALSELALPHA, props.GetInt("selection.additional.alpha", selectionAdditionalAlpha));
+	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_TEXT, "selection.fore", "selection.alpha");
+	
+	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_BACK, "selection.back", "selection.alpha");
+	
+	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_TEXT, "selection.additional.fore", "selection.additional.alpha");
+	
+	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_BACK, "selection.additional.back", "selection.additional.alpha");
 
-	SString foldColour = props.Get("fold.margin.colour");
-	if (foldColour.length()) {
-		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
-	} else {
-		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 0, 0);
-	}
-	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
-	if (foldHiliteColour.length()) {
-		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
-	} else {
-		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-	}
-	//!-start-[HighlightCurrFolder]
-	SString foldHighlightColour = props.Get("fold.highlight.colour");
-	if (foldHighlightColour.length()) {
-		wEditor.Call(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
-	} else {
-		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-	}
-	//!-end-[HighlightCurrFolder]
+//	SString foldColour = props.Get("fold.margin.colour");
+//	if (foldColour.length()) {
+//		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
+//	} else {
+//		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 0, 0);
+//	}
+//	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
+//	if (foldHiliteColour.length()) {
+//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
+//	} else {
+//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+//	}
+//	//!-start-[HighlightCurrFolder]
+//	SString foldHighlightColour = props.Get("fold.highlight.colour");
+//	if (foldHighlightColour.length()) {
+//		wEditor.Call(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
+//	} else {
+//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+//	}
+//	//!-end-[HighlightCurrFolder]
 
 	SString whitespaceFore = props.Get("whitespace.fore");
 	if (whitespaceFore.length()) {
@@ -915,33 +1143,6 @@ void SciTEBase::ReadProperties() {
 	char key[200];
 	SString sval;
 
-	//!-start-[BetterCalltips]
-		// sval = FindLanguageProperty("calltip.*.automatic", "1");
-		// callTipAutomatic = sval == "1";
-	// //!-end-[BetterCalltips]
-
-		// sval = FindLanguageProperty("calltip.*.ignorecase");
-		// callTipIgnoreCase = sval == "1";
-
-	// //!-start-[BetterCalltips]
-		// calltipShowPerPage = FindIntLanguageProperty("calltip.*.show.per.page", 1);
-		// if (calltipShowPerPage < 1) calltipShowPerPage = 1;
-	// //!-end-[BetterCalltips]
-
-		// calltipWordCharacters = FindLanguageProperty("calltip.*.word.characters",
-			// "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-		// calltipParametersStart = FindLanguageProperty("calltip.*.parameters.start", "(");
-		// calltipParametersEnd = FindLanguageProperty("calltip.*.parameters.end", ")");
-		// calltipParametersSeparators = FindLanguageProperty("calltip.*.parameters.separators", ",;");
-
-		// calltipEndDefinition = FindLanguageProperty("calltip.*.end.definition");
-
-		// sprintf(key, "autocomplete.%s.start.characters", language.c_str());
-		// autoCompleteStartCharacters = props.GetExpanded(key);
-		// if (autoCompleteStartCharacters == "")
-			// autoCompleteStartCharacters = props.GetExpanded("autocomplete.*.start.characters");
-		// // "" is a quite reasonable value for this setting
 
 	sprintf(key, "autocomplete.%s.fillups", language.c_str());
 	autoCompleteFillUpCharacters = props.GetExpanded(key);
@@ -959,8 +1160,6 @@ void SciTEBase::ReadProperties() {
 	if (sval != "")
 	autoCompleteIgnoreCase = sval == "1";
 	wEditor.Call(SCI_AUTOCSETIGNORECASE, autoCompleteIgnoreCase ? 1 : 0);
-	// wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
-	// wFindRes.Call(SCI_AUTOCSETIGNORECASE, 1);
 
 	int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
 	wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
@@ -981,17 +1180,11 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
 	wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
 
-	// jobQueue.clearBeforeExecute = props.GetInt("clear.before.execute");
-	// jobQueue.timeCommands = props.GetInt("time.commands");
 
 	int blankMarginLeft = props.GetInt("blank.margin.left", 1);
 	int blankMarginRight = props.GetInt("blank.margin.right", 1);
 	wEditor.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
 	wEditor.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
-	// wOutput.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	// wOutput.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
-	// wFindRes.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	// wFindRes.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
 
 	wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
 
@@ -1071,36 +1264,6 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETWRAPSTARTINDENT, props.GetInt("wrap.visual.startindent"));
 	wEditor.Call(SCI_SETWRAPINDENTMODE, props.GetInt("wrap.indent.mode"));
 
-	// if (props.GetInt("wrap.aware.home.end.keys",0)) {
-		// if (props.GetInt("vc.home.key", 1)) {
-			// AssignKey(SCK_HOME, 0, SCI_VCHOMEWRAP);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEWRAPEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		// } else {
-			// AssignKey(SCK_HOME, 0, SCI_HOMEWRAP);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEWRAPEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		// }
-		// AssignKey(SCK_END, 0, SCI_LINEENDWRAP);
-		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDWRAPEXTEND);
-	// } else {
-		// if (props.GetInt("vc.home.key", 1)) {
-			// AssignKey(SCK_HOME, 0, SCI_VCHOME);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		// } else {
-			// AssignKey(SCK_HOME, 0, SCI_HOME);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		// }
-		// AssignKey(SCK_END, 0, SCI_LINEEND);
-		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDEXTEND);
-	// }
-
-	// AssignKey('L', SCMOD_SHIFT | SCMOD_CTRL, SCI_LINEDELETE);
-
-	// scrollOutput = props.GetInt("output.scroll", 1);
-
 	wEditor.Call(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
 
 	// To put the folder markers in the line number region
@@ -1128,53 +1291,14 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
 
-	wEditor.Call(SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS);
+	wEditor.Call(SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS | 1);
 	wEditor.Call(SCI_SETMARGINSENSITIVEN, 2, 1);
-	if (props.GetInt("margin.bookmark.by.single.click", 1) == 1) //!-add-[SetBookmark]
-	wEditor.Call(SCI_SETMARGINSENSITIVEN, 1, 1);	//!-add-[SetBookmark]
+	if (props.GetInt("margin.bookmark.by.single.click", 1) == 1) { //!-add-[SetBookmark]
+		wEditor.Call(SCI_SETMARGINSENSITIVEN, 1, 1);	//!-add-[SetBookmark]
+		wEditor.Call(SCI_SETMARGINSENSITIVEN, 0, 1);	//!-add-[SetBookmark]
+	}
 
-	 switch (props.GetInt("fold.symbols")) {
-	 case 0:
-		 // Arrow pointing right for contracted folders, arrow pointing down for expanded
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
-		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_ARROW,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
-		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					 
-		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));					  
-		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));					  
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));					  
-		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 break;
-	 case 1:
-		 // Plus for contracted folders, minus for expanded
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_PLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 break;
-	 case 2:
-		 // Like a flattened tree control using circular headers and curved joins
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 break;
-	 case 3:
-		 // Like a flattened tree control using square headers
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(true, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 break;
-	 }
+	SetFoldingMarkers(true);
 
 	wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
 		ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
@@ -1210,25 +1334,18 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_MARKERDEFINE, markerVertAlign, SC_MARK_VLINE);
 	wEditor.Call(SCI_MARKERSETFORE, markerVertAlign, ColourOfProperty(props,
 		"vertalign.marker.fore", ColourRGB(0x0, 0, 0x7f)));
-	//wEditor.Call(SCI_MARKERSETBACK, markerBreakPoint, ColourOfProperty(props,
-	//	"breakpoint.marker.back", ColourRGB(0xff, 0, 0)));
 
 	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
-	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);
-	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
-	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	//wEditor.Call(SCI_SETXOFFSET, hpos);
-	// wOutput.Call(SCI_SETSCROLLWIDTH, 100);
-	// wOutput.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	// wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
-	// wFindRes.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
 
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 
-	// wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
-	// wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
+	SetColourElement(&wEditor, SC_ELEMENT_LIST, "list.colour", "#");
+	SetColourElement(&wEditor, SC_ELEMENT_LIST_BACK, "list.back", "#");
+	SetColourElement(&wEditor, SC_ELEMENT_LIST_SELECTED, "list.selection", "#");
+	SetColourElement(&wEditor, SC_ELEMENT_LIST_SELECTED_BACK, "list.selection.back", "#");
+
 
 	if (extender) {
 		FilePath defaultDir = GetDefaultDirectory();
@@ -1262,33 +1379,7 @@ void SciTEBase::ReadProperties() {
 void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
-	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
-	// Lexilla::Load(".");
 
-	// SString fileNameForExtension = ExtensionFileName();
-
-	// language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
-	// std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0); 
-
-	// if (language.length()) {
-		// if (strcmp(language.c_str(), languageCurrent.c_str())) {
-			// if (language.startswith("script_")) {
-				// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
-			// } else {
-
-				// Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
-				// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-			// }
-		// }
-	// } else if (languageCurrent.length()) {
-		// wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
-	// }
-
-	// props.Set("Language", language.c_str());
-
-	// lexLanguage = wEditor.Call(SCI_GETLEXER);
-
-	// wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 
 	std::string languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 	if (strcmp("errorlist", languageCurrent.c_str())) {
@@ -1298,18 +1389,6 @@ void SciTEBase::ReadPropertiesEx() {
 		plexer = Lexilla::MakeLexer("searchResult");
 		wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 	}
-
-	// SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
-	// wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());
-
-	// for (int wl = 1; wl <= KEYWORDSET_MAX; wl++) {
-		// SString kwk(wl+1);
-		// kwk += '.';
-		// kwk.insert(0, "keywords");
-		// SString kw = props.GetNewExpand(kwk.c_str(), fileNameForExtension.c_str());
-		// wEditor.CallString(SCI_SETKEYWORDS, wl, kw.c_str());
-	// }
-
 
 	FilePath homepath = GetSciteDefaultHome();
 	props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
@@ -1323,15 +1402,7 @@ void SciTEBase::ReadPropertiesEx() {
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", ExtensionFileName().c_str()).c_str());
 	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
 
-	// wEditor.Call(SCI_SETOVERTYPE, props.GetInt("change.overwrite.enable", 1) + 2); //-add-[ignore_overstrike_change]
 
-	// codePage = props.GetInt("code.page");
-	// if (CurrentBuffer()->unicodeMode != uni8Bit) {
-		// // Override properties file to ensure Unicode displayed.
-		// codePage = SC_CP_UTF8;
-	// }
-	// props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
-	// wEditor.Call(SCI_SETCODEPAGE, codePage);
 	int outputCodePage = props.GetInt("output.code.page", codePage);
 	wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
 	wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
@@ -1348,17 +1419,8 @@ void SciTEBase::ReadPropertiesEx() {
 
 	wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
 
-//!-start-[caret]
-	// SString tmp_str;
-	// tmp_str=props.GetNewExpand("caret.fore.", fileNameForExtension.c_str());
-	// //Writing caret.fore.$(FilePattern) into tmp_str
-	// //And test for existing
-	// if(tmp_str.length())
-		// wEditor.Call(SCI_SETCARETFORE,ColourFromString(tmp_str));
-	// else
-//!-end-[caret]
 	CallChildren(SCI_SETCARETFORE,
-	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0)));
+	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0), invertColors));
 	CallChildren(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	CallChildren(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
@@ -1370,134 +1432,57 @@ void SciTEBase::ReadPropertiesEx() {
 	           props.GetInt("dwell.period", SC_TIME_FOREVER), 0);
 
 
-	// wEditor.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	// wOutput.Call(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	CallChildren(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
-	//!-add-[caret]
 
-	// SString caretLineBack = props.Get("caret.line.back");
-	// if (caretLineBack.length()) {
-		// wEditor.Call(SCI_SETCARETLINEVISIBLE, 1);
-		// wEditor.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	// }
-	// else {
-		// wEditor.Call(SCI_SETCARETLINEVISIBLE, 0);
-	// }
-	// wEditor.Call(SCI_SETCARETLINEBACKALPHA,
-		// props.GetInt("caret.line.back.alpha", SC_ALPHA_NOALPHA));
+	CallChildren(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
 	
-	SString caretLineBack = props.Get("findres.caret.line.back");
-	if (caretLineBack.length()) {
-		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 1);
-		wFindRes.Call(SCI_SETCARETLINEVISIBLEALWAYS, 1);
-		wFindRes.Call(SCI_SETCARETLINEBACK, ColourFromString(caretLineBack));
-	}
-	else {
-		wFindRes.Call(SCI_SETCARETLINEVISIBLE, 0);
-	}
-	wFindRes.Call(SCI_SETCARETLINEBACKALPHA,
-		props.GetInt("findres.caret.line.back.alpha", SC_ALPHA_NOALPHA));
+	SetColourElement(&wFindRes, SC_ELEMENT_CARET_LINE_BACK, "findres.caret.line.back", "findres.caret.line.back.alpha");
 
 //!-start-[output.caret]  - не будем делать в поиске
 	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
 
-	SString outputCaretLineBack = props.Get("output.caret.line.back");
-	if (outputCaretLineBack.length()) {
-		wOutput.Call(SCI_SETCARETLINEVISIBLE, 1);
-		wOutput.Call(SCI_SETCARETLINEBACK, ColourFromString(outputCaretLineBack));
-	} else {
-		wOutput.Call(SCI_SETCARETLINEVISIBLE, 0);
-	}
-	wOutput.Call(SCI_SETCARETLINEBACKALPHA, props.GetInt("output.caret.line.back.alpha", SC_ALPHA_NOALPHA));
-//!-end-[output.caret]
-
-	// SString controlCharSymbol = props.Get("control.char.symbol");
-	// if (controlCharSymbol.length()) {
-		// wEditor.Call(SCI_SETCONTROLCHARSYMBOL, static_cast<unsigned char>(controlCharSymbol[0]));
-	// } else {
-		// wEditor.Call(SCI_SETCONTROLCHARSYMBOL, 0);
-	// }
+	SetColourElement(&wOutput, SC_ELEMENT_CARET_LINE_BACK, "output.caret.line.back", "output.caret.line.back.alpha");
 
 	SString caretPeriod = props.Get("caret.period");
 	if (caretPeriod.length()) {
-		// wEditor.Call(SCI_SETCARETPERIOD, caretPeriod.value());
-		// wOutput.Call(SCI_SETCARETPERIOD, caretPeriod.value());
 		CallChildren(SCI_SETCARETPERIOD, caretPeriod.value());
 	}
 
-	// int caretSlop = props.GetInt("caret.policy.xslop", 1) ? CARET_SLOP : 0;
-	// int caretZone = props.GetInt("caret.policy.width", 50);
-	// int caretStrict = props.GetInt("caret.policy.xstrict") ? CARET_STRICT : 0;
-	// int caretEven = props.GetInt("caret.policy.xeven", 1) ? CARET_EVEN : 0;
-	// int caretJumps = props.GetInt("caret.policy.xjumps") ? CARET_JUMPS : 0;
-	// wEditor.Call(SCI_SETXCARETPOLICY, caretStrict | caretSlop | caretEven | caretJumps, caretZone);
+	CallChildren(SCI_SETCARETLINELAYER, SC_LAYER_UNDER_TEXT);
+	CallChildren(SCI_SETSELECTIONLAYER, SC_LAYER_UNDER_TEXT);
+	SetColourElement(NULL, SC_ELEMENT_SELECTION_TEXT, "selection.fore", "selection.alpha");
 
-	// caretSlop = props.GetInt("caret.policy.yslop", 1) ? CARET_SLOP : 0;
-	// caretZone = props.GetInt("caret.policy.lines");
-	// caretStrict = props.GetInt("caret.policy.ystrict") ? CARET_STRICT : 0;
-	// caretEven = props.GetInt("caret.policy.yeven", 1) ? CARET_EVEN : 0;
-	// caretJumps = props.GetInt("caret.policy.yjumps") ? CARET_JUMPS : 0;
-	// wEditor.Call(SCI_SETYCARETPOLICY, caretStrict | caretSlop | caretEven | caretJumps, caretZone);
+	SetColourElement(NULL, SC_ELEMENT_SELECTION_BACK, "selection.back", "selection.alpha");
+	
+	SetColourElement(NULL, SC_ELEMENT_SELECTION_ADDITIONAL_TEXT, "selection.additional.fore", "selection.additional.alpha");
 
-	// int visibleStrict = props.GetInt("visible.policy.strict") ? VISIBLE_STRICT : 0;
-	// int visibleSlop = props.GetInt("visible.policy.slop", 1) ? VISIBLE_SLOP : 0;
-	// int visibleLines = props.GetInt("visible.policy.lines");
-	// wEditor.Call(SCI_SETVISIBLEPOLICY, visibleStrict | visibleSlop, visibleLines);
+	SetColourElement(NULL, SC_ELEMENT_SELECTION_ADDITIONAL_BACK, "selection.additional.back", "selection.additional.alpha");
 
-	// wEditor.Call(SCI_SETEDGECOLUMN, props.GetInt("edge.column", 0));
-	// wEditor.Call(SCI_SETEDGEMODE, props.GetInt("edge.mode", EDGE_NONE));
-	// wEditor.Call(SCI_SETEDGECOLOUR,
-	           // ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda)));
-
-	SString selFore = props.Get("selection.fore");
-	if (selFore.length()) {
-		CallChildren(SCI_SETSELFORE, 1, ColourFromString(selFore));
-	} else {
-		CallChildren(SCI_SETSELFORE, 0, 0);
-	}
-	SString selBack = props.Get("selection.back");
-	if (selBack.length()) {
-		CallChildren(SCI_SETSELBACK, 1, ColourFromString(selBack));
-	} else {
-		if (selFore.length())
-			CallChildren(SCI_SETSELBACK, 0, 0);
-		else	// Have to show selection somehow
-			CallChildren(SCI_SETSELBACK, 1, ColourRGB(0xC0, 0xC0, 0xC0));
-	}
-	int selectionAlpha = props.GetInt("selection.alpha", SC_ALPHA_NOALPHA);
-	CallChildren(SCI_SETSELALPHA, selectionAlpha);
-
-	SString selAdditionalFore = props.Get("selection.additional.fore");
-	if (selAdditionalFore.length()) {
-		CallChildren(SCI_SETADDITIONALSELFORE, ColourFromString(selAdditionalFore));
-	}
-	SString selAdditionalBack = props.Get("selection.additional.back");
-	if (selAdditionalBack.length()) {
-		CallChildren(SCI_SETADDITIONALSELBACK, ColourFromString(selAdditionalBack));
-	}
-	int selectionAdditionalAlpha = (selectionAlpha == SC_ALPHA_NOALPHA) ? SC_ALPHA_NOALPHA : selectionAlpha / 2;
-	CallChildren(SCI_SETADDITIONALSELALPHA, props.GetInt("selection.additional.alpha", selectionAdditionalAlpha));
-
-	SString foldColour = props.Get("fold.margin.colour");
-	if (foldColour.length()) {
-		CallChildren(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
-	} else {
-		CallChildren(SCI_SETFOLDMARGINCOLOUR, 0, 0);
-	}
-	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
-	if (foldHiliteColour.length()) {
-		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
-	} else {
-		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-	}
-//!-start-[HighlightCurrFolder]
-	SString foldHighlightColour = props.Get("fold.highlight.colour");
-	if (foldHighlightColour.length()) {
-		CallChildren(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
-	} else {
-		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-	}
-//!-end-[HighlightCurrFolder]
+//	SString foldColour = props.Get("fold.margin.colour");
+//	SString foldColour = props.Get("fold.margin.colour");
+//	if (foldColour.length()) {
+//	if (foldColour.length()) {
+//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
+//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
+//	} else {
+//	} else {
+//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 0, 0);
+//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 0, 0);
+//	}
+//	}
+//	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
+//	if (foldHiliteColour.length()) {
+//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
+//	} else {
+//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+//	}
+////!-start-[HighlightCurrFolder]
+//	SString foldHighlightColour = props.Get("fold.highlight.colour");
+//	if (foldHighlightColour.length()) {
+//		CallChildren(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
+//	} else {
+//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
+//	}
+////!-end-[HighlightCurrFolder]
 
 	SString whitespaceFore = props.Get("whitespace.fore");
 	if (whitespaceFore.length()) {
@@ -1732,126 +1717,19 @@ void SciTEBase::ReadPropertiesEx() {
 
 	CallChildren(SCI_SETMARGINWIDTHN, 2, foldMargin ? foldMarginWidth : 0);
 
-	CallChildren(SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS);
+	CallChildren(SCI_SETMARGINMASKN, 2, SC_MASK_FOLDERS | 1);
 	CallChildren(SCI_SETMARGINSENSITIVEN, 2, 1);
 	if (props.GetInt("margin.bookmark.by.single.click",1)==1) //!-add-[SetBookmark]
 		wEditor.Call(SCI_SETMARGINSENSITIVEN, 1, 1);	//!-add-[SetBookmark]
 
-	 switch (props.GetInt("fold.symbols")) {
-	 case 0:
-		 // Arrow pointing right for contracted folders, arrow pointing down for expanded
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN, ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		             
-		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_ARROW,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
-		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
-		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY,ColourRGB(0, 0, 0), ColourRGB(0, 0, 0));		              
-		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));		             
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY,ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));		              
-		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 break;
-	 case 1:
-		 // Plus for contracted folders, minus for expanded
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_MINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_PLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_EMPTY, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0, 0, 0));
-		 break;
-	 case 2:
-		 // Like a flattened tree control using circular headers and curved joins
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_CIRCLEMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_CIRCLEPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_CIRCLEPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_CIRCLEMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNERCURVE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x40, 0x40, 0x40));
-		 break;
-	 case 3:
-		 // Like a flattened tree control using square headers
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDER, SC_MARK_BOXPLUS, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDERSUB, SC_MARK_VLINE, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDERTAIL, SC_MARK_LCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDEREND, SC_MARK_BOXPLUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDEROPENMID, SC_MARK_BOXMINUSCONNECTED, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 DefineMarker(false, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, ColourRGB(0xff, 0xff, 0xff), ColourRGB(0x80, 0x80, 0x80));
-		 break;
-	 }
+	SetFoldingMarkers(false);
 
-	// wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
-		// ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
-	// wEditor.Call(SCI_MARKERSETBACK, markerBookmark,
-		// ColourOfProperty(props, "bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
-	// wEditor.Call(SCI_MARKERSETALPHA,
-		// props.GetInt("bookmark.alpha", SC_ALPHA_NOALPHA));
-	// SString bookMarkXPM = props.Get("bookmark.pixmap");
-	// if (bookMarkXPM.length()) {
-		// wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
-			// bookMarkXPM.c_str());
-	// } else if (props.Get("bookmark.fore").length()) {
-		// wEditor.Call(SCI_MARKERDEFINE, markerBookmark, SC_MARK_CIRCLE);
-	// } else {
-		// // No bookmark.fore setting so display default pixmap.
-		// wEditor.CallString(SCI_MARKERDEFINEPIXMAP, markerBookmark,
-			// reinterpret_cast<char *>(bookmarkBluegem));
-	// }
-
-	// wEditor.Call(SCI_MARKERSETBACK, markerNotSaved,
-		// ColourOfProperty(props, "marker.notsaved.back", ColourRGB(0xff, 0x70, 0x70)));
-	// wEditor.Call(SCI_MARKERDEFINE, markerNotSaved, SC_MARK_LEFTRECT);
-	// wEditor.Call(SCI_MARKERSETBACK, markerSaved,
-		// ColourOfProperty(props, "marker.saved.back", ColourRGB(0x70, 0xff, 0x70)));
-	// wEditor.Call(SCI_MARKERDEFINE, markerSaved, SC_MARK_LEFTRECT);
-
-	// wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
-	// wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
-		// "error.marker.fore", ColourRGB(0x7f, 0, 0)));
-	// wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
-		// "error.marker.back", ColourRGB(0xff, 0xff, 0)));
-
-	// wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
-
-	//sptr_t hpos = wEditor.Call(SCI_GETXOFFSET);
-	//wEditor.Call(SCI_SETSCROLLWIDTH, wEditor.Call(SCI_GETSCROLLWIDTH));
-	//wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-	//wEditor.Call(SCI_SETXOFFSET, hpos);
-	//wOutput.Call(SCI_SETSCROLLWIDTH, 100);
-	CallChildren(SCI_SETSCROLLWIDTHTRACKING, 1);
-	//wFindRes.Call(SCI_SETSCROLLWIDTH, 100);
 	CallChildren(SCI_SETSCROLLWIDTHTRACKING, 1);
 
-	// wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
-	// wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
+	CallChildren(SCI_SETSCROLLWIDTHTRACKING, 1);
 
 	wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
 	wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
-
-	// if (extender) {
-		// FilePath defaultDir = GetDefaultDirectory();
-		// FilePath scriptPath;
-
-		// // Check for an extension script
-		// GUI::gui_string extensionFile = GUI::StringFromUTF8(
-			// props.GetNewExpand("extension.", fileNameForExtension.c_str()).c_str());
-		// if (extensionFile.length()) {
-			// // find file in local directory
-			// FilePath docDir = filePath.Directory();
-			// if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
-				// // Found file in document directory
-				// extender->Load(scriptPath.AsUTF8().c_str());
-			// } else if (Exists(defaultDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
-				// // Found file in global directory
-				// extender->Load(scriptPath.AsUTF8().c_str());
-			// } else if (Exists(GUI_TEXT(""), extensionFile.c_str(), &scriptPath)) {
-				// // Found as completely specified file name
-				// extender->Load(scriptPath.AsUTF8().c_str());
-			// }
-		// }
-	// }
-	// firstPropertiesRead = false;
-	// needReadProperties = false;
 }
 
 
@@ -1887,6 +1765,7 @@ void SciTEBase::ReadFontProperties() {
 //!-start-[StyleDefault]
 #if !defined(GTK)
 	StyleDefinition style(sval.c_str());
+	style.invertColors = invertColors;
 	char sColor[8];
 	ColourDesired color;
 	if (!(style.specified & StyleDefinition::sdBack)) {
@@ -1916,7 +1795,11 @@ void SciTEBase::ReadFontProperties() {
 
 	sprintf(key, "style.%s.%0d", languageName, STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
-	SetOneStyle(wEditor, STYLE_DEFAULT, sval.c_str());
+	{
+		StyleDefinition style(sval.c_str());
+		style.invertColors = invertColors;
+		SetOneStyle(wEditor, STYLE_DEFAULT, style);
+	}
 
 	wEditor.Call(SCI_STYLECLEARALL, 0, 0);
 
@@ -1926,7 +1809,11 @@ void SciTEBase::ReadFontProperties() {
 	wOutput.Call(SCI_STYLECLEARALL, 0, 0);
 	sprintf(key, "style.%s.%0d", "errorlist", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
-	SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
+	{
+		StyleDefinition style(sval.c_str());
+		style.invertColors = invertColors;
+		SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
+	}
 	wOutput.Call(SCI_STYLECLEARALL, 0, 0);
 	SetStyleFor(wOutput, "*");
 	SetStyleFor(wOutput, "errorlist");
@@ -1934,7 +1821,11 @@ void SciTEBase::ReadFontProperties() {
 	wFindRes.Call(SCI_STYLECLEARALL, 0, 0);
 	sprintf(key, "style.%s.%0d", "searchResult", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
-	SetOneStyle(wFindRes, STYLE_DEFAULT, sval.c_str());
+	{
+		StyleDefinition style(sval.c_str());
+		style.invertColors = invertColors;
+		SetOneStyle(wFindRes, STYLE_DEFAULT, sval.c_str());
+	}
 	wFindRes.Call(SCI_STYLECLEARALL, 0, 0);
 	SetStyleFor(wFindRes, "*");
 	SetStyleFor(wFindRes, "searchResult");
