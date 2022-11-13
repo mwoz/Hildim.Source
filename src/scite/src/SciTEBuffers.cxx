@@ -1679,11 +1679,8 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 		        style != SCE_ERR_DIFF_DELETION) {
 			wBottom.Call(SCI_MARKERDELETEALL, static_cast<uptr_t>(-1));
 			wBottom.Call(SCI_MARKERDEFINE, 0, SC_MARK_SMALLRECT);
-			wBottom.Call(SCI_MARKERSETFORE, 0, ColourOfProperty(props,
-			        "error.marker.fore", ColourRGB(0x7f, 0, 0)));
-			wBottom.Call(SCI_MARKERSETBACK, 0, ColourOfProperty(props,
-//!			        "error.marker.back", ColourRGB(0xff, 0xff, 0)));
-			        "error.line.back", ColourOfProperty(props, "error.marker.back", ColourRGB(0xff, 0xff, 0)))); //!-change-[ErrorLineBack]
+			wBottom.Call(SCI_MARKERSETFORE, 0, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
+			wBottom.Call(SCI_MARKERSETBACK, 0, ColourOfProperty("error.line.back", ColourOfProperty("error.marker.back", ColourRGB(0xff, 0xff, 0)))); //!-change-[ErrorLineBack]
 			wBottom.Call(SCI_MARKERADD, lookLine, 0);
 			wBottom.Call(SCI_SETSEL, startPosLine, startPosLine);
 			SString message = GetRange(wBottom, startPosLine, startPosLine + lineLength);

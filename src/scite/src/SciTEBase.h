@@ -233,6 +233,12 @@ enum IndentationStatus {
 int IntFromHexDigit(int ch);
 int IntFromHexByte(const char *hexByte);
 
+class ColorConvertor {
+public:
+	virtual void Init(const char *points, ExtensionAPI *h) = 0;
+	virtual Colour Convert(Colour colorIn) = 0;
+};
+
 class StyleDefinition {
 public:
 	SString font;
@@ -252,10 +258,12 @@ public:
 	        sdBold = 0x10, sdItalics = 0x20, sdEOLFilled = 0x40, sdUnderlined = 0x80,
 //!	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400} specified;
 	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400, sdHotspot = 0x800} specified; //!-change-[StyleDefHotspot]
-	StyleDefinition(const char *definition);
+	StyleDefinition(const char *definition, ColorConvertor * pc, bool useConv);
+	StyleDefinition::StyleDefinition(const char *definition) :StyleDefinition(definition, false, false) {};
 	bool ParseStyleDefinition(const char *definition);
 	long ForeAsLong(bool useInv = true) const;
 	long BackAsLong(bool useInv = true) const;
+	ColorConvertor * pConvertor;
 };
 
 struct StyleAndWords {
@@ -408,6 +416,26 @@ private:
 	HICON hicon = NULL;
 };
 
+
+
+#define CONVERTORLAB_MAXPOINTS 20
+
+class ColorConvertorLAB : public ColorConvertor {
+
+private:
+	int nPoints;
+	bool inicialized = false;
+	std::string prevPoints = "";
+
+	float m_x[CONVERTORLAB_MAXPOINTS], m_y[CONVERTORLAB_MAXPOINTS];
+	float m_k[CONVERTORLAB_MAXPOINTS], m_b[CONVERTORLAB_MAXPOINTS];
+public:
+	ColorConvertorLAB() {}
+	~ColorConvertorLAB() {}
+	virtual void Init(const char *points, ExtensionAPI *h);
+	virtual Colour Convert(Colour colorIn);
+};
+
 class SciTEBase : public ExtensionAPI, public Searcher {
 protected:
 	GUI::gui_string windowName = L"HildiM";
@@ -485,6 +513,8 @@ protected:
 	ScintillaWindowSwitcher wEditor;
 	ScintillaWindowEditor wEditorR;
 	ScintillaWindowEditor wEditorL;
+	ColorConvertorLAB convMain;
+	
 	virtual sptr_t CallAll(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallStringAll(unsigned int msg, uptr_t wParam, const char *s);
 	friend class ScintillaWindowEditor;
@@ -972,6 +1002,8 @@ public:
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
 	virtual bool IsRunAsAdmin() = 0;
 	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
+	long ColourOfProperty(const char *key, Colour colourDefault, bool invClr = false);
+
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);
@@ -998,7 +1030,6 @@ const int blockSize = 131072;
 
 int ControlIDOfCommand(unsigned long);
 void LowerCaseString(char *s);
-long ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault, bool invClr = false);
 void WindowSetFocus(GUI::ScintillaWindow &w);
 
 inline bool isspacechar(unsigned char ch) {

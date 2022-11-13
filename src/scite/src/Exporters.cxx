@@ -413,7 +413,8 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 		delete []valdef;
 
 		SString sval = props.GetExpanded("font.monospace");
-		StyleDefinition sdmono(sval.c_str());
+		StyleDefinition cd(valdef);
+		StyleDefinition sdmono(cd);
 
 		for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
 			if ((istyle > STYLE_DEFAULT) && (istyle <= STYLE_LASTPREDEFINED))

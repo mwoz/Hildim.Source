@@ -152,14 +152,167 @@ static Colour ColourFromString(const SString &s) {
 	}
 }
 
-Colour ColourOfProperty(PropSetFile &props, const char *key, Colour colourDefault, bool invClr) {
+Colour SciTEBase::ColourOfProperty(const char *key, Colour colourDefault, bool invClr) {
 	SString colour = props.GetExpanded(key);
 	if (colour.length()) {
 		colourDefault = ColourFromString(colour);
 	}
 	if (invClr)
-		colourDefault = invertColor(colourDefault);
+		colourDefault = convMain.Convert(colourDefault);
 	return colourDefault;
+}
+
+float clr_brightness(long clr) {
+	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
+}
+
+void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
+	float var_R = R / 255.0;
+	float var_G = G / 255.0;
+	float var_B = B / 255.0;
+	if (var_R > 0.04045) var_R = pow(((var_R + 0.055) / 1.055), 2.4);
+	else                   var_R = var_R / 12.92;
+	if (var_G > 0.04045) var_G = pow(((var_G + 0.055) / 1.055), 2.4);
+	else                   var_G = var_G / 12.92;
+	if (var_B > 0.04045) var_B = pow(((var_B + 0.055) / 1.055), 2.4);
+	else                   var_B = var_B / 12.92;
+	var_R = var_R * 100.;
+	var_G = var_G * 100.;
+	var_B = var_B * 100.;
+	//Observer. = 2°, Illuminant = D65
+	float X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+	float Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+	float Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+	float var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
+	float var_Y = Y / 100.000;          //ref_Y = 100.000
+	float var_Z = Z / 108.883;          //ref_Z = 108.883
+	if (var_X > 0.008856) var_X = pow(var_X, (1. / 3.));
+	else                    var_X = (7.787 * var_X) + (16. / 116.);
+	if (var_Y > 0.008856) var_Y = pow(var_Y, (1. / 3.));
+	else                    var_Y = (7.787 * var_Y) + (16. / 116.);
+	if (var_Z > 0.008856) var_Z = pow(var_Z, (1. / 3.));
+	else                    var_Z = (7.787 * var_Z) + (16. / 116.);
+	l_s = (116. * var_Y) - 16.;
+	a_s = 500. * (var_X - var_Y);
+	b_s = 200. * (var_Y - var_Z);
+
+	l_s = l_s < 0. ? 0. : l_s > 100. ? 100. : l_s;
+	a_s = a_s < -128. ? -128. : a_s > 128. ? 128 : a_s;
+	b_s = b_s < -128. ? -128. : b_s > 128. ? 128 : b_s;
+}
+
+void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
+	float var_Y = (l_s + 16.) / 116.;
+	float var_X = a_s / 500. + var_Y;
+	float var_Z = var_Y - b_s / 200.;
+	if (pow(var_Y, 3) > 0.008856) var_Y = pow(var_Y, 3);
+	else                      var_Y = (var_Y - 16. / 116.) / 7.787;
+	if (pow(var_X, 3) > 0.008856) var_X = pow(var_X, 3);
+	else                      var_X = (var_X - 16. / 116.) / 7.787;
+	if (pow(var_Z, 3) > 0.008856) var_Z = pow(var_Z, 3);
+	else                      var_Z = (var_Z - 16. / 116.) / 7.787;
+	float X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
+	float Y = 100.000 * var_Y;   //ref_Y = 100.000
+	float Z = 108.883 * var_Z;    //ref_Z = 108.883
+	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
+	var_Y = Y / 100.;       //Y from 0 to 100.000
+	var_Z = Z / 100.;      //Z from 0 to 108.883
+	float var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
+	float var_G = var_X * -0.9689 + var_Y * 1.8758 + var_Z * 0.0415;
+	float var_B = var_X * 0.0557 + var_Y * -0.2040 + var_Z * 1.0570;
+	if (var_R > 0.0031308) var_R = 1.055 * pow(var_R, (1 / 2.4)) - 0.055;
+	else                     var_R = 12.92 * var_R;
+	if (var_G > 0.0031308) var_G = 1.055 * pow(var_G, (1 / 2.4)) - 0.055;
+	else                     var_G = 12.92 * var_G;
+	if (var_B > 0.0031308) var_B = 1.055 * pow(var_B, (1 / 2.4)) - 0.055;
+	else                     var_B = 12.92 * var_B;
+	R = var_R * 255.;
+	G = var_G * 255.;
+	B = var_B * 255.;
+	R = R > 255 ? 255 : R < 0 ? 0 : R;
+	G = G > 255 ? 255 : G < 0 ? 0 : G;
+	B = B > 255 ? 255 : B < 0 ? 0 : B;
+}
+
+void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
+	if (inicialized && prevPoints == points) {
+		return;
+	}
+	prevPoints = "";
+	inicialized = false;
+	std::string v = points; 
+	//std::regex re = std::regex("\\(\\d+", std::regex::ECMAScript);
+	std::regex re = std::regex(" *\\( *(\\d+\\.?\\d*) *, *(\\d+\\.?\\d*) *\\) *", std::regex::ECMAScript);
+	std::smatch mtch;
+	//bool b = std::regex_search(v, mtch, re);
+	nPoints = -1;
+	//int tt = mtch[0].length();
+	
+	for (int i = 0; std::regex_search(v, mtch, re) && mtch.length(); i++, v.erase(0, mtch[0].length())) {
+		if (i > CONVERTORLAB_MAXPOINTS) {
+			h->Trace("Too many points\n");
+			return;
+		}
+		nPoints = i;
+		m_x[i] = atof(mtch[1].str().c_str());
+		m_y[i] = atof(mtch[2].str().c_str());
+		if (i && m_x[i] <= m_x[i - 1]) {
+			h->Trace("Incorrect points order\n");
+			return;
+		}
+		if (m_x[i] > 100. || m_y[i] > 100.) {
+			h->Trace("Incorrect points sizes\n");
+			return;
+		}
+	}
+	if (nPoints < 0) {
+		if (v.length() > 0)
+			h->Trace("Points not found\n");
+		return;
+	}
+	if (v.length()) {
+		h->Trace("Incorrect points format\n");
+		return;
+	}
+
+	for (int i = 0; i < nPoints - 2; ++i) {
+		m_k[i] = (m_y[i + 1] - m_y[i]) / (m_x[i + 1] - m_x[i]);
+		m_b[i] = m_y[i] - m_k[i] * m_x[i];
+	}
+	inicialized = true;
+	prevPoints = points;
+}
+Colour ColorConvertorLAB::Convert(Colour colorIn) {
+	if(!inicialized)
+		return colorIn;
+
+	float R = colorIn & 0x0000FF;
+	float G = (colorIn & 0x00FF00) >> 8;
+	float B = (colorIn & 0xFF0000) >> 16;
+
+	float L, a_s, b_s;
+
+	rgb2lab(R, G, B, L, a_s, b_s);
+	
+	float L2;
+	if (L <= m_x[0]){
+		L2 = m_y[0];
+	}
+	else if (L >= m_x[nPoints - 1]){
+		L2 = m_y[nPoints - 1];
+	}
+	else{
+		L2 = m_y[nPoints - 1];
+		for (int i = 0; i < nPoints - 2; ++i){
+			if (L >= m_x[i] && L < m_x[i + 1]) {
+				L2 = L * m_k[i] + m_b[i];
+				break;
+			}
+		}
+    }
+	lab2rgb(L2, a_s, b_s, R, G, B);
+
+	return ColourRGB(R, G, B);
 }
 
 /**
@@ -192,12 +345,12 @@ const char *SciTEBase::GetNextPropItem(
 	return pNext;
 }
 
-StyleDefinition::StyleDefinition(const char *definition):
-//!		size(0), fore("#000000"), back("#FFFFFF"),
-		size(0), fore(""), back(""), //!-change-[StyleDefault]
-		bold(false), italics(false), eolfilled(false), underlined(false),
-		caseForce(SC_CASE_MIXED),
-		visible(true), changeable(true),
+StyleDefinition::StyleDefinition(const char *definition, ColorConvertor * pc, bool useConv) :
+	//!		size(0), fore("#000000"), back("#FFFFFF"),
+	size(0), fore(""), back(""), //!-change-[StyleDefault]
+	bold(false), italics(false), eolfilled(false), underlined(false),
+	caseForce(SC_CASE_MIXED),
+	visible(true), changeable(true), pConvertor(pc), invertColors(useConv),
 //!		specified(sdNone) {
 		hotspot(false), specified(sdNone) { //!-change-[StyleDefHotspot]
 	ParseStyleDefinition(definition);
@@ -315,78 +468,8 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 	delete []val;
 	return true;
 }
-float clr_brightness(long clr) {
-	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
-}
-void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
-	float var_R = R / 255.0;
-	float var_G = G / 255.0;
-	float var_B = B / 255.0;
-	if (var_R > 0.04045) var_R = pow(((var_R + 0.055) / 1.055), 2.4);
-	else                   var_R = var_R / 12.92;
-	if (var_G > 0.04045) var_G = pow(((var_G + 0.055) / 1.055), 2.4);
-	else                   var_G = var_G / 12.92;
-	if (var_B > 0.04045) var_B = pow(((var_B + 0.055) / 1.055), 2.4);
-	else                   var_B = var_B / 12.92;
-	var_R = var_R * 100.;
-	var_G = var_G * 100.;
-	var_B = var_B * 100.;
-	//Observer. = 2°, Illuminant = D65
-	float X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
-	float Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
-	float Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
-	float var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
-	float var_Y = Y / 100.000;          //ref_Y = 100.000
-	float var_Z = Z / 108.883;          //ref_Z = 108.883
-	if (var_X > 0.008856) var_X = pow(var_X, (1. / 3.));
-	else                    var_X = (7.787 * var_X) + (16. / 116.);
-	if (var_Y > 0.008856) var_Y = pow(var_Y, (1. / 3.));
-	else                    var_Y = (7.787 * var_Y) + (16. / 116.);
-	if (var_Z > 0.008856) var_Z = pow(var_Z, (1. / 3.));
-	else                    var_Z = (7.787 * var_Z) + (16. / 116.);
-	l_s = (116. * var_Y) - 16.;
-	a_s = 500. * (var_X - var_Y);
-	b_s = 200. * (var_Y - var_Z);
 
-	l_s = l_s < 0. ? 0. : l_s > 100. ? 100. : l_s;
-	a_s = a_s < -128. ? -128. : a_s > 128. ? 128 : a_s;
-	b_s = b_s < -128. ? -128. : b_s > 128. ? 128 : b_s;
-}
-
-void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
-	float var_Y = (l_s + 16.) / 116.;
-	float var_X = a_s / 500. + var_Y;
-	float var_Z = var_Y - b_s / 200.;
-	if (pow(var_Y, 3) > 0.008856) var_Y = pow(var_Y, 3);
-	else                      var_Y = (var_Y - 16. / 116.) / 7.787;
-	if (pow(var_X, 3) > 0.008856) var_X = pow(var_X, 3);
-	else                      var_X = (var_X - 16. / 116.) / 7.787;
-	if (pow(var_Z, 3) > 0.008856) var_Z = pow(var_Z, 3);
-	else                      var_Z = (var_Z - 16. / 116.) / 7.787;
-	float X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
-	float Y = 100.000 * var_Y;   //ref_Y = 100.000
-	float Z = 108.883 * var_Z;    //ref_Z = 108.883
-	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
-	var_Y = Y / 100.;       //Y from 0 to 100.000
-	var_Z = Z / 100.;      //Z from 0 to 108.883
-	float var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
-	float var_G = var_X * -0.9689 + var_Y * 1.8758 + var_Z * 0.0415;
-	float var_B = var_X * 0.0557 + var_Y * -0.2040 + var_Z * 1.0570;
-	if (var_R > 0.0031308) var_R = 1.055 * pow(var_R, (1 / 2.4)) - 0.055;
-	else                     var_R = 12.92 * var_R;
-	if (var_G > 0.0031308) var_G = 1.055 * pow(var_G, (1 / 2.4)) - 0.055;
-	else                     var_G = 12.92 * var_G;
-	if (var_B > 0.0031308) var_B = 1.055 * pow(var_B, (1 / 2.4)) - 0.055;
-	else                     var_B = 12.92 * var_B;
-	R = var_R * 255.;
-	G = var_G * 255.;
-	B = var_B * 255.;
-	R = R > 255 ? 255 : R < 0 ? 0 : R;
-	G = G > 255 ? 255 : G < 0 ? 0 : G;
-	B = B > 255 ? 255 : B < 0 ? 0 : B;
-}
-
-Colour invertColor(Colour clr) {
+Colour invertColor2(Colour clr) {
 	if (!clr)
 		return 0xFFFFFF;
 	if (clr == 0xFFFFFF)
@@ -430,12 +513,7 @@ Colour invertColor(Colour clr) {
 
 	return ColourRGB(R, G, B);
 }
-void correctForeColor(Colour &fore, DWORD back) {
-	float bBack = clr_brightness(back);
-	float bFore = clr_brightness(fore);
-	if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
-		fore = invertColor(fore);
-}
+
 Colour ColourRGBOrInvert(unsigned int red, unsigned int green, unsigned int blue, bool invert, bool isBG) {
 	if(!invert)
 		return ColourRGB(red, green, blue);
@@ -444,14 +522,14 @@ Colour ColourRGBOrInvert(unsigned int red, unsigned int green, unsigned int blue
 long StyleDefinition::ForeAsLong(bool useInv) const {
 	long l = ColourFromString(fore);
 	if (invertColors && useInv)
-		l = invertColor(l);
+		l = pConvertor->Convert(l);
 	return l;
 }
 
 long StyleDefinition::BackAsLong(bool useInv) const {
 	long l = ColourFromString(back);
 	if (invertColors && useInv)
-		l = invertColor(l);
+		l = pConvertor->Convert(l);
 	return l;
 }
 
@@ -459,22 +537,22 @@ long StyleDefinition::BackAsLong(bool useInv) const {
 void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd) {
 	bool bSetClr = true;
 	if (style == STYLE_LINENUMBER) {
-		Colour fore, back;
+		Colour fore, back; 
 
-		bool needRecalc = false;
+		bool needRecalc = 0;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
-			fore = layout.GetColorRef("TXTFGCOLOR");
-			needRecalc = true;
+			fore = layout.GetColorRef("FGCOLOR");
+			needRecalc = 1;
 		} else {
 			fore = sd.ForeAsLong(false);
 		}
 		if (!(sd.specified & StyleDefinition::sdBack)) {
 			back = layout.GetColorRef("SCR_BACKCOLOR");
-			needRecalc = true;
+			needRecalc += 1;
 		} else {
 			back = sd.BackAsLong(false);
 		}
-		if (needRecalc) {
+		if (needRecalc == 1) {
 			//float l_s, a_s, b_s;
 			//rgb2lab((back & 0x0000FF), ((back & 0x00FF00) >> 8), ((back & 0xFF0000) >> 16), l_s, a_s, b_s);
 
@@ -482,11 +560,11 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 			float bBack = clr_brightness(back);
 			float bFore = clr_brightness(fore);
 			if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
-				fore = invertColor(fore);
+				fore = convMain.Convert(fore);
 
-		} else if (invertColors) {
-			fore = invertColor(fore);
-			back = invertColor(back);
+		} else if (invertColors && needRecalc == 0) {
+			fore = convMain.Convert(fore);
+			back = convMain.Convert(back);
 		}
 
 		//LineNumberColors(fore, back, sd);
@@ -500,20 +578,20 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 	} else if (style == STYLE_CALLTIP) {
 		Colour fore, back;
 
-		bool needRecalc = false;
+		int needRecalc = 0;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
 			fore = layout.GetColorRef("TIPFGCOLOR");
-			needRecalc = true;
+			needRecalc = 1;
 		} else {
 			fore = sd.ForeAsLong(false);
 		}
 		if (!(sd.specified & StyleDefinition::sdBack)) {
 			back = layout.GetColorRef("TIPBGCOLOR");
-			needRecalc = true;
+			needRecalc +=1;
 		} else {
 			back = sd.BackAsLong(false);
 		}
-		if (needRecalc) {
+		if (needRecalc == 1) {
 			//float l_s, a_s, b_s;
 			//rgb2lab((back & 0x0000FF), ((back & 0x00FF00) >> 8), ((back & 0xFF0000) >> 16), l_s, a_s, b_s);
 
@@ -521,11 +599,11 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 			float bBack = clr_brightness(back);
 			float bFore = clr_brightness(fore);
 			if ((bFore > 128 && bBack > 128) || (bFore < 128 && bBack < 128))
-				fore = invertColor(fore);
+				fore = convMain.Convert(fore);
 
-		} else if (invertColors) {
-			fore = invertColor(fore);
-			back = invertColor(back);
+		} else if (invertColors && needRecalc == 0) {
+			fore = convMain.Convert(fore);
+			back = convMain.Convert(back);
 		}
 
 
@@ -544,9 +622,9 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 	if (sd.specified & StyleDefinition::sdFont)
 		win.SendPointer(SCI_STYLESETFONT, style,
 			const_cast<char *>(sd.font.c_str()));
-	if (bSetClr && sd.specified & StyleDefinition::sdFore)
+	if (bSetClr && (sd.specified & StyleDefinition::sdFore))
 		win.Send(SCI_STYLESETFORE, style, sd.ForeAsLong());
-	if (bSetClr && sd.specified & StyleDefinition::sdBack)
+	if (bSetClr && (sd.specified & StyleDefinition::sdBack))
 		win.Send(SCI_STYLESETBACK, style, sd.BackAsLong());
 	if (sd.specified & StyleDefinition::sdSize)
 		win.Send(SCI_STYLESETSIZE, style, sd.size);
@@ -579,8 +657,7 @@ void SciTEBase::SetStyleFor(GUI::ScintillaWindow &win, const char *lang) {
 			sprintf(key, "style.%s.%0d", lang, style);
 			SString sval = props.GetExpanded(key);
 			if (sval.length()) {
-				StyleDefinition sd(sval.c_str());
-				sd.invertColors = invertColors;
+				StyleDefinition sd(sval.c_str(), &convMain, invertColors);
 				SetOneStyle(win, style, sd);
 			}
 		}
@@ -634,8 +711,13 @@ void SciTEBase::ForwardPropertyToEditor(const char *key) {
 
 void SciTEBase::SetFoldingMarkers(bool main) {
 	Colour fore = layout.GetColorRef("SCR_FORECOLOR");  //props.GetInt("invert.lexer.colors") ? ColourRGB(0x80, 0x80, 0x80) : ColourRGB(0xff, 0xff, 0xff);
-	Colour back = layout.GetColorRef("TXTFGCOLOR"); //props.GetInt("invert.lexer.colors") ? ColourRGB(0xff, 0xff, 0xff) : ColourRGB(0x80, 0x80, 0x80);
-	correctForeColor(back, layout.GetColorRef("SCR_BACKCOLOR"));
+	Colour back = layout.GetColorRef("FGCOLOR"); //props.GetInt("invert.lexer.colors") ? ColourRGB(0xff, 0xff, 0xff) : ColourRGB(0x80, 0x80, 0x80);
+	
+	float brBack = clr_brightness(back);
+	float brFore = clr_brightness(fore);
+	if ((brFore > 128 && brBack > 128) || (brFore < 128 && brBack < 128))
+		back = convMain.Convert(layout.GetColorRef("SCR_BACKCOLOR"));
+
 	switch (props.GetInt("fold.symbols")) {
 	case 0:
 		// Arrow pointing right for contracted folders, arrow pointing down for expanded
@@ -915,7 +997,7 @@ void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *col
 		Colour c = ColourFromString(clr);
 		int a = props.GetInt(alphaProp, 30) & 0xFF;
 		if (invertColors) {
-			c = invertColor(c);
+			c = convMain.Convert(c);
 			a *= 2;
 		}
 		c |= a << 24;
@@ -931,7 +1013,7 @@ void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *col
 	}
 }
 
-void SciTEBase::ReadProperties() {
+void SciTEBase::ReadProperties() {	
 	if (extender)
 		extender->Clear();
 	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
@@ -964,15 +1046,6 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 
-	// languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
-	// if (strcmp("errorlist", languageCurrent.c_str())) {
-		// Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
-		// wOutput.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-
-		// plexer = Lexilla::MakeLexer("searchResult");
-		// wFindRes.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
-	// }
-
 	SString kw0 = props.GetNewExpand("keywords.", fileNameForExtension.c_str());
 	wEditor.CallString(SCI_SETKEYWORDS, 0, kw0.c_str());
 
@@ -1001,6 +1074,13 @@ void SciTEBase::ReadProperties() {
 		else
 			wEditor.CallString(SCI_SETPROPERTY,
 				reinterpret_cast<uptr_t>(propertiesToForward[i]), props.GetExpanded(propertiesToForward[i]).c_str());
+	}
+
+	if (firstPropertiesRead) {
+		SString points = props.Get("lexer.lightness.points");
+		if (points == "")
+			points = "(0,100)(10,93.177)(40, 78.912)(50,75.625)(60,71.392)(70,64.377)(80,52.192)(90, 31.897)(99, 3.822)(100,0)";
+		convMain.Init(points.c_str(), this);
 	}
 
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", fileNameForExtension.c_str()).c_str());
@@ -1041,7 +1121,7 @@ void SciTEBase::ReadProperties() {
 	else
 		//!-end-[caret]
 		wEditor.Call(SCI_SETCARETFORE,
-			ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0),invertColors));
+			ColourOfProperty("caret.fore", ColourRGB(0, 0, 0),invertColors));
 	wEditor.Call(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	wEditor.Call(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
@@ -1091,7 +1171,7 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETEDGECOLUMN, props.GetInt("edge.column", 0));
 	wEditor.Call(SCI_SETEDGEMODE, props.GetInt("edge.mode", EDGE_NONE));
 	wEditor.Call(SCI_SETEDGECOLOUR,
-		ColourOfProperty(props, "edge.colour", ColourRGB(0xff, 0xda, 0xda), invertColors));
+		ColourOfProperty("edge.colour", ColourRGB(0xff, 0xda, 0xda), invertColors));
 
 
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_TEXT, "selection.fore", "selection.alpha");
@@ -1301,9 +1381,9 @@ void SciTEBase::ReadProperties() {
 	SetFoldingMarkers(true);
 
 	wEditor.Call(SCI_MARKERSETFORE, markerBookmark,
-		ColourOfProperty(props, "bookmark.fore", ColourRGB(0, 0, 0x7f)));
+		ColourOfProperty("bookmark.fore", ColourRGB(0, 0, 0x7f)));
 	wEditor.Call(SCI_MARKERSETBACK, markerBookmark,
-		ColourOfProperty(props, "bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
+		ColourOfProperty("bookmark.back", ColourRGB(0x80, 0xff, 0xff)));
 	wEditor.Call(SCI_MARKERSETALPHA,
 		props.GetInt("bookmark.alpha", SC_ALPHA_NOALPHA));
 	SString bookMarkXPM = props.Get("bookmark.pixmap");
@@ -1320,20 +1400,15 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_MARKERSETBACK, SC_MARKNUM_HISTORY_MODIFIED, ColourRGB(0xff, 0x80, 0x00));
 
 	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
-	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty(props,
-		"error.marker.fore", ColourRGB(0x7f, 0, 0)));
-	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty(props,
-		"error.marker.back", ColourRGB(0xff, 0xff, 0)));
+	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
+	wEditor.Call(SCI_MARKERSETBACK, markerError, ColourOfProperty("error.marker.back", ColourRGB(0xff, 0xff, 0)));
 
 	wEditor.Call(SCI_MARKERDEFINE, markerBreakPoint, SC_MARK_ARROW);
-	wEditor.Call(SCI_MARKERSETFORE, markerBreakPoint, ColourOfProperty(props,
-		"breakpoint.marker.fore", ColourRGB(0x7f, 0, 0x7f)));
-	wEditor.Call(SCI_MARKERSETBACK, markerBreakPoint, ColourOfProperty(props,
-		"breakpoint.marker.back", ColourRGB(0xff, 0, 0)));
+	wEditor.Call(SCI_MARKERSETFORE, markerBreakPoint, ColourOfProperty("breakpoint.marker.fore", ColourRGB(0x7f, 0, 0x7f)));
+	wEditor.Call(SCI_MARKERSETBACK, markerBreakPoint, ColourOfProperty("breakpoint.marker.back", ColourRGB(0xff, 0, 0)));
 
 	wEditor.Call(SCI_MARKERDEFINE, markerVertAlign, SC_MARK_VLINE);
-	wEditor.Call(SCI_MARKERSETFORE, markerVertAlign, ColourOfProperty(props,
-		"vertalign.marker.fore", ColourRGB(0x0, 0, 0x7f)));
+	wEditor.Call(SCI_MARKERSETFORE, markerVertAlign, ColourOfProperty("vertalign.marker.fore", ColourRGB(0x0, 0, 0x7f)));
 
 	wEditor.Call(SCI_AUTOCSETMULTI, SC_MULTIAUTOC_EACH);
 
@@ -1380,7 +1455,6 @@ void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
 
-
 	std::string languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 	if (strcmp("errorlist", languageCurrent.c_str())) {
 		Scintilla::ILexer5 *plexer = Lexilla::MakeLexer("errorlist");
@@ -1420,7 +1494,7 @@ void SciTEBase::ReadPropertiesEx() {
 	wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
 
 	CallChildren(SCI_SETCARETFORE,
-	   ColourOfProperty(props, "caret.fore", ColourRGB(0, 0, 0), invertColors));
+	   ColourOfProperty("caret.fore", ColourRGB(0, 0, 0), invertColors));
 	CallChildren(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	CallChildren(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
@@ -1438,7 +1512,7 @@ void SciTEBase::ReadPropertiesEx() {
 	SetColourElement(&wFindRes, SC_ELEMENT_CARET_LINE_BACK, "findres.caret.line.back", "findres.caret.line.back.alpha");
 
 //!-start-[output.caret]  - не будем делать в поиске
-	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty(props, "output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
+	wOutput.Call(SCI_SETCARETFORE, ColourOfProperty("output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
 
 	SetColourElement(&wOutput, SC_ELEMENT_CARET_LINE_BACK, "output.caret.line.back", "output.caret.line.back.alpha");
 
@@ -1447,8 +1521,22 @@ void SciTEBase::ReadPropertiesEx() {
 		CallChildren(SCI_SETCARETPERIOD, caretPeriod.value());
 	}
 
-	CallChildren(SCI_SETCARETLINELAYER, SC_LAYER_UNDER_TEXT);
-	CallChildren(SCI_SETSELECTIONLAYER, SC_LAYER_UNDER_TEXT);
+	wEditorL.Call(SCI_SETCARETLINELAYER, SC_LAYER_UNDER_TEXT);
+	wEditorR.Call(SCI_SETCARETLINELAYER, SC_LAYER_UNDER_TEXT);
+	wOutput.Call(SCI_SETCARETLINELAYER,  SC_LAYER_UNDER_TEXT);
+	wFindRes.Call(SCI_SETCARETLINELAYER, SC_LAYER_UNDER_TEXT);
+
+	wEditorL.Call(SCI_SETSELECTIONLAYER, SC_LAYER_UNDER_TEXT);
+	wEditorR.Call(SCI_SETSELECTIONLAYER, SC_LAYER_UNDER_TEXT);
+	wOutput.Call(SCI_SETSELECTIONLAYER,  SC_LAYER_UNDER_TEXT);
+	wFindRes.Call(SCI_SETSELECTIONLAYER, SC_LAYER_UNDER_TEXT);
+
+	wEditorL.Call(SCI_MARKERSETLAYER, SC_LAYER_UNDER_TEXT);
+	wEditorR.Call(SCI_MARKERSETLAYER, SC_LAYER_UNDER_TEXT);
+	wOutput.Call(SCI_MARKERSETLAYER,  SC_LAYER_UNDER_TEXT);
+	wFindRes.Call(SCI_MARKERSETLAYER, SC_LAYER_UNDER_TEXT);
+
+
 	SetColourElement(NULL, SC_ELEMENT_SELECTION_TEXT, "selection.fore", "selection.alpha");
 
 	SetColourElement(NULL, SC_ELEMENT_SELECTION_BACK, "selection.back", "selection.alpha");
@@ -1764,8 +1852,7 @@ void SciTEBase::ReadFontProperties() {
 */
 //!-start-[StyleDefault]
 #if !defined(GTK)
-	StyleDefinition style(sval.c_str());
-	style.invertColors = invertColors;
+	StyleDefinition style(sval.c_str(), &convMain, invertColors);
 	char sColor[8];
 	ColourDesired color;
 	if (!(style.specified & StyleDefinition::sdBack)) {
@@ -1796,7 +1883,7 @@ void SciTEBase::ReadFontProperties() {
 	sprintf(key, "style.%s.%0d", languageName, STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
 	{
-		StyleDefinition style(sval.c_str());
+		StyleDefinition style(sval.c_str(), &convMain, invertColors);
 		style.invertColors = invertColors;
 		SetOneStyle(wEditor, STYLE_DEFAULT, style);
 	}
@@ -1810,9 +1897,8 @@ void SciTEBase::ReadFontProperties() {
 	sprintf(key, "style.%s.%0d", "errorlist", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
 	{
-		StyleDefinition style(sval.c_str());
-		style.invertColors = invertColors;
-		SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
+		StyleDefinition style(sval.c_str(), &convMain, invertColors);
+		SetOneStyle(wOutput, STYLE_DEFAULT, style);
 	}
 	wOutput.Call(SCI_STYLECLEARALL, 0, 0);
 	SetStyleFor(wOutput, "*");
@@ -1822,9 +1908,8 @@ void SciTEBase::ReadFontProperties() {
 	sprintf(key, "style.%s.%0d", "searchResult", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
 	{
-		StyleDefinition style(sval.c_str());
-		style.invertColors = invertColors;
-		SetOneStyle(wFindRes, STYLE_DEFAULT, sval.c_str());
+		StyleDefinition style(sval.c_str(), &convMain, invertColors);
+		SetOneStyle(wFindRes, STYLE_DEFAULT, style);
 	}
 	wFindRes.Call(SCI_STYLECLEARALL, 0, 0);
 	SetStyleFor(wFindRes, "*");
@@ -1834,7 +1919,7 @@ void SciTEBase::ReadFontProperties() {
 
 	if (CurrentBuffer()->useMonoFont) {
 		sval = props.GetExpanded("font.monospace");
-		StyleDefinition sd(sval.c_str());
+		StyleDefinition sd(sval.c_str(), &convMain, invertColors);
 		for (int style = 0; style <= STYLE_MAX; style++) {
 			if (style != STYLE_LINENUMBER) {
 				if (sd.specified & StyleDefinition::sdFont) {
