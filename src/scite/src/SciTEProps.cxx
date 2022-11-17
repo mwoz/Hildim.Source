@@ -275,7 +275,7 @@ void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
 		return;
 	}
 
-	for (int i = 0; i < nPoints - 2; ++i) {
+	for (int i = 0; i < nPoints - 1; ++i) {
 		m_k[i] = (m_y[i + 1] - m_y[i]) / (m_x[i + 1] - m_x[i]);
 		m_b[i] = m_y[i] - m_k[i] * m_x[i];
 	}
@@ -298,12 +298,12 @@ Colour ColorConvertorLAB::Convert(Colour colorIn) {
 	if (L <= m_x[0]){
 		L2 = m_y[0];
 	}
-	else if (L >= m_x[nPoints - 1]){
-		L2 = m_y[nPoints - 1];
+	else if (L >= m_x[nPoints]){
+		L2 = m_y[nPoints];
 	}
 	else{
-		L2 = m_y[nPoints - 1];
-		for (int i = 0; i < nPoints - 2; ++i){
+		L2 = m_y[nPoints];
+		for (int i = 0; i <= nPoints - 1; ++i){
 			if (L >= m_x[i] && L < m_x[i + 1]) {
 				L2 = L * m_k[i] + m_b[i];
 				break;
@@ -1472,6 +1472,10 @@ void SciTEBase::ReadPropertiesEx() {
 	for (size_t i=0; propertiesToForward[i]; i++) {
 		ForwardPropertyToEditor(propertiesToForward[i]);
 	}
+
+	wEditorL.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
+	wEditorR.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
+	wFindRes.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
 
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", ExtensionFileName().c_str()).c_str());
 	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());

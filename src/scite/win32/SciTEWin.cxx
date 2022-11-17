@@ -39,6 +39,7 @@
 #endif
 
 #include "LuaExtension.h"
+#include <sstream>
 
 const GUI::gui_char appName[] = GUI_TEXT("HildiM");
 
@@ -548,32 +549,91 @@ void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 }
 
 
+//void SciTEWin::CopyAsRTF() {
+//	Sci_CharacterRange cr = GetSelection();
+//	char *fileNameTemp = _tempnam(NULL, "scite-tmp-");
+//	if (fileNameTemp) {
+//		SaveToRTF(GUI::StringFromUTF8(fileNameTemp), cr.cpMin, cr.cpMax);
+//		FILE *fp = fopen(fileNameTemp, "rb");
+//		if (fp) {
+//			fseek(fp, 0, SEEK_END);
+//			int len = ftell(fp);
+//			fseek(fp, 0, SEEK_SET);
+//			HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len + 1);
+//			if (hand) {
+//				::OpenClipboard(MainHWND());
+//				::EmptyClipboard();
+//				char *ptr = static_cast<char *>(::GlobalLock(hand));
+//				fread(ptr, 1, len, fp);
+//				ptr[len] = '\0';
+//				::GlobalUnlock(hand);
+//				::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
+//				::CloseClipboard();
+//			}
+//			fclose(fp);
+//		}
+//		_unlink(fileNameTemp);
+//		free(fileNameTemp);
+//	}
+//}
 void SciTEWin::CopyAsRTF() {
-	Sci_CharacterRange cr = GetSelection();
-	char *fileNameTemp = _tempnam(NULL, "scite-tmp-");
-	if (fileNameTemp) {
-		SaveToRTF(GUI::StringFromUTF8(fileNameTemp), cr.cpMin, cr.cpMax);
-		FILE *fp = fopen(fileNameTemp, "rb");
-		if (fp) {
-			fseek(fp, 0, SEEK_END);
-			int len = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len + 1);
-			if (hand) {
-				::OpenClipboard(MainHWND());
-				::EmptyClipboard();
-				char *ptr = static_cast<char *>(::GlobalLock(hand));
-				fread(ptr, 1, len, fp);
-				ptr[len] = '\0';
-				::GlobalUnlock(hand);
-				::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
-				::CloseClipboard();
-			}
-			fclose(fp);
+	const Sci_CharacterRange cr = GetSelection();
+
+	bool bOpen = false;
+
+	char* text = new char[(cr.cpMax - cr.cpMin + 1)];
+
+	Sci_TextRange tr;
+	tr.chrg.cpMin = cr.cpMin;
+	tr.chrg.cpMax = cr.cpMax;
+	tr.lpstrText = text;
+
+	wEditor.SendPointer(SCI_GETTEXTRANGE, 0, &tr);
+
+	size_t len = strlen(text);
+	HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
+	if (hand) {
+		if (!bOpen) {
+			::OpenClipboard(MainHWND());
+			::EmptyClipboard();
 		}
-		_unlink(fileNameTemp);
-		free(fileNameTemp);
+		bOpen = true;
+		char *ptr = static_cast<char *>(::GlobalLock(hand));
+		if (ptr) {
+			memcpy(ptr, text, len);
+			::GlobalUnlock(hand);
+		}
+		::SetClipboardData(CF_TEXT, hand);
+
+		hand = GlobalAlloc(GMEM_DDESHARE, sizeof(LCID));
+		LCID *lcid = (LCID*)GlobalLock(hand);
+		*lcid = GetSystemDefaultLCID();
+		GlobalUnlock(hand);
+		SetClipboardData(CF_LOCALE, hand);
 	}
+	std::ostringstream oss;
+	SaveToStreamRTF(oss, cr.cpMin, cr.cpMax);
+	const std::string rtf = oss.str();
+	len = rtf.length() + 1;	// +1 for NUL
+	hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
+	if (hand) {
+		if (!bOpen) {
+			::OpenClipboard(MainHWND());
+			::EmptyClipboard();
+		}
+		bOpen = true;
+		char *ptr = static_cast<char *>(::GlobalLock(hand));
+		if (ptr) {
+			memcpy(ptr, rtf.c_str(), len);
+			::GlobalUnlock(hand);
+		}
+		::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
+		//::CloseClipboard();
+	}
+
+	if(bOpen)
+		::CloseClipboard();
+	delete[] text;
 }
 
 void SciTEWin::FullScreenToggle() {

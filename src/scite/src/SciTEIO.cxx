@@ -411,9 +411,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 	WindowSetFocus(wOutput);
 	WindowSetFocus(wEditor);
 	wEditor.Call(SCI_SETSAVEPOINT);
-	if (props.GetInt("fold.on.open") > 0) {
-		FoldAll();
-	}
+
 	wEditor.Call(SCI_GOTOPOS, 0);
 	Redraw();
 }

@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
 
 #if defined(GTK)
 
@@ -100,6 +101,37 @@
 #define RTF_FONTFACE "Courier New"
 #define RTF_COLOR "#000000"
 
+constexpr bool IsASCII(int ch) noexcept {
+	return (ch >= 0) && (ch < 0x80);
+}
+
+unsigned int UTF32Character(const char *utf8) noexcept {
+	unsigned char ch = utf8[0];
+	unsigned int u32Char;
+	if (ch < 0x80) {
+		u32Char = ch;
+	} else if (ch < 0x80 + 0x40 + 0x20) {
+		u32Char = (ch & 0x1F) << 6;
+		ch = utf8[1];
+		u32Char += ch & 0x7F;
+	} else if (ch < 0x80 + 0x40 + 0x20 + 0x10) {
+		u32Char = (ch & 0xF) << 12;
+		ch = utf8[1];
+		u32Char += (ch & 0x7F) << 6;
+		ch = utf8[2];
+		u32Char += ch & 0x7F;
+	} else {
+		u32Char = (ch & 0x7) << 18;
+		ch = utf8[1];
+		u32Char += (ch & 0x3F) << 12;
+		ch = utf8[2];
+		u32Char += (ch & 0x3F) << 6;
+		ch = utf8[3];
+		u32Char += ch & 0x3F;
+	}
+	return u32Char;
+}
+
 // extract the next RTF control word from *style
 void GetRTFNextControl(char **style, char *control) {
 	int len;
@@ -132,10 +164,48 @@ void GetRTFStyleChange(char *delta, char *last, char *current) { // \f0\fs20\cf0
 	strcpy(last, current);
 }
 
-void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
-	int lengthDoc = LengthDocument();
+static void GetRTFNextControl(const char **style, char *control) noexcept {
+	const char *pos = *style;
+	*control = '\0';
+	if ('\0' == *pos) return;
+	pos++; // implicit skip over leading '\'
+	while ('\0' != *pos && '\\' != *pos) { pos++; }
+	ptrdiff_t len = pos - *style;
+	memcpy(control, *style, len);
+	*(control + len) = '\0';
+	*style = pos;
+}
+
+static std::string GetRTFStyleChange(const char *last, const char *current) { // \f0\fs20\cf0\highlight0\b0\i0
+	char lastControl[MAX_STYLEDEF] = "";
+	char currentControl[MAX_STYLEDEF] = "";
+	const char *lastPos = last;
+	const char *currentPos = current;
+	std::string delta;
+	// font face, size, color, background, bold, italic
+	for (int i = 0; i < 6; i++) {
+		GetRTFNextControl(&lastPos, lastControl);
+		GetRTFNextControl(&currentPos, currentControl);
+		if (strcmp(lastControl, currentControl)) {	// changed
+			delta += currentControl;
+		}
+	}
+	if (!delta.empty()) { delta += " "; }
+	return delta;
+}
+
+static size_t FindCaseInsensitive(const std::vector<std::string> &values, const std::string &s) {
+	for (size_t i = 0; i < values.size(); i++)
+		if (EqualCaseInsensitive(s.c_str(), values[i].c_str()))
+			return i;
+	return values.size();
+}
+
+void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
+	const int lengthDoc = LengthDocument();
 	if (end < 0)
 		end = lengthDoc;
+	//RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 
 	// Read the default settings
@@ -148,18 +218,15 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 	StyleDefinition defaultStyle(valdef);
 	defaultStyle.ParseStyleDefinition(val);
 
-	delete []val;
-	delete []valdef;
-
 	int tabSize = props.GetInt("export.rtf.tabsize", props.GetInt("tabsize"));
-	int wysiwyg = props.GetInt("export.rtf.wysiwyg", 1);
-	SString fontFace = props.GetExpanded("export.rtf.font.face");
+	const int wysiwyg = props.GetInt("export.rtf.wysiwyg", 1);
+	std::string fontFace = props.GetExpanded("export.rtf.font.face").c_str();
 	if (fontFace.length()) {
-		defaultStyle.font = fontFace;
+		defaultStyle.font = fontFace.c_str();
 	} else if (defaultStyle.font.length() == 0) {
 		defaultStyle.font = RTF_FONTFACE;
 	}
-	int fontSize = props.GetInt("export.rtf.font.size", 0);
+	const int fontSize = props.GetInt("export.rtf.font.size", 0);
 	if (fontSize > 0) {
 		defaultStyle.size = fontSize << 1;
 	} else if (defaultStyle.size == 0) {
@@ -167,156 +234,179 @@ void SciTEBase::SaveToRTF(FilePath saveName, int start, int end) {
 	} else {
 		defaultStyle.size <<= 1;
 	}
-	unsigned int characterset = props.GetInt("character.set", SC_CHARSET_DEFAULT);
-	int tabs = props.GetInt("export.rtf.tabs", 0);
+	const bool isUTF8 = (codePage == SC_CP_UTF8);
+	const unsigned int characterset = props.GetInt("character.set", 1251);
+	const int tabs = props.GetInt("export.rtf.tabs", 0);
 	if (tabSize == 0)
 		tabSize = 4;
 
-	FILE *fp = saveName.Open(GUI_TEXT("wt"));
-	if (fp) {
-		char styles[STYLE_DEFAULT + 1][MAX_STYLEDEF];
-		char fonts[STYLE_DEFAULT + 1][MAX_FONTDEF];
-		char colors[STYLE_DEFAULT + 1][MAX_COLORDEF];
-		char lastStyle[MAX_STYLEDEF], deltaStyle[MAX_STYLEDEF];
-		int fontCount = 1, colorCount = 2, i;
-		fputs(RTF_HEADEROPEN RTF_FONTDEFOPEN, fp);
-		strncpy(fonts[0], defaultStyle.font.c_str(), MAX_FONTDEF);
-		fprintf(fp, RTF_FONTDEF, 0, characterset, defaultStyle.font.c_str());
-		strncpy(colors[0], defaultStyle.fore.c_str(), MAX_COLORDEF);
-		strncpy(colors[1], defaultStyle.back.c_str(), MAX_COLORDEF);
+	std::vector<std::string> styles;
+	std::vector<std::string> fonts;
+	std::vector<std::string> colors;
+	os << RTF_HEADEROPEN << RTF_FONTDEFOPEN;
+	fonts.push_back(defaultStyle.font.c_str());
+	os << "{\\f" << 0 << "\\fnil\\fcharset" << characterset << " " << defaultStyle.font.c_str() << ";}";
+	if (defaultStyle.fore.size() == 0)
+		defaultStyle.fore = "#000000";
+	colors.push_back(defaultStyle.fore.c_str());
+	if (defaultStyle.back.size() == 0)
+		defaultStyle.back = "#FFFFFF";
+	colors.push_back(defaultStyle.back.c_str());
 
-		for (int istyle = 0; istyle < STYLE_DEFAULT; istyle++) {
-			sprintf(key, "style.*.%0d", istyle);
-			char *valdef = StringDup(props.GetExpanded(key).c_str());
-			sprintf(key, "style.%s.%0d", language.c_str(), istyle);
-			char *val = StringDup(props.GetExpanded(key).c_str());
+	for (int istyle = 0; istyle <= 255; istyle++) {
+		std::ostringstream osStyle;
 
-			StyleDefinition sd(valdef);
-			sd.ParseStyleDefinition(val);
+		sprintf(key, "style.%s.%0d", language.c_str(), istyle);
+		SString sval = props.GetExpanded(key);
 
-			if (sd.specified != StyleDefinition::sdNone) {
-				if (wysiwyg && sd.font.length()) {
-					for (i = 0; i < fontCount; i++)
-						if (EqualCaseInsensitive(sd.font.c_str(), fonts[i]))
-							break;
-					if (i >= fontCount) {
-						strncpy(fonts[fontCount++], sd.font.c_str(), MAX_FONTDEF);
-						fprintf(fp, RTF_FONTDEF, i, characterset, sd.font.c_str());
-					}
-					sprintf(lastStyle, RTF_SETFONTFACE "%d", i);
-				} else {
-					strcpy(lastStyle, RTF_SETFONTFACE "0");
+		const StyleDefinition sd(sval.c_str());
+
+		if (sd.specified != StyleDefinition::sdNone) {
+			size_t iFont = 0;
+			if (wysiwyg && sd.font.length()) {
+				iFont = FindCaseInsensitive(fonts, sd.font.c_str());
+				if (iFont >= fonts.size()) {
+					fonts.push_back(sd.font.c_str());
+					os << "{\\f" << iFont << "\\fnil\\fcharset" << characterset << " " << sd.font.c_str() << ";}";
 				}
+			}
+			osStyle << RTF_SETFONTFACE << iFont;
 
-				sprintf(lastStyle + strlen(lastStyle), RTF_SETFONTSIZE "%d",
-				        wysiwyg && sd.size ? sd.size << 1 : defaultStyle.size);
+			osStyle << RTF_SETFONTSIZE << (wysiwyg && sd.size ? sd.size << 1 : defaultStyle.size);
 
-				if (sd.specified & StyleDefinition::sdFore) {
-					for (i = 0; i < colorCount; i++)
-						if (EqualCaseInsensitive(sd.fore.c_str(), colors[i]))
-							break;
-					if (i >= colorCount)
-						strncpy(colors[colorCount++], sd.fore.c_str(), MAX_COLORDEF);
-					sprintf(lastStyle + strlen(lastStyle), RTF_SETCOLOR "%d", i);
-				} else {
-					strcat(lastStyle, RTF_SETCOLOR "0");	// Default fore
-				}
+			size_t iFore = 0;
+			if (sd.specified & StyleDefinition::sdFore) {
+				iFore = FindCaseInsensitive(colors, sd.fore.c_str());
+				if (iFore >= colors.size())
+					colors.push_back(sd.fore.c_str());
+			}
+			osStyle << RTF_SETCOLOR << iFore;
 
-				// PL: highlights doesn't seems to follow a distinct table, at least with WordPad and Word 97
-				// Perhaps it is different for Word 6?
-//				sprintf(lastStyle + strlen(lastStyle), RTF_SETBACKGROUND "%d",
-//				        sd.back.length() ? GetRTFHighlight(sd.back.c_str()) : 0);
-				if (sd.specified & StyleDefinition::sdBack) {
-					for (i = 0; i < colorCount; i++)
-						if (EqualCaseInsensitive(sd.back.c_str(), colors[i]))
-							break;
-					if (i >= colorCount)
-						strncpy(colors[colorCount++], sd.back.c_str(), MAX_COLORDEF);
-					sprintf(lastStyle + strlen(lastStyle), RTF_SETBACKGROUND "%d", i);
-				} else {
-					strcat(lastStyle, RTF_SETBACKGROUND "1");	// Default back
-				}
-				if (sd.specified & StyleDefinition::sdBold) {
-					strcat(lastStyle, sd.bold ? RTF_BOLD_ON : RTF_BOLD_OFF);
-				} else {
-					strcat(lastStyle, defaultStyle.bold ? RTF_BOLD_ON : RTF_BOLD_OFF);
-				}
-				if (sd.specified & StyleDefinition::sdItalics) {
-					strcat(lastStyle, sd.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
-				} else {
-					strcat(lastStyle, defaultStyle.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
-				}
-				strncpy(styles[istyle], lastStyle, MAX_STYLEDEF);
+			// PL: highlights doesn't seems to follow a distinct table, at least with WordPad and Word 97
+			// Perhaps it is different for Word 6?
+			size_t iBack = 1;
+			if (sd.specified & StyleDefinition::sdBack) {
+				iBack = FindCaseInsensitive(colors, sd.back.c_str());
+				if (iBack >= colors.size())
+					colors.push_back(sd.back.c_str());
+			}
+			osStyle << RTF_SETBACKGROUND << iBack;
+
+			if (sd.specified & StyleDefinition::sdBold) {
+				osStyle << (sd.bold ? RTF_BOLD_ON : RTF_BOLD_OFF);
 			} else {
-				sprintf(styles[istyle], RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
-				        RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
-				        RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
+				osStyle << (defaultStyle.bold ? RTF_BOLD_ON : RTF_BOLD_OFF);
 			}
-			delete []val;
-			delete []valdef;
-		}
-		fputs(RTF_FONTDEFCLOSE RTF_COLORDEFOPEN, fp);
-		for (i = 0; i < colorCount; i++) {
-			fprintf(fp, RTF_COLORDEF, IntFromHexByte(colors[i] + 1),
-			        IntFromHexByte(colors[i] + 3), IntFromHexByte(colors[i] + 5));
-		}
-		fprintf(fp, RTF_COLORDEFCLOSE RTF_HEADERCLOSE RTF_BODYOPEN RTF_SETFONTFACE "0"
-		        RTF_SETFONTSIZE "%d" RTF_SETCOLOR "0 ", defaultStyle.size);
-		sprintf(lastStyle, RTF_SETFONTFACE "0" RTF_SETFONTSIZE "%d"
-		        RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
-		        RTF_BOLD_OFF RTF_ITALIC_OFF, defaultStyle.size);
-		bool prevCR = false;
-		int styleCurrent = -1;
-		TextReader acc(wEditor);
-		int column = 0;
-		for (i = start; i < end; i++) {
-			char ch = acc[i];
-			int style = acc.StyleAt(i);
-			if (style > STYLE_DEFAULT)
-				style = 0;
-			if (style != styleCurrent) {
-				GetRTFStyleChange(deltaStyle, lastStyle, styles[style]);
-				if (*deltaStyle)
-					fputs(deltaStyle, fp);
-				styleCurrent = style;
+			if (sd.specified & StyleDefinition::sdItalics) {
+				osStyle << (sd.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
+			} else {
+				osStyle << (defaultStyle.italics ? RTF_ITALIC_ON : RTF_ITALIC_OFF);
 			}
-			if (ch == '{')
-				fputs("\\{", fp);
-			else if (ch == '}')
-				fputs("\\}", fp);
-			else if (ch == '\\')
-				fputs("\\\\", fp);
-			else if (ch == '\t') {
-				if (tabs) {
-					fputs(RTF_TAB, fp);
-				} else {
-					int ts = tabSize - (column % tabSize);
-					for (int itab = 0; itab < ts; itab++) {
-						fputc(' ', fp);
-					}
-					column += ts - 1;
-				}
-			} else if (ch == '\n') {
-				if (!prevCR) {
-					fputs(RTF_EOLN, fp);
-					column = -1;
-				}
-			} else if (ch == '\r') {
-				fputs(RTF_EOLN, fp);
-				column = -1;
-			} else
-				fputc(ch, fp);
-			column++;
-			prevCR = ch == '\r';
+		} else {
+			osStyle << RTF_SETFONTFACE "0" RTF_SETFONTSIZE << defaultStyle.size <<
+				RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
+				RTF_BOLD_OFF RTF_ITALIC_OFF;
 		}
-		fputs(RTF_BODYCLOSE, fp);
-		fclose(fp);
-	} else {
-		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+		styles.push_back(osStyle.str());
 	}
+	os << RTF_FONTDEFCLOSE RTF_COLORDEFOPEN;
+	for (const std::string &color : colors) {
+		os << "\\red" << IntFromHexByte(color.c_str() + 1) << "\\green" << IntFromHexByte(color.c_str() + 3) <<
+			"\\blue" << IntFromHexByte(color.c_str() + 5) << ";";
+	}
+	os << RTF_COLORDEFCLOSE RTF_HEADERCLOSE RTF_BODYOPEN RTF_SETFONTFACE "0"
+		RTF_SETFONTSIZE << defaultStyle.size << RTF_SETCOLOR "0 ";
+	std::ostringstream osStyleDefault;
+	osStyleDefault << RTF_SETFONTFACE "0" RTF_SETFONTSIZE << defaultStyle.size <<
+		RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
+		RTF_BOLD_OFF RTF_ITALIC_OFF;
+	std::string lastStyle = osStyleDefault.str();
+	bool prevCR = false;
+	int styleCurrent = -1;
+	TextReader acc(wEditor);
+	int column = 0;
+	for (int iPos = start; iPos < end; iPos++) {
+		const char ch = acc[iPos];
+		int style = acc.StyleAt(iPos);
+		if (style > 255)
+			style = 0;
+		if (style != styleCurrent) {
+			const std::string deltaStyle = GetRTFStyleChange(lastStyle.c_str(), styles[style].c_str());
+			lastStyle = styles[style];
+			if (!deltaStyle.empty())
+				os << deltaStyle;
+			styleCurrent = style;
+		}
+		if (ch == '{')
+			os << "\\{";
+		else if (ch == '}')
+			os << "\\}";
+		else if (ch == '\\')
+			os << "\\\\";
+		else if (ch == '\t') {
+			if (tabs) {
+				os << RTF_TAB;
+			} else {
+				const int ts = tabSize - (column % tabSize);
+				for (int itab = 0; itab < ts; itab++) {
+					os << ' ';
+				}
+				column += ts - 1;
+			}
+		} else if (ch == '\n') {
+			if (!prevCR) {
+				os << RTF_EOLN;
+				column = -1;
+			}
+		} else if (ch == '\r') {
+			os << RTF_EOLN;
+			column = -1;
+		} else if (isUTF8 && !IsASCII(ch)) {
+			const int nextPosition = wEditor.Call(SCI_POSITIONAFTER, iPos);
+			wEditor.Call(SCI_SETTARGETSTART, iPos);
+			wEditor.Call(SCI_SETTARGETEND, nextPosition);
+			char u8Char[5] = "";
+			wEditor.CallPointer(SCI_TARGETASUTF8, 0, (void *)u8Char);
+			const unsigned int u32 = UTF32Character(u8Char);
+			if (u32 < 0x10000) {
+				os << "\\u" << static_cast<short>(u32) << "?";
+			} else {
+				os << "\\u" << static_cast<short>(((u32 - 0x10000) >> 10) + 0xD800) << "?";
+				os << "\\u" << static_cast<short>((u32 & 0x3ff) + 0xDC00) << "?";
+			}
+			iPos = nextPosition - 1;
+		} else {
+			os << ch;
+		}
+		column++;
+		prevCR = ch == '\r';
+	}
+	os << RTF_BODYCLOSE;
 }
 
+void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
+	FILE *fp = saveName.Open(GUI_TEXT("wt"));
+	bool failedWrite = fp == nullptr;
+	if (fp) {
+		try {
+			std::ostringstream oss;
+			SaveToStreamRTF(oss, start, end);
+			const std::string rtf = oss.str();
+			if (fwrite(rtf.c_str(), 1, rtf.length(), fp) != rtf.length()) {
+				failedWrite = true;
+			}
+			if (fclose(fp) != 0) {
+				failedWrite = true;
+			}
+		} catch (std::exception &) {
+			failedWrite = true;
+		}
+	}
+	if (failedWrite) {
+		SString msg = "Could not save file \n";
+		wOutput.CallString(SCI_ADDTEXT, msg.length(), msg.c_str());
+	}
+}
 
 //---------- Save to HTML ----------
 

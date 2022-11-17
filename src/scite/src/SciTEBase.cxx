@@ -3007,10 +3007,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		StartStreamComment();
 		break;
 
-	case IDM_TOGGLE_FOLDALL:
-		FoldAll();
-		break;
-
 	case IDM_UPRCASE:
 		CallFocused(SCI_UPPERCASE);
 		break;
@@ -3031,20 +3027,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_EXPAND:
 		wEditor.Call(SCI_TOGGLEFOLD, GetCurrentLineNumber());
-		break;
-
-	case IDM_TOGGLE_FOLDRECURSIVE: {
-			int line = GetCurrentLineNumber();
-			int level = wEditor.Call(SCI_GETFOLDLEVEL, line);
-			ToggleFoldRecursive(line, level);
-		}
-		break;
-
-	case IDM_EXPAND_ENSURECHILDRENVISIBLE: {
-			int line = GetCurrentLineNumber();
-			int level = wEditor.Call(SCI_GETFOLDLEVEL, line);
-			EnsureAllChildrenVisible(line, level);
-		}
 		break;
 
 	case IDM_LINENUMBERMARGIN:
@@ -3345,103 +3327,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	}
 }
 
-void SciTEBase::FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w) {
-	int parentLine = w->Call(SCI_GETFOLDPARENT, line);
-	if (w->Call(SCI_GETFOLDEXPANDED, parentLine) && w->Call(SCI_GETLINEVISIBLE, parentLine)){
-		if (levelNow & SC_FOLDLEVELHEADERFLAG) {
-			if (!(levelPrev & SC_FOLDLEVELHEADERFLAG)) {
-				// Adding a fold point.
-				w->Call(SCI_SETFOLDEXPANDED, line, 1);
-				Expand(line, true, false, 0, levelPrev);
-			}
-		}
-		else if (levelPrev & SC_FOLDLEVELHEADERFLAG) {
-			if (!w->Call(SCI_GETFOLDEXPANDED, line)) {
-				// Removing the fold from one that has been contracted so should expand
-				// otherwise lines are left invisible with no way to make them visible
-				w->Call(SCI_SETFOLDEXPANDED, line, 1);
-				Expand(w , line, true, false, 0, levelPrev);
-			}
-		}
-		if (!(levelNow & SC_FOLDLEVELWHITEFLAG) &&
-			((levelPrev & SC_FOLDLEVELNUMBERMASK) > (levelNow & SC_FOLDLEVELNUMBERMASK))) {
-			// See if should still be hidden
-			w->Call(SCI_SHOWLINES, line, line);
-		}
-	}
-}
-
-
-
-void SciTEBase::Expand(int &line, bool doExpand, bool force, int visLevels, int level) {
-	Expand(&wEditor, line, doExpand, force, visLevels, level);
-}
-void SciTEBase::Expand(GUI::ScintillaWindow *w, int &line, bool doExpand, bool force, int visLevels, int level) {
-	int lineMaxSubord = w->Call(SCI_GETLASTCHILD, line, level & SC_FOLDLEVELNUMBERMASK);
-	line++;
-	while (line <= lineMaxSubord) {
-		if (force) {
-			if (visLevels > 0)
-				w->Call(SCI_SHOWLINES, line, line);
-			else
-				w->Call(SCI_HIDELINES, line, line);
-		} else {
-			if (doExpand)
-				w->Call(SCI_SHOWLINES, line, line);
-		}
-		int levelLine = level;
-		if (levelLine == -1)
-			levelLine = w->Call(SCI_GETFOLDLEVEL, line);
-		if (levelLine & SC_FOLDLEVELHEADERFLAG) {
-			if (force) {
-				if (visLevels > 1)
-					w->Call(SCI_SETFOLDEXPANDED, line, 1);
-				else
-					w->Call(SCI_SETFOLDEXPANDED, line, 0);
-				Expand(line, doExpand, force, visLevels - 1);
-			} else {
-				if (doExpand) {
-					if (!w->Call(SCI_GETFOLDEXPANDED, line))
-						w->Call(SCI_SETFOLDEXPANDED, line, 1);
-					Expand(line, true, force, visLevels - 1);
-				} else {
-					Expand(line, false, force, visLevels - 1);
-				}
-			}
-		} else {
-			line++;
-		}
-	}
-}
-
-void SciTEBase::FoldAll() {
-	wEditor.Call(SCI_COLOURISE, 0, -1);
-	int maxLine = wEditor.Call(SCI_GETLINECOUNT);
-	bool expanding = true;
-	for (int lineSeek = 0; lineSeek < maxLine; lineSeek++) {
-		if (wEditor.Call(SCI_GETFOLDLEVEL, lineSeek) & SC_FOLDLEVELHEADERFLAG) {
-			expanding = !wEditor.Call(SCI_GETFOLDEXPANDED, lineSeek);
-			break;
-		}
-	}
-	for (int line = 0; line < maxLine; line++) {
-		int level = wEditor.Call(SCI_GETFOLDLEVEL, line);
-		if ((level & SC_FOLDLEVELHEADERFLAG) &&
-		        (SC_FOLDLEVELBASE == (level & SC_FOLDLEVELNUMBERMASK))) {
-			if (expanding) {
-				wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-				Expand(line, true, false, 0, level);
-				line--;
-			} else {
-				int lineMaxSubord = wEditor.Call(SCI_GETLASTCHILD, line, -1);
-				wEditor.Call(SCI_SETFOLDEXPANDED, line, 0);
-				if (lineMaxSubord > line)
-					wEditor.Call(SCI_HIDELINES, line + 1, lineMaxSubord);
-			}
-		}
-	}
-}
-
 void SciTEBase::CollapseOutput()	{
 	wFindRes.Call(SCI_COLOURISE, 0, -1);
 	int maxLine = wFindRes.Call(SCI_GETLINECOUNT);
@@ -3468,64 +3353,6 @@ void SciTEBase::EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy)
 	for (int line = lineStart; line <= lineEnd; line++) {
 		wEditor.Call(enforcePolicy ? SCI_ENSUREVISIBLEENFORCEPOLICY : SCI_ENSUREVISIBLE, line);
 	}
-}
-
-bool SciTEBase::MarginClick(int position, int modifiers, GUI::ScintillaWindow *w) {
-	int lineClick = w->Call(SCI_LINEFROMPOSITION, position);
-	if ((modifiers & SCMOD_SHIFT) && (modifiers & SCMOD_CTRL)) {
-		FoldAll();
-	} else {
-		int levelClick = w->Call(SCI_GETFOLDLEVEL, lineClick);
-		if (levelClick & SC_FOLDLEVELHEADERFLAG) {
-			if (modifiers & SCMOD_SHIFT) {
-				EnsureAllChildrenVisible(lineClick, levelClick);
-			} else if (modifiers & SCMOD_CTRL) {
-				ToggleFoldRecursive(lineClick, levelClick);
-			} else {
-				// Toggle this line
-				w->Call(SCI_TOGGLEFOLD, lineClick);
-			}
-		}
-	}
-	if (!w->Call(SCI_GETLINEVISIBLE, w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONSTART))) ||
-		!w->Call(SCI_GETLINEVISIBLE, w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONEND)))){
-		int lineSel;
-		for (lineSel = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETSELECTIONSTART));
-			lineSel > 0 && !w->Call(SCI_GETLINEVISIBLE, lineSel);
-			lineSel = w->Call(SCI_GETFOLDPARENT, lineSel))
-		{
-		}
-
-		if (w->Call(SCI_GETLINEVISIBLE, lineSel)){
-			w->Call(SCI_SETSELECTIONSTART, w->Call(SCI_POSITIONFROMLINE, lineSel));
-			w->Call(SCI_SETSELECTIONEND, w->Call(SCI_POSITIONFROMLINE, lineSel));
-		}
-	}
-	return true;
-}
-
-void SciTEBase::ToggleFoldRecursive(int line, int level) {
-	int baseLevel = wEditor.Call(SCI_GETFOLDLEVEL, line, 0) & SC_FOLDLEVELNUMBERMASK;
-	if (baseLevel > SC_FOLDLEVELBASE && (baseLevel & SC_FOLDLEVELHEADERFLAG) == 0) {
-		line = wEditor.Call(SCI_GETFOLDPARENT, line, 0);
-		level = wEditor.Call(SCI_GETFOLDLEVEL, line, 0);
-	}
-	
-	if (wEditor.Call(SCI_GETFOLDEXPANDED, line)) {
-		// Contract this line and all children
-		wEditor.Call(SCI_SETFOLDEXPANDED, line, 0);
-		Expand(line, false, true, 0, level);
-	} else {
-		// Expand this line and all children
-		wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-		Expand(line, true, true, 100, level);
-	}
-}
-
-void SciTEBase::EnsureAllChildrenVisible(int line, int level) {
-	// Ensure all children visible
-	wEditor.Call(SCI_SETFOLDEXPANDED, line, 1);
-	Expand(line, true, true, 100, level);
 }
 
 void SciTEBase::RunInConcole(){
@@ -3874,8 +3701,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD) && notification->nmhdr.idFrom != IDM_FINDRESWIN) {
 			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - в будущем могут быть еще варианты
 
-			FoldChanged(notification->line,
-			        notification->foldLevelNow, notification->foldLevelPrev, w);
 			sptr_t p = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETCURRENTPOS), 0);
 			if (p == notification->line + 1 || p == notification->line){
 				extender->OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
@@ -3909,16 +3734,12 @@ void SciTEBase::Notify(SCNotification *notification) {
 					BookmarkToggle(lineClick); 
 				}
 //!-end-[SetBookmark]
-				if (notification->margin == 2) {
-
-					MarginClick(notification->position, notification->modifiers, w);
-				}
 			}
 		}
 		break;
 
 	case SCN_NEEDSHOWN: {
-							if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
+//							if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
 		}
 		break;
 

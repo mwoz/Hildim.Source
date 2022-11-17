@@ -749,7 +749,8 @@ protected:
 	void EnsureFinalNewLine();
 	bool SaveBuffer(FilePath saveName, bool bNotSaveNotChanged = false);
 	virtual void SaveAsHTML() = 0;
-	void SaveToRTF(FilePath saveName, int start = 0, int end = -1);
+	void SaveToStreamRTF(std::ostream &os, int start = 0, int end = -1);
+	void SaveToRTF(const FilePath &saveName, int start = 0, int end = -1);
 	virtual void SaveAsRTF() = 0;
 	void SaveToPDF(FilePath saveName);
 	virtual void SaveAsPDF() = 0;
@@ -843,19 +844,9 @@ protected:
 	void SetLineNumberWidth(ScintillaWindowEditor *pE = NULL);
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
-	void FoldChanged(int line, int levelNow, int levelPrev, GUI::ScintillaWindow *w);
-	//void FoldChanged(int position);
-	void Expand(int &line, bool doExpand, bool force = false,
-		int visLevels = 0, int level = -1);
-	void Expand(GUI::ScintillaWindow *w, int &line, bool doExpand, bool force = false,
-		int visLevels = 0, int level = -1);
-	void FoldAll();
 	void CollapseOutput();
-	void ToggleFoldRecursive(int line, int level);
-	void EnsureAllChildrenVisible(int line, int level);
 	void EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy = true);
 	void GotoLineEnsureVisible(int line);
-	bool MarginClick(int position, int modifiers, GUI::ScintillaWindow *w);
 	void NewLineInOutput();
 	virtual void Notify(SCNotification *notification);
 
