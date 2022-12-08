@@ -2927,6 +2927,10 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		CopyAsRTF();
 		break;
 
+	case IDM_COPYASHTML:
+		CopyAsHTML();
+		break;
+
 	case IDM_FIND:
 		break;
 
@@ -3617,9 +3621,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 		}
 		break;
-//!-end-[OnDoubleClick][GoMessageImprovement][MouseClickHandled]
 
-//!-begin-[OnClick][MouseClickHandled]
 	case SCN_CLICK:
 		if (extender) {
 			handled = extender->OnClick(notification->modifiers);
@@ -3631,9 +3633,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			}
 		}
 		break;
-//!-end-[OnClick][MouseClickHandled]
 
-//!-begin-[OnHotSpotReleaseClick][GoMessageImprovement]
 	case SCN_HOTSPOTRELEASECLICK:
 		if (extender) {
 			handled = extender->OnHotSpotReleaseClick(notification->modifiers);
@@ -3645,9 +3645,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			}
 		}
 		break;
-//!-end-[OnHotSpotReleaseClick][GoMessageImprovement]
 
-//!-start-[OnMouseButtonUp][GoMessageImprovement]
 	case SCN_MOUSEBUTTONUP:
 		if (extender)
 			extender->OnMouseButtonUp(notification->modifiers);

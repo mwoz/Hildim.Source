@@ -253,7 +253,7 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 		defaultStyle.back = "#FFFFFF";
 	colors.push_back(defaultStyle.back.c_str());
 
-	for (int istyle = 0; istyle <= 255; istyle++) {
+	for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
 		std::ostringstream osStyle;
 
 		sprintf(key, "style.%s.%0d", language.c_str(), istyle);
@@ -328,7 +328,7 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 	for (int iPos = start; iPos < end; iPos++) {
 		const char ch = acc[iPos];
 		int style = acc.StyleAt(iPos);
-		if (style > 255)
+		if (style > STYLE_MAX)
 			style = 0;
 		if (style != styleCurrent) {
 			const std::string deltaStyle = GetRTFStyleChange(lastStyle.c_str(), styles[style].c_str());
@@ -403,36 +403,34 @@ void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
 		}
 	}
 	if (failedWrite) {
-		SString msg = "Could not save file \n";
-		wOutput.CallString(SCI_ADDTEXT, msg.length(), msg.c_str());
+		extender->HildiAlarm("Could not save file\n'%1'",
+			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
 }
 
 //---------- Save to HTML ----------
+void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 
-void SciTEBase::SaveToHTML(FilePath saveName) {
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
 		tabSize = 4;
-	int wysiwyg = props.GetInt("export.html.wysiwyg", 1);
-	int tabs = props.GetInt("export.html.tabs", 0);
-	int folding = props.GetInt("export.html.folding", 0);
-	int onlyStylesUsed = props.GetInt("export.html.styleused", 0);
-	int titleFullPath = props.GetInt("export.html.title.fullpath", 0);
+	const int wysiwyg = props.GetInt("export.html.wysiwyg", 1);
+	const int tabs = props.GetInt("export.html.tabs", 0) && (end == -1);
+	const int folding = props.GetInt("export.html.folding", 0);
+	const int onlyStylesUsed = end == -1 ? props.GetInt("export.html.styleused", 0) : 1;
+	const int titleFullPath = props.GetInt("export.html.title.fullpath", 0);
 
-	int lengthDoc = LengthDocument();
+	const int lengthDoc = end == -1 ? LengthDocument() : end;
 	TextReader acc(wEditor);
 
-	bool styleIsUsed[STYLE_MAX + 1];
+	constexpr int StyleLastPredefined = STYLE_LASTPREDEFINED;
+
+	bool styleIsUsed[STYLE_MAX + 1] = {};
 	if (onlyStylesUsed) {
-		int i;
-		for (i = 0; i <= STYLE_MAX; i++) {
-			styleIsUsed[i] = false;
-		}
 		// check the used styles
-		for (i = 0; i < lengthDoc; i++) {
-			styleIsUsed[acc.StyleAt(i) & 0x7F] = true;
+		for (int i = 0; i < lengthDoc; i++) {
+			styleIsUsed[acc.StyleAt(i)] = true;
 		}
 	} else {
 		for (int i = 0; i <= STYLE_MAX; i++) {
@@ -441,317 +439,344 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 	}
 	styleIsUsed[STYLE_DEFAULT] = true;
 
-	FILE *fp = saveName.Open(GUI_TEXT("wt"));
-	if (fp) {
-		fputs("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n", fp);
-		fputs("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n", fp);
-		fputs("<head>\n", fp);
-		if (titleFullPath)
-			fprintf(fp, "<title>%s</title>\n",
-			        static_cast<const char *>(filePath.AsUTF8().c_str()));
-		else
-			fprintf(fp, "<title>%s</title>\n",
-			        static_cast<const char *>(filePath.Name().AsUTF8().c_str()));
-		// Probably not used by robots, but making a little advertisement for those looking
-		// at the source code doesn't hurt...
-		fputs("<meta name=\"Generator\" content=\"SciTE - www.Scintilla.org\" />\n", fp);
-		if (codePage == SC_CP_UTF8)
-			fputs("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n", fp);
+	if (end == -1) {
+		os << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n";
+		os << "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
+	} else {
+		os << "Version:0.9\n"
+			"StartHTML:0000000000\n"
+			"EndHTML:0000000000\n"
+			"StartFragment:0000000000\n"
+			"EndFragment:0000000000\n"
+			"<html>\n";
+	}
+	os << "<head>\n";
+	if (titleFullPath)
+		os << "<title>" << filePath.AsUTF8().c_str() << "</title>\n";
+	else
+		os << "<title>" << filePath.AsUTF8().c_str() << "</title>\n";
 
-		if (folding) {
-			fputs("<script language=\"JavaScript\" type=\"text/javascript\">\n"
-			      "<!--\n"
-			      "function symbol(id, sym) {\n"
-			      " if (id.textContent==undefined) {\n"
-			      " id.innerText=sym; } else {\n"
-			      " id.textContent=sym; }\n"
-			      "}\n"
-			      "function toggle(id) {\n"
-			      "var thislayer=document.getElementById('ln'+id);\n"
-			      "id-=1;\n"
-			      "var togline=document.getElementById('hd'+id);\n"
-			      "var togsym=document.getElementById('bt'+id);\n"
-			      "if (thislayer.style.display == 'none') {\n"
-			      " thislayer.style.display='block';\n"
-			      " togline.style.textDecoration='none';\n"
-			      " symbol(togsym,'- ');\n"
-			      "} else {\n"
-			      " thislayer.style.display='none';\n"
-			      " togline.style.textDecoration='underline';\n"
-			      " symbol(togsym,'+ ');\n"
-			      "}\n"
-			      "}\n"
-			      "//-->\n"
-			      "</script>\n", fp);
-		}
+	// Probably not used by robots, but making a little advertisement for those looking
+	// at the source code doesn't hurt...
+	os << "<meta name=\"Generator\" content=\"SciTE - www.Scintilla.org\" />\n";
+	bool toUtf = (codePage == CP_ACP) && (end != -1);
+	if (codePage == CP_UTF8)
+		os << "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n";
 
-		fputs("<style type=\"text/css\">\n", fp);
+	if (folding) {
+		os << "<script language=\"JavaScript\" type=\"text/javascript\">\n"
+			"<!--\n"
+			"function symbol(id, sym) {\n"
+			" if (id.textContent==undefined) {\n"
+			" id.innerText=sym; } else {\n"
+			" id.textContent=sym; }\n"
+			"}\n"
+			"function toggle(id) {\n"
+			"var thislayer=document.getElementById('ln'+id);\n"
+			"id-=1;\n"
+			"var togline=document.getElementById('hd'+id);\n"
+			"var togsym=document.getElementById('bt'+id);\n"
+			"if (thislayer.style.display == 'none') {\n"
+			" thislayer.style.display='';\n"
+			" togline.style.textDecoration='none';\n"
+			" symbol(togsym,'- ');\n"
+			"} else {\n"
+			" thislayer.style.display='none';\n"
+			" togline.style.textDecoration='underline';\n"
+			" symbol(togsym,'+ ');\n"
+			"}\n"
+			"}\n"
+			"//-->\n"
+			"</script>\n";
+	}
 
-		SString bgColour;
-		char key[200];
-		sprintf(key, "style.*.%0d", STYLE_DEFAULT);
-		char *valdef = StringDup(props.GetExpanded(key).c_str());
-		sprintf(key, "style.%s.%0d", language.c_str(), STYLE_DEFAULT);
-		char *val = StringDup(props.GetExpanded(key).c_str());
+	os << "<style type=\"text/css\">\n";
 
-		StyleDefinition sddef(valdef);
-		sddef.ParseStyleDefinition(val);
-		if (sddef.back.length()) {
-			bgColour = sddef.back;
-		}
-		delete []val;
-		delete []valdef;
+	std::string bgColour;
 
-		SString sval = props.GetExpanded("font.monospace");
-		StyleDefinition cd(valdef);
-		StyleDefinition sdmono(cd);
+	char key[200];
+	sprintf(key, "style.*.%0d", STYLE_DEFAULT);
+	char *valdef = StringDup(props.GetExpanded(key).c_str());
+	StyleDefinition sddef(valdef);
 
-		for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
-			if ((istyle > STYLE_DEFAULT) && (istyle <= STYLE_LASTPREDEFINED))
-				continue;
-			if (styleIsUsed[istyle]) {
-				sprintf(key, "style.*.%0d", istyle);
-				valdef = StringDup(props.GetExpanded(key).c_str());
-				sprintf(key, "style.%s.%0d", language.c_str(), istyle);
-				val = StringDup(props.GetExpanded(key).c_str());
+	if (sddef.back.length()) {
+		bgColour = sddef.back.c_str();
+	}
 
-				StyleDefinition sd(valdef);
-				sd.ParseStyleDefinition(val);
+	std::string sval = props.GetExpanded("font.monospace").c_str();
 
-				if (CurrentBuffer()->useMonoFont && sd.font.length() && sdmono.font.length()) {
-					sd.font = sdmono.font;
-					sd.size = sdmono.size;
-					sd.italics = sdmono.italics;
-					sd.bold = sdmono.bold;
-				}
+	for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
+		if ((istyle > STYLE_DEFAULT) && (istyle <= StyleLastPredefined))
+			continue;
+		if (styleIsUsed[istyle]) {
+			sprintf(key, "style.%s.%0d", language.c_str(), istyle);
+			SString sval = props.GetExpanded(key);
 
-				if (sd.specified != StyleDefinition::sdNone) {
-					if (istyle == STYLE_DEFAULT) {
-						fprintf(fp, "span {\n");
+			const StyleDefinition sd(sval.c_str());
+
+			if (sd.specified != StyleDefinition::sdNone) {
+				if (istyle == STYLE_DEFAULT) {
+					if (wysiwyg) {
+						os << "span {\n";
 					} else {
-						fprintf(fp, ".S%0d {\n", istyle);
+						os << "pre {\n";
 					}
-					if (sd.italics) {
-						fprintf(fp, "\tfont-style: italic;\n");
-					}
-					if (sd.bold) {
-						fprintf(fp, "\tfont-weight: bold;\n");
-					}
-					if (wysiwyg && sd.font.length()) {
-						fprintf(fp, "\tfont-family: '%s';\n", sd.font.c_str());
-					}
-					if (sd.fore.length()) {
-						fprintf(fp, "\tcolor: %s;\n", sd.fore.c_str());
-					} else if (istyle == STYLE_DEFAULT) {
-						fprintf(fp, "\tcolor: #000000;\n");
-					}
-					if ((sd.specified & StyleDefinition::sdBack) && sd.back.length()) {
-						if (istyle != STYLE_DEFAULT && bgColour != sd.back) {
-							fprintf(fp, "\tbackground: %s;\n", sd.back.c_str());
-							fprintf(fp, "\ttext-decoration: inherit;\n");
-						}
-					}
-					if (wysiwyg && sd.size) {
-						fprintf(fp, "\tfont-size: %0dpt;\n", sd.size);
-					}
-					fprintf(fp, "}\n");
 				} else {
-					styleIsUsed[istyle] = false;	// No definition, it uses default style (32)
+					os << ".S" << istyle << " {\n";
 				}
-
-				delete []val;
-				delete []valdef;
-			}
-		}
-		fputs("</style>\n", fp);
-		fputs("</head>\n", fp);
-		if (bgColour.length() > 0)
-			fprintf(fp, "<body bgcolor=\"%s\">\n", bgColour.c_str());
-		else
-			fputs("<body>\n", fp);
-
-		int line = acc.GetLine(0);
-		int level = (acc.LevelAt(line) & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
-		int newLevel;
-		int styleCurrent = acc.StyleAt(0);
-		bool inStyleSpan = false;
-		bool inFoldSpan = false;
-		// Global span for default attributes
-		if (wysiwyg) {
-			fputs("<span>", fp);
-		} else {
-			fputs("<pre>", fp);
-		}
-
-		if (folding) {
-			int lvl = acc.LevelAt(0);
-			level = (lvl & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
-
-			if (lvl & SC_FOLDLEVELHEADERFLAG) {
-				fprintf(fp, "<span id=\"hd%d\" onclick=\"toggle('%d')\">", line, line + 1);
-				fprintf(fp, "<span id=\"bt%d\">- </span>", line);
-				inFoldSpan = true;
+				if (sd.italics) {
+					os << "\tfont-style: italic;\n";
+				}
+				if (sd.bold) {
+					os << "\tfont-weight: bold;\n";
+				}
+				if (wysiwyg && sd.font.length()) {
+					os << "\tfont-family: '" << sd.font.c_str() << "';\n";
+				}
+				if (sd.fore.length()) {
+					os << "\tcolor: " << sd.fore.c_str() << ";\n";
+				} else if (istyle == STYLE_DEFAULT) {
+					os << "\tcolor: #000000;\n";
+				}
+				if ((sd.specified & StyleDefinition::sdBack) && sd.back.length()) {
+					if (istyle != STYLE_DEFAULT && strcmp(bgColour.c_str(), sd.back.c_str())) {
+						os << "\tbackground: " << sd.back.c_str() << ";\n";
+						os << "\ttext-decoration: inherit;\n";
+					}
+				}
+				if (wysiwyg && sd.size) {
+					os << "\tfont-size: " << sd.size << "pt;\n";
+				}
+				os << "}\n";
 			} else {
-				fputs("&nbsp; ", fp);
+				styleIsUsed[istyle] = false;	// No definition, it uses default style (32)
 			}
 		}
+	}
+	os << "</style>\n";
+	os << "</head>\n";
+	if (bgColour.length() > 0)
+		os << "<body bgcolor=\"" << bgColour.c_str() << "\">\n";
+	else
+		os << "<body>\n";
+	if (end != -1)
+		os << "<!--StartFragment-->\n";
 
-		if (styleIsUsed[styleCurrent]) {
-			fprintf(fp, "<span class=\"S%0d\">", styleCurrent);
-			inStyleSpan = true;
+	int line = acc.GetLine(start);
+	int level = (acc.LevelAt(line) & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
+	int styleCurrent = acc.StyleAt(start);
+	bool inStyleSpan = false;
+	bool inFoldSpan = false;
+	// Global span for default attributes
+	if (wysiwyg) {
+		os << "<span>";
+	} else {
+		os << "<pre>";
+	}
+
+	if (folding) {
+		const int lvl = acc.LevelAt(line);
+		level = (lvl & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
+
+		if (lvl && SC_FOLDLEVELHEADERFLAG) {
+			const std::string sLine = std::to_string(line);
+			const std::string sLineNext = std::to_string(line + 1);
+			os << "<span id=\"hd" << sLine.c_str() << "\" onclick=\"toggle('" << sLineNext.c_str() << "')\">";
+			os << "<span id=\"bt" << sLine.c_str() << "\">- </span>";
+			inFoldSpan = true;
+		} else {
+			os << "&nbsp; ";
 		}
-		// Else, this style has no definition (beside default one):
-		// no span for it, except the global one
+	}
 
-		int column = 0;
-		for (int i = 0; i < lengthDoc; i++) {
-			char ch = acc[i];
-			int style = acc.StyleAt(i);
+	if (styleIsUsed[styleCurrent]) {
+		os << "<span class=\"S" << styleCurrent << "\">";
+		inStyleSpan = true;
+	}
+	// Else, this style has no definition (beside default one):
+	// no span for it, except the global one
 
-			if (style != styleCurrent) {
-				if (inStyleSpan) {
-					fputs("</span>", fp);
-					inStyleSpan = false;
-				}
-				if (ch != '\r' && ch != '\n') {	// No need of a span for the EOL
-					if (styleIsUsed[style]) {
-						fprintf(fp, "<span class=\"S%0d\">", style);
-						inStyleSpan = true;
-					}
-					styleCurrent = style;
-				}
+	int column = 0;
+	for (int i = start; i < lengthDoc; i++) {
+		const char ch = acc[i];
+		const int style = acc.StyleAt(i);
+
+		if (style != styleCurrent) {
+			if (inStyleSpan) {
+				os << "</span>";
+				inStyleSpan = false;
 			}
-			if (ch == ' ') {
-				if (wysiwyg) {
-					char prevCh = '\0';
-					if (column == 0) {	// At start of line, must put a &nbsp; because regular space will be collapsed
-						prevCh = ' ';
-					}
-					while (i < lengthDoc && acc[i] == ' ') {
-						if (prevCh != ' ') {
-							fputc(' ', fp);
-						} else {
-							fputs("&nbsp;", fp);
-						}
-						prevCh = acc[i];
-						i++;
-						column++;
-					}
-					i--; // the last incrementation will be done by the for loop
-				} else {
-					fputc(' ', fp);
-					column++;
-				}
-			} else if (ch == '\t') {
-				int ts = tabSize - (column % tabSize);
-				if (wysiwyg) {
-					for (int itab = 0; itab < ts; itab++) {
-						if (itab % 2) {
-							fputc(' ', fp);
-						} else {
-							fputs("&nbsp;", fp);
-						}
-					}
-					column += ts;
-				} else {
-					if (tabs) {
-						fputc(ch, fp);
-						column++;
-					} else {
-						for (int itab = 0; itab < ts; itab++) {
-							fputc(' ', fp);
-						}
-						column += ts;
-					}
-				}
-			} else if (ch == '\r' || ch == '\n') {
-				if (inStyleSpan) {
-					fputs("</span>", fp);
-					inStyleSpan = false;
-				}
-				if (inFoldSpan) {
-					fputs("</span>", fp);
-					inFoldSpan = false;
-				}
-				if (ch == '\r' && acc[i + 1] == '\n') {
-					i++;	// CR+LF line ending, skip the "extra" EOL char
-				}
-				column = 0;
-				if (wysiwyg) {
-					fputs("<br />", fp);
-				}
-
-				styleCurrent = acc.StyleAt(i + 1);
-				if (folding) {
-					line = acc.GetLine(i + 1);
-
-					int lvl = acc.LevelAt(line);
-					newLevel = (lvl & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
-
-					if (newLevel < level)
-						fprintf(fp, "</span>");
-					fputc('\n', fp); // here to get clean code
-					if (newLevel > level)
-						fprintf(fp, "<span id=\"ln%d\">", line);
-
-					if (lvl & SC_FOLDLEVELHEADERFLAG) {
-						fprintf(fp, "<span id=\"hd%d\" onclick=\"toggle('%d')\">", line, line + 1);
-						fprintf(fp, "<span id=\"bt%d\">- </span>", line);
-						inFoldSpan = true;
-					} else
-						fputs("&nbsp; ", fp);
-					level = newLevel;
-				} else {
-					fputc('\n', fp);
-				}
-
-				if (styleIsUsed[styleCurrent] && acc[i + 1] != '\r' && acc[i + 1] != '\n') {
-					// We know it's the correct next style,
-					// but no (empty) span for an empty line
-					fprintf(fp, "<span class=\"S%0d\">", styleCurrent);
+			if (ch != '\r' && ch != '\n') {	// No need of a span for the EOL
+				if (styleIsUsed[style]) {
+					os << "<span class=\"S" << style << "\">";
 					inStyleSpan = true;
 				}
-			} else {
-				switch (ch) {
-				case '<':
-					fputs("&lt;", fp);
-					break;
-				case '>':
-					fputs("&gt;", fp);
-					break;
-				case '&':
-					fputs("&amp;", fp);
-					break;
-				default:
-					fputc(ch, fp);
+				styleCurrent = style;
+			}
+		}
+		if (ch == ' ') {
+			if (wysiwyg) {
+				char prevCh = '\0';
+				if (column == 0) {	// At start of line, must put a &nbsp; because regular space will be collapsed
+					prevCh = ' ';
 				}
+				while (i < lengthDoc && acc[i] == ' ') {
+					if (prevCh != ' ') {
+						os << ' ';
+					} else {
+						os << "&nbsp;";
+					}
+					prevCh = acc[i];
+					i++;
+					column++;
+				}
+				i--; // the last incrementation will be done by the for loop
+			} else {
+				os << ' ';
 				column++;
 			}
-		}
-
-		if (inStyleSpan) {
-			fputs("</span>", fp);
-		}
-
-		if (folding) {
-			while (level > 0) {
-				fprintf(fp, "</span>");
-				level--;
+		} else if (ch == '\t') {
+			const int ts = tabSize - (column % tabSize);
+			if (wysiwyg) {
+				for (int itab = 0; itab < ts; itab++) {
+					if (itab % 2) {
+						os << ' ';
+					} else {
+						os << "&nbsp;";
+					}
+				}
+				column += ts;
+			} else {
+				if (tabs) {
+					os << ch;
+					column++;
+				} else {
+					for (int itab = 0; itab < ts; itab++) {
+						os << ' ';
+					}
+					column += ts;
+				}
 			}
-		}
+		} else if (ch == '\r' || ch == '\n') {
+			if (inStyleSpan) {
+				os << "</span>";
+				inStyleSpan = false;
+			}
+			if (inFoldSpan) {
+				os << "</span>";
+				inFoldSpan = false;
+			}
+			if (ch == '\r' && acc[i + 1] == '\n') {
+				i++;	// CR+LF line ending, skip the "extra" EOL char
+			}
+			column = 0;
+			if (wysiwyg) {
+				os << "<br />";
+			}
 
-		if (!wysiwyg) {
-			fputs("</pre>", fp);
+			styleCurrent = acc.StyleAt(i + 1);
+			if (folding) {
+				line = acc.GetLine(i + 1);
+
+				const int lvl = acc.LevelAt(line);
+				const int newLevel = (lvl & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
+
+				if (newLevel < level)
+					os << "</span>";
+				os << '\n'; // here to get clean code
+				if (newLevel > level) {
+					const std::string sLine = std::to_string(line);
+					os << "<span id=\"ln" << sLine.c_str() << "\">";
+				}
+
+				if (lvl & SC_FOLDLEVELHEADERFLAG) {
+					const std::string sLine = std::to_string(line);
+					const std::string sLineNext = std::to_string(line + 1);
+					os << "<span id=\"hd" << sLine.c_str() << "\" onclick=\"toggle('" << sLineNext.c_str() << "')\">";
+					os << "<span id=\"bt" << sLine.c_str() << "\">- </span>";
+					inFoldSpan = true;
+				} else
+					os << "&nbsp; ";
+				level = newLevel;
+			} else {
+				os << '\n';
+			}
+
+			if (styleIsUsed[styleCurrent] && acc[i + 1] != '\r' && acc[i + 1] != '\n') {
+				// We know it's the correct next style,
+				// but no (empty) span for an empty line
+				os << "<span class=\"S" << styleCurrent << "\">";
+				inStyleSpan = true;
+			}
 		} else {
-			fputs("</span>", fp);
+			switch (ch) {
+			case '<':
+				os << "&lt;";
+				break;
+			case '>':
+				os << "&gt;";
+				break;
+			case '&':
+				os << "&amp;";
+				break;
+			default:
+				if (ch > 128 || !toUtf) {
+					os << ch;
+				} else {
+					std::string s;
+					s += ch;
+					os << GUI::ConvertToUTF8(s, CP_ACP);
+				}
+			}
+			column++;
 		}
+	}
 
-		fputs("\n</body>\n</html>\n", fp);
-		fclose(fp);
+	if (inStyleSpan) {
+		os << "</span>";
+	}
+
+	if (folding) {
+		while (level > 0) {
+			os << "</span>";
+			level--;
+		}
+	}
+
+	if (!wysiwyg) {
+		os << "</pre>";
 	} else {
+		os << "</span>";
+	}
+	if (end != -1)
+		os << "<!--EndFragment-->";
+	os << "\n</body>\n</html>\n";
+
+}
+
+void SciTEBase::SaveToHTML(FilePath saveName) {
+	FILE *fp = saveName.Open(GUI_TEXT("wt"));
+	bool failedWrite = fp == nullptr;
+	if (fp) {
+		try {
+			std::ostringstream oss;
+			SaveToStreamHTML(oss);
+			const std::string html = oss.str();
+			if (fwrite(html.c_str(), 1, html.length(), fp) != html.length()) {
+				failedWrite = true;
+			}
+			if (fclose(fp) != 0) {
+				failedWrite = true;
+			}
+		} catch (std::exception &) {
+			failedWrite = true;
+		}
+	}
+	if (failedWrite) {
 		extender->HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING, filePath.AsInternal());
 	}
+
 }
 
 

@@ -1346,7 +1346,10 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		jobQueue.SetAll(grepOut.iFiles);
 		grepOut.iFiles = 0;
 	}
-
+	if (wFindRes.Send(SCI_GETLINECOUNT)) {
+		wFindRes.Send(SCI_SETSEL, 0, 0);
+		wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("\n"));
+	}
 	wFindRes.Send(SCI_SETSEL, 0, 0);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
 	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("Wait...\n"));
@@ -1375,6 +1378,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
 	wFindRes.Send(SCI_COLOURISE, 0, -1);
 	int maxLine = wFindRes.Send(SCI_GETLINECOUNT);
+
 	for (int line = 0; line < maxLine; line++) {
 		int level = wFindRes.Send(SCI_GETFOLDLEVEL, line);
 		if ((level & SC_FOLDLEVELHEADERFLAG) &&
@@ -1386,6 +1390,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		}
 	}
 	wFindRes.Send(SCI_SETSEL, 0, 8);
+	wFindRes.Send(SCI_SETLINESTATE, 0, -1);
 	wFindRes.Send(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>(os.c_str()));
 	wFindRes.Send(SCI_SETSEL, 0, 0);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);

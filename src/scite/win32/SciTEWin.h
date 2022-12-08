@@ -218,7 +218,9 @@ protected:
 	virtual void ActivateWindow(const char *timestamp);
 	void ExecuteHelp(const char *cmd, int hh_cmd = 0x000d);
 	void ExecuteOtherHelp(const char *cmd);
+	void CopyWithColors(bool asHTML);
 	void CopyAsRTF();
+	void CopyAsHTML();
 	void FullScreenToggle();
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);
 	void Command(WPARAM wParam, LPARAM lParam);

@@ -179,6 +179,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_COMPLETE",233},
 	{"IDM_COMPLETEWORD",234},
 	{"IDM_COPY",204},
+	{"IDM_COPYASHTML",257},
 	{"IDM_COPYASRTF",245},
 	{"IDM_COPYPATH",118},
     {"IDM_COSRCWIN",356},
@@ -1733,6 +1734,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_SEARCHRESULT_DEFAULT", 0},
 	{"SCE_SEARCHRESULT_FILE_HEADER", 2},
 	{"SCE_SEARCHRESULT_LINE_NUMBER", 3},
+	{"SCE_SEARCHRESULT_SEARCH_FOOTER", 5},
 	{"SCE_SEARCHRESULT_SEARCH_HEADER", 1},
 	{"SCE_SH_BACKTICKS",11},
 	{"SCE_SH_CHARACTER",6},
@@ -3297,7 +3299,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 318,
-	ifaceConstantCount = 2577,
+	ifaceConstantCount = 2579,
 	ifacePropertyCount = 250
 };
 

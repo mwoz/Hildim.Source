@@ -548,35 +548,7 @@ void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 	}
 }
 
-
-//void SciTEWin::CopyAsRTF() {
-//	Sci_CharacterRange cr = GetSelection();
-//	char *fileNameTemp = _tempnam(NULL, "scite-tmp-");
-//	if (fileNameTemp) {
-//		SaveToRTF(GUI::StringFromUTF8(fileNameTemp), cr.cpMin, cr.cpMax);
-//		FILE *fp = fopen(fileNameTemp, "rb");
-//		if (fp) {
-//			fseek(fp, 0, SEEK_END);
-//			int len = ftell(fp);
-//			fseek(fp, 0, SEEK_SET);
-//			HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len + 1);
-//			if (hand) {
-//				::OpenClipboard(MainHWND());
-//				::EmptyClipboard();
-//				char *ptr = static_cast<char *>(::GlobalLock(hand));
-//				fread(ptr, 1, len, fp);
-//				ptr[len] = '\0';
-//				::GlobalUnlock(hand);
-//				::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
-//				::CloseClipboard();
-//			}
-//			fclose(fp);
-//		}
-//		_unlink(fileNameTemp);
-//		free(fileNameTemp);
-//	}
-//}
-void SciTEWin::CopyAsRTF() {
+void SciTEWin::CopyWithColors(bool asHTML) {
 	const Sci_CharacterRange cr = GetSelection();
 
 	bool bOpen = false;
@@ -611,10 +583,53 @@ void SciTEWin::CopyAsRTF() {
 		GlobalUnlock(hand);
 		SetClipboardData(CF_LOCALE, hand);
 	}
-	std::ostringstream oss;
-	SaveToStreamRTF(oss, cr.cpMin, cr.cpMax);
-	const std::string rtf = oss.str();
+	std::ostringstream oss; 
+	if (asHTML)
+		SaveToStreamHTML(oss, cr.cpMin, cr.cpMax);
+	else
+		SaveToStreamRTF(oss, cr.cpMin, cr.cpMax);
+
+	std::string rtf = oss.str(); 
 	len = rtf.length() + 1;	// +1 for NUL
+	if (asHTML) {
+		size_t l = len - 2;
+		if (l > 0) {
+			std::string num = std::to_string(l);   //"EndHTML:0000000000\n"
+			size_t p1 = rtf.find("EndHTML:") + 8;
+			
+			//str3_Iter = rtf.erase( (p1, (size_t)num.length());
+			rtf = rtf.erase(p1, num.length());
+			rtf = rtf.insert(p1 + 10 - num.length(), num);
+
+		}
+		l = rtf.find("<html>");
+		if (l > 0) {
+			std::string num = std::to_string(l);   //"EndHTML:0000000000\n"
+			size_t p1 = rtf.find("StartHTML:") + 10;
+
+			//str3_Iter = rtf.erase( (p1, (size_t)num.length());
+			rtf = rtf.erase(p1, num.length());
+			rtf = rtf.insert(p1 + 10 - num.length(), num);
+		}
+		l = rtf.find("<!--StartFragment-->") + 20;
+		if (l > 0) {
+			std::string num = std::to_string(l);   //"EndHTML:0000000000\n"
+			size_t p1 = rtf.find("StartFragment:") + 14;
+
+			//str3_Iter = rtf.erase( (p1, (size_t)num.length());
+			rtf = rtf.erase(p1, num.length());
+			rtf = rtf.insert(p1 + 10 - num.length(), num);
+		}
+		l = rtf.find("<!--EndFragment-->");
+		if (l > 0) {
+			std::string num = std::to_string(l);   //"EndHTML:0000000000\n"
+			size_t p1 = rtf.find("EndFragment:") + 12;
+
+			//str3_Iter = rtf.erase( (p1, (size_t)num.length());
+			rtf = rtf.erase(p1, num.length());
+			rtf = rtf.insert(p1 + 10 - num.length(), num);
+		}
+	}
 	hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
 	if (hand) {
 		if (!bOpen) {
@@ -627,13 +642,22 @@ void SciTEWin::CopyAsRTF() {
 			memcpy(ptr, rtf.c_str(), len);
 			::GlobalUnlock(hand);
 		}
-		::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
-		//::CloseClipboard();
+		if (asHTML)
+			::SetClipboardData(::RegisterClipboardFormat(L"HTML Format"), hand);
+		else
+			::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
 	}
 
-	if(bOpen)
+	if (bOpen)
 		::CloseClipboard();
 	delete[] text;
+}
+
+void SciTEWin::CopyAsHTML() {
+	CopyWithColors(true);
+}
+void SciTEWin::CopyAsRTF() {
+	CopyWithColors(false);
 }
 
 void SciTEWin::FullScreenToggle() {
@@ -2265,7 +2289,9 @@ int SciTEWin::EventLoop() {
 					}
 					break;
 				}
-				if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
+				//if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
+				//Изменен порядок выполнения для легкой блокировки пользовательского ввода(findres), не нарушающей работы акселераторов
+				if ((!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)) && (!ModelessHandler(&msg)))
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessageW(&msg);

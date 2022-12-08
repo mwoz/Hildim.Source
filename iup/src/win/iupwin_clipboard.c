@@ -419,8 +419,46 @@ static char* winClipboardGetFormatDataStringAttrib(Ihandle *ih)
 {
   TCHAR* data = (TCHAR*)winClipboardGetFormatDataAttrib(ih);
   int size = iupAttribGetInt(ih, "FORMATDATASIZE");
+  if (!size)
+	  return iupStrReturnStr("");
   data[size] = 0;  /* add terminator */
   return iupStrReturnStr(iupwinStrFromSystem(data));
+}
+static char* winClipboardGetFormatDataCharsAttrib(Ihandle *ih)
+{
+  CHAR* data = (TCHAR*)winClipboardGetFormatDataAttrib(ih);
+  int size = iupAttribGetInt(ih, "FORMATDATASIZE");
+  if(!size)
+	  return iupStrReturnStr("");
+  data[size] = 0;  /* add terminator */
+  return iupStrReturnStr(data);
+}
+
+static char* winClipboardGetFormatDataNamesAttrib(Ihandle *ih)
+{
+  CHAR data[10000];
+  data[0] = 0;
+  int cnt = 10000;
+  int shift = 0;
+  if (!OpenClipboard(GetForegroundWindow()))
+	  return NULL;
+
+  UINT fmt = 0;
+  do {
+	  fmt = EnumClipboardFormats(fmt);
+	  if (!fmt)
+		  break;
+	  int len = GetClipboardFormatNameA(fmt, data + shift, cnt);
+	  if (len) {
+		  data[shift + len + 0] = '\n';
+		  data[shift + len + 1] = 0;
+		  cnt -= len + 1;
+		  shift += (len + 1);
+	  }
+  } while (fmt);
+
+  CloseClipboard();
+  return iupStrReturnStr(data);
 }
 
 static int winClipboardSetFormatDataStringAttrib(Ihandle *ih, const char *value)
@@ -528,6 +566,8 @@ Iclass* iupClipboardNewClass(void)
   iupClassRegisterAttribute(ic, "FORMATAVAILABLE", winClipboardGetFormatAvailableAttrib, NULL, NULL, NULL, IUPAF_READONLY|IUPAF_NOT_MAPPED|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMATDATA", winClipboardGetFormatDataAttrib, winClipboardSetFormatDataAttrib, NULL, NULL, IUPAF_NO_STRING|IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMATDATASTRING", winClipboardGetFormatDataStringAttrib, winClipboardSetFormatDataStringAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FORMATDATACHARS", winClipboardGetFormatDataCharsAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FORMATDATANAMES", winClipboardGetFormatDataNamesAttrib, NULL, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FORMATDATASIZE", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   return ic;

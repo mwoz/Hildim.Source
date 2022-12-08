@@ -67,6 +67,10 @@ static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine,
 	{
 		styler.ColourTo(endPos, SCE_SEARCHRESULT_SEARCH_HEADER);
 	}
+	else if (lineBuffer[0] == '<') // search header
+	{
+		styler.ColourTo(endPos, SCE_SEARCHRESULT_SEARCH_FOOTER);
+	}
 	else // line info
 	{
 		//const unsigned int firstTokenLen = 1;

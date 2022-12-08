@@ -636,8 +636,10 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 		win.Send(SCI_STYLESETCASE, style, sd.caseForce);
 	if (sd.specified & StyleDefinition::sdVisible) {
 		props.SetInteger("hidden.styles.found", 1);
-		if (hideHiddenStyles)
+		if (hideHiddenStyles) {
 			win.Send(SCI_STYLESETVISIBLE, style, sd.visible ? 1 : 0);
+			//win.Send(SCI_STYLESETINVISIBLEREPRESENTATION, style, reinterpret_cast<uptr_t>("X"));
+		}
 	}
 	if (sd.specified & StyleDefinition::sdChangeable)
 		win.Send(SCI_STYLESETCHANGEABLE, style, sd.changeable ? 1 : 0);
@@ -717,8 +719,8 @@ void SciTEBase::SetFoldingMarkers(bool main) {
 	float brFore = clr_brightness(fore);
 	if ((brFore > 128 && brBack > 128) || (brFore < 128 && brBack < 128))
 		back = convMain.Convert(layout.GetColorRef("SCR_BACKCOLOR"));
-
-	switch (props.GetInt("fold.symbols")) {
+	int sym = main ? props.GetInt("fold.symbols") : props.GetInt("fold.symbols.findes", 1);
+	switch (sym) {
 	case 0:
 		// Arrow pointing right for contracted folders, arrow pointing down for expanded
 		DefineMarker(main, SC_MARKNUM_FOLDEROPEN, SC_MARK_ARROWDOWN, back, back);
@@ -1475,7 +1477,7 @@ void SciTEBase::ReadPropertiesEx() {
 
 	wEditorL.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
 	wEditorR.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
-	wFindRes.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
+	//wFindRes.Call(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_CHANGE | SC_AUTOMATICFOLD_SHOW);
 
 	FilePath fileAbbrev = GUI::StringFromUTF8(props.GetNewExpand("abbreviations.", ExtensionFileName().c_str()).c_str());
 	props.Set("AbbrevPath", fileAbbrev.AsUTF8().c_str());
@@ -1822,6 +1824,11 @@ void SciTEBase::ReadPropertiesEx() {
 
 	wOutput.Call(SCI_SETUNDOCOLLECTION, 0);
 	wFindRes.Call(SCI_SETUNDOCOLLECTION, 0);
+
+	wFindRes.Call(SCI_MARKERDEFINE, 0, SC_MARK_BAR);
+	wFindRes.Call(SCI_MARKERSETFORE, 0, ColourRGB(0xff, 0x80, 0x00));
+	wFindRes.Call(SCI_MARKERSETBACK, 0, ColourRGB(0xff, 0x80, 0x00));
+
 }
 
 

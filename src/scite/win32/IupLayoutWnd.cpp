@@ -566,7 +566,6 @@ void IupChildWnd::OnIdle() {
 LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
 	LRESULT ret;
 	switch (uMsg){
-	case WM_SETFOCUS:
 	{
 		HWND h = ::FindWindowEx(hwnd, NULL, L"Scintilla", NULL);
 		::SetFocus(h);
