@@ -2845,6 +2845,7 @@ static IFaceFunction ifaceFunctions[] = {
 	{"GetRangePointer", 2643, iface_pointer, {iface_position, iface_position}},
 	{"GetSelText", 2161, iface_position, {iface_void, iface_stringresult}},
 	{"GetStyledText", 2015, iface_position, {iface_void, iface_textrange}},
+	{"GetStyledTextFull", 2778, iface_position, {iface_void, iface_textrange}},
 	{"GetText", 2182, iface_position, {iface_length, iface_stringresult}},
 	{"GetTextRange", 2162, iface_position, {iface_void, iface_textrange}},
 	{"GotoLine", 2024, iface_void, {iface_line, iface_void}},
@@ -2954,6 +2955,7 @@ static IFaceFunction ifaceFunctions[] = {
 	{"ReleaseLineCharacterIndex", 2712, iface_void, {iface_int, iface_void}},
 	{"ReplaceSel", 2170, iface_void, {iface_void, iface_string}},
 	{"ReplaceTarget", 2194, iface_position, {iface_length, iface_string}},
+	{"ReplaceTargetMinimal", 2779, iface_position, {iface_length, iface_string}},
 	{"ReplaceTargetRE", 2195, iface_position, {iface_length, iface_string}},
 	{"ResetElementColour", 2755, iface_void, {iface_int, iface_void}},
 	{"RotateSelection", 2606, iface_void, {iface_void, iface_void}},
@@ -3298,7 +3300,7 @@ static IFaceProperty ifaceProperties[] = {
 };
 
 enum {
-	ifaceFunctionCount = 318,
+	ifaceFunctionCount = 319,
 	ifaceConstantCount = 2579,
 	ifacePropertyCount = 250
 };

@@ -376,7 +376,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 					char number[100] = "";
 					if (FlagSet(model.foldFlags, FoldFlag::LevelNumbers)) {
 						const FoldLevel lev = model.pdoc->GetFoldLevel(lineDoc);
-						sprintf(number, "%c%c %03X %03X",
+						sprintf(number, " %c%c %03X %03X",
 							LevelIsHeader(lev) ? 'H' : '_',
 							LevelIsWhitespace(lev) ? 'W' : '_',
 							LevelNumber(lev),
@@ -384,9 +384,9 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						sprintf(number, "%0X", state);
+						sprintf(number, "  %0X", state);
 					}
-					sNumber = number;
+					sNumber += number;
 				}
 				PRectangle rcNumber = rcMarker;
 				// Right justify
@@ -477,7 +477,7 @@ void MarginView::PaintMargin(Surface *surface, Sci::Line topLine, PRectangle rc,
 			rcOneMargin.right = rcOneMargin.left + marginStyle.width;
 
 			if (marginStyle.style != MarginType::Number) {
-				if (marginStyle.ShowsFolding()) {
+				if (marginStyle.ShowsFolding() && !(marginStyle.mask & 1)) {//Передаем в маску 1 если не хотим применять алгоритм сглаживания цвета в колонке фолдинга
 					// Required because of special way brush is created for selection margin
 					// Ensure patterns line up when scrolling with separate margin view
 					// by choosing correctly aligned variant.
