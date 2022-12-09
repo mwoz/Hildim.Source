@@ -168,7 +168,6 @@ int ScintillaBase::KeyCommand(Message iMessage) {
 			EnsureCaretVisible();
 			return 0;
 		case Message::Tab:
-		case Message::BackTab:
 			AutoCompleteCompleted(0, CompletionMethods::Tab);
 			return 0;
 		case Message::NewLine:
@@ -209,21 +208,14 @@ void ScintillaBase::ListNotify(ListBoxEvent *plbe) {
 	case ListBoxEvent::EventType::doubleClick:
 		AutoCompleteCompleted(0, CompletionMethods::DoubleClick);
 		break;
-	case ListBoxEvent::EventType::contextMenu:
-		NotificationData scn = {};
-		scn.nmhdr.code = Notification::ListContextMenu;
-		scn.wParam = listType;
-		scn.listType = listType;
-		NotifyParent(scn);
-		break;
 	}
 }
 
-void ScintillaBase::AutoCompleteInsert(Sci::Position startPos, Sci::Position removeLen, const char *text, Sci::Position textLen) {
+void ScintillaBase::AutoCompleteInsert(Sci::Position startPos, Sci::Position removeLen, std::string_view text) {
 	UndoGroup ug(pdoc);
 	if (multiAutoCMode == MultiAutoComplete::Once) {
 		pdoc->DeleteChars(startPos, removeLen);
-		const Sci::Position lengthInserted = pdoc->InsertString(startPos, text, textLen);
+		const Sci::Position lengthInserted = pdoc->InsertString(startPos, text);
 		SetEmptySelection(startPos + lengthInserted);
 	} else {
 		// MultiAutoComplete::Each
@@ -236,7 +228,7 @@ void ScintillaBase::AutoCompleteInsert(Sci::Position startPos, Sci::Position rem
 					positionInsert -= removeLen;
 					pdoc->DeleteChars(positionInsert, removeLen);
 				}
-				const Sci::Position lengthInserted = pdoc->InsertString(positionInsert, text, textLen);
+				const Sci::Position lengthInserted = pdoc->InsertString(positionInsert, text);
 				if (lengthInserted > 0) {
 					sel.Range(r).caret.SetPosition(positionInsert + lengthInserted);
 					sel.Range(r).anchor.SetPosition(positionInsert + lengthInserted);
@@ -253,15 +245,20 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 
 	if (ac.chooseSingle && (listType == 0)) {
 		if (list && !strchr(list, ac.GetSeparator())) {
-			const char *typeSep = strchr(list, ac.GetTypesep());
-			const Sci::Position lenInsert = typeSep ?
-				(typeSep-list) : strlen(list);
+			// list contains just one item so choose it
+			const std::string_view item(list);
+			const std::string_view choice = item.substr(0, item.find_first_of(ac.GetTypesep()));
 			if (ac.ignoreCase) {
 				// May need to convert the case before invocation, so remove lenEntered characters
-				AutoCompleteInsert(sel.MainCaret() - lenEntered, lenEntered, list, lenInsert);
+				AutoCompleteInsert(sel.MainCaret() - lenEntered, lenEntered, choice);
 			} else {
-				AutoCompleteInsert(sel.MainCaret(), 0, list + lenEntered, lenInsert - lenEntered);
+				AutoCompleteInsert(sel.MainCaret(), 0, choice.substr(lenEntered));
 			}
+			const Sci::Position firstPos = sel.MainCaret() - lenEntered;
+			// Construct a string with a NUL at end as that is expected by applications
+			const std::string selected(choice);
+			AutoCompleteNotifyCompleted('\0', CompletionMethods::SingleChoice, firstPos, selected.c_str());
+
 			ac.Cancel();
 			return;
 		}
@@ -395,18 +392,25 @@ void ScintillaBase::AutoCompleteCharacterDeleted() {
 		AutoCompleteCancel();
 	} else {
 		AutoCompleteMoveToCurrentWord();
-//!-start-[autocompleteword.incremental]
-		NotificationData scn = {0};
-		scn.nmhdr.code = Notification::AutoUpdated;
-		scn.wParam = 0;
-		scn.listType = 0;
-		NotifyParent(scn);
-//!-end-[autocompleteword.incremental]
 	}
 	NotificationData scn = {};
 	scn.nmhdr.code = Notification::AutoCCharDeleted;
 	scn.wParam = 0;
 	scn.listType = 0;
+	NotifyParent(scn);
+}
+
+void ScintillaBase::AutoCompleteNotifyCompleted(char ch, CompletionMethods completionMethod, Sci::Position firstPos, const char *text) {
+	NotificationData scn = {};
+	scn.nmhdr.code = Notification::AutoCCompleted;
+	scn.message = static_cast<Message>(0);
+	scn.ch = ch;
+	scn.listCompletionMethod = completionMethod;
+	scn.wParam = listType;
+	scn.listType = listType;
+	scn.position = firstPos;
+	scn.lParam = firstPos;
+	scn.text = text;
 	NotifyParent(scn);
 }
 
@@ -431,7 +435,6 @@ void ScintillaBase::AutoCompleteCompleted(char ch, CompletionMethods completionM
 	scn.position = firstPos;
 	scn.lParam = firstPos;
 	scn.text = selected.c_str();
-	scn.position = item; //!-add-[UserListItemID]
 	NotifyParent(scn);
 
 	if (!ac.Active())
@@ -446,12 +449,10 @@ void ScintillaBase::AutoCompleteCompleted(char ch, CompletionMethods completionM
 		endPos = pdoc->ExtendWordSelect(endPos, 1, true);
 	if (endPos < firstPos)
 		return;
-	AutoCompleteInsert(firstPos, endPos - firstPos, selected.c_str(), selected.length());
+	AutoCompleteInsert(firstPos, endPos - firstPos, selected);
 	SetLastXChosen();
 
-	scn.nmhdr.code = Notification::AutoCCompleted;
-	NotifyParent(scn);
-
+	AutoCompleteNotifyCompleted(ch, completionMethod, firstPos, selected.c_str());
 }
 
 int ScintillaBase::AutoCompleteGetCurrent() const {
@@ -509,13 +510,6 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 		rc.top += offset;
 		rc.bottom += offset;
 	}
-//!-start-[BetterCalltips]
-	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
-//!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
 	ct.wCallTip.SetPositionRelative(rc, &wMain);
@@ -839,10 +833,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		AutoCompleteStart(PositionFromUPtr(wParam), ConstCharPtrFromSPtr(lParam));
 		break;
 
-	case Message::Paste:
-		ac.Cancel();
-		return Editor::WndProc(iMessage, wParam, lParam);
-
 	case Message::AutoCCancel:
 		ac.Cancel();
 		break;
@@ -1078,7 +1068,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return StringResult(lParam, DocumentLexState()->GetName());
 
 	case Message::PrivateLexerCall:
-	case Message::PrivateLexerCallStr:
 		return reinterpret_cast<sptr_t>(
 			DocumentLexState()->PrivateCall(static_cast<int>(wParam), PtrFromSPtr(lParam)));
 
@@ -1147,19 +1136,6 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::DescriptionOfStyle:
 		return StringResult(lParam, DocumentLexState()->
 				    DescriptionOfStyle(static_cast<int>(wParam)));
-
-	case Message::ListCustomColors:
-	{
-		Sci_ListColorsInfo *ci = (Sci_ListColorsInfo*)wParam;
-		ac.listcolors.inizialized = ci->inizialized;
-		ac.listcolors.border = ci->border;
-		ac.listcolors.borderbak = ci->borderbak;
-		ac.listcolors.scroll = ci->scroll;
-		ac.listcolors.scrollbak = ci->scrollbak;
-		ac.listcolors.scrollhl = ci->scrollhl;
-		ac.listcolors.scrollpress = ci->scrollpress;
-		ac.listcolors.scrollsize = ci->scrollsize;
-	}
 
 	default:
 		return Editor::WndProc(iMessage, wParam, lParam);

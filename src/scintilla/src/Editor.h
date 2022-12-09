@@ -205,7 +205,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	Scintilla::CursorShape cursorMode;
 
-	bool ignoreOverstrikeChange; //!-add-[ignore_overstrike_change]
 	bool mouseDownCaptures;
 	bool mouseWheelCaptures;
 
@@ -453,8 +452,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyChar(int ch, Scintilla::CharacterSource charSource);
 	void NotifySavePoint(bool isSavePoint);
 	void NotifyModifyAttempt();
-	void NotifyClick(Point pt, KeyMod modifiers); //!-add-[OnClick]
-	void NotifyMouseButtonUp(Point pt, KeyMod ctrl); //!-add-[OnMouseButtonUp]	
 	virtual void NotifyDoubleClick(Point pt, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotClicked(Sci::Position position, Scintilla::KeyMod modifiers);
 	void NotifyHotSpotDoubleClicked(Sci::Position position, Scintilla::KeyMod modifiers);
@@ -476,8 +473,6 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endStyleNeeded) override;
 	void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) override;
 	void NotifyMacroRecord(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam);
-	void NotifyColorized(uptr_t wParam, uptr_t lParam);
-	void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam);
 
 	void ContainerNeedsUpdate(Scintilla::Update flags) noexcept;
 	void PageMove(int direction, Selection::SelTypes selt=Selection::SelTypes::none, bool stuttered = false);
@@ -586,7 +581,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	void FoldAll(Scintilla::FoldAction action);
 
 	Sci::Position GetTag(char *tagValue, int tagNumber);
-	Sci::Position ReplaceTarget(bool replacePatterns, const char *text, Sci::Position length=-1);
+	enum class ReplaceType {basic, patterns, minimal};
+	Sci::Position ReplaceTarget(ReplaceType replaceType, std::string_view text);
 
 	bool PositionIsHotspot(Sci::Position position) const noexcept;
 	bool PointIsHotspot(Point pt);
@@ -603,6 +599,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 
 	Sci::Line WrapCount(Sci::Line line);
 	void AddStyledText(const char *buffer, Sci::Position appendLength);
+	Sci::Position GetStyledText(char *buffer, Sci::Position cpMin, Sci::Position cpMax) const noexcept;
+	Sci::Position GetTextRange(char *buffer, Sci::Position cpMin, Sci::Position cpMax) const;
 
 	virtual Scintilla::sptr_t DefWndProc(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam) = 0;
 	bool ValidMargin(Scintilla::uptr_t wParam) const noexcept;
@@ -627,6 +625,12 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	}
 	static unsigned char *UCharPtrFromSPtr(Scintilla::sptr_t lParam) noexcept {
 		return static_cast<unsigned char *>(PtrFromSPtr(lParam));
+	}
+	static std::string_view ViewFromParams(Scintilla::sptr_t lParam, Scintilla::uptr_t wParam) noexcept {
+		if (SPtrFromUPtr(wParam) == -1) {
+			return std::string_view(CharPtrFromSPtr(lParam));
+		}
+		return std::string_view(CharPtrFromSPtr(lParam), wParam);
 	}
 	static void *PtrFromUPtr(Scintilla::uptr_t wParam) noexcept {
 		return reinterpret_cast<void *>(wParam);

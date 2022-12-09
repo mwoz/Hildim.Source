@@ -127,7 +127,6 @@ Editor::Editor() : durationWrapOneByte(0.000001, 0.00000001, 0.00001) {
 
 	cursorMode = CursorShape::Normal;
 
-	ignoreOverstrikeChange = false; //!-add-[ignore_overstrike_change]
 	errorStatus = Status::Ok;
 	mouseDownCaptures = true;
 	mouseWheelCaptures = true;
@@ -2380,19 +2379,6 @@ void Editor::NotifyStyleNeeded(Document *, void *, Sci::Position endStyleNeeded)
 	NotifyStyleToNeeded(endStyleNeeded);
 }
 
-void Editor::NotifyExColorized(Document *, void *, uptr_t wParam, uptr_t lParam){
-	NotifyColorized(wParam, lParam);
-}
-
-void Editor::NotifyColorized(uptr_t wParam, uptr_t lParam)
-{
-	NotificationData scn = { 0 };
-	scn.nmhdr.code = Notification::Colorized;
-	scn.wParam = wParam;
-	scn.lParam = lParam;
-	NotifyParent(scn);
-}
-
 void Editor::NotifyErrorOccurred(Document *, void *, Status status) {
 	errorStatus = status;
 }
@@ -2432,26 +2418,6 @@ void Editor::NotifyDoubleClick(Point pt, KeyMod modifiers) {
 	scn.modifiers = modifiers;
 	NotifyParent(scn);
 }
-//!-start-[OnClick]
-void Editor::NotifyClick(Point pt, KeyMod modifiers) {
-	NotificationData scn = {0};
-	scn.nmhdr.code = Notification::Click;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = modifiers;
-	NotifyParent(scn);
-}
-//!-end-[OnClick]
-//!-start-[OnMouseButtonUp]
-void Editor::NotifyMouseButtonUp(Point pt, KeyMod ctrl) {
-	NotificationData scn = {0};
-	scn.nmhdr.code = Notification::MouseButtonUp;
-	scn.line = LineFromLocation(pt);
-	scn.position = PositionFromLocation(pt, true);
-	scn.modifiers = ctrl;
-	NotifyParent(scn);
-}
-//!-end-[OnMouseButtonUp]
 
 void Editor::NotifyHotSpotDoubleClicked(Sci::Position position, KeyMod modifiers) {
 	NotificationData scn = {};
@@ -2637,7 +2603,7 @@ constexpr Sci::Position MovePositionForDeletion(Sci::Position position, Sci::Pos
 }
 
 void Editor::NotifyModified(Document *, DocModification mh, void *) {
-	ContainerNeedsUpdate((Update)((unsigned int)Update::Content | ((unsigned int)mh.modificationType << 4)));
+	ContainerNeedsUpdate(Update::Content);
 	if (paintState == PaintState::painting) {
 		CheckForChangeOutsidePaint(Range(mh.position, mh.position + mh.length));
 	}
@@ -3152,8 +3118,8 @@ void Editor::NewLine() {
 		// Remove non-main ranges
 		sel.DropAdditionalRanges();
 	}
-	UndoGroup ug(pdoc,true); ///!!!ћой фикс - один ундо при переходе на новую строку
-	//UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
+
+	UndoGroup ug(pdoc, !sel.Empty() || (sel.Count() > 1));
 
 	// Clear each range
 	if (!sel.Empty()) {
@@ -3772,11 +3738,6 @@ int Editor::DelWordOrLine(Message iMessage) {
 }
 
 int Editor::KeyCommand(Message iMessage) {
-	NotificationData scn = { 0 };
-	scn.nmhdr.code = Notification::KeyCommand;
-	scn.wParam = (uptr_t)iMessage;
-	scn.lParam = 0;
-	NotifyParent(scn);
 	switch (iMessage) {
 	case Message::LineDown:
 		CursorUpOrDown(1, Selection::SelTypes::none);
@@ -3905,7 +3866,6 @@ int Editor::KeyCommand(Message iMessage) {
 		PageMove(1, Selection::SelTypes::rectangle);
 		break;
 	case Message::EditToggleOvertype:
-		if ( ignoreOverstrikeChange == true ) break; //!-add-[ignore_overstrike_change]
 		inOverstrike = !inOverstrike;
 		ContainerNeedsUpdate(Update::Selection);
 		ShowCaretAtCurrentPosition();
@@ -4029,9 +3989,6 @@ int Editor::KeyCommand(Message iMessage) {
 	default:
 		break;
 	}
-
-	scn.lParam = 1;
-	NotifyParent(scn);
 	return 0;
 }
 
@@ -4040,7 +3997,6 @@ int Editor::KeyDefault(Keys, KeyMod) {
 }
 
 int Editor::KeyDownWithModifiers(Keys key, KeyMod modifiers, bool *consumed) {
-	if(key!=(Keys)0x10 && key!=(Keys)0x11 && key!=(Keys)0x12)
 	DwellEnd(false);
 	const Message msg = kmap.Find(key, modifiers);
 	if (msg != static_cast<Message>(0)) {
@@ -4638,21 +4594,15 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, KeyMod modi
 	SetHoverIndicatorPoint(pt);
 	//Platform::DebugPrintf("ButtonDown %d %d = %d alt=%d %d\n", curTime, lastClickTime, curTime - lastClickTime, alt, inDragDrop);
 	ptMouseLast = pt;
-	const bool nmid = (int)(modifiers & SCI_META) == 0;
-	const bool ctrl = nmid && ((int)(modifiers & SCI_CTRL) != 0);
-	const bool shift = nmid && ((int)(modifiers & SCI_SHIFT)) != 0;
-	const bool alt = nmid && ((int)(modifiers & SCI_ALT)) != 0;
-	
-	//const bool ctrl = FlagSet(modifiers, KeyMod::Ctrl);
-	//const bool shift = FlagSet(modifiers, KeyMod::Shift);
-	//const bool alt = FlagSet(modifiers, KeyMod::Alt);
+	const bool ctrl = FlagSet(modifiers, KeyMod::Ctrl);
+	const bool shift = FlagSet(modifiers, KeyMod::Shift);
+	const bool alt = FlagSet(modifiers, KeyMod::Alt);
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false, AllowVirtualSpace(virtualSpaceOptions, alt));
 	newPos = MovePositionOutsideChar(newPos, sel.MainCaret() - newPos.Position());
 	SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
 	newCharPos = MovePositionOutsideChar(newCharPos, -1);
 	inDragDrop = DragDrop::none;
 	sel.SetMoveExtends(false);
-	bool notifyClick = false; //!-add-[OnClick]
 
 	if (NotifyMarginClick(pt, modifiers))
 		return;
@@ -4813,14 +4763,12 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, KeyMod modi
 				sel.Rectangular() = SelectionRange(newPos, anchorCurrent);
 				SetRectangularRange();
 			}
-			notifyClick = true; //!-add-[OnClick]
 		}
 	}
 	lastClickTime = curTime;
 	lastClick = pt;
 	lastXChosen = static_cast<int>(pt.x) + xOffset;
 	ShowCaretAtCurrentPosition();
-	if (notifyClick) NotifyClick(pt, modifiers); //!-add-[OnClick]
 }
 
 void Editor::RightButtonDownWithModifiers(Point pt, unsigned int, KeyMod modifiers) {
@@ -5022,7 +4970,6 @@ void Editor::ButtonMoveWithModifiers(Point pt, unsigned int, KeyMod modifiers) {
 
 void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifiers) {
 	//Platform::DebugPrintf("ButtonUp %d %d\n", HaveMouseCapture(), inDragDrop);
-	const bool nmid = (int)(modifiers & SCI_META) == 0;
 	SelectionPosition newPos = SPositionFromLocation(pt, false, false,
 		AllowVirtualSpace(virtualSpaceOptions, sel.IsRectangular()));
 	if (hoverIndicatorPos != Sci::invalidPosition)
@@ -5038,7 +4985,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 		hotSpotClickPos = Sci::invalidPosition;
 		SelectionPosition newCharPos = SPositionFromLocation(pt, false, true, false);
 		newCharPos = MovePositionOutsideChar(newCharPos, -1);
-		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers);
+		NotifyHotSpotReleaseClick(newCharPos.Position(), modifiers & KeyMod::Ctrl);
 	}
 	if (HaveMouseCapture()) {
 		if (PointInSelMargin(pt)) {
@@ -5057,7 +5004,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 			if (selStart < selEnd) {
 				if (drag.Length()) {
 					const Sci::Position length = drag.Length();
-					if (FlagSet(modifiers, KeyMod::Ctrl) && nmid) {
+					if (FlagSet(modifiers, KeyMod::Ctrl)) {
 						const Sci::Position lengthInserted = pdoc->InsertString(
 							newPos.Position(), drag.Data(), length);
 						if (lengthInserted > 0) {
@@ -5091,7 +5038,7 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 					sel.RangeMain() =
 						SelectionRange(newPos, sel.Range(sel.Count() - 1).anchor);
 					InvalidateWholeSelection();
-				} else if(nmid) {
+				} else {
 					SetSelection(newPos, sel.RangeMain().anchor);
 				}
 			}
@@ -5107,7 +5054,6 @@ void Editor::ButtonUpWithModifiers(Point pt, unsigned int curTime, KeyMod modifi
 		inDragDrop = DragDrop::none;
 		EnsureCaretVisible(false);
 	}
-	NotifyMouseButtonUp(pt, modifiers); //!-add-[OnMouseButtonUp]
 }
 
 bool Editor::Idle() {
@@ -5144,7 +5090,7 @@ void Editor::TickFor(TickReason reason) {
 			break;
 		case TickReason::scroll:
 			// Auto scroll
-			//ButtonMoveWithModifiers(ptMouseLast, 0, KeyMod::Norm);
+			ButtonMoveWithModifiers(ptMouseLast, 0, KeyMod::Norm);
 			break;
 		case TickReason::widen:
 			SetScrollBars();
@@ -5750,15 +5696,27 @@ Sci::Position Editor::GetTag(char *tagValue, int tagNumber) {
 	return length;
 }
 
-Sci::Position Editor::ReplaceTarget(bool replacePatterns, const char *text, Sci::Position length) {
+Sci::Position Editor::ReplaceTarget(ReplaceType replaceType, std::string_view text) {
 	UndoGroup ug(pdoc);
-	if (length == -1)
-		length = strlen(text);
-	if (replacePatterns) {
-		text = pdoc->SubstituteByPosition(text, &length);
-		if (!text) {
+	if (replaceType == ReplaceType::patterns) {
+		Sci::Position length = text.length();
+		const char *p = pdoc->SubstituteByPosition(text.data(), &length);
+		if (!p) {
 			return 0;
 		}
+		text = std::string_view(p, length);
+	}
+
+	if (replaceType == ReplaceType::minimal) {
+		// Check for prefix and suffix and reduce text and target to match.
+		// This is performed with Range which doesn't support virtual space.
+		Range range(targetRange.start.Position(), targetRange.end.Position());
+		pdoc->TrimReplacement(text, range);
+		// Re-apply virtual space to start if start position didn't change.
+		// Don't bother with end as its virtual space is not used
+		const SelectionPosition start(range.start == targetRange.start.Position() ?
+			targetRange.start : SelectionPosition(range.start));
+		targetRange = SelectionSegment(start, SelectionPosition(range.end));
 	}
 
 	// Remove the text inside the range
@@ -5772,9 +5730,9 @@ Sci::Position Editor::ReplaceTarget(bool replacePatterns, const char *text, Sci:
 	targetRange.end = targetRange.start;
 
 	// Insert the new text
-	const Sci::Position lengthInserted = pdoc->InsertString(targetRange.start.Position(), text, length);
+	const Sci::Position lengthInserted = pdoc->InsertString(targetRange.start.Position(), text);
 	targetRange.end.SetPosition(targetRange.start.Position() + lengthInserted);
-	return length;
+	return text.length();
 }
 
 bool Editor::IsUnicodeMode() const noexcept {
@@ -5837,6 +5795,27 @@ void Editor::AddStyledText(const char *buffer, Sci::Position appendLength) {
 	SetEmptySelection(sel.MainCaret() + lengthInserted);
 }
 
+Sci::Position Editor::GetStyledText(char *buffer, Sci::Position cpMin, Sci::Position cpMax) const noexcept {
+	Sci::Position iPlace = 0;
+	for (Sci::Position iChar = cpMin; iChar < cpMax; iChar++) {
+		buffer[iPlace++] = pdoc->CharAt(iChar);
+		buffer[iPlace++] = pdoc->StyleAtNoExcept(iChar);
+	}
+	buffer[iPlace] = '\0';
+	buffer[iPlace + 1] = '\0';
+	return iPlace;
+}
+
+Sci::Position Editor::GetTextRange(char *buffer, Sci::Position cpMin, Sci::Position cpMax) const {
+	const Sci::Position cpEnd = (cpMax == -1) ? pdoc->Length() : cpMax;
+	PLATFORM_ASSERT(cpEnd <= pdoc->Length());
+	const Sci::Position len = cpEnd - cpMin; 	// No -1 as cpMin and cpMax are referring to inter character positions
+	pdoc->GetCharRange(buffer, cpMin, len);
+	// Spec says copied text is terminated with a NUL
+	buffer[len] = '\0';
+	return len; 	// Not including NUL
+}
+
 bool Editor::ValidMargin(uptr_t wParam) const noexcept {
 	return wParam < vs.ms.size();
 }
@@ -5893,7 +5872,7 @@ void Editor::StyleSetMessage(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		if (!(classified & UTF8MaskInvalid)) {
 			// valid UTF-8
 			int len = classified & UTF8MaskWidth;
-			while (len--)
+			for (int i=0; i<len && i<4; i++)
 				*rep++ = *utf8++;
 		}
 		*rep = 0;
@@ -5915,7 +5894,6 @@ void Editor::StyleSetMessage(Message iMessage, uptr_t wParam, sptr_t lParam) {
 }
 
 sptr_t Editor::StyleGetMessage(Message iMessage, uptr_t wParam, sptr_t lParam) {
-    PLATFORM_ASSERT(wParam < vs.styles.size());
 	vs.EnsureStyle(wParam);
 	switch (iMessage) {
 	case Message::StyleGetFore:
@@ -6274,11 +6252,15 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case Message::ReplaceTarget:
 		PLATFORM_ASSERT(lParam);
-		return ReplaceTarget(false, ConstCharPtrFromSPtr(lParam), PositionFromUPtr(wParam));
+		return ReplaceTarget(ReplaceType::basic, ViewFromParams(lParam, wParam));
 
 	case Message::ReplaceTargetRE:
 		PLATFORM_ASSERT(lParam);
-		return ReplaceTarget(true, ConstCharPtrFromSPtr(lParam), PositionFromUPtr(wParam));
+		return ReplaceTarget(ReplaceType::patterns, ViewFromParams(lParam, wParam));
+
+	case Message::ReplaceTargetMinimal:
+		PLATFORM_ASSERT(lParam);
+		return ReplaceTarget(ReplaceType::minimal, ViewFromParams(lParam, wParam));
 
 	case Message::SearchInTarget:
 		PLATFORM_ASSERT(lParam);
@@ -6366,36 +6348,17 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 	case Message::FindTextFull:
 		return FindTextFull(wParam, lParam);
 
-	case Message::GetTextRange: {
-			if (lParam == 0)
-				return 0;
-			TextRange *tr = static_cast<TextRange *>(PtrFromSPtr(lParam));
-			Sci::Position cpMax = static_cast<Sci::Position>(tr->chrg.cpMax);
-			if (cpMax == -1)
-				cpMax = pdoc->Length();
-			PLATFORM_ASSERT(cpMax <= pdoc->Length());
-			Sci::Position len = cpMax - tr->chrg.cpMin; 	// No -1 as cpMin and cpMax are referring to inter character positions
-			pdoc->GetCharRange(tr->lpstrText, tr->chrg.cpMin, len);
-			// Spec says copied text is terminated with a NUL
-			tr->lpstrText[len] = '\0';
-			return len; 	// Not including NUL
+	case Message::GetTextRange:
+		if (TextRange *tr = static_cast<TextRange *>(PtrFromSPtr(lParam))) {
+			return GetTextRange(tr->lpstrText, tr->chrg.cpMin, tr->chrg.cpMax);
 		}
+		return 0;
 
-	case Message::GetTextRangeFull: {
-			if (lParam == 0)
-				return 0;
-			TextRangeFull *tr = static_cast<TextRangeFull *>(PtrFromSPtr(lParam));
-			Sci::Position cpMax = tr->chrg.cpMax;
-			if (cpMax == -1)
-				cpMax = pdoc->Length();
-			PLATFORM_ASSERT(cpMax <= pdoc->Length());
-			const Sci::Position len = cpMax - tr->chrg.cpMin; 	// No -1 as cpMin and cpMax are referring to inter character positions
-			PLATFORM_ASSERT(len >= 0);
-			pdoc->GetCharRange(tr->lpstrText, tr->chrg.cpMin, len);
-			// Spec says copied text is terminated with a NUL
-			tr->lpstrText[len] = '\0';
-			return len; 	// Not including NUL
+	case Message::GetTextRangeFull:
+		if (TextRangeFull *tr = static_cast<TextRangeFull *>(PtrFromSPtr(lParam))) {
+			return GetTextRange(tr->lpstrText, tr->chrg.cpMin, tr->chrg.cpMax);
 		}
+		return 0;
 
 	case Message::HideSelection:
 		vs.selection.visible = wParam == 0;
@@ -6492,7 +6455,8 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return 0;
 
 	case Message::EndUndoAction:
-		return pdoc->EndUndoAction();
+		pdoc->EndUndoAction();
+		return 0;
 
 	case Message::GetCaretPeriod:
 		return caret.period;
@@ -6642,19 +6606,17 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		pdoc->SetSavePoint();
 		break;
 
-	case Message::GetStyledText: {
-			if (lParam == 0)
-				return 0;
-			TextRange *tr = static_cast<TextRange *>(PtrFromSPtr(lParam));
-			Sci::Position iPlace = 0;
-			for (Sci::Position iChar = tr->chrg.cpMin; iChar < tr->chrg.cpMax; iChar++) {
-				tr->lpstrText[iPlace++] = pdoc->CharAt(iChar);
-				tr->lpstrText[iPlace++] = pdoc->StyleAt(iChar);
-			}
-			tr->lpstrText[iPlace] = '\0';
-			tr->lpstrText[iPlace + 1] = '\0';
-			return iPlace;
+	case Message::GetStyledText:
+		if (TextRange *tr = static_cast<TextRange *>(PtrFromSPtr(lParam))) {
+			return GetStyledText(tr->lpstrText, tr->chrg.cpMin, tr->chrg.cpMax);
 		}
+		return 0;
+
+	case Message::GetStyledTextFull:
+		if (TextRangeFull *tr = static_cast<TextRangeFull *>(PtrFromSPtr(lParam))) {
+			return GetStyledText(tr->lpstrText, tr->chrg.cpMin, tr->chrg.cpMax);
+		}
+		return 0;
 
 	case Message::CanRedo:
 		return (pdoc->CanRedo() && !pdoc->IsReadOnly()) ? 1 : 0;
@@ -8251,18 +8213,12 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 
 	case Message::SetOvertype:
-//!		inOverstrike = wParam != 0;
-//!-start-[ignore_overstrike_change]
-		if ( wParam < 2 ) {
+		if (inOverstrike != (wParam != 0)) {
 			inOverstrike = wParam != 0;
 			ContainerNeedsUpdate(Update::Selection);
 			ShowCaretAtCurrentPosition();
 			SetIdle(true);
 		}
-		else {
-			ignoreOverstrikeChange = wParam == 2;
-		}
-//!-end-[ignore_overstrike_chang		
 		break;
 
 	case Message::GetOvertype:
@@ -8821,13 +8777,8 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case Message::ChangeLexerState:
-		pdoc->ChangeLexerState(static_cast<Sci::Position>(wParam), lParam);
+		pdoc->ChangeLexerState(PositionFromUPtr(wParam), lParam);
 		break;
-//!-start-[MouseClickHandled]
-	case Message::SetMouseCapture:
-		SetMouseCapture(wParam != 0);
-		break;
-//!-end-[MouseClickHandled]
 
 	case Message::SetIdentifier:
 		SetCtrlID(static_cast<int>(wParam));
