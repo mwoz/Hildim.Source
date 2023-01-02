@@ -259,7 +259,7 @@ public:
 //!	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400} specified;
 	        sdCaseForce = 0x100, sdVisible = 0x200, sdChangeable = 0x400, sdHotspot = 0x800} specified; //!-change-[StyleDefHotspot]
 	StyleDefinition(const char *definition, ColorConvertor * pc, bool useConv);
-	StyleDefinition::StyleDefinition(const char *definition) :StyleDefinition(definition, false, false) {};
+	StyleDefinition(const char *definition) :StyleDefinition(definition, NULL, false) {};
 	bool ParseStyleDefinition(const char *definition);
 	long ForeAsLong(bool useInv = true) const;
 	long BackAsLong(bool useInv = true) const;
@@ -899,7 +899,7 @@ protected:
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
 	virtual void ReadProperties();
 	virtual void ReadPropertiesEx();
-	void SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *colourProp, char *alphaProp);
+	void SetColourElement(GUI::ScintillaWindow *pWin, int elem, const char *colourProp, const char *alphaProp);
 	void SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd);
 	void SetStyleFor(GUI::ScintillaWindow &win, const char *language);
 	void ReloadProperties();

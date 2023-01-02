@@ -993,7 +993,7 @@ SString SciTEBase::GetFileNameProperty(const char *name) {
 		return props.Get(name);
 	}
 }
-void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem, char *colourProp, char *alphaProp) {
+void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem,const char *colourProp,const char *alphaProp) {
 	SString clr = props.Get(colourProp);
 	if (clr.length()) {
 		Colour c = ColourFromString(clr);

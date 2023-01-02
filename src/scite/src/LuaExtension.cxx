@@ -882,7 +882,7 @@ static int cf_editor_set_foreground(lua_State* L) {
 	HWND hCurrWnd;
 	int iMyTID;
 	int iCurrTID;
-	char* er = NULL;
+	const char* er = NULL;
 
 	hCurrWnd = ::GetForegroundWindow();
 	if (!hCurrWnd && !er)
