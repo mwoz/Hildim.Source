@@ -157,7 +157,7 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib\zlib1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -200,7 +200,7 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib\zlib1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib</AdditionalDependencies>
       <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
