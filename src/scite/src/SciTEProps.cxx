@@ -2083,3 +2083,8 @@ int SciTEBase::GetMenuCommandAsInt(SString commandName) {
 	// Otherwise we might have entered a number as command to access a "SCI_" command
 	return commandName.value();
 }
+
+unsigned long SciTEBase::InvertColor(unsigned long clr)
+{
+	return convMain.Convert(clr);
+}

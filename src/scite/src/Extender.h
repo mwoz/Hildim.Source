@@ -73,6 +73,7 @@ public:
 	virtual bool IsRunAsAdmin()=0;
 	virtual bool NewInstance(const char* arg, bool asAdmin) =0;
 	virtual bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile) = 0;
+	virtual unsigned long InvertColor(unsigned long clr) = 0;
 };
 
 /**

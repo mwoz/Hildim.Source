@@ -2753,7 +2753,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 	case IDM_CLOSE:
 		if (SaveIfUnsure() != IDCANCEL) {
+			bBlockTextChangeNotify = true;
 			Close();
+			bBlockTextChangeNotify = false;
 			WindowSetFocus(wEditor);
 		}
 		break;

@@ -378,6 +378,16 @@ errr:
 	return 2;
 }
 
+static int cf_scite_InvertColor(lua_State* L) {
+	lua_pushnumber(L, 0);
+	if (host) {
+
+		lua_pushnumber(L, host->InvertColor(luaL_checkinteger(L, 1)));
+		return 1;
+	}
+	return 0;
+}
+
 static int cf_scite_LAB2RGB(lua_State *L) {
 	std::string err;
 	float R, G, B, l_s, a_s, b_s;
@@ -2509,6 +2519,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_scite_RGB2LAB);
 	lua_setfield(luaState, -2, "RGB2LAB");
+
+	lua_pushcfunction(luaState, cf_scite_InvertColor);
+	lua_setfield(luaState, -2, "InvertColor");
 
 	// buffers
 	lua_newtable(luaState);

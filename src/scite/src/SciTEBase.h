@@ -66,8 +66,6 @@ enum {
     menuHelp = 8
 };
 
-Colour invertColor(Colour clr);
-
 class RecentFile : public FilePath {
 public:
 	Sci_CharacterRange selection;
@@ -996,6 +994,7 @@ public:
 	virtual bool IsRunAsAdmin() = 0;
 	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
 	long ColourOfProperty(const char *key, Colour colourDefault, bool invClr = false);
+	unsigned long InvertColor(unsigned long clr);
 
 private:
 	// un-implemented copy-constructor and assignment operator
