@@ -1275,8 +1275,14 @@ static int bf_get_buffer_modtime(lua_State *L) {
 }
 
 static int bf_get_buffer_unicmode(lua_State *L) {
-
+	
 	lua_pushinteger(L, host->GetBufferUnicMode(luaL_checkinteger(L, 1)));
+	return 1;
+}
+
+static int bf_get_buffer_redonly(lua_State *L) {
+
+	lua_pushboolean(L, host->GetBufferReadOnly(luaL_checkinteger(L, 1)));
 	return 1;
 }
 
@@ -2553,6 +2559,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, bf_get_buffer_order);
 	lua_setfield(luaState, -2, "GetBufferOrder");
+
+	lua_pushcfunction(luaState, bf_get_buffer_redonly);
+	lua_setfield(luaState, -2, "GetBufferReadOnly");
 
 	lua_pushcfunction(luaState, bf_get_buffer_modtime);
 	lua_setfield(luaState, -2, "GetBufferModTime");

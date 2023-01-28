@@ -54,6 +54,7 @@ public:
 	virtual int ActiveEditor()=0;
 	virtual int GetBufferSide(int index) = 0;
 	virtual int GetBufferModTime(int index) = 0;
+	virtual bool GetBufferReadOnly(int index) = 0;
 	virtual int GetBufferUnicMode(int index) = 0;
 	virtual int GetBufferOrder(int index) = 0;
 	virtual int SecondEditorActive() = 0;

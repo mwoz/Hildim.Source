@@ -2674,7 +2674,9 @@ void WindowSetFocus(GUI::ScintillaWindow &w) {
 }
 
 void SciTEBase::Close_script() { 
+	bBlockTextChangeNotify = true;
 	Close(); 
+	bBlockTextChangeNotify = true;
 	WindowSetFocus(wEditor); 
 }
 
@@ -2760,7 +2762,9 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		}
 		break;
 	case IDM_CLOSEALL:
+		bBlockTextChangeNotify = true;
 		CloseAllBuffers();
+		bBlockTextChangeNotify = false;
 		break;
 	case IDM_SAVE:
 		Save(true);

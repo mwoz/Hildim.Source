@@ -1128,7 +1128,7 @@ public:
 	bool BufferContainsNull() {
 		char *top = bf->getTop();
 		if (top){
-			convert->convert(top, 4, true);
+			convert->convert(top, strlen(top), true);
 			if (convert->getEncoding() == Utf8_16::encodingType::eUtf16BigEndian || convert->getEncoding() == Utf8_16::encodingType::eUtf16LittleEndian) return false;
 		}
 		return bf->BufferContainsNull();

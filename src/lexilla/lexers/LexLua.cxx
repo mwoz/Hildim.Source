@@ -412,7 +412,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 					sc.ChangeState(SCE_LUA_WORD8);
 				} else if (isObject || isSubObject) {
 					// colourise objects part separately
-					if (isObject) {
+					if (isObject && sc.currentPos <= objectPartEndPos) {
 						int currPos = sc.currentPos;
 						sc.MoveTo(objectPartEndPos);
 						if (isObjectStart) {

@@ -642,6 +642,7 @@ protected:
 	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
 	virtual int GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
 	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
+	virtual bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; };
 	virtual int SecondEditorActive();
 	virtual void Open_script(const char* path);
 	virtual void SavePositions();
