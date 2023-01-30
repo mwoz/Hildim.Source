@@ -610,8 +610,8 @@ static int cur_more(lua_State* L) {
 	SQLHSTMT hstmt = cur->stmt->hstmt;
 	int ret;
 	SQLSMALLINT numcols;
-
-	if (SQLMoreResults(hstmt) == SQL_SUCCESS) {
+	SQLRETURN r = SQLMoreResults(hstmt);
+	if (r == SQL_SUCCESS) {
 		ret = SQLNumResultCols(hstmt, &numcols);
 		if (error(ret)) {
 			ret = fail(L, hSTMT, hstmt);
@@ -646,19 +646,41 @@ static int cur_more(lua_State* L) {
 			}
 			lua_pushnumber(L, 0);
 			lua_pushnumber(L, numrows);
-			ret = 1;
+			ret = 2;
 		}
 		return ret;
 
 	}
-	else {
-		/* automatically close cursor when end of resultset is reached */
-		//if ((ret = cur_shut(L, cur)) != 0) {
-		//	return ret;
-		//}
+	else if (r == SQL_SUCCESS_WITH_INFO) {
+		SQLCHAR State[6];
+		SQLINTEGER NativeError;
+		SQLSMALLINT MsgSize, i;
+		SQLRETURN ret;
+		SQLCHAR Msg[SQL_MAX_MESSAGE_LENGTH];
+		luaL_Buffer b;
+		
+		luaL_buffinit(L, &b);
+		i = 1;
 
-		lua_pushnil(L);
-		return 1;
+		while (1) {
+			ret = SQLGetDiagRec(hSTMT, hstmt, i, State, &NativeError, Msg,
+				sizeof(Msg), &MsgSize);
+			if (ret == SQL_NO_DATA) break;
+			luaL_addlstring(&b, (char*)Msg, MsgSize);
+			luaL_addchar(&b, '\n');
+			i++;
+		}
+		lua_pushnumber(L, 0);
+		luaL_pushresult(&b);
+		return 2;
+	}else {
+		ret = 0;
+		if (error(r)) {
+			ret = fail(L, hSTMT, hstmt);
+			SQLFreeHandle(hSTMT, hstmt);
+			return ret;
+		}
+		return ret;
 	}
 }
 
@@ -739,18 +761,59 @@ static int raw_execute(lua_State *L, int istmt)
 	stmt_data *stmt = getstatement(L, istmt);
 
 	/* execute the statement */
-	if (error(SQLExecute(stmt->hstmt))) {
+	SQLRETURN r = SQLExecute(stmt->hstmt);
+	if (error(r)) {
+		return fail(L, hSTMT, stmt->hstmt);
+	}
+	
+	char* errMsg = NULL;
+	size_t errLen = 0;
+	if (r == SQL_SUCCESS_WITH_INFO) {
+		numcols = 0;
+		SQLCHAR State[6];
+		SQLINTEGER NativeError;
+		SQLSMALLINT MsgSize, i;
+		SQLRETURN ret2;
+		SQLCHAR Msg[SQL_MAX_MESSAGE_LENGTH];
+		luaL_Buffer b;
+
+		luaL_buffinit(L, &b);
+		i = 1;
+		while (1) {
+			ret2 = SQLGetDiagRec(hSTMT, stmt->hstmt, i, State, &NativeError, Msg,
+				//ret2 = SQLGetDiagField(hSTMT, stmt->hstmt, i, State, Msg,
+				sizeof(Msg), &MsgSize);
+			if (ret2 == SQL_NO_DATA) break;
+			luaL_addlstring(&b, (char*)Msg, MsgSize);
+			luaL_addchar(&b, '\n');
+			i++;
+		}
+		luaL_pushresult(&b);
+
+		lua_tolstring(L, -1, &errLen);
+		if (errLen > 0) {
+			errMsg = malloc(errLen + 1);
+			memcpy(errMsg, lua_tolstring(L, -1, NULL), errLen +1);
+		}
+	} 
+	if (error(SQLNumResultCols(stmt->hstmt, &numcols))) {
+		/* determine the number of result columns */
 		return fail(L, hSTMT, stmt->hstmt);
 	}
 
-	/* determine the number of result columns */
-	if (error(SQLNumResultCols(stmt->hstmt, &numcols))) {
-		return fail(L, hSTMT, stmt->hstmt);
+
+	int ret = create_cursor(L, -1, stmt, numcols);
+
+	if (r == SQL_SUCCESS_WITH_INFO) {
+		//lua_pushnumber(L, 9);
+		lua_pushstring(L, errMsg);
+		free(errMsg);
+		return ret + 1;
 	}
 
 	if (numcols > 0) {
 		/* if there is a results table (e.g., SELECT) */
-		return create_cursor(L, -1, stmt, numcols);
+		return ret;
 	} else {
 		/* if action has no results (e.g., UPDATE) */
 		SQLLEN numrows;
@@ -759,7 +822,7 @@ static int raw_execute(lua_State *L, int istmt)
 		}
 
 		lua_pushnumber(L, numrows);
-		return 1;
+		return ret + 1;
 	}
 }
 
