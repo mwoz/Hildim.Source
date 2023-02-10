@@ -583,13 +583,13 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 			fore = layout.GetColorRef("TIPFGCOLOR");
 			needRecalc = 1;
 		} else {
-			fore = sd.ForeAsLong(false);
+			fore = sd.ForeAsLong();
 		}
 		if (!(sd.specified & StyleDefinition::sdBack)) {
 			back = layout.GetColorRef("TIPBGCOLOR");
 			needRecalc +=1;
 		} else {
-			back = sd.BackAsLong(false);
+			back = sd.BackAsLong();
 		}
 		if (needRecalc == 1) {
 			//float l_s, a_s, b_s;
@@ -605,8 +605,6 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 			fore = convMain.Convert(fore);
 			back = convMain.Convert(back);
 		}
-
-
 
 		//LineNumberColors(fore, back, sd);
 		win.Send(SCI_STYLESETFORE, style, fore);
@@ -1015,7 +1013,7 @@ void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem,const char
 	}
 }
 
-void SciTEBase::ReadProperties() {	
+void SciTEBase::ReadProperties() {
 	if (extender)
 		extender->Clear();
 	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
@@ -1030,13 +1028,15 @@ void SciTEBase::ReadProperties() {
 		if (strcmp(language.c_str(), languageCurrent.c_str())) {
 			if (language.startswith("script_")) {
 				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
-			} else {
+			}
+			else {
 
-				Scintilla::ILexer5 *plexer = Lexilla::MakeLexer(language.c_str());
+				Scintilla::ILexer5* plexer = Lexilla::MakeLexer(language.c_str());
 				wEditor.Call(SCI_SETILEXER, 0, (uptr_t)plexer);
 			}
 		}
-	} else if (languageCurrent.length()) {
+	}
+	else if (languageCurrent.length()) {
 		wEditor.Call(SCI_SETILEXER, 0, (uptr_t)nullptr);
 	}
 
@@ -1053,7 +1053,7 @@ void SciTEBase::ReadProperties() {
 
 	int maxN = KEYWORDSET_MAX;
 	SString maxS = props.GetNewExpand("max.keywords.", fileNameForExtension.c_str());
-	if(maxS.length())
+	if (maxS.length())
 		maxN = maxS.value() - 1;
 	for (int wl = 1; wl <= maxN; wl++) {
 		SString kwk(wl + 1);
@@ -1070,7 +1070,7 @@ void SciTEBase::ReadProperties() {
 	// props.Set("SciteUserHome", homepath.AsUTF8().c_str());
 
 	for (size_t i = 0; propertiesToForward[i]; i++) {
-		if(*propertiesToForward[i] == '$')
+		if (*propertiesToForward[i] == '$')
 			wEditor.CallString(SCI_SETPROPERTY,
 				reinterpret_cast<uptr_t>(propertiesToForward[i] + 1), props.GetNewExpand(propertiesToForward[i] + 1, ExtensionFileName().c_str()).c_str());
 		else
@@ -1123,7 +1123,7 @@ void SciTEBase::ReadProperties() {
 	else
 		//!-end-[caret]
 		wEditor.Call(SCI_SETCARETFORE,
-			ColourOfProperty("caret.fore", ColourRGB(0, 0, 0),invertColors));
+			ColourOfProperty("caret.fore", ColourRGB(0, 0, 0), invertColors));
 	wEditor.Call(SCI_SETCARETSTYLE, CARETSTYLE_LINE | (CARETSTYLE_OVERSTRIKE_BLOCK * props.GetInt("caret.overstrike.block")));
 
 	wEditor.Call(SCI_SETMULTIPLESELECTION, props.GetInt("selection.multiple", 1));
@@ -1142,7 +1142,8 @@ void SciTEBase::ReadProperties() {
 	SString controlCharSymbol = props.Get("control.char.symbol");
 	if (controlCharSymbol.length()) {
 		wEditor.Call(SCI_SETCONTROLCHARSYMBOL, static_cast<unsigned char>(controlCharSymbol[0]));
-	} else {
+	}
+	else {
 		wEditor.Call(SCI_SETCONTROLCHARSYMBOL, 0);
 	}
 
@@ -1177,33 +1178,13 @@ void SciTEBase::ReadProperties() {
 
 
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_TEXT, "selection.fore", "selection.alpha");
-	
+
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_BACK, "selection.back", "selection.alpha");
-	
+
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_TEXT, "selection.additional.fore", "selection.additional.alpha");
-	
+
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_BACK, "selection.additional.back", "selection.additional.alpha");
 
-//	SString foldColour = props.Get("fold.margin.colour");
-//	if (foldColour.length()) {
-//		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
-//	} else {
-//		wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 0, 0);
-//	}
-//	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
-//	if (foldHiliteColour.length()) {
-//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
-//	} else {
-//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-//	}
-//	//!-start-[HighlightCurrFolder]
-//	SString foldHighlightColour = props.Get("fold.highlight.colour");
-//	if (foldHighlightColour.length()) {
-//		wEditor.Call(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
-//	} else {
-//		wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-//	}
-//	//!-end-[HighlightCurrFolder]
 
 	SString whitespaceFore = props.Get("whitespace.fore");
 	if (whitespaceFore.length()) {
@@ -1255,6 +1236,45 @@ void SciTEBase::ReadProperties() {
 	}
 
 	ReadFontProperties();
+
+	COLORREF cFold = layout.GetColorRef("SCR_BACKCOLOR");
+
+	wEditor.Call(SCI_SETFOLDMARGINCOLOUR, 1, cFold);
+	wOutput.Call(SCI_SETFOLDMARGINCOLOUR, 1, cFold);
+	wFindRes.Call(SCI_SETFOLDMARGINCOLOUR, 1, cFold);
+
+	unsigned char r = (cFold & 0xFF0000) >> 16;
+	unsigned char g = (cFold & 0x00FF00) >> 8;
+	unsigned char b = cFold & 0x0000FF;
+
+	unsigned char r1 = (clrDefaultBack & 0xFF0000) >> 16;
+	unsigned char g1 = (clrDefaultBack & 0x00FF00) >> 8;
+	unsigned char b1 = clrDefaultBack & 0x0000FF;
+
+
+	if (clr_brightness(cFold) < clr_brightness(clrDefaultBack)) {
+		r = r >= 0xDF ? 0xFF : r + 0x20;
+		g = g >= 0xDF ? 0xFF : g + 0x20;
+		b = b >= 0xDF ? 0xFF : b + 0x20;
+		r = min(r, r1);
+		g = min(g, g1);
+		b = min(b, b1);
+	}
+	else {
+		r = r <= 0x20 ? 0 : r - 0x20;
+		g = g <= 0x20 ? 0 : g - 0x20;
+		b = b <= 0x20 ? 0 : b - 0x20;
+		r = max(r, r1);
+		g = max(g, g1);
+		b = max(b, b1);
+	}
+
+	cFold = ((r << 16) & 0xFF0000) | ((g << 8) & 0x00FF00) | (b & 0x0000FF);
+
+	wEditor.Call(SCI_SETFOLDMARGINHICOLOUR, 1, cFold);
+	wOutput.Call(SCI_SETFOLDMARGINHICOLOUR, 1, cFold);
+	wFindRes.Call(SCI_SETFOLDMARGINHICOLOUR, 1, cFold);
+
 	wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));
 	wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
 
@@ -1356,7 +1376,7 @@ void SciTEBase::ReadProperties() {
 	if (0 == props.GetInt("undo.redo.lazy")) {
 		// Trap for insert/delete notifications (also fired by undo
 		// and redo) so that the buttons can be enabled if needed.
-		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
+		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
 			| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | wEditor.Call(SCI_GETMODEVENTMASK, 0));
 		wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
 			| SC_LASTSTEPINUNDOREDO | wOutput.Call(SCI_GETMODEVENTMASK, 0));
@@ -1400,6 +1420,8 @@ void SciTEBase::ReadProperties() {
 			reinterpret_cast<char *>(bookmarkBluegem));
 	}
 	wEditor.Call(SCI_MARKERSETBACK, SC_MARKNUM_HISTORY_MODIFIED, ColourRGB(0xff, 0x80, 0x00));
+
+	wEditor.Call(SCI_MARKERDEFINE, markerScipLineFormat, SC_MARK_EMPTY);
 
 	wEditor.Call(SCI_MARKERDEFINE, markerError, SC_MARK_SHORTARROW);
 	wEditor.Call(SCI_MARKERSETFORE, markerError, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
@@ -1885,6 +1907,8 @@ void SciTEBase::ReadFontProperties() {
 	SetOneStyle(wEditor, STYLE_DEFAULT, style);
 	SetOneStyle(wOutput, STYLE_DEFAULT, style);
 	SetOneStyle(wFindRes, STYLE_DEFAULT, style);
+
+	clrDefaultBack = style.BackAsLong();
 #else
 	SetOneStyle(wEditor, STYLE_DEFAULT, sval.c_str());
 	SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());

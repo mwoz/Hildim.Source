@@ -1849,7 +1849,7 @@ static Ihandle* load_image_Tree_String_WW(void)
   return image;
 }
 
-static Ihandle* load_image_IMAGE_Function(void)
+static Ihandle* load_image_IMAGE_Function(const char* scrTXTFGCOLOR)
 {
   unsigned char imgdata[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -1871,7 +1871,7 @@ static Ihandle* load_image_IMAGE_Function(void)
 
   Ihandle* image = IupImage(16, 16, imgdata);
 
-  IupSetAttribute(image, "0", "0 0 0");
+  IupSetAttribute(image, "0", scrTXTFGCOLOR);
   IupSetAttribute(image, "1", "BGCOLOR");
 
   return image;
@@ -2935,12 +2935,12 @@ static Ihandle* load_image_property2_WW(void)
     2, 15, 1, 1, 5, 7, 6, 7, 6, 7, 6, 3, 13, 3, 13, 7,
     15, 8, 2, 1, 7, 6, 14, 3, 11, 3, 7, 3, 13, 7, 11, 15,
     1, 1, 1, 4, 3, 14, 14, 4, 3, 11, 3, 11, 4, 14, 2, 12,
-    1, 12, 12, 15, 14, 15, 12, 15, 4, 3, 11, 5, 8, 1, 12, 12,
-    1, 12, 12, 12, 12, 12, 12, 12, 15, 4, 5, 8, 8, 1, 12, 12,
-    1, 12, 10, 12, 1, 8, 8, 2, 12, 12, 12, 12, 12, 1, 12, 12,
-    1, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 1, 12, 12,
-    1, 12, 11, 2, 1, 8, 8, 8, 1, 8, 1, 8, 12, 1, 12, 12,
-    5, 12, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 12, 5, 12, 12,
+    1, 10, 10, 15, 14, 15, 10, 15, 4, 3, 11, 5, 8, 1, 12, 12,
+    1, 10, 10, 10, 10, 10, 10, 10, 15, 4, 5, 8, 8, 1, 12, 12,
+    1, 10, 13, 10, 1, 8, 8, 2, 10, 10, 10, 10, 10, 1, 12, 12,
+    1, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1, 12, 12,
+    1, 10, 11, 2, 1, 8, 8, 8, 1, 8, 1, 8, 10, 1, 12, 12,
+    5, 10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 10, 5, 12, 12,
     5, 2, 9, 2, 1, 1, 1, 1, 1, 1, 8, 2, 2, 5, 12, 12,
     5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 12, 12,
     5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 12,
@@ -2958,7 +2958,7 @@ static Ihandle* load_image_property2_WW(void)
   IupSetAttribute(image, "7", "189 138 85");
   IupSetAttribute(image, "8", "202 203 202");
   IupSetAttribute(image, "9", "100 154 252");
-  IupSetAttribute(image, "10", "52 170 36");
+  IupSetAttribute(image, "10", "255 255 255");
   IupSetAttribute(image, "11", "176 118 76");
   IupSetAttribute(image, "12", "BGCOLOR");
   IupSetAttribute(image, "13", "213 166 116");
@@ -4208,7 +4208,7 @@ static Ihandle* load_image_Event(void) {
 	return image;
 }
 
-void load_all_images_Images(void)
+void load_all_images_Images(const char* scrTXTFGCOLOR)
 {
   IupSetHandle("HildiM_µ", load_image_HildiM_WW());
   IupSetHandle("disk_µ", load_image_disk_WW());
@@ -4255,7 +4255,7 @@ void load_all_images_Images(void)
   IupSetHandle("navigation_µ", load_image_navigation_WW());
   IupSetHandle("key_µ", load_image_key_WW());
   IupSetHandle("Tree_String_µ", load_image_Tree_String_WW());
-  IupSetHandle("IMAGE_Function", load_image_IMAGE_Function());
+  IupSetHandle("IMAGE_Function", load_image_IMAGE_Function(scrTXTFGCOLOR));
   IupSetHandle("IMAGE_Trigger", load_image_IMAGE_Trigger());
   IupSetHandle("IMAGE_Pin", load_image_IMAGE_Pin());
   IupSetHandle("edit_uppercase_µ", load_image_edit_uppercase_WW());

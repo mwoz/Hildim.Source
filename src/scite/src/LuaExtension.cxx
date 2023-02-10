@@ -44,7 +44,7 @@ extern "C" {
 #include "scite_sbox.h"
 #include "scite_flattabs.h"
 #include "scite_scrollcanvas.h"
-#include "scite_images.h"
+//#include "scite_images.h"
 #include "../../iup/include/iup.h"
 #include "../../iup/include/iuplua.h"
 #include "../../iup/srccontrols/matrix/iupmat_getset.h"
@@ -2368,7 +2368,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	iupcontrolslua_open(luaState);
 	cdlua_open(luaState);
 	cdluaiup_open(luaState);
-	load_all_images_Images();
+	//load_all_images_Images();
 
 	lua_register(luaState, "_ALERT", cf_global_print);
 
@@ -3539,6 +3539,10 @@ void LuaExtension::OnRightEditorVisibility(bool show) {
 
 void LuaExtension::OnTextChanged(int position, int leg, int linesAdded, int flag) {
 	CallNamedFunction("OnTextChanged", position, flag, linesAdded, leg);
+}
+
+void LuaExtension::BeforeTextChanged(int position, int leg, const char* t, int type) {
+	CallNamedFunction("BeforeTextChanged", leg, t, position, type) ;
 }
 
 void LuaExtension::OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) {

@@ -93,6 +93,7 @@ function iup.TreeAddNodesRec(ih, t, id)
         iup.SetAttribute(ih, "ADDLEAF"..id, tnode.leafname)
         iup.TreeSetNodeAttrib(ih, tnode, id+1)
       end
+      if tnode.extratext then iup.SetAttributeId(ih, "EXTRATEXT", id + 1, tnode.extratext) end
     else
       if tnode then
         iup.SetAttribute(ih, "ADDLEAF"..id, tnode)

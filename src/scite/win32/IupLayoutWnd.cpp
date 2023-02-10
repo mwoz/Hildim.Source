@@ -1,4 +1,9 @@
+extern "C" {
+#include "scite_images.h"
+}
+
 #include "SciTEWin.h"
+#include "scite_images.h"
 #include <assert.h>
 #include "../../iup/src/iup_drvdraw.h"
 #include "../../iup/src/iup_draw.h"
@@ -7,7 +12,112 @@
 #include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
 
+
 std::map<std::string, IupChildWnd*> classList;
+
+static Ihandle* load_image_expanderDown_WW(const char* fore, const char* bak ) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(15, 15, imgdata);
+
+	IupSetAttribute(image, "0", fore);
+	IupSetAttribute(image, "1", bak);
+
+	return image;
+}
+
+static Ihandle* load_image_expanderUp_WW(const char* fore, const char* bak ) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(15, 15, imgdata);
+
+	IupSetAttribute(image, "0", fore);
+	IupSetAttribute(image, "1", bak);
+
+	return image;
+}
+
+static Ihandle* load_image_expanderLeft_WW(const char* fore, const char* bak ) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(15, 15, imgdata);
+
+	IupSetAttribute(image, "0", fore);
+	IupSetAttribute(image, "1", bak);
+
+	return image;
+}
+
+static Ihandle* load_image_expanderRight_WW(const char* fore, const char* bak ) {
+	unsigned char imgdata[] = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+	Ihandle* image = IupImage(15, 15, imgdata);
+
+	IupSetAttribute(image, "0", fore);
+	IupSetAttribute(image, "1", bak);
+
+	return image;
+}
 
 static Ihandle* load_image_property_WW(const char *fore) {
 	unsigned char imgdata[] = {
@@ -377,7 +487,7 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 	if (curLine >= 0) {
 		int cur = lineheightPx * curLine + sb_size;
-		iupdrvDrawLine(dc, 0, cur, sb_size, cur, 0, IUP_DRAW_FILL, 1);
+		iupdrvDrawLine(dc, 0, cur, sb_size, cur, caretColor, IUP_DRAW_FILL, 1);
 	}
 
 }
@@ -515,6 +625,7 @@ void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::
 {
 	hMainWnd = hM;
 	pSciteWin = (SciTEWin*)pScite;
+	caretColor = ((SciTEWin*)pSciteWin)->layout.GetColorRef("FGCOLOR");
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);
@@ -777,13 +888,14 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	minSz[1] = 'x';
 	lstrcatA(minSz, fntSize);
 	
-	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14],
+	static char scrFORECOLOR[14], scrPRESSCOLOR[14], scrHIGHCOLOR[14], scrBACKCOLOR[14], scrCAPTIONCOLOR[14],
 		scrHLCOLOR[14], scrBORDERHLCOLOR[14], scrBORDERCOLOR[14],
 		scrBGCOLOR[14], scrTXTBGCOLOR[14], scrFGCOLOR[14], scrTIPFGCOLOR[14], scrTIPBGCOLOR[14],
 		scrTXTFGCOLOR[14], scrTXTHLCOLOR[14], scrTXTINACTIVCOLOR[14], scrSPLITCOLOR[14], scrollsize[4], framesize[4], layoutdrag[4];
 	_itoa(::GetSystemMetrics(SM_CYSIZEFRAME), framesize, 10);
 
 	PropGet("layout.splittercolor", "220 220 220", scrSPLITCOLOR);
+	PropGet("layout.captioncolor", scrSPLITCOLOR, scrCAPTIONCOLOR);
 	PropGet("layout.scroll.forecolor", "190 190 190", scrFORECOLOR);
 	PropGet("layout.scroll.presscolor", "150 150 150", scrPRESSCOLOR);
 	PropGet("layout.scroll.highcolor", "170 170 170", scrHIGHCOLOR);
@@ -811,14 +923,27 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	IupSetHandle("uncheck_t_µ", load_image_uncheck(scrTXTBGCOLOR, scrBORDERCOLOR));
 	IupSetHandle("uncheck_inactive_µ", load_image_uncheck(scrTXTINACTIVCOLOR, scrBORDERCOLOR));
 	
-	IupSetHandle("MINIMISE_µ", load_image_MINIMISE(scrFGCOLOR, scrSPLITCOLOR));
-	IupSetHandle("NORMAL_µ", load_image_NORMAL(scrFGCOLOR, scrSPLITCOLOR));
-	IupSetHandle("CLOSE_µ", load_image_CLOSE(scrFGCOLOR, scrSPLITCOLOR));
-	IupSetHandle("MAXIMISE_µ", load_image_MAXIMISE(scrFGCOLOR, scrSPLITCOLOR));
+	IupSetHandle("MINIMISE_µ", load_image_MINIMISE(scrFGCOLOR, scrCAPTIONCOLOR));
+	IupSetHandle("NORMAL_µ", load_image_NORMAL(scrFGCOLOR, scrCAPTIONCOLOR));
+	IupSetHandle("CLOSE_µ", load_image_CLOSE(scrFGCOLOR, scrCAPTIONCOLOR));
+	IupSetHandle("MAXIMISE_µ", load_image_MAXIMISE(scrFGCOLOR, scrCAPTIONCOLOR));
 	IupSetHandle("MINIMISE_H_µ", load_image_MINIMISE(scrFGCOLOR, scrHLCOLOR));
 	IupSetHandle("NORMAL_H_µ", load_image_NORMAL(scrFGCOLOR, scrHLCOLOR));
 	IupSetHandle("CLOSE_H_µ", load_image_CLOSE("255 0 0", scrHLCOLOR));
 	IupSetHandle("MAXIMISE_H_µ", load_image_MAXIMISE(scrFGCOLOR, scrHLCOLOR));
+
+	IupSetHandle("EXPANDER_DOWN_µ", load_image_expanderDown_WW(scrFGCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_DOWN_H_µ", load_image_expanderDown_WW(scrTXTHLCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_UP_µ", load_image_expanderUp_WW(scrFGCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_UP_H_µ", load_image_expanderUp_WW(scrTXTHLCOLOR, scrBGCOLOR));
+	
+	IupSetHandle("EXPANDER_LEFT_µ", load_image_expanderLeft_WW(scrFGCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_LEFT_H_µ", load_image_expanderLeft_WW(scrTXTHLCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_RIGHT_µ", load_image_expanderRight_WW(scrFGCOLOR, scrBGCOLOR));
+	IupSetHandle("EXPANDER_RIGHT_H_µ", load_image_expanderRight_WW(scrTXTHLCOLOR, scrBGCOLOR));
+	
+	
+	load_all_images_Images(scrTXTFGCOLOR);
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
@@ -1160,7 +1285,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"TXTFGCOLOR", scrTXTFGCOLOR,
 		"TXTHLCOLOR", scrTXTHLCOLOR,
 		"TXTINACTIVCOLOR", scrTXTINACTIVCOLOR,
-		"CAPTBGCOLOR", scrSPLITCOLOR,
+		"CAPTBGCOLOR", scrCAPTIONCOLOR,
+		"SPLITCOLOR", scrSPLITCOLOR,
 		"SCR_FORECOLOR", scrFORECOLOR,
 		"SCR_PRESSCOLOR", scrPRESSCOLOR,
 		"SCR_HIGHCOLOR", scrHIGHCOLOR,

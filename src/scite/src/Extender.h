@@ -148,6 +148,7 @@ public:
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
 	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag) { return; };
+	virtual void BeforeTextChanged(int position, int leg, const char * t, int type) { return; };
 	virtual void OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) { return; };
 	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };

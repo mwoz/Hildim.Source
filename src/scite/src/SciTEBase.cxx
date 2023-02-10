@@ -3712,9 +3712,14 @@ void SciTEBase::Notify(SCNotification *notification) {
 			}
 		}
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
-			if (!bBlockTextChangeNotify && 0 != (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))){
-				extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
-					notification->linesAdded, notification->modificationType);
+			if (!bBlockTextChangeNotify) {
+				if (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) {
+					extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+						notification->linesAdded, notification->modificationType);
+				}
+				else if (notification->modificationType & (SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE)) {
+					extender->BeforeTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1, notification->text, notification->modificationType);
+				}
 			}
 		}
 		break;

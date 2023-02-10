@@ -356,6 +356,7 @@ private:
 	UINT vHeight = 0; //текущая высота вертикального бара
 	bool colodizedSB = false;
 	int resetmap = false;
+	COLORREF caretColor;
 	std::vector<sb_colors> pixelMap;
 
 	sb_colorsetting leftClr = { 0,{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0, 0 };
@@ -452,7 +453,7 @@ protected:
 	enum { importCmdID = IDM_IMPORT };
 
 	enum { indicatorMatch = INDIC_CONTAINER };
-	enum {markerSaved  = 0, markerNotSaved, markerBookmark, markerError, markerBreakPoint, markerVertAlign};
+	enum {markerScipLineFormat  = 0, markerNotUsed, markerBookmark, markerError, markerBreakPoint, markerVertAlign};
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 
@@ -468,6 +469,7 @@ protected:
 	SString functionDefinition;
 	bool invertColors = false;
 	bool hideHiddenStyles = false;
+	COLORREF clrDefaultBack = NULL;
 
 	bool indentOpening;
 	bool indentClosing;
@@ -612,8 +614,6 @@ protected:
 	PropSetFile propsSession;
 
 	FilePath pathAbbreviations;
-
-	IupLayoutWnd layout;
 
 	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
 
@@ -996,6 +996,7 @@ public:
 	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
 	long ColourOfProperty(const char *key, Colour colourDefault, bool invClr = false);
 	unsigned long InvertColor(unsigned long clr);
+	IupLayoutWnd layout;
 
 private:
 	// un-implemented copy-constructor and assignment operator

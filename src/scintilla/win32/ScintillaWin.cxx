@@ -2792,9 +2792,9 @@ void ScintillaWin::Paste() {
 }
 
 void ScintillaWin::CreateCallTipWindow(PRectangle) {
-	if (!ct.wCallTip.Created()) {
+	if (!ct.wCallTip.Created()) {//WS_EX_CLIENTEDGE
 		HWND wnd = ::CreateWindow(callClassName, TEXT("ACallTip"),
-					     WS_POPUP, 100, 100, 150, 20,
+					     WS_POPUP | WS_BORDER, 100, 100, 150, 20,
 					     MainHWND(), 0,
 					     GetWindowInstance(MainHWND()),
 					     this);
