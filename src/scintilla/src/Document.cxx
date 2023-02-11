@@ -225,27 +225,27 @@ void Document::RemoveLine(Sci::Line line) {
 }
 
 LineMarkers *Document::Markers() const noexcept {
-	return dynamic_cast<LineMarkers *>(perLineData[ldMarkers].get());
+	return static_cast<LineMarkers *>(perLineData[ldMarkers].get());
 }
 
 LineLevels *Document::Levels() const noexcept {
-	return dynamic_cast<LineLevels *>(perLineData[ldLevels].get());
+	return static_cast<LineLevels *>(perLineData[ldLevels].get());
 }
 
 LineState *Document::States() const noexcept {
-	return dynamic_cast<LineState *>(perLineData[ldState].get());
+	return static_cast<LineState *>(perLineData[ldState].get());
 }
 
 LineAnnotation *Document::Margins() const noexcept {
-	return dynamic_cast<LineAnnotation *>(perLineData[ldMargin].get());
+	return static_cast<LineAnnotation *>(perLineData[ldMargin].get());
 }
 
 LineAnnotation *Document::Annotations() const noexcept {
-	return dynamic_cast<LineAnnotation *>(perLineData[ldAnnotation].get());
+	return static_cast<LineAnnotation *>(perLineData[ldAnnotation].get());
 }
 
 LineAnnotation *Document::EOLAnnotations() const noexcept {
-	return dynamic_cast<LineAnnotation *>(perLineData[ldEOLAnnotation].get());
+	return static_cast<LineAnnotation *>(perLineData[ldEOLAnnotation].get());
 }
 
 LineEndType Document::LineEndTypesSupported() const {
@@ -512,7 +512,7 @@ Sci::Position Document::VCHomePosition(Sci::Position position) const {
 	const Sci::Position startPosition = LineStart(line);
 	const Sci::Position endLine = LineEnd(line);
 	Sci::Position startText = startPosition;
-	while (startText < endLine && (cb.CharAt(startText) == ' ' || cb.CharAt(startText) == '\t'))
+	while (startText < endLine && IsSpaceOrTab(cb.CharAt(startText)))
 		startText++;
 	if (position == startText)
 		return startPosition;
@@ -558,8 +558,8 @@ int SCI_METHOD Document::GetLevel(Sci_Position line) const {
 	return Levels()->GetLevel(line);
 }
 
-FoldLevel Document::GetFoldLevel(Sci_Position line) const {
-	return static_cast<FoldLevel>(Levels()->GetLevel(line));
+FoldLevel Document::GetFoldLevel(Sci_Position line) const noexcept {
+	return Levels()->GetFoldLevel(line);
 }
 
 void Document::ClearLevels() {
@@ -578,14 +578,8 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
-	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		if (lineMaxSubord >= lineMaxStyled) {
-			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
-			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
-				lineMaxStyled = lookLastLine;
-			EnsureStyledTo(LineStart(lineMaxStyled + 2));
-		}
+		EnsureStyledTo(LineStart(lineMaxSubord + 2));
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
@@ -603,21 +597,8 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	return lineMaxSubord;
 }
 
-Sci::Line Document::GetFoldParent(Sci::Line line) const {
-	const FoldLevel level = LevelNumberPart(GetFoldLevel(line));
-	Sci::Line lineLook = line - 1;
-	while ((lineLook > 0) && (
-	            (!LevelIsHeader(GetFoldLevel(lineLook))) ||
-	            (LevelNumberPart(GetFoldLevel(lineLook)) >= level))
-	      ) {
-		lineLook--;
-	}
-	if (LevelIsHeader(GetFoldLevel(lineLook)) &&
-	        (LevelNumberPart(GetFoldLevel(lineLook)) < level)) {
-		return lineLook;
-	} else {
-		return -1;
-	}
+Sci::Line Document::GetFoldParent(Sci::Line line) const noexcept {
+	return Levels()->GetFoldParent(line);
 }
 
 void Document::GetHighlightDelimiters(HighlightDelimiter &highlightDelimiter, Sci::Line line, Sci::Line lastLine) {
@@ -1582,13 +1563,12 @@ Sci::Position Document::SetLineIndentation(Sci::Line line, Sci::Position indent)
 	if (indent < 0)
 		indent = 0;
 	if (indent != indentOfLine) {
-		std::string linebuf = CreateIndentation(indent, tabInChars, !useTabs);
+		const std::string linebuf = CreateIndentation(indent, tabInChars, !useTabs);
 		const Sci::Position thisLineStart = LineStart(line);
 		const Sci::Position indentPos = GetLineIndentPosition(line);
 		UndoGroup ug(this);
 		DeleteChars(thisLineStart, indentPos - thisLineStart);
-		return thisLineStart + InsertString(thisLineStart, linebuf.c_str(),
-			linebuf.length());
+		return thisLineStart + InsertString(thisLineStart, linebuf);
 	} else {
 		return GetLineIndentPosition(line);
 	}
@@ -1725,7 +1705,8 @@ void Document::ConvertLineEnds(EndOfLine eolModeSet) {
 	UndoGroup ug(this);
 
 	for (Sci::Position pos = 0; pos < Length(); pos++) {
-		if (cb.CharAt(pos) == '\r') {
+		const char ch = cb.CharAt(pos);
+		if (ch == '\r') {
 			if (cb.CharAt(pos + 1) == '\n') {
 				// CRLF
 				if (eolModeSet == EndOfLine::Cr) {
@@ -1745,7 +1726,7 @@ void Document::ConvertLineEnds(EndOfLine eolModeSet) {
 					pos--;
 				}
 			}
-		} else if (cb.CharAt(pos) == '\n') {
+		} else if (ch == '\n') {
 			// LF
 			if (eolModeSet == EndOfLine::CrLf) {
 				pos += InsertString(pos, "\r", 1); // Insert CR
@@ -1757,6 +1738,16 @@ void Document::ConvertLineEnds(EndOfLine eolModeSet) {
 		}
 	}
 
+}
+
+std::string_view Document::EOLString() const noexcept {
+	if (eolMode == EndOfLine::CrLf) {
+		return "\r\n";
+	} else if (eolMode == EndOfLine::Cr) {
+		return "\r";
+	} else {
+		return "\n";
+	}
 }
 
 DocumentOption Document::Options() const noexcept {
@@ -2111,7 +2102,6 @@ bool SplitMatch(const SplitView &view, size_t start, std::string_view text) noex
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         FindOption flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = FlagSet(flags, FindOption::MatchCase);
@@ -2427,9 +2417,9 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
+		if (pli && !pli->UseContainerLexing()) {
 			const Sci::Line lineEndStyled = SciLineFromPosition(GetEndStyled());
 			const Sci::Position endStyledTo = LineStart(lineEndStyled);
-		if (pli && !pli->UseContainerLexing()) {
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2437,9 +2427,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2833,11 +2820,6 @@ Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxRe
 class BuiltinRegex : public RegexSearchBase {
 public:
 	explicit BuiltinRegex(CharClassify *charClassTable) : search(charClassTable) {}
-	BuiltinRegex(const BuiltinRegex &) = delete;
-	BuiltinRegex(BuiltinRegex &&) = delete;
-	BuiltinRegex &operator=(const BuiltinRegex &) = delete;
-	BuiltinRegex &operator=(BuiltinRegex &&) = delete;
-	~BuiltinRegex() override = default;
 
 	Sci::Position FindText(Document *doc, Sci::Position minPos, Sci::Position maxPos, const char *s,
                         bool caseSensitive, bool word, bool wordStart, FindOption flags,
@@ -3234,11 +3216,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;
