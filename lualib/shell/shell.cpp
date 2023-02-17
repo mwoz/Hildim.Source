@@ -793,9 +793,9 @@ static int do_startProc(lua_State* L) {
 }
 
 // запустить через CreateProcess в скрытом режиме
-static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut )
+static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut, const char *longpar)
 {
-	static const int MAX_CMD = 1024;
+	static const int MAX_CMD = 10240;
 
 	STARTUPINFOA si = { sizeof(STARTUPINFOA) };
 	si.dwFlags = STARTF_USESHOWWINDOW;
@@ -825,6 +825,11 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 	{
 		strcat( bufCmdLine.GetBuffer(), " " );
 		strcat( bufCmdLine.GetBuffer(), path.GetFileParams() );
+	}
+	if (longpar)
+	{
+		strcat( bufCmdLine.GetBuffer(), " " );
+		strcat( bufCmdLine.GetBuffer(), longpar);
 	}
 	char *lp = NULL;
 	if (strlen(currentDir) > 0)	lp = currentDir;
@@ -918,7 +923,7 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 
 // запустить через ShellExecuteEx в скрытом режиме
 // (см. шаманство с консолью)
-static BOOL ExecuteHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut )
+static BOOL ExecuteHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut, const char *longpar )
 {
 	HANDLE hSaveStdin = NULL;
 	HANDLE hSaveStdout = NULL;
@@ -1032,10 +1037,19 @@ static BOOL ExecuteHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut
 		return FALSE;
 	}
 
+	CSimpleString sFileParams;
+
+	sFileParams.Append(path.GetFileParams());
+
+	if (longpar) {
+		sFileParams.Append(" ");
+		sFileParams.Append(longpar);
+	}
+
 	// Now create the child process.
 	SHELLEXECUTEINFOA shinf = { sizeof(SHELLEXECUTEINFOA) };
 	shinf.lpFile = path.GetPath();
-	shinf.lpParameters = path.GetFileParams();
+	shinf.lpParameters = sFileParams.GetString();
 	//shinf.lpDirectory = path.GetDirectory();
 	shinf.fMask = SEE_MASK_FLAG_NO_UI |
 				  SEE_MASK_NO_CONSOLE |
@@ -1128,6 +1142,7 @@ static int exec( lua_State* L )
 	const char* verb = lua_tostring( L, 2 );
 	int noshow = lua_toboolean( L, 3 );
 	int dowait = lua_toboolean( L, 4 );
+	const char* longpar = lua_tostring(L, 5);
 
 	BOOL useConsoleOut = dowait && noshow && ( verb == NULL );
 
@@ -1137,8 +1152,8 @@ static int exec( lua_State* L )
 
 	if ( useConsoleOut != FALSE )
 	{
-		bSuccess = RunProcessHide( file, &exit_code, &strOut ) ||
-				   ExecuteHide( file, &exit_code, &strOut );
+		bSuccess = RunProcessHide( file, &exit_code, &strOut, longpar) ||
+				   ExecuteHide( file, &exit_code, &strOut, longpar);
 	}
 	else
 	{
@@ -1172,6 +1187,7 @@ static int exec( lua_State* L )
 			CSimpleString sFileParams;
 			sFileParams.Append( "/select," );
 			sFileParams.Append( file.GetPath() );
+
 			shinf.lpParameters = sFileParams.GetString();
 			shinf.fMask = SEE_MASK_FLAG_NO_UI |
 						  SEE_MASK_NO_CONSOLE |
@@ -1186,7 +1202,17 @@ static int exec( lua_State* L )
 		{
 			SHELLEXECUTEINFOA shinf = { sizeof(SHELLEXECUTEINFOA) };
 			shinf.lpFile = file.GetPath();
-			shinf.lpParameters = file.GetFileParams();
+
+			CSimpleString sFileParams;
+
+			sFileParams.Append(file.GetFileParams());
+
+			if (longpar) {
+				sFileParams.Append(" ");
+				sFileParams.Append(longpar);
+			}
+
+			shinf.lpParameters = sFileParams.GetString();
 			shinf.lpVerb = verb;
 			if (strlen(currentDir) > 3) {
 				shinf.lpDirectory = currentDir;

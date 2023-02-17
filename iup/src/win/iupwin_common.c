@@ -491,6 +491,32 @@ int iupwinBaseContainerMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRES
       }
       break;
     }
+  case WM_MEASUREITEM:   /* for OWNERDRAW menues */
+    {
+      if (!wp) {
+        Ihandle* child, * root;
+        MEASUREITEMSTRUCT* measureitem = (MEASUREITEMSTRUCT*)lp;
+        if (!measureitem)
+            break;
+
+        child = measureitem->itemData;
+        if (!child)
+            break;
+        root = child;
+
+        while (root->parent)
+            root = root->parent;
+
+        IFdrawItem cb = (IFdrawItem)IupGetCallback(root, "_IUPWIN_MEASUREITEM_CB");
+        if (cb)
+        {
+            cb(child, (void*)measureitem);
+            *result = TRUE;
+            return 1;
+        }
+      }
+      break;
+    }
   case WM_DRAWITEM:   /* for OWNERDRAW controls */
     {
       Ihandle *child;
@@ -499,7 +525,27 @@ int iupwinBaseContainerMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRES
         break;
 
       if (wp == 0) /* a menu */
-        child = iupwinMenuGetItemHandle((HMENU)drawitem->hwndItem, drawitem->itemID);
+      { 
+        //child = iupwinMenuGetItemHandle((HMENU)drawitem->hwndItem, drawitem->itemID); ???
+        Ihandle* root;
+
+        child = drawitem->itemData;
+        if (!child)
+            break;
+        root = child;
+        
+        while (root->parent)
+            root = root->parent;
+        
+        IFdrawItem cb = (IFdrawItem)IupGetCallback(root, "_IUPWIN_DRAWITEM_CB");
+        if (cb)
+        {
+            cb(child, (void*)drawitem);
+            *result = TRUE;
+            return 1;
+        }
+        break;
+      }
       else
       {
         child = iupwinHandleGet(drawitem->hwndItem); 

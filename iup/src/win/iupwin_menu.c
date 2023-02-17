@@ -22,12 +22,13 @@
 #include "iup_focus.h"
 #include "iup_menu.h"
 #include "iup_drv.h"
+#include "iup_drvfont.h"
 
 #include "iupwin_drv.h"
 #include "iupwin_handle.h"
 #include "iupwin_brush.h"
 #include "iupwin_str.h"
-
+#include "iupwin_draw.h"
 
 Ihandle* iupwinMenuGetHandle(HMENU hMenu)
 {
@@ -432,6 +433,286 @@ static int winMenuMapMethod(Ihandle* ih)
   return IUP_NOERROR;
 }
 
+
+/*******************************************************************************************/
+static const int BCMENU_PAD = 2;
+static int icon_h, icon_w;
+
+static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
+{
+
+    Ihandle* root, * parent;
+    parent = ih->parent;
+    if (!parent) {
+        return;
+    }
+    root = parent;
+    while (root->parent)
+        root = root->parent;
+
+    int x, y, width, height;
+    x = drawitem->rcItem.left;
+    y = drawitem->rcItem.top;
+    width = drawitem->rcItem.right - drawitem->rcItem.left;
+    height = drawitem->rcItem.bottom - drawitem->rcItem.top;
+
+    COLORREF fgcolor;
+    COLORREF bgcolor;
+    COLORREF barcolor, barfgcolor;
+    RECT rect, rectIcon;
+
+    BOOL isSubmenu = FALSE;
+
+    iupwinBitmapDC bmpDC;
+    HDC hDC = iupwinDrawCreateBitmapDC(&bmpDC, drawitem->hDC, x, y, width, height);
+    HPEN hPen, hPenOld;
+    POINT line_poly[3];
+
+    BOOL bFullSelect = (drawitem->itemState & ODS_SELECTED) && !(drawitem->itemState & ODS_GRAYED);
+
+    SetRect(&rect, bFullSelect ? 0 : parent->x, 0, width, height);
+    SetRect(&rectIcon, 0, 0,  parent->x, height);
+
+    const char* clr = drawitem->itemState & ODS_SELECTED ? (drawitem->itemState & ODS_GRAYED ? "HLINACTIVECOLOR" : "HLCOLOR") : "DRAWBGCOLOR";
+
+    if (iupwinGetColorRef(root, clr, &bgcolor))
+    {
+        SetDCBrushColor(hDC, bgcolor);
+        SetBkColor(hDC, bgcolor);
+        FillRect(hDC, &rect, (HBRUSH)GetStockObject(DC_BRUSH));
+    }
+    if (!bFullSelect) {
+        if (iupwinGetColorRef(root, "BARCOLOR", &barcolor)) {
+            SetDCBrushColor(hDC, barcolor);
+            FillRect(hDC, &rectIcon, (HBRUSH)GetStockObject(DC_BRUSH));
+        }
+
+    }
+
+    if (iupStrEqual(ih->iclass->name, "separator")){
+
+        if (iupwinGetColorRef(root, "SEPCOLOR", &fgcolor))
+        {
+
+            line_poly[0].x = parent->x;
+            line_poly[0].y = (height / 2) + 1;
+            line_poly[1].x = width;
+            line_poly[1].y = line_poly[0].y;
+
+            hPen = CreatePen(PS_SOLID, 1, fgcolor);
+            hPenOld = SelectObject(hDC, hPen);
+
+            Polyline(hDC, line_poly, 2);
+
+            SelectObject(hDC, hPenOld);
+            DeleteObject(hPen);
+
+        }
+    }
+    else {
+        
+        char* text, *font;
+        TCHAR* wtext;
+        int lenKey, lenW;
+        font = IupGetAttribute(root, "FONT");
+        text = iupAttribGet(ih, "TITLE");
+
+        char* img = iupAttribGet(ih, "IMAGE");
+
+        //if (drawitem->itemState & ODS_CHECKED)
+        //    img = "check_t_µ";
+
+        if (img) {
+            HBITMAP hb = (HBITMAP)iupImageGetImage(img, NULL, drawitem->itemState & ODS_GRAYED, NULL);
+            
+            int bpp;
+            iupdrvImageGetInfo(hb, NULL, NULL, &bpp);
+            iupwinDrawBitmap(hDC, hb, (parent->x - icon_w)/2, (parent->y - icon_h) / 2, icon_w, icon_h, icon_w, icon_h, bpp);
+        }
+
+
+        if (text && iupwinGetColorRef(root, drawitem->itemState & ODS_GRAYED ? "FGINACTIVECOLOR" : "FGCOLOR", &fgcolor))
+        {
+            if (drawitem->itemState & ODS_CHECKED) {
+
+                if(!iupwinGetColorRef(root, "BARFGCOLOR", &barfgcolor))
+                    barfgcolor = fgcolor;
+
+                hPen = CreatePen(PS_SOLID, 1, barfgcolor);
+
+                hPenOld = SelectObject(hDC, hPen);               
+                if (IupGetInt(parent, "RADIO")) {
+                    
+                    Ellipse(hDC, (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
+                                 (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
+                                 (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
+                                 (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
+                }
+                else {
+
+                    line_poly[0].x = (parent->x - icon_w) / 2 + BCMENU_PAD;
+                    line_poly[0].y = (height / 2) + 1;
+                    line_poly[1].x = parent->x / 2;
+                    line_poly[1].y = height - (parent->y - icon_h) / 2 - BCMENU_PAD;
+                    line_poly[2].x = parent->x - (parent->x - icon_h) / 2 - BCMENU_PAD;
+                    line_poly[2].y = (parent->y - icon_h) / 2 + BCMENU_PAD;
+
+                    Polyline(hDC, line_poly, 3);
+
+                    line_poly[0].x++;
+                    line_poly[1].y--;
+                    line_poly[2].x--;
+
+                    Polyline(hDC, line_poly, 3);
+
+                }
+                SelectObject(hDC, hPenOld);
+                DeleteObject(hPen);
+            }
+            
+            HFONT hFont = (HFONT)iupwinGetHFont(font);
+            SetTextColor(hDC, fgcolor);
+            SelectObject(hDC, hFont);
+            
+            int len = text ? strlen(text) : 0;
+            
+            char* key = strchr(text, '\t');
+            if (key) {
+                key++;
+                int lenKey = strlen(key);
+                len -= (lenKey+1);
+                lenW = lenKey;
+                wtext = iupwinStrToSystemLen(key, &lenW);
+                //text[len - 1] = 0;
+
+                SetRect(&rect, parent->x + parent->userwidth + BCMENU_PAD * 2, BCMENU_PAD, parent->x + parent->userwidth + parent->naturalwidth + BCMENU_PAD * 2, height - BCMENU_PAD);
+
+                DrawText(hDC, wtext, lenW, &rect, 0);
+            }
+
+            lenW = len;
+            wtext = iupwinStrToSystemLen(text, &lenW);
+
+            
+            SetRect(&rect, parent->x + BCMENU_PAD * 2, BCMENU_PAD, parent->x + parent->userwidth + BCMENU_PAD * 2, height - BCMENU_PAD);
+            
+            DrawText(hDC, wtext, lenW, &rect, 0);
+             //Draw custom submenu arrow
+             if (iupStrEqual(ih->iclass->name, "submenu"))
+             {
+                 isSubmenu = TRUE;
+
+                 //lenW = 1;
+                 //wtext = L"›";// iupwinStrToSystemLen(">", &lenW);
+                 //
+                 //
+                 //SetRect(&rect, width - 15, BCMENU_PAD, width, height - BCMENU_PAD);
+                 //
+                 //DrawText(hDC, wtext, lenW, &rect, 0);
+
+                 int left = parent->x + parent->userwidth + parent->naturalwidth + BCMENU_PAD ;
+                 left = left + (width - left) / 2;
+
+                 line_poly[0].x = left - 4;
+                 line_poly[0].y = height / 2 - 6;
+                 line_poly[1].x = left + 4;
+                 line_poly[1].y = height / 2 ;
+                 line_poly[2].x = left - 5;
+                 line_poly[2].y = height / 2 + 7;
+
+                 hPen = CreatePen(PS_SOLID, 1, fgcolor);
+                 hPenOld = SelectObject(hDC, hPen);
+
+                 Polyline(hDC, line_poly, 3);
+                 line_poly[0].y++;
+                 line_poly[1].y++;
+                 line_poly[2].y++;
+                 Polyline(hDC, line_poly, 3);
+
+                 SelectObject(hDC, hPenOld);
+                 DeleteObject(hPen);
+             }
+        }
+
+    }
+
+    iupwinDrawDestroyBitmapDC(&bmpDC);
+    if (isSubmenu) {
+        RECT tmpR = drawitem->rcItem;
+        ExcludeClipRect(drawitem->hDC, tmpR.left, tmpR.top, tmpR.right,
+            tmpR.bottom);
+    }
+
+}
+
+static void winMeasureItem(Ihandle* ih, MEASUREITEMSTRUCT* measureitem)
+{
+    Ihandle* root, * parent;
+
+    parent = ih->parent;
+    if (!parent) {
+        return;
+    }
+    root = parent;
+    while (root->parent)
+        root = root->parent;
+
+    if (!parent->y)
+    {
+        iupStrToIntInt(IupGetAttribute(root, "ICONSIZE"), &icon_w, &icon_h, 'x');
+
+        char* text, * font;
+        font = IupGetAttribute(root, "FONT");
+        Ihandle* brother = parent->firstchild;
+
+        int w, h, w1Max, w2Max;
+        w1Max = 0; w2Max = 0;
+
+        while (brother) {
+            text = IupGetAttribute(brother, "TITLE");
+            if (text) {
+                int len = strlen(text);
+                char * key = strchr(text, '\t');
+                if (key) {
+                    key++;
+                    int lenKey = strlen(key);
+                    len -= (lenKey + 1);
+                    iupdrvFontGetTextSize(font, key, lenKey, &w, &h);
+                    w2Max = max(w2Max, w);
+                }
+                iupdrvFontGetTextSize(font, text, len, &w, &h);
+                w1Max = max(w1Max, w + BCMENU_PAD * 2);
+            }
+            
+
+            brother = brother->brother;
+        }
+
+        parent->y = max(h, icon_h) + BCMENU_PAD * 2;
+        parent->userheight = BCMENU_PAD * 2 + 1;
+
+        parent->x = max(parent->y, icon_h + BCMENU_PAD * 2);
+        parent->userwidth = w1Max + BCMENU_PAD * 2;
+        parent->naturalwidth = w2Max + BCMENU_PAD * 2;
+
+    }
+
+    if (iupStrEqual(ih->iclass->name, "separator"))
+        measureitem->itemHeight = parent->userheight;
+    else    
+        measureitem->itemHeight = parent->y;
+
+    measureitem->itemWidth = parent->x + parent->userwidth + parent->naturalwidth;
+
+}
+
+static int winMenuSetOwnerdrowAttrib(Ihandle* ih, const char* value)
+{
+    IupSetCallback(ih, "_IUPWIN_MEASUREITEM_CB", (Icallback)winMeasureItem);
+    IupSetCallback(ih, "_IUPWIN_DRAWITEM_CB", (Icallback)winMenuDrawItem);
+    return 1;
+}
+
 void iupdrvMenuInitClass(Iclass* ic)
 {
   /* Driver Dependent Class functions */
@@ -439,7 +720,23 @@ void iupdrvMenuInitClass(Iclass* ic)
   ic->UnMap = winMenuUnMapMethod;
 
   iupClassRegisterAttribute(ic, "BGCOLOR", NULL, winMenuSetBgColorAttrib, IUPAF_SAMEASSYSTEM, "MENUBGCOLOR", IUPAF_DEFAULT);
+
+  ////////////////////
+  iupClassRegisterAttribute(ic, "OWNERDROW", NULL, winMenuSetOwnerdrowAttrib, IUPAF_SAMEASSYSTEM, "NO", IUPAF_DEFAULT);
+  iupClassRegisterAttribute(ic, "DRAWBGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "MENUBGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "MENUFGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "HLCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "TXTHLCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "SEPCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FONT", NULL, NULL, IUPAF_SAMEASSYSTEM, "DEFAULTFONT", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FGINACTIVECOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "MENUFGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "HLINACTIVECOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "MENUFGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "BARCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "DLGBGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "BARFGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "DLGFGCOLOR", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ICONSIZE", NULL, NULL, "16x16", NULL, IUPAF_NO_INHERIT);
+
+
 }
+
 
 
 /*******************************************************************************************/
@@ -489,36 +786,48 @@ static int winItemSetImpressAttrib(Ihandle* ih, const char* value)
 }
 
 static int winItemSetTitleAttrib(Ihandle* ih, const char* value)
-{
-  char *str;
-
+{    
   /* check if the submenu handle was created in winSubmenuAddToParent */
   if (ih->handle == (InativeHandle*)-1)
     return 1;
 
-  if (!value)
+  if (iupAttribGetBoolean(ih, "OWNERDROW"))
   {
-    str = "     ";
-    value = str;
+      MENUITEMINFO menuiteminfo;
+      menuiteminfo.cbSize = sizeof(MENUITEMINFO);
+      menuiteminfo.fMask = MIIM_TYPE;
+      menuiteminfo.fType = MFT_OWNERDRAW;
+      menuiteminfo.dwItemData = (ULONG_PTR)ih;
+
+      SetMenuItemInfo((HMENU)ih->handle, (UINT)ih->serial, FALSE, &menuiteminfo);
   }
   else
-    str = iupMenuProcessTitle(ih, value);
-
   {
-    TCHAR* tstr = iupwinStrToSystem(str);
-    int len = lstrlen(tstr);
-    MENUITEMINFO menuiteminfo;
-    menuiteminfo.cbSize = sizeof(MENUITEMINFO); 
-    menuiteminfo.fMask = MIIM_TYPE;
-    menuiteminfo.fType = MFT_STRING;
-    menuiteminfo.dwTypeData = tstr;
-    menuiteminfo.cch = len;
+    char *str;
 
-    SetMenuItemInfo((HMENU)ih->handle, (UINT)ih->serial, FALSE, &menuiteminfo);
+    if (!value)
+    {
+      str = "     ";
+      value = str;
+    }
+    else
+      str = iupMenuProcessTitle(ih, value);
+    
+    {
+      TCHAR* tstr = iupwinStrToSystem(str);
+      int len = lstrlen(tstr);
+      MENUITEMINFO menuiteminfo;
+      menuiteminfo.cbSize = sizeof(MENUITEMINFO); 
+      menuiteminfo.fMask = MIIM_TYPE;
+      menuiteminfo.fType = MFT_STRING;
+      menuiteminfo.dwTypeData = tstr;
+      menuiteminfo.cch = len;
+    
+      SetMenuItemInfo((HMENU)ih->handle, (UINT)ih->serial, FALSE, &menuiteminfo);
+    }
+    
+    if (str != value) free(str);
   }
-
-  if (str != value) free(str);
-
   winMenuUpdateBar(ih);
 
   return 1;
@@ -678,6 +987,7 @@ void iupdrvSubmenuInitClass(Iclass* ic)
   iupClassRegisterAttribute(ic, "IMAGE", NULL, winItemSetImageAttrib, NULL, NULL, IUPAF_IHANDLENAME|IUPAF_NO_DEFAULTVALUE|IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "BGCOLOR", NULL, NULL, IUPAF_SAMEASSYSTEM, "MENUBGCOLOR", IUPAF_DEFAULT);  /* used by IupImage */
 
+
   /* necessary because transparent background does not work when not using visual styles */
   if (!iupwin_comctl32ver6)  /* Used by iupdrvImageCreateImage */
     iupClassRegisterAttribute(ic, "FLAT_ALPHA", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
@@ -696,18 +1006,29 @@ static int winSeparatorMapMethod(Ihandle* ih)
 
   pos = IupGetChildPos(ih->parent, ih);
   ih->serial = iupMenuGetChildId(ih);
-
+  MENUITEMINFO menuiteminfo;
+  if (iupAttribGetBoolean(ih, "OWNERDROW"))
   {
-    MENUITEMINFO menuiteminfo;
+      menuiteminfo.cbSize = sizeof(MENUITEMINFO);
+      menuiteminfo.fMask = MIIM_TYPE | MIIM_ID | MIIM_DATA;
+      menuiteminfo.fType = MFT_OWNERDRAW | MFT_SEPARATOR;
+      menuiteminfo.wID = (UINT)ih->serial;
+      menuiteminfo.dwItemData = (ULONG_PTR)ih;
+
+      //SetMenuItemInfo((HMENU)ih->handle, (UINT)ih->serial, FALSE, &menuiteminfo);
+      //return IUP_NOERROR;
+  }
+  else
+  {
     menuiteminfo.cbSize = sizeof(MENUITEMINFO); 
     menuiteminfo.fMask = MIIM_FTYPE|MIIM_ID|MIIM_DATA; 
-    menuiteminfo.fType = MFT_SEPARATOR; 
+    menuiteminfo.fType = MFT_SEPARATOR;
     menuiteminfo.wID = (UINT)ih->serial;
     menuiteminfo.dwItemData = (ULONG_PTR)ih; 
 
+  }
     if (!InsertMenuItem((HMENU)ih->parent->handle, pos, TRUE, &menuiteminfo))
       return IUP_ERROR;
-  }
 
   /* Notice that "handle" here is the HMENU of the parent menu,
   and "serial" identifies the menu separator */

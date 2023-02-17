@@ -1720,10 +1720,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				return 0;
 			}
 			layout.OnNcMouseMove(MainHWND(), 0);
+			break;
 		case WM_NCMOUSELEAVE:
 			layout.OnNcMouseMove(MainHWND(), 0);
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			//return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_NCLBUTTONDOWN:
 			if ((wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
 				return layout.OnNcLMouseDown(MainHWND(), wParam);
@@ -1979,7 +1980,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return OnDrawClipBoardMsg(wParam);
 		case WM_CHANGECBCHAIN:
 			return OnChangeCBChain(wParam, lParam);
-
+		case WM_DRAWITEM:
+		case WM_MEASUREITEM:
+			if (!wParam)
+				return SendMessage(layout.GetChildHWND("LAYOUT"), iMessage, wParam, lParam);
+			break;
 		default:
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		}
