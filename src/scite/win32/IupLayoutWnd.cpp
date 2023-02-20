@@ -943,7 +943,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 	IupSetHandle("EXPANDER_RIGHT_H_µ", load_image_expanderRight_WW(scrTXTHLCOLOR, scrBGCOLOR));
 	
 	
-	load_all_images_Images(scrTXTFGCOLOR);
+	load_all_images_Images(scrTXTFGCOLOR, scrFGCOLOR);
 
 	pLeftTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlLeft",
