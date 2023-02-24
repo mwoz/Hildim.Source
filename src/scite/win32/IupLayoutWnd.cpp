@@ -954,6 +954,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"MINSIZE", minSz,
 		"TABSFORECOLOR", scrFGCOLOR,
 		"TABSLINECOLOR", scrBORDERCOLOR,
+		"EXTRAHIGHCOLOR1", scrHLCOLOR,
+		"EXTRAPRESSCOLOR1", scrBORDERCOLOR,
 		NULL);
 	pRightTab = IupSetAtt(NULL, IupCreate("flattabs_ctrl"),
 		"NAME", "TabCtrlRight",
@@ -964,6 +966,8 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"MINSIZE", minSz,
 		"TABSFORECOLOR", scrFGCOLOR,
 		"TABSLINECOLOR", scrBORDERCOLOR,
+		"EXTRAHIGHCOLOR1", scrHLCOLOR,
+		"EXTRAPRESSCOLOR1", scrBORDERCOLOR,
 		NULL);
 
 	pTab = IupSetAtt(NULL, IupCreatep("split",    

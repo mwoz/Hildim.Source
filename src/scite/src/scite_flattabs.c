@@ -675,7 +675,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			extra_x = iWidth - right_extra_width - extra_w;
 
 			if (extra_press == extra_id) {
-				char* extra_presscolor = iupAttribGetId(ih, "EXTRAPRESSCOLOR", i);
+				char* extra_presscolor = iupAttribGetId(ih, "EXTRAPRESSCOLOR_", i);
 				if (!extra_presscolor)
 					extra_presscolor = iupAttribGetStr(ih, "CLOSEPRESSCOLOR"); 
 

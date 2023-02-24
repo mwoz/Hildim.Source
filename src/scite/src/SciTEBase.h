@@ -494,6 +494,7 @@ protected:
 	public:
 		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
+		std::string languageCurrent = "xxx";
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	

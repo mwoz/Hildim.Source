@@ -1014,15 +1014,24 @@ void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem,const char
 }
 
 void SciTEBase::ReadProperties() {
+
+	SString fileNameForExtension = ExtensionFileName();
+	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
+	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
+
+	ScintillaWindowEditor* pEd = wEditor.GetWindowIdm() == IDM_SRCWIN ? &wEditorL : &wEditorR;
+
+
+	if (pEd->languageCurrent == language.c_str() && languageCurrent == pEd->languageCurrent){
+		//int ttt = 55;
+		return;
+	}
+	
 	if (extender)
 		extender->Clear();
 	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
 	Lexilla::Load(".");
 
-	SString fileNameForExtension = ExtensionFileName();
-
-	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
-	std::string languageCurrent = wEditor.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 
 	if (language.length()) {
 		if (strcmp(language.c_str(), languageCurrent.c_str())) {
@@ -1473,6 +1482,8 @@ void SciTEBase::ReadProperties() {
 
 	firstPropertiesRead = false;
 	needReadProperties = false;
+
+	pEd->languageCurrent = language.c_str();
 }
 
 void SciTEBase::ReadPropertiesEx() {

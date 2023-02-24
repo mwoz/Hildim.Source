@@ -6,6 +6,7 @@
 #define TYPE_SQL 3
 #define TYPE_CUBRFORMULA 4
 #define TYPE_WIREFORMAT 5
+#define TYPE_PSQL 6
 
 #define FM_NEXTFOLD 0x100
 #define FM_ENDCOMMENT 0x200
@@ -77,6 +78,12 @@ struct OptionsFM {
 	bool frozen;  //флаг для временного отключения на время загрузки хелплистов
 	std::string debugsuffix;
 	bool isSyslog;
+//psql
+	bool foldOnlyBegin;
+	bool sqlBackticksIdentifier;
+	bool sqlNumbersignComment;
+	bool sqlBackslashEscapes;
+	bool sqlAllowDottedWord;
 	OptionsFM() {
 		fold = false;
 		foldComment = false;
@@ -87,6 +94,12 @@ struct OptionsFM {
 		frozen = false;
 		debugsuffix = "";
 		isSyslog = false;
+//psql
+		foldOnlyBegin = false;
+		sqlBackticksIdentifier = false;
+		sqlNumbersignComment = false;
+		sqlBackslashEscapes = false;
+		sqlAllowDottedWord = false;
 	}
 };
 
@@ -105,8 +118,16 @@ struct OptionsFM {
 #define KW_MSSQL_FUNCTIONS 12
 #define KW_MSSQL_STORED_PROCEDURES 13
 #define KW_MSSQL_INDENT_CLASS 14
-#define KW_MSSQL_RADIUS 16
 #define KW_CF_FUNCTIONS 15
+#define KW_MSSQL_RADIUS 16
+#define KW_PSQL_KEYWORDS1 17
+#define KW_PSQL_KEYWORDS2 18
+#define KW_PSQL_PLDOC 19
+#define KW_PSQL_SQLPLUS 20
+#define KW_PSQL_USER1 21
+#define KW_PSQL_USER2 22
+#define KW_PSQL_USER3 23
+#define KW_PSQL_USER4 24
 
 static const char *const fnWordLists[] = {
 	"Statements",
@@ -126,6 +147,14 @@ static const char *const fnWordLists[] = {
 	"Constants",
 	"functionsEx",
 	"RadiusKeyWords",
+	"PSQLKeywords",
+	"PSQLDatabase Objects",
+	"PSQLPLDoc",
+	"PSQLSQL*Plus",
+	"PSQLUser Keywords 1",
+	"PSQLUser Keywords 2",
+	"PSQLUser Keywords 3",
+	"PSQLUser Keywords 4",
 	0,
 };
 
@@ -157,7 +186,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 class LexerFormEngine : public ILexer5 {
 	bool caseSensitive;
 	CharacterSet setFoldingWordsBegin;
-	WordList keywords[17];	//переданные нам вордлисты
+	WordList keywords[30];	//переданные нам вордлисты
 	WordList wRefold; //начала фолдинга
 	WordList wFold;   //продолжения ифов и свитчей
 	WordList wUnfold; //окончания конструкций
@@ -172,6 +201,7 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD ColoriseVBS(StyleContext &sc, int &visibleChars,int &fileNbDigits);
 	void SCI_METHOD ColoriseXML(StyleContext &sc);
 	void SCI_METHOD ColoriseSQL(StyleContext &sc);
+	void SCI_METHOD ColorisePSQL(StyleContext &sc, LexAccessor &styler);
 	bool SCI_METHOD ColoriseWireFormat(StyleContext &sc);
 	void SCI_METHOD ColoriseCubeFormula(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc);
@@ -305,8 +335,8 @@ Sci_Position SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
 	WordList *wordListN = 0;
 	wordListN = &keywords[n];
 	int firstModification = -1;
-	if (wordListN && n < 17) {
-		WordList wlNew;
+	if (wordListN && n < 100) {
+		WordList wlNew;  
 		wlNew.Set(wl);
 		if (*wordListN != wlNew) {
 			wordListN->Set(wl);
@@ -384,7 +414,8 @@ static inline int GetSector(int style){
 	if (s < SCE_FM_SQL_DEFAULT) return TYPE_XML;
 	if (s < SCE_FM_CF_DEFAULT) return TYPE_SQL;
 	if (s < SCE_FM_WF_DEFAULT) return TYPE_CUBRFORMULA;
-	return TYPE_WIREFORMAT;
+	if (s < SCE_FM_PSQL_DEFAULT) return TYPE_WIREFORMAT;
+	return TYPE_PSQL;
 }
 
 static bool isMSSQLOperator(char ch) {
@@ -448,6 +479,281 @@ void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc)
 	}
 
 }
+
+
+/////////////////////////////////////////////////
+static inline bool IsANumberChar_PSQL(int ch, int chPrev) {
+	// Not exactly following number definition (several dots are seen as OK, etc.)
+	// but probably enough in most cases.
+	return (ch < 0x80) &&
+		(isdigit(ch) || toupper(ch) == 'E' ||
+			ch == '.' || ((ch == '-' || ch == '+') && chPrev < 0x80 && toupper(chPrev) == 'E'));
+}
+
+static inline bool IsADoxygenChar(int ch) {
+	return (islower(ch) || ch == '$' || ch == '@' ||
+		ch == '\\' || ch == '&' || ch == '<' ||
+		ch == '>' || ch == '#' || ch == '{' ||
+		ch == '}' || ch == '[' || ch == ']');
+}
+static inline bool IsAWordChar_PSQL(int ch, bool sqlAllowDottedWord) {
+	if (!sqlAllowDottedWord)
+		return (ch < 0x80) && (isalnum(ch) || ch == '_');
+	else
+		return (ch < 0x80) && (isalnum(ch) || ch == '_' || ch == '.');
+}
+
+static inline bool IsAWordStart_PSQL(int ch) {
+	return (ch < 0x80) && (isalpha(ch) || ch == '_');
+}
+
+
+void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& styler) {
+	int styleBeforeDCKeyword = SCE_SQL_DEFAULT;
+
+	// Determine if the current state should terminate.
+	switch (sc.state) {
+	case SCE_FM_PSQL_OPERATOR:
+		sc.SetState(SCE_FM_PSQL_DEFAULT);
+		break;
+	case SCE_FM_PSQL_NUMBER:
+		// We stop the number definition on non-numerical non-dot non-eE non-sign char
+		if (!IsANumberChar_PSQL(sc.ch, sc.chPrev)) {
+			sc.SetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PSQL_IDENTIFIER:
+		if (!IsAWordChar_PSQL(sc.ch, options.sqlAllowDottedWord)) {
+			char s[1000];
+			sc.GetCurrent(s, sizeof(s));
+			int nextState = SCE_FM_PSQL_DEFAULT;
+			if (s[0] == '_') {
+				if (keywords[KW_MSSQL_RADIUS].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_USER4);
+				}
+				else if(s[1] != '_'){
+					sc.ChangeState(SCE_FM_PSQL_VARIABLE);
+				}
+			}
+			else {
+				char *c = s;
+				while (*c) {
+					if (*c >= 'A' && *c <= 'Z') {
+						*c += 'a' - 'A';
+					}
+					++c;
+				}
+				if (keywords[KW_PSQL_KEYWORDS1].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_WORD);
+				}
+				else if (keywords[KW_PSQL_KEYWORDS2].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_WORD2);
+				}
+				else if (keywords[KW_PSQL_KEYWORDS2].InListAbbreviated(s, '~')) {
+					sc.ChangeState(KW_PSQL_SQLPLUS);
+					if (strncmp(s, "rem", 3) == 0) {
+						nextState = SCE_FM_PSQL_SQLPLUS_COMMENT;
+					}
+					else if (strncmp(s, "pro", 3) == 0) {
+						nextState = SCE_FM_PSQL_SQLPLUS_PROMPT;
+					}
+				}
+				else if (keywords[KW_PSQL_USER1].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_USER1);
+				}
+				else if (keywords[KW_PSQL_USER2].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_USER2);
+				}
+				else if (keywords[KW_PSQL_USER3].InList(s)) {
+					sc.ChangeState(SCE_FM_PSQL_USER3);
+				}
+				//else if (keywords[KW_PSQL_USER4].InList(s)) {
+				//	sc.ChangeState(SCE_FM_PSQL_USER4);
+				//}
+			}
+			sc.SetState(nextState);
+		}
+		break;
+	case SCE_FM_PSQL_PARAMETR:
+		if (!IsAWordChar_PSQL(sc.ch, false)) {
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PSQL_FMPARAMETR:
+		if (sc.ch == '}' || sc.atLineStart)
+		{
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PSQL_QUOTEDIDENTIFIER:
+		if (sc.ch == 0x60) {
+			if (sc.chNext == 0x60) {
+				sc.Forward();	// Ignore it
+			}
+			else {
+				sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+			}
+		}
+		break;
+	case SCE_FM_PSQL_COMMENT:
+		if (sc.Match('*', '/')) {
+			sc.Forward();
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PSQL_COMMENTDOC:
+		if (sc.Match('*', '/')) {
+			sc.Forward();
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		else if (sc.ch == '@' || sc.ch == '\\') { // Doxygen support
+			// Verify that we have the conditions to mark a comment-doc-keyword
+			if ((IsASpace(sc.chPrev) || sc.chPrev == '*') && (!IsASpace(sc.chNext))) {
+				styleBeforeDCKeyword = SCE_FM_PSQL_COMMENTDOC;
+				sc.SetState(SCE_FM_PSQL_COMMENTDOCKEYWORD);
+			}
+		}
+		break;
+	case SCE_FM_PSQL_COMMENTLINE:
+	case SCE_FM_PSQL_COMMENTLINEDOC:
+	case SCE_FM_PSQL_SQLPLUS_COMMENT:
+	case SCE_FM_PSQL_SQLPLUS_PROMPT:
+		if (sc.atLineStart) {
+			sc.SetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PSQL_COMMENTDOCKEYWORD:
+		if ((styleBeforeDCKeyword == SCE_FM_PSQL_COMMENTDOC) && sc.Match('*', '/')) {
+			sc.ChangeState(SCE_FM_PSQL_COMMENTDOCKEYWORDERROR);
+			sc.Forward();
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		else if (!IsADoxygenChar(sc.ch)) {
+			char s[100];
+			sc.GetCurrentLowered(s, sizeof(s));
+			if (!isspace(sc.ch) || !keywords[KW_PSQL_PLDOC].InList(s + 1)) {
+				sc.ChangeState(SCE_FM_PSQL_COMMENTDOCKEYWORDERROR);
+			}
+			sc.SetState(styleBeforeDCKeyword);
+		}
+		break;
+	case SCE_FM_PSQL_CHARACTER:
+		if (options.sqlBackslashEscapes && sc.ch == '\\') {
+			sc.Forward();
+		}
+		else if (sc.ch == '\'') {
+			if (sc.chNext == '\'') {
+				sc.Forward();
+			}
+			else {
+				sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+			}
+		}
+		break;
+	case SCE_FM_PSQL_STRING:
+		if (options.sqlBackslashEscapes && sc.ch == '\\') {
+			// Escape sequence
+			sc.Forward();
+		}
+		else if (sc.ch == '\"') {
+			if (sc.chNext == '\"') {
+				sc.Forward();
+			}
+			else {
+				sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+			}
+		}
+		break;
+	case SCE_FM_PSQL_QOPERATOR:
+		// Locate the unique Q operator character
+		sc.Complete();
+		char qOperator = 0x00;
+		for (Sci_Position styleStartPos = sc.currentPos; styleStartPos > 0; --styleStartPos) {
+			if (styler.StyleAt(styleStartPos - 1) != SCE_FM_PSQL_QOPERATOR) {
+				qOperator = styler.SafeGetCharAt(styleStartPos + 2);
+				break;
+			}
+		}
+
+		char qComplement = 0x00;
+
+		if (qOperator == '<') {
+			qComplement = '>';
+		}
+		else if (qOperator == '(') {
+			qComplement = ')';
+		}
+		else if (qOperator == '{') {
+			qComplement = '}';
+		}
+		else if (qOperator == '[') {
+			qComplement = ']';
+		}
+		else {
+			qComplement = qOperator;
+		}
+
+		if (sc.Match(qComplement, '\'')) {
+			sc.Forward();
+			sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+		}
+		break;
+	}
+
+	// Determine if a new state should be entered.
+	if (sc.state == SCE_FM_PSQL_DEFAULT) {
+		if (sc.Match('q', '\'') || sc.Match('Q', '\'')) {
+			sc.SetState(SCE_FM_PSQL_QOPERATOR);
+			sc.Forward();
+		}
+		else if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)) ||
+			((sc.ch == '-' || sc.ch == '+') && IsADigit(sc.chNext) && !IsADigit(sc.chPrev))) {
+			sc.SetState(SCE_FM_PSQL_NUMBER);
+		}
+		else if (IsAWordStart_PSQL(sc.ch)) {
+			sc.SetState(SCE_FM_PSQL_IDENTIFIER);
+		}
+		else if (sc.ch == 0x60 && options.sqlBackticksIdentifier) {
+			sc.SetState(SCE_FM_PSQL_QUOTEDIDENTIFIER);
+		}
+		else if (sc.Match('/', '*')) {
+			if (sc.Match("/**") || sc.Match("/*!")) {	// Support of Doxygen doc. style
+				sc.SetState(SCE_FM_PSQL_COMMENTDOC);
+			}
+			else {
+				sc.SetState(SCE_FM_PSQL_COMMENT);
+			}
+			sc.Forward();	// Eat the * so it isn't used for the end of the comment
+		}
+		else if (sc.Match('-', '-')) {
+			// MySQL requires a space or control char after --
+			// http://dev.mysql.com/doc/mysql/en/ansi-diff-comments.html
+			// Perhaps we should enforce that with proper property:
+			//~ 			} else if (sc.Match("-- ")) {
+			sc.SetState(SCE_FM_PSQL_COMMENTLINE);
+		}
+		else if (sc.ch == '#' && options.sqlNumbersignComment) {
+			sc.SetState(SCE_FM_PSQL_COMMENTLINEDOC);
+		}
+		else if (sc.ch == '\'') {
+			sc.SetState(SCE_FM_PSQL_CHARACTER);
+		}
+		else if (sc.ch == '\"') {
+			sc.SetState(SCE_FM_PSQL_STRING);
+		}
+		else if (sc.ch == ':') {
+			sc.SetState(SCE_FM_PSQL_PARAMETR);
+		}
+		else if (sc.ch == '{') {
+			sc.SetState(SCE_FM_PSQL_FMPARAMETR);
+		}
+		else if (isoperator(static_cast<char>(sc.ch))) {
+			sc.SetState(SCE_FM_PSQL_OPERATOR);
+		}
+	}
+
+}
+
 void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 
 	switch(sc.state){
@@ -1046,7 +1352,6 @@ bool SCI_METHOD LexerFormEngine::ColoriseWireFormat(StyleContext &sc) {
 void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if(options.frozen) return;
 	LexAccessor styler(pAccess);
-
 	int visibleChars = 0;
 	int fileNbDigits = 0;
 
@@ -1143,6 +1448,9 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 						if (mtch[1] == "sql") {
 							sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
 							ColoriseSQL(sc);
+						} else if (mtch[1] == "psql") {
+							sc.ForwardSetState(SCE_FM_PSQL_DEFAULT);
+							ColorisePSQL(sc, styler);
 						} else if (mtch[1] == "vbs") {
 							sc.ForwardSetState(SCE_FM_VB_DEFAULT);
 							ColoriseVBS(sc, visibleChars, fileNbDigits);
@@ -1159,6 +1467,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 								sc.SetState(SCE_FM_CDATA);
 								continue;
 							}
+
 						} else
 							sc.ForwardSetState(SCE_FM_PLAINCDATA);
 					} else
@@ -1187,6 +1496,9 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 			break;
 		case TYPE_SQL:
 			ColoriseSQL(sc);
+			break;
+		case TYPE_PSQL:
+			ColorisePSQL(sc, styler);
 			break;
 		case TYPE_VBS:
 			ColoriseVBS(sc, visibleChars, fileNbDigits);
@@ -1465,6 +1777,7 @@ bool FoldContext::FindThen() {
 	return !strcmp(s, "then");
 }
 
+
 bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
 	
 	while ( initStyle == SCE_FM_VB_STRINGCONT) {
@@ -1687,6 +2000,9 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyl
 				}
 			}
 		}
+			break;
+		case TYPE_PSQL:
+			//todo...
 			break;
 		}
 		fc.startLineResolved = true;

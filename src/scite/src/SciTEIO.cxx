@@ -804,6 +804,8 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 }
 
 void SciTEBase::ReloadProperties() {
+	wEditorL.languageCurrent = "xxx";
+	wEditorR.languageCurrent = "xxx"; //чтобы потом перечиталось на обоих редакторах
 	ReadGlobalPropFile(L"");
 	firstPropertiesRead = true;
 	ReadProperties();
