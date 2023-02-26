@@ -151,11 +151,12 @@
 #define SCLEX_ABAP 138
 #define SCLEX_AHK1 139
 #define SCLEX_EUPHORIA 140
-#define SCLEX_FORMENJINE 141
+#define SCLEX_FORMENJINE 146
 #define SCLEX_RUBRICA 147
 #define SCLEX_WIREFORMAT 148
 #define SCLEX_CUBEFORMULA 149
 #define SCLEX_SEARCHRESULT 150
+#define SCLEX_PGSQL 151
 #define SCLEX_AUTOMATIC 1000
 #define SCE_P_DEFAULT 0
 #define SCE_P_COMMENTLINE 1
@@ -2209,6 +2210,43 @@
 #define SCE_FM_PSQL_VARIABLE 158 
 #define SCE_FM_PSQL_PARAMETR 159 
 #define SCE_FM_PSQL_FMPARAMETR 160 
+
+
+
+
+#define SCE_PGSQL_DEFAULT 0                                    //         SCE_SQL_DEFAULT 0                   +
+#define SCE_PGSQL_COMMENT 1										//		 SCE_SQL_COMMENT 1             +
+#define SCE_PGSQL_LINE_COMMENT 2								//		 SCE_SQL_COMMENTLINE 2         +
+#define SCE_PGSQL_NUMBER 3					       				//		 SCE_SQL_NUMBER 4              +
+#define SCE_PGSQL_STATEMENT 4       						   //         SCE_SQL_WORD 5
+#define SCE_PGSQL_2QSTRING 5					       			//		 SCE_SQL_STRING 6
+#define SCE_PGSQL_1QSTRING 6      						       //         SCE_SQL_CHARACTER 7
+#define SCE_PGSQL_$TAG 7 
+#define SCE_PGSQL_$STRING 8                                 //
+#define SCE_PGSQL_OPERATOR 9				       				//		 SCE_SQL_OPERATOR 10
+#define SCE_PGSQL_IDENTIFIER 10				       				//		 SCE_SQL_IDENTIFIER 11
+#define SCE_PGSQL_VARIABLE 11				       				//	
+#define SCE_PGSQL_FUNCTION 12	                               //         SCE_SQL_WORD2 16
+#define SCE_PGSQL_DATATYPE 13				       				//		 SCE_SQL_USER1 19
+#define SCE_PGSQL_USER1 14				       				//		 SCE_SQL_USER1 19
+#define SCE_PGSQL_USER2 15				       				//		 SCE_SQL_USER1 19
+#define SCE_PGSQL_USER3 16
+#define SCE_PGSQL_BYTESTRING 17
+#define SCE_PGSQL_HEXSTRING 18
+                                                              //		 SCE_SQL_USER1 19
+#define SCE_PGSQL_SYSMCONSTANTS 19			       				//		 
+#define SCE_PGSQL_M4KEYS 20					       				//		 
+#define SCE_PGSQL_M4KBRASHES 21				       		       //                                                                     SCE_SQL_QOPERATOR 24
+#define SCE_PGSQL_RADIUSKEYWORDS 22			                   //         SCE_SQL_USER4 22
+
+
+
+
+
+
+
+
+
 
 #define SCE_CF_DEFAULT 0
 #define SCE_CF_FUNCTION 1

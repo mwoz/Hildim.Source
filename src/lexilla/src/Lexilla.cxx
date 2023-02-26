@@ -119,6 +119,7 @@ extern LexerModule lmOScript;
 extern LexerModule lmPascal;
 extern LexerModule lmPB;
 extern LexerModule lmPerl;
+extern LexerModule lmPGSQL;
 extern LexerModule lmPHPSCRIPT;
 extern LexerModule lmPLM;
 extern LexerModule lmPO;
@@ -272,6 +273,7 @@ void AddEachLexer() {
 		&lmPascal,
 		&lmPB,
 		&lmPerl,
+		&lmPGSQL,
 		&lmPHPSCRIPT,
 		&lmPLM,
 		&lmPO,

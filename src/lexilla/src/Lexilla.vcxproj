@@ -240,6 +240,7 @@
     <ClCompile Include="..\lexers\LexPascal.cxx" />
     <ClCompile Include="..\lexers\LexPB.cxx" />
     <ClCompile Include="..\lexers\LexPerl.cxx" />
+    <ClCompile Include="..\lexers\LexPGSQL.cxx" />
     <ClCompile Include="..\lexers\LexPLM.cxx" />
     <ClCompile Include="..\lexers\LexPO.cxx" />
     <ClCompile Include="..\lexers\LexPOV.cxx" />
