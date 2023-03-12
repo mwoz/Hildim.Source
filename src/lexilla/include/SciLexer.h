@@ -2184,69 +2184,53 @@
 #define SCE_FM_WF_OPERATOR 129
 #define SCE_FM_WF_STRING 130
 #define SCE_FM_WF_STRINGIDENTIFIER 131
-#define SCE_FM_PSQL_DEFAULT 135
-#define SCE_FM_PSQL_COMMENT 136
-#define SCE_FM_PSQL_COMMENTLINE 137
-#define SCE_FM_PSQL_COMMENTDOC 138
-#define SCE_FM_PSQL_NUMBER 139
-#define SCE_FM_PSQL_WORD 140
-#define SCE_FM_PSQL_STRING 141
-#define SCE_FM_PSQL_CHARACTER 142
-#define SCE_FM_PSQL_SQLPLUS 143
-#define SCE_FM_PSQL_SQLPLUS_PROMPT 144
-#define SCE_FM_PSQL_OPERATOR 145
-#define SCE_FM_PSQL_IDENTIFIER 146
-#define SCE_FM_PSQL_SQLPLUS_COMMENT 147
-#define SCE_FM_PSQL_COMMENTLINEDOC 148
-#define SCE_FM_PSQL_WORD2 149
-#define SCE_FM_PSQL_COMMENTDOCKEYWORD 150
-#define SCE_FM_PSQL_COMMENTDOCKEYWORDERROR 151
-#define SCE_FM_PSQL_USER1 152
-#define SCE_FM_PSQL_USER2 153
-#define SCE_FM_PSQL_USER3 154
-#define SCE_FM_PSQL_USER4 155  //SCE_FM_PSQL_RADIUSKEYWORDS
-#define SCE_FM_PSQL_QUOTEDIDENTIFIER 156
-#define SCE_FM_PSQL_QOPERATOR 157
-#define SCE_FM_PSQL_VARIABLE 158 
-#define SCE_FM_PSQL_PARAMETR 159 
-#define SCE_FM_PSQL_FMPARAMETR 160 
+#define SCE_FM_PGSQL_DEFAULT 135                     
+#define SCE_FM_PGSQL_COMMENT 136					
+#define SCE_FM_PGSQL_LINE_COMMENT 137				
+#define SCE_FM_PGSQL_NUMBER 138				    
+#define SCE_FM_PGSQL_STATEMENT 139       			
+#define SCE_FM_PGSQL_2QSTRING 140					
+#define SCE_FM_PGSQL_1QSTRING 141      				
+#define SCE_FM_PGSQL_$TAG 142 
+#define SCE_FM_PGSQL_$STRING 143                     
+#define SCE_FM_PGSQL_OPERATOR 144				    
+#define SCE_FM_PGSQL_IDENTIFIER 145				    
+#define SCE_FM_PGSQL_VARIABLE 146				    
+#define SCE_FM_PGSQL_FUNCTION 147	                
+#define SCE_FM_PGSQL_DATATYPE 148				    
+#define SCE_FM_PGSQL_USER1 149				       	
+#define SCE_FM_PGSQL_USER2 150				       	
+#define SCE_FM_PGSQL_USER3 151
+#define SCE_FM_PGSQL_BYTESTRING 152
+#define SCE_FM_PGSQL_HEXSTRING 153
+#define SCE_FM_PGSQL_SYSMCONSTANTS 154			    
+#define SCE_FM_PGSQL_M4KEYS 155					    
+#define SCE_FM_PGSQL_M4KBRASHES 156				                
+#define SCE_FM_PGSQL_RADIUSKEYWORDS 157	
 
-
-
-
-#define SCE_PGSQL_DEFAULT 0                                    //         SCE_SQL_DEFAULT 0                   +
-#define SCE_PGSQL_COMMENT 1										//		 SCE_SQL_COMMENT 1             +
-#define SCE_PGSQL_LINE_COMMENT 2								//		 SCE_SQL_COMMENTLINE 2         +
-#define SCE_PGSQL_NUMBER 3					       				//		 SCE_SQL_NUMBER 4              +
-#define SCE_PGSQL_STATEMENT 4       						   //         SCE_SQL_WORD 5
-#define SCE_PGSQL_2QSTRING 5					       			//		 SCE_SQL_STRING 6
-#define SCE_PGSQL_1QSTRING 6      						       //         SCE_SQL_CHARACTER 7
+#define SCE_PGSQL_DEFAULT 0                     
+#define SCE_PGSQL_COMMENT 1						
+#define SCE_PGSQL_LINE_COMMENT 2				
+#define SCE_PGSQL_NUMBER 3					    
+#define SCE_PGSQL_STATEMENT 4       			
+#define SCE_PGSQL_2QSTRING 5					
+#define SCE_PGSQL_1QSTRING 6      				
 #define SCE_PGSQL_$TAG 7 
-#define SCE_PGSQL_$STRING 8                                 //
-#define SCE_PGSQL_OPERATOR 9				       				//		 SCE_SQL_OPERATOR 10
-#define SCE_PGSQL_IDENTIFIER 10				       				//		 SCE_SQL_IDENTIFIER 11
-#define SCE_PGSQL_VARIABLE 11				       				//	
-#define SCE_PGSQL_FUNCTION 12	                               //         SCE_SQL_WORD2 16
-#define SCE_PGSQL_DATATYPE 13				       				//		 SCE_SQL_USER1 19
-#define SCE_PGSQL_USER1 14				       				//		 SCE_SQL_USER1 19
-#define SCE_PGSQL_USER2 15				       				//		 SCE_SQL_USER1 19
+#define SCE_PGSQL_$STRING 8                     
+#define SCE_PGSQL_OPERATOR 9				    
+#define SCE_PGSQL_IDENTIFIER 10				    
+#define SCE_PGSQL_VARIABLE 11				    
+#define SCE_PGSQL_FUNCTION 12	                
+#define SCE_PGSQL_DATATYPE 13				    
+#define SCE_PGSQL_USER1 14				       	
+#define SCE_PGSQL_USER2 15				       	
 #define SCE_PGSQL_USER3 16
 #define SCE_PGSQL_BYTESTRING 17
 #define SCE_PGSQL_HEXSTRING 18
-                                                              //		 SCE_SQL_USER1 19
-#define SCE_PGSQL_SYSMCONSTANTS 19			       				//		 
-#define SCE_PGSQL_M4KEYS 20					       				//		 
-#define SCE_PGSQL_M4KBRASHES 21				       		       //                                                                     SCE_SQL_QOPERATOR 24
-#define SCE_PGSQL_RADIUSKEYWORDS 22			                   //         SCE_SQL_USER4 22
-
-
-
-
-
-
-
-
-
+#define SCE_PGSQL_SYSMCONSTANTS 19			    
+#define SCE_PGSQL_M4KEYS 20					    
+#define SCE_PGSQL_M4KBRASHES 21				                
+#define SCE_PGSQL_RADIUSKEYWORDS 22			    
 
 #define SCE_CF_DEFAULT 0
 #define SCE_CF_FUNCTION 1

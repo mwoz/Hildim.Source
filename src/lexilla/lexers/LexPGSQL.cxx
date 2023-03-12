@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <functional>
+#include <regex>
 
 #include "ILexer.h"
 #include "Scintilla.h"
@@ -56,181 +56,6 @@ static inline bool IsANumberChar(int ch, int chPrev) {
 	        ch == '.' || ((ch == '-' || ch == '+') && chPrev < 0x80 && toupper(chPrev) == 'E'));
 }
 
-typedef unsigned int sql_state_t;
-
-class SQLStates {
-public :
-	void Set(Sci_Position lineNumber, unsigned short int sqlStatesLine) {
-		sqlStatement.Set(lineNumber, sqlStatesLine);
-	}
-
-	sql_state_t IgnoreWhen (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_IGNORE_WHEN;
-		else
-			sqlStatesLine &= ~MASK_IGNORE_WHEN;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoCondition (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_CONDITION;
-		else
-			sqlStatesLine &= ~MASK_INTO_CONDITION;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoExceptionBlock (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_EXCEPTION;
-		else
-			sqlStatesLine &= ~MASK_INTO_EXCEPTION;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoDeclareBlock (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_DECLARE;
-		else
-			sqlStatesLine &= ~MASK_INTO_DECLARE;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoMergeStatement (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_MERGE_STATEMENT;
-		else
-			sqlStatesLine &= ~MASK_MERGE_STATEMENT;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t CaseMergeWithoutWhenFound (sql_state_t sqlStatesLine, bool found) {
-		if (found)
-			sqlStatesLine |= MASK_CASE_MERGE_WITHOUT_WHEN_FOUND;
-		else
-			sqlStatesLine &= ~MASK_CASE_MERGE_WITHOUT_WHEN_FOUND;
-
-		return sqlStatesLine;
-	}
-	sql_state_t IntoSelectStatementOrAssignment (sql_state_t sqlStatesLine, bool found) {
-		if (found)
-			sqlStatesLine |= MASK_INTO_SELECT_STATEMENT_OR_ASSIGNEMENT;
-		else
-			sqlStatesLine &= ~MASK_INTO_SELECT_STATEMENT_OR_ASSIGNEMENT;
-		return sqlStatesLine;
-	}
-
-	sql_state_t BeginCaseBlock (sql_state_t sqlStatesLine) {
-		if ((sqlStatesLine & MASK_NESTED_CASES) < MASK_NESTED_CASES) {
-			sqlStatesLine++;
-		}
-		return sqlStatesLine;
-	}
-
-	sql_state_t EndCaseBlock (sql_state_t sqlStatesLine) {
-		if ((sqlStatesLine & MASK_NESTED_CASES) > 0) {
-			sqlStatesLine--;
-		}
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoCreateStatement (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_CREATE;
-		else
-			sqlStatesLine &= ~MASK_INTO_CREATE;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoCreateViewStatement (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_CREATE_VIEW;
-		else
-			sqlStatesLine &= ~MASK_INTO_CREATE_VIEW;
-
-		return sqlStatesLine;
-	}
-
-	sql_state_t IntoCreateViewAsStatement (sql_state_t sqlStatesLine, bool enable) {
-		if (enable)
-			sqlStatesLine |= MASK_INTO_CREATE_VIEW_AS_STATEMENT;
-		else
-			sqlStatesLine &= ~MASK_INTO_CREATE_VIEW_AS_STATEMENT;
-
-		return sqlStatesLine;
-	}
-
-	bool IsIgnoreWhen (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_IGNORE_WHEN) != 0;
-	}
-
-	bool IsIntoCondition (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_CONDITION) != 0;
-	}
-
-	bool IsIntoCaseBlock (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_NESTED_CASES) != 0;
-	}
-
-	bool IsIntoExceptionBlock (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_EXCEPTION) != 0;
-	}
-	bool IsIntoSelectStatementOrAssignment (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_SELECT_STATEMENT_OR_ASSIGNEMENT) != 0;
-	}
-	bool IsCaseMergeWithoutWhenFound (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_CASE_MERGE_WITHOUT_WHEN_FOUND) != 0;
-	}
-
-	bool IsIntoDeclareBlock (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_DECLARE) != 0;
-	}
-
-	bool IsIntoMergeStatement (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_MERGE_STATEMENT) != 0;
-	}
-
-	bool IsIntoCreateStatement (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_CREATE) != 0;
-	}
-
-	bool IsIntoCreateViewStatement (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_CREATE_VIEW) != 0;
-	}
-
-	bool IsIntoCreateViewAsStatement (sql_state_t sqlStatesLine) {
-		return (sqlStatesLine & MASK_INTO_CREATE_VIEW_AS_STATEMENT) != 0;
-	}
-
-	sql_state_t ForLine(Sci_Position lineNumber) {
-		return sqlStatement.ValueAt(lineNumber);
-	}
-
-	SQLStates() {}
-
-private :
-	SparseState <sql_state_t> sqlStatement;
-	enum {
-		MASK_NESTED_CASES                         = 0x0001FF,
-		MASK_INTO_SELECT_STATEMENT_OR_ASSIGNEMENT = 0x000200,
-		MASK_CASE_MERGE_WITHOUT_WHEN_FOUND        = 0x000400,
-		MASK_MERGE_STATEMENT                      = 0x000800,
-		MASK_INTO_DECLARE                         = 0x001000,
-		MASK_INTO_EXCEPTION                       = 0x002000,
-		MASK_INTO_CONDITION                       = 0x004000,
-		MASK_IGNORE_WHEN                          = 0x008000,
-		MASK_INTO_CREATE                          = 0x010000,
-		MASK_INTO_CREATE_VIEW                     = 0x020000,
-		MASK_INTO_CREATE_VIEW_AS_STATEMENT        = 0x040000
-	};
-};
-
 // Options used for LexerPGSQL
 struct OptionsPGSQL {
 	bool fold;
@@ -245,19 +70,31 @@ struct OptionsPGSQL {
 		foldComment = false;
 		foldCompact = false;
 		foldOnlyBegin = false;
-		tag$ignore = "";
+		tag$ignore = "$function$";
 	}
 };
 
-static const char * const sqlWordListDesc[] = {
-	"Keywords",
-	"Database Objects",
-	"PLDoc",
-	"SQL*Plus",
-	"User Keywords 1",
-	"User Keywords 2",
-	"User Keywords 3",
-	"User Keywords 4",
+#define KW_PGSQL_STATEMENTS         0
+#define KW_PGSQL_FUNCTIONS          1
+#define KW_PGSQL_DATA_TYPES         2
+#define KW_PGSQL_USER1              3
+#define KW_PGSQL_USER2              4
+#define KW_PGSQL_USER3              5
+#define KW_PGSQL_RADIUS             6
+#define KW_PGSQL_M4KEYS             7
+#define KW_PGSQL_INDENT_CLASS       8
+#define KW_PGSQL_NKEYWORDS          9
+
+static const char * const pgsqlWordListDesc[] = {
+	"Statements",
+	"Functions",
+	"Data Types",
+	"User 1",
+	"User 2",
+	"User 3",
+	"Radius constants",
+	"M4 preprocessor",
+	"Indent classes",
 	0
 };
 
@@ -277,13 +114,15 @@ struct OptionSetPGSQL : public OptionSet<OptionsPGSQL> {
 		DefineProperty("tag$ignore", &OptionsPGSQL::tag$ignore);
 
 
-		DefineWordListSets(sqlWordListDesc);
+		DefineWordListSets(pgsqlWordListDesc);
 	}
 };
 
 class LexerPGSQL : public DefaultLexer {
 public :
-	LexerPGSQL() : DefaultLexer("pgsql", SCLEX_PGSQL) {}
+	LexerPGSQL() : DefaultLexer("pgsql", SCLEX_PGSQL) ,
+		reRegisterMacto("^\\s*__REGISTER_(REPORT)|(PLUGIN)|(WIZARD)|(FORM)_", std::regex::ECMAScript)
+	{}
 
 	virtual ~LexerPGSQL() {}
 
@@ -330,7 +169,7 @@ public :
 		return 0;
 	}
 
-	static ILexer5 *LexerFactorySQL() {
+	static ILexer5 *LexerFactoryPGSQL() {
 		return new LexerPGSQL();
 	}
 private:
@@ -364,19 +203,9 @@ private:
 
 	OptionsPGSQL options;
 	OptionSetPGSQL osSQL;
-	SQLStates sqlStates;
-
-#define KW_PGSQL_STATEMENTS         0
-#define KW_PGSQL_FUNCTIONS          1
-#define KW_PGSQL_DATA_TYPES         2
-#define KW_PGSQL_USER1              3
-#define KW_PGSQL_USER2              4
-#define KW_PGSQL_USER3              5
-#define KW_PGSQL_RADIUS             6
-#define KW_PGSQL_M4KEYS             7
-#define KW_PGSQL_NKEYWORDS          8
 
 	WordList keywords[KW_PGSQL_NKEYWORDS];
+	const std::regex reRegisterMacto;
 
 	std::string $tag = "";
 	Sci_PositionU posTagStart = SIZE_MAX;
@@ -659,341 +488,247 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 	sc.Complete();
 }
 
+
+class FoldContextPGSQL {
+	Sci_PositionU endPos;
+	LexAccessor& styler;
+	void Init() {
+		chPrev = currentPos ? styler.SafeGetCharAt(currentPos - 1) : '\n';
+		ch = styler.SafeGetCharAt(currentPos);
+		chNext = styler.SafeGetCharAt(currentPos + 1);
+		style = styler.StyleAt(currentPos);
+		atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
+		lineCurrent = styler.GetLine(currentPos);
+	}
+public:
+	Sci_PositionU currentPos;
+	Sci_Position lineCurrent;
+	char chPrev;
+	char ch;
+	char chNext;
+	int style;
+	bool atEOL;
+	FoldContextPGSQL(Sci_PositionU startPos, Sci_Position length, LexAccessor& styler_) :
+		styler(styler_),
+		endPos(startPos + length),
+		currentPos(startPos),
+		atEOL(false),
+		ch(0) {
+		Init();
+	}
+	bool More() const {
+		return currentPos < endPos;
+	}
+	void Forward() {
+		if (atEOL)
+			lineCurrent++;
+		currentPos++;
+		chPrev = ch;
+		ch = chNext;
+		chNext = styler.SafeGetCharAt(currentPos + 1);
+		style = styler.StyleAt(currentPos);
+		atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
+	}
+	void SkipSameStyle() {
+		Sci_PositionU j = currentPos;
+		for (; (style == styler.StyleAt(currentPos)) && (currentPos < endPos) && (styler[currentPos] != '\r)' && (styler[currentPos] != '\n')); currentPos++);
+		currentPos--;
+
+		Init();
+	}	
+	std::string GetCurLowered() {
+		Sci_PositionU prevPos = currentPos;
+		SkipSameStyle();
+		if (prevPos <= currentPos + 1)
+			return "";
+		return styler.GetRangeLowered(prevPos, currentPos + 1);
+	}
+
+	std::string GetNextLowered(int scyppedStyle) {
+		if (atEOL || (styler.StyleAt(currentPos + 1) != scyppedStyle))
+			return "";
+		int prevStyle = style;
+		Forward();
+		if(atEOL)
+			return "";
+		SkipSameStyle();
+		if (atEOL || (styler.StyleAt(currentPos + 1) != prevStyle))
+			return "";
+		Forward();
+		return GetCurLowered();
+	}
+
+};
+
 void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if (!options.fold)
 		return;
 	LexAccessor styler(pAccess);
+	FoldContextPGSQL fc(startPos, length, styler);
+
+	bool foldComment = options.foldComment;
+	bool foldCompact = options.foldCompact;
 	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
-	Sci_Position lineCurrent = styler.GetLine(startPos);
-	int levelCurrent = SC_FOLDLEVELBASE;
 
-	if (lineCurrent > 0) {
-		// Backtrack to previous line in case need to fix its fold status for folding block of single-line comments (i.e. '--').
-		Sci_Position lastNLPos = -1;
-		// And keep going back until we find an operator ';' followed
-		// by white-space and/or comments. This will improve folding.
-		while (--startPos > 0) {
-			char ch = styler[startPos];
-			if (ch == '\n' || (ch == '\r' && styler[startPos + 1] != '\n')) {
-				lastNLPos = startPos;
-			} else if (ch == ';' &&
-				   styler.StyleAt(startPos) == SCE_PGSQL_OPERATOR) {
-				bool isAllClear = true;
-				for (Sci_Position tempPos = startPos + 1;
-				     tempPos < lastNLPos;
-				     ++tempPos) {
-					int tempStyle = styler.StyleAt(tempPos);
-					if (!IsCommentStyle(tempStyle)
-					    && tempStyle != SCE_PGSQL_DEFAULT) {
-						isAllClear = false;
-						break;
-					}
-				}
-				if (isAllClear) {
-					startPos = lastNLPos + 1;
-					break;
-				}
-			}
-		}
-		lineCurrent = styler.GetLine(startPos);
-		if (lineCurrent > 0)
-			levelCurrent = styler.LevelAt(lineCurrent - 1) >> 16;
-	}
-	// And because folding ends at ';', keep going until we find one
-	// Otherwise if create ... view ... as is split over multiple
-	// lines the folding won't always update immediately.
-	Sci_PositionU docLength = styler.Length();
-	for (; endPos < docLength; ++endPos) {
-		if (styler.SafeGetCharAt(endPos) == ';') {
-			break;
-		}
-	}
+	bool caseSwitcher = false;
 
-	int levelNext = levelCurrent;
-	char chNext = styler[startPos];
-	int styleNext = styler.StyleAt(startPos);
-	int style = initStyle;
-	bool endFound = false;
-	bool isUnfoldingIgnored = false;
-	// this statementFound flag avoids to fold when the statement is on only one line by ignoring ELSE or ELSIF
-	// eg. "IF condition1 THEN ... ELSIF condition2 THEN ... ELSE ... END IF;"
-	bool statementFound = false;
-	sql_state_t sqlStatesCurrentLine = 0;
-	if (!options.foldOnlyBegin) {
-		sqlStatesCurrentLine = sqlStates.ForLine(lineCurrent);
-	}
-	for (Sci_PositionU i = startPos; i < endPos; i++) {
-		char ch = chNext;
-		chNext = styler.SafeGetCharAt(i + 1);
-		int stylePrev = style;
-		style = styleNext;
-		styleNext = styler.StyleAt(i + 1);
-		bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
-		if (atEOL || (!IsCommentStyle(style) && ch == ';')) {
-			if (endFound) {
-				//Maybe this is the end of "EXCEPTION" BLOCK (eg. "BEGIN ... EXCEPTION ... END;")
-				sqlStatesCurrentLine = sqlStates.IntoExceptionBlock(sqlStatesCurrentLine, false);
-			}
-			// set endFound and isUnfoldingIgnored to false if EOL is reached or ';' is found
-			endFound = false;
-			isUnfoldingIgnored = false;
-		}
-		if ((!IsCommentStyle(style) && ch == ';')) {
-			if (sqlStates.IsIntoMergeStatement(sqlStatesCurrentLine)) {
-				// This is the end of "MERGE" statement.
-				if (!sqlStates.IsCaseMergeWithoutWhenFound(sqlStatesCurrentLine))
-					levelNext--;
-				sqlStatesCurrentLine = sqlStates.IntoMergeStatement(sqlStatesCurrentLine, false);
-				levelNext--;
-			}
-			if (sqlStates.IsIntoSelectStatementOrAssignment(sqlStatesCurrentLine))
-				sqlStatesCurrentLine = sqlStates.IntoSelectStatementOrAssignment(sqlStatesCurrentLine, false);
-			if (sqlStates.IsIntoCreateStatement(sqlStatesCurrentLine)) {
-				if (sqlStates.IsIntoCreateViewStatement(sqlStatesCurrentLine)) {
-					if (sqlStates.IsIntoCreateViewAsStatement(sqlStatesCurrentLine)) {
-						levelNext--;
-						sqlStatesCurrentLine = sqlStates.IntoCreateViewAsStatement(sqlStatesCurrentLine, false);
-					}
-					sqlStatesCurrentLine = sqlStates.IntoCreateViewStatement(sqlStatesCurrentLine, false);
-				}
-				sqlStatesCurrentLine = sqlStates.IntoCreateStatement(sqlStatesCurrentLine, false);
-			}
-		}
-		if (ch == ':' && chNext == '=' && !IsCommentStyle(style))
-			sqlStatesCurrentLine = sqlStates.IntoSelectStatementOrAssignment(sqlStatesCurrentLine, true);
+	int levelPrev = SC_FOLDLEVELBASE;
+	if (fc.lineCurrent > 0)
+		levelPrev = (styler.LevelAt(fc.lineCurrent - 1) >> 16) & SC_FOLDLEVELNUMBERMASK;
+	int levelCurrent = levelPrev;
+	int levelMinCurrent = levelPrev;
+	//char chNext = styler[startPos];
+	///char ch, chPrev;
+	//ch = '\n';
+	bool inComment = (styler.StyleAt(startPos - 1) == SCE_PGSQL_COMMENT);
+	char s[15];
+	int lineState = 0;
+	if (fc.lineCurrent > 0)
+		lineState = styler.GetLineState(fc.lineCurrent - 1) & 0x1000000;
+	for (; fc.More(); fc.Forward()) {
 
-		if (options.foldComment && IsStreamCommentStyle(style)) {
-			if (!IsStreamCommentStyle(stylePrev)) {
-				levelNext++;
-			} else if (!IsStreamCommentStyle(styleNext) && !atEOL) {
-				// Comments don't end at end of line and the next character may be unstyled.
-				levelNext--;
+		// Comment folding
+		if (foldComment) {
+			if (!inComment && (fc.style == SCE_PGSQL_COMMENT)) {
+				if (levelMinCurrent > levelCurrent)
+					levelMinCurrent = levelCurrent;
+				levelCurrent++;
 			}
-		}
-		if (options.foldComment && (style == SCE_PGSQL_LINE_COMMENT)) {
-			// MySQL needs -- comments to be followed by space or control char
-			if ((ch == '-') && (chNext == '-')) {
-				char chNext2 = styler.SafeGetCharAt(i + 2);
-				char chNext3 = styler.SafeGetCharAt(i + 3);
-				if (chNext2 == '{' || chNext3 == '{') {
-					levelNext++;
-				} else if (chNext2 == '}' || chNext3 == '}') {
-					levelNext--;
-				}
-			}
-		}
-		// Fold block of single-line comments (i.e. '--').
-		if (options.foldComment && atEOL && IsCommentLine(lineCurrent, styler)) {
-			if (!IsCommentLine(lineCurrent - 1, styler) && IsCommentLine(lineCurrent + 1, styler))
-				levelNext++;
-			else if (IsCommentLine(lineCurrent - 1, styler) && !IsCommentLine(lineCurrent + 1, styler))
-				levelNext--;
-		}
-		if (style == SCE_PGSQL_OPERATOR) {
-			if (ch == '(') {
-				if (levelCurrent > levelNext)
-					levelCurrent--;
-				levelNext++;
-			} else if (ch == ')') {
-				levelNext--;
-			} else if ((!options.foldOnlyBegin) && ch == ';') {
-				sqlStatesCurrentLine = sqlStates.IgnoreWhen(sqlStatesCurrentLine, false);
-			}
-		}
-		// If new keyword (cannot trigger on elseif or nullif, does less tests)
-		if (style == SCE_PGSQL_STATEMENT && stylePrev != SCE_PGSQL_STATEMENT) {
-			const int MAX_KW_LEN = 9;	// Maximum length of folding keywords
-			char s[MAX_KW_LEN + 2];
-			unsigned int j = 0;
-			for (; j < MAX_KW_LEN + 1; j++) {
-				if (!iswordchar(styler[i + j])) {
-					break;
-				}
-				s[j] = static_cast<char>(tolower(styler[i + j]));
-			}
-			if (j == MAX_KW_LEN + 1) {
-				// Keyword too long, don't test it
-				s[0] = '\0';
-			} else {
-				s[j] = '\0';
-			}
-			if (!options.foldOnlyBegin &&
-			        strcmp(s, "select") == 0) {
-				sqlStatesCurrentLine = sqlStates.IntoSelectStatementOrAssignment(sqlStatesCurrentLine, true);
-			} else if (strcmp(s, "if") == 0) {
-				if (endFound) {
-					endFound = false;
-					if (options.foldOnlyBegin && !isUnfoldingIgnored) {
-						// this end isn't for begin block, but for if block ("end if;")
-						// so ignore previous "end" by increment levelNext.
-						levelNext++;
-					}
-				} else {
-					if (!options.foldOnlyBegin)
-						sqlStatesCurrentLine = sqlStates.IntoCondition(sqlStatesCurrentLine, true);
-					if (levelCurrent > levelNext) {
-						// doesn't include this line into the folding block
-						// because doesn't hide IF (eg "END; IF")
-						levelCurrent = levelNext;
-					}
-				}
-			} else if (!options.foldOnlyBegin &&
-			           strcmp(s, "then") == 0 &&
-			           sqlStates.IsIntoCondition(sqlStatesCurrentLine)) {
-				sqlStatesCurrentLine = sqlStates.IntoCondition(sqlStatesCurrentLine, false);
-				if (!options.foldOnlyBegin) {
-					if (levelCurrent > levelNext) {
-						levelCurrent = levelNext;
-					}
-					if (!statementFound)
-						levelNext++;
-
-					statementFound = true;
-				} else if (levelCurrent > levelNext) {
-					// doesn't include this line into the folding block
-					// because doesn't hide LOOP or CASE (eg "END; LOOP" or "END; CASE")
-					levelCurrent = levelNext;
-				}
-			} else if (strcmp(s, "loop") == 0 ||
-			           strcmp(s, "case") == 0) {
-				if (endFound) {
-					endFound = false;
-					if (options.foldOnlyBegin && !isUnfoldingIgnored) {
-						// this end isn't for begin block, but for loop block ("end loop;") or case block ("end case;")
-						// so ignore previous "end" by increment levelNext.
-						levelNext++;
-					}
-					if ((!options.foldOnlyBegin) && strcmp(s, "case") == 0) {
-						sqlStatesCurrentLine = sqlStates.EndCaseBlock(sqlStatesCurrentLine);
-						if (!sqlStates.IsCaseMergeWithoutWhenFound(sqlStatesCurrentLine))
-							levelNext--; //again for the "end case;" and block when
-					}
-				} else if (!options.foldOnlyBegin) {
-					if (strcmp(s, "case") == 0) {
-						sqlStatesCurrentLine = sqlStates.BeginCaseBlock(sqlStatesCurrentLine);
-						sqlStatesCurrentLine = sqlStates.CaseMergeWithoutWhenFound(sqlStatesCurrentLine, true);
-					}
-
-					if (levelCurrent > levelNext)
-						levelCurrent = levelNext;
-
-					if (!statementFound)
-						levelNext++;
-
-					statementFound = true;
-				} else if (levelCurrent > levelNext) {
-					// doesn't include this line into the folding block
-					// because doesn't hide LOOP or CASE (eg "END; LOOP" or "END; CASE")
-					levelCurrent = levelNext;
-				}
-			} else if ((!options.foldOnlyBegin) && (
-			               // folding for ELSE and ELSIF block only if foldAtElse is set
-			               // and IF or CASE aren't on only one line with ELSE or ELSIF (with flag statementFound)
-			               options.foldAtElse && !statementFound) && strcmp(s, "elsif") == 0) {
-				sqlStatesCurrentLine = sqlStates.IntoCondition(sqlStatesCurrentLine, true);
+			else if (inComment && (fc.style != SCE_PGSQL_COMMENT))
 				levelCurrent--;
-				levelNext--;
-			} else if ((!options.foldOnlyBegin) && (
-			               // folding for ELSE and ELSIF block only if foldAtElse is set
-			               // and IF or CASE aren't on only one line with ELSE or ELSIF (with flag statementFound)
-			               options.foldAtElse && !statementFound) && strcmp(s, "else") == 0) {
-				// prevent also ELSE is on the same line (eg. "ELSE ... END IF;")
-				statementFound = true;
-				if (sqlStates.IsIntoCaseBlock(sqlStatesCurrentLine) && sqlStates.IsCaseMergeWithoutWhenFound(sqlStatesCurrentLine)) {
-					sqlStatesCurrentLine = sqlStates.CaseMergeWithoutWhenFound(sqlStatesCurrentLine, false);
-					levelNext++;
-				} else {
-					// we are in same case "} ELSE {" in C language
-					levelCurrent--;
-				}
-			} else if (strcmp(s, "begin") == 0) {
-				levelNext++;
-				sqlStatesCurrentLine = sqlStates.IntoDeclareBlock(sqlStatesCurrentLine, false);
-			} else if ((strcmp(s, "end") == 0) ||
-			           // SQL Anywhere permits IF ... ELSE ... ENDIF
-			           // will only be active if "endif" appears in the
-			           // keyword list.
-			           (strcmp(s, "endif") == 0)) {
-				endFound = true;
-				levelNext--;
-				if (sqlStates.IsIntoSelectStatementOrAssignment(sqlStatesCurrentLine) && !sqlStates.IsCaseMergeWithoutWhenFound(sqlStatesCurrentLine))
-					levelNext--;
-				if (levelNext < SC_FOLDLEVELBASE) {
-					levelNext = SC_FOLDLEVELBASE;
-					isUnfoldingIgnored = true;
-				}
-			} else if ((!options.foldOnlyBegin) &&
-			           strcmp(s, "when") == 0 &&
-			           !sqlStates.IsIgnoreWhen(sqlStatesCurrentLine) &&
-			           !sqlStates.IsIntoExceptionBlock(sqlStatesCurrentLine) && (
-			               sqlStates.IsIntoCaseBlock(sqlStatesCurrentLine) ||
-			               sqlStates.IsIntoMergeStatement(sqlStatesCurrentLine)
-			               )
-			           ) {
-				sqlStatesCurrentLine = sqlStates.IntoCondition(sqlStatesCurrentLine, true);
-
-				// Don't foldind when CASE and WHEN are on the same line (with flag statementFound) (eg. "CASE selector WHEN expression1 THEN sequence_of_statements1;\n")
-				// and same way for MERGE statement.
-				if (!statementFound) {
-					if (!sqlStates.IsCaseMergeWithoutWhenFound(sqlStatesCurrentLine)) {
-						levelCurrent--;
-						levelNext--;
+			inComment = (fc.style == SCE_PGSQL_COMMENT);
+		}
+		if (fc.style == SCE_PGSQL_M4KBRASHES) {
+			if (fc.ch == '{') {
+				if (visibleChars) {
+					std::string s = styler.GetRange(fc.currentPos - visibleChars, fc.currentPos);
+					if (std::regex_search(s, reRegisterMacto)) {
+						lineState |= 0x1000000;
 					}
-					sqlStatesCurrentLine = sqlStates.CaseMergeWithoutWhenFound(sqlStatesCurrentLine, false);
 				}
-			} else if ((!options.foldOnlyBegin) && strcmp(s, "exit") == 0) {
-				sqlStatesCurrentLine = sqlStates.IgnoreWhen(sqlStatesCurrentLine, true);
-			} else if ((!options.foldOnlyBegin) && !sqlStates.IsIntoDeclareBlock(sqlStatesCurrentLine) && strcmp(s, "exception") == 0) {
-				sqlStatesCurrentLine = sqlStates.IntoExceptionBlock(sqlStatesCurrentLine, true);
-			} else if ((!options.foldOnlyBegin) &&
-			           (strcmp(s, "declare") == 0 ||
-			            strcmp(s, "function") == 0 ||
-			            strcmp(s, "procedure") == 0 ||
-			            strcmp(s, "package") == 0)) {
-				sqlStatesCurrentLine = sqlStates.IntoDeclareBlock(sqlStatesCurrentLine, true);
-			} else if ((!options.foldOnlyBegin) &&
-			           strcmp(s, "merge") == 0) {
-				sqlStatesCurrentLine = sqlStates.IntoMergeStatement(sqlStatesCurrentLine, true);
-				sqlStatesCurrentLine = sqlStates.CaseMergeWithoutWhenFound(sqlStatesCurrentLine, true);
-				levelNext++;
-				statementFound = true;
-			} else if ((!options.foldOnlyBegin) &&
-				   strcmp(s, "create") == 0) {
-				sqlStatesCurrentLine = sqlStates.IntoCreateStatement(sqlStatesCurrentLine, true);
-			} else if ((!options.foldOnlyBegin) &&
-				   strcmp(s, "view") == 0 &&
-				   sqlStates.IsIntoCreateStatement(sqlStatesCurrentLine)) {
-				sqlStatesCurrentLine = sqlStates.IntoCreateViewStatement(sqlStatesCurrentLine, true);
-			} else if ((!options.foldOnlyBegin) &&
-				   strcmp(s, "as") == 0 &&
-				   sqlStates.IsIntoCreateViewStatement(sqlStatesCurrentLine) &&
-				   ! sqlStates.IsIntoCreateViewAsStatement(sqlStatesCurrentLine)) {
-				sqlStatesCurrentLine = sqlStates.IntoCreateViewAsStatement(sqlStatesCurrentLine, true);
-				levelNext++;
+				if (levelMinCurrent > levelCurrent)
+					levelMinCurrent = levelCurrent;
+				levelCurrent++;
+			}
+			else {
+				if ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)
+					levelCurrent--;
+				lineState &= ~0x1000000;
 			}
 		}
-		if (atEOL) {
-			int levelUse = levelCurrent;
-			int lev = levelUse | levelNext << 16;
-			if (visibleChars == 0 && options.foldCompact)
-				lev |= SC_FOLDLEVELWHITEFLAG;
-			if (levelUse < levelNext)
+		if (!(lineState & 0x1000000)) {
+			if (fc.style == SCE_PGSQL_STATEMENT) {
+				if (!visibleChars) {
+					char lvl = 0;
+					std::string s = styler.GetRangeLowered(fc.currentPos, styler.LineEnd(fc.lineCurrent) + 1);
+					keywords[KW_PGSQL_INDENT_CLASS].InClassificator(s.c_str(), lvl);
+					if (lvl)
+						lineState |= lvl << 20;
+
+				}
+				// Folding between begin or case and end
+				char c = static_cast<char>(tolower(fc.ch));
+				if ((c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'i' || c == 'l' || c == 'f' || c == 'w') && isspacechar(fc.chPrev)) {
+					std::string strSt = fc.GetCurLowered();
+					
+					Sci_PositionU j;
+
+					if (strSt == "begin") {
+						if (fc.GetNextLowered(SCE_PGSQL_DEFAULT) != "transaction") { //не фолдим начало транзакций
+							if (levelMinCurrent > levelCurrent)
+								levelMinCurrent = levelCurrent;
+							levelCurrent++;
+						}
+					}
+					else if (strSt == "loop" || strSt == "case") {
+						if (levelMinCurrent > levelCurrent)
+							levelMinCurrent = levelCurrent;
+						levelCurrent++;
+					}
+					else if (strSt ==  "if") {
+						if (levelMinCurrent > levelCurrent)
+							levelMinCurrent = levelCurrent;
+						levelCurrent++;
+						levelCurrent++;
+					}
+					else if (strSt ==  "else" || strSt == "elseif" || strSt == "when") {
+						int prevLevel = styler.LevelAt(fc.lineCurrent - 1);
+						if (!(prevLevel & SC_FOLDLEVELHEADERFLAG) && !visibleChars) {
+							levelMinCurrent--;
+						}
+
+					}
+					else if (strSt == "create") {
+						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
+						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц						
+							if (levelMinCurrent > levelCurrent)
+								levelMinCurrent = levelCurrent;
+							levelCurrent++;
+						}
+					}
+					else if (strSt == "end" && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
+						levelCurrent--;
+						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
+						if (strSt == "if") {
+							levelCurrent--;
+						}
+					}
+					else if (strcmp(s, "go") == 0) {
+						levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+					}
+				}
+			}
+			else if (fc.style == SCE_PGSQL_OPERATOR) {
+				if (fc.ch == ')')
+					levelCurrent--;
+				else if (fc.ch == '(') {
+					if (levelMinCurrent > levelCurrent)
+						levelMinCurrent = levelCurrent;
+					levelCurrent++;
+				}
+			}
+			else if (fc.style == SCE_PGSQL_SYSMCONSTANTS) {
+				if (fc.ch == '_') {
+					Sci_PositionU j;
+					for (j = 0; j < 13; j++) {
+						if (!iswordchar(styler[fc.currentPos + j])) {
+							break;
+						}
+						s[j] = static_cast<char>(tolower(styler[fc.currentPos + j]));
+						s[j + 1] = '\0';
+					}
+					if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0) {
+						levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
+					}
+				}
+			}
+		}
+		if (fc.atEOL) {
+			styler.SetLineState(fc.lineCurrent, lineState);
+			lineState &= 0x1000000;
+			int lev = levelMinCurrent;
+			if (((levelCurrent > lev) && (visibleChars > 0)) || caseSwitcher)
 				lev |= SC_FOLDLEVELHEADERFLAG;
-			if (lev != styler.LevelAt(lineCurrent)) {
-				styler.SetLevel(lineCurrent, lev);
+			if (visibleChars == 0 && foldCompact)
+				lev |= SC_FOLDLEVELWHITEFLAG;
+			lev |= levelCurrent << 16;
+			if (lev != styler.LevelAt(fc.lineCurrent)) {
+				styler.SetLevel(fc.lineCurrent, lev);
 			}
-			lineCurrent++;
-			levelCurrent = levelNext;
+			caseSwitcher = false;
+			levelPrev = levelCurrent;
+			levelMinCurrent = levelCurrent;
 			visibleChars = 0;
-			statementFound = false;
-			if (!options.foldOnlyBegin)
-				sqlStates.Set(lineCurrent, sqlStatesCurrentLine);
 		}
-		if (!isspacechar(ch)) {
+		else if (fc.currentPos == endPos - 1)
+			styler.SetLineState(fc.lineCurrent, lineState);
+		if (!isspacechar(fc.ch))
 			visibleChars++;
-		}
 	}
+	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
+	// int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
+	// styler.SetLevel(lineCurrent, levelPrev | flagsNext);	
 }
 
-LexerModule lmPGSQL(SCLEX_PGSQL, LexerPGSQL::LexerFactorySQL, "pgsql", sqlWordListDesc);
+LexerModule lmPGSQL(SCLEX_PGSQL, LexerPGSQL::LexerFactoryPGSQL, "pgsql", pgsqlWordListDesc);
