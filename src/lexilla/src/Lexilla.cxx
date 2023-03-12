@@ -13,7 +13,8 @@
 
 #if defined(_WIN32)
 #define EXPORT_FUNCTION __declspec(dllexport)
-#define CALLING_CONVENTION __stdcall
+//#define CALLING_CONVENTION __stdcall
+#define CALLING_CONVENTION __cdecl 
 #else
 #define EXPORT_FUNCTION __attribute__((visibility("default")))
 #define CALLING_CONVENTION
@@ -58,6 +59,7 @@ extern LexerModule lmCPP;
 extern LexerModule lmCPPNoCase;
 extern LexerModule lmCsound;
 extern LexerModule lmCss;
+extern LexerModule lmCubeFormula;
 extern LexerModule lmD;
 extern LexerModule lmDataflex;
 extern LexerModule lmDiff;
@@ -72,6 +74,7 @@ extern LexerModule lmErrorList;
 extern LexerModule lmESCRIPT;
 extern LexerModule lmF77;
 extern LexerModule lmFlagShip;
+extern LexerModule lmFormEngine;
 extern LexerModule lmForth;
 extern LexerModule lmFortran;
 extern LexerModule lmFreeBasic;
@@ -116,6 +119,7 @@ extern LexerModule lmOScript;
 extern LexerModule lmPascal;
 extern LexerModule lmPB;
 extern LexerModule lmPerl;
+extern LexerModule lmPGSQL;
 extern LexerModule lmPHPSCRIPT;
 extern LexerModule lmPLM;
 extern LexerModule lmPO;
@@ -131,9 +135,11 @@ extern LexerModule lmR;
 extern LexerModule lmRaku;
 extern LexerModule lmREBOL;
 extern LexerModule lmRegistry;
+extern LexerModule lmRubrica;
 extern LexerModule lmRuby;
 extern LexerModule lmRust;
 extern LexerModule lmSAS;
+extern LexerModule lmSearchResult;
 extern LexerModule lmScriptol;
 extern LexerModule lmSmalltalk;
 extern LexerModule lmSML;
@@ -157,6 +163,7 @@ extern LexerModule lmVBScript;
 extern LexerModule lmVerilog;
 extern LexerModule lmVHDL;
 extern LexerModule lmVisualProlog;
+extern LexerModule lmWireFormat;
 extern LexerModule lmX12;
 extern LexerModule lmXML;
 extern LexerModule lmYAML;
@@ -206,6 +213,7 @@ void AddEachLexer() {
 		&lmCPPNoCase,
 		&lmCsound,
 		&lmCss,
+		&lmCubeFormula,
 		&lmD,
 		&lmDataflex,
 		&lmDiff,
@@ -220,6 +228,7 @@ void AddEachLexer() {
 		&lmESCRIPT,
 		&lmF77,
 		&lmFlagShip,
+		&lmFormEngine,
 		&lmForth,
 		&lmFortran,
 		&lmFreeBasic,
@@ -264,6 +273,7 @@ void AddEachLexer() {
 		&lmPascal,
 		&lmPB,
 		&lmPerl,
+		&lmPGSQL,
 		&lmPHPSCRIPT,
 		&lmPLM,
 		&lmPO,
@@ -279,9 +289,11 @@ void AddEachLexer() {
 		&lmRaku,
 		&lmREBOL,
 		&lmRegistry,
+		&lmRubrica,
 		&lmRuby,
 		&lmRust,
 		&lmSAS,
+		&lmSearchResult,
 		&lmScriptol,
 		&lmSmalltalk,
 		&lmSML,
@@ -305,6 +317,7 @@ void AddEachLexer() {
 		&lmVerilog,
 		&lmVHDL,
 		&lmVisualProlog,
+		&lmWireFormat,
 		&lmX12,
 		&lmXML,
 		&lmYAML,

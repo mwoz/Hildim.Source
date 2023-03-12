@@ -19,6 +19,7 @@ WARNINGS = -Wpedantic -Wall -Wextra
 
 ifdef CLANG
 CXX = clang++
+DEFINES += -D_CRT_SECURE_NO_DEPRECATE
 else
 # MinGW GCC
 LIBSMINGW = -lstdc++
