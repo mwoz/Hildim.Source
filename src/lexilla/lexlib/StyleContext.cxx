@@ -22,7 +22,7 @@
 using namespace Lexilla;
 
 StyleContext::StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-	int initStyle, LexAccessor &styler_, int chMask) :
+	int initStyle, LexAccessor &styler_, char chMask) :
 	styler(styler_),
 	multiByteAccess((styler.Encoding() == EncodingType::eightBit) ? nullptr : styler.MultiByteAccess()),
 	lengthDocument(static_cast<Sci_PositionU>(styler.Length())),
@@ -70,4 +70,15 @@ void StyleContext::GetCurrent(char *s, Sci_PositionU len) {
 
 void StyleContext::GetCurrentLowered(char *s, Sci_PositionU len) {
 	styler.GetRangeLowered(styler.GetStartSegment(), currentPos, s, len);
+}
+
+void StyleContext::GetCurrentString(std::string &string, Transform transform) {
+	const Sci_PositionU startPos = styler.GetStartSegment();
+	const Sci_PositionU len = currentPos - styler.GetStartSegment();
+	string.resize(len);
+	if (transform == Transform::lower) {
+		styler.GetRange(startPos, currentPos, string.data(), len + 1);
+	} else {
+		styler.GetRangeLowered(startPos, currentPos, string.data(), len + 1);
+	}
 }

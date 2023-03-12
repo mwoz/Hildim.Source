@@ -57,7 +57,7 @@ public:
 	Sci_Position widthNext = 1;
 
 	StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-                        int initStyle, LexAccessor &styler_, int chMask = '\377');
+                        int initStyle, LexAccessor &styler_, char chMask = '\377');
 	// Deleted so StyleContext objects can not be copied.
 	StyleContext(const StyleContext &) = delete;
 	StyleContext &operator=(const StyleContext &) = delete;
@@ -182,6 +182,8 @@ public:
 	bool MatchIgnoreCase(const char *s);
 	void GetCurrent(char *s, Sci_PositionU len);
 	void GetCurrentLowered(char *s, Sci_PositionU len);
+	enum class Transform { none, lower };
+	void GetCurrentString(std::string &string, Transform transform);
 };
 
 }

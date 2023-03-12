@@ -9,12 +9,12 @@
 #include <cassert>
 #include <cstring>
 
+#include <string>
 #include <algorithm>
 #include <iterator>
 #include <memory>
 
 #include "WordList.h"
-#include "CharacterSet.h"
 
 using namespace Lexilla;
 
@@ -183,6 +183,12 @@ bool WordList::InList(const char *s) const noexcept {
 	return false;
 }
 
+/** convenience overload so can easily call with std::string.
+ */
+bool WordList::InList(const std::string &s) const noexcept {
+	return InList(s.c_str());
+}
+
 /** similar to InList, but word s can be a substring of keyword.
  * eg. the keyword define is defined as def~ine. This means the word must start
  * with def to be a keyword, but also defi, defin and define are valid.
@@ -301,40 +307,3 @@ const char *WordList::WordAt(int n) const noexcept {
 	return words[n];
 }
 
-bool WordList::InClassificator(const char *s, char &cOut) {
-	cOut = 0;
-	if (!words)
-		return false;
-	const unsigned char firstChar = s[0];
-	int j = starts[firstChar];
-	if (j >= 0) {
-		while (words[j][0] == firstChar) {
-			if (s[1] == words[j][1]) {
-				const char *a = words[j] + 1;
-				const char *b = s + 1;
-				bool sep = (*a == '~');
-				while ((*a && *a == *b || (sep && (*b == ' ' || *b == '\t')))) {
-					a++;
-					b++;
-					while (sep && (*b == ' ' || *b == '\t'))
-						b++;
-					sep = (*a == '~');
-				}
-				if (!*b ||!iswordchar(*b)) {
-					if (!*a)
-						return true;
-					if (*a == ':') {
-						a++; 
-						cOut = static_cast<char>(atoi(a));
-						int curLen = a - words[j] - 1;
-						if(!(words[j + 1][0] && strlen(words[j + 1]) > curLen && !_memicmp(words[j + 1], words[j], curLen)))
-							return true;
-					}
-				}
-			}
-			j++;
-		}
-	}
-
-	return false;
-}
