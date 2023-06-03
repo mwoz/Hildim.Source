@@ -78,6 +78,7 @@ struct OptionsFM {
 	bool frozen;  //флаг для временного отключения на время загрузки хелплистов
 	std::string debugsuffix;
 	bool isSyslog;
+	bool isExtended;
 	std::string tag$ignore;
 //psql
 	bool sqlAllowDottedWord;
@@ -91,6 +92,7 @@ struct OptionsFM {
 		frozen = false;
 		debugsuffix = "";
 		isSyslog = false;
+		isExtended = false;
 //psql
 		sqlAllowDottedWord = false;
 		tag$ignore = "$function$";
@@ -161,6 +163,7 @@ struct OptionsSetFM : public OptionSet<OptionsFM> {
 		DefineProperty("precompiller.debugsuffix", &OptionsFM::debugsuffix);
 		DefineProperty("lexer.formenjine.frozen", &OptionsFM::frozen);
 		DefineProperty("lexer.formenjine.syslog", &OptionsFM::isSyslog);
+		DefineProperty("lexer.formenjine.extended", &OptionsFM::isExtended);
 
 
 		DefineProperty("fold.at.else", &OptionsFM::foldAtElse,
@@ -404,6 +407,7 @@ static inline int onStartNextLine(int initStyle)
 	case SCE_FM_VB_STRINGEOL:
 	case SCE_FM_VB_COMMENT:
 	case SCE_FM_VB_ERROR:
+	case SCE_FM_VB_FIELDNAME:
 		initStyle = SCE_FM_VB_DEFAULT;
 		break;
 	case SCE_FM_VB_STRINGCONT:
@@ -1017,6 +1021,19 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 			sc.ForwardSetState(SCE_FM_VB_DEFAULT);
 		}
 	break;
+	case SCE_FM_VB_FIELDNAME:
+		if (sc.ch == ']') {
+			if (sc.chNext == '["') {
+				sc.Forward();
+			}
+			else {
+				sc.ForwardSetState(SCE_FM_VB_DEFAULT);
+			}
+		}
+		else if (sc.atLineEnd) {
+			sc.ForwardSetState(SCE_FM_VB_DEFAULT);
+		}
+		break;
 	case SCE_FM_VB_STRINGCONT:
 		if(!IsASpace(sc.ch)){
 			sc.SetState(SCE_FM_VB_ERROR);
@@ -1134,6 +1151,8 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 			}
 		} else if (sc.ch == '\"') {
 			sc.SetState(SCE_FM_VB_STRING);
+		} else if (options.isExtended && sc.ch == '[') {
+			sc.SetState(SCE_FM_VB_FIELDNAME);
 		} else if (sc.ch == '#' && visibleChars == 0) {
 			// Preprocessor commands are alone on their line
 			sc.SetState(SCE_FM_PREPROCESSOR);
