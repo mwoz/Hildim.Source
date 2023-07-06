@@ -461,7 +461,7 @@ bool SignificantLines::LineMayCache(Sci::Line line) const noexcept {
 	case LineCache::Caret:
 		return line == lineCaret;
 	case LineCache::Page:
-		return (abs(line - lineCaret) < linesOnScreen) ||
+		return (std::abs(line - lineCaret) < linesOnScreen) ||
 			((line >= lineTop) && (line <= (lineTop + linesOnScreen)));
 	case LineCache::Document:
 	default:
@@ -1168,7 +1168,7 @@ void PositionCache::MeasureWidths(Surface *surface, const ViewStyle &vstyle, uns
 	if (unicode) {
 		surface->MeasureWidthsUTF8(fontStyle, sv, positions);
 	} else {
-	surface->MeasureWidths(fontStyle, sv, positions);
+		surface->MeasureWidths(fontStyle, sv, positions);
 	}
 	if (probe < pces.size()) {
 		// Store into cache

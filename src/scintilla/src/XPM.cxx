@@ -33,13 +33,13 @@ namespace {
 
 const char *NextField(const char *s) noexcept {
 	// In case there are leading spaces in the string
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	while (*s && *s != ' ') {
 		s++;
 	}
-	while (*s && *s == ' ') {
+	while (*s == ' ') {
 		s++;
 	}
 	return s;
@@ -266,7 +266,7 @@ void RGBAImage::SetPixel(int x, int y, ColourRGBA colour) noexcept {
 
 namespace {
 
-unsigned char AlphaMultiplied(unsigned char value, unsigned char alpha) {
+constexpr unsigned char AlphaMultiplied(unsigned char value, unsigned char alpha) noexcept {
 	return (value * alpha / UCHAR_MAX) & 0xffU;
 }
 
