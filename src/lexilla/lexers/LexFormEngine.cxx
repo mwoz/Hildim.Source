@@ -207,7 +207,7 @@ class LexerFormEngine : public ILexer5 {
 public:
 	LexerFormEngine(bool caseSensitive_) :
 		setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
-		reSyntax(" syntax=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
+		reSyntax(" (syntax|lang)=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
 		reLogDate("^\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}:\\d{2} ", std::regex::ECMAScript),
 		caseSensitive(caseSensitive_){
 			wRefold.Set("else elseif");
@@ -644,8 +644,9 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			sc.SetState(SCE_FM_PGSQL_DEFAULT);
 		}
 		break;
+	case SCE_FM_PGSQL_ESCQSTRING:
 	case SCE_FM_PGSQL_1QSTRING:
-		if (sc.ch == '\\') {
+		if (sc.ch == '\\' && sc.state == SCE_FM_PGSQL_ESCQSTRING) {
 			sc.Forward();
 		}
 		else if (sc.ch == '\'') {
@@ -703,6 +704,10 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			sc.SetState(SCE_FM_PGSQL_HEXSTRING);
 			sc.Forward();
 		}
+		else if (sc.MatchIgnoreCase("e'")) {
+			sc.SetState(SCE_FM_PGSQL_ESCQSTRING);
+			sc.Forward();
+		}		
 		else if (IsAWordStart(sc.ch)) {
 			sc.SetState(SCE_FM_PGSQL_IDENTIFIER);
 		}
@@ -719,6 +724,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			//~ 			} else if (sc.Match("-- ")) {
 			sc.SetState(SCE_FM_PGSQL_LINE_COMMENT);
 		}
+
 		else if (sc.ch == '\'') {
 			sc.SetState(SCE_FM_PGSQL_1QSTRING);
 		}
@@ -1441,24 +1447,6 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 					} else {
 						sc.ForwardSetState(SCE_FM_VB_COMMENT);
 					}
-				}else if(sc.Match("[--]")){
-					if (options.isSyslog) {
-						sc.Forward((3));
-						sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
-						ColoriseSQL(sc);
-					} else {
-						sc.ForwardSetState(SCE_FM_SQL_LINE_COMMENT);
-						sc.Forward((3));
-					}
-				}else if(sc.Match("[--P]")){
-					if (options.isSyslog) {
-						sc.Forward((4));
-						sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
-						ColoriseSQL(sc);
-					} else {
-						sc.ForwardSetState(SCE_FM_PGSQL_LINE_COMMENT);
-						sc.Forward((4));
-					}
 				}else if(sc.Match("[<!--]-->")){
 					if (options.isSyslog) {
 						sc.Forward((8));
@@ -1492,34 +1480,77 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 					std::string prevLine = styler.GetRangeLowered(styler.LineStart(sc.currentLine), sc.currentPos);
 					std::smatch mtch;
 					if (std::regex_search(prevLine, mtch, reSyntax)) 						{
-						if (mtch[1] == "sql") {
+						if (mtch[1] == "lang") {
+							if (mtch[2] == "ms") {
+								sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
+								ColoriseSQL(sc);
+							}
+							else if (mtch[2] == "pg") {
+								sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
+								ColorisePSQL(sc, styler);
+							}
+							else
+								sc.ForwardSetState(SCE_FM_PLAINCDATA);
+						}
+						else {
+
+							if (mtch[2] == "sql") {
+								sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
+								ColoriseSQL(sc);
+							}
+							else if (mtch[2] == "psql" ) {
+								sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
+								ColorisePSQL(sc, styler);
+							}
+							else if (mtch[2] == "vbs") {
+								sc.ForwardSetState(SCE_FM_VB_DEFAULT);
+								ColoriseVBS(sc, visibleChars, fileNbDigits);
+							}
+							else if (mtch[2] == "xml") {
+								sc.ForwardSetState(SCE_FM_X_DEFAULT);
+								ColoriseXML(sc);
+							}
+							else if (mtch[2] == "cubeformula") {
+								sc.ForwardSetState(SCE_FM_CF_DEFAULT);
+								ColoriseCubeFormula(sc);
+							}
+							else if (mtch[2] == "wireformat") {
+								sc.ForwardSetState(SCE_FM_WF_DEFAULT);
+								if (ColoriseWireFormat(sc)) {
+									lineState |= FM_ENDCDATA;
+									sc.SetState(SCE_FM_CDATA);
+									continue;
+								}
+							}
+							else
+								sc.ForwardSetState(SCE_FM_PLAINCDATA);
+						}
+					} 
+					else if (sc.Match("[--]")) {
+						if (options.isSyslog) {
+							sc.Forward((3));
 							sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
 							ColoriseSQL(sc);
-						} else if (mtch[1] == "psql") {
+						}
+						else {
+							sc.ForwardSetState(SCE_FM_SQL_LINE_COMMENT);
+							sc.Forward((3));
+						}
+					}
+					else if (sc.Match("[--P]")) {
+						if (options.isSyslog) {
+							sc.Forward((4));
 							sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
-							ColorisePSQL(sc, styler);
-						} else if (mtch[1] == "vbs") {
-							sc.ForwardSetState(SCE_FM_VB_DEFAULT);
-							ColoriseVBS(sc, visibleChars, fileNbDigits);
-						} else if (mtch[1] == "xml") {
-							sc.ForwardSetState(SCE_FM_X_DEFAULT);
-							ColoriseXML(sc);
-						} else if (mtch[1] == "cubeformula") {
-							sc.ForwardSetState(SCE_FM_CF_DEFAULT);
-							ColoriseCubeFormula(sc);
-						} else if (mtch[1] == "wireformat") {
-							sc.ForwardSetState(SCE_FM_WF_DEFAULT);
-							if (ColoriseWireFormat(sc)) {
-								lineState |= FM_ENDCDATA;
-								sc.SetState(SCE_FM_CDATA);
-								continue;
-							}
-
-						} else
-							sc.ForwardSetState(SCE_FM_PLAINCDATA);
-					} else
+							ColoriseSQL(sc);
+						}
+						else {
+							sc.ForwardSetState(SCE_FM_PGSQL_LINE_COMMENT);
+							sc.Forward((4));
+						}
+					}else
 						sc.ForwardSetState(SCE_FM_PLAINCDATA);
 				}
+				
 			} else if(options.isSyslog && sc.state == SCE_FM_DEFAULT) {// && sc.chPrev == '<'
 				if (sc.Match("<![CDATA[")) {
 					sc.SetState(SCE_FM_CDATA);
@@ -1656,7 +1687,7 @@ public:
 				lineFlag |= FM_PREVCDATA;
 	}
 	bool More() const {
-		return currentPos < endPos;
+		return currentPos < endPos - 1;
 	}
 	void DecreaseLevel(int flag = 0){
 		currentLevel--;

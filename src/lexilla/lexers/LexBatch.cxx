@@ -168,8 +168,8 @@ void ColouriseBatchDoc(
 						styler.ColourTo(startLine + offset + endLabel - startLabelName, SCE_BAT_LABEL);
 						styler.ColourTo(endPos, SCE_BAT_AFTER_LABEL);	// New style
 					} else {
-						styler.ColourTo(endPos, SCE_BAT_LABEL);
-					}
+					styler.ColourTo(endPos, SCE_BAT_LABEL);
+				}
 				}
 				stopLineProcessing=true;
 			// Check for Drive Change (Drive Change is internal command) - return if found

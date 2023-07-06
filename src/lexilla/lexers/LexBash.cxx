@@ -36,7 +36,6 @@ using namespace Scintilla;
 using namespace Lexilla;
 
 namespace {
-
 #define HERE_DELIM_MAX			256
 
 // define this if you want 'invalid octals' to be marked as errors
@@ -820,22 +819,22 @@ void SCI_METHOD LexerBash::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					sc.SetState(SCE_SH_HERE_Q | insideCommand);
 					if (HereDoc.Indent) { // tabulation prefix
 						while (sc.ch == '\t') {
-							sc.Forward();
-						}
+						sc.Forward();
+					}
 					}
 					if ((static_cast<Sci_Position>(sc.currentPos + HereDoc.DelimiterLength) == sc.lineEnd) &&
 						(HereDoc.DelimiterLength == 0 || sc.Match(HereDoc.Delimiter))) {
-						while (!sc.MatchLineEnd()) {
-							sc.Forward();
-						}
+					while (!sc.MatchLineEnd()) {
+						sc.Forward();
+					}
 						QuoteStack.Pop();
 						sc.SetState(SCE_SH_DEFAULT | QuoteStack.insideCommand);
-						break;
+							break;
+						}
 					}
-				}
 				if (HereDoc.Quoted || HereDoc.Escaped) {
-					break;
-				}
+				break;
+					}
 				// fall through to handle nested shell expansions
 				[[fallthrough]];
 			case SCE_SH_STRING:	// delimited styles, can nest
@@ -992,7 +991,7 @@ void SCI_METHOD LexerBash::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				QuoteStack.Start(sc.ch, QuoteStyle::Backtick, SCE_SH_DEFAULT);
 			} else if (sc.ch == '$') {
 				QuoteStack.Expand(sc, cmdState, true);
-				continue;
+					continue;
 			} else if (cmdState != CmdState::Arithmetic && sc.Match('<', '<')) {
 				sc.SetState(SCE_SH_HERE_DELIM | insideCommand);
 				HereDoc.State = 0;
