@@ -578,6 +578,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			sc.SetState(SCE_FM_PGSQL_DEFAULT);
 		}
 		break;
+	case SCE_FM_PGSQL_PARAMETER:
 	case SCE_FM_PGSQL_IDENTIFIER:
 		if (!IsAWordChar(sc.ch)) {
 			int nextState = SCE_FM_PGSQL_DEFAULT;
@@ -733,6 +734,16 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 		}
 		else if (sc.ch == '$' && IsAWordStart(sc.chNext)) {
 			sc.SetState(SCE_FM_PGSQL_$TAG);
+		}
+		else if (sc.ch == ':') {
+			sc.SetState(SCE_FM_PGSQL_OPERATOR);
+			if (sc.chNext == ':') {
+				while(sc.chNext == ':')
+					sc.Forward();
+			}
+			else if (IsAWordStart(sc.chNext)) {
+				sc.ChangeState(SCE_FM_PGSQL_PARAMETER);
+			}
 		}
 		else if (isoperator(static_cast<char>(sc.ch))) {
 			sc.SetState(SCE_FM_PGSQL_OPERATOR);

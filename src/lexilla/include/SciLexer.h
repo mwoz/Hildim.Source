@@ -2214,6 +2214,7 @@
 #define SCE_FM_PGSQL_M4KBRASHES 156				                
 #define SCE_FM_PGSQL_RADIUSKEYWORDS 157	
 #define SCE_FM_PGSQL_ESCQSTRING 158	
+#define SCE_FM_PGSQL_PARAMETER 159	
 
 #define SCE_PGSQL_DEFAULT 0                     
 #define SCE_PGSQL_COMMENT 1						
