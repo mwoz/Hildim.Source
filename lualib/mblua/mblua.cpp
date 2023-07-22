@@ -865,7 +865,12 @@ int mesage_FillList(lua_State* L) {
 	int firstLine = luaL_checkinteger(L, 3);
 	int firstCol = luaL_checkinteger(L, 4);
 	bool setNum = false;
-	if (firstCol < 0) {
+	bool setId = false;
+	if (firstCol == 0) {
+		firstCol = 1;
+		setId = true;
+	}
+	else if (firstCol < 0) {
 		firstCol = firstCol * -1;
 		setNum = true;
 	}
@@ -971,7 +976,7 @@ int mesage_FillList(lua_State* L) {
 		CRecordsetReader reader = rs->CreateReader();
 		COleVariant value;
 		for (int i = 0; i < msgCnt; i++) {
-			if (setNum) {
+			if (setNum || setId) {
 				_ltoa(i + firstLine, buf, 10);
 				pFunc(pList, i + firstLine, 0, buf);
 			}
@@ -1026,6 +1031,9 @@ int mesage_FillList(lua_State* L) {
 			if (setNum) {
 				_ltoa(i + firstLine, buf, 10);
 				pFunc(pList, i + firstLine, 0, buf);
+			}
+			else if (setId) {
+				pFunc(pList, i + firstLine, 0, msg->GetMsg(i)->id());
 			}
 			for (int j = 0; j < nFields; j++) {
 

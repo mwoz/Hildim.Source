@@ -70,7 +70,7 @@ struct OptionsPGSQL {
 		foldComment = false;
 		foldCompact = false;
 		foldOnlyBegin = false;
-		tag$ignore = "$function$";
+		tag$ignore = "$function$ $procedure$ $sql$";
 	}
 };
 
@@ -111,7 +111,7 @@ struct OptionSetPGSQL : public OptionSet<OptionsPGSQL> {
 
 		DefineProperty("fold.sql.only.begin", &OptionsPGSQL::foldOnlyBegin);
 
-		DefineProperty("tag$ignore", &OptionsPGSQL::tag$ignore);
+		DefineProperty("lexer.pgsql.transparent.tags", &OptionsPGSQL::tag$ignore);
 
 
 		DefineWordListSets(pgsqlWordListDesc);
@@ -122,7 +122,9 @@ class LexerPGSQL : public DefaultLexer {
 public :
 	LexerPGSQL() : DefaultLexer("pgsql", SCLEX_PGSQL) ,
 		reRegisterMacto("^\\s*__REGISTER_(REPORT)|(PLUGIN)|(WIZARD)|(FORM)_", std::regex::ECMAScript)
-	{}
+	{
+		transparentTags.Set(options.tag$ignore.c_str());
+	}
 
 	virtual ~LexerPGSQL() {}
 
@@ -148,6 +150,9 @@ public :
 
 	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val) override {
 		if (osSQL.PropertySet(&options, key, val)) {
+			if (!strcmp(key, "lexer.pgsql.transparent.tags") && options.tag$ignore.length() > 0) {
+				transparentTags.Set(options.tag$ignore.c_str());
+			}
 			return 0;
 		}
 		return -1;
@@ -176,6 +181,7 @@ private:
 	bool IsStreamCommentStyle(int style) {
 		return style == SCE_PGSQL_COMMENT;
 	}
+	WordList transparentTags;
 
 	bool IsCommentStyle (int style) {
 		switch (style) {
@@ -304,7 +310,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				$tag += "$";
 				posTagStart = sc.currentPos;
 
-				if ($tag == options.tag$ignore) {
+				if (transparentTags.InList($tag)) {
 					$tag = "";
 					nextState = SCE_PGSQL_DEFAULT;
 				}

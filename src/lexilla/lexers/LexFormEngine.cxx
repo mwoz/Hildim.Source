@@ -95,7 +95,7 @@ struct OptionsFM {
 		isExtended = false;
 //psql
 		sqlAllowDottedWord = false;
-		tag$ignore = "$function$";
+		tag$ignore = "$function$ $procedure$ $sql$";
 	}
 };
 
@@ -185,6 +185,7 @@ class LexerFormEngine : public ILexer5 {
 	WordList wDebug; //Используемые в данный момент дебаги с суффиксами
 	WordList wTypes_wf; //типы полей в вайрформате
 	WordList wKeydords_cf; //ключевые слов в формулах
+	WordList transparentTags;
 	std::map<std::string, std::string> preprocessorDefinitionsStart;
 	OptionsFM options;
 	OptionsSetFM osFM;
@@ -205,6 +206,20 @@ class LexerFormEngine : public ILexer5 {
 	int commentLevel = 0;
 	Sci_PositionU posCommentStart = SIZE_MAX;
 public:
+//	LexerFormEngine(bool caseSensitive_) :
+//		setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
+//		reSyntax(" (syntax|lang)=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
+//		reLogDate("^\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}:\\d{2} ", std::regex::ECMAScript),
+//		caseSensitive(caseSensitive_){
+//			wRefold.Set("else elseif");
+//			wFold.Set("do function sub for with private public property class while");
+//			wUnfold.Set("end next wend loop");
+//			wEndWhat.Set("with sub function property class");
+//			wEndWhat2.Set("if select");
+//			wTypes_wf.Set("string int float datetime bool null empty binary");
+//			wKeydords_cf.Set("and or function");
+//			wDebug.Set("");
+//	}
 	LexerFormEngine(bool caseSensitive_) :
 		setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
 		reSyntax(" (syntax|lang)=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
@@ -218,6 +233,7 @@ public:
 			wTypes_wf.Set("string int float datetime bool null empty binary");
 			wKeydords_cf.Set("and or function");
 			wDebug.Set("");
+			transparentTags.Set(options.tag$ignore.c_str());
 	}
 	~LexerFormEngine() {
 	}
@@ -320,7 +336,13 @@ Sci_Position SCI_METHOD LexerFormEngine::PropertySet(const char *key, const char
 	if (osFM.PropertySet(&options, key, val)) {
 		if (!strcmp(key, "precompiller.debugsuffix")) {
 			wDebug.Set(val);
+		}else if (osFM.PropertySet(&options, key, val)) {
+			if (!strcmp(key, "lexer.pgsql.transparent.tags") && options.tag$ignore.length() > 0) {
+				transparentTags.Set(options.tag$ignore.c_str());
+			}
+			return 0;
 		}
+
 		return 0;
 	}
 	return -1;
@@ -544,7 +566,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			$tag += "$";
 			posTagStart = sc.currentPos;
 
-			if ($tag == options.tag$ignore) {
+			if (transparentTags.InList($tag)) {
 				$tag = "";
 				nextState = SCE_FM_PGSQL_DEFAULT;
 			}
@@ -741,7 +763,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 				while(sc.chNext == ':')
 					sc.Forward();
 			}
-			else if (IsAWordStart(sc.chNext)) {
+			else if (sc.chNext == ':') {
 				sc.ChangeState(SCE_FM_PGSQL_PARAMETER);
 			}
 		}
