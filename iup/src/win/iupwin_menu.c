@@ -537,19 +537,27 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
                 if(!iupwinGetColorRef(root, "BARFGCOLOR", &barfgcolor))
                     barfgcolor = fgcolor;
-
-                hPen = CreatePen(PS_SOLID, 1, barfgcolor);
-
-                hPenOld = SelectObject(hDC, hPen);               
+              
                 if (IupGetInt(parent, "RADIO")) {
-                    
-                    Ellipse(hDC, (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
-                                 (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
-                                 (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
-                                 (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
+                    HRGN hr = CreateEllipticRgn((parent->x - icon_w) / 2 + BCMENU_PAD + 1,
+                                                (parent->x - icon_w) / 2 + BCMENU_PAD + 1,
+                                                (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
+                                                (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
+                    HBRUSH hbr = CreateSolidBrush(barfgcolor);
+                    FillRgn(hDC, hr, hbr);
+
+                    DeleteObject(hbr);
+                    DeleteObject(hr);
+
+                    //Ellipse(hDC, (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
+                    //             (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
+                    //             (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
+                    //             (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
                 }
                 else {
+                    hPen = CreatePen(PS_SOLID, 3, barfgcolor);
 
+                    hPenOld = SelectObject(hDC, hPen);
                     line_poly[0].x = (parent->x - icon_w) / 2 + BCMENU_PAD;
                     line_poly[0].y = (height / 2) + 1;
                     line_poly[1].x = parent->x / 2;
@@ -558,16 +566,11 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
                     line_poly[2].y = (parent->y - icon_h) / 2 + BCMENU_PAD;
 
                     Polyline(hDC, line_poly, 3);
-
-                    line_poly[0].x++;
-                    line_poly[1].y--;
-                    line_poly[2].x--;
-
-                    Polyline(hDC, line_poly, 3);
+                    SelectObject(hDC, hPenOld);
+                    DeleteObject(hPen);
 
                 }
-                SelectObject(hDC, hPenOld);
-                DeleteObject(hPen);
+
             }
             
             HFONT hFont = (HFONT)iupwinGetHFont(font);
@@ -620,14 +623,14 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
                  line_poly[2].x = left - 5;
                  line_poly[2].y = height / 2 + 7;
 
-                 hPen = CreatePen(PS_SOLID, 1, fgcolor);
+                 hPen = CreatePen(PS_SOLID, 3, fgcolor);
                  hPenOld = SelectObject(hDC, hPen);
 
                  Polyline(hDC, line_poly, 3);
-                 line_poly[0].y++;
-                 line_poly[1].y++;
-                 line_poly[2].y++;
-                 Polyline(hDC, line_poly, 3);
+                 //line_poly[0].y++;
+                 //line_poly[1].y++;
+                 //line_poly[2].y++;
+                 //Polyline(hDC, line_poly, 3);
 
                  SelectObject(hDC, hPenOld);
                  DeleteObject(hPen);

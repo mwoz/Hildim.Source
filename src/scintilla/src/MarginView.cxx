@@ -384,7 +384,7 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						snprintf(number, std::size(number), "%0X", state);
+						snprintf(number, std::size(number), " %08X", state);
 					}
 					sNumber += number;
 				}

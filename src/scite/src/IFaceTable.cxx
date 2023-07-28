@@ -933,9 +933,11 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_PGSQL_M4KEYS", 155},
 	{"SCE_FM_PGSQL_NUMBER", 138},
 	{"SCE_FM_PGSQL_OPERATOR", 144},
+	{"SCE_FM_PGSQL_OPERATOR_NOFOLD", 160},
 	{"SCE_FM_PGSQL_PARAMETER", 159},
 	{"SCE_FM_PGSQL_RADIUSKEYWORDS", 157},
 	{"SCE_FM_PGSQL_STATEMENT", 139},
+	{"SCE_FM_PGSQL_STATEMENT_NOFOLD", 161},
 	{"SCE_FM_PGSQL_SYSMCONSTANTS", 154},
 	{"SCE_FM_PGSQL_USER1", 149},
 	{"SCE_FM_PGSQL_USER2", 150},
@@ -1539,6 +1541,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_PGSQL_HEXSTRING", 18},
 	{"SCE_PGSQL_IDENTIFIER", 10},
 	{"SCE_PGSQL_LINE_COMMENT", 2},
+	{"SCE_PGSQL_LINE_COMMENT_EX", 25},
 	{"SCE_PGSQL_M4KBRASHES", 21},
 	{"SCE_PGSQL_M4KEYS", 20},
 	{"SCE_PGSQL_NUMBER", 3},
@@ -3373,7 +3376,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 319,
-	ifaceConstantCount = 2651,
+	ifaceConstantCount = 2654,
 	ifacePropertyCount = 250
 };
 

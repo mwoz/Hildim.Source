@@ -70,7 +70,7 @@ struct OptionsPGSQL {
 		foldComment = false;
 		foldCompact = false;
 		foldOnlyBegin = false;
-		tag$ignore = "$function$ $procedure$ $sql$";
+		tag$ignore = "$function$ $procedure$ $sql$ $pg$ $p$";
 	}
 };
 
@@ -84,6 +84,8 @@ struct OptionsPGSQL {
 #define KW_PGSQL_M4KEYS             7
 #define KW_PGSQL_INDENT_CLASS       8
 #define KW_PGSQL_NKEYWORDS          9
+
+#define PGSQL_PGSTRTAGMASK 0xF0000000
 
 static const char * const pgsqlWordListDesc[] = {
 	"Statements",
@@ -183,30 +185,6 @@ private:
 	}
 	WordList transparentTags;
 
-	bool IsCommentStyle (int style) {
-		switch (style) {
-		case SCE_PGSQL_COMMENT :
-		case SCE_PGSQL_LINE_COMMENT :
-			return true;
-		default :
-			return false;
-		}
-	}
-
-	bool IsCommentLine (Sci_Position line, LexAccessor &styler) {
-		Sci_Position pos = styler.LineStart(line);
-		Sci_Position eol_pos = styler.LineStart(line + 1) - 1;
-		for (Sci_Position i = pos; i + 1 < eol_pos; i++) {
-			int style = styler.StyleAt(i);
-			// MySQL needs -- comments to be followed by space or control char
-			if (style == SCE_PGSQL_LINE_COMMENT && styler.Match(i, "--"))
-				return true;
-			else if (!IsASpaceOrTab(styler[i]))
-				return false;
-		}
-		return false;
-	}
-
 	OptionsPGSQL options;
 	OptionSetPGSQL osSQL;
 
@@ -214,10 +192,27 @@ private:
 	const std::regex reRegisterMacto;
 
 	std::string $tag = "";
+	char $transparent_tagNum = 0;
+	std::string $transparent_tag = "";
 	Sci_PositionU posTagStart = SIZE_MAX;
 	int commentLevel = 0;
 	Sci_PositionU posCommentStart = SIZE_MAX;
 
+	void SetTransparentTagNum(const char* tag);
+	bool TryClearTransTagStyle(StyleContext& sc);
+
+	inline void ReadTransparentTagNum(LexAccessor& styler, Sci_Position pos) {
+		Sci_Position l = styler.GetLine(pos);
+		char c = l ? (styler.GetLineState(l - 1) & PGSQL_PGSTRTAGMASK) >> 28 : 0;
+		if (c > transparentTags.Length())
+			return;
+		$transparent_tagNum = c;
+		$transparent_tag = $transparent_tagNum ? transparentTags.WordAt($transparent_tagNum - 1) : "";
+	};
+	inline int TransparentTagNum2LineState() {
+		int r = ($transparent_tagNum << 28) & PGSQL_PGSTRTAGMASK;
+		return r;
+	};
 };
 
 Sci_Position SCI_METHOD LexerPGSQL::WordListSet(int n, const char* wl) {
@@ -256,12 +251,46 @@ inline bool IsStringTag(const char* s) {
 	return true;
 }
 
+void LexerPGSQL::SetTransparentTagNum(const char* tag) {
+	$transparent_tagNum = 0;
+	$transparent_tag = "";
+	if (!tag)
+		return;
+	// Первые 2 (function procedure) тэга не помечаем - чтобы в них был фолдинг и возможность 
+	//вкладывать другие теги с подсветкой
+	if(!strcmp("$function$", tag) || !strcmp("$procedure$", tag))
+		return;
+	for (int i = 0; i < transparentTags.Length() && i < 15; i++) {
+		if (!strcmp(transparentTags.WordAt(i), tag)) {
+			$transparent_tagNum = i + 1;
+			$transparent_tag = tag;
+			return;
+		}
+	}
+}
+
+bool LexerPGSQL::TryClearTransTagStyle(StyleContext& sc) {
+	if ($transparent_tagNum && sc.ch == '$') {
+		if (sc.Match($transparent_tag.c_str())) {
+			sc.SetState(SCE_PGSQL_$TAG);
+			sc.Forward($transparent_tag.length());
+			sc.SetState(SCE_PGSQL_DEFAULT);
+			$transparent_tag = "";
+			$transparent_tagNum = 0;
+			return true;
+		}
+	}
+	return false;
+}
+
 void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler);
 	int styleBeforeDCKeyword = SCE_PGSQL_DEFAULT;
 
 	if (startPos) {
+		if (startPos == sc.currentPos)
+			ReadTransparentTagNum(styler, startPos);
 		switch (initStyle) {
 		case SCE_PGSQL_$STRING:
 			if (posTagStart > startPos) {
@@ -299,6 +328,9 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 	}
 
 	for (; sc.More(); sc.Forward()) {
+		if (sc.atLineEnd) {
+			styler.SetLineState(sc.currentLine, TransparentTagNum2LineState());
+		}
 		// Determine if the current state should terminate.
 		switch (sc.state) {
 		case SCE_PGSQL_$TAG:
@@ -310,30 +342,45 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				$tag += "$";
 				posTagStart = sc.currentPos;
 
-				if (transparentTags.InList($tag)) {
+				if ($transparent_tagNum) {
+					if ($transparent_tag == $tag) {
+						$tag = "";
+						$transparent_tag = "";
+						$transparent_tagNum = 0;
+						nextState = SCE_PGSQL_DEFAULT;
+					}
+				}
+				else if (transparentTags.InList($tag)) {
+					SetTransparentTagNum($tag.c_str());
 					$tag = "";
 					nextState = SCE_PGSQL_DEFAULT;
 				}
 
 				sc.ForwardSetState(nextState);
 			} else if (!IsAWordChar(sc.ch)) {
-				sc.SetState(SCE_PGSQL_DEFAULT);
+				sc.ChangeState(SCE_PGSQL_DEFAULT);
 			}
 			break;
 		case SCE_PGSQL_$STRING:
 			if (sc.ch == '$' ) {
-				if (sc.Match($tag.c_str())) {
+				bool mt = sc.Match($tag.c_str());
+				if (mt || ($transparent_tagNum && sc.Match($transparent_tag.c_str()))) {
 					sc.SetState(SCE_PGSQL_$TAG);
 					sc.Forward($tag.length() );
 					sc.SetState(SCE_PGSQL_DEFAULT);
 					$tag = "";
 					posTagStart = SIZE_MAX;
+					if (!mt) {
+						$transparent_tag = "";
+						$transparent_tagNum = 0;
+					}
 				}
 			}
 			break;
 		}
 		
 		switch (sc.state) {
+		case SCE_PGSQL_OPERATOR_NOFOLD:
 		case SCE_PGSQL_OPERATOR:
 			sc.SetState(SCE_PGSQL_DEFAULT);
 			break;
@@ -381,7 +428,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 						sc.ChangeState(SCE_PGSQL_USER3);
 					}
 					else if (keywords[KW_PGSQL_STATEMENTS].InList(s)) {
-						sc.ChangeState(SCE_PGSQL_STATEMENT);
+						sc.ChangeState($transparent_tagNum ? SCE_PGSQL_STATEMENT_NOFOLD : SCE_PGSQL_STATEMENT);
 					}
 					else if (keywords[KW_PGSQL_M4KEYS].InList(s)) {
 						sc.ChangeState(SCE_PGSQL_M4KEYS);
@@ -404,6 +451,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				sc.Forward();
 			}
 			break;
+		case SCE_PGSQL_LINE_COMMENT_EX:
 		case SCE_PGSQL_LINE_COMMENT:
 			if (sc.atLineStart) {
 				sc.SetState(SCE_PGSQL_DEFAULT);
@@ -419,6 +467,9 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 					sc.ForwardSetState(SCE_PGSQL_DEFAULT);
 				}
 			}
+			else{ 
+				TryClearTransTagStyle(sc);
+			}
 			break;
 		case SCE_PGSQL_2QSTRING:
 			if (sc.ch == '\\') {
@@ -430,6 +481,9 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				} else {
 					sc.ForwardSetState(SCE_PGSQL_DEFAULT);
 				}
+			}
+			else {
+				TryClearTransTagStyle(sc);
 			}
 			break;
 		case SCE_PGSQL_BYTESTRING:
@@ -452,7 +506,12 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 
 		// Determine if a new state should be entered.
 		if (sc.state == SCE_PGSQL_DEFAULT) {
-			if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)) ||
+			if ((sc.chPrev == '\r' || sc.chPrev == '\n' || sc.currentPos == startPos) && sc.ch == 'd' && sc.chNext == 'n' && styler.SafeGetCharAt(sc.currentPos + 2) == 'l') {
+				char c = styler.SafeGetCharAt(sc.currentPos + 3);
+				if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+					sc.SetState(SCE_PGSQL_LINE_COMMENT_EX);
+			}
+			else if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)) ||
 			          ((sc.ch == '-' || sc.ch == '+') && IsADigit(sc.chNext) && !IsADigit(sc.chPrev))) {
 				sc.SetState(SCE_PGSQL_NUMBER);
 			} 
@@ -481,10 +540,10 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				sc.SetState(SCE_PGSQL_1QSTRING);
 			} else if (sc.ch == '\"') {
 				sc.SetState(SCE_PGSQL_2QSTRING);
-			} else if (sc.ch == '$' && IsAWordStart(sc.chNext)) {
+			} else if (sc.ch == '$' && (IsAWordStart(sc.chNext) || sc.chNext == '$')) {
 				sc.SetState(SCE_PGSQL_$TAG);
 			} else if (isoperator(static_cast<char>(sc.ch))) {
-				sc.SetState(SCE_PGSQL_OPERATOR);
+				sc.SetState($transparent_tagNum ? SCE_PGSQL_OPERATOR_NOFOLD : SCE_PGSQL_OPERATOR);
 			}
 			else if ((sc.ch == '{' || sc.ch == '}') && keywords[KW_PGSQL_M4KEYS].InList("}")) {
 				sc.SetState(SCE_PGSQL_M4KBRASHES);
@@ -545,7 +604,7 @@ public:
 	std::string GetCurLowered() {
 		Sci_PositionU prevPos = currentPos;
 		SkipSameStyle();
-		if (prevPos <= currentPos + 1)
+		if (prevPos >= currentPos + 1)
 			return "";
 		return styler.GetRangeLowered(prevPos, currentPos + 1);
 	}
@@ -592,6 +651,7 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 	int lineState = 0;
 	if (fc.lineCurrent > 0)
 		lineState = styler.GetLineState(fc.lineCurrent - 1) & 0x1000000;
+	
 	for (; fc.More(); fc.Forward()) {
 
 		// Comment folding
@@ -640,31 +700,32 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 					
 					Sci_PositionU j;
 
-					if (strSt == "begin") {
-						if (fc.GetNextLowered(SCE_PGSQL_DEFAULT) != "transaction") { //не фолдим начало транзакций
-							if (levelMinCurrent > levelCurrent)
-								levelMinCurrent = levelCurrent;
-							levelCurrent++;
-						}
-					}
-					else if (strSt == "loop" || strSt == "case") {
+					//if (strSt == "begin") {
+					//	if (fc.GetNextLowered(SCE_PGSQL_DEFAULT) != "transaction") { //не фолдим начало транзакций
+					//		if (levelMinCurrent > levelCurrent)
+					//			levelMinCurrent = levelCurrent;
+					//		levelCurrent++;
+					//	}
+					//}
+					//else 
+					if (strSt == "loop" || strSt == "case" || strSt == "begin" || strSt == "if") {
 						if (levelMinCurrent > levelCurrent)
 							levelMinCurrent = levelCurrent;
 						levelCurrent++;
 					}
-					else if (strSt ==  "if") {
-						if (levelMinCurrent > levelCurrent)
-							levelMinCurrent = levelCurrent;
-						levelCurrent++;
-						levelCurrent++;
-					}
-					else if (strSt ==  "else" || strSt == "elseif" || strSt == "when") {
-						int prevLevel = styler.LevelAt(fc.lineCurrent - 1);
-						if (!(prevLevel & SC_FOLDLEVELHEADERFLAG) && !visibleChars) {
-							levelMinCurrent--;
-						}
-
-					}
+					//lse if (strSt ==  "if") {
+					//	if (levelMinCurrent > levelCurrent)
+					//		levelMinCurrent = levelCurrent;
+					//	levelCurrent++;
+					//	//levelCurrent++;
+					//
+					//else if (strSt ==  "else" || strSt == "elseif" || strSt == "when") {
+					//	int prevLevel = styler.LevelAt(fc.lineCurrent - 1);
+					//	if (!(prevLevel & SC_FOLDLEVELHEADERFLAG) && !visibleChars) {
+					//		levelMinCurrent--;
+					//	}
+					//
+					//}
 					else if (strSt == "create") {
 						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
 						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц						
@@ -676,9 +737,9 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 					else if (strSt == "end" && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < levelCurrent)) {
 						levelCurrent--;
 						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
-						if (strSt == "if") {
-							levelCurrent--;
-						}
+						//if (strSt == "if") {
+						//	levelCurrent--;
+						//}
 					}
 					else if (strcmp(s, "go") == 0) {
 						levelCurrent = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
@@ -711,7 +772,8 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 			}
 		}
 		if (fc.atEOL) {
-			styler.SetLineState(fc.lineCurrent, lineState);
+			int ttt = styler.GetLineState(fc.lineCurrent);
+			styler.SetLineState(fc.lineCurrent, lineState | (ttt & PGSQL_PGSTRTAGMASK))  ;
 			lineState &= 0x1000000;
 			int lev = levelMinCurrent;
 			if (((levelCurrent > lev) && (visibleChars > 0)) || caseSwitcher)
