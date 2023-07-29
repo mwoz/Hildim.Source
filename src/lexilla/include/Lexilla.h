@@ -24,7 +24,7 @@
 
 // On Win32 use the stdcall calling convention otherwise use the standard calling convention
 #if defined(_WIN32)
-#define LEXILLA_CALL __cdecl 
+#define LEXILLA_CALL __stdcall
 #else
 #define LEXILLA_CALL
 #endif

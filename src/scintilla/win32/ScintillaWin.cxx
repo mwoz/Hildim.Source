@@ -333,6 +333,8 @@ class ScintillaWin :
 
 	bool capturedMouse;
 	bool trackedMouseLeave;
+	BOOL typingWithoutCursor;
+	bool cursorIsHidden;
 	SetCoalescableTimerSig SetCoalescableTimerFn;
 
 	unsigned int linesPerScroll;	///< Intellimouse support
@@ -362,7 +364,10 @@ class ScintillaWin :
 	static ATOM scintillaClassAtom;
 	static ATOM callClassAtom;
 
-	int deviceScaleFactor = 1;
+	float deviceScaleFactor = 1.f;
+	int GetFirstIntegralMultipleDeviceScaleFactor() const noexcept {
+		 return static_cast<int>(std::ceil(deviceScaleFactor));
+	}
 
 #if defined(USE_D2D)
 	ID2D1RenderTarget *pRenderTarget;
@@ -445,6 +450,7 @@ class ScintillaWin :
 	void SetMouseCapture(bool on) override;
 	bool HaveMouseCapture() override;
 	void SetTrackMouseLeaveEvent(bool on) noexcept;
+	void HideCursorIfPreferred() noexcept;
 	void UpdateBaseElements() override;
 	bool PaintContains(PRectangle rc) override;
 	void ScrollText(Sci::Line linesToMove) override;
@@ -470,7 +476,7 @@ class ScintillaWin :
 	void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
 	void ClaimSelection() override;
 
-	void GetIntelliMouseParameters() noexcept;
+	void GetMouseParameters() noexcept;
 	void CopyToGlobal(GlobalMemory &gmUnicode, const SelectionText &selectedText);
 	void CopyToClipboard(const SelectionText &selectedText) override;
 	void ScrollMessage(WPARAM wParam);
@@ -487,8 +493,6 @@ class ScintillaWin :
 	void ChangeScrollPos(int barType, Sci::Position pos);
 	sptr_t GetTextLength();
 	sptr_t GetText(uptr_t wParam, sptr_t lParam);
-	void InsertMultiPasteText(const char *text, int len); //!-add-[InsertMultiPasteText] 
-	 
 	Window::Cursor ContextCursor(Point pt);
 	sptr_t ShowContextMenu(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
 	PRectangle GetClientRectangle() const override;
@@ -553,6 +557,8 @@ ScintillaWin::ScintillaWin(HWND hwnd) {
 
 	capturedMouse = false;
 	trackedMouseLeave = false;
+	typingWithoutCursor = false;
+	cursorIsHidden = false;
 	SetCoalescableTimerFn = nullptr;
 
 	linesPerScroll = 0;
@@ -720,14 +726,15 @@ void ScintillaWin::EnsureRenderTarget(HDC hdc) {
 			}
 
 		} else {
-			drtp.dpiX = 96.f * deviceScaleFactor;
-			drtp.dpiY = 96.f * deviceScaleFactor;
+			const int integralDeviceScaleFactor = GetFirstIntegralMultipleDeviceScaleFactor();
+			drtp.dpiX = 96.f * integralDeviceScaleFactor;
+			drtp.dpiY = 96.f * integralDeviceScaleFactor;
 			drtp.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN,
 				D2D1_ALPHA_MODE_UNKNOWN);
 
 			D2D1_HWND_RENDER_TARGET_PROPERTIES dhrtp {};
 			dhrtp.hwnd = hw;
-			dhrtp.pixelSize = ::GetSizeUFromRect(rc, deviceScaleFactor);
+			dhrtp.pixelSize = ::GetSizeUFromRect(rc, integralDeviceScaleFactor);
 			dhrtp.presentOptions = (technology == Technology::DirectWriteRetain) ?
 			D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS : D2D1_PRESENT_OPTIONS_NONE;
 
@@ -772,7 +779,7 @@ void ScintillaWin::DisplayCursor(Window::Cursor c) {
 		c = static_cast<Window::Cursor>(cursorMode);
 	}
 	if (c == Window::Cursor::reverseArrow) {
-		::SetCursor(reverseArrowCursor.Load(dpi));
+		::SetCursor(reverseArrowCursor.Load(static_cast<UINT>(dpi * deviceScaleFactor)));
 	} else {
 		wMain.SetCursor(c);
 	}
@@ -1262,6 +1269,7 @@ sptr_t ScintillaWin::HandleCompositionInline(uptr_t, sptr_t lParam) {
 	}
 
 	view.imeCaretBlockOverride = false;
+	HideCursorIfPreferred();
 
 	if (lParam & GCS_RESULTSTR) {
 		AddWString(imc.GetCompositionString(GCS_RESULTSTR), CharacterSource::ImeResult);
@@ -1316,11 +1324,6 @@ sptr_t ScintillaWin::HandleCompositionInline(uptr_t, sptr_t lParam) {
 				const Sci::Position imeCaretPosDoc = pdoc->GetRelativePositionUTF16(currentPos, imeEndToImeCaretU16);
 
 				MoveImeCarets(-currentPos + imeCaretPosDoc);
-
-				if (std::find(imeIndicator.begin(), imeIndicator.end(), IndicatorTarget) != imeIndicator.end()) {
-					// set candidate window left aligned to beginning of target string.
-					SetCandidateWindowPos();
-				}
 			}
 		}
 
@@ -1373,7 +1376,7 @@ UINT CodePageFromCharSet(CharacterSet characterSet, UINT documentCodePage) noexc
 	}
 	switch (characterSet) {
 	case CharacterSet::Ansi: return 1252;
-	case CharacterSet::Default: return documentCodePage ? documentCodePage : 1251;
+	case CharacterSet::Default: return documentCodePage ? documentCodePage : 1252;
 	case CharacterSet::Baltic: return 1257;
 	case CharacterSet::ChineseBig5: return 950;
 	case CharacterSet::EastEurope: return 1250;
@@ -1525,10 +1528,6 @@ sptr_t ScintillaWin::ShowContextMenu(unsigned int iMessage, uptr_t wParam, sptr_
 		ContextMenu(pt);
 		return 0;
 	}
-	if (PointInSelMargin(ptClient)) {
-		SendMessage(GetParent(MainHWND()), (UINT)Message::MarginContextMenu, wParam, lParam);
-		return 0;
-	}
 	return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 }
 
@@ -1551,7 +1550,6 @@ void ScintillaWin::SizeWindow() {
 
 sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t lParam) {
 	switch (iMessage) {
-	case WM_MBUTTONDOWN:
 	case WM_LBUTTONDOWN: {
 			// For IME, set the composition string as the result string.
 			IMContext imc(MainHWND());
@@ -1565,14 +1563,13 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 			//	KeyboardIsKeyDown(VK_MENU));
 			::SetFocus(MainHWND());
 			ButtonDownWithModifiers(PointFromLParam(lParam), ::GetMessageTime(),
-						MouseModifiers(wParam) | ((iMessage == WM_MBUTTONDOWN) ? SCI_META : SCI_NORM));
+						MouseModifiers(wParam));
 		}
 		break;
 
-	case WM_MBUTTONUP:
 	case WM_LBUTTONUP:
 		ButtonUpWithModifiers(PointFromLParam(lParam),
-				      ::GetMessageTime(), MouseModifiers(wParam) | ((iMessage == WM_MBUTTONUP) ? SCI_META : SCI_NORM));
+				      ::GetMessageTime(), MouseModifiers(wParam));
 		break;
 
 	case WM_RBUTTONDOWN: {
@@ -1588,11 +1585,12 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 		break;
 
 	case WM_MOUSEMOVE: {
+			cursorIsHidden = false; // to be shown by ButtonMoveWithModifiers
 			const Point pt = PointFromLParam(lParam);
 
 			// Windows might send WM_MOUSEMOVE even though the mouse has not been moved:
 			// http://blogs.msdn.com/b/oldnewthing/archive/2003/10/01/55108.aspx
-			if (ptMouseLast != pt && !(wParam & MK_MBUTTON)) {
+			if (ptMouseLast != pt) {
 				SetTrackMouseLeaveEvent(true);
 				ButtonMoveWithModifiers(pt, ::GetMessageTime(), MouseModifiers(wParam));
 			}
@@ -1701,10 +1699,9 @@ sptr_t ScintillaWin::KeyMessage(unsigned int iMessage, uptr_t wParam, sptr_t lPa
 		return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 
 	case WM_CHAR:
+		HideCursorIfPreferred();
 		if (((wParam >= 128) || !iscntrl(static_cast<int>(wParam))) || !lastKeyDownConsumed) {
-			if (wParam < 32 && wParam > 0 && KeyboardIsKeyDown(VK_CONTROL))
-				return 0;
-			wchar_t wcs[3] = {static_cast<wchar_t>(wParam), 0};
+			wchar_t wcs[3] = { static_cast<wchar_t>(wParam), 0 };
 			unsigned int wclen = 1;
 			if (IS_HIGH_SURROGATE(wcs[0])) {
 				// If this is a high surrogate character, we need a second one
@@ -1821,9 +1818,6 @@ sptr_t ScintillaWin::IMEMessage(unsigned int iMessage, uptr_t wParam, sptr_t lPa
 
 	case WM_IME_NOTIFY:
 		return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
-	case WM_SYSCHAR:
-		return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-
 
 	}
 	return 0;
@@ -2018,7 +2012,7 @@ sptr_t ScintillaWin::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 			ctrlID = ::GetDlgCtrlID(HwndFromWindow(wMain));
 			UpdateBaseElements();
 			// Get Intellimouse scroll line parameters
-			GetIntelliMouseParameters();
+			GetMouseParameters();
 			::RegisterDragDrop(MainHWND(), &dt);
 			break;
 
@@ -2072,16 +2066,16 @@ sptr_t ScintillaWin::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		case WM_MOUSELEAVE:
 		case WM_MOUSEWHEEL:
 		case WM_MOUSEHWHEEL:
-		case WM_MBUTTONDOWN:
-		case WM_MBUTTONUP:		
 			return MouseMessage(msg, wParam, lParam);
 
 		case WM_SETCURSOR:
 			if (LOWORD(lParam) == HTCLIENT) {
-				POINT pt;
-				if (::GetCursorPos(&pt)) {
-					::ScreenToClient(MainHWND(), &pt);
-					DisplayCursor(ContextCursor(PointFromPOINT(pt)));
+				if (!cursorIsHidden) {
+					POINT pt;
+					if (::GetCursorPos(&pt)) {
+						::ScreenToClient(MainHWND(), &pt);
+						DisplayCursor(ContextCursor(PointFromPOINT(pt)));
+					}
 				}
 				return TRUE;
 			} else {
@@ -2104,7 +2098,7 @@ sptr_t ScintillaWin::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 #endif
 			UpdateBaseElements();
 			// Get Intellimouse scroll line parameters
-			GetIntelliMouseParameters();
+			GetMouseParameters();
 			InvalidateStyleRedraw();
 			break;
 
@@ -2342,6 +2336,14 @@ void ScintillaWin::SetTrackMouseLeaveEvent(bool on) noexcept {
 	trackedMouseLeave = on;
 }
 
+void ScintillaWin::HideCursorIfPreferred() noexcept {
+	// SPI_GETMOUSEVANISH from OS.
+	if (typingWithoutCursor && !cursorIsHidden) {
+		::SetCursor(NULL);
+		cursorIsHidden = true;
+	}
+}
+
 void ScintillaWin::UpdateBaseElements() {
 	struct ElementToIndex { Element element; int nIndex; };
 	const ElementToIndex eti[] = {
@@ -2400,13 +2402,11 @@ bool ScintillaWin::IsVisible() const noexcept {
 }
 
 int ScintillaWin::SetScrollInfo(int nBar, LPCSCROLLINFO lpsi, BOOL bRedraw) noexcept {
-	//return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
-	return ::SendMessage(::GetParent(MainHWND()), (UINT)Message::SetScrollInfo, nBar, (WPARAM)lpsi) ? true : false;
+	return ::SetScrollInfo(MainHWND(), nBar, lpsi, bRedraw);
 }
 
 bool ScintillaWin::GetScrollInfo(int nBar, LPSCROLLINFO lpsi) noexcept {
-	//return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
-	return ::SendMessage(::GetParent(MainHWND()), (UINT)Message::GetScrollInfo, nBar, (WPARAM)lpsi) ? true : ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
+	return ::GetScrollInfo(MainHWND(), nBar, lpsi) ? true : false;
 }
 
 // Change the scroll position but avoid repaint if changing to same value
@@ -2742,71 +2742,16 @@ bool SupportedFormat(const FORMATETC *pFE) noexcept {
 
 }
 
-
-//!-start-[InsertMultiPasteText]
-void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
-	std::string	convertedText;
-	if (convertPastes) {
-		// Convert line endings of the paste into our local line-endings mode
-		convertedText = Document::TransformLineEnds(text, len, pdoc->eolMode);
-		text = convertedText.c_str();
-	}
-	FilterSelections();
-	UndoGroup ug(pdoc, (sel.Count() > 1) || !sel.Empty());
-	for (size_t r=0; r<sel.Count(); r++) {
-		if (!RangeContainsProtected(sel.Range(r).Start().Position(),
-			sel.Range(r).End().Position())) {
-			int positionInsert = sel.Range(r).Start().Position();
-			if (!sel.Range(r).Empty()) {
-				if (sel.Range(r).Length()) {
-					pdoc->DeleteChars(positionInsert, sel.Range(r).Length());
-					sel.Range(r).ClearVirtualSpace();
-				} else {
-					// Range is all virtual so collapse to start of virtual space
-					sel.Range(r).MinimizeVirtualSpace();
-				}
-			}
-			positionInsert = RealizeVirtualSpace(positionInsert, sel.Range(r).caret.VirtualSpace());
-			if (pdoc->InsertString(positionInsert, text, len)) {
-				sel.Range(r).caret.SetPosition(positionInsert + len);
-				sel.Range(r).anchor.SetPosition(positionInsert + len);
-			}
-			sel.Range(r).ClearVirtualSpace();
-			// If in wrap mode rewrap current line so EnsureCaretVisible has accurate information
-			if (Wrapping()) {
-				AutoSurface surface(this);
-				if (surface) {
-					WrapOneLine(surface, pdoc->LineFromPosition(positionInsert));
-				}
-			}
-		}
-	}
-}
-//!-end-[InsertMultiPasteText]
 void ScintillaWin::Paste() {
 	if (!::OpenClipboardRetry(MainHWND())) {
 		return;
 	}
-/*!-remove-[InsertMultiPasteText]
 	UndoGroup ug(pdoc);
 	const bool isLine = SelectionEmpty() &&
 		(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
-	ClearSelection(multiPasteMode == SC_MULTIPASTE_EACH);
+	ClearSelection(multiPasteMode == MultiPaste::Each);
 	bool isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
-*/
-//!-start-[InsertMultiPasteText]
-	bool isLine = SelectionEmpty() && (::IsClipboardFormatAvailable(cfLineSelect) != 0);
-	SelectionPosition selStart;
-	bool isRectangular = ::IsClipboardFormatAvailable(cfColumnSelect) != 0;
-	bool isMultiPaste = (!isRectangular)&&(!isLine)&&(sel.Count()>1);
-	if(!isMultiPaste) {
-		UndoGroup ug(pdoc);
-		ClearSelection();
-		selStart = sel.IsRectangular() ?
-			sel.Rectangular().Start() :
-			sel.Range(sel.Main()).Start();
-	}
-//!-end-[InsertMultiPasteText]
+
 	if (!isRectangular) {
 		// Evaluate "Borland IDE Block Type" explicitly
 		GlobalMemory memBorlandSelection(::GetClipboardData(cfBorlandIDEBlockType));
@@ -2821,12 +2766,7 @@ void ScintillaWin::Paste() {
 	GlobalMemory memUSelection(::GetClipboardData(CF_UNICODETEXT));
 	if (const wchar_t *uptr = static_cast<const wchar_t *>(memUSelection.ptr)) {
 		const std::string putf = EncodeWString(uptr);
-		if (!isMultiPaste) {
 		InsertPasteShape(putf.c_str(), putf.length(), pasteShape);
-		} else {
-			InsertMultiPasteText(putf.c_str(), putf.length());
-		}
-
 		memUSelection.Unlock();
 	}
 	::CloseClipboard();
@@ -2834,9 +2774,9 @@ void ScintillaWin::Paste() {
 }
 
 void ScintillaWin::CreateCallTipWindow(PRectangle) {
-	if (!ct.wCallTip.Created()) {//WS_EX_CLIENTEDGE
+	if (!ct.wCallTip.Created()) {
 		HWND wnd = ::CreateWindow(callClassName, TEXT("ACallTip"),
-					     WS_POPUP | WS_BORDER, 100, 100, 150, 20,
+					     WS_POPUP, 100, 100, 150, 20,
 					     MainHWND(), 0,
 					     GetWindowInstance(MainHWND()),
 					     this);
@@ -3085,7 +3025,7 @@ void ScintillaWin::ImeStartComposition() {
 		// Move IME Window to current caret position
 		IMContext imc(MainHWND());
 		const Point pos = PointMainCaret();
-		COMPOSITIONFORM CompForm;
+		COMPOSITIONFORM CompForm {};
 		CompForm.dwStyle = CFS_POINT;
 		CompForm.ptCurrentPos = POINTFromPoint(pos);
 
@@ -3252,13 +3192,14 @@ LRESULT ScintillaWin::ImeOnDocumentFeed(LPARAM lParam) const {
 	return rcSize; // MS API says reconv structure to be returned.
 }
 
-void ScintillaWin::GetIntelliMouseParameters() noexcept {
+void ScintillaWin::GetMouseParameters() noexcept {
 	// This retrieves the number of lines per scroll as configured in the Mouse Properties sheet in Control Panel
 	::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &linesPerScroll, 0);
 	if (!::SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0, &charsPerScroll, 0)) {
 		// no horizontal scrolling configuration on Windows XP
 		charsPerScroll = (linesPerScroll == WHEEL_PAGESCROLL) ? 3 : linesPerScroll;
 	}
+	::SystemParametersInfo(SPI_GETMOUSEVANISH, 0, &typingWithoutCursor, 0);
 }
 
 void ScintillaWin::CopyToGlobal(GlobalMemory &gmUnicode, const SelectionText &selectedText) {
@@ -3707,7 +3648,7 @@ LRESULT PASCAL ScintillaWin::CTWndProc(
 					surfaceWindow->Init(ps.hdc, hWnd);
 				} else {
 #if defined(USE_D2D)
-					const int scaleFactor = sciThis->deviceScaleFactor;
+					const int scaleFactor = sciThis->GetFirstIntegralMultipleDeviceScaleFactor();
 
 					// Create a Direct2D render target.
 					D2D1_HWND_RENDER_TARGET_PROPERTIES dhrtp {};

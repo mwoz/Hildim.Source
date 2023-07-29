@@ -110,6 +110,7 @@ bool ValidStyledText(const ViewStyle &vs, size_t styleOffset, const StyledText &
 	}
 	return true;
 }
+
 int WidestLineWidth(Surface *surface, const ViewStyle &vs, int styleOffset, const StyledText &st) {
 	int widthMax = 0;
 	size_t start = 0;
@@ -350,8 +351,8 @@ void LayoutSegments(IPositionCache *pCache,
 		if (vstyle.styles[styleSegment].visible) {
 			if (ts.representation) {
 				XYPOSITION representationWidth = 0.0;
-					// Tab is a special case of representation, taking a variable amount of space
-					// which will be filled in later.
+				// Tab is a special case of representation, taking a variable amount of space
+				// which will be filled in later.
 				if (ll->chars[ts.start] != '\t') {
 					representationWidth = vstyle.controlCharWidth;
 					if (representationWidth <= 0.0) {
@@ -359,7 +360,7 @@ void LayoutSegments(IPositionCache *pCache,
 						XYPOSITION positionsRepr[Representation::maxLength + 1];
 						// ts.representation->stringRep is UTF-8.
 						pCache->MeasureWidths(surface, vstyle, StyleControlChar, true, ts.representation->stringRep,
-								positionsRepr, multiThreaded);
+							positionsRepr, multiThreaded);
 						representationWidth = positionsRepr[ts.representation->stringRep.length() - 1];
 						if (FlagSet(ts.representation->appearance, RepresentationAppearance::Blob)) {
 							representationWidth += vstyle.ctrlCharPadding;
@@ -929,12 +930,13 @@ void FillLineRemainder(Surface *surface, const EditModel &model, const ViewStyle
 			surface->FillRectangleAligned(rcArea, Fill(vsDraw.styles[ll->styles[ll->numCharsInLine]].back));
 		} else {
 			surface->FillRectangleAligned(rcArea, Fill(vsDraw.styles[StyleDefault].back));
-	}
+		}
 		if (eolInSelection && vsDraw.selection.eolFilled && (line < model.pdoc->LinesTotal() - 1) && (vsDraw.selection.layer != Layer::Base)) {
 			surface->FillRectangleAligned(rcArea, SelectionBackground(model, vsDraw, eolInSelection));
+		}
 	}
-	}
-	}
+}
+
 }
 
 void EditView::DrawEOL(Surface *surface, const EditModel &model, const ViewStyle &vsDraw, const LineLayout *ll,
@@ -2308,7 +2310,7 @@ void EditView::DrawForeground(Surface *surface, const EditModel &model, const Vi
 				rcUL.top = ybase + 1;
 				rcUL.bottom = ybase + 2;
 				ColourRGBA colourUnderline = textFore;
-			if (inHotspot && vsDraw.hotspotUnderline) {
+				if (inHotspot && vsDraw.hotspotUnderline) {
 					colourUnderline = vsDraw.ElementColour(Element::HotSpotActive).value_or(textFore);
 				}
 				surface->FillRectangleAligned(rcUL, colourUnderline);
