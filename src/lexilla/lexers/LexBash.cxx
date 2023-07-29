@@ -36,7 +36,6 @@ using namespace Scintilla;
 using namespace Lexilla;
 
 namespace {
-
 #define HERE_DELIM_MAX			256
 
 // define this if you want 'invalid octals' to be marked as errors
@@ -847,25 +846,25 @@ void SCI_METHOD LexerBash::Lex(Sci_PositionU startPos, Sci_Position length, int 
 					sc.SetState(SCE_SH_HERE_Q | insideCommand);
 					if (HereDoc.Indent) { // tabulation prefix
 						while (sc.ch == '\t') {
-							sc.Forward();
-						}
+						sc.Forward();
+					}
 					}
 					if ((static_cast<Sci_Position>(sc.currentPos + HereDoc.DelimiterLength) == sc.lineEnd) &&
 						(HereDoc.DelimiterLength == 0 || sc.Match(HereDoc.Delimiter))) {
 						if (HereDoc.DelimiterLength != 0) {
 							sc.SetState(SCE_SH_HERE_DELIM | insideCommand);
-							while (!sc.MatchLineEnd()) {
-								sc.Forward();
-							}
+					while (!sc.MatchLineEnd()) {
+						sc.Forward();
+					}
 						}
 						QuoteStack.Pop();
 						sc.SetState(SCE_SH_DEFAULT | QuoteStack.insideCommand);
-						break;
+							break;
+						}
 					}
-				}
 				if (HereDoc.Quoted || HereDoc.Escaped) {
-					break;
-				}
+				break;
+					}
 				// fall through to handle nested shell expansions
 				[[fallthrough]];
 			case SCE_SH_STRING:	// delimited styles, can nest
@@ -1022,7 +1021,7 @@ void SCI_METHOD LexerBash::Lex(Sci_PositionU startPos, Sci_Position length, int 
 				QuoteStack.Start(sc.ch, QuoteStyle::Backtick, SCE_SH_DEFAULT, cmdState);
 			} else if (sc.ch == '$') {
 				QuoteStack.Expand(sc, cmdState, true);
-				continue;
+					continue;
 			} else if (cmdState != CmdState::Arithmetic && sc.Match('<', '<')) {
 				sc.SetState(SCE_SH_HERE_DELIM | insideCommand);
 				HereDoc.State = 0;
@@ -1187,7 +1186,7 @@ void SCI_METHOD LexerBash::Fold(Sci_PositionU startPos_, Sci_Position length, in
 			if (stylePrev == SCE_SH_HERE_Q) {
 				levelCurrent--;
 			} else if (stylePrev != SCE_SH_HERE_DELIM) {
-				if (ch == '<' && chNext == '<') {
+			if (ch == '<' && chNext == '<') {
 					if (styler.SafeGetCharAt(i + 2) != '<') {
 						levelCurrent++;
 					}

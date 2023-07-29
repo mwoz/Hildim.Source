@@ -239,7 +239,6 @@ bool isPreProcessorEndTag(int state, int ch) {
 	}
 	return ch == '?';
 }
-
 // not really well done, since it's only comments that should lex the %> and <%
 bool isCommentASPState(int state) noexcept {
 	bool bResult;
