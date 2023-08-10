@@ -367,9 +367,20 @@ void SCI_METHOD LexerMSSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				if (sc.ch == '"') {
 					if (sc.chNext == '"') {
 						sc.Forward();
-				} else {
-					sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
-                }
+					} else {
+						char s0[100];
+						sc.GetCurrent(s0, sizeof(s0));
+
+						char* s = s0 + 1;
+						int lenW = strlen(s);
+
+						if (s[0] == '_') {
+							if (keywords[KW_MSSQL_RADIUS].InList(s)) {
+								sc.ChangeState(SCE_MSSQL_RADIUSKEYWORDS);
+							}
+						}
+						sc.SetStateEx(SCE_MSSQL_DEFAULT_PREF_DATATYPE);
+					}
                 }
 		} else if (sc.state == SCE_MSSQL_COLUMN_NAME_2) {
 			if (sc.ch == ']') {

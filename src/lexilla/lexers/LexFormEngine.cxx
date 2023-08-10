@@ -210,6 +210,9 @@ class LexerFormEngine : public ILexer5 {
 	int commentLevel = 0;
 	Sci_PositionU posCommentStart = SIZE_MAX;
 
+	Sci_PositionU vbRAWStart = SIZE_MAX;
+	int rawLevel = 0;
+
 	void SetTransparentTagNum(const char* tag);
 
 	bool TryClearTransTagStyle(StyleContext& sc);
@@ -654,20 +657,12 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 	case SCE_FM_PGSQL_IDENTIFIER:
 		if (!IsAWordChar(sc.ch)) {
 			int nextState = SCE_FM_PGSQL_DEFAULT;
-			char s[1000];
+			char s[100];
 			sc.GetCurrent(s, sizeof(s));
 			int lenW = strlen(s);
 
 			if (s[0] == '_') {
-				if (keywords[KW_MSSQL_RADIUS].InList(s)) {
-					sc.ChangeState(SCE_FM_PGSQL_RADIUSKEYWORDS);
-				}
-				else if (s[1] == '_' && HasNotLwr(s)) {
-					sc.ChangeState(SCE_FM_PGSQL_SYSMCONSTANTS);
-				}
-				else {
-					sc.ChangeState(SCE_FM_PGSQL_VARIABLE);
-				}
+				sc.ChangeState(SCE_FM_PGSQL_VARIABLE);
 			}
 			else {
 				_strlwr(s);
@@ -742,6 +737,17 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 				sc.Forward();
 			}
 			else {
+				char s0[100];
+				sc.GetCurrent(s0, sizeof(s0));
+
+				char* s = s0 + 1;
+				int lenW = strlen(s);
+
+				if (s[0] == '_') {
+					if (keywords[KW_MSSQL_RADIUS].InList(s)) {
+						sc.ChangeState(SCE_FM_PGSQL_RADIUSKEYWORDS);
+					}
+				}
 				sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
 			}
 		}else {
@@ -762,6 +768,11 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 		}
 		else if (!IsAHeXDigit(sc.ch)) {
 			sc.ChangeState(SCE_FM_PGSQL_DEFAULT);
+		}
+		break;
+	case SCE_FM_PGSQL_FMPARAMETR:
+		if (sc.ch == '}') {
+			sc.ForwardSetState(SCE_FM_PGSQL_DEFAULT);
 		}
 		break;
 	}
@@ -819,6 +830,9 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			else if (sc.chNext == ':') {
 				sc.ChangeState(SCE_FM_PGSQL_PARAMETER);
 			}
+		}
+		else if (sc.ch == '{') {
+			sc.SetState(SCE_FM_PGSQL_FMPARAMETR);
 		}
 		else if (isoperator(static_cast<char>(sc.ch))) {
 			sc.SetState($transparent_tagNum ? SCE_FM_PGSQL_OPERATOR_NOFOLD : SCE_FM_PGSQL_OPERATOR);
@@ -880,6 +894,17 @@ void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 			if (sc.chNext == '"') {
 				sc.Forward();
 			} else {
+				char s0[100];
+				sc.GetCurrent(s0, sizeof(s0));
+
+				char* s = s0 + 1;
+				int lenW = strlen(s);
+
+				if (s[0] == '_') {
+					if (keywords[KW_MSSQL_RADIUS].InList(s)) {
+						sc.ChangeState(SCE_FM_SQL_RADIUSKEYWORDS);
+					}
+				}
 				sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
 			}
 		}
@@ -1178,6 +1203,7 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 		} else if (sc.ch == '#') {
 			sc.ForwardSetState(SCE_FM_VB_DEFAULT);
 		}
+	break;
 	case SCE_FM_VB_UNACTIVE:
 		if (sc.atLineStart && !options.debugmode && sc.Match("\'#ENDDEBUG")) {
 			sc.Forward(10);
@@ -1185,6 +1211,21 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 				sc.ForwardSetState(SCE_FM_VB_COMMENT);
 			}
 		}
+		break;
+	case SCE_FM_VB_RAWSTRING:
+		if (sc.ch == ']') {
+			int rl = 0;
+			for (; rl <= rawLevel; rl++) {
+				if (sc.chNext != '=')
+					break;
+				sc.Forward();
+			}
+			if (sc.chNext == ']' && rl == rawLevel) {
+				sc.Forward();
+				sc.ForwardSetState(SCE_FM_VB_DEFAULT);
+			}
+		}
+		break;
 	}
 
 	if (sc.state == SCE_FM_VB_DEFAULT) {
@@ -1241,8 +1282,24 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 			}
 		} else if (sc.ch == '\"') {
 			sc.SetState(SCE_FM_VB_STRING);
-		} else if (options.isExtended && sc.ch == '[') {
-			sc.SetState(SCE_FM_VB_FIELDNAME);
+		} else if (sc.ch == '[') {
+			int rl = 0;
+			sc.SetState(SCE_FM_VB_IDENTIFIER);
+			while ( sc.chNext == '=')
+			{
+				sc.Forward();
+				rl++;
+			}
+			if (sc.chNext == '[') {
+				rawLevel = rl;
+				vbRAWStart = sc.currentPos - rl;
+				sc.ChangeState(SCE_FM_VB_RAWSTRING);
+			}else if (!rl && options.isExtended) {
+				sc.ChangeState(SCE_FM_VB_FIELDNAME);
+			}
+			else {
+				sc.ChangeState(SCE_FM_VB_DEFAULT);
+			}
 		} else if (sc.ch == '#' && visibleChars == 0) {
 			// Preprocessor commands are alone on their line
 			sc.SetState(SCE_FM_PREPROCESSOR);
@@ -1485,6 +1542,21 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 				}
 			}
 			break;
+		}
+	}
+	else if (startPos && sc.state == SCE_FM_VB_RAWSTRING) {
+		if (vbRAWStart > startPos) {
+			for (Sci_PositionU i = startPos - 1; i; i--) {
+				if ((unsigned char)styler.StyleAt(i) != SCE_FM_VB_RAWSTRING) {
+					Sci_PositionU j;
+					rawLevel = 0;
+					vbRAWStart = i;
+					for (j = i + 1; styler.SafeGetCharAt(j) == '='; j++){
+						rawLevel++;
+					}
+					break;
+				}
+			}
 		}
 	}
 
@@ -2266,21 +2338,6 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyl
 					fc.currentLevel--;
 				else if (fc.ch == '(') {
 					fc.Up();
-				}
-			}
-			else if (fc.style == SCE_FM_PGSQL_SYSMCONSTANTS) {
-				if (fc.ch == '_') {
-					Sci_PositionU j;
-					for (j = 0; j < 13; j++) {
-						if (!iswordchar(styler[fc.currentPos + j])) {
-							break;
-						}
-						s[j] = static_cast<char>(tolower(styler[fc.currentPos + j]));
-						s[j + 1] = '\0';
-					}
-					if (strcmp(s, "__cmd_check_p") == 0 || strcmp(s, "__cmd_check_f") == 0 || strcmp(s, "__cmd_check_t") == 0 || strcmp(s, "__cmd_check_v") == 0) {
-						fc.currentLevel = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
-					}
 				}
 			}
 		}

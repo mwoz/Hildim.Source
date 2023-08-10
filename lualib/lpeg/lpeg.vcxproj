@@ -96,6 +96,7 @@
   <ItemGroup>
     <ClInclude Include="lpcap.h" />
     <ClInclude Include="lpcode.h" />
+    <ClInclude Include="lpcset.h" />
     <ClInclude Include="lpprint.h" />
     <ClInclude Include="lptree.h" />
     <ClInclude Include="lptypes.h" />
@@ -105,6 +106,7 @@
   <ItemGroup>
     <ClCompile Include="lpcap.c" />
     <ClCompile Include="lpcode.c" />
+    <ClCompile Include="lpcset.c" />
     <ClCompile Include="lpprint.c" />
     <ClCompile Include="lptree.c" />
     <ClCompile Include="lpvm.c" />

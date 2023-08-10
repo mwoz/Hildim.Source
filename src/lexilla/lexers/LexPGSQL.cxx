@@ -398,10 +398,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				int lenW = strlen(s);
 
 				if (s[0] == '_') {
-					if (keywords[KW_PGSQL_RADIUS].InList(s)) {
-						sc.ChangeState(SCE_PGSQL_RADIUSKEYWORDS);
-					}
-					else if (s[1] == '_' && HasNotLwr(s)) {
+					if (s[1] == '_' && HasNotLwr(s)) {
 						sc.ChangeState(SCE_PGSQL_SYSMCONSTANTS);
 					}
 					else {
@@ -457,8 +454,9 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				sc.SetState(SCE_PGSQL_DEFAULT);
 			}
 			break;
+		case SCE_PGSQL_ESCQSTRING:
 		case SCE_PGSQL_1QSTRING:
-			if (sc.ch == '\\') {
+			if (sc.ch == '\\' && sc.state == SCE_PGSQL_ESCQSTRING) {
 				sc.Forward();
 			} else if (sc.ch == '\'') {
 				if (sc.chNext == '\'') {
@@ -479,6 +477,17 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				if (sc.chNext == '\"') {
 					sc.Forward();
 				} else {
+					char s0[100];
+					sc.GetCurrent(s0, sizeof(s0));
+
+					char* s = s0 + 1;
+					int lenW = strlen(s);
+
+					if (s[0] == '_') {
+						if (keywords[KW_PGSQL_RADIUS].InList(s)) {
+							sc.ChangeState(SCE_PGSQL_RADIUSKEYWORDS);
+						}
+					}
 					sc.ForwardSetState(SCE_PGSQL_DEFAULT);
 				}
 			}
@@ -521,6 +530,10 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			}
 			else if (sc.MatchIgnoreCase("x'")) {
 				sc.SetState(SCE_PGSQL_HEXSTRING);
+				sc.Forward();
+			}
+			else if (sc.MatchIgnoreCase("e'")) {
+				sc.SetState(SCE_PGSQL_ESCQSTRING);
 				sc.Forward();
 			}
 			else if (IsAWordStart(sc.ch)) {
