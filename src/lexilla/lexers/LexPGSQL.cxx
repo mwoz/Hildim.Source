@@ -70,7 +70,7 @@ struct OptionsPGSQL {
 		foldComment = false;
 		foldCompact = false;
 		foldOnlyBegin = false;
-		tag$ignore = "$function$ $procedure$ $sql$ $pg$ $p$";
+		tag$ignore = "$function$ $procedure$ $block$ $sql$ $pg$ $p$";
 	}
 };
 
@@ -258,7 +258,7 @@ void LexerPGSQL::SetTransparentTagNum(const char* tag) {
 		return;
 	// Первые 2 (function procedure) тэга не помечаем - чтобы в них был фолдинг и возможность 
 	//вкладывать другие теги с подсветкой
-	if(!strcmp("$function$", tag) || !strcmp("$procedure$", tag))
+	if(!strcmp("$function$", tag) || !strcmp("$procedure$", tag) || !strcmp("$block$", tag))
 		return;
 	for (int i = 0; i < transparentTags.Length() && i < 15; i++) {
 		if (!strcmp(transparentTags.WordAt(i), tag)) {

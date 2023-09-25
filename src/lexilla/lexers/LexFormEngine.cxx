@@ -96,7 +96,7 @@ struct OptionsFM {
 		isExtended = false;
 //psql
 		sqlAllowDottedWord = false;
-		tag$ignore = "$function$ $procedure$ $sql$ $pg$ $p$";
+		tag$ignore = "$function$ $procedure$ $block$ $sql$ $pg$ $p$";
 	}
 };
 
@@ -232,7 +232,7 @@ class LexerFormEngine : public ILexer5 {
 public:
 	LexerFormEngine(bool caseSensitive_) :
 		setFoldingWordsBegin(CharacterSet::setLower, "idfecnwspl"),
-		reSyntax(" (syntax|lang)=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
+		reSyntax(" (syntax|lang|sqltype)=\"(\\w+)\"[^>]*><!\\[cdat\0$", std::regex::ECMAScript),
 		reLogDate("^\\d{2}\\.\\d{2}\\.\\d{4} \\d{2}:\\d{2}:\\d{2} ", std::regex::ECMAScript),
 		rePgLongEnd("^(\\s+(if|loop))\\W", std::regex::ECMAScript),
 		caseSensitive(caseSensitive_){
@@ -827,7 +827,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 				while(sc.chNext == ':')
 					sc.Forward();
 			}
-			else if (sc.chNext == ':') {
+			if (iswordchar(sc.chNext)) {
 				sc.ChangeState(SCE_FM_PGSQL_PARAMETER);
 			}
 		}
@@ -1574,7 +1574,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 			if(sc.ch == '<') sc.ChangeState(SCE_FM_X_DEFAULT);
 			else if(!IsASpace(sc.ch))sc.ChangeState(SCE_FM_VB_DEFAULT);
 		}
-		if(sc.Match("]]>")){
+		if (sc.Match("]]>") && (sc.state < SCE_FM_X_DEFAULT || sc.state >= SCE_FM_SQL_DEFAULT)) {
 			lineState |= FM_ENDCDATA;
 			if (options.isSyslog) {
 				if (sc.state != SCE_FM_CDATA) {
@@ -1640,7 +1640,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 					std::string prevLine = styler.GetRangeLowered(styler.LineStart(sc.currentLine), sc.currentPos);
 					std::smatch mtch;
 					if (std::regex_search(prevLine, mtch, reSyntax)) 						{
-						if (mtch[1] == "lang") {
+						if (mtch[1] == "lang" || mtch[1] == "sqltype") {
 							if (mtch[2] == "ms") {
 								sc.ForwardSetState(SCE_FM_SQL_DEFAULT);
 								ColoriseSQL(sc);
@@ -2332,8 +2332,8 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyl
 						fc.currentLevel = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
 					}
 				}
-			}
-			else if (fc.style == SCE_FM_PGSQL_OPERATOR) {
+			} 
+			if (fc.style == SCE_FM_PGSQL_OPERATOR) {
 				if (fc.ch == ')')
 					fc.currentLevel--;
 				else if (fc.ch == '(') {

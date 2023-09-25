@@ -984,6 +984,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_VB_OBJECTS", 23},
 	{"SCE_FM_VB_OPERATOR", 16},
 	{"SCE_FM_VB_PROPERTIES", 24},
+	{"SCE_FM_VB_RAWSTRING", 44},
 	{"SCE_FM_VB_STRING", 14},
 	{"SCE_FM_VB_STRINGCONT", 30},
 	{"SCE_FM_VB_STRINGEOL", 19},
@@ -3376,7 +3377,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 319,
-	ifaceConstantCount = 2654,
+	ifaceConstantCount = 2655,
 	ifacePropertyCount = 250
 };
 

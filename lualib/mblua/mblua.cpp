@@ -483,6 +483,24 @@ int mesage_Counts(lua_State* L)
 	return 2;
 }
 
+int mesage_RemoveField(lua_State* L) {
+	CString type = luaL_typename(L, 2);
+	CMessage* msg = cmessage_arg(L, "mesage_RemoveField");
+	CDatum* d = NULL;
+	if (type == "string") {
+		d = msg->DetachDatum(luaL_checkstring(L, 2));//->~CDatum();
+	}
+	else if (type == "number") {
+		d = msg->DetachDatum(luaL_checknumber(L, 2));//->~CDatum();
+	}
+	else {
+		throw_L_error(L, "Invalid type of value");
+	}
+	if (d)
+		d->~CDatum();
+	return 0;
+}
+
 int mesage_SetField(lua_State* L) {
 	CString type = luaL_typename(L, 3);
 	CMessage* msg = cmessage_arg(L, "mesage_SetField");
@@ -1308,6 +1326,7 @@ luaL_Reg message_methods[] = {
 	{"SetPathValue",mesage_SetPathValue},
 	{"GetPathValue", mesage_GetPathValue },
 	{"Field", mesage_Field },
+	{"RemoveField", mesage_RemoveField },
 	{"SetField", mesage_SetField },
 	{"FieldType", mesage_FieldType },
 	{"FieldName", mesage_FieldName },
