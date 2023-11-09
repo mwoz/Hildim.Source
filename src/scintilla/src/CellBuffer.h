@@ -64,7 +64,7 @@ public:
 	const char *AppendAction(ActionType at, Sci::Position position, const char *data, Sci::Position lengthData, bool &startSequence, bool mayCoalesce=true);
 
 	void BeginUndoAction();
-	void EndUndoAction();
+	int EndUndoAction();
 	void DropUndoSequence();
 	void DeleteUndoHistory();
 
@@ -219,7 +219,7 @@ public:
 	bool SetUndoCollection(bool collectUndo);
 	bool IsCollectingUndo() const noexcept;
 	void BeginUndoAction();
-	void EndUndoAction();
+	int EndUndoAction();
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory();
 
