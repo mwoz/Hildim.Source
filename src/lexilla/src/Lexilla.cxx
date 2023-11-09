@@ -13,8 +13,7 @@
 
 #if defined(_WIN32)
 #define EXPORT_FUNCTION __declspec(dllexport)
-//#define CALLING_CONVENTION __stdcall
-#define CALLING_CONVENTION __cdecl 
+#define CALLING_CONVENTION __stdcall
 #else
 #define EXPORT_FUNCTION __attribute__((visibility("default")))
 #define CALLING_CONVENTION
@@ -59,7 +58,6 @@ extern LexerModule lmCPP;
 extern LexerModule lmCPPNoCase;
 extern LexerModule lmCsound;
 extern LexerModule lmCss;
-extern LexerModule lmCubeFormula;
 extern LexerModule lmD;
 extern LexerModule lmDataflex;
 extern LexerModule lmDiff;
@@ -74,7 +72,6 @@ extern LexerModule lmErrorList;
 extern LexerModule lmESCRIPT;
 extern LexerModule lmF77;
 extern LexerModule lmFlagShip;
-extern LexerModule lmFormEngine;
 extern LexerModule lmForth;
 extern LexerModule lmFortran;
 extern LexerModule lmFreeBasic;
@@ -119,7 +116,6 @@ extern LexerModule lmOScript;
 extern LexerModule lmPascal;
 extern LexerModule lmPB;
 extern LexerModule lmPerl;
-extern LexerModule lmPGSQL;
 extern LexerModule lmPHPSCRIPT;
 extern LexerModule lmPLM;
 extern LexerModule lmPO;
@@ -135,11 +131,9 @@ extern LexerModule lmR;
 extern LexerModule lmRaku;
 extern LexerModule lmREBOL;
 extern LexerModule lmRegistry;
-extern LexerModule lmRubrica;
 extern LexerModule lmRuby;
 extern LexerModule lmRust;
 extern LexerModule lmSAS;
-extern LexerModule lmSearchResult;
 extern LexerModule lmScriptol;
 extern LexerModule lmSmalltalk;
 extern LexerModule lmSML;
@@ -163,7 +157,6 @@ extern LexerModule lmVBScript;
 extern LexerModule lmVerilog;
 extern LexerModule lmVHDL;
 extern LexerModule lmVisualProlog;
-extern LexerModule lmWireFormat;
 extern LexerModule lmX12;
 extern LexerModule lmXML;
 extern LexerModule lmYAML;
@@ -213,7 +206,6 @@ void AddEachLexer() {
 		&lmCPPNoCase,
 		&lmCsound,
 		&lmCss,
-		&lmCubeFormula,
 		&lmD,
 		&lmDataflex,
 		&lmDiff,
@@ -228,7 +220,6 @@ void AddEachLexer() {
 		&lmESCRIPT,
 		&lmF77,
 		&lmFlagShip,
-		&lmFormEngine,
 		&lmForth,
 		&lmFortran,
 		&lmFreeBasic,
@@ -273,7 +264,6 @@ void AddEachLexer() {
 		&lmPascal,
 		&lmPB,
 		&lmPerl,
-		&lmPGSQL,
 		&lmPHPSCRIPT,
 		&lmPLM,
 		&lmPO,
@@ -289,11 +279,9 @@ void AddEachLexer() {
 		&lmRaku,
 		&lmREBOL,
 		&lmRegistry,
-		&lmRubrica,
 		&lmRuby,
 		&lmRust,
 		&lmSAS,
-		&lmSearchResult,
 		&lmScriptol,
 		&lmSmalltalk,
 		&lmSML,
@@ -317,7 +305,6 @@ void AddEachLexer() {
 		&lmVerilog,
 		&lmVHDL,
 		&lmVisualProlog,
-		&lmWireFormat,
 		&lmX12,
 		&lmXML,
 		&lmYAML,
@@ -333,7 +320,7 @@ extern "C" {
 
 EXPORT_FUNCTION int CALLING_CONVENTION GetLexerCount() {
 	AddEachLexer();
-	return catalogueLexilla.Count();
+	return static_cast<int>(catalogueLexilla.Count());
 }
 
 EXPORT_FUNCTION void CALLING_CONVENTION GetLexerName(unsigned int index, char *name, int buflength) {
@@ -352,7 +339,7 @@ EXPORT_FUNCTION LexerFactoryFunction CALLING_CONVENTION GetLexerFactory(unsigned
 
 EXPORT_FUNCTION Scintilla::ILexer5 * CALLING_CONVENTION CreateLexer(const char *name) {
 	AddEachLexer();
-	for (unsigned int i = 0; i < catalogueLexilla.Count(); i++) {
+	for (size_t i = 0; i < catalogueLexilla.Count(); i++) {
 		const char *lexerName = catalogueLexilla.Name(i);
 		if (0 == strcmp(lexerName, name)) {
 			return catalogueLexilla.Create(i);
@@ -366,9 +353,8 @@ EXPORT_FUNCTION const char * CALLING_CONVENTION LexerNameFromID(int identifier) 
 	const LexerModule *pModule = catalogueLexilla.Find(identifier);
 	if (pModule) {
 		return pModule->languageName;
-	} else {
-		return nullptr;
 	}
+	return nullptr;
 }
 
 EXPORT_FUNCTION const char * CALLING_CONVENTION GetLibraryPropertyNames() {

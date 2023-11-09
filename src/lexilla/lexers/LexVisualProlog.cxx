@@ -57,7 +57,7 @@ struct OptionsVisualProlog {
     }
 };
 
-static const char *const visualPrologWordLists[] = {
+static const char* const visualPrologWordLists[] = {
     "Major keywords (class, predicates, ...)",
     "Minor keywords (if, then, try, ...)",
     "Directive keywords without the '#' (include, requires, ...)",
@@ -126,27 +126,27 @@ public:
     int SCI_METHOD Version() const override {
         return lvRelease5;
     }
-    const char * SCI_METHOD PropertyNames() override {
+    const char* SCI_METHOD PropertyNames() override {
         return osVisualProlog.PropertyNames();
     }
-    int SCI_METHOD PropertyType(const char *name) override {
+    int SCI_METHOD PropertyType(const char* name) override {
         return osVisualProlog.PropertyType(name);
     }
-    const char * SCI_METHOD DescribeProperty(const char *name) override {
+    const char* SCI_METHOD DescribeProperty(const char* name) override {
         return osVisualProlog.DescribeProperty(name);
     }
-    Sci_Position SCI_METHOD PropertySet(const char *key, const char *val) override;
-	const char * SCI_METHOD PropertyGet(const char *key) override {
-		return osVisualProlog.PropertyGet(key);
-	}
-    const char * SCI_METHOD DescribeWordListSets() override {
+    Sci_Position SCI_METHOD PropertySet(const char* key, const char* val) override;
+    const char* SCI_METHOD PropertyGet(const char* key) override {
+        return osVisualProlog.PropertyGet(key);
+    }
+    const char* SCI_METHOD DescribeWordListSets() override {
         return osVisualProlog.DescribeWordListSets();
     }
-    Sci_Position SCI_METHOD WordListSet(int n, const char *wl) override;
-    void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) override;
-    void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) override;
+    Sci_Position SCI_METHOD WordListSet(int n, const char* wl) override;
+    void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) override;
+    void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) override;
 
-    void * SCI_METHOD PrivateCall(int, void *) override {
+    void* SCI_METHOD PrivateCall(int, void*) override {
         return 0;
     }
 
@@ -169,33 +169,33 @@ public:
         return getLexicalClass(style).description;
     }
 
-    static ILexer5 *LexerFactoryVisualProlog() {
+    static ILexer5* LexerFactoryVisualProlog() {
         return new LexerVisualProlog();
     }
 };
 
-Sci_Position SCI_METHOD LexerVisualProlog::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerVisualProlog::PropertySet(const char* key, const char* val) {
     if (osVisualProlog.PropertySet(&options, key, val)) {
         return 0;
     }
     return -1;
 }
 
-Sci_Position SCI_METHOD LexerVisualProlog::WordListSet(int n, const char *wl) {
-    WordList *wordListN = 0;
+Sci_Position SCI_METHOD LexerVisualProlog::WordListSet(int n, const char* wl) {
+    WordList* wordListN = 0;
     switch (n) {
-    case 0:
-        wordListN = &majorKeywords;
-        break;
-    case 1:
-        wordListN = &minorKeywords;
-        break;
-    case 2:
-        wordListN = &directiveKeywords;
-        break;
-    case 3:
-        wordListN = &docKeywords;
-        break;
+        case 0:
+            wordListN = &majorKeywords;
+            break;
+        case 1:
+            wordListN = &minorKeywords;
+            break;
+        case 2:
+            wordListN = &directiveKeywords;
+            break;
+        case 3:
+            wordListN = &docKeywords;
+            break;
     }
     Sci_Position firstModification = -1;
     if (wordListN) {
@@ -209,25 +209,25 @@ Sci_Position SCI_METHOD LexerVisualProlog::WordListSet(int n, const char *wl) {
     return firstModification;
 }
 
-static bool isLowerLetter(int ch){
+static bool isLowerLetter(int ch) {
     return ccLl == CategoriseCharacter(ch);
 }
 
-static bool isUpperLetter(int ch){
+static bool isUpperLetter(int ch) {
     return ccLu == CategoriseCharacter(ch);
 }
 
-static bool isAlphaNum(int ch){
+static bool isAlphaNum(int ch) {
     CharacterCategory cc = CategoriseCharacter(ch);
     return (ccLu == cc || ccLl == cc || ccLt == cc || ccLm == cc || ccLo == cc || ccNd == cc || ccNl == cc || ccNo == cc);
 }
 
-static bool isStringVerbatimOpenClose(int ch){
+static bool isStringVerbatimOpenClose(int ch) {
     CharacterCategory cc = CategoriseCharacter(ch);
     return (ccPc <= cc && cc <= ccSo);
 }
 
-static bool isIdChar(int ch){
+static bool isIdChar(int ch) {
     return ('_') == ch || isAlphaNum(ch);
 }
 
@@ -258,45 +258,45 @@ public:
         if (next > 0x7FFF) {
             return false;
         }
-    switch (next) {
-    case L'<':
-        closingQuote = L'>';
-        return true;
-    case L'>':
-        closingQuote = L'<';
-        return true;
-    case L'(':
-        closingQuote = L')';
-        return true;
-    case L')':
-        closingQuote = L'(';
-        return true;
-    case L'[':
-        closingQuote = L']';
-        return true;
-    case L']':
-        closingQuote = L'[';
-        return true;
-    case L'{':
-        closingQuote = L'}';
-        return true;
-    case L'}':
-        closingQuote = L'{';
-        return true;
-    case L'_':
-    case L'.':
-    case L',':
-    case L';':
-        return false;
-    default:
-        if (isStringVerbatimOpenClose(next)) {
-            closingQuote = next;
-            return true;
-        } else {
-			return false;
+        switch (next) {
+            case L'<':
+                closingQuote = L'>';
+                return true;
+            case L'>':
+                closingQuote = L'<';
+                return true;
+            case L'(':
+                closingQuote = L')';
+                return true;
+            case L')':
+                closingQuote = L'(';
+                return true;
+            case L'[':
+                closingQuote = L']';
+                return true;
+            case L']':
+                closingQuote = L'[';
+                return true;
+            case L'{':
+                closingQuote = L'}';
+                return true;
+            case L'}':
+                closingQuote = L'{';
+                return true;
+            case L'_':
+            case L'.':
+            case L',':
+            case L';':
+                return false;
+            default:
+                if (isStringVerbatimOpenClose(next)) {
+                    closingQuote = next;
+                    return true;
+                } else {
+                    return false;
+                }
         }
     }
-}
 
     enum kind {
         none = 0,
@@ -317,16 +317,16 @@ public:
 
     void enter(kind k) {
         kindStack = kindStack << 2 | k;
-}
+    }
 
     void leave(kind k) {
         if (k == currentKind()) {
             kindStack = kindStack >> 2;
         }
-                    }
+    }
     kind currentKind() {
         return static_cast<kind>(kindStack & 0x3);
-                }
+    }
     kind stateKind2(int ks) {
         if (0 == ks) {
             return none;
@@ -342,10 +342,10 @@ public:
     }
     kind stateKind() {
         return stateKind2(kindStack);
-}
+    }
 };
 
-void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
     LexAccessor styler(pAccess);
     CharacterSet setDoxygen(CharacterSet::setAlpha, "");
     CharacterSet setNumber(CharacterSet::setNone, "0123456789abcdefABCDEFxoXO_");
@@ -387,46 +387,46 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
 
         // Determine if the current state should terminate.
         switch (sc.state) {
-        case SCE_VISUALPROLOG_OPERATOR:
-            sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            break;
-        case SCE_VISUALPROLOG_NUMBER:
+            case SCE_VISUALPROLOG_OPERATOR:
+                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
+                break;
+            case SCE_VISUALPROLOG_NUMBER:
                 // We accept almost anything because of hex, '.' and number suffixes
-            if (!(setNumber.Contains(sc.ch)) || (sc.Match('.') && IsADigit(sc.chNext))) {
-                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            }
-            break;
-        case SCE_VISUALPROLOG_IDENTIFIER:
-            if (!isIdChar(sc.ch)) {
-                char s[1000];
-                sc.GetCurrent(s, sizeof(s));
-                if (0 == strcmp(s, "end")) {
-                    endLookAhead(s, styler, sc.currentPos);
+                if (!(setNumber.Contains(sc.ch)) || (sc.Match('.') && IsADigit(sc.chNext))) {
+                    sc.SetState(SCE_VISUALPROLOG_DEFAULT);
                 }
-                if (majorKeywords.InList(s)) {
-                    sc.ChangeState(SCE_VISUALPROLOG_KEY_MAJOR);
-                } else if (minorKeywords.InList(s)) {
-                    sc.ChangeState(SCE_VISUALPROLOG_KEY_MINOR);
+                break;
+            case SCE_VISUALPROLOG_IDENTIFIER:
+                if (!isIdChar(sc.ch)) {
+                    char s[1000];
+                    sc.GetCurrent(s, sizeof(s));
+                    if (0 == strcmp(s, "end")) {
+                        endLookAhead(s, styler, sc.currentPos);
+                    }
+                    if (majorKeywords.InList(s)) {
+                        sc.ChangeState(SCE_VISUALPROLOG_KEY_MAJOR);
+                    } else if (minorKeywords.InList(s)) {
+                        sc.ChangeState(SCE_VISUALPROLOG_KEY_MINOR);
+                    }
+                    sc.SetState(SCE_VISUALPROLOG_DEFAULT);
                 }
-                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            }
-            break;
-        case SCE_VISUALPROLOG_VARIABLE:
-        case SCE_VISUALPROLOG_ANONYMOUS:
-            if (!isIdChar(sc.ch)) {
-                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            }
-            break;
-        case SCE_VISUALPROLOG_KEY_DIRECTIVE:
-            if (!isLowerLetter(sc.ch)) {
-                char s[1000];
-                sc.GetCurrent(s, sizeof(s));
-                if (!directiveKeywords.InList(s+1)) {
-                    sc.ChangeState(SCE_VISUALPROLOG_IDENTIFIER);
+                break;
+            case SCE_VISUALPROLOG_VARIABLE:
+            case SCE_VISUALPROLOG_ANONYMOUS:
+                if (!isIdChar(sc.ch)) {
+                    sc.SetState(SCE_VISUALPROLOG_DEFAULT);
                 }
-                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            }
-            break;
+                break;
+            case SCE_VISUALPROLOG_KEY_DIRECTIVE:
+                if (!isLowerLetter(sc.ch)) {
+                    char s[1000];
+                    sc.GetCurrent(s, sizeof(s));
+                    if (!directiveKeywords.InList(s + 1)) {
+                        sc.ChangeState(SCE_VISUALPROLOG_IDENTIFIER);
+                    }
+                    sc.SetState(SCE_VISUALPROLOG_DEFAULT);
+                }
+                break;
             case SCE_VISUALPROLOG_COMMENT_LINE:
                 if (sc.MatchLineEnd()) {
                     int nextState = (lineState::comment == ls.currentKind()) ? SCE_VISUALPROLOG_COMMENT_BLOCK : SCE_VISUALPROLOG_DEFAULT;
@@ -436,35 +436,35 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                     sc.SetState(SCE_VISUALPROLOG_COMMENT_KEY_ERROR);
                 }
                 break;
-        case SCE_VISUALPROLOG_COMMENT_BLOCK:
-            if (sc.Match('*', '/')) {
-                sc.Forward();
+            case SCE_VISUALPROLOG_COMMENT_BLOCK:
+                if (sc.Match('*', '/')) {
+                    sc.Forward();
                     ls.leave(lineState::comment);
                     newState = true;
-            } else if (sc.Match('/', '*')) {
-                sc.Forward();
+                } else if (sc.Match('/', '*')) {
+                    sc.Forward();
                     ls.enter(lineState::comment);
-            } else if (sc.Match('@')) {
+                } else if (sc.Match('@')) {
                     styleBeforeDocKeyword = SCE_VISUALPROLOG_COMMENT_BLOCK;
-                sc.SetState(SCE_VISUALPROLOG_COMMENT_KEY_ERROR);
-            }
-            break;
-        case SCE_VISUALPROLOG_COMMENT_KEY_ERROR:
-            if (!setDoxygen.Contains(sc.ch) || sc.MatchLineEnd()) {
-                char s[1000];
-                sc.GetCurrent(s, sizeof(s));
-                if (docKeywords.InList(s+1)) {
-                    sc.ChangeState(SCE_VISUALPROLOG_COMMENT_KEY);
+                    sc.SetState(SCE_VISUALPROLOG_COMMENT_KEY_ERROR);
                 }
-                if (SCE_VISUALPROLOG_COMMENT_LINE == styleBeforeDocKeyword && sc.MatchLineEnd()) {
-                    // end line comment
+                break;
+            case SCE_VISUALPROLOG_COMMENT_KEY_ERROR:
+                if (!setDoxygen.Contains(sc.ch) || sc.MatchLineEnd()) {
+                    char s[1000];
+                    sc.GetCurrent(s, sizeof(s));
+                    if (docKeywords.InList(s + 1)) {
+                        sc.ChangeState(SCE_VISUALPROLOG_COMMENT_KEY);
+                    }
+                    if (SCE_VISUALPROLOG_COMMENT_LINE == styleBeforeDocKeyword && sc.MatchLineEnd()) {
+                        // end line comment
                         int nextState = (lineState::comment == ls.currentKind()) ? SCE_VISUALPROLOG_COMMENT_BLOCK : SCE_VISUALPROLOG_DEFAULT;
-                    sc.SetState(nextState);
-                } else {
-                    sc.SetState(styleBeforeDocKeyword);
-                    if (SCE_VISUALPROLOG_COMMENT_BLOCK == styleBeforeDocKeyword && sc.Match('*', '/')) {
-                        // we have consumed the '*' if it comes immediately after the docKeyword
-                        sc.Forward();
+                        sc.SetState(nextState);
+                    } else {
+                        sc.SetState(styleBeforeDocKeyword);
+                        if (SCE_VISUALPROLOG_COMMENT_BLOCK == styleBeforeDocKeyword && sc.Match('*', '/')) {
+                            // we have consumed the '*' if it comes immediately after the docKeyword
+                            sc.Forward();
                             ls.leave(lineState::comment);
                             newState = true;
                         }
@@ -475,15 +475,15 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                 if (sc.atLineStart) {
                     sc.SetState(SCE_VISUALPROLOG_DEFAULT);
                     break;
-            }
+                }
                 [[fallthrough]];
-        case SCE_VISUALPROLOG_STRING_ESCAPE:
+            case SCE_VISUALPROLOG_STRING_ESCAPE:
             case SCE_VISUALPROLOG_STRING_QUOTE:
             case SCE_VISUALPROLOG_STRING_EOL:
                 // return to SCE_VISUALPROLOG_STRING and treat as such (fallthrough)
-            sc.SetState(SCE_VISUALPROLOG_STRING);
+                sc.SetState(SCE_VISUALPROLOG_STRING);
                 [[fallthrough]];
-        case SCE_VISUALPROLOG_STRING:
+            case SCE_VISUALPROLOG_STRING:
                 if (sc.MatchLineEnd() | sc.atLineEnd) {
                     if (ls.verbatim) {
                         sc.SetState(SCE_VISUALPROLOG_STRING_EOL);
@@ -503,8 +503,8 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                 } else if (!ls.verbatim && sc.Match('\\')) {
                     sc.SetState(SCE_VISUALPROLOG_STRING_ESCAPE_ERROR);
                     sc.Forward();
-            if (sc.MatchLineEnd()) {
-                sc.ForwardSetState(SCE_VISUALPROLOG_DEFAULT);
+                    if (sc.MatchLineEnd()) {
+                        sc.ForwardSetState(SCE_VISUALPROLOG_DEFAULT);
                     } else {
                         if (sc.Match('"') || sc.Match('\'') || sc.Match('\\') || sc.Match('n') || sc.Match('l') || sc.Match('r') || sc.Match('t')) {
                             sc.ChangeState(SCE_VISUALPROLOG_STRING_ESCAPE);
@@ -524,8 +524,8 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                             }
                         }
                     }
-            }
-            break;
+                }
+                break;
             case SCE_VISUALPROLOG_EMBEDDED:
                 if (sc.Match('|', ']')) {
                     sc.Forward();
@@ -535,7 +535,7 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                     sc.Forward();
                     ls.enter(lineState::embedded);
                 } else if (sc.Match('{', '|') && lineState::comment != ls.currentKind()) {
-                sc.SetState(SCE_VISUALPROLOG_DEFAULT);
+                    sc.SetState(SCE_VISUALPROLOG_DEFAULT);
                 } else if (sc.Match('/', '*')) {
                     sc.Forward();
                     ls.enter(lineState::comment);
@@ -543,15 +543,15 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                     sc.Forward();
                     ls.leave(lineState::comment);
                     newState = true;
-            }
-            break;
+                }
+                break;
             case SCE_VISUALPROLOG_PLACEHOLDER:
                 if (lineState::embedded == ls.currentKind()) {
                     sc.SetState(SCE_VISUALPROLOG_EMBEDDED);
                 } else {
                     sc.SetState(SCE_VISUALPROLOG_DEFAULT);
-            }
-            break;
+                }
+                break;
         }
 
         if (currentLineEntry != sc.currentLine) {
@@ -620,7 +620,6 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
                 sc.SetState(SCE_VISUALPROLOG_OPERATOR);
             }
         }
-
     }
     sc.Complete();
     styler.Flush();
@@ -637,7 +636,7 @@ void SCI_METHOD LexerVisualProlog::Lex(Sci_PositionU startPos, Sci_Position leng
 #endif
 #endif
 
-void SCI_METHOD LexerVisualProlog::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerVisualProlog::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
 
     LexAccessor styler(pAccess);
 
@@ -646,7 +645,7 @@ void SCI_METHOD LexerVisualProlog::Fold(Sci_PositionU startPos, Sci_Position len
     Sci_Position currentLine = styler.GetLine(startPos);
     int levelCurrent = SC_FOLDLEVELBASE;
     if (currentLine > 0)
-        levelCurrent = styler.LevelAt(currentLine-1) >> 16;
+        levelCurrent = styler.LevelAt(currentLine - 1) >> 16;
     int levelMinCurrent = levelCurrent;
     int levelNext = levelCurrent;
     char chNext = styler[startPos];
@@ -672,7 +671,7 @@ void SCI_METHOD LexerVisualProlog::Fold(Sci_PositionU startPos, Sci_Position len
         }
         if (!IsASpace(ch))
             visibleChars++;
-        if (atEOL || (i == endPos-1)) {
+        if (atEOL || (i == endPos - 1)) {
             int levelUse = levelCurrent;
             int lev = levelUse | levelNext << 16;
             if (levelUse < levelNext)
@@ -683,7 +682,7 @@ void SCI_METHOD LexerVisualProlog::Fold(Sci_PositionU startPos, Sci_Position len
             currentLine++;
             levelCurrent = levelNext;
             levelMinCurrent = levelCurrent;
-            if (atEOL && (i == static_cast<Sci_PositionU>(styler.Length()-1))) {
+            if (atEOL && (i == static_cast<Sci_PositionU>(styler.Length() - 1))) {
                 // There is an empty line at end of file so give it same level and empty
                 styler.SetLevel(currentLine, (levelCurrent | levelCurrent << 16) | SC_FOLDLEVELWHITEFLAG);
             }

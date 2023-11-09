@@ -22,7 +22,7 @@
 using namespace Lexilla;
 
 StyleContext::StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-	int initStyle, LexAccessor &styler_, int chMask) :
+	int initStyle, LexAccessor &styler_, char chMask) :
 	styler(styler_),
 	multiByteAccess((styler.Encoding() == EncodingType::eightBit) ? nullptr : styler.MultiByteAccess()),
 	lengthDocument(static_cast<Sci_PositionU>(styler.Length())),
@@ -39,6 +39,8 @@ StyleContext::StyleContext(Sci_PositionU startPos, Sci_PositionU length,
 
 	styler.StartAt(startPos /*, chMask*/);
 	styler.StartSegment(startPos);
+
+	chPrev = GetRelativeCharacter(-1);
 
 	// Variable width is now 0 so GetNextChar gets the char at currentPos into chNext/widthNext
 	GetNextChar();

@@ -170,7 +170,7 @@ class LineVector : public ILineVector {
 		return static_cast<POS>(pos);
 	}
 
-	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line 
+	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line
 	// This avoids warnings from Visual C++ Code Analysis and shortens code
 	static constexpr Sci::Line line_from_pos_cast(POS line) noexcept {
 		return static_cast<Sci::Line>(line);
@@ -481,10 +481,7 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-int UndoHistory::EndUndoAction() {
-	int res = undoSequenceDepth;
-	if (!res)
-		return res;
+void UndoHistory::EndUndoAction() {
 	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
@@ -496,7 +493,6 @@ int UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
-	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -850,6 +846,33 @@ Sci::Position CellBuffer::LineStart(Sci::Line line) const noexcept {
 		return Length();
 	else
 		return plv->LineStart(line);
+}
+
+Sci::Position CellBuffer::LineEnd(Sci::Line line) const noexcept {
+	if (line >= Lines() - 1) {
+		return LineStart(line + 1);
+	} else {
+		Sci::Position position = LineStart(line + 1);
+		if (LineEndType::Unicode == GetLineEndTypes()) {
+			const unsigned char bytes[] = {
+				UCharAt(position - 3),
+				UCharAt(position - 2),
+				UCharAt(position - 1),
+			};
+			if (UTF8IsSeparator(bytes)) {
+				return position - UTF8SeparatorLength;
+			}
+			if (UTF8IsNEL(bytes + 1)) {
+				return position - UTF8NELLength;
+			}
+		}
+		position--; // Back over CR or LF
+		// When line terminator is CR+LF, may need to go back one more
+		if ((position > LineStart(line)) && (CharAt(position - 1) == '\r')) {
+			position--;
+		}
+		return position;
+	}
 }
 
 Sci::Line CellBuffer::LineFromPosition(Sci::Position pos) const noexcept {
@@ -1317,8 +1340,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-int CellBuffer::EndUndoAction() {
-	return uh.EndUndoAction();
+void CellBuffer::EndUndoAction() {
+	uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {

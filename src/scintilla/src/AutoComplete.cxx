@@ -21,7 +21,6 @@
 
 #include "ScintillaTypes.h"
 #include "ScintillaMessages.h"
-#include "ScintillaStructures.h"
 
 #include "Debugging.h"
 #include "Geometry.h"
@@ -70,7 +69,7 @@ void AutoComplete::Start(Window &parent, int ctrlID,
 		Cancel();
 	}
 	lb->SetOptions(listOptions);
-	lb->Create(parent, ctrlID, location, lineHeight, unicodeMode, technology, &listcolors);
+	lb->Create(parent, ctrlID, location, lineHeight, unicodeMode, technology);
 	lb->Clear();
 	active = true;
 	startLen = startLen_;
@@ -237,124 +236,27 @@ void AutoComplete::Move(int delta) {
 	lb->Select(current);
 }
 
-bool IsAbbr(const char *item, const char *abr)
-{//Проверка, что слово является аббревиатурой
-	int l = strlen(abr);
-	int l2 = strlen(item);
-	if (l2< l) return false;
-	int i2 = 0;
-	for (int i = 0; i<l; i++)
-	{
-		for (; i2<l2 && (item[i2] > 'Z'|| item[i2] < 'A') && i2>0; i2++);
-		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;
-		i2++;
-	}
-	return true;
-}
-
 void AutoComplete::Select(const char *word) {
 	const size_t lenWord = strlen(word);
 	int location = -1;
-	std::string item;
 	int start = 0; // lower bound of the api array block to search
 	int end = lb->Length() - 1; // upper bound of the api array block to search
-	const char* pword = word;
-	if (separator == '‡' && lenWord < 20 && word[0] < 0) {
-		static char s[22];
-		pword = s;
-		for (int i = 0; i < 21; i++) {
-			switch (word[i]) {
-			case 'й': s[i] = 'q';  break;
-			case 'ц': s[i] = 'w';  break;
-			case 'у': s[i] = 'e';  break;
-			case 'к': s[i] = 'r';  break;
-			case 'е': s[i] = 't';  break;
-			case 'н': s[i] = 'y';  break;
-			case 'г': s[i] = 'u';  break;
-			case 'ш': s[i] = 'i';  break;
-			case 'щ': s[i] = 'o';  break;
-			case 'з': s[i] = 'p';  break;
-			case 'ф': s[i] = 'a';  break;
-			case 'ы': s[i] = 's';  break;
-			case 'в': s[i] = 'd';  break;
-			case 'а': s[i] = 'f';  break;
-			case 'п': s[i] = 'g';  break;
-			case 'р': s[i] = 'h';  break;
-			case 'о': s[i] = 'j';  break;
-			case 'л': s[i] = 'k';  break;
-			case 'д': s[i] = 'l';  break;
-			case 'я': s[i] = 'z';  break;
-			case 'ч': s[i] = 'x';  break;
-			case 'с': s[i] = 'c';  break;
-			case 'м': s[i] = 'v';  break;
-			case 'и': s[i] = 'b';  break;
-			case 'т': s[i] = 'n';  break;
-			case 'ь': s[i] = 'm';  break;
-			case 'Й': s[i] = 'Q';  break;
-			case 'Ц': s[i] = 'W';  break;
-			case 'У': s[i] = 'E';  break;
-			case 'К': s[i] = 'R';  break;
-			case 'Е': s[i] = 'T';  break;
-			case 'Н': s[i] = 'Y';  break;
-			case 'Г': s[i] = 'U';  break;
-			case 'Ш': s[i] = 'I';  break;
-			case 'Щ': s[i] = 'O';  break;
-			case 'З': s[i] = 'P';  break;
-			case 'Ф': s[i] = 'A';  break;
-			case 'Ы': s[i] = 'S';  break;
-			case 'В': s[i] = 'D';  break;
-			case 'А': s[i] = 'F';  break;
-			case 'П': s[i] = 'G';  break;
-			case 'Р': s[i] = 'H';  break;
-			case 'О': s[i] = 'J';  break;
-			case 'Л': s[i] = 'K';  break;
-			case 'Д': s[i] = 'L';  break;
-			case 'Я': s[i] = 'Z';    break;
-			case 'Ч': s[i] = 'X';    break;
-			case 'С': s[i] = 'C';    break;
-			case 'М': s[i] = 'V';    break;
-			case 'И': s[i] = 'B';    break;
-			case 'Т': s[i] = 'N';    break;
-			case 'Ь': s[i] = 'M';    break;
-			default: s[i] = word[i]; break;
-			}
-			if (!s[i]) break;
-		}
-	}
-	if (separator == '\t' && lenWord > 1 && lenWord < 20)
-	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '\t'
-		char testUpper[21];
-		strncpy(testUpper, pword, lenWord + 1);
-		_strupr(testUpper);
-		if (!strncmp(pword+1, testUpper+1, lenWord-1))
-		{
-			for (int i = 0; i <= end; i++)
-			{
-				item = lb->GetValue(i);
-				if (IsAbbr(item.c_str(), pword))
-				{
-					location = i;
-					break;
-				}
-			}
-		}
-	}
 	while ((start <= end) && (location == -1)) { // Binary searching loop
 		int pivot = (start + end) / 2;
 		std::string item = GetValue(sortMatrix[pivot]);
 		int cond;
 		if (ignoreCase)
-			cond = CompareNCaseInsensitive(pword, item.c_str(), lenWord);
+			cond = CompareNCaseInsensitive(word, item.c_str(), lenWord);
 		else
-			cond = strncmp(pword, item.c_str(), lenWord);
+			cond = strncmp(word, item.c_str(), lenWord);
 		if (!cond) {
 			// Find first match
 			while (pivot > start) {
 				item = lb->GetValue(sortMatrix[pivot-1]);
 				if (ignoreCase)
-					cond = CompareNCaseInsensitive(pword, item.c_str(), lenWord);
+					cond = CompareNCaseInsensitive(word, item.c_str(), lenWord);
 				else
-					cond = strncmp(pword, item.c_str(), lenWord);
+					cond = strncmp(word, item.c_str(), lenWord);
 				if (0 != cond)
 					break;
 				--pivot;
@@ -365,11 +267,11 @@ void AutoComplete::Select(const char *word) {
 				// Check for exact-case match
 				for (; pivot <= end; pivot++) {
 					item = lb->GetValue(sortMatrix[pivot]);
-					if (!strncmp(pword, item.c_str(), lenWord)) {
+					if (!strncmp(word, item.c_str(), lenWord)) {
 						location = pivot;
 						break;
 					}
-					if (CompareNCaseInsensitive(pword, item.c_str(), lenWord))
+					if (CompareNCaseInsensitive(word, item.c_str(), lenWord))
 						break;
 				}
 			}
@@ -389,9 +291,9 @@ void AutoComplete::Select(const char *word) {
 			// Check for a logically earlier match
 			for (int i = location + 1; i <= end; ++i) {
 				std::string item = lb->GetValue(sortMatrix[i]);
-				if (CompareNCaseInsensitive(pword, item.c_str(), lenWord))
+				if (CompareNCaseInsensitive(word, item.c_str(), lenWord))
 					break;
-				if (sortMatrix[i] < sortMatrix[location] && !strncmp(pword, item.c_str(), lenWord))
+				if (sortMatrix[i] < sortMatrix[location] && !strncmp(word, item.c_str(), lenWord))
 					location = i;
 			}
 		}

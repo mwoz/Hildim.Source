@@ -394,7 +394,7 @@ public:
 	}
 	bool IsCollectingUndo() const noexcept { return cb.IsCollectingUndo(); }
 	void BeginUndoAction() { cb.BeginUndoAction(); }
-	int EndUndoAction() { return cb.EndUndoAction(); }
+	void EndUndoAction() { cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const noexcept { return cb.IsSavePoint(); }
@@ -455,11 +455,12 @@ public:
 	int MarkerHandleFromLine(Sci::Line line, int which) const noexcept;
 	Sci_Position SCI_METHOD LineStart(Sci_Position line) const override;
 	[[nodiscard]] Range LineRange(Sci::Line line) const noexcept;
-	bool IsLineStartPosition(Sci::Position position) const;
+	bool IsLineStartPosition(Sci::Position position) const noexcept;
 	Sci_Position SCI_METHOD LineEnd(Sci_Position line) const override;
-	Sci::Position LineEndPosition(Sci::Position position) const;
-	bool IsLineEndPosition(Sci::Position position) const;
-	bool IsPositionInLineEnd(Sci::Position position) const;
+	Sci::Position LineStartPosition(Sci::Position position) const noexcept;
+	Sci::Position LineEndPosition(Sci::Position position) const noexcept;
+	bool IsLineEndPosition(Sci::Position position) const noexcept;
+	bool IsPositionInLineEnd(Sci::Position position) const noexcept;
 	Sci::Position VCHomePosition(Sci::Position position) const;
 	Sci::Position IndexLineStart(Sci::Line line, Scintilla::LineCharacterIndexType lineCharacterIndex) const noexcept;
 	Sci::Line LineFromPositionIndex(Sci::Position pos, Scintilla::LineCharacterIndexType lineCharacterIndex) const noexcept;
@@ -645,7 +646,6 @@ public:
 	virtual void NotifyDeleted(Document *doc, void *userData) noexcept = 0;
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }
