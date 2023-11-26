@@ -469,10 +469,9 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 	return result;
 }
 
-bool SciTEBase::Open(FilePath file, OpenFlags of) {
+bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	FilePath absPath = file.AbsolutePath();
 	int encoding = 0;
-	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
 	
 	absPath._encoding = encoding;
 	InitialiseBuffers();
@@ -502,6 +501,10 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 			}
 		}
 	}
+	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
+	if(setNav)
+		extender->OnNavigation("Open");
+	
 	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 
 	bBlockRedraw = true;
@@ -556,7 +559,8 @@ bool SciTEBase::Open(FilePath file, OpenFlags of) {
 	BuffersMenu();
 	if (extender)
 		extender->OnOpen(filePath.AsUTF8().c_str());
-	
+	if (setNav)
+		extender->OnNavigation("Open-");
 	return true;
 }
 
@@ -648,17 +652,36 @@ FilePath SciTEBase::SaveName(const char *ext) {
 	return FilePath(savePath.c_str());
 }
 
-int SciTEBase::SaveIfUnsure(bool forceQuestion) {
+int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 	if (buffers.CurrentBuffer()->pFriend)
 		return IDOK;
+	if (forNewRoom && (!CurrentBuffer()->isDirty || filePath.IsTemporaly() )) {
+		int decision;
+		GUI::gui_char cnt[9];
+		swprintf(cnt, 9, L"%0d", buffers.length);
+		decision = extender->HildiAlarm("%1 files have already been opened.\nClose '%2'?",
+			MB_OKCANCEL, cnt, filePath.Name().AsInternal());
+		if (decision != IDCANCEL)
+			extender->OnClose(filePath.AsUTF8().c_str());
+	}
 	if ((CurrentBuffer()->isDirty) && (LengthDocument() || !filePath.IsUntitled() || forceQuestion)) {
 		if ((props.GetInt("are.you.sure", 1) && props.GetInt("are.you.sure.close", 1)) ||
 		        filePath.IsUntitled() ||
 		        forceQuestion) {
 			int decision;
 			if (!filePath.IsUntitled()) {
-				decision = extender->HildiAlarm("Save changes to '%1'?",
-					MB_YESNOCANCEL, filePath.AsInternal());
+				if (forNewRoom) {
+					GUI::gui_char cnt[9];
+					swprintf(cnt, 9, L"%0d", buffers.length);
+					decision = extender->HildiAlarm("%1 files have already been opened.\nSave changes to '%2' and close it?",
+						MB_YESNOCANCEL, cnt, filePath.AsInternal());
+					if (decision != IDCANCEL)
+						extender->OnClose(filePath.AsUTF8().c_str());
+				}
+				else {
+					decision = extender->HildiAlarm("Save changes to '%1'?",
+						MB_YESNOCANCEL, filePath.AsInternal());
+				}
 			} else {
 				decision = extender->HildiAlarm("Save changes to (Untitled)?",
 					MB_YESNOCANCEL, filePath.AsInternal());

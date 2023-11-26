@@ -276,8 +276,8 @@ static int cf_scite_send(lua_State *L) {
 }
 
 static int cf_scite_open(lua_State *L) {
-	host->Open_script(luaL_checkstring(L, 1));
-	return 0;
+	lua_pushboolean(L, host->Open_script(luaL_checkstring(L, 1)));
+	return 1;
 }
 
 static int cf_scite_menu_command(lua_State *L) {

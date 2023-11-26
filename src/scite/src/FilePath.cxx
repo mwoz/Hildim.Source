@@ -141,6 +141,10 @@ bool FilePath::IsUntitled() const {
 	size_t dirEnd = fileName.rfind(pathSepChar);
 	return (dirEnd == GUI::gui_string::npos) || (!fileName[dirEnd+1]);
 }
+bool FilePath::IsTemporaly() const {
+	size_t dirEnd = fileName.rfind(pathSepChar);
+	return (dirEnd < GUI::gui_string::npos) && (fileName[dirEnd + 1] == '^');
+}
 
 bool FilePath::IsAbsolute() const {
 	if (fileName.length() == 0)

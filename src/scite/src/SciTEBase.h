@@ -645,7 +645,7 @@ protected:
 	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
 	virtual bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; };
 	virtual int SecondEditorActive();
-	virtual void Open_script(const char* path);
+	virtual bool Open_script(const char* path) {return Open(GUI::StringFromUTF8(path), ofNone, true);};
 	virtual void SavePositions();
 	virtual void BlockUpdate(int cmd);
 	virtual void Close_script();
@@ -735,10 +735,10 @@ protected:
 	    ofPreserveUndo = 4,	// Do not delete undo history
 	    ofQuiet = 8		// Avoid "Could not open file" message
 	};
-	bool Open(FilePath file, OpenFlags of = ofNone);
+	bool Open(FilePath file, OpenFlags of = ofNone, bool setNav = false);
 	void Revert();
 	FilePath SaveName(const char *ext);
-	int SaveIfUnsure(bool forceQuestion = false);
+	int SaveIfUnsure(bool forceQuestion = false, bool forNewRoom = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
 	bool Save(bool bNotSaveNotChanged = false);

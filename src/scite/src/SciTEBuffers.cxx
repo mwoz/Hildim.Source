@@ -573,7 +573,7 @@ bool SciTEBase::CanMakeRoom(bool maySaveIfDirty) {
 		return true;
 	} else if (maySaveIfDirty) {
 		// All available buffers are taken, try and close the current one
-		if (SaveIfUnsure(true) != IDCANCEL) {
+		if (SaveIfUnsure(true, true) != IDCANCEL) {
 			// The file isn't dirty, or the user agreed to close the current one
 			return true;
 		}

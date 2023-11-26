@@ -3885,12 +3885,6 @@ int  SciTEBase::SecondEditorActive() {
 	return false;
 }
 
-void SciTEBase::Open_script(const char* path) {
-	extender->OnNavigation("Open");
-	Open(GUI::StringFromUTF8(path));
-	extender->OnNavigation("Open-");
-}
-
 void SciTEBase::SavePositions() {
 	WINDOWPLACEMENT wp;
 	::GetWindowPlacement((HWND)wSciTE.GetID(), &wp);

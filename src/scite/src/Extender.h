@@ -61,7 +61,7 @@ public:
 	virtual int Cloned(int index) = 0;
 	virtual int IndexOfClone(int index) = 0;
 	virtual int BufferByName(const char* c) = 0;
-	virtual void Open_script(const char* path) = 0;
+	virtual bool Open_script(const char* path) = 0;
 	virtual void ReloadProperties() = 0;
 	virtual void Close_script() = 0;
 	virtual void SavePositions() = 0;

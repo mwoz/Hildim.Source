@@ -52,6 +52,7 @@ public:
 	bool SameNameAs(const FilePath &other) const;
 	bool IsSet() const;
 	bool IsUntitled() const;
+	bool IsTemporaly() const;
 	bool IsAbsolute() const;
 	bool IsRoot() const;
 	static int RootLength();
