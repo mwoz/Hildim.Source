@@ -170,7 +170,7 @@ class LineVector : public ILineVector {
 		return static_cast<POS>(pos);
 	}
 
-	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line
+	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line 
 	// This avoids warnings from Visual C++ Code Analysis and shortens code
 	static constexpr Sci::Line line_from_pos_cast(POS line) noexcept {
 		return static_cast<Sci::Line>(line);
@@ -481,7 +481,10 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-void UndoHistory::EndUndoAction() {
+int UndoHistory::EndUndoAction() {
+	int res = undoSequenceDepth;
+	if (!res)
+		return res;
 	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
@@ -493,6 +496,7 @@ void UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
+	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -1340,8 +1344,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-void CellBuffer::EndUndoAction() {
-	uh.EndUndoAction();
+int CellBuffer::EndUndoAction() {
+	return uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {
