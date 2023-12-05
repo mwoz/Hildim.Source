@@ -51,11 +51,11 @@ struct _IcontrolData
       is_multiple,
       is_dropdown,
       has_editbox,
-      maximg_w, maximg_h, /* used only in Windows */
+      maximg_w, maximg_h, in_redraw, /* used only in Windows */
       show_image,
-		show_dragdrop,
-		block_sel,
-		call_listbox;
+	  show_dragdrop,
+	  block_sel,
+	  call_listbox;
   Imask* mask;
 };
 

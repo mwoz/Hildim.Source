@@ -1606,25 +1606,40 @@ static LRESULT CALLBACK winListEditWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARA
 	}
 }
 
+static void winListOnMouseLeave(Ihandle* ih, HWND cbstatic)
+{
+    KillTimer(cbstatic, 1);
+    POINT cursor;
+    GetCursorPos(&cursor);
+    MapWindowPoints(NULL, ih->handle, &cursor, 1);
+
+    int w, h, w1, h1;
+    iupStrToIntInt(iupBaseGetCurrentSizeAttrib(ih), &w, &h, 'x');
+
+    RECT rect;
+    SetRect(&rect, 0, 0, w, h);
+    if (!PtInRect(&rect, cursor)) {
+        IupRedraw(ih, 1);
+    }
+}
+
+static int winList_inRedraw = 0;
+
 static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result) {
 	switch (msg) {
 	case WM_TIMER:
+        switch (wp) {
+        case 1:
+            winListOnMouseLeave(ih, cbstatic);
+            break;
+        case 10:
+            KillTimer(cbstatic, 10);
+            ih->data->in_redraw = 1;
+            RedrawWindow(cbstatic, NULL, NULL, RDW_INTERNALPAINT | RDW_FRAME | RDW_INVALIDATE);
+        }
+        break;
 	case  WM_MOUSELEAVE:
-	{
-		KillTimer(cbstatic, 1);
-		POINT cursor;
-		GetCursorPos(&cursor);
-		MapWindowPoints(NULL, ih->handle, &cursor, 1);
-
-		int w, h, w1, h1;
-		iupStrToIntInt(iupBaseGetCurrentSizeAttrib(ih), &w, &h, 'x');
-
-		RECT rect;
-		SetRect(&rect, 0, 0, w, h);
-		if (!PtInRect(&rect, cursor)) {
-			IupRedraw(ih, 1);
-		}
-	}
+        winListOnMouseLeave(ih, cbstatic);
 		break;
 	case  WM_NCHITTEST:
 		if (!iupAttribGetBoolean(ih, "__HIGLIGHT")) {
@@ -1645,11 +1660,17 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 	case WM_PAINT:
 		if (iupAttribGetBoolean(ih->parent, "FLAT")){
+            if (!ih->data->in_redraw) {
+                KillTimer(cbstatic, 10);
+                SetTimer(cbstatic, 10, 0, NULL);
+                ValidateRgn(cbstatic, NULL);
+                return 0;
+            }
+            ih->data->in_redraw = 0;
 			BOOL bEdit = ih->data->has_editbox;
 
 			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(ih->handle, &ps);
-	
+			HDC hdc = BeginPaint(ih->handle, &ps);            
 			POINT cursor;
 			GetCursorPos(&cursor);
 			MapWindowPoints(NULL, ih->handle, &cursor, 1);
@@ -2088,7 +2109,7 @@ static int winListMapMethod(Ihandle* ih)
 
   if (!ih->parent)
     return IUP_ERROR;
-
+  ih->data->in_redraw = 1;
   if (ih->data->is_dropdown || ih->data->has_editbox)
   {
     class_name = TEXT("COMBOBOX");
