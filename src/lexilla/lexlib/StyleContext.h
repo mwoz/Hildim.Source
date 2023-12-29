@@ -57,7 +57,7 @@ public:
 	Sci_Position widthNext = 1;
 
 	StyleContext(Sci_PositionU startPos, Sci_PositionU length,
-                        int initStyle, LexAccessor &styler_, int chMask = '\377');
+                        int initStyle, LexAccessor &styler_, char chMask = '\377');
 	// Deleted so StyleContext objects can not be copied.
 	StyleContext(const StyleContext &) = delete;
 	StyleContext &operator=(const StyleContext &) = delete;

@@ -1501,9 +1501,9 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 	int visibleChars = 0;
 	int fileNbDigits = 0;
 
-	StyleContext sc(startPos, length, initStyle, styler, 0xFF);
+	StyleContext sc(startPos, length, initStyle & 0xFF, styler);
+
 	int lineState = 0;
-	int chMask = '\377';
 
 	ReadTransparentTagNum(styler, startPos);
 	
