@@ -259,7 +259,7 @@ struct CharacterExtracted {
 
 /**
  */
-class Document : PerLine, public Scintilla::IDocument, public Scintilla::ILoader {
+class Document : PerLine, public Scintilla::IDocument, public Scintilla::ILoader, public Scintilla::IDocumentEditable {
 
 public:
 	/** Used to pair watcher pointer with user data. */
@@ -329,7 +329,7 @@ public:
 	Document &operator=(Document &&) = delete;
 	~Document() override;
 
-	int AddRef();
+	int SCI_METHOD AddRef() noexcept override;
 	int SCI_METHOD Release() override;
 
 	// From PerLine
@@ -347,6 +347,7 @@ public:
 	int SCI_METHOD Version() const override {
 		return Scintilla::dvRelease4;
 	}
+	int SCI_METHOD DEVersion() const noexcept override;
 
 	void SCI_METHOD SetErrorStatus(int status) override;
 
@@ -383,6 +384,7 @@ public:
 	Sci::Position InsertString(Sci::Position position, std::string_view sv);
 	void ChangeInsertion(const char *s, Sci::Position length);
 	int SCI_METHOD AddData(const char *data, Sci_Position length) override;
+	IDocumentEditable *AsDocumentEditable() noexcept;
 	void * SCI_METHOD ConvertToDocument() override;
 	Sci::Position Undo();
 	Sci::Position Redo();
@@ -394,7 +396,7 @@ public:
 	}
 	bool IsCollectingUndo() const noexcept { return cb.IsCollectingUndo(); }
 	void BeginUndoAction() { cb.BeginUndoAction(); }
-	int EndUndoAction() { return cb.EndUndoAction(); }
+	void EndUndoAction() { cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const noexcept { return cb.IsSavePoint(); }
@@ -646,7 +648,6 @@ public:
 	virtual void NotifyDeleted(Document *doc, void *userData) noexcept = 0;
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) = 0;
-	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }

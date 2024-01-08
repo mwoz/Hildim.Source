@@ -46,7 +46,7 @@ constexpr bool InsertionSpanSameDeletion(const ChangeSpan &is, Sci::Position pos
 		is.start == positionDeletion &&
 		is.length == 0 &&
 		is.edition == edition;
-};
+}
 
 }
 
@@ -286,7 +286,7 @@ void ChangeLog::SetSavePoint() {
 		}
 		startRun = endRun;
 	}
-	
+
 	for (Sci::Position positionDeletion = 0; positionDeletion <= length;) {
 		const EditionSetOwned &editions = deleteEdition.ValueAt(positionDeletion);
 		if (editions) {

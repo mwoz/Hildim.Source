@@ -184,7 +184,7 @@ Document::~Document() {
 }
 
 // Increase reference count and return its previous value.
-int Document::AddRef() {
+int SCI_METHOD Document::AddRef() noexcept {
 	return refCount++;
 }
 
@@ -461,6 +461,10 @@ Sci_Position SCI_METHOD Document::LineEnd(Sci_Position line) const {
 	return cb.LineEnd(line);
 }
 
+int SCI_METHOD Document::DEVersion() const noexcept {
+	return deRelease0;
+}
+
 void SCI_METHOD Document::SetErrorStatus(int status) {
 	// Tell the watchers an error has occurred.
 	for (const WatcherWithUserData &watcher : watchers) {
@@ -564,14 +568,8 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
-	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		if (lineMaxSubord >= lineMaxStyled) {
-			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
-			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
-				lineMaxStyled = lookLastLine;
-			EnsureStyledTo(LineStart(lineMaxStyled + 2));
-		}
+		EnsureStyledTo(LineStart(lineMaxSubord + 2));
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
@@ -1347,8 +1345,12 @@ int SCI_METHOD Document::AddData(const char *data, Sci_Position length) {
 	return static_cast<int>(Status::Ok);
 }
 
+IDocumentEditable *Document::AsDocumentEditable() noexcept {
+	return static_cast<IDocumentEditable *>(this);
+}
+
 void * SCI_METHOD Document::ConvertToDocument() {
-	return this;
+	return AsDocumentEditable();
 }
 
 Sci::Position Document::Undo() {
@@ -2094,7 +2096,6 @@ bool SplitMatch(const SplitView &view, size_t start, std::string_view text) noex
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         FindOption flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = FlagSet(flags, FindOption::MatchCase);
@@ -2410,8 +2411,8 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
-		const Sci::Position endStyledTo = LineStartPosition(GetEndStyled());
 		if (pli && !pli->UseContainerLexing()) {
+			const Sci::Position endStyledTo = LineStartPosition(GetEndStyled());
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2419,9 +2420,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2815,11 +2813,6 @@ Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxRe
 class BuiltinRegex : public RegexSearchBase {
 public:
 	explicit BuiltinRegex(CharClassify *charClassTable) : search(charClassTable) {}
-	BuiltinRegex(const BuiltinRegex &) = delete;
-	BuiltinRegex(BuiltinRegex &&) = delete;
-	BuiltinRegex &operator=(const BuiltinRegex &) = delete;
-	BuiltinRegex &operator=(BuiltinRegex &&) = delete;
-	~BuiltinRegex() override = default;
 
 	Sci::Position FindText(Document *doc, Sci::Position minPos, Sci::Position maxPos, const char *s,
                         bool caseSensitive, bool word, bool wordStart, FindOption flags,
@@ -2858,8 +2851,8 @@ public:
 		lineRangeEnd = doc->SciLineFromPosition(endPos);
 		lineRangeBreak = lineRangeEnd + increment;
 	}
-	Range LineRange(Sci::Line line) const {
-		Range range(doc->LineStart(line), doc->LineEnd(line));
+	Range LineRange(Sci::Line line, Sci::Position lineStartPos, Sci::Position lineEndPos) const noexcept {
+		Range range(lineStartPos, lineEndPos);
 		if (increment == 1) {
 			if (line == lineRangeStart)
 				range.start = startPos;
@@ -2889,6 +2882,9 @@ public:
 			return 0;
 		else
 			return pdoc->CharAt(index);
+	}
+	Sci::Position MovePositionOutsideChar(Sci::Position pos, Sci::Position moveDir) const noexcept override {
+		return pdoc->MovePositionOutsideChar(pos, moveDir, false);
 	}
 };
 
@@ -3097,12 +3093,24 @@ public:
 
 #endif
 
-std::regex_constants::match_flag_type MatchFlags(const Document *doc, Sci::Position startPos, Sci::Position endPos) noexcept {
+std::regex_constants::match_flag_type MatchFlags(const Document *doc, Sci::Position startPos, Sci::Position endPos, Sci::Position lineStartPos, Sci::Position lineEndPos) {
 	std::regex_constants::match_flag_type flagsMatch = std::regex_constants::match_default;
-	if (!doc->IsLineStartPosition(startPos))
+	if (startPos != lineStartPos) {
+#ifdef _LIBCPP_VERSION
 		flagsMatch |= std::regex_constants::match_not_bol;
-	if (!doc->IsLineEndPosition(endPos))
+		if (!doc->IsWordStartAt(startPos)) {
+			flagsMatch |= std::regex_constants::match_not_bow;
+		}
+#else
+		flagsMatch |= std::regex_constants::match_prev_avail;
+#endif
+	}
+	if (endPos != lineEndPos) {
 		flagsMatch |= std::regex_constants::match_not_eol;
+		if (!doc->IsWordEndAt(endPos)) {
+			flagsMatch |= std::regex_constants::match_not_eow;
+		}
+	}
 	return flagsMatch;
 }
 
@@ -3116,39 +3124,33 @@ bool MatchOnLines(const Document *doc, const Regex &regexp, const RESearchRange 
 	// has not been implemented by compiler runtimes with MSVC always in multiline
 	// mode and libc++ and libstdc++ always in single-line mode.
 	// If multiline regex worked well then the line by line iteration could be removed
-	// for the forwards case and replaced with the following 4 lines:
+	// for the forwards case and replaced with the following:
 #ifdef REGEX_MULTILINE
+	const Sci::Position lineStartPos = doc->LineStart(resr.lineRangeStart);
+	const Sci::Position lineEndPos = doc->LineEnd(resr.lineRangeEnd);
 	Iterator itStart(doc, resr.startPos);
 	Iterator itEnd(doc, resr.endPos);
-	const std::regex_constants::match_flag_type flagsMatch = MatchFlags(doc, resr.startPos, resr.endPos);
+	const std::regex_constants::match_flag_type flagsMatch = MatchFlags(doc, resr.startPos, resr.endPos, lineStartPos, lineEndPos);
 	const bool matched = std::regex_search(itStart, itEnd, match, regexp, flagsMatch);
 #else
 	// Line by line.
 	bool matched = false;
 	for (Sci::Line line = resr.lineRangeStart; line != resr.lineRangeBreak; line += resr.increment) {
-		const Range lineRange = resr.LineRange(line);
+		const Sci::Position lineStartPos = doc->LineStart(line);
+		const Sci::Position lineEndPos = doc->LineEnd(line);
+		const Range lineRange = resr.LineRange(line, lineStartPos, lineEndPos);
 		Iterator itStart(doc, lineRange.start);
 		Iterator itEnd(doc, lineRange.end);
-		std::regex_constants::match_flag_type flagsMatch = MatchFlags(doc, lineRange.start, lineRange.end);
-		matched = std::regex_search(itStart, itEnd, match, regexp, flagsMatch);
-		// Check for the last match on this line.
-		if (matched) {
-			if (resr.increment == -1) {
-				while (matched) {
-					Iterator itNext(doc, match[0].second.PosRoundUp());
-					flagsMatch = MatchFlags(doc, itNext.Pos(), lineRange.end);
-					std::match_results<Iterator> matchNext;
-					matched = std::regex_search(itNext, itEnd, matchNext, regexp, flagsMatch);
-					if (matched) {
-						if (match[0].first == match[0].second) {
-							// Empty match means failure so exit
-							return false;
-						}
-						match = matchNext;
-					}
-				}
-				matched = true;
+		const std::regex_constants::match_flag_type flagsMatch = MatchFlags(doc, lineRange.start, lineRange.end, lineStartPos, lineEndPos);
+		std::regex_iterator<Iterator> it(itStart, itEnd, regexp, flagsMatch);
+		for (const std::regex_iterator<Iterator> last; it != last; ++it) {
+			match = *it;
+			matched = true;
+			if (resr.increment > 0) {
+				break;
 			}
+		}
+		if (matched) {
 			break;
 		}
 	}
@@ -3186,7 +3188,6 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 			std::wregex regexp;
 			regexp.assign(ws, flagsRe);
 			matched = MatchOnLines<UTF8Iterator>(doc, regexp, resr, search);
-
 		} else {
 			std::regex regexp;
 			regexp.assign(s, flagsRe);
@@ -3204,11 +3205,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;
@@ -3249,8 +3248,10 @@ Sci::Position BuiltinRegex::FindText(Document *doc, Sci::Position minPos, Sci::P
 	const char searchEndPrev = (*length > 1) ? s[*length - 2] : '\0';
 	const bool searchforLineEnd = (searchEnd == '$') && (searchEndPrev != '\\');
 	for (Sci::Line line = resr.lineRangeStart; line != resr.lineRangeBreak; line += resr.increment) {
-		Sci::Position startOfLine = doc->LineStart(line);
-		Sci::Position endOfLine = doc->LineEnd(line);
+		const Sci::Position lineStartPos = doc->LineStart(line);
+		const Sci::Position lineEndPos = doc->LineEnd(line);
+		Sci::Position startOfLine = lineStartPos;
+		Sci::Position endOfLine = lineEndPos;
 		if (resr.increment == 1) {
 			if (line == resr.lineRangeStart) {
 				if ((resr.startPos != startOfLine) && searchforLineStart)
@@ -3276,36 +3277,32 @@ Sci::Position BuiltinRegex::FindText(Document *doc, Sci::Position minPos, Sci::P
 		}
 
 		const DocumentIndexer di(doc, endOfLine);
+		search.SetLineRange(lineStartPos, lineEndPos);
 		int success = search.Execute(di, startOfLine, endOfLine);
 		if (success) {
-			pos = search.bopat[0];
-			// Ensure only whole characters selected
-			search.eopat[0] = doc->MovePositionOutsideChar(search.eopat[0], 1, false);
-			lenRet = search.eopat[0] - search.bopat[0];
+			Sci::Position endPos = search.eopat[0];
 			// There can be only one start of a line, so no need to look for last match in line
 			if ((resr.increment == -1) && !searchforLineStart) {
 				// Check for the last match on this line.
-				int repetitions = 1000;	// Break out of infinite loop
-				RESearch::MatchPositions bopat{};
-				RESearch::MatchPositions eopat{};
-				while (success && (search.eopat[0] <= endOfLine) && (repetitions--)) {
-					bopat = search.bopat;
-					eopat = search.eopat;
-					success = search.Execute(di, pos+1, endOfLine);
+				while (success && (endPos < endOfLine)) {
+					const RESearch::MatchPositions bopat = search.bopat;
+					const RESearch::MatchPositions eopat = search.eopat;
+					pos = endPos;
+					if (pos == bopat[0]) {
+						// empty match
+						pos = doc->NextPosition(pos, 1);
+					}
+					success = search.Execute(di, pos, endOfLine);
 					if (success) {
-						if (search.eopat[0] <= minPos) {
-							pos = search.bopat[0];
-							lenRet = search.eopat[0] - search.bopat[0];
-						} else {
-							success = 0;
-						}
+						endPos = search.eopat[0];
+					} else {
+						search.bopat = bopat;
+						search.eopat = eopat;
 					}
 				}
-				if (!success) {
-					search.bopat = bopat;
-					search.eopat = eopat;
-				}
 			}
+			pos = search.bopat[0];
+			lenRet = endPos - pos;
 			break;
 		}
 	}

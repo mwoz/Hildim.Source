@@ -11,6 +11,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
+#include <climits>
 
 #include <stdexcept>
 #include <string>
@@ -170,7 +171,7 @@ class LineVector : public ILineVector {
 		return static_cast<POS>(pos);
 	}
 
-	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line 
+	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line
 	// This avoids warnings from Visual C++ Code Analysis and shortens code
 	static constexpr Sci::Line line_from_pos_cast(POS line) noexcept {
 		return static_cast<Sci::Line>(line);
@@ -405,7 +406,7 @@ const char *UndoHistory::AppendAction(ActionType at, Sci::Position position, con
 	} else if (detach && (*detach > currentAction)) {
 		detach = currentAction;
 	}
-	int oldCurrentAction = currentAction;
+	const int oldCurrentAction = currentAction;
 	if (currentAction >= 1) {
 		if (0 == undoSequenceDepth) {
 			// Top level actions may not always be coalesced
@@ -481,10 +482,7 @@ void UndoHistory::BeginUndoAction() {
 	undoSequenceDepth++;
 }
 
-int UndoHistory::EndUndoAction() {
-	int res = undoSequenceDepth;
-	if (!res)
-		return res;
+void UndoHistory::EndUndoAction() {
 	PLATFORM_ASSERT(undoSequenceDepth > 0);
 	EnsureUndoRoom();
 	undoSequenceDepth--;
@@ -496,7 +494,6 @@ int UndoHistory::EndUndoAction() {
 		}
 		actions[currentAction].mayCoalesce = false;
 	}
-	return res;
 }
 
 void UndoHistory::DropUndoSequence() {
@@ -650,7 +647,7 @@ void CellBuffer::GetCharRange(char *buffer, Sci::Position position, Sci::Positio
 }
 
 char CellBuffer::StyleAt(Sci::Position position) const noexcept {
-	return hasStyles ? style.ValueAt(position) : 0;
+	return hasStyles ? style.ValueAt(position) : '\0';
 }
 
 void CellBuffer::GetStyleRange(unsigned char *buffer, Sci::Position position, Sci::Position lengthRetrieve) const {
@@ -777,6 +774,9 @@ Sci::Position CellBuffer::Length() const noexcept {
 }
 
 void CellBuffer::Allocate(Sci::Position newSize) {
+	if (!largeDocument && (newSize > INT32_MAX)) {
+		throw std::runtime_error("CellBuffer::Allocate: size of standard document limited to 2G.");
+	}
 	substance.ReAllocate(newSize);
 	if (hasStyles) {
 		style.ReAllocate(newSize);
@@ -1344,8 +1344,8 @@ void CellBuffer::BeginUndoAction() {
 	uh.BeginUndoAction();
 }
 
-int CellBuffer::EndUndoAction() {
-	return uh.EndUndoAction();
+void CellBuffer::EndUndoAction() {
+	uh.EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {

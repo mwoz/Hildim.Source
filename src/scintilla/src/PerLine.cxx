@@ -267,8 +267,8 @@ int LineLevels::GetLevel(Sci::Line line) const noexcept {
 	if ((line >= 0) && (line < levels.Length())) {
 		return levels[line];
 	}
-		return static_cast<int>(Scintilla::FoldLevel::Base);
-	}
+	return static_cast<int>(Scintilla::FoldLevel::Base);
+}
 
 Scintilla::FoldLevel LineLevels::GetFoldLevel(Sci::Line line) const noexcept {
 	if ((line >= 0) && (line < levels.Length())) {
