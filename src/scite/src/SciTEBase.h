@@ -335,6 +335,7 @@ public:
 	void OnIdle();
 	void resetPixelMap();
 	void setCurLine(int l);
+	void Redraw();
 private:
 	int curLine = -1;
 	bool lineChanged = false;
@@ -714,7 +715,6 @@ protected:
 	void New();
 	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
-	bool bBlockUIUpdate = false;
 	bool bBlockRedraw = false;
 	bool bBlockTextChangeNotify = false;
 	bool Exists(const GUI::gui_char *dir, const GUI::gui_char *path, FilePath *resultPath);
@@ -991,7 +991,7 @@ public:
 	OutputMode curOutMode = outNull;
 	virtual Ihandle * IupTab(int id) = 0;
 	bool bFinalise = false;
-
+	bool bBlockUIUpdate = false;
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
 	virtual bool IsRunAsAdmin() = 0;
 	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;

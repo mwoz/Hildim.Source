@@ -373,7 +373,6 @@ $(DIR_O)/PositionCache.o: \
 	../src/CaseFolder.h \
 	../src/Document.h \
 	../src/UniConversion.h \
-	../src/DBCS.h \
 	../src/Selection.h \
 	../src/PositionCache.h
 $(DIR_O)/RESearch.o: \

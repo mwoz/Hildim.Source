@@ -3903,9 +3903,11 @@ void SciTEBase::BlockUpdate(int cmd) {
 		CheckMenus();
 		wEditor.Call(WM_SETREDRAW, 1);
 		RedrawWindow((HWND)wEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+		layout.childMap["Source"]->Redraw();
 
 		wEditor.coEditor.Call(WM_SETREDRAW, 1);
 		RedrawWindow((HWND)wEditor.coEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+		layout.childMap["CoSource"]->Redraw();
 	}
 }
 

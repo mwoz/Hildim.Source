@@ -496,6 +496,9 @@ void IupChildWnd::setCurLine(int l) {
 	curLine = l;
 	lineChanged = true;
 }
+void IupChildWnd::Redraw() {
+	IupRedraw(pContainer, true);
+}
 
 void IupChildWnd::resetPixelMap() {
 	if (!vPx || !colodizedSB || vHeight == 0)
@@ -721,6 +724,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 		break;
 	case SCI_SETSCROLLINFO:
 	{
+		if (((SciTEWin*)pSciteWin)->bBlockUIUpdate)
+			return true;
 		bBlockFlatCollback = true;
 		if (!pContainer) return false;
 		LPSCROLLINFO lpsi = (LPSCROLLINFO)lParam; 
