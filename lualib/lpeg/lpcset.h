@@ -1,3 +1,30 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e2649107e2d0ffbbc9a1776e67f3529da4ff2a20a75fc759df841b4152e4c371
-size 767
+
+#if !defined(lpset_h)
+#define lpset_h
+
+#include "lpcset.h"
+#include "lpcode.h"
+#include "lptree.h"
+
+
+/****
+** Extra information for the result of 'charsettype'.  When result  is
+** IChar, 'offset' is the character.  When result is ISet, 'cs' is the
+** supporting bit array (with offset included), 'offset' is the offset
+** (in bytes), 'size' is the size (in bytes), and 'delt' is the default
+** value for bytes outside the set.
+*/
+typedef struct {
+  const byte *cs;
+  int offset;
+  int size;
+  int deflt;
+} charsetinfo;
+
+
+int tocharset (TTree *tree, Charset *cs);
+Opcode charsettype (const byte *cs, charsetinfo *info);
+byte getbytefromcharset (const charsetinfo *info, int index);
+void tree2cset (TTree *tree, charsetinfo *info);
+
+#endif
