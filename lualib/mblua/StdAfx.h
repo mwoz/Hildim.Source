@@ -1,36 +1,3 @@
-// stdafx.h : include file for standard system include files,
-//  or project specific include files that are used frequently, but
-//      are changed infrequently
-//
-
-#if !defined(AFX_STDAFX_H__80916F7D_F768_460A_9794_47C2E73555EF__INCLUDED_)
-#define AFX_STDAFX_H__80916F7D_F768_460A_9794_47C2E73555EF__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
-#define _WIN32_WINNT 0x0501
-
-#define _AUTOINCREASEVERSIONFORRELEASE_		//autoincrease last number in version on successfull release build
-#define _AUTOINCREASEBOTHVERSIONS_			//autoincrease both File Version and Product Version
-
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
-
-#include <afxwin.h>         // MFC core and standard components
-#include <afxext.h>         // MFC extensions
-#include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
-#ifndef _AFX_NO_AFXCMN_SUPPORT
-#include <afxcmn.h>			// MFC support for Windows Common Controls
-#endif // _AFX_NO_AFXCMN_SUPPORT
-
-#include <afxtempl.h>
-#include <afxsock.h>		// MFC socket extensions
-#include <atlconv.h>		
-
-#include <TLX_LIB\tlxlib_misc.h>
-#include <TLX_LIB\sysLog.h>
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_STDAFX_H__80916F7D_F768_460A_9794_47C2E73555EF__INCLUDED_)
+version https://git-lfs.github.com/spec/v1
+oid sha256:022a595aa8bd2920e7bb0c6b16e500e100fdd972b4442993b01b444ec438ffe8
+size 1388
