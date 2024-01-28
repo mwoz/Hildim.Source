@@ -18,7 +18,7 @@
 
 
 /*
-** Return the size of capture 'cap'. If it is an open capture, 'close'
+** Return the size of capture 'cap'.  If it is an open capture, 'close'
 ** must be its corresponding close.
 */
 static Index_t capsize (Capture *cap, Capture *close) {
@@ -526,8 +526,8 @@ static int pushcapture (CapState *cs) {
 	  cs->cap++;
       res = 1;
       break;
-  }  
-    case Cposition: 
+  }
+    case Cposition:
     {
       lua_pushinteger(L, cs->cap->index + 1);
       cs->cap++;

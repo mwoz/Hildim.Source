@@ -11,7 +11,7 @@ typedef enum CapKind {
   Cclose,  /* not used in trees */
   Cposition,
   Cconst,  /* ktable[key] is Lua constant */
-  Cbackref,  /* ktable[key] is "name" of group to get capture */
+  Cbackref,  /* ktable[key] is "name" of group to  get capture */
   Carg,  /* 'key' is arg's number */
   Csimple,  /* next node is pattern */
   Ctable,  /* next node is pattern */
