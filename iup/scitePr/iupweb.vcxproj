@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0A12BCDE-4F00-5637-8901-067292C84EDB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '17.0'">10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '17.0'">10.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '16.0'">10.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '15.0'">10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
