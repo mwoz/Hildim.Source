@@ -64,8 +64,8 @@ public:
 		pError->GetSourcePosition(&dwCookie, &ulLineNo, &lChar);
 		pError->GetSourceLineText(&bstrSource);
 		pError->GetExceptionInfo(&ei);
-		lua_pushstring(L, CString(ei.bstrSource));
-		lua_pushstring(L, CString(ei.bstrDescription));
+		lua_pushstringW(L, CString(ei.bstrSource));
+		lua_pushstringW(L, CString(ei.bstrDescription));
 		lua_pushinteger(L, ulLineNo + 1);
 		lua_pushinteger(L, lChar);
 		isError = true;
@@ -273,8 +273,8 @@ int do_CreateMessageLite(lua_State* L)
 
 int do_GetGuid(lua_State* L) 	{
 	CString s = mbTransport->mbCreateInbox(false);
-	s.Replace("_INBOX.", "");
-	lua_pushfstring(L, s);
+	s.Replace(L"_INBOX.", L"");
+	lua_pushstringW(L, s);
 	return 1;
 }
 int do_RestoreMessage(lua_State* L)
@@ -285,18 +285,14 @@ int do_RestoreMessage(lua_State* L)
 	CFileException e;
 	if(!f.Open(path, CFile::modeRead | CFile::shareDenyWrite|CFile::typeBinary, &e))
 	{	
-		CString str;
-		str.Format("mesage_Store:File could not be opened %d", e.m_cause);
-		throw_L_error(L,str);
+		throw_L_error(L,string_format("mesage_Store:File could not be opened %d", e.m_cause).c_str());
 	}
 	else
 	{
 		ULONGLONG s = f.GetLength();
 		if(s > 4294967296)
 		{
-			CString str;
-			str.Format("do_RestoreMessage:File %s too lage", path);
-			throw_L_error(L,str);
+			throw_L_error(L, string_format("do_RestoreMessage:File %s too lage", path).c_str());
 		}
 		DWORD dwSize = DWORD(s);
 		BYTE* pByte = new BYTE[dwSize+20];
@@ -306,9 +302,7 @@ int do_RestoreMessage(lua_State* L)
 		}
 		catch(CFileException& e)
 		{
-			CString str;
-			str.Format("do_RestoreMessage:File could not be reader %d", e.m_cause);
-			throw_L_error(L,str);
+			throw_L_error(L, string_format("do_RestoreMessage:File could not be reader %d", e.m_cause).c_str());
 		}
 		f.Close();
 		msg->Restore(pByte,dwSize);
@@ -428,7 +422,7 @@ int do_CheckXML(lua_State* L)
 
 		lua_pushinteger(L, lineNum);
 		lua_pushinteger(L, linePos);
-		lua_pushstring(L, CString(reason));
+		lua_pushstringW(L, CString(reason));
 
 		pIParseError->Release();
 		pIParseError = NULL;
@@ -441,17 +435,17 @@ int do_CheckXML(lua_State* L)
 }
 int mesage_GetName(lua_State* L)
 {
-	lua_pushstring(L, cmessage_arg(L, "Name")->id());
+	lua_pushstringW(L, cmessage_arg(L, "Name")->id());
 	return 1;
 }
 int mesage_ToString(lua_State* L)
 {
-	lua_pushstring(L, cmessage_arg(L, "mesage_ToString")->ToString());
+	lua_pushstringW(L, cmessage_arg(L, "mesage_ToString")->ToString());
 	return 1;
 }
 int message_GetWireText(lua_State* L)
 {
-	lua_pushstring(L, (CString)cmessage_arg(L, "mesage_GetWireText")->GetWireText());
+	lua_pushstringW(L, (CString)cmessage_arg(L, "mesage_GetWireText")->GetWireText());
 	return 1;
 }
 int mesage_Subjects(lua_State* L)
@@ -464,9 +458,9 @@ int mesage_Subjects(lua_State* L)
 	if(type3 == "string")
 		msg->m_strReplySubject = luaL_checkstring(L,3);
 
-	lua_pushstring(L, msg->m_strSendSubject);
-	lua_pushstring(L, msg->m_strReplySubject);
-	lua_pushstring(L, msg->id());
+	lua_pushstringW(L, msg->m_strSendSubject);
+	lua_pushstringW(L, msg->m_strReplySubject);
+	lua_pushstringW(L, msg->id());
 	return 3;
 }
 int mesage_Reset(lua_State* L) {
@@ -548,24 +542,24 @@ int mesage_SetPathValue(lua_State* L)
 		COleDateTime dt;
 		if(dt.ParseDateTime(str))
 		{
-			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(luaL_checkstring(L,2),COleVariant(dt));
+			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(dt));
 		}else{
-			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(luaL_checkstring(L,2),COleVariant(str));
+			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(str));
 		}
 	}else if(type == "number")
 	{
-		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(luaL_checkstring(L,2),COleVariant(luaL_checknumber(L,3)));
+		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(luaL_checknumber(L,3)));
 	}else if(type == "boolean")
 	{
 		VARIANT var;
 		var.vt = VT_BOOL;
 		var.boolVal = (lua_toboolean(L,3)==1);
-		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(luaL_checkstring(L,2),var);
+		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),var);
 	}else if(type == "nil")
 	{
 		VARIANT var;
 		var.vt = VT_NULL;
-		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(luaL_checkstring(L,2),var);
+		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),var);
 	}else
 	{
 		throw_L_error(L, "Invalid type of value");
@@ -582,7 +576,7 @@ int mesage_FieldType(lua_State* L){
 		d = msg->GetDatum(luaL_checkinteger(L, 2));
 
 	if (!d) return 0;	 
-	lua_pushstring(L, d->GetVarTypeText());
+	lua_pushstringW(L, d->GetVarTypeText());
 	return 1;
 
 }
@@ -591,7 +585,7 @@ int mesage_FieldName(lua_State* L){
 	int i = luaL_checkinteger(L, 2);
 	CDatum* d = msg->GetDatum(i);
 	if (!d) return 0;
-	lua_pushstring(L, d->id());
+	lua_pushstringW(L, d->id());
 	return 1;
 }
 int mesage_Field(lua_State* L){
@@ -631,11 +625,11 @@ int mesage_Field(lua_State* L){
 		{
 			ATL::COleDateTime dt;
 			d->GetValueAsDate(dt);
-			lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+			lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
 		}
 		break;
 	case VT_BSTR:
-		lua_pushstring(L, d->GetValueText());
+		lua_pushstringW(L, d->GetValueText());
 		break;
 	default:
 		lua_pushnil(L);
@@ -676,11 +670,11 @@ int mesage_GetPathValue(lua_State* L)
 		{
 			ATL::COleDateTime dt;
 			d->GetValueAsDate(dt);
-			lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+			lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
 		}
 		break;
 	case VT_BSTR:
-		lua_pushstring(L, d->GetValueText());
+		lua_pushstringW(L, d->GetValueText());
 		break;
 	default:
 		lua_pushnil(L);
@@ -699,9 +693,7 @@ int mesage_Store(lua_State* L)
 	CFileException e;
 	if(!f.Open(path, CFile::modeCreate | CFile::modeWrite|CFile::typeBinary, &e))
 	{	
-		CString str;
-		str.Format("mesage_Store:File could not be opened %d", e.m_cause);
-		throw_L_error(L,str);
+		throw_L_error(L, string_format("mesage_Store:File could not be opened %d", e.m_cause).c_str());
 	}
 	else
 	{
@@ -740,7 +732,7 @@ int mesage_Destroy(lua_State* L)
 	 if (!rs)
 		 return 0;
 	 int col = luaL_checkinteger(L, 2);
-	 lua_pushstring(L, rs->GetColumn(col)->GetName());
+	 lua_pushstringW(L, rs->GetColumn(col)->GetName());
 	 return 1;
 }
  int mesage_RelecordsetGetRecord(lua_State* L)
@@ -790,14 +782,14 @@ int mesage_Destroy(lua_State* L)
 		 {
 			 type = "DATE";
 			 ATL::COleDateTime dt = value.date;
-			 lua_pushstring(L, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+			 lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
 		 }
 		 break;
 		 case VT_BSTR:
 		 {
 			 type = "BSTR";
 			 CStringEx str = value.bstrVal;
-			 lua_pushstring(L, str);
+			 lua_pushstringW(L, str);
 		 }
 			 break;
 		 default:
@@ -806,7 +798,7 @@ int mesage_Destroy(lua_State* L)
 		 }
 		 lua_setfield(L, -2, "value");
 		 
-		 lua_pushstring(L, rs->GetColumn(i)->GetName());
+		 lua_pushstringW(L, rs->GetColumn(i)->GetName());
 		 lua_setfield(L, -2, "title");
 
 		 lua_pushstring(L, type);
@@ -847,31 +839,21 @@ int mesage_Destroy(lua_State* L)
  void SetBstrCell(_PF *pFunc, void* pList, int i, int j, bool bUnic, CStringEx& sVal) {
 	 if (bUnic) {
 		 //const char * str = d->GetValueText();
-		 int result_u, result_c;
-		 result_u = MultiByteToWideChar(CP_ACP, 0, sVal, -1, 0, 0);
-		 if (!result_u) 
-			 return ; 
+		 int result_c;
 
-		 wchar_t *ures = new wchar_t[result_u];
-		 if (!MultiByteToWideChar(CP_ACP, 0, sVal, -1, ures, result_u)) {
-			 delete[] ures;
-			 return;
-		 }
-		 result_c = WideCharToMultiByte(65001, 0, ures, -1, 0, 0, 0, 0);
+		 result_c = WideCharToMultiByte(CP_UTF8, 0, sVal, -1, 0, 0, 0, 0);
 		 if (!result_c) {
-			 delete[] ures;
 			 return;
 		 }
 		 char *cres = new char[result_c];
-		 if (!WideCharToMultiByte(65001, 0, ures, -1, cres, result_c, 0, 0)) {
+		 if (!WideCharToMultiByte(CP_UTF8, 0, sVal, -1, cres, result_c, 0, 0)) {
 			 delete[] cres;
 			 return;
 		 }
-		 delete[] ures;
 		 pFunc(pList, i + 1, j + 1, cres);
 		 delete[] cres;
 	 } else {
-		 pFunc(pList, i + 1, j + 1, sVal);
+		 pFunc(pList, i + 1, j + 1, W2MB(sVal).c_str());
 	 }
  }
 
@@ -1025,7 +1007,7 @@ int mesage_FillList(lua_State* L) {
 				case VT_DATE:
 				{
 					ATL::COleDateTime dt = value.date;
-					strcpy(buf, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+					strcpy(buf, W2MB(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str());
 					out = buf;
 				}
 				break;
@@ -1051,7 +1033,7 @@ int mesage_FillList(lua_State* L) {
 				pFunc(pList, i + firstLine, 0, buf);
 			}
 			else if (setId) {
-				pFunc(pList, i + firstLine, 0, msg->GetMsg(i)->id());
+				pFunc(pList, i + firstLine, 0, W2MB(msg->GetMsg(i)->id()).c_str());
 			}
 			for (int j = 0; j < nFields; j++) {
 
@@ -1087,7 +1069,7 @@ int mesage_FillList(lua_State* L) {
 					{
 						ATL::COleDateTime dt;
 						d->GetValueAsDate(dt);
-						strcpy(buf, dt.Format("%Y-%m-%d %H:%M:%S").GetBuffer());
+						strcpy(buf, W2MB(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str());
 						out = buf;
 					}
 					break;
@@ -1206,13 +1188,9 @@ int mesage_SaveFieldBinary(lua_State* L) {
 		ASSERT(l == pArray->rgsabound[0].cElements * pArray->cbElements); // get size of array
 		memcpy(b, (BYTE*)pArray->pvData, l);
 
-		int charsLen = ::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), NULL, 0);
-		std::wstring characters(charsLen, '\0');
-		::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), &characters[0], charsLen);
-
 		int pf;
 
-		err = _wsopen_s(&pf, characters.c_str(), _O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _SH_DENYRW, _S_IWRITE);
+		err = _wsopen_s(&pf, path, _O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _SH_DENYRW, _S_IWRITE);
 		if (err) {
 			description = "Open File Error";
 			goto err;
@@ -1247,13 +1225,9 @@ int mesage_AddFieldBinary(lua_State* L) {
 	int err;
 	char *description;
 
-	int charsLen = ::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), NULL, 0);
-	std::wstring characters(charsLen, '\0');
-	::MultiByteToWideChar(CP_UTF8, 0, path, lstrlen(path), &characters[0], charsLen);
-
 	int pf;
 	char *b = NULL;
-	err = _wsopen_s(&pf, characters.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+	err = _wsopen_s(&pf, path, _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
 	if (err) {
 		description = "Open File error";
 		goto err;
@@ -1361,7 +1335,7 @@ int luaopen_mblua(lua_State *L)
 	// that it is the foreground window, so we hunt through all windows
 	// associated with this thread (the main GUI thread) to find a window
 	// matching the appropriate class name
-	sysLOGInit("", "", -1);
+	sysLOGInit(L"", L"", -1);
 	luaL_newmetatable(L, MESSAGEOBJECT);  // create metatable for window objects
 	lua_pushvalue(L, -1);  // push metatable
 	lua_setfield(L, -2, "__index");  // metatable.__index = metatable

@@ -369,6 +369,10 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 			sc.Forward(6);
 			//sc.SetState(SCE_RBR_DEFAULT);
 			continue;
+		} else if (curState == SCE_RBR_PRE_TAG && sc.Match(">")) {
+			sc.Forward();
+			sc.SetState(SCE_RBR_PRE);
+			continue;
 		} else if (curState == SCE_RBR_NOWIKI && sc.Match("</nowiki>")) {
 			sc.SetState(SCE_RBR_KEYWORD);
 			sc.Forward(9);
@@ -457,6 +461,9 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 				sc.SetState(SCE_RBR_KEYWORD);
 				sc.Forward(5);
 				sc.SetState(SCE_RBR_PRE);
+			} else if (sc.Match("<pre ")) {
+				sc.SetState(SCE_RBR_PRE_TAG);
+				sc.Forward(4);
 			}
 		} else if (sc.atLineEnd) {
 			//sc.SetState(SCE_RBR_DEFAULT);

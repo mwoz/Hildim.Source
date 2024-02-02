@@ -62,7 +62,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2, 2, 5, 0
+ FILEVERSION 2, 2, 5, 1
  PRODUCTVERSION VERSION_HILDIM_W
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -79,8 +79,8 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Systematica"
-            VALUE "FileDescription", "Message Bas(10.01.24) for HildiM"
-            VALUE "FileVersion", "2.2.5.0"
+            VALUE "FileDescription", "Message Bas(02.02.24) for HildiM"
+            VALUE "FileVersion", "2.2.5.1"
             VALUE "InternalName", "MbLua"
             VALUE "LegalCopyright", "Copyright (C) 2024"
             VALUE "OriginalFilename", "MbLua"
