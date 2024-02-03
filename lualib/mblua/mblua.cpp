@@ -14,6 +14,7 @@
 #include <io.h>  
 #include <fcntl.h>  
 #include <activscp.h>
+
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
@@ -499,7 +500,7 @@ int mesage_SetField(lua_State* L) {
 	CString type = luaL_typename(L, 3);
 	CMessage* msg = cmessage_arg(L, "mesage_SetField");
 	CDatum* d;
-	COleVariant v;
+	Variant v;
 
 	if (type == "string") {
 		v = luaL_checkstring(L, 3);
@@ -507,11 +508,11 @@ int mesage_SetField(lua_State* L) {
 	} else if (type == "number") {
 		v = luaL_checknumber(L, 3);
 	} else if (type == "boolean") {
-		v.boolVal = (lua_toboolean(L, 3) == 1);
+		v.boolValue = (lua_toboolean(L, 3) == 1);
 	} else if (type == "nil") {
-		v.vt = VT_NULL;
+		v.SetNull();
 	} else if ( type == "no value") {
-		v.vt = VT_EMPTY;
+		v.Clear();
 	} else {
 		throw_L_error(L, "Invalid type of value");
 	}
@@ -519,7 +520,7 @@ int mesage_SetField(lua_State* L) {
 
 	type = luaL_typename(L, 2);
 	if (type == "string") 
-		d = msg->SetDatum(luaL_checkstring(L, 2), v);
+		d = msg->SetDatum (CString(luaL_checkstring(L, 2)), v);
 	else if (type == "number" || (type == "integer")) {
 		d = msg->GetDatum(lua_tointeger(L, 2));
 		if (d)
@@ -542,23 +543,22 @@ int mesage_SetPathValue(lua_State* L)
 		COleDateTime dt;
 		if(dt.ParseDateTime(str))
 		{
-			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(dt));
+			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),Variant(dt));
 		}else{
-			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(str));
+			cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),Variant(str));
 		}
 	}else if(type == "number")
 	{
-		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),COleVariant(luaL_checknumber(L,3)));
+		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),Variant(luaL_checknumber(L,3)));
 	}else if(type == "boolean")
 	{
-		VARIANT var;
-		var.vt = VT_BOOL;
-		var.boolVal = (lua_toboolean(L,3)==1);
-		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),var);
+		Variant var;
+		var.boolValue = (lua_toboolean(L,3)==1);
+		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(), var);
 	}else if(type == "nil")
 	{
-		VARIANT var;
-		var.vt = VT_NULL;
+		Variant var;
+		var.SetNull();
 		cmessage_arg(L,"mesage_SetPathValue")->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(),var);
 	}else
 	{
@@ -571,7 +571,7 @@ int mesage_FieldType(lua_State* L){
 	CMessage* msg = cmessage_arg(L, "mesage_Field");
 	CDatum* d;
 	if (type == "string")
-		d = msg->GetDatum(luaL_checkstring(L, 2));
+		d = msg->GetDatum(CString(luaL_checkstring(L, 2)));
 	else
 		d = msg->GetDatum(luaL_checkinteger(L, 2));
 
@@ -588,53 +588,63 @@ int mesage_FieldName(lua_State* L){
 	lua_pushstringW(L, d->id());
 	return 1;
 }
-int mesage_Field(lua_State* L){
-	CString type = luaL_typename(L, 2);
-	CMessage* msg = cmessage_arg(L, "mesage_Field");
-	CDatum* d;
-	if(type == "string")
-		d = msg->GetDatum(luaL_checkstring(L, 2));
-	else
-		d = msg->GetDatum(luaL_checkinteger(L, 2));
 
-	if (!d) return 0;
-	switch (d->GetVarType())
-	{
-	case VT_R8:
+int pushDatum(lua_State* L, CDatum* d) {
+	if (!d) 
+		return 0;
+
+	switch (d->value().type) {
+	case Variant::Type::Double:
 	{
 		double i;
 		d->GetValueAsDouble(i);
 		lua_pushnumber(L, i);
 	}
-		break;
-	case VT_I4:
+	break;
+	case Variant::Type::Integer:
 	{
 		long i;
 		d->GetValueAsLong(i);
 		lua_pushinteger(L, i);
 	}
-		break;
-	case VT_BOOL:
+	break;
+	case Variant::Type::Boolean:
 	{
 		bool i;
 		d->GetValueAsBool(i);
 		lua_pushboolean(L, i);
 	}
-		break;
-	case VT_DATE:
-		{
-			ATL::COleDateTime dt;
-			d->GetValueAsDate(dt);
-			lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
-		}
-		break;
-	case VT_BSTR:
+	break;
+	case Variant::Type::Date:
+	{
+		ATL::COleDateTime dt;
+		d->GetValueAsDate(dt);
+		lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
+	}
+	break;
+	case Variant::Type::String:
+	{
 		lua_pushstringW(L, d->GetValueText());
-		break;
+	}
+	break;
 	default:
+	{
 		lua_pushnil(L);
 	}
+	}
 	return 1;
+}
+
+int mesage_Field(lua_State* L){
+	CString type = luaL_typename(L, 2);
+	CMessage* msg = cmessage_arg(L, "mesage_Field");
+	CDatum* d;
+	if(type == "string")
+		d = msg->GetDatum(CString(luaL_checkstring(L, 2)));
+	else
+		d = msg->GetDatum(luaL_checkinteger(L, 2));
+
+	return pushDatum(L, d);
 }
 
 int mesage_GetPathValue(lua_State* L)
@@ -642,44 +652,7 @@ int mesage_GetPathValue(lua_State* L)
 	CString path = luaL_checkstring(L,2);
 	CMessage* msg = cmessage_arg(L,"mesage_GetPathValue");
 	CDatum* d = msg->GetDatumByPath(path);
-	if(!d) return 0;
-	switch(d->GetVarType())
-	{
-	case VT_R8:
-		{
-			double i;
-			d->GetValueAsDouble(i);
-			lua_pushnumber(L, i);
-		}
-		break;
-	case VT_I4:
-		{
-			long i;
-			d->GetValueAsLong(i);
-			lua_pushinteger(L, i);
-		}
-		break;
-	case VT_BOOL:
-		{
-			bool i;
-			d->GetValueAsBool(i);
-			lua_pushboolean(L, i);
-		}
-		break;
-	case VT_DATE:
-		{
-			ATL::COleDateTime dt;
-			d->GetValueAsDate(dt);
-			lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
-		}
-		break;
-	case VT_BSTR:
-		lua_pushstringW(L, d->GetValueText());
-		break;
-	default:
-		lua_pushnil(L);
-	}
-	return 1;
+	return pushDatum(L, d);
 }
 
 
@@ -702,6 +675,7 @@ int mesage_Store(lua_State* L)
 	}
 	return 0;
 }
+
 int mesage_gc(lua_State* L) {
 	cmesage_gc(L);
 	return 0;
@@ -725,6 +699,7 @@ int mesage_Destroy(lua_State* L)
 	 lua_pushinteger(L, rs->GetRecordCount());
 	 return 2;
 }
+
  int mesage_RelecordsetColumn(lua_State* L)
 {
 	 CMessage* msg = cmessage_arg(L, "mesage_RelecordsetColumn");
@@ -735,6 +710,7 @@ int mesage_Destroy(lua_State* L)
 	 lua_pushstringW(L, rs->GetColumn(col)->GetName());
 	 return 1;
 }
+
  int mesage_RelecordsetGetRecord(lua_State* L)
 {
 	 CMessage* msg = cmessage_arg(L, "mesage_RelecordsetGetRecord");
@@ -744,7 +720,7 @@ int mesage_Destroy(lua_State* L)
 	 int row = luaL_checkinteger(L, 2);
 
 	 CString strId;
-	 COleVariant value;
+	 Variant value;
 	 CRecordsetReader reader = rs->CreateReader();
 	 for (int i = 0; i <= row; i++) {
 		 if (!reader.MoveNext())
@@ -759,36 +735,36 @@ int mesage_Destroy(lua_State* L)
 		 lua_createtable(L, 0, 3);
 
 		 reader.GetValue(i, value);
-		 switch (value.vt) {
-		 case VT_R8:
+		 switch (value.type) {
+		 case Variant::Type::Double:
 		 {
 			 type = "R8";
-			 lua_pushnumber(L, value.dblVal);
+			 lua_pushnumber(L, value.dblValue);
 		 }
 		 break;
-		 case VT_I4:
+		 case Variant::Type::Integer:
 		 {
 			 type = "I4";
-			 lua_pushinteger(L, value.lVal);
+			 lua_pushinteger(L, value.longValue);
 		 }
 		 break;
-		 case VT_BOOL:
+		 case Variant::Type::Boolean:
 		 {
 			 type = "BOOL";
-			 lua_pushboolean(L, (value.boolVal == VARIANT_TRUE));
+			 lua_pushboolean(L, (value.boolValue == VARIANT_TRUE));
 		 }
 		 break;
-		 case VT_DATE:
+		 case Variant::Type::Date:
 		 {
 			 type = "DATE";
-			 ATL::COleDateTime dt = value.date;
+			 ATL::COleDateTime dt = value.dateValue;
 			 lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
 		 }
 		 break;
-		 case VT_BSTR:
+		 case Variant::Type::String:
 		 {
 			 type = "BSTR";
-			 CStringEx str = value.bstrVal;
+			 CStringEx str = value.strValue;
 			 lua_pushstringW(L, str);
 		 }
 			 break;
@@ -818,7 +794,7 @@ int mesage_Destroy(lua_State* L)
 
 	 CMessage* pMsg = new CMessage();
 	 CString strId;
-	 COleVariant value; 
+	 Variant value; 
 
 	 CRecordsetReader reader = rs->CreateReader();
 	 while (reader.MoveNext()) {
@@ -835,6 +811,7 @@ int mesage_Destroy(lua_State* L)
 	 wrap_cmsg(L, pMsg);
 	 return 1;
  }
+
 
  void SetBstrCell(_PF *pFunc, void* pList, int i, int j, bool bUnic, CStringEx& sVal) {
 	 if (bUnic) {
@@ -855,17 +832,20 @@ int mesage_Destroy(lua_State* L)
 	 } else {
 		 pFunc(pList, i + 1, j + 1, W2MB(sVal).c_str());
 	 }
- }
+}
 
-int mesage_FillList(lua_State* L) {
-	CMessage* msg = cmessage_arg(L, "mesage_FillList");
+ int mesage_FillList(lua_State* L) {
 
-    luaL_checkudata(L, 2, "iupHandle");
+	 CMessage* msg = cmessage_arg(L, "mesage_FillList");
 
-	int firstLine = luaL_checkinteger(L, 3);
-	int firstCol = luaL_checkinteger(L, 4);
-	bool setNum = false;
-	bool setId = false;
+	 luaL_checkudata(L, 2, "iupHandle");
+
+	 int firstLine = luaL_checkinteger(L, 3);
+	 int firstCol = luaL_checkinteger(L, 4);
+	 bool setNum = false;
+	 bool setId = false;
+
+ 
 	if (firstCol == 0) {
 		firstCol = 1;
 		setId = true;
@@ -974,7 +954,7 @@ int mesage_FillList(lua_State* L) {
 
 	if (rs) {
 		CRecordsetReader reader = rs->CreateReader();
-		COleVariant value;
+		Variant value;
 		for (int i = 0; i < msgCnt; i++) {
 			if (setNum || setId) {
 				_ltoa(i + firstLine, buf, 10);
@@ -984,43 +964,45 @@ int mesage_FillList(lua_State* L) {
 			for (int j = 0; j < nFields; j++) {
 				reader.GetValue(fMap[j] - 1, value);
 
-				const char *out = NULL;
+				const char* out = NULL;
 
-				switch (value.vt) {
-				case VT_R8:
+				switch (value.type) {
+				case Variant::Type::Double:
 				{
-					sprintf(buf, "%.9f", value.dblVal);
+					sprintf(buf, "%.9f", value.dblValue);
 					out = buf;
 				}
 				break;
-				case VT_I4:
+				case Variant::Type::Integer:
 				{
-					_ltoa(value.lVal, buf, 10);
+					_ltoa(value.longValue, buf, 10);
 					out = buf;
 				}
 				break;
-				case VT_BOOL:
+				case Variant::Type::Boolean:
 				{
-					out = value.boolVal ? "<true>" : "<false>";
+					out = value.boolValue ? "<true>" : "<false>";
 				}
 				break;
-				case VT_DATE:
+				case Variant::Type::Date:
 				{
-					ATL::COleDateTime dt = value.date;
+					ATL::COleDateTime dt = value.dateValue;
 					strcpy(buf, W2MB(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str());
 					out = buf;
 				}
 				break;
-				case VT_BSTR:
+				case Variant::Type::String:
 				{
-					SetBstrCell(pFunc, pList, i, j, fUtf[j], CStringEx(value.bstrVal));
+					SetBstrCell(pFunc, pList, i, j, fUtf[j], CStringEx(value.strValue));
 				}
 				break;
-				case VT_NULL:
+				case Variant::Type::Null:
+				{
 					if (setNull)
 						out = "<null>";
-					break;
 				}
+				break;
+				}			
 				if (out)
 					pFunc(pList, i + firstLine, j + firstCol, out);
 			}
@@ -1041,8 +1023,9 @@ int mesage_FillList(lua_State* L) {
 
 				const char *out = NULL;
 				if (d) {
-					switch (d->GetVarType()) {
-					case VT_R8:
+					if (!d) return 0;
+					switch (d->value().type) {
+					case Variant::Type::Double:
 					{
 						double v;
 						d->GetValueAsDouble(v);
@@ -1050,7 +1033,7 @@ int mesage_FillList(lua_State* L) {
 						out = buf;
 					}
 					break;
-					case VT_I4:
+					case Variant::Type::Integer:
 					{
 						long v;
 						d->GetValueAsLong(v);
@@ -1058,14 +1041,14 @@ int mesage_FillList(lua_State* L) {
 						out = buf;
 					}
 					break;
-					case VT_BOOL:
+					case Variant::Type::Boolean:
 					{
 						bool v;
 						d->GetValueAsBool(v);
 						out = v ? "<true>" : "<false>";
 					}
 					break;
-					case VT_DATE:
+					case Variant::Type::Date:
 					{
 						ATL::COleDateTime dt;
 						d->GetValueAsDate(dt);
@@ -1073,13 +1056,17 @@ int mesage_FillList(lua_State* L) {
 						out = buf;
 					}
 					break;
-					case VT_BSTR:
+					case Variant::Type::String:
+					{
 						SetBstrCell(pFunc, pList, i, j, fUtf[j], d->GetValueText());
-						break;
-					case VT_NULL:
+					}
+					break;
+					case Variant::Type::Null:
+					{
 						if (setNull)
 							out = "<null>";
-						break;
+					}
+					break;
 					}
 				}
 				if (out)
@@ -1157,9 +1144,8 @@ int mesage_AttachMessage(lua_State* L)
 
 int mesage_CopyFrom(lua_State* L) {
 	CMessage* msg = cmessage_arg(L, "mesage_CopyFrom");
-	CMessage* subMsg = cmessage_arg(L, "mesage_CopyFrom", 2);
 
-	msg->AddContentFrom(subMsg);
+	msg->AddContentFrom(cmessage_arg(L, "mesage_CopyFrom", 2));
 	return 0;
 }
 
@@ -1173,7 +1159,7 @@ int mesage_SaveFieldBinary(lua_State* L) {
 	DWORD l;
 
 	CDatum *d = msg->GetDatum(fldName);
-	if (d->GetVarType() != (VT_ARRAY | VT_UI1) ) {
+	if (!d->value().IsBuffer()) {
 		err = -1;
 		description = "Not Binary Data";
 		goto err;
@@ -1182,11 +1168,8 @@ int mesage_SaveFieldBinary(lua_State* L) {
 		l = d->GetDataSize();
 		b = new char[l];
 
-
-		SAFEARRAY* pArray = d->value().parray;
-		ASSERT(pArray->cDims == 1); // check we have 1 dimension array
-		ASSERT(l == pArray->rgsabound[0].cElements * pArray->cbElements); // get size of array
-		memcpy(b, (BYTE*)pArray->pvData, l);
+		Variant::Buffer* pBuffer = (Variant::Buffer*)d->value().customValue;
+		memcpy(b, pBuffer->ptr, pBuffer->size);
 
 		int pf;
 
@@ -1249,15 +1232,17 @@ int mesage_AddFieldBinary(lua_State* L) {
 		goto err;
 	}
 	{
-		COleSafeArray arr;
-		arr.Create(VT_UI1, 1, &l);
+		Variant::Buffer* pBuffer = new Variant::Buffer();
+		pBuffer->ptr = new BYTE[l];
+		pBuffer->size = l;
+		//v.Attach(pBuffer);
+
 
 		for (DWORD i = 0; i < l; i++) {
-
-			arr.PutElement((long*)&i, &b[i]);
+			((BYTE*)pBuffer->ptr)[i] = (BYTE)b[i];
 		}
 
-		msg->AddDatum(fldName, arr);
+		msg->AddDatum(fldName, pBuffer);
 	}
 
 err:

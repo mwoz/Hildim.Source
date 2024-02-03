@@ -584,6 +584,24 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">Disabled</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">EnableFastChecks</BasicRuntimeChecks>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">true</BrowseInformation>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
+      <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</BrowseInformation>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">MaxSpeed</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release2|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug2|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WinAuth.cpp" />
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WMIquery.cpp" />
   </ItemGroup>
@@ -626,6 +644,7 @@
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxMessage.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxSocket.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\TypedStorage.h" />
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WinAuth.h" />
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\WMIquery.h" />
   </ItemGroup>

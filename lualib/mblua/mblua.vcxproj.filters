@@ -108,6 +108,9 @@
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\CrashStat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.cpp">
+      <Filter>Source Files\mb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mblua.def">
@@ -220,6 +223,9 @@
       <Filter>Header Files\mb</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\tlxlib_misc.h">
+      <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.h">
       <Filter>Header Files\mb</Filter>
     </ClInclude>
   </ItemGroup>
