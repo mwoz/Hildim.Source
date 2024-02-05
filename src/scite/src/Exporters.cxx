@@ -327,9 +327,8 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 	int column = 0;
 	for (int iPos = start; iPos < end; iPos++) {
 		const char ch = acc[iPos];
-		int style = acc.StyleAt(iPos);
-		if (style > STYLE_MAX)
-			style = 0;
+		const UCHAR style = acc.StyleAt(iPos);
+
 		if (style != styleCurrent) {
 			const std::string deltaStyle = GetRTFStyleChange(lastStyle.c_str(), styles[style].c_str());
 			lastStyle = styles[style];
@@ -409,6 +408,153 @@ void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
 }
 
 //---------- Save to HTML ----------
+void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
+	wEditor.Call(SCI_COLOURISE, 0, -1);
+	int tabSize = props.GetInt("tabsize");
+	if (tabSize == 0)
+		tabSize = 4;
+	const int lengthDoc = end == -1 ? LengthDocument() : end;
+	TextReader acc(wEditor);
+	constexpr int StyleLastPredefined = STYLE_LASTPREDEFINED;
+
+	std::string bgColour;
+	std::string spanOpen[STYLE_MAX + 1];
+	std::string spanClose[STYLE_MAX + 1];
+	std::string style;
+	std::string pStyle = "";
+	std::string defBack = "";
+	SString sval;
+
+	char key[200];
+	sprintf(key, "style.%s.%0d", language.c_str(), 0);
+	sval = props.GetExpanded(key);
+	const StyleDefinition sd(sval.c_str());
+	if (sd.font.length()) 
+		pStyle = sd.font.c_str();
+	if (sd.back.length()) 
+		defBack = sd.back.c_str();
+	
+
+	for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
+		spanOpen[istyle] = "";
+		spanClose[istyle] = "";
+		style = "";
+		if ((istyle > STYLE_DEFAULT) && (istyle <= StyleLastPredefined))
+			continue;
+
+		sprintf(key, "style.%s.%0d", language.c_str(), istyle);
+		sval = props.GetExpanded(key);
+
+		const StyleDefinition sd(sval.c_str());
+
+		if (sd.specified != StyleDefinition::sdNone) {
+
+			if (sd.italics) {
+				spanOpen[istyle] += "<em>";
+				spanClose[istyle] = "</em>" + spanClose[istyle];
+			}
+			if (sd.bold) {
+				spanOpen[istyle] += "<strong>";
+				spanClose[istyle] = "</strong>" + spanClose[istyle];
+			}
+			if (sd.font.length() && (pStyle == "" || pStyle != sd.font.c_str())) {
+				style += "font-family: ";
+				style += sd.font.c_str() ;
+				style += ";";
+			}
+			if (sd.fore.length()) {
+				style += "color: ";
+				style += sd.fore.c_str();
+				style += ";";
+			}
+			if (sd.back.length() && defBack != sd.back.c_str()) {
+				style += "background: ";
+				style += sd.back.c_str();
+				style += ";";
+			}
+			if(style != ""){
+				spanOpen[istyle] += "<span style=\"";
+				spanOpen[istyle] += style;
+				spanOpen[istyle] += "\">";
+				spanClose[istyle] = "</span>" + spanClose[istyle];
+			}
+
+		}
+	}
+	if (pStyle == "")
+		pStyle = "<p>";
+	else
+		pStyle = "<p style=\"font-family: " + pStyle + "\">";
+
+	int styleCurrent = -1;
+	std::string close = "";
+	os << pStyle;
+	int column = 0;
+	for (int i = start; i < lengthDoc; i++) {
+		const char ch = acc[i];
+		const UCHAR style = acc.StyleAt(i);
+		column++;
+		if (style != styleCurrent) {
+			styleCurrent = style;
+
+			if (close != "")
+				os << close;
+			
+
+			if (style) {
+				close = spanClose[style];
+				os << spanOpen[style];
+			}
+		}
+		switch (ch) {
+		case '\r':
+		case '\n':
+			if (close != "") {
+				os << close;
+			}
+			os << "</p>\r\n";
+			os << pStyle;
+			os << spanOpen[style];
+			column = 0;
+			if (ch == '\r' && i < lengthDoc && acc[i + 1] == '\n') {
+				i++;	// CR+LF line ending, skip the "extra" EOL char
+			}
+			break;
+		case ' ':		
+			if (i < lengthDoc && acc[i + 1] == ' ') {
+				do {
+					os << "&nbsp;";
+					i++;
+					column++;
+				} while (i < lengthDoc && acc[i + 1] == ' ');
+			}
+			else
+				os << "&nbsp;";
+			break;
+		case '\t':
+		{
+			const int ts = tabSize - (column % tabSize);
+			for (int itab = 0; itab < ts; itab++) {
+				os << "&nbsp;";
+			}
+			column += ts;
+		}
+			break;
+		case '<':
+			os << "&lt;";
+			break;
+		case '>':
+			os << "&gt;";
+			break;
+		case '&':
+			os << "&amp;";
+			break;
+		default:
+			os << ch;
+		}
+	}
+	os << "</p>";
+}
 void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 
 	wEditor.Call(SCI_COLOURISE, 0, -1);
@@ -430,7 +576,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	if (onlyStylesUsed) {
 		// check the used styles
 		for (int i = 0; i < lengthDoc; i++) {
-			styleIsUsed[acc.StyleAt(i)] = true;
+			styleIsUsed[(UCHAR)acc.StyleAt(i)] = true;
 		}
 	} else {
 		for (int i = 0; i <= STYLE_MAX; i++) {
@@ -460,7 +606,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	// at the source code doesn't hurt...
 	os << "<meta name=\"Generator\" content=\"SciTE - www.Scintilla.org\" />\n";
 	bool toUtf = (codePage == CP_ACP) && (end != -1);
-	if (codePage == CP_UTF8)
+	if (codePage == CP_UTF8 && end != -1)
 		os << "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n";
 
 	if (folding) {
@@ -564,7 +710,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 
 	int line = acc.GetLine(start);
 	int level = (acc.LevelAt(line) & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
-	int styleCurrent = acc.StyleAt(start);
+	UCHAR styleCurrent = acc.StyleAt(start);
 	bool inStyleSpan = false;
 	bool inFoldSpan = false;
 	// Global span for default attributes
@@ -590,7 +736,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	}
 
 	if (styleIsUsed[styleCurrent]) {
-		os << "<span class=\"S" << styleCurrent << "\">";
+		os << "<span class=\"S" << (int)styleCurrent << "\">";
 		inStyleSpan = true;
 	}
 	// Else, this style has no definition (beside default one):
@@ -599,7 +745,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	int column = 0;
 	for (int i = start; i < lengthDoc; i++) {
 		const char ch = acc[i];
-		const int style = acc.StyleAt(i);
+		const UCHAR style = acc.StyleAt(i);
 
 		if (style != styleCurrent) {
 			if (inStyleSpan) {
@@ -608,7 +754,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 			}
 			if (ch != '\r' && ch != '\n') {	// No need of a span for the EOL
 				if (styleIsUsed[style]) {
-					os << "<span class=\"S" << style << "\">";
+					os << "<span class=\"S" << (int)style << "\">";
 					inStyleSpan = true;
 				}
 				styleCurrent = style;
@@ -705,7 +851,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 			if (styleIsUsed[styleCurrent] && acc[i + 1] != '\r' && acc[i + 1] != '\n') {
 				// We know it's the correct next style,
 				// but no (empty) span for an empty line
-				os << "<span class=\"S" << styleCurrent << "\">";
+				os << "<span class=\"S" << (int)styleCurrent << "\">";
 				inStyleSpan = true;
 			}
 		} else {
@@ -720,7 +866,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 				os << "&amp;";
 				break;
 			default:
-				if (ch > 128 || !toUtf) {
+				if (ch > 0 || !toUtf) {
 					os << ch;
 				} else {
 					std::string s;

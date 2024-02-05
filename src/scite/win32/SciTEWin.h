@@ -218,9 +218,13 @@ protected:
 	virtual void ActivateWindow(const char *timestamp);
 	void ExecuteHelp(const char *cmd, int hh_cmd = 0x000d);
 	void ExecuteOtherHelp(const char *cmd);
-	void CopyWithColors(bool asHTML);
+	enum CopyColorsType {
+		rtf = 0, html = 1, htmlText = 2
+	};
+	void CopyWithColors(CopyColorsType clrType);
 	void CopyAsRTF();
 	void CopyAsHTML();
+	void CopyAsHTMLText();
 	void FullScreenToggle();
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);
 	void Command(WPARAM wParam, LPARAM lParam);

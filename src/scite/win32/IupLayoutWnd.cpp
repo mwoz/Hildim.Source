@@ -624,11 +624,23 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 		break;
 	}
 }
+inline float clr_brightness(COLORREF clr) {
+	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
+}
+
 void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)
 {
 	hMainWnd = hM;
 	pSciteWin = (SciTEWin*)pScite;
 	caretColor = ((SciTEWin*)pSciteWin)->layout.GetColorRef("FGCOLOR");
+	COLORREF scrollColor = ((SciTEWin*)pSciteWin)->layout.GetColorRef("SCR_BACKCOLOR");
+	float bBack = clr_brightness(scrollColor);
+	float bFore = clr_brightness(caretColor);
+	if (bFore > 128 && bBack > 128)
+		caretColor = 0;
+	else if (bFore < 128 && bBack < 128)
+		caretColor = 0xFFFFFF;
+
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 	SetWindowLong(h, GWL_STYLE, GetWindowLong(h, GWL_STYLE) | WS_CLIPCHILDREN);

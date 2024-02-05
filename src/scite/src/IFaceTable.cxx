@@ -180,6 +180,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_COMPLETEWORD",234},
 	{"IDM_COPY",204},
 	{"IDM_COPYASHTML",257},
+	{"IDM_COPYASHTMLTEXT",512},
 	{"IDM_COPYASRTF",245},
 	{"IDM_COPYPATH",118},
     {"IDM_COSRCWIN",356},
@@ -3379,7 +3380,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 321,
-	ifaceConstantCount = 2655,
+	ifaceConstantCount = 2656,
 	ifacePropertyCount = 250
 };
 

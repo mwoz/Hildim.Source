@@ -2937,6 +2937,10 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		CopyAsHTML();
 		break;
 
+	case IDM_COPYASHTMLTEXT:
+		CopyAsHTMLText();
+		break;
+
 	case IDM_FIND:
 		break;
 

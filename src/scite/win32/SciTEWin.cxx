@@ -548,13 +548,15 @@ void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 	}
 }
 
-void SciTEWin::CopyWithColors(bool asHTML) {
+void SciTEWin::CopyWithColors(CopyColorsType clrType){
 	const Sci_CharacterRange cr = GetSelection();
 
 	bool bOpen = false;
 
 	char* text = new char[(cr.cpMax - cr.cpMin + 1)];
 
+	size_t len;
+	HGLOBAL hand;
 	Sci_TextRange tr;
 	tr.chrg.cpMin = cr.cpMin;
 	tr.chrg.cpMax = cr.cpMax;
@@ -562,36 +564,53 @@ void SciTEWin::CopyWithColors(bool asHTML) {
 
 	wEditor.SendPointer(SCI_GETTEXTRANGE, 0, &tr);
 
-	size_t len = strlen(text);
-	HGLOBAL hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
-	if (hand) {
-		if (!bOpen) {
-			::OpenClipboard(MainHWND());
-			::EmptyClipboard();
-		}
-		bOpen = true;
-		char *ptr = static_cast<char *>(::GlobalLock(hand));
-		if (ptr) {
-			memcpy(ptr, text, len);
-			::GlobalUnlock(hand);
-		}
-		::SetClipboardData(CF_TEXT, hand);
+	GUI::gui_string uText;
+	const void* t;
 
-		hand = GlobalAlloc(GMEM_DDESHARE, sizeof(LCID));
-		LCID *lcid = (LCID*)GlobalLock(hand);
-		*lcid = GetSystemDefaultLCID();
-		GlobalUnlock(hand);
-		SetClipboardData(CF_LOCALE, hand);
+	if (clrType != CopyColorsType::htmlText) {
+		len = strlen(text);
+		if (codePage) {
+			uText = GUI::StringFromUTF8(text);
+			len = uText.length() * 2 + 2;
+			t = uText.c_str();
+		}
+		else {
+			t = text;
+			len = strlen(text) + 1;
+
+		}
+		hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
+		if (hand) {
+			if (!bOpen) {
+				::OpenClipboard(MainHWND());
+				::EmptyClipboard();
+			}
+			bOpen = true;
+			char* ptr = static_cast<char*>(::GlobalLock(hand));
+			if (ptr) {
+				memcpy(ptr, t, len);
+				::GlobalUnlock(hand);
+			}
+			::SetClipboardData(codePage ? CF_UNICODETEXT : CF_TEXT, hand);
+
+		}
 	}
 	std::ostringstream oss; 
-	if (asHTML)
-		SaveToStreamHTML(oss, cr.cpMin, cr.cpMax);
-	else
+	switch (clrType) {
+	case CopyColorsType::rtf:
 		SaveToStreamRTF(oss, cr.cpMin, cr.cpMax);
+		break;
+	case CopyColorsType::html:
+		SaveToStreamHTML(oss, cr.cpMin, cr.cpMax);
+		break;
+	case CopyColorsType::htmlText:
+		SaveToStreamHTMLText(oss, cr.cpMin, cr.cpMax);
+		break;
+	}
 
 	std::string rtf = oss.str(); 
 	len = rtf.length() + 1;	// +1 for NUL
-	if (asHTML) {
+	if (clrType == CopyColorsType::html) {
 		size_t l = len - 2;
 		if (l > 0) {
 			std::string num = std::to_string(l);   //"EndHTML:0000000000\n"
@@ -630,6 +649,10 @@ void SciTEWin::CopyWithColors(bool asHTML) {
 			rtf = rtf.insert(p1 + 10 - num.length(), num);
 		}
 	}
+	else if (codePage && clrType == CopyColorsType::htmlText) {
+		rtf = GUI::ConvertFromUTF8(rtf, CP_ACP);
+	}
+
 	hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
 	if (hand) {
 		if (!bOpen) {
@@ -642,22 +665,36 @@ void SciTEWin::CopyWithColors(bool asHTML) {
 			memcpy(ptr, rtf.c_str(), len);
 			::GlobalUnlock(hand);
 		}
-		if (asHTML)
-			::SetClipboardData(::RegisterClipboardFormat(L"HTML Format"), hand);
-		else
+		switch (clrType) {
+		case CopyColorsType::rtf:
 			::SetClipboardData(::RegisterClipboardFormat(CF_RTF), hand);
+			break;
+		case CopyColorsType::html:
+			::SetClipboardData(::RegisterClipboardFormat(L"HTML Format"), hand);
+			break;
+		case CopyColorsType::htmlText:
+			::SetClipboardData(CF_TEXT, hand);
+			break;
+		}
+		hand = GlobalAlloc(GMEM_DDESHARE, sizeof(LCID));
+		LCID* lcid = (LCID*)GlobalLock(hand);
+		*lcid = GetSystemDefaultLCID();
+		GlobalUnlock(hand);
+		SetClipboardData(CF_LOCALE, hand);
 	}
 
 	if (bOpen)
 		::CloseClipboard();
 	delete[] text;
 }
-
+void SciTEWin::CopyAsHTMLText() {
+	CopyWithColors(CopyColorsType::htmlText);
+}
 void SciTEWin::CopyAsHTML() {
-	CopyWithColors(true);
+	CopyWithColors(CopyColorsType::html);
 }
 void SciTEWin::CopyAsRTF() {
-	CopyWithColors(false);
+	CopyWithColors(CopyColorsType::rtf);
 }
 
 void SciTEWin::FullScreenToggle() {

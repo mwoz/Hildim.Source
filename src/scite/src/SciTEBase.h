@@ -744,6 +744,7 @@ protected:
 	bool Save(bool bNotSaveNotChanged = false);
 	void SaveAs(const GUI::gui_char *file, bool fixCase);
 	virtual void SaveACopy() = 0;
+	void SaveToStreamHTMLText(std::ostream &os, int start = 0, int end = -1);
 	void SaveToStreamHTML(std::ostream &os, int start = 0, int end = -1);
 	void SaveToHTML(FilePath saveName);
 	void StripTrailingSpaces();
@@ -843,6 +844,7 @@ protected:
 	void SaveTitledBuffers();
 	virtual void CopyAsRTF() {}
 	virtual void CopyAsHTML() {}
+	virtual void CopyAsHTMLText() {}
 	void SetLineNumberWidth(ScintillaWindowEditor *pE = NULL);
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
