@@ -19,6 +19,12 @@
       <UniqueIdentifier>{bfc2650f-4d83-4803-9606-c38ff0048d9b}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
+    <Filter Include="Source Files\vb">
+      <UniqueIdentifier>{ed78fcbf-25e0-4036-bec6-7de6dcde9a4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\vb">
+      <UniqueIdentifier>{0eaf2759-7954-432f-9413-d2266110f42e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="L_mbConnector.cpp">
@@ -110,6 +116,15 @@
     </ClCompile>
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.cpp">
       <Filter>Source Files\mb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbParser.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbLexer.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntime.cpp">
+      <Filter>Source Files\vb</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +242,15 @@
     </ClInclude>
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\TLX_LIB\Variant.h">
       <Filter>Header Files\mb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbLexer.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbParser.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntime.h">
+      <Filter>Header Files\vb</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
