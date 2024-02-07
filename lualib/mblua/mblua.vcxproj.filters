@@ -126,6 +126,42 @@
     <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntime.cpp">
       <Filter>Source Files\vb</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\DualScriptObject.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\Heap.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\OleCallback.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\ScriptObject.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\ScriptObjectOleWrapper.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbArray.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbError.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbExpr.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbFunctions.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRegExp.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntimeManager.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbUtils.cpp">
+      <Filter>Source Files\vb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mblua.def">
@@ -250,6 +286,48 @@
       <Filter>Header Files\vb</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntime.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\DualScriptObject.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\Heap.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\OleCallback.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\RuntimeStorage.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\ScriptObject.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\ScriptObjectOleWrapper.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\StackContainer.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbArray.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbError.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbExpr.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbFunctions.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRegExp.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbRuntimeManager.h">
+      <Filter>Header Files\vb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\CommonLib\Common_CPP\VbEngine\VbUtils.h">
       <Filter>Header Files\vb</Filter>
     </ClInclude>
   </ItemGroup>
