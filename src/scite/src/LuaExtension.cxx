@@ -589,24 +589,33 @@ static ExtensionAPI::Pane check_pane_object(lua_State *L, int index) {
 	return ExtensionAPI::paneOutput; // this line never reached
 }
 
-static int cf_pane_getstyle(lua_State *L) {
+static int cf_pane_getU(lua_State* L, DWORD msg) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	if (lua_gettop(L) >= 2) {
 		UINT cpPos = static_cast<UINT>(luaL_checknumber(L, 2));
 
 		if (cpPos >= 0) {
-			sptr_t st = host->Send(p,SCI_GETSTYLEAT, cpPos, cpPos);
+			sptr_t st = host->Send(p, msg, cpPos, cpPos);
 			if (st < 0)
 				st = st + 256;
 			lua_pushinteger(L, st);
 			return 1;
-		} else {
+		}
+		else {
 			raise_error(L, "Invalid argument 1 for <pane>:getstyle.  Positive number or zero expected.");
 		}
-	} else {
+	}
+	else {
 		raise_error(L, "Not enough arguments for <pane>:getstyle");
 	}
 	return 0;
+}
+
+static int cf_pane_getstyle(lua_State *L) {
+	return cf_pane_getU(L, SCI_GETSTYLEAT);
+}
+static int cf_pane_getchar(lua_State *L) {
+	return cf_pane_getU(L, SCI_GETCHARAT);
 }
 static int cf_pane_line(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
@@ -2097,6 +2106,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		lua_setfield(L, -2, "line");
 		lua_pushcfunction(L, cf_pane_getstyle);
 		lua_setfield(L, -2, "ustyle");
+		lua_pushcfunction(L, cf_pane_getchar);
+		lua_setfield(L, -2, "uchar");
 
 //!-start-[EncodingToLua]
 		lua_pushcfunction(luaState, cf_pane_get_codepage);
