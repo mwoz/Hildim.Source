@@ -19,7 +19,6 @@ WARNINGS = -Wpedantic -Wall -Wextra
 
 ifdef CLANG
 CXX = clang++
-DEFINES += -D_CRT_SECURE_NO_DEPRECATE
 else
 # MinGW GCC
 LIBSMINGW = -lstdc++
@@ -46,7 +45,7 @@ vpath %.h ../src ../include
 vpath %.cxx ../src
 
 LDFLAGS=-shared -static -mwindows
-LIBS=-lgdi32 -luser32 -limm32 -lole32 -luuid -loleaut32 -lmsimg32 $(LIBSMINGW)
+LIBS=-lgdi32 -luser32 -limm32 -lole32 -luuid -loleaut32 $(LIBSMINGW)
 
 INCLUDES=-I ../include -I ../src
 
@@ -109,6 +108,7 @@ SRC_OBJS = \
 	$(DIR_O)/RunStyles.o \
 	$(DIR_O)/Selection.o \
 	$(DIR_O)/Style.o \
+	$(DIR_O)/UndoHistory.o \
 	$(DIR_O)/UniConversion.o \
 	$(DIR_O)/UniqueString.o \
 	$(DIR_O)/ViewStyle.o \

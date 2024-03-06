@@ -303,7 +303,7 @@ void Document::TentativeUndo() {
 			//Platform::DebugPrintf("Steps=%d\n", steps);
 			for (int step = 0; step < steps; step++) {
 				const Sci::Line prevLinesTotal = LinesTotal();
-				const Action &action = cb.GetUndoStep();
+				const Action action = cb.GetUndoStep();
 				if (action.at == ActionType::remove) {
 					NotifyModified(DocModification(
 									ModificationFlags::BeforeInsert | ModificationFlags::Undo, action));
@@ -338,7 +338,7 @@ void Document::TentativeUndo() {
 						modFlags |= ModificationFlags::MultilineUndoRedo;
 				}
 				NotifyModified(DocModification(modFlags, action.position, action.lenData,
-											   linesAdded, action.data.get()));
+											   linesAdded, action.data));
 			}
 
 			const bool endSavePoint = cb.IsSavePoint();
@@ -349,6 +349,62 @@ void Document::TentativeUndo() {
 		}
 		enteredModification--;
 	}
+}
+
+int Document::UndoActions() const noexcept {
+	return cb.UndoActions();
+}
+
+void Document::SetUndoSavePoint(int action) noexcept {
+	cb.SetUndoSavePoint(action);
+}
+
+int Document::UndoSavePoint() const noexcept {
+	return cb.UndoSavePoint();
+}
+
+void Document::SetUndoDetach(int action) noexcept {
+	cb.SetUndoDetach(action);
+}
+
+int Document::UndoDetach() const noexcept {
+	return cb.UndoDetach();
+}
+
+void Document::SetUndoTentative(int action) noexcept {
+	cb.SetUndoTentative(action);
+}
+
+int Document::UndoTentative() const noexcept {
+	return cb.UndoTentative();
+}
+
+void Document::SetUndoCurrent(int action) {
+	cb.SetUndoCurrent(action);
+}
+
+int Document::UndoCurrent() const noexcept {
+	return cb.UndoCurrent();
+}
+
+int Document::UndoActionType(int action) const noexcept {
+	return cb.UndoActionType(action);
+}
+
+Sci::Position Document::UndoActionPosition(int action) const noexcept {
+	return cb.UndoActionPosition(action);
+}
+
+std::string_view Document::UndoActionText(int action) const noexcept {
+	return cb.UndoActionText(action);
+}
+
+void Document::PushUndoActionType(int type, Sci::Position position) {
+	cb.PushUndoActionType(type, position);
+}
+
+void Document::ChangeLastUndoActionText(size_t length, const char *text) {
+	cb.ChangeLastUndoActionText(length, text);
 }
 
 int Document::GetMark(Sci::Line line, bool includeChangeHistory) const {
@@ -568,14 +624,8 @@ Sci::Line Document::GetLastChild(Sci::Line lineParent, std::optional<FoldLevel> 
 	const Sci::Line maxLine = LinesTotal();
 	const Sci::Line lookLastLine = (lastLine != -1) ? std::min(LinesTotal() - 1, lastLine) : -1;
 	Sci::Line lineMaxSubord = lineParent;
-	Sci::Line lineMaxStyled = lineParent;
 	while (lineMaxSubord < maxLine - 1) {
-		if (lineMaxSubord >= lineMaxStyled) {
-			lineMaxStyled = std::min(lineMaxStyled + 50, maxLine - 2);
-			if (lookLastLine > -1 && lineMaxStyled > lookLastLine)
-				lineMaxStyled = lookLastLine;
-			EnsureStyledTo(LineStart(lineMaxStyled + 2));
-		}
+		EnsureStyledTo(LineStart(lineMaxSubord + 2));
 		if (!IsSubordinate(levelStart, GetFoldLevel(lineMaxSubord + 1)))
 			break;
 		if ((lookLastLine != -1) && (lineMaxSubord >= lookLastLine) && !LevelIsWhitespace(GetFoldLevel(lineMaxSubord)))
@@ -1369,13 +1419,10 @@ Sci::Position Document::Undo() {
 			bool multiLine = false;
 			const int steps = cb.StartUndo();
 			//Platform::DebugPrintf("Steps=%d\n", steps);
-			Sci::Position coalescedRemovePos = -1;
-			Sci::Position coalescedRemoveLen = 0;
-			Sci::Position prevRemoveActionPos = -1;
-			Sci::Position prevRemoveActionLen = 0;
+			Range coalescedRemove;	// Default is empty at 0
 			for (int step = 0; step < steps; step++) {
 				const Sci::Line prevLinesTotal = LinesTotal();
-				const Action &action = cb.GetUndoStep();
+				const Action action = cb.GetUndoStep();
 				if (action.at == ActionType::remove) {
 					NotifyModified(DocModification(
 									ModificationFlags::BeforeInsert | ModificationFlags::Undo, action));
@@ -1383,12 +1430,6 @@ Sci::Position Document::Undo() {
 					DocModification dm(ModificationFlags::Container | ModificationFlags::Undo);
 					dm.token = action.position;
 					NotifyModified(dm);
-					if (!action.mayCoalesce) {
-						coalescedRemovePos = -1;
-						coalescedRemoveLen = 0;
-						prevRemoveActionPos = -1;
-						prevRemoveActionLen = 0;
-					}
 				} else {
 					NotifyModified(DocModification(
 									ModificationFlags::BeforeDelete | ModificationFlags::Undo, action));
@@ -1404,22 +1445,15 @@ Sci::Position Document::Undo() {
 				if (action.at == ActionType::remove) {
 					newPos += action.lenData;
 					modFlags |= ModificationFlags::InsertText;
-					if ((coalescedRemoveLen > 0) &&
-						(action.position == prevRemoveActionPos || action.position == (prevRemoveActionPos + prevRemoveActionLen))) {
-						coalescedRemoveLen += action.lenData;
-						newPos = coalescedRemovePos + coalescedRemoveLen;
+					if (coalescedRemove.Contains(action.position)) {
+						coalescedRemove.end += action.lenData;
+						newPos = coalescedRemove.end;
 					} else {
-						coalescedRemovePos = action.position;
-						coalescedRemoveLen = action.lenData;
+						coalescedRemove = Range(action.position, action.position + action.lenData);
 					}
-					prevRemoveActionPos = action.position;
-					prevRemoveActionLen = action.lenData;
 				} else if (action.at == ActionType::insert) {
 					modFlags |= ModificationFlags::DeleteText;
-					coalescedRemovePos = -1;
-					coalescedRemoveLen = 0;
-					prevRemoveActionPos = -1;
-					prevRemoveActionLen = 0;
+					coalescedRemove = Range(); 
 				}
 				if (steps > 1)
 					modFlags |= ModificationFlags::MultiStepUndoRedo;
@@ -1432,7 +1466,7 @@ Sci::Position Document::Undo() {
 						modFlags |= ModificationFlags::MultilineUndoRedo;
 				}
 				NotifyModified(DocModification(modFlags, action.position, action.lenData,
-											   linesAdded, action.data.get()));
+											   linesAdded, action.data));
 			}
 
 			const bool endSavePoint = cb.IsSavePoint();
@@ -1455,7 +1489,7 @@ Sci::Position Document::Redo() {
 			const int steps = cb.StartRedo();
 			for (int step = 0; step < steps; step++) {
 				const Sci::Line prevLinesTotal = LinesTotal();
-				const Action &action = cb.GetRedoStep();
+				const Action action = cb.GetRedoStep();
 				if (action.at == ActionType::insert) {
 					NotifyModified(DocModification(
 									ModificationFlags::BeforeInsert | ModificationFlags::Redo, action));
@@ -1492,7 +1526,7 @@ Sci::Position Document::Redo() {
 				}
 				NotifyModified(
 					DocModification(modFlags, action.position, action.lenData,
-									linesAdded, action.data.get()));
+									linesAdded, action.data));
 			}
 
 			const bool endSavePoint = cb.IsSavePoint();
@@ -2102,7 +2136,6 @@ bool SplitMatch(const SplitView &view, size_t start, std::string_view text) noex
  */
 Sci::Position Document::FindText(Sci::Position minPos, Sci::Position maxPos, const char *search,
                         FindOption flags, Sci::Position *length) {
-if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]	
 	if (*length <= 0)
 		return minPos;
 	const bool caseSensitive = FlagSet(flags, FindOption::MatchCase);
@@ -2202,7 +2235,7 @@ if ((minPos == maxPos) && (minPos == Length())) return -1; //!-add-[FixFind]
 						for (int b = 1; b < widthCharBytes; b++) {
 							bytes[b] = cbView.CharAt(posIndexDocument + b);
 						}
-						widthChar = UTF8Classify(reinterpret_cast<const unsigned char *>(bytes), widthCharBytes) & UTF8MaskWidth;
+						widthChar = UTF8Classify(bytes, widthCharBytes) & UTF8MaskWidth;
 						if (!indexSearch) {	// First character
 							widthFirstCharacter = widthChar;
 						}
@@ -2418,8 +2451,8 @@ bool SCI_METHOD Document::SetStyles(Sci_Position length, const char *styles) {
 void Document::EnsureStyledTo(Sci::Position pos) {
 	if ((enteredStyling == 0) && (pos > GetEndStyled())) {
 		IncrementStyleClock();
-		const Sci::Position endStyledTo = LineStartPosition(GetEndStyled());
 		if (pli && !pli->UseContainerLexing()) {
+			const Sci::Position endStyledTo = LineStartPosition(GetEndStyled());
 			pli->Colourise(endStyledTo, pos);
 		} else {
 			// Ask the watchers to style, and stop as soon as one responds.
@@ -2427,9 +2460,6 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
-		}
-		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
-			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);
 		}
 	}
 }
@@ -2823,11 +2853,6 @@ Sci::Position Document::BraceMatch(Sci::Position position, Sci::Position /*maxRe
 class BuiltinRegex : public RegexSearchBase {
 public:
 	explicit BuiltinRegex(CharClassify *charClassTable) : search(charClassTable) {}
-	BuiltinRegex(const BuiltinRegex &) = delete;
-	BuiltinRegex(BuiltinRegex &&) = delete;
-	BuiltinRegex &operator=(const BuiltinRegex &) = delete;
-	BuiltinRegex &operator=(BuiltinRegex &&) = delete;
-	~BuiltinRegex() override = default;
 
 	Sci::Position FindText(Document *doc, Sci::Position minPos, Sci::Position maxPos, const char *s,
                         bool caseSensitive, bool word, bool wordStart, FindOption flags,
@@ -3163,8 +3188,8 @@ bool MatchOnLines(const Document *doc, const Regex &regexp, const RESearchRange 
 			matched = true;
 			if (resr.increment > 0) {
 				break;
-						}
 			}
+		}
 		if (matched) {
 			break;
 		}
@@ -3203,7 +3228,6 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 			std::wregex regexp;
 			regexp.assign(ws, flagsRe);
 			matched = MatchOnLines<UTF8Iterator>(doc, regexp, resr, search);
-
 		} else {
 			std::regex regexp;
 			regexp.assign(s, flagsRe);
@@ -3221,11 +3245,9 @@ Sci::Position Cxx11RegexFindText(const Document *doc, Sci::Position minPos, Sci:
 		//const double durSearch = ep.Duration(true);
 		//Platform::DebugPrintf("Search:%9.6g \n", durSearch);
 		return posMatch;
-	} catch (std::regex_error & rerr) {
-		rerr;
+	} catch (std::regex_error &) {
 		// Failed to create regular expression
-		//throw RegexError();
-		return -1;
+		throw RegexError();
 	} catch (...) {
 		// Failed in some other way
 		return -1;
@@ -3313,11 +3335,11 @@ Sci::Position BuiltinRegex::FindText(Document *doc, Sci::Position minPos, Sci::P
 					success = search.Execute(di, pos, endOfLine);
 					if (success) {
 						endPos = search.eopat[0];
-						} else {
-					search.bopat = bopat;
-					search.eopat = eopat;
+					} else {
+						search.bopat = bopat;
+						search.eopat = eopat;
+					}
 				}
-			}
 			}
 			pos = search.bopat[0];
 			lenRet = endPos - pos;

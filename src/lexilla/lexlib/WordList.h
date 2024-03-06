@@ -13,7 +13,7 @@ namespace Lexilla {
 /**
  */
 class WordList {
-	// Each word contains at least one character - a empty word acts as sentinel at the end.
+	// Each word contains at least one character - an empty word acts as sentinel at the end.
 	char **words;
 	char *list;
 	size_t len;
@@ -37,7 +37,6 @@ public:
 	bool InListAbbreviated(const char *s, const char marker) const noexcept;
 	bool InListAbridged(const char *s, const char marker) const noexcept;
 	const char *WordAt(int n) const noexcept;
-	bool InClassificator(const char *s, char &cOut);
 };
 
 }

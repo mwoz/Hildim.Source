@@ -415,7 +415,6 @@ int RESearch::GetBackslashExpression(const char *pattern, int &incr) noexcept {
 }
 
 const char *RESearch::Compile(const char *pattern, Sci::Position length, bool caseSensitive, bool posix) {
-
 	if (!pattern || !length) {
 		if (sta)
 			return nullptr;
@@ -503,7 +502,7 @@ const char *RESearch::Compile(const char *pattern, Sci::Position length, bool ca
 								} else {
 									i++;
 									p++;
-									int incr;
+									int incr = 0;
 									c2 = GetBackslashExpression(p, incr);
 									i += incr;
 									p += incr;
@@ -538,7 +537,7 @@ const char *RESearch::Compile(const char *pattern, Sci::Position length, bool ca
 				} else if (*p == '\\' && p[1]) {
 					i++;
 					p++;
-					int incr;
+					int incr = 0;
 					const int c = GetBackslashExpression(p, incr);
 					i += incr;
 					p += incr;
@@ -654,8 +653,8 @@ const char *RESearch::Compile(const char *pattern, Sci::Position length, bool ca
 						return badpat("Unmatched \\)");
 					}
 				} else {
-					int incr;
-					int c = GetBackslashExpression(p, incr);
+					int incr = 0;
+					const int c = GetBackslashExpression(p, incr);
 					i += incr;
 					p += incr;
 					if (c >= 0) {
@@ -766,7 +765,7 @@ int RESearch::Execute(const CharacterIndexer &ci, Sci::Position lp, Sci::Positio
 		if (lp >= endp)	/* if EOS, fail, else fall through. */
 			return 0;
 	}
-		[[fallthrough]];
+	[[fallthrough]];
 	default:			/* regular matching all the way. */
 		while (lp < endp) {
 			ep = PMatch(ci, lp, endp, ap);
@@ -776,7 +775,7 @@ int RESearch::Execute(const CharacterIndexer &ci, Sci::Position lp, Sci::Positio
 				if (pos != lp) {
 					ep = NOTFOUND;
 				} else {
-				break;
+					break;
 				}
 			}
 			lp++;
@@ -795,7 +794,7 @@ int RESearch::Execute(const CharacterIndexer &ci, Sci::Position lp, Sci::Positio
 				return 0;
 			}
 		} else {
-		return 0;
+			return 0;
 		}
 	}
 
@@ -939,8 +938,8 @@ Sci::Position RESearch::PMatch(const CharacterIndexer &ci, Sci::Position lp, Sci
 			Sci::Position llp = lp;		/* lazy lp for LCLO       */
 			Sci::Position e = NOTFOUND; /* extra pointer for CLO  */
 			while (llp >= are) {
-				Sci::Position q;
-				if ((q = PMatch(ci, llp, endp, ap)) != NOTFOUND) {
+				const Sci::Position q = PMatch(ci, llp, endp, ap);
+				if (q != NOTFOUND) {
 					e = q;
 					lp = llp;
 					if (op != LCLO) return e;
@@ -958,5 +957,3 @@ Sci::Position RESearch::PMatch(const CharacterIndexer &ci, Sci::Position lp, Sci
 		}
 	return lp;
 }
-
-
