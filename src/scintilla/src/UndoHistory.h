@@ -98,7 +98,7 @@ public:
 	const char *AppendAction(ActionType at, Sci::Position position, const char *data, Sci::Position lengthData, bool &startSequence, bool mayCoalesce=true);
 
 	void BeginUndoAction(bool mayCoalesce=false) noexcept;
-	void EndUndoAction() noexcept;
+	int EndUndoAction() noexcept;
 	void DropUndoSequence() noexcept;
 	void DeleteUndoHistory() noexcept;
 

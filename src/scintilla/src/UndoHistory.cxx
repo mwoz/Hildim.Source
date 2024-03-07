@@ -102,7 +102,7 @@ void ScaledVector::SetValueAt(size_t index, size_t value) {
 }
 
 void ScaledVector::ClearValueAt(size_t index) noexcept {
-	// 0 fits in any size element so no expansion needed so no exceptions 
+	// 0 fits in any size element so no expansion needed so no exceptions
 	WriteValue(bytes.data() + index * element.size, element.size, 0);
 }
 
@@ -331,14 +331,18 @@ void UndoHistory::BeginUndoAction(bool mayCoalesce) noexcept {
 	undoSequenceDepth++;
 }
 
-void UndoHistory::EndUndoAction() noexcept {
-	PLATFORM_ASSERT(undoSequenceDepth > 0);
+int UndoHistory::EndUndoAction() noexcept {
+    int res = undoSequenceDepth;
+	if (!res)
+    return res;
+    PLATFORM_ASSERT(undoSequenceDepth > 0);
 	undoSequenceDepth--;
 	if (0 == undoSequenceDepth) {
 		if (currentAction > 0) {
 			actions.types[PreviousAction()].mayCoalesce = false;
 		}
 	}
+    return res;
 }
 
 void UndoHistory::DropUndoSequence() noexcept {

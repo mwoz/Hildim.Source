@@ -123,6 +123,9 @@
     <ClCompile Include="src\ChangeHistory.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UndoHistory.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -285,6 +288,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ChangeHistory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UndoHistory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

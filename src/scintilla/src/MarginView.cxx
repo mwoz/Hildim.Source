@@ -384,9 +384,9 @@ void MarginView::PaintOneMargin(Surface *surface, PRectangle rc, PRectangle rcOn
 						);
 					} else {
 						const int state = model.pdoc->GetLineState(lineDoc);
-						snprintf(number, std::size(number), "%0X", state);
+						snprintf(number, std::size(number), " %08X", state);
 					}
-					sNumber = number;
+					sNumber += number;
 				}
 				PRectangle rcNumber = rcMarker;
 				// Right justify
@@ -477,8 +477,8 @@ void MarginView::PaintMargin(Surface *surface, Sci::Line topLine, PRectangle rc,
 			rcOneMargin.right = rcOneMargin.left + marginStyle.width;
 
 			if (marginStyle.style != MarginType::Number) {
-				if (marginStyle.ShowsFolding()) {
-					// Required because of special way brush is created for selection margin
+				if (marginStyle.ShowsFolding() ) {//Передаем в маску 1 если не хотим применять алгоритм сглаживания цвета в колонке фолдинга
+					// Required because of special way brush is created for selection margin&& !(marginStyle.mask & 1)
 					// Ensure patterns line up when scrolling with separate margin view
 					// by choosing correctly aligned variant.
 					const bool invertPhase = static_cast<int>(ptOrigin.y) & 1;

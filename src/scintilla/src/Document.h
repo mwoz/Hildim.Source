@@ -396,7 +396,7 @@ public:
 	}
 	bool IsCollectingUndo() const noexcept { return cb.IsCollectingUndo(); }
 	void BeginUndoAction(bool coalesceWithPrior=false) noexcept { cb.BeginUndoAction(coalesceWithPrior); }
-	void EndUndoAction() noexcept { cb.EndUndoAction(); }
+	int EndUndoAction() { return cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const noexcept { return cb.IsSavePoint(); }
@@ -663,6 +663,7 @@ public:
 	virtual void NotifyDeleted(Document *doc, void *userData) noexcept = 0;
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) = 0;
+	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }

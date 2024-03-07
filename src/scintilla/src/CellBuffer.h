@@ -22,7 +22,6 @@ public:
 
 class UndoHistory;
 class ChangeHistory;
-
 /**
  * The line vector contains information about each of the lines in a cell buffer.
  */
@@ -165,7 +164,7 @@ public:
 	bool SetUndoCollection(bool collectUndo) noexcept;
 	bool IsCollectingUndo() const noexcept;
 	void BeginUndoAction(bool mayCoalesce=false) noexcept;
-	void EndUndoAction() noexcept;
+	int EndUndoAction();
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory() noexcept;
 

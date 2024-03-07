@@ -1167,7 +1167,7 @@ void PositionCache::MeasureWidths(Surface *surface, const ViewStyle &vstyle, uns
 	if (unicode) {
 		surface->MeasureWidthsUTF8(fontStyle, sv, positions);
 	} else {
-		surface->MeasureWidths(fontStyle, sv, positions);
+	surface->MeasureWidths(fontStyle, sv, positions);
 	}
 	if (probe < pces.size()) {
 		// Store into cache
