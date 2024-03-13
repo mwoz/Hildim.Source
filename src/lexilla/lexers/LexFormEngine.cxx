@@ -668,7 +668,17 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 				_strlwr(s);
 
 				if (keywords[KW_FM_PGSQL_FUNCTIONS].InList(s)) {
-					sc.ChangeState(SCE_FM_PGSQL_FUNCTION);
+					bool b = true;
+					if (!strncmp(s, "left", lenW) || !strncmp(s, "right", lenW)) {
+						std::string se = styler.GetRangeLowered(sc.currentPos - lenW, styler.LineEnd(sc.currentLine) + 1);
+						char c;
+						if (keywords[KW_FM_PGSQL_INDENT_CLASS].InClassificator(se.c_str(), c)) {
+							b = false;
+							sc.ChangeState($transparent_tagNum ? SCE_FM_PGSQL_STATEMENT_NOFOLD : SCE_FM_PGSQL_STATEMENT);
+						}
+					}
+					if(b)
+						sc.ChangeState(SCE_FM_PGSQL_FUNCTION);
 				}
 				else if (keywords[KW_FM_PGSQL_DATA_TYPES].InList(s)) {
 					sc.ChangeState(SCE_FM_PGSQL_DATATYPE);

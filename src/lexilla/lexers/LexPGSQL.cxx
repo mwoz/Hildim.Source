@@ -410,6 +410,16 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 					//sc.GetCurrentLowered(s, sizeof(s));
 
 					if (keywords[KW_PGSQL_FUNCTIONS].InList(s)) {
+						bool b = true;
+						if (!strncmp(s, "left", lenW) || !strncmp(s, "right", lenW)) {
+							std::string se = styler.GetRangeLowered(sc.currentPos - lenW, styler.LineEnd(sc.currentLine) + 1);
+							char c;
+							if (keywords[KW_PGSQL_INDENT_CLASS].InClassificator(se.c_str(), c)) {
+								b = false;
+								sc.ChangeState($transparent_tagNum ? SCE_PGSQL_STATEMENT_NOFOLD : SCE_PGSQL_STATEMENT);
+							}
+						}
+						if (b)
 						sc.ChangeState(SCE_PGSQL_FUNCTION);
 					}
 					else if (keywords[KW_PGSQL_DATA_TYPES].InList(s)) {
