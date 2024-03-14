@@ -286,7 +286,6 @@ bool LexerPGSQL::TryClearTransTagStyle(StyleContext& sc) {
 void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler);
-	int styleBeforeDCKeyword = SCE_PGSQL_DEFAULT;
 
 	if (startPos) {
 		if (startPos == sc.currentPos)
@@ -332,7 +331,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			styler.SetLineState(sc.currentLine, TransparentTagNum2LineState());
 		}
 		// Determine if the current state should terminate.
-		switch (sc.state) {
+		switch (sc.state) { 
 		case SCE_PGSQL_$TAG:
 			if (sc.ch == '$') {
 				int nextState = SCE_PGSQL_$STRING;
@@ -491,7 +490,6 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 					sc.GetCurrent(s0, sizeof(s0));
 
 					char* s = s0 + 1;
-					int lenW = strlen(s);
 
 					if (s[0] == '_') {
 						if (keywords[KW_PGSQL_RADIUS].InList(s)) {
@@ -618,7 +616,6 @@ public:
 		atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
 	}
 	void SkipSameStyle() {
-		Sci_PositionU j = currentPos;
 		for (; (style == styler.StyleAt(currentPos)) && (currentPos < endPos) && (styler[currentPos] != '\r)' && (styler[currentPos] != '\n')); currentPos++);
 		currentPos--;
 
@@ -648,7 +645,7 @@ public:
 
 };
 
-void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, int , IDocument *pAccess) {
 	if (!options.fold)
 		return;
 	LexAccessor styler(pAccess);
@@ -721,34 +718,12 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 				if ((c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'i' || c == 'l' || c == 'f' || c == 'w') && isspacechar(fc.chPrev)) {
 					std::string strSt = fc.GetCurLowered();
 					
-					Sci_PositionU j;
-
-					//if (strSt == "begin") {
-					//	if (fc.GetNextLowered(SCE_PGSQL_DEFAULT) != "transaction") { //не фолдим начало транзакций
-					//		if (levelMinCurrent > levelCurrent)
-					//			levelMinCurrent = levelCurrent;
-					//		levelCurrent++;
-					//	}
-					//}
-					//else 
 					if (strSt == "loop" || strSt == "case" || strSt == "begin" || strSt == "if") {
 						if (levelMinCurrent > levelCurrent)
 							levelMinCurrent = levelCurrent;
 						levelCurrent++;
 					}
-					//lse if (strSt ==  "if") {
-					//	if (levelMinCurrent > levelCurrent)
-					//		levelMinCurrent = levelCurrent;
-					//	levelCurrent++;
-					//	//levelCurrent++;
-					//
-					//else if (strSt ==  "else" || strSt == "elseif" || strSt == "when") {
-					//	int prevLevel = styler.LevelAt(fc.lineCurrent - 1);
-					//	if (!(prevLevel & SC_FOLDLEVELHEADERFLAG) && !visibleChars) {
-					//		levelMinCurrent--;
-					//	}
-					//
-					//}
+
 					else if (strSt == "create") {
 						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
 						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц						

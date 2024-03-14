@@ -333,7 +333,7 @@ bool WordList::InClassificator(const char *s, char &cOut) {
 					if (*a == ':') {
 						a++; 
 						cOut = static_cast<char>(atoi(a));
-						int curLen = a - words[j] - 1;
+						size_t curLen = a - words[j] - 1;
 						if(!(words[j + 1][0] && strlen(words[j + 1]) > curLen && !_memicmp(words[j + 1], words[j], curLen)))
 							return true;
 					}

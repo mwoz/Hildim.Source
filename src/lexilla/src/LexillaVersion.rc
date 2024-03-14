@@ -5,8 +5,8 @@
 #include <windows.h>
 #include "../../../HildimVer.h"
 
-#define VERSION_LEXILLA "5.3.1.1"
-#define VERSION_WORDS 5, 3, 1, 1
+#define VERSION_LEXILLA "5.3.1.2"
+#define VERSION_WORDS 5, 3, 1, 2
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION	VERSION_WORDS

@@ -163,13 +163,13 @@ Colour SciTEBase::ColourOfProperty(const char *key, Colour colourDefault, bool i
 }
 
 float clr_brightness(long clr) {
-	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
+	return static_cast<float>((((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.);
 }
 
 void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
-	float var_R = R / 255.0;
-	float var_G = G / 255.0;
-	float var_B = B / 255.0;
+	double var_R = R / 255.0;
+	double var_G = G / 255.0;
+	double var_B = B / 255.0;
 	if (var_R > 0.04045) var_R = pow(((var_R + 0.055) / 1.055), 2.4);
 	else                   var_R = var_R / 12.92;
 	if (var_G > 0.04045) var_G = pow(((var_G + 0.055) / 1.055), 2.4);
@@ -180,58 +180,58 @@ void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
 	var_G = var_G * 100.;
 	var_B = var_B * 100.;
 	//Observer. = 2°, Illuminant = D65
-	float X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
-	float Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
-	float Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
-	float var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
-	float var_Y = Y / 100.000;          //ref_Y = 100.000
-	float var_Z = Z / 108.883;          //ref_Z = 108.883
+	double X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+	double Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+	double Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+	double var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
+	double var_Y = Y / 100.000;          //ref_Y = 100.000
+	double var_Z = Z / 108.883;          //ref_Z = 108.883
 	if (var_X > 0.008856) var_X = pow(var_X, (1. / 3.));
 	else                    var_X = (7.787 * var_X) + (16. / 116.);
 	if (var_Y > 0.008856) var_Y = pow(var_Y, (1. / 3.));
 	else                    var_Y = (7.787 * var_Y) + (16. / 116.);
 	if (var_Z > 0.008856) var_Z = pow(var_Z, (1. / 3.));
 	else                    var_Z = (7.787 * var_Z) + (16. / 116.);
-	l_s = (116. * var_Y) - 16.;
-	a_s = 500. * (var_X - var_Y);
-	b_s = 200. * (var_Y - var_Z);
+	double l_sd = (116. * var_Y) - 16.;
+	double a_sd = 500. * (var_X - var_Y);
+	double b_sd = 200. * (var_Y - var_Z);
 
-	l_s = l_s < 0. ? 0. : l_s > 100. ? 100. : l_s;
-	a_s = a_s < -128. ? -128. : a_s > 128. ? 128 : a_s;
-	b_s = b_s < -128. ? -128. : b_s > 128. ? 128 : b_s;
+	l_s = static_cast<float>(l_sd < 0. ? 0. : l_sd > 100. ? 100. : l_sd);
+	a_s = static_cast<float>(a_sd < -128. ? -128. : a_sd > 128. ? 128 : a_sd);
+	b_s = static_cast<float>(b_sd < -128. ? -128. : b_sd > 128. ? 128 : b_sd);
 }
 
 void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
-	float var_Y = (l_s + 16.) / 116.;
-	float var_X = a_s / 500. + var_Y;
-	float var_Z = var_Y - b_s / 200.;
+	double var_Y = (l_s + 16.) / 116.;
+	double var_X = a_s / 500. + var_Y;
+	double var_Z = var_Y - b_s / 200.;
 	if (pow(var_Y, 3) > 0.008856) var_Y = pow(var_Y, 3);
 	else                      var_Y = (var_Y - 16. / 116.) / 7.787;
 	if (pow(var_X, 3) > 0.008856) var_X = pow(var_X, 3);
 	else                      var_X = (var_X - 16. / 116.) / 7.787;
 	if (pow(var_Z, 3) > 0.008856) var_Z = pow(var_Z, 3);
 	else                      var_Z = (var_Z - 16. / 116.) / 7.787;
-	float X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
-	float Y = 100.000 * var_Y;   //ref_Y = 100.000
-	float Z = 108.883 * var_Z;    //ref_Z = 108.883
+	double X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
+	double Y = 100.000 * var_Y;   //ref_Y = 100.000
+	double Z = 108.883 * var_Z;    //ref_Z = 108.883
 	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
 	var_Y = Y / 100.;       //Y from 0 to 100.000
 	var_Z = Z / 100.;      //Z from 0 to 108.883
-	float var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
-	float var_G = var_X * -0.9689 + var_Y * 1.8758 + var_Z * 0.0415;
-	float var_B = var_X * 0.0557 + var_Y * -0.2040 + var_Z * 1.0570;
+	double var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
+	double var_G = var_X * -0.9689 + var_Y * 1.8758 + var_Z * 0.0415;
+	double var_B = var_X * 0.0557 + var_Y * -0.2040 + var_Z * 1.0570;
 	if (var_R > 0.0031308) var_R = 1.055 * pow(var_R, (1 / 2.4)) - 0.055;
 	else                     var_R = 12.92 * var_R;
 	if (var_G > 0.0031308) var_G = 1.055 * pow(var_G, (1 / 2.4)) - 0.055;
 	else                     var_G = 12.92 * var_G;
 	if (var_B > 0.0031308) var_B = 1.055 * pow(var_B, (1 / 2.4)) - 0.055;
 	else                     var_B = 12.92 * var_B;
-	R = var_R * 255.;
-	G = var_G * 255.;
-	B = var_B * 255.;
-	R = R > 255 ? 255 : R < 0 ? 0 : R;
-	G = G > 255 ? 255 : G < 0 ? 0 : G;
-	B = B > 255 ? 255 : B < 0 ? 0 : B;
+	double Rd = var_R * 255.;
+	double Gd = var_G * 255.;
+	double Bd = var_B * 255.;
+	R = static_cast<float>(Rd > 255 ? 255 : Rd < 0 ? 0 : Rd);
+	G = static_cast<float>(Gd > 255 ? 255 : Gd < 0 ? 0 : Gd);
+	B = static_cast<float>(Bd > 255 ? 255 : Bd < 0 ? 0 : Bd);
 }
 
 void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
@@ -254,8 +254,8 @@ void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
 			return;
 		}
 		nPoints = i;
-		m_x[i] = atof(mtch[1].str().c_str());
-		m_y[i] = atof(mtch[2].str().c_str());
+		m_x[i] = static_cast<float>(atof(mtch[1].str().c_str()));
+		m_y[i] = static_cast<float>(atof(mtch[2].str().c_str()));
 		if (i && m_x[i] <= m_x[i - 1]) {
 			h->Trace("Incorrect points order\n");
 			return;
@@ -286,9 +286,9 @@ Colour ColorConvertorLAB::Convert(Colour colorIn) {
 	if(!inicialized)
 		return colorIn;
 
-	float R = colorIn & 0x0000FF;
-	float G = (colorIn & 0x00FF00) >> 8;
-	float B = (colorIn & 0xFF0000) >> 16;
+	float R = static_cast<float>(colorIn & 0x0000FF);
+	float G = static_cast<float>((colorIn & 0x00FF00) >> 8);
+	float B = static_cast<float>((colorIn & 0xFF0000) >> 16);
 
 	float L, a_s, b_s;
 
@@ -312,7 +312,7 @@ Colour ColorConvertorLAB::Convert(Colour colorIn) {
     }
 	lab2rgb(L2, a_s, b_s, R, G, B);
 
-	return ColourRGB(R, G, B);
+	return ColourRGB(static_cast<int>(R), static_cast<int>(G), static_cast<int>(B));
 }
 
 /**
@@ -475,9 +475,9 @@ Colour invertColor2(Colour clr) {
 	if (clr == 0xFFFFFF)
 		return 0;
 
-	float R = clr & 0x0000FF;
-	float G = (clr & 0x00FF00) >> 8;
-	float B = (clr & 0xFF0000) >> 16;
+	float R = static_cast<float>(clr & 0x0000FF);
+	float G = static_cast<float>((clr & 0x00FF00) >> 8);
+	float B = static_cast<float>((clr & 0xFF0000) >> 16);
 
 	float l_s, a_s, b_s;
 
@@ -490,12 +490,12 @@ Colour invertColor2(Colour clr) {
 	//	//l_s = 100 - (pow(l_s / 100., 2) * 100);
 	//	l_s = 70. - ((l_s - 43.) / 43.) *((l_s - 43.) / 43.) *((l_s - 43.) / 43.) * 30.;
 	//}
-	l_s = l_s / 100.;
+	l_s = static_cast<float>(l_s / 100.);
 	//l_s = (-lN*lN*lN + lN*lN - lN + 1) * 100;
 	//l_s = (-2.5*lN*lN*lN + 2.5*lN*lN - lN + 1) * 100;
 	//l_s = (-2.8*lN*lN*lN + 2.6*lN*lN - 0.8*lN + 1) * 100;
 	//l_s = (4*(1-lN)*lN*lN*lN - lN + 1) * 100;
-	l_s = ((2-2.3*l_s)*l_s*l_s*l_s - 0.7*l_s + 1) * 100;
+	l_s = static_cast<float>(((2-2.3*l_s)*l_s*l_s*l_s - 0.7*l_s + 1) * 100);
 
 
 
@@ -511,13 +511,13 @@ Colour invertColor2(Colour clr) {
 	////////////////
 	lab2rgb(l_s, a_s, b_s, R, G, B);
 
-	return ColourRGB(R, G, B);
+	return ColourRGB(static_cast<unsigned int>(R), static_cast<unsigned int>(G), static_cast<unsigned int>(B));
 }
 
-Colour ColourRGBOrInvert(unsigned int red, unsigned int green, unsigned int blue, bool invert, bool isBG) {
-	if(!invert)
-		return ColourRGB(red, green, blue);
-}
+//Colour ColourRGBOrInvert(unsigned int red, unsigned int green, unsigned int blue, bool invert, bool isBG) {
+//	if(!invert)
+//		return ColourRGB(red, green, blue);
+//}
 
 long StyleDefinition::ForeAsLong(bool useInv) const {
 	long l = ColourFromString(fore);
@@ -539,7 +539,7 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 	if (style == STYLE_LINENUMBER) {
 		Colour fore, back; 
 
-		bool needRecalc = 0;
+		int needRecalc = 0;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
 			fore = layout.GetColorRef("FGCOLOR");
 			needRecalc = 1;
@@ -1253,11 +1253,11 @@ void SciTEBase::ReadProperties() {
 	wOutput.Call(SCI_SETFOLDMARGINCOLOUR, 1, cFold);
 	wFindRes.Call(SCI_SETFOLDMARGINCOLOUR, 1, cFold);
 
-	unsigned char r = (cFold & 0xFF0000) >> 16;
-	unsigned char g = (cFold & 0x00FF00) >> 8;
-	unsigned char b = cFold & 0x0000FF;
+	unsigned char r = static_cast<unsigned char>((cFold & 0xFF0000) >> 16);
+	unsigned char g = static_cast<unsigned char>((cFold & 0x00FF00) >> 8);
+	unsigned char b = static_cast<unsigned char>(cFold & 0x0000FF);
 
-	unsigned char r1 = (clrDefaultBack & 0xFF0000) >> 16;
+	unsigned char r1 = static_cast<unsigned char>((clrDefaultBack & 0xFF0000) >> 16);
 	unsigned char g1 = (clrDefaultBack & 0x00FF00) >> 8;
 	unsigned char b1 = clrDefaultBack & 0x0000FF;
 

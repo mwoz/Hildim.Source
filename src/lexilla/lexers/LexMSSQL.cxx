@@ -5,7 +5,7 @@
 // By Filip Yaghob <fyaghob@gmail.com>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h>
+#include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -116,7 +116,7 @@ class LexerMSSQL : public DefaultLexer {
 
 public:
 	LexerMSSQL() : DefaultLexer("sql", SCLEX_MSSQL), 
-		reCreateFold("^\\s*(proc\\W)|(procedure\\W)|(trigger\\W)|(view\\W)|(function\W)|(table\\s+\\w)", std::regex::ECMAScript),
+		reCreateFold("^\\s*(proc\\W)|(procedure\\W)|(trigger\\W)|(view\\W)|(function\\W)|(table\\s+\\w)", std::regex::ECMAScript),
 		reRegisterMacto("^\\s*__REGISTER_(REPORT)|(PLUGIN)|(WIZARD)|(FORM)_", std::regex::ECMAScript)
 	{}
 
@@ -259,11 +259,7 @@ void SCI_METHOD LexerMSSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 
 	styler.StartAt(startPos);
 
-	Sci_Position lineCurrent = styler.GetLine(startPos);
-	int spaceFlags = 0;
-
-	StyleContextEx sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
-	Sci_PositionU lengthDoc = startPos + length;
+	StyleContextEx sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 
 		// When the last char isn't part of the state (have to deal with it too)...
@@ -372,7 +368,6 @@ void SCI_METHOD LexerMSSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 						sc.GetCurrent(s0, sizeof(s0));
 
 						char* s = s0 + 1;
-						int lenW = strlen(s);
 
 						if (s[0] == '_') {
 							if (keywords[KW_MSSQL_RADIUS].InList(s)) {
@@ -391,7 +386,7 @@ void SCI_METHOD LexerMSSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 	sc.Complete();
 }
 
-void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, int, IDocument *pAccess) {
 	if (!options.fold)
 		return;
 	LexAccessor styler(pAccess);

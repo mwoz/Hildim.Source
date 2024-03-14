@@ -281,7 +281,7 @@ public:
 	int SCI_METHOD LineEndTypesSupported() noexcept override {
 		return SC_LINE_END_TYPE_UNICODE;
 	}
-	int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) noexcept override {
+	int SCI_METHOD AllocateSubStyles(int , int) noexcept override {
 		return -1;
 	}
 	int SCI_METHOD SubStylesStart(int)  noexcept override {
@@ -314,15 +314,15 @@ public:
 		return 0;
 	}
 
-	const char * SCI_METHOD NameOfStyle(int style) {
+	const char * SCI_METHOD NameOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD TagsOfStyle(int style) {
+	const char * SCI_METHOD TagsOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD DescriptionOfStyle(int style) {
+	const char * SCI_METHOD DescriptionOfStyle(int) {
 		return "";
 	}
 	// ILexer5 methods
@@ -591,9 +591,7 @@ bool LexerFormEngine::TryClearTransTagStyle(StyleContext& sc) {
 	return false;
 }
 
-void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& styler) {
-	int styleBeforeDCKeyword = SCE_SQL_DEFAULT;
-	
+void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& styler) {	
 	switch (sc.state) {
 	case SCE_FM_PGSQL_$TAG:
 		if (sc.ch == '$') {
@@ -751,7 +749,6 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 				sc.GetCurrent(s0, sizeof(s0));
 
 				char* s = s0 + 1;
-				int lenW = strlen(s);
 
 				if (s[0] == '_') {
 					if (keywords[KW_MSSQL_RADIUS].InList(s)) {
@@ -908,7 +905,6 @@ void SCI_METHOD LexerFormEngine::ColoriseSQL(StyleContext &sc) {
 				sc.GetCurrent(s0, sizeof(s0));
 
 				char* s = s0 + 1;
-				int lenW = strlen(s);
 
 				if (s[0] == '_') {
 					if (keywords[KW_MSSQL_RADIUS].InList(s)) {
@@ -1890,7 +1886,6 @@ public:
 		currentLevel++;
 	}
 	void SkipSameStyle() {
-		Sci_PositionU j = currentPos;
 		for (; (style == (styler.StyleAt(currentPos) & 0xFF)) && (currentPos < endPos) && (styler[currentPos] != '\r)' && (styler[currentPos] != '\n')); currentPos++);
 		currentPos--;
 
@@ -2312,15 +2307,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyl
 				if ((c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'i' || c == 'l' || c == 'f' || c == 'w') && isspacechar(fc.chPrev)) {
 						
 					fc.GetNextLowered(s, 100);
-					//std::string strSt = fc.GetCurLowered();
 
-					Sci_PositionU j;
-
-					//if (!strcmp(s, "begin")) {
-					//	if (fc.GetStyleLowered(SCE_FM_PGSQL_DEFAULT) != "transaction") { //не фолдим начало транзакций
-					//		fc.Up();
-					//	}
-					//}
 					if (!strcmp(s, "loop") || !strcmp(s, "case") || !strcmp(s, "if") || !strcmp(s, "begin")) {
 						fc.Up();
 					}

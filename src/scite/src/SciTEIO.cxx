@@ -1451,7 +1451,7 @@ static int lua_string_from_utf8(lua_State *L) {
 	if (!lua_isnumber(L, 2))
 		cp = GUI::CodePageFromName(lua_tostring(L, 2));
 	else
-		cp = lua_tointeger(L, 2);
+		cp = static_cast<int>(lua_tointeger(L, 2));
 	std::string ss = GUI::ConvertFromUTF8(s, cp);
 	lua_pushstring(L, ss.c_str());
 	return 1;

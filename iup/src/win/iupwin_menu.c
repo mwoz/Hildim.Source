@@ -473,7 +473,7 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
     SetRect(&rect, bFullSelect ? 0 : parent->x, 0, width, height);
     SetRect(&rectIcon, 0, 0,  parent->x, height);
 
-    const char* clr = drawitem->itemState & ODS_SELECTED ? (drawitem->itemState & ODS_GRAYED ? "HLINACTIVECOLOR" : "HLCOLOR") : "DRAWBGCOLOR";
+    char* clr = drawitem->itemState & ODS_SELECTED ? (drawitem->itemState & ODS_GRAYED ? "HLINACTIVECOLOR" : "HLCOLOR") : "DRAWBGCOLOR";
 
     if (iupwinGetColorRef(root, clr, &bgcolor))
     {
@@ -513,7 +513,7 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
         
         char* text, *font;
         TCHAR* wtext;
-        int lenKey, lenW;
+        int lenW;
         font = IupGetAttribute(root, "FONT");
         text = iupAttribGet(ih, "TITLE");
 
@@ -582,9 +582,9 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
             char* key = strchr(text, '\t');
             if (key) {
                 key++;
-                int lenKey = strlen(key);
-                len -= (lenKey+1);
-                lenW = lenKey;
+                int lenK = strlen(key);
+                len -= (lenK+1);
+                lenW = lenK;
                 wtext = iupwinStrToSystemLen(key, &lenW);
                 //text[len - 1] = 0;
 
@@ -668,7 +668,7 @@ static void winMeasureItem(Ihandle* ih, MEASUREITEMSTRUCT* measureitem)
         font = IupGetAttribute(root, "FONT");
         Ihandle* brother = parent->firstchild;
 
-        int w, h, w1Max, w2Max;
+        int w, h = 0, w1Max, w2Max;
         w1Max = 0; w2Max = 0;
 
         while (brother) {
@@ -711,6 +711,7 @@ static void winMeasureItem(Ihandle* ih, MEASUREITEMSTRUCT* measureitem)
 
 static int winMenuSetOwnerdrowAttrib(Ihandle* ih, const char* value)
 {
+    value;
     IupSetCallback(ih, "_IUPWIN_MEASUREITEM_CB", (Icallback)winMeasureItem);
     IupSetCallback(ih, "_IUPWIN_DRAWITEM_CB", (Icallback)winMenuDrawItem);
     return 1;

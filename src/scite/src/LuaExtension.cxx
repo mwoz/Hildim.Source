@@ -237,7 +237,7 @@ static int cf_scite_send(lua_State *L) {
 
 	int paneIndex = lua_upvalueindex(1);
 	check_pane_object(L, paneIndex);
-	int message = luaL_checkinteger(L, 1);
+	int message = static_cast<int>(luaL_checkinteger(L, 1));
 
 	lua_pushvalue(L, paneIndex);
 	lua_replace(L, 1);
@@ -281,7 +281,7 @@ static int cf_scite_open(lua_State *L) {
 }
 
 static int cf_scite_menu_command(lua_State *L) {
-	int cmdID = luaL_checkinteger(L, 1);
+	int cmdID = static_cast<int>(luaL_checkinteger(L, 1));
 	if (cmdID) {
 		host->DoMenuCommand(cmdID);
 	}
@@ -296,7 +296,7 @@ static int cf_scite_get_editor(lua_State *L) {
 static int cf_scite_save_encoding_file(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 	const char *body = luaL_checkstring(L, 2);
-	int encoding = lua_tointeger(L, 3);
+	int encoding = static_cast<int>(lua_tointeger(L, 3));
 
 
 	FilePath fPath = GUI::StringFromUTF8(path);
@@ -358,9 +358,9 @@ static int cf_scite_Read(lua_State *L) {
 static int cf_scite_RGB2LAB(lua_State *L) {
 	std::string err;
 	float R, G, B, l_s, a_s, b_s;
-	R = luaL_checkinteger(L, 1);
-	G = luaL_checkinteger(L, 2);
-	B = luaL_checkinteger(L, 3);
+	R = static_cast<float>(luaL_checkinteger(L, 1));
+	G = static_cast<float>(luaL_checkinteger(L, 2));
+	B = static_cast<float>(luaL_checkinteger(L, 3));
 	if ((R < 0 || R > 255) || (G < 0 || G > 255) || (B < 0 || B > 255)) {
 		err = "One from arguments (r,g,b) is negative or more then 255";
 		goto errr;
@@ -381,8 +381,7 @@ errr:
 static int cf_scite_InvertColor(lua_State* L) {
 	lua_pushnumber(L, 0);
 	if (host) {
-
-		lua_pushnumber(L, host->InvertColor(luaL_checkinteger(L, 1)));
+		lua_pushnumber(L, host->InvertColor(static_cast<int>(luaL_checkinteger(L, 1))));
 		return 1;
 	}
 	return 0;
@@ -392,9 +391,9 @@ static int cf_scite_LAB2RGB(lua_State *L) {
 	std::string err;
 	float R, G, B, l_s, a_s, b_s;
 
-	l_s = luaL_checknumber(L, 1);
-	a_s = luaL_checknumber(L, 2);
-	b_s = luaL_checknumber(L, 3);
+	l_s = static_cast<float>(luaL_checknumber(L, 1));
+	a_s = static_cast<float>(luaL_checknumber(L, 2));
+	b_s = static_cast<float>(luaL_checknumber(L, 3));
 
 	if (abs(a_s) > 128 || abs(b_s) > 128 ) {
 		err = "One from arguments (a_s, b_s) is less then -128 or more then 128";
@@ -407,9 +406,9 @@ static int cf_scite_LAB2RGB(lua_State *L) {
 
 	lab2rgb(l_s, a_s, b_s, R, G, B);
 
-	lua_pushinteger(L, R);
-	lua_pushinteger(L, G);
-	lua_pushinteger(L, B);
+	lua_pushinteger(L, static_cast<lua_Integer>(R));
+	lua_pushinteger(L, static_cast<lua_Integer>(G));
+	lua_pushinteger(L, static_cast<lua_Integer>(B));
 	return 3;
 errr:
 	lua_pushboolean(L, false);
@@ -420,7 +419,7 @@ errr:
 static int cf_scite_compare_encoding_file(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 	const char *body = luaL_checkstring(L, 2);
-	int encoding = lua_tointeger(L, 3);
+	int encoding = static_cast<int>(lua_tointeger(L, 3));
 
 
 	FilePath fPath = GUI::StringFromUTF8(path);
@@ -515,7 +514,7 @@ static int lua_string_from_utf8(lua_State *L) {
 		if (!lua_isnumber(L, 2))
 			cp = GUI::CodePageFromName(lua_tostring(L, 2));
 		else
-			cp = lua_tointeger(L, 2);
+			cp = static_cast<int>(lua_tointeger(L, 2));
 	}
 	std::string ss = GUI::ConvertFromUTF8(s, cp);
 	lua_pushstring(L, ss.c_str());
@@ -531,7 +530,7 @@ static int lua_string_to_utf8(lua_State *L) {
 		if (!lua_isnumber(L, 2))
 			cp = GUI::CodePageFromName(lua_tostring(L, 2));
 		else
-			cp = lua_tointeger(L, 2);
+			cp = static_cast<int>(lua_tointeger(L, 2));
 	}
 	std::string ss = GUI::ConvertToUTF8(s, cp);
 	lua_pushstring(L, ss.c_str());
@@ -675,7 +674,7 @@ static int cf_pane_textrange(lua_State *L) {
 
 static int cf_pane_insert(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
-	int pos = luaL_checkinteger(L, 2);
+	int pos = static_cast<int>(luaL_checkinteger(L, 2));
 	const char *s = luaL_checkstring(L, 3);
 	host->Insert(p, pos, s);
 	return 0;
@@ -709,7 +708,7 @@ static int cf_pane_findtext(lua_State *L) {
 
 		ft.lpstrText = const_cast<char*>(t);
 
-		int flags = (nArgs > 2) ? luaL_checkinteger(L, 3) : 0;
+		int flags = (nArgs > 2) ? static_cast<int>(luaL_checkinteger(L, 3)) : 0;
 		hasError = (flags == 0 && lua_gettop(L) > nArgs);
 
 		if (!hasError) {
@@ -764,7 +763,7 @@ static int cf_Reg_HotKey(lua_State* L){
 			// key is at index -2 and value at index -1
 			//ccc = luaL_checkinteger(L, -2);
 
-			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), luaL_checkinteger(L, -1));
+			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), static_cast<int>(luaL_checkinteger(L, -1)));
 			lua_pop(L, 1);
 			i++;
 		}
@@ -797,7 +796,7 @@ static int sf_findfiles(lua_State* L) {
 			lua_pushinteger(L, findFileData.dwFileAttributes);
 			lua_setfield(L, -2, "attributes");
 
-			lua_pushinteger(L, findFileData.nFileSizeHigh * ((lua_Number)MAXDWORD + 1) +
+			lua_pushinteger(L, findFileData.nFileSizeHigh * ((lua_Integer)MAXDWORD + 1) +
 				findFileData.nFileSizeLow);
 			lua_setfield(L, -2, "size");
 
@@ -841,7 +840,7 @@ static int cf_EnsureVisible(lua_State* L){
 static int cf_HideForeReolad(lua_State* L){
 	int close =0;
 	if(lua_isinteger(L, 1))
-		close = luaL_checkinteger(L, 1);
+		close = static_cast<int>(luaL_checkinteger(L, 1));
 	host->HideForeReolad(close);
 	return 0;
 }
@@ -874,7 +873,7 @@ static int sf_SavePosition(lua_State* L) {
 }
 
 static int sf_BlockUpdate(lua_State* L) {
-	int cmd = luaL_checkinteger(L, 1);
+	int cmd = static_cast<int>(luaL_checkinteger(L, 1));
 	host->BlockUpdate(cmd);
 	return 0;
 }
@@ -941,7 +940,7 @@ static int sf_SetOverrideLanguage(lua_State* L){
 
 static int sf_ExecuteHelp(lua_State* L){
 	const char * cmd = luaL_checkstring(L, 1);
-	int hh_cmd = luaL_checkinteger(L, 2);
+	int hh_cmd = static_cast<int>(luaL_checkinteger(L, 2));
 	host->ExecuteHelp(cmd, hh_cmd);
 	return 0;
 }
@@ -1004,7 +1003,7 @@ static int cf_match_replace(lua_State *L) {
 
 	host->Send(pmo->pane, SCI_SETTARGETSTART, pmo->startPos, 0);
 	host->Send(pmo->pane, SCI_SETTARGETEND, pmo->endPos, 0);
-	host->Send(pmo->pane, SCI_REPLACETARGET, lua_rawlen(L, 2), reinterpret_cast<sptr_t>(replacement));
+	host->Send(pmo->pane, SCI_REPLACETARGET, static_cast<uptr_t>(lua_rawlen(L, 2)), reinterpret_cast<sptr_t>(replacement));
 	pmo->endPos = host->Send(pmo->pane, SCI_GETTARGETEND, 0, 0);
 	return 0;
 }
@@ -1095,9 +1094,9 @@ static int cf_pane_match(lua_State *L) {
 		pmo->endPos = pmo->endPosOrig = 0;
 		pmo->flags = 0;
 		if (nargs >= 3) {
-			pmo->flags = luaL_checkinteger(L, 3);
+			pmo->flags = static_cast<int>(luaL_checkinteger(L, 3));
 			if (nargs >= 4) {
-				pmo->endPos = pmo->endPosOrig = luaL_checkinteger(L, 4);
+				pmo->endPos = pmo->endPosOrig = static_cast<long>(luaL_checkinteger(L, 4));
 				if (pmo->endPos < 0) {
 					raise_error(L, "Invalid argument 3 for <pane>:match.  Positive number or zero expected.");
 					return 0;
@@ -1269,38 +1268,38 @@ static int bf_current(lua_State *L) {
 
 static int bf_get_buffer_side(lua_State *L) {
 
-	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->GetBufferSide(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->GetBufferSide(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 static int bf_get_buffer_order(lua_State *L) {
 
-	lua_pushinteger(L, host->GetBufferOrder(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, host->GetBufferOrder(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 static int bf_get_buffer_modtime(lua_State *L) {
 
-	lua_pushinteger(L, host->GetBufferModTime(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, host->GetBufferModTime(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 
 static int bf_get_buffer_unicmode(lua_State *L) {
 	
-	lua_pushinteger(L, host->GetBufferUnicMode(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, host->GetBufferUnicMode(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 
 static int bf_get_buffer_redonly(lua_State *L) {
 
-	lua_pushboolean(L, host->GetBufferReadOnly(luaL_checkinteger(L, 1)));
+	lua_pushboolean(L, host->GetBufferReadOnly(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 
 static int bf_is_cloned(lua_State *L) {
-	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->Cloned(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, curBufferIndex < 0 ? 0 : host->Cloned(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 static int bf_index_of_clone(lua_State *L) {
-	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->IndexOfClone(luaL_checkinteger(L, 1)));
+	lua_pushinteger(L, curBufferIndex < 0 ? -1 : host->IndexOfClone(static_cast<int>(luaL_checkinteger(L, 1))));
 	return 1;
 }
 static int bf_buffer_by_name(lua_State *L) {
@@ -1319,7 +1318,7 @@ static int bf_get_count(lua_State *L){
 }
 
 static int bf_get_buffer_name(lua_State *L){
-	int i = luaL_checkinteger(L, 1);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
 	char c[2000];
 	host->GetBufferName(i, c);
 	lua_pushstring(L, c);
@@ -1339,32 +1338,32 @@ static int bf_get_cobuffer_name(lua_State *L){
 }
 
 static int bf_get_buffer_saved(lua_State *L){
-	int i = luaL_checkinteger(L, 1);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
 	lua_pushboolean(L, host->GetBuffersSavedState(i));
 	return 1;
 }
 
 static int bf_get_buffer_encoding(lua_State *L) {
-	int i = luaL_checkinteger(L, 1);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
 	lua_pushinteger(L, host->GetBufferEncoding(i));
 	return 1;
 }
 
 static int bf_set_buffer_encoding(lua_State *L) {
-	int i = luaL_checkinteger(L, 1);
-	int e = luaL_checkinteger(L, 2);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
+	int e = static_cast<int>(luaL_checkinteger(L, 2));
 	host->SetBufferEncoding(i, e);
 	return 0;
 }
 
 static int bf_get_filetime(lua_State *L) {
-	int i = luaL_checkinteger(L, 1);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
 	lua_pushinteger(L, host->GetBufferFileTime(i));
 	return 1;
 }
 
 static int bf_set_filetime(lua_State *L) {
-	int i = luaL_checkinteger(L, 1);
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
 	host->ClearBufferFileTime(i);
 	return 0;
 }
@@ -1372,7 +1371,7 @@ static int bf_set_filetime(lua_State *L) {
 
 
 static int cf_set_document_at(lua_State *L){
-	int index = luaL_checkinteger(L, 1);
+	int index = static_cast<int>(luaL_checkinteger(L, 1));
 	int updateStack = 1;
 	if (lua_isboolean(L, 2))
 		updateStack = lua_toboolean(L, 2);
@@ -1395,7 +1394,7 @@ static int cf_global_dostring(lua_State *L) {
 	int nargs = lua_gettop(L);
 	const char *code = luaL_checkstring(L, 1);
 	const char *name = luaL_optstring(L, 2, code);
-	if (0 == luaL_loadbuffer(L, code, lua_rawlen(L, 1), name)) {
+	if (0 == luaL_loadbuffer(L, code, static_cast<size_t>(lua_rawlen(L, 1)), name)) {
 		lua_call(L, 0, LUA_MULTRET);
 		return lua_gettop(L) - nargs;
 	} else {
@@ -1475,7 +1474,7 @@ static void sf_FileVersionInfo_value(lua_State* L, BYTE* pbVersionInfo, const ch
 		(LPVOID*)&lpTranslate,
 		&len)) {
 		TCHAR SubBlock[128];
-		swprintf(SubBlock, block.c_str(),
+		swprintf(SubBlock, 128, block.c_str(),
 			lpTranslate[0].wLanguage, lpTranslate[0].wCodePage);
 		LPTSTR ret;
 		if (VerQueryValue(pbVersionInfo, SubBlock, (LPVOID*)&ret, &len) && len>0) {
@@ -1493,8 +1492,8 @@ static int sf_OrderTab(lua_State* L) {
 	while (lua_next(L, 1) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
 		/* используем 'key' (по индексу -2) и 'value' (по индексу -1) */
-		int key = luaL_checkinteger(L, -2);
-		int val = luaL_checkinteger(L, -1);
+		int key = static_cast<int>(luaL_checkinteger(L, -2));
+		int val = static_cast<int>(luaL_checkinteger(L, -1));
 		order.insert({ key, val });
 
 		/* removes 'value'; keeps 'key' for next iteration */
@@ -2193,7 +2192,7 @@ static int cf_iup_get_layout(lua_State *L){
 	return 1;
 }
 static int cf_iup_KeyCodeToName(lua_State *L){
-	int k = luaL_checkinteger(L, 1);
+	int k = static_cast<int>(luaL_checkinteger(L, 1));
 	lua_pushfstring(L, iupKeyCodeToName(k));
 	return 1;
 }
@@ -2894,7 +2893,7 @@ bool LuaExtension::OnBeforeOpen(const char *filename, const char *extension, int
 			call_function(luaState, 2, 2);
 
 			if (lua_isinteger(luaState, -2)) {
-				encoding = lua_tointeger(luaState, -2);
+				encoding = static_cast<int>(lua_tointeger(luaState, -2));
 			} else {
 				handled = lua_toboolean(luaState, -2);
 			}
@@ -2980,51 +2979,51 @@ struct StylingContext {
 
 	static int Line(lua_State *L) {
 		StylingContext *context = Context(L);
-		int position = luaL_checkinteger(L, 2);
+		int position = static_cast<int>(luaL_checkinteger(L, 2));
 		lua_pushinteger(L, context->styler->GetLine(position));
 		return 1;
 	}
 
 	static int CharAt(lua_State *L) {
 		StylingContext *context = Context(L);
-		int position = luaL_checkinteger(L, 2);
+		int position = static_cast<int>(luaL_checkinteger(L, 2));
 		lua_pushinteger(L, context->styler->SafeGetCharAt(position));
 		return 1;
 	}
 
 	static int StyleAt(lua_State *L) {
 		StylingContext *context = Context(L);
-		int position = luaL_checkinteger(L, 2);
+		int position = static_cast<int>(luaL_checkinteger(L, 2));
 		lua_pushinteger(L, context->styler->StyleAt(position));
 		return 1;
 	}
 
 	static int LevelAt(lua_State *L) {
 		StylingContext *context = Context(L);
-		int line = luaL_checkinteger(L, 2);
+		int line = static_cast<int>(luaL_checkinteger(L, 2));
 		lua_pushinteger(L, context->styler->LevelAt(line));
 		return 1;
 	}
 
 	static int SetLevelAt(lua_State *L) {
 		StylingContext *context = Context(L);
-		int line = luaL_checkinteger(L, 2);
-		int level = luaL_checkinteger(L, 3);
+		int line = static_cast<int>(luaL_checkinteger(L, 2));
+		int level = static_cast<int>(luaL_checkinteger(L, 3));
 		context->styler->SetLevel(line, level);
 		return 0;
 	}
 
 	static int LineState(lua_State *L) {
 		StylingContext *context = Context(L);
-		int line = luaL_checkinteger(L, 2);
+		int line = static_cast<int>(luaL_checkinteger(L, 2));
 		lua_pushinteger(L, context->styler->GetLineState(line));
 		return 1;
 	}
 
 	static int SetLineState(lua_State *L) {
 		StylingContext *context = Context(L);
-		int line = luaL_checkinteger(L, 2);
-		int state = luaL_checkinteger(L, 3);
+		int line = static_cast<int>(luaL_checkinteger(L, 2));
+		int state = static_cast<int>(luaL_checkinteger(L, 3));
 		context->styler->SetLineState(line, state);
 		return 0;
 	}
@@ -3100,9 +3099,9 @@ struct StylingContext {
 
 	static int StartStyling(lua_State *L) {
 		StylingContext *context = Context(L);
-		unsigned int startPos = luaL_checkinteger(L, 2);
-		unsigned int length = luaL_checkinteger(L, 3);
-        int initStyle = luaL_checkinteger(L, 4);
+		unsigned int startPos = static_cast<int>(luaL_checkinteger(L, 2));
+		unsigned int length = static_cast<int>(luaL_checkinteger(L, 3));
+        int initStyle = static_cast<int>(luaL_checkinteger(L, 4));
 		context->StartStyling(startPos, length, initStyle);
 		return 0;
 	}
@@ -3161,7 +3160,7 @@ struct StylingContext {
 	static int SetState(lua_State *L) {
 		StylingContext *context = Context(L);
 		context->Colourize();
-		context->state = luaL_checkinteger(L, 2);
+		context->state = static_cast<int>(luaL_checkinteger(L, 2));
 		return 0;
 	}
 
@@ -3169,13 +3168,13 @@ struct StylingContext {
 		StylingContext *context = Context(L);
 		context->Forward();
 		context->Colourize();
-		context->state = luaL_checkinteger(L, 2);
+		context->state = static_cast<int>(luaL_checkinteger(L, 2));
 		return 0;
 	}
 
 	static int ChangeState(lua_State *L) {
 		StylingContext *context = Context(L);
-		context->state = luaL_checkinteger(L, 2);
+		context->state = static_cast<int>(luaL_checkinteger(L, 2));
 		return 0;
 	}
 
@@ -3610,7 +3609,7 @@ int LuaExtension::HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 
 				cnt++;
 			}
 			if (!lua_pcall(luaState, cnt, 1, 0)) {
-				handled = lua_tointeger(luaState, -1);
+				handled = static_cast<int>(lua_tointeger(luaState, -1));
 				lua_pop(luaState, 1);
 				return handled;
 			}

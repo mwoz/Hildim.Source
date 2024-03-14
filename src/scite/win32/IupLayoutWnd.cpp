@@ -359,10 +359,10 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 	clrId = 0; lineFrom = 0;
 	int mid1, mid2;
 	if (rightClr.size > 0) {
-		mid1 = round((sb_size - 1) / 3);
-		mid2 = round((sb_size - 1) / 3 * 2);
+		mid1 = static_cast<int>(round((sb_size - 1) / 3));
+		mid2 = static_cast<int>(round((sb_size - 1) / 3 * 2));
 	} else {
-		mid1 = round((sb_size - 1) / 2);
+		mid1 = static_cast<int>(round((sb_size - 1) / 2));
 		mid2 = size - 1;
 	}
 
@@ -486,7 +486,7 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 	if (curLine >= 0) {
-		int cur = lineheightPx * curLine + sb_size;
+		int cur = static_cast<int>(lineheightPx * curLine + sb_size);
 		iupdrvDrawLine(dc, 0, cur, sb_size, cur, caretColor, IUP_DRAW_FILL, 1);
 	}
 
@@ -528,8 +528,8 @@ void IupChildWnd::resetPixelMap() {
 				}
 				assert(id > -1);
 
-				int pFirst = round(vLine * lineheightPx);
-				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				int pFirst = static_cast<int>(round(vLine * lineheightPx));
+				int pLast = static_cast<int>(max(pFirst, round((vLine + 1) * lineheightPx)));
 				for (int i = pFirst; i <= pLast; i++) {
 					if(!pixelMap[i].left || pixelMap[i].left > id + 1) //от первых по списку цветов всегда что-то останетс€
 						pixelMap[i].left = id + 1;
@@ -546,8 +546,8 @@ void IupChildWnd::resetPixelMap() {
 				}
 				assert(id > -1);
 
-				int pFirst = round(vLine * lineheightPx);
-				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				int pFirst = static_cast<int>(round(vLine * lineheightPx));
+				int pLast = static_cast<int>(max(pFirst, round((vLine + 1) * lineheightPx)));
 				for (int i = pFirst; i <= pLast; i++) {
 					if (!pixelMap[i].middle || pixelMap[i].middle > id + 1)
 						pixelMap[i].middle = id + 1;
@@ -564,8 +564,8 @@ void IupChildWnd::resetPixelMap() {
 				}
 				assert(id > -1);
 
-				int pFirst = round(vLine * lineheightPx);
-				int pLast = max(pFirst, round((vLine + 1) * lineheightPx));
+				int pFirst = static_cast<int>(round(vLine * lineheightPx));
+				int pLast = static_cast<int>(max(pFirst, round((vLine + 1) * lineheightPx)));
 				for (int i = pFirst; i <= pLast; i++) {
 					if (!pixelMap[i].right || pixelMap[i].right > id + 1)
 						pixelMap[i].right = id + 1;
@@ -574,8 +574,8 @@ void IupChildWnd::resetPixelMap() {
 			int annotLines;
 			if ((rightClr.annotation || leftClr.annotation || middleClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
 				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
-				int pFirst = round((vLine + 1) * lineheightPx);
-				int pLast = max(pFirst, round((vLine + annotLines + 1) * lineheightPx));
+				int pFirst = static_cast<int>(round((vLine + 1) * lineheightPx));
+				int pLast = static_cast<int>(max(pFirst, round((vLine + annotLines + 1) * lineheightPx)));
 				for (int i = pFirst; i <= pLast; i++) {
 					if (rightClr.annotation && (!pixelMap[i].right || pixelMap[i].right > rightClr.annotation))
 						pixelMap[i].right = rightClr.annotation;
@@ -625,7 +625,7 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	}
 }
 inline float clr_brightness(COLORREF clr) {
-	return (((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.;
+	return static_cast<float>((((clr & 0x0000FF) * 299.) + (((clr & 0x00FF00) >> 8) * 587.) + (((clr & 0xFF0000) >> 16) * 114.)) / 1000.);
 }
 
 void IupChildWnd::Attach(HWND h, void *pScite, const char *pName, HWND hM, GUI::ScintillaWindow *pW, Ihandle *pCnt)

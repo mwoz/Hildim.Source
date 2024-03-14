@@ -605,7 +605,7 @@ static bool isInterruptableMessage(unsigned int msg) {
 	return false;
 }
 
-// messages list witch has not string parameter
+// messages list witch has not string parameter 
 static bool isNotStringParams(unsigned int msg) {
 	switch (msg) {
 		case SCI_MARKERADD:

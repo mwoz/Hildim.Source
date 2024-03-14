@@ -141,7 +141,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\lexilla\access\LexillaAccess.h" />
-    <ClInclude Include="Access\LexillaAccess.h" />
     <ClInclude Include="lua\include\lauxlib.h" />
     <ClInclude Include="lua\src\lapi.h" />
     <ClInclude Include="lua\src\lcode.h" />
@@ -215,7 +214,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\lexilla\access\LexillaAccess.cxx" />
-    <ClCompile Include="Access\LexillaAccess.cxx" />
     <ClCompile Include="src\Encoding.cpp" />
     <ClCompile Include="src\Exporters.cxx" />
     <ClCompile Include="src\FilePath.cxx" />

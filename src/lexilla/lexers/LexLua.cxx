@@ -8,7 +8,7 @@
  **/
 
 #include <stdlib.h>
-#include <string.h>
+#include <string.h> 
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
@@ -614,7 +614,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 	sc.Complete();
 }
 
-void SCI_METHOD LexerLua::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess){
+void SCI_METHOD LexerLua::Fold(Sci_PositionU startPos, Sci_Position length, int, IDocument *pAccess){
 	if (!options.fold) 
 		return;
 

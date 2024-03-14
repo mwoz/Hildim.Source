@@ -20,7 +20,7 @@
 #endif
 #ifdef __BORLANDC__
 // Borland C++ displays warnings in vector header without this
-#pragma option -w-ccc -w-rch
+#pragma option -w-ccc -w-rch 
 #endif
 
 #include <string>
@@ -156,7 +156,7 @@ public:
 	int SCI_METHOD LineEndTypesSupported() noexcept override {
 		return SC_LINE_END_TYPE_UNICODE;
 	}
-	int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) noexcept override {
+	int SCI_METHOD AllocateSubStyles(int, int) noexcept override {
 		return -1;
 	}
 	int SCI_METHOD SubStylesStart(int)  noexcept override {
@@ -189,15 +189,15 @@ public:
 		return 0;
 	}
 
-	const char* SCI_METHOD NameOfStyle(int style) {
+	const char* SCI_METHOD NameOfStyle(int) {
 		return "";
 	}
 
-	const char* SCI_METHOD TagsOfStyle(int style) {
+	const char* SCI_METHOD TagsOfStyle(int) {
 		return "";
 	}
 
-	const char* SCI_METHOD DescriptionOfStyle(int style) {
+	const char* SCI_METHOD DescriptionOfStyle(int) {
 		return "";
 	}
 	// ILexer5 methods
@@ -255,7 +255,7 @@ void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position lengt
 		initStyle = SCE_CF_DEFAULT;
 	
 	LexAccessor styler(pAccess);
-	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
+	StyleContext sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
 	
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 		if (sc.state == SCE_CF_IDENTIFIER && !iswordchar(sc.ch)) {
@@ -349,7 +349,7 @@ void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position lengt
 
 
 
-void SCI_METHOD LexerCubeFormula::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
+void SCI_METHOD LexerCubeFormula::Fold(Sci_PositionU, Sci_Position, int, IDocument*) {
 	
 
 

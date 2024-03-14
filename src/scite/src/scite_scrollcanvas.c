@@ -120,7 +120,7 @@ static int scrollcanvas_contextmenu_cb(Ihandle *self, int p0, int p1, char* p2) 
 	lua_State *L = iuplua_call_start(self, "contextmenu_cb");
 	lua_pushinteger(L, p0); 
 	lua_pushinteger(L, p1);
-	lua_pushstring(L, p2);
+	lua_pushstring(L, p2); 
 	return iuplua_call(L, 3);
 }
 

@@ -55,7 +55,7 @@ static const char * const emptyWordListDesc[] = {
 	0
 };
 
-static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine, unsigned int startLine, unsigned int endPos, Accessor &styler, int linenum)
+static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine, unsigned int startLine, unsigned int endPos, Accessor &styler, int)
 {
 	// startLine and endPos are the absolute positions.
 
@@ -85,7 +85,7 @@ static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine,
 	}
 }
 
-static void ColouriseSearchResultDoc(unsigned int startPos, int length, int, WordList *keywordlists[], Accessor &styler) {
+static void ColouriseSearchResultDoc(unsigned int startPos, int length, int, WordList*[], Accessor &styler) {
 
 	char lineBuffer[SC_SEARCHRESULT_LINEBUFFERMAXLENGTH];
 	styler.StartAt(startPos);

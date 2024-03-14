@@ -642,7 +642,7 @@ protected:
 	int GetCurrentBufer(){ return buffers.Current(); };	
 	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
 	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
-	virtual int GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
+	virtual int GetBufferModTime(int index) { return static_cast<int>(buffers.buffers[index].fileModTime); }
 	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
 	virtual bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; };
 	virtual int SecondEditorActive();

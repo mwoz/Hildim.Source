@@ -7,7 +7,7 @@
 // Copyright 1998-2005 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h>
+#include <stdlib.h> 
 #include <string.h>
 #include <regex>
 #include <ctype.h>
@@ -73,7 +73,7 @@ private:
 	std::string LineEnd(LexAccessor &styler, StyleContext &sc);
 	void Anchor(LexAccessor &styler, StyleContext &sc);
 public:
-	LexerRubrica(bool caseSensitive_) :
+	LexerRubrica(bool ) :
 		rePicBody("^((?:(?!\\}\\}).)+)\\}\\}", std::regex::ECMAScript),
 		reLnkBody("^((?:(?!\\]\\]).)*)\\]\\]", std::regex::ECMAScript),
 		reCellEx2("^((?:(?!\\}\\})[^|{])*)\\}\\}", std::regex::ECMAScript),
@@ -93,10 +93,10 @@ public:
 	const char * SCI_METHOD PropertyNames() override {
 		return NULL;
 	}
-	int SCI_METHOD PropertyType(const char *name) override {
+	int SCI_METHOD PropertyType(const char*) override {
 		return -1;
 	}
-	const char * SCI_METHOD DescribeProperty(const char *name) override {
+	const char * SCI_METHOD DescribeProperty(const char*) override {
 		return NULL;
 	}
 	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
@@ -117,7 +117,7 @@ public:
 	int SCI_METHOD LineEndTypesSupported() noexcept override {
 		return SC_LINE_END_TYPE_UNICODE;
 	}
-	int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) noexcept override {
+	int SCI_METHOD AllocateSubStyles(int, int) noexcept override {
 		return -1;
 	}
 	int SCI_METHOD SubStylesStart(int)  noexcept override {
@@ -150,15 +150,15 @@ public:
 		return 0;
 	}
 
-	const char * SCI_METHOD NameOfStyle(int style) {
+	const char * SCI_METHOD NameOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD TagsOfStyle(int style) {
+	const char * SCI_METHOD TagsOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD DescriptionOfStyle(int style) {
+	const char * SCI_METHOD DescriptionOfStyle(int) {
 		return "";
 	}
 	// ILexer5 methods
@@ -168,7 +168,7 @@ public:
 	int SCI_METHOD  GetIdentifier() override {
 		return SCLEX_RUBRICA;
 	}
-	const char * SCI_METHOD PropertyGet(const char *key) override {
+	const char * SCI_METHOD PropertyGet(const char*) override {
 		return NULL;
 	}
 
@@ -181,11 +181,11 @@ public:
 
 };
 
-Sci_Position SCI_METHOD LexerRubrica::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerRubrica::PropertySet(const char*, const char*) {
 	return -1;
 }
 
-Sci_Position SCI_METHOD LexerRubrica::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerRubrica::WordListSet(int, const char*) {
 	return -1;
 }
  //Functor used to truncate history
@@ -220,7 +220,7 @@ void LexerRubrica::Anchor(LexAccessor &styler, StyleContext &sc) {
 void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 
 	LexAccessor styler(pAccess);
-	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
+	StyleContext sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
 
 	//for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 	while (sc.More()) {
@@ -503,7 +503,7 @@ forward:
 
 
 
-void SCI_METHOD LexerRubrica::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerRubrica::Fold(Sci_PositionU, Sci_Position, int, IDocument*) {
 
 }
 

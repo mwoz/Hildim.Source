@@ -14,6 +14,7 @@
 
 #include "iup.h"
 #include "iupcbs.h"
+#include "iupdraw.h"
 
 #include "../../iup/src/iup_object.h"
 #include "../../iup/src/iup_attrib.h"
@@ -466,7 +467,7 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 	iupFlatDrawBox(dc, 0, iWidth - 1, 0, title_height, tabs_bgcolor, NULL, 1);
 
 
-	iFlatTabsGetAlignment(alignment, &horiz_alignment, &vert_alignment);
+	iFlatTabsGetAlignment(alignment, &horiz_alignment, &vert_alignment); 
 
 	if (show_lines) {
 		char* title_line_color = iupAttribGetStr(ih, "TABSLINECOLOR");

@@ -409,7 +409,7 @@ float GetDeviceScaleFactorWhenGdiScalingActive(HWND hWnd) noexcept {
 			const HMONITOR hMonitor = MonitorFromWindowHandleScaling(hRootWnd);
 			DEVICE_SCALE_FACTOR deviceScaleFactor;
 			if (S_OK == fnGetScaleFactorForMonitor(hMonitor, &deviceScaleFactor))
-				return deviceScaleFactor / 100.f;
+				return static_cast<int>(deviceScaleFactor) / 100.f;
 		}
 	}
 	return 1.f;
@@ -1016,10 +1016,10 @@ void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> 
 */
 static ColourRGBA MixedWithC(ColourRGBA first, ColourRGBA other, float coef) {
 	coef = coef * 2; 
-	const unsigned int red = (first.GetRed() * (2 - coef) + other.GetRed() * coef) / 2;
-	const unsigned int green = (first.GetGreen() * (2 - coef) + other.GetGreen()* coef) / 2;
-	const unsigned int blue = (first.GetBlue() * (2 - coef) + other.GetBlue()* coef) / 2;
-	const unsigned int alpha = (first.GetAlpha() * (2 - coef) + other.GetAlpha()* coef) / 2;
+	const unsigned int red = static_cast<unsigned int>((first.GetRed() * (2 - coef) + other.GetRed() * coef) / 2);
+	const unsigned int green = static_cast<unsigned int>((first.GetGreen() * (2 - coef) + other.GetGreen()* coef) / 2);
+	const unsigned int blue = static_cast<unsigned int>((first.GetBlue() * (2 - coef) + other.GetBlue()* coef) / 2);
+	const unsigned int alpha = static_cast<unsigned int>((first.GetAlpha() * (2 - coef) + other.GetAlpha()* coef) / 2);
 	return ColourRGBA(red, green, blue, alpha);
 }
 void SurfaceGDI::GradientRectangle(PRectangle rc, const std::vector<ColourStop> &stops, GradientOptions) {
@@ -2800,7 +2800,7 @@ void Window::SetPositionRelative(PRectangle rc, const Window *relativeTo) {
 		const RECT rcMonitor = RectFromPRectangle(rc);
 		//HMONITOR hMonitor = MonitorFromRect(&rcMonitor, MONITOR_DEFAULTTONEAREST);
 		
-		POINT ptTopLeft = { rc.left, rc.top }; //хотим получить именно тот монитор, в котором расположен верхний левый угол окна, в свою очередь привязанный к курсору
+		POINT ptTopLeft = { static_cast<long>(rc.left), static_cast<long>(rc.top) }; //хотим получить именно тот монитор, в котором расположен верхний левый угол окна, в свою очередь привязанный к курсору
 		HMONITOR hMonitor = MonitorFromPoint(ptTopLeft, MONITOR_DEFAULTTONEAREST);
 
 		// If hMonitor is NULL, that's just the main screen anyways.

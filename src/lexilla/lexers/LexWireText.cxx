@@ -60,7 +60,7 @@ class LexerWireFormat : public ILexer5 {
 	CharacterSet setFoldingWordsBegin;
 	WordList wTypes;	//переданные нам вордлисты
 
-	const std::regex reCase, reIfElse, reComment;
+	const std::regex reCase, reIfElse, reComment; 
 	constexpr bool IsOperator(int ch) noexcept {
 		if (IsAlphaNumeric(ch))
 			return false;
@@ -70,7 +70,7 @@ class LexerWireFormat : public ILexer5 {
 	}
 
 public:
-	LexerWireFormat(bool caseSensitive_) {
+	LexerWireFormat(bool ) {
 		wTypes.Set("string int float datetime bool null empty binary");
 	}
 	~LexerWireFormat() {
@@ -84,13 +84,13 @@ public:
 	const char * SCI_METHOD PropertyNames() override {
 		return NULL;
 	}
-	int SCI_METHOD PropertyType(const char *name) override {
+	int SCI_METHOD PropertyType(const char*) override {
 		return -1;
 	}
-	const char * SCI_METHOD DescribeProperty(const char *name) override {
+	const char * SCI_METHOD DescribeProperty(const char*) override {
 		return NULL;
 	}
-	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val);
+	Sci_Position SCI_METHOD PropertySet(const char*, const char*);
 	const char * SCI_METHOD DescribeWordListSets() override {
 		return NULL;
 	}
@@ -108,7 +108,7 @@ public:
 	int SCI_METHOD LineEndTypesSupported() noexcept override {
 		return SC_LINE_END_TYPE_UNICODE;
 	}
-	int SCI_METHOD AllocateSubStyles(int styleBase, int numberStyles) noexcept override {
+	int SCI_METHOD AllocateSubStyles(int, int) noexcept override {
 		return -1;
 	}
 	int SCI_METHOD SubStylesStart(int)  noexcept override {
@@ -141,15 +141,15 @@ public:
 		return 0;
 	}
 
-	const char * SCI_METHOD NameOfStyle(int style) {
+	const char * SCI_METHOD NameOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD TagsOfStyle(int style) {
+	const char * SCI_METHOD TagsOfStyle(int) {
 		return "";
 	}
 
-	const char * SCI_METHOD DescriptionOfStyle(int style) {
+	const char * SCI_METHOD DescriptionOfStyle(int) {
 		return "";
 	}
 	// ILexer5 methods
@@ -159,7 +159,7 @@ public:
 	int SCI_METHOD  GetIdentifier() override {
 		return SCLEX_WIREFORMAT;
 	}
-	const char * SCI_METHOD PropertyGet(const char *key) override {
+	const char * SCI_METHOD PropertyGet(const char*) override {
 		return NULL;
 	}
 
@@ -172,11 +172,11 @@ public:
 
 };
 
-Sci_Position SCI_METHOD LexerWireFormat::PropertySet(const char *key, const char *val) {
+Sci_Position SCI_METHOD LexerWireFormat::PropertySet(const char*, const char*) {
 	return -1;
 }
 
-Sci_Position SCI_METHOD LexerWireFormat::WordListSet(int n, const char *wl) {
+Sci_Position SCI_METHOD LexerWireFormat::WordListSet(int, const char*) {
 	return -1;
 }
  //Functor used to truncate history
@@ -184,7 +184,8 @@ Sci_Position SCI_METHOD LexerWireFormat::WordListSet(int n, const char *wl) {
 
 void SCI_METHOD LexerWireFormat::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
-	StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
+	//StyleContext sc(startPos, length, initStyle, styler, (char)(STYLE_MAX));
+	StyleContext sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
 
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 
@@ -277,7 +278,7 @@ void SCI_METHOD LexerWireFormat::Lex(Sci_PositionU startPos, Sci_Position length
 
 
 
-void SCI_METHOD LexerWireFormat::Fold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
+void SCI_METHOD LexerWireFormat::Fold(Sci_PositionU startPos, Sci_Position length, int, IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	Sci_Position lineCurrent = styler.GetLine(startPos);
 	int levelCurrent = SC_FOLDLEVELBASE;
@@ -286,11 +287,9 @@ void SCI_METHOD LexerWireFormat::Fold(Sci_PositionU startPos, Sci_Position lengt
 	if (lineCurrent > 0)
 		levelCurrent = styler.LevelAt(lineCurrent - 1) >> 16;
 	int levelNext = levelCurrent;
-	int style = initStyle;
 	const Sci_PositionU endPos = startPos + length;
 	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		const bool atEOL = i == (lineStartNext - 1);
-		char ch = styler[i];
 		if (styler.StyleAt(i) == SCE_WF_OPERATOR) {
 			if (styler[i] == '(') {
 				// Measure the minimum before a '{' to allow

@@ -1241,7 +1241,7 @@ static int GetFromC(lua_State *L)
   {
     lua_pushstring(L, "iup.GetFromC: wrong arguments to function"); 
     lua_error(L);
-    return 0;
+    //return 0;
   }
   lua_pushinteger(L, 1);
   lua_gettable(L, -2);
@@ -1249,7 +1249,7 @@ static int GetFromC(lua_State *L)
   {
     lua_pushstring(L, "iup.GetFromC: wrong arguments to function"); 
     lua_error(L);
-    return 0;
+    //return 0;
   }
   a = lua_tostring(L, -1);
   n = IupGetHandle((char*)a);
@@ -1316,7 +1316,7 @@ static int il_open(lua_State * L)
     if (argv) free(argv);
     lua_pushstring(L, "IupOpen: could not initialize"); 
     lua_error(L);
-    return 0;
+    //return 0;
   }
 
   if (argv) free(argv);
