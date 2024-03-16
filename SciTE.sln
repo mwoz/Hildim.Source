@@ -29,7 +29,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luahunspell", "lualib\luahu
 		{C9A4D8FA-927A-4951-9622-43C783955E60} = {C9A4D8FA-927A-4951-9622-43C783955E60}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhunspell", "lualib\hunspell\src\win_api\libhunspell.vcxproj", "{53609BB3-D874-465C-AF7B-DF626DB0D89B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhunspell", "lualib\hunspell\msvc\libhunspell.vcxproj", "{53609BB3-D874-465C-AF7B-DF626DB0D89B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mblua", "lualib\mblua\mblua.vcxproj", "{465000B6-959F-4B72-A71B-425D586996D1}"
 	ProjectSection(ProjectDependencies) = postProject
