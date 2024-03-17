@@ -14,10 +14,6 @@
     <ProjectGuid>{53609BB3-D874-465C-AF7B-DF626DB0D89B}</ProjectGuid>
     <RootNamespace>Hunspell</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <SccProjectName>Svn</SccProjectName>
-    <SccAuxPath>Svn</SccAuxPath>
-    <SccLocalPath>Svn</SccLocalPath>
-    <SccProvider>SubversionScc</SccProvider>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '17.0'">10.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '16.0'">10.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' == '15.0'">10.0.17763.0</WindowsTargetPlatformVersion>
@@ -70,12 +66,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HUNSPELL_STATIC;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
       <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4706</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <AdditionalOptions>/MACHINE:X86 %(AdditionalOptions)</AdditionalOptions>
@@ -95,6 +91,7 @@
       <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>None</DebugInformationFormat>
+<DisableSpecificWarnings>4706</DisableSpecificWarnings>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -105,13 +102,11 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-   <ClInclude Include="config.h" />
     <ClInclude Include="..\src\hunspell\affentry.hxx" />
     <ClInclude Include="..\src\hunspell\affixmgr.hxx" />
     <ClInclude Include="..\src\hunspell\atypes.hxx" />
     <ClInclude Include="..\src\hunspell\baseaffix.hxx" />
     <ClInclude Include="..\src\hunspell\csutil.hxx" />
-    <ClInclude Include="..\src\hunspell\dictmgr.hxx" />
     <ClInclude Include="..\src\hunspell\filemgr.hxx" />
     <ClInclude Include="..\src\hunspell\hashmgr.hxx" />
     <ClInclude Include="..\src\hunspell\htypes.hxx" />
@@ -123,12 +118,12 @@
     <ClInclude Include="..\src\hunspell\replist.hxx" />
     <ClInclude Include="..\src\hunspell\suggestmgr.hxx" />
     <ClInclude Include="..\src\hunspell\w_char.hxx" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\hunspell\affentry.cxx" />
     <ClCompile Include="..\src\hunspell\affixmgr.cxx" />
     <ClCompile Include="..\src\hunspell\csutil.cxx" />
-    <ClCompile Include="..\src\hunspell\dictmgr.cxx" />
     <ClCompile Include="..\src\hunspell\filemgr.cxx" />
     <ClCompile Include="..\src\hunspell\hashmgr.cxx" />
     <ClCompile Include="..\src\hunspell\hunspell.cxx" />
