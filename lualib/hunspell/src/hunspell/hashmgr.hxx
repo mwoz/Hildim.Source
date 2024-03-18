@@ -117,7 +117,7 @@ class HashMgr {
 
   int add(const std::string& word);
   int add_with_flags(const std::string& word, const std::string& flags, const std::string& desc = NULL);
-  int add_with_affix(const std::string& word, const std::string& pattern, const std::string& flags_out = NULL);
+  int add_with_affix(const std::string& word, const std::string& pattern, std::string* flags_out = NULL);
   int remove(const std::string& word);
   int decode_flags(unsigned short** result, const std::string& flags, FileMgr* af) const;
   bool decode_flags(std::vector<unsigned short>& result, const std::string& flags, FileMgr* af) const;

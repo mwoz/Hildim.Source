@@ -109,7 +109,7 @@ public:
   const std::string& get_dict_encoding() const;
   int add(const std::string& word);
   int add_with_flags(const std::string& word, const std::string& flags, const std::string& desc = NULL);
-  int add_with_affix(const std::string& word, const std::string& example, const std::string& flags_out = NULL);
+  int add_with_affix(const std::string& word, const std::string& example, std::string* flags_out = NULL);
   int remove(const std::string& word);
   const std::string& get_version_cpp() const;
   struct cs_info* get_csconv();
@@ -1489,7 +1489,7 @@ int HunspellImpl::add_with_flags(const std::string& word, const std::string& fla
   return 0;
 }
 
-int HunspellImpl::add_with_affix(const std::string& word, const std::string& example, const std::string& flags_out) {
+int HunspellImpl::add_with_affix(const std::string& word, const std::string& example, std::string* flags_out) {
   if (!m_HMgrs.empty())
     return m_HMgrs[0]->add_with_affix(word, example, flags_out);
   return 0;
@@ -2174,7 +2174,7 @@ int Hunspell::add_with_flags(const std::string& word, const std::string& flags, 
   return m_Impl->add_with_flags(word, flags, desc);
 }
 
-int Hunspell::add_with_affix(const std::string& word, const std::string& example, const std::string& flags_out) {
+int Hunspell::add_with_affix(const std::string& word, const std::string& example, std::string* flags_out) {
   return m_Impl->add_with_affix(word, example, flags_out);
 }
 

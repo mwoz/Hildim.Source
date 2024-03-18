@@ -204,7 +204,7 @@ class LIBHUNSPELL_DLL_EXPORTED Hunspell {
    * affixed forms of the new word, too.
    */
 
-  int add_with_affix(const std::string& word, const std::string& example, const std::string& flags_out = NULL);
+  int add_with_affix(const std::string& word, const std::string& example, std::string* flags_out = NULL);
 
   /* remove word from the run-time dictionary */
 
