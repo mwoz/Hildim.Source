@@ -980,6 +980,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCE_FM_VB_FUNCTIONSEX", 40},
 	{"SCE_FM_VB_HEXNUMBER", 27},
 	{"SCE_FM_VB_IDENTIFIER", 17},
+	{"SCE_FM_VB_IDENTIFIER_SPELL", 45},
 	{"SCE_FM_VB_KEYWORD", 13},
 	{"SCE_FM_VB_NUMBER", 12},
 	{"SCE_FM_VB_OBJECTS", 23},

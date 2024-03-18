@@ -121,7 +121,7 @@
       <PreprocessorDefinitions>WIN32;_LIB;_WIN32_WINNT=0x0501;_WIN32_IE=0x0600;COBJMACROS;WINVER=0x0501;IUP_ASSERT;_CRT_SECURE_NO_DEPRECATE;NOTREEVIEW;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <BrowseInformation>

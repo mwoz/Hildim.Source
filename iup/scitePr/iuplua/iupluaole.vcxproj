@@ -112,7 +112,7 @@
       <AdditionalIncludeDirectories>..\..\..\src\scite\lua\src;..\..\src;..\..\include;..\..\srclua5;..\..\srclua5\lh;..\..\..\lua$(LUA_SUFFIX)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;IUPLUA_USELH;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <BrowseInformation>

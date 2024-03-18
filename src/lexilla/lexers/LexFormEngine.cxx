@@ -187,6 +187,8 @@ class LexerFormEngine : public ILexer5 {
 	WordList wTypes_wf; //типы полей в вайрформате
 	WordList wKeydords_cf; //ключевые слов в формулах
 	WordList transparentTags;
+	WordList startExSpellID;
+	bool exSpellID = false;
 	std::map<std::string, std::string> preprocessorDefinitionsStart;
 	OptionsFM options;
 	OptionsSetFM osFM;
@@ -243,6 +245,7 @@ public:
 			wEndWhat2.Set("if select");
 			wTypes_wf.Set("string int float datetime bool null empty binary");
 			wKeydords_cf.Set("and or function");
+			startExSpellID.Set("dim sub function property");
 			wDebug.Set("");
 			transparentTags.Set(options.tag$ignore.c_str());
 	}
@@ -1059,6 +1062,7 @@ void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc)
 {
 	bool skipType = false;
 	switch(sc.state){
+	case SCE_FM_VB_IDENTIFIER_SPELL:
 	case SCE_FM_VB_IDENTIFIER:
 		if (IsTypeCharacter(sc.ch)) {
 			sc.Forward();	// Skip it
@@ -1081,6 +1085,8 @@ void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc)
 		} else {
 			if (keywords[KW_VB_KEYWORDS].InList(s)) {
 				sc.ChangeState(SCE_FM_VB_KEYWORD);
+				if (startExSpellID.InList(s))
+					exSpellID = true;
 			} else if (keywords[KW_VB_FUNCTIONS].InList(s)) {
 				sc.ChangeState(SCE_FM_VB_FUNCTIONS);
 			} else if (keywords[KW_VB_OBJECTS].InList(s)) {
@@ -1111,6 +1117,7 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 	case SCE_FM_VB_OPERATOR:
 		sc.SetState(SCE_FM_VB_DEFAULT);
 	break;
+	case SCE_FM_VB_IDENTIFIER_SPELL:
 	case SCE_FM_VB_IDENTIFIER:
 	case SCE_FM_VB_UNKNOWNPROP:
 		if (!IsAWordChar(sc.ch)) ResolveVBId(sc);
@@ -1170,6 +1177,7 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 	case SCE_FM_VB_COMMENT:
 		if (sc.atLineEnd) {
 			visibleChars = 0;
+			exSpellID = false;
 			sc.ForwardSetState(SCE_FM_VB_DEFAULT);
 		}
 	break;
@@ -1328,9 +1336,11 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 		} else if (IsAWordStart(sc.ch) && (sc.chPrev == '.')) {
 			sc.SetState(SCE_FM_VB_UNKNOWNPROP);
 		} else if (IsAWordStart(sc.ch) || (sc.ch == '[')) {
-			sc.SetState(SCE_FM_VB_IDENTIFIER);
+			sc.SetState(exSpellID ? SCE_FM_VB_IDENTIFIER_SPELL : SCE_FM_VB_IDENTIFIER);
 		} else if (isoperator(static_cast<char>(sc.ch)) || (sc.ch == '\\')) {	// Integer division
 			sc.SetState(SCE_FM_VB_OPERATOR);
+			if (sc.ch == ':')
+				exSpellID = false;
 		}
 	}
 }
@@ -1572,6 +1582,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 		if (sc.atLineStart){
 			sc.SetState(onStartNextLine(sc.state));
 			lineState = 0;
+			exSpellID = false;
 		} else if (sc.atLineEnd) {
 			styler.SetLineState(sc.currentLine, lineState | TransparentTagNum2LineState());
 			lineState = 0;

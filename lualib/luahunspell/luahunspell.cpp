@@ -97,8 +97,8 @@ static int l_add_word(lua_State *L) {
 static int l_add_with_affix(lua_State *L) {
 	const std::string word = luaL_checkstring(L, 2);
 	const std::string example = luaL_checkstring(L, 3);
-	std::string flags;
-	CheckH(L)->add_with_affix(word,example,flags);
+	std::string flags = "";
+	CheckH(L)->add_with_affix(word,example,&flags);
 	lua_pushstring(L, flags.c_str());
 	return 1;
 }

@@ -110,7 +110,7 @@
       <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)/</ObjectFileName>

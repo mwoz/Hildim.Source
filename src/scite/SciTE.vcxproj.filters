@@ -102,9 +102,6 @@
     <ClCompile Include="..\lexilla\access\LexillaAccess.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Access\LexillaAccess.cxx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Containers.h">
@@ -249,9 +246,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lexilla\access\LexillaAccess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Access\LexillaAccess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

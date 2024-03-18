@@ -524,7 +524,7 @@ int HashMgr::add_with_flags(const std::string& word, const std::string& flags, c
   return add_hidden_capitalized_word(word, wcl, df, al, &desc, captype);
 }
 
-int HashMgr::add_with_affix(const std::string& word, const std::string& example, const std::string& flags_out) {
+int HashMgr::add_with_affix(const std::string& word, const std::string& example, std::string* flags_out) {
   // detect captype and modify word length for UTF-8 encoding
   struct hentry* dp = lookup(example.c_str(), example.size());
   remove_forbidden_flag(word);
@@ -537,8 +537,12 @@ int HashMgr::add_with_affix(const std::string& word, const std::string& example,
       auto flags = new unsigned short[dp->alen];
       memcpy(flags, dp->astr, dp->alen * sizeof(unsigned short));
       add_word(word, wcl, flags, dp->alen, NULL, false, captype);
-      if (&flags_out)
-          flags_out.copy(reinterpret_cast<char*>(dp->astr), dp->alen * sizeof(unsigned short));
+      if (flags_out)
+      {
+          for (int i = 0; i < dp->alen; i++) {
+              *flags_out += encode_flag(*(dp->astr + i));
+          }
+      }
     }
     return add_hidden_capitalized_word(word, wcl, dp->astr,
                                        dp->alen, NULL, captype);

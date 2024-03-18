@@ -110,7 +110,7 @@
       <AdditionalIncludeDirectories>..\include;..\src;..\src\drv;..\src\svg;..\..\..\zlib;..\..\..\freetype\include;..\src\intcgm;..\src\iup;..\src\sim;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;FT2_BUILD_LIBRARY;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AssemblerListingLocation>
       </AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
