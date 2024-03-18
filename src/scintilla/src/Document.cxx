@@ -2467,6 +2467,7 @@ void Document::EnsureStyledTo(Sci::Position pos) {
 				(pos > GetEndStyled()) && (it != watchers.end()); ++it) {
 				it->watcher->NotifyStyleNeeded(this, it->userData, pos);
 			}
+			StartStyling(pos); //В результате, как будто при отсутствии лексера мы не получаем бесконечные NotifyExColorized и при скроллинге получаем нужный диапазон
 		}
 		for (unsigned int i = 0; pos > endStyledTo && i < watchers.size(); i++) {
 			watchers[i].watcher->NotifyExColorized(this, watchers[i].userData, endStyledTo, pos);

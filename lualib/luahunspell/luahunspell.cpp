@@ -12,9 +12,6 @@
 static Hunspell* CheckH(lua_State* L) {
 	return *reinterpret_cast<Hunspell**>(luaL_checkudata(L, 1, LUASPELL));
 }
-static HunspellImpl* CheckHI(lua_State* L) {
-	return *reinterpret_cast<HunspellImpl**>(luaL_checkudata(L, 1, LUASPELL));
-}
 
 /**
 h:add_dic(dic_path [, key]) -> []
@@ -114,7 +111,7 @@ luaL_Reg spell_methods[] = {
 	{"suggest", l_suggest},
 	{"add_word", l_add_word},
 	{"add_with_affix", l_add_with_affix},
-	{ "destroy", l_destroy },
+	{"destroy", l_destroy},
 	{NULL, NULL}
 };
 

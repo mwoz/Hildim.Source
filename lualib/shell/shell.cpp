@@ -1384,6 +1384,39 @@ private:
 	wchar_t *buffer;
 };
 
+static int internalConv( lua_State *L, bool toUTF8 )
+{
+	bool success = false;
+	if ( lua_isstring(L, 1) )
+	{
+		size_t len;
+		const char *src = lua_tolstring( L, 1, &len );
+		ptrdiff_t cp = luaL_optinteger( L, 2, CP_ACP );
+		MB2W wc( src, toUTF8? cp:CP_UTF8 );
+		if ( wc.c_str() )
+		{
+			W2MB nc( wc.c_str(), toUTF8? CP_UTF8:cp );
+			if ( nc.c_str() )
+			{
+				lua_pushstring( L, nc.c_str() );
+				success = true;
+			}
+		}
+	}
+	if ( !success )
+		lua_pushnil( L );
+	return 1;
+}
+
+static int to_utf8( lua_State* L )
+{
+	return internalConv( L, true );
+}
+
+static int from_utf8( lua_State* L )
+{
+	return internalConv( L, false );
+}
 static int get_clipboard( lua_State* L )
 {
 	HGLOBAL hglb=0; 
@@ -1555,6 +1588,8 @@ luaL_Reg shell[] =
 	{ "fileexists", fileexists },
 	{ "getclipboardtext", getclipboardtext },
 	{ "findfiles", findfiles },
+	{ "to_utf8", to_utf8 },
+	{ "from_utf8", from_utf8 },
 	{ "get_clipboard", get_clipboard },
 	{ "set_clipboard", set_clipboard },
 	{ "delete_file", delete_file },

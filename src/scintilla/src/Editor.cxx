@@ -5945,8 +5945,9 @@ Sci::Position Editor::GetStyledText(char *buffer, Sci::Position cpMin, Sci::Posi
 }
 
 Sci::Position Editor::GetTextRange(char *buffer, Sci::Position cpMin, Sci::Position cpMax) const {
-	const Sci::Position cpEnd = (cpMax == -1) ? pdoc->Length() : cpMax;
-	PLATFORM_ASSERT(cpEnd <= pdoc->Length());
+	const Sci::Position docLen = pdoc->Length();
+	const Sci::Position cpEnd = (cpMax == -1) ? docLen : (cpMax == docLen + 1) ? docLen : cpMax;
+	PLATFORM_ASSERT(cpEnd <= pdoc->Length()); //Добавляем 1 к длинне - иначе много ошибок с концом документа
 	const Sci::Position len = cpEnd - cpMin; 	// No -1 as cpMin and cpMax are referring to inter character positions
 	pdoc->GetCharRange(buffer, cpMin, len);
 	// Spec says copied text is terminated with a NUL
