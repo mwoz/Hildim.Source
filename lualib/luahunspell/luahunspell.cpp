@@ -13,6 +13,18 @@ static Hunspell* CheckH(lua_State* L) {
 	return *reinterpret_cast<Hunspell**>(luaL_checkudata(L, 1, LUASPELL));
 }
 
+static int pushVector(lua_State* L,const std::vector<std::string>& vs) {
+	int n = vs.size();
+	lua_createtable(L, n, 0);
+	if (n > 0) {
+		for (int i = 0; i < n; i++) {
+			lua_pushstring(L, vs[i].c_str());
+			lua_rawseti(L, -2, i + 1);
+		}
+	}
+	return 1;
+}
+
 /**
 h:add_dic(dic_path [, key]) -> []
 load extra dictionaries (only dic files)
@@ -21,8 +33,9 @@ static int l_add_dic(lua_State *L) {
 
 	const char *dic = luaL_checkstring(L, 2);
 	const char *key = luaL_optstring(L, 3, NULL);
-	CheckH(L)->add_dic(dic, key);
-	return 0;
+	int ret = CheckH(L)->add_dic(dic, key);
+	lua_pushboolean(L, ret?0:1);
+	return 1;
 }
 
 /**
@@ -49,18 +62,25 @@ returns a table of suggestions for the word (or empty table)
 static int l_suggest(lua_State* L) {
 
 	const std::string word = luaL_checkstring(L, 2);
-	Hunspell* sp = CheckH(L);
-	std::vector<std::string> vs = sp->suggest(word);
-	int n = vs.size();
-	lua_createtable(L, n, 0);
-	if (n > 0) {
-		for (int i = 0; i < n; i++) {
-			lua_pushstring(L, vs[i].c_str());
-			lua_rawseti(L, -2, i + 1);
-		}		
-	}
-	return 1;
+	return pushVector(L, CheckH(L)->suggest(word));
 }
+
+static int l_suffix_suggest(lua_State* L) {
+
+	const std::string word = luaL_checkstring(L, 2);
+	return pushVector(L, CheckH(L)->suffix_suggest(word));
+}
+
+
+/* h:analyze(word) ->[table] morphological analysis of the word */
+
+static int l_analyze(lua_State *L) {
+
+	const std::string word = luaL_checkstring(L, 2);
+	return pushVector(L, CheckH(L)->analyze(word));
+}
+
+
 /**
 h:stem(word)->[table]
 returnsatableofstemsofword
@@ -69,19 +89,15 @@ returnsatableofstemsofword
 static int l_stem(lua_State *L) {
 
 	const std::string word = luaL_checkstring(L, 2);
-	Hunspell* sp = CheckH(L);
-	std::vector<std::string> vs = sp->stem(word);
-	int n = vs.size();
-	lua_createtable(L, n, 0);
-	if (n > 0) {
-		for (int i = 0; i < n; i++) {
-			lua_pushstring(L, vs[i].c_str());
-			lua_rawseti(L, -2, i + 1);
-		}
+	return pushVector(L, CheckH(L)->stem(word));
+}
 
-		
-	}
-	return 1;
+
+static int l_generate(lua_State *L) {
+
+	const std::string word = luaL_checkstring(L, 2);
+	const std::string word2 = luaL_checkstring(L, 3);
+	return pushVector(L, CheckH(L)->generate(word, word2));
 }
 
 /**
@@ -98,8 +114,19 @@ static int l_add_with_affix(lua_State *L) {
 	const std::string word = luaL_checkstring(L, 2);
 	const std::string example = luaL_checkstring(L, 3);
 	std::string flags = "";
-	CheckH(L)->add_with_affix(word,example,&flags);
-	lua_pushstring(L, flags.c_str());
+	int res = CheckH(L)->add_with_affix(word,example,&flags);
+	if(!res)
+		lua_pushstring(L, flags.c_str());
+	return res ? 0:1;
+}
+
+static int l_add_with_flags(lua_State *L) {
+	const std::string word = luaL_checkstring(L, 2);
+	const std::string flags = luaL_checkstring(L, 3);
+	const std::string desc = luaL_checkstring(L, 4);
+
+	int res = CheckH(L)->add_with_flags(word, flags, desc);
+	lua_pushinteger(L, res);
 	return 1;
 }
 
@@ -107,10 +134,14 @@ static int l_add_with_affix(lua_State *L) {
 luaL_Reg spell_methods[] = {
 	{"add_dic", l_add_dic},
 	{"spell", l_spell},
+	{"analyze", l_analyze},
 	{"stem", l_stem},
+	{"generate", l_generate},
 	{"suggest", l_suggest},
+	{"suffix_suggest", l_suffix_suggest},
 	{"add_word", l_add_word},
 	{"add_with_affix", l_add_with_affix},
+	{"add_with_flags", l_add_with_flags},
 	{"destroy", l_destroy},
 	{NULL, NULL}
 };

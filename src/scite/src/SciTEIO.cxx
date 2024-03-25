@@ -502,6 +502,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 		}
 	}
 	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
+	absPath._encoding = encoding;
 	if(setNav)
 		extender->OnNavigation("Open");
 	
