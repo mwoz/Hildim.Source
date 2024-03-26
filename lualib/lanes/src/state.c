@@ -444,7 +444,7 @@ lua_State* luaG_newstate( Universe* U, lua_State* from_, char const* libs_)
             lua_pushcfunction( L, luaopen_base);
             lua_pushstring( L, "");
             lua_call( L, 1, 0);
-#endif // LUA_VERSION_NUM
+#endif // LUA_VERSION_NUM  
         }
     }
     STACK_END( L, 0);

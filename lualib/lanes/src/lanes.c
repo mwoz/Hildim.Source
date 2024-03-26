@@ -254,15 +254,10 @@ static void lane_cleanup( Lane* s)
     }
 #endif // HAVE_LANE_TRACKING()
 
-    // don't hijack the state allocator when running LuaJIT because it looks like LuaJIT does not expect it and might invalidate the memory unexpectedly
-#if USE_LUA_STATE_ALLOCATOR()
     {
-        AllocatorDefinition* const allocD = &s->U->protected_allocator.definition;
-        allocD->allocF(allocD->allocUD, s, sizeof(Lane), 0);
+        AllocatorDefinition* const allocD = &s->U->internal_allocator;
+        (void) allocD->allocF(allocD->allocUD, s, sizeof(Lane), 0);
     }
-#else // USE_LUA_STATE_ALLOCATOR()
-    free(s);
-#endif // USE_LUA_STATE_ALLOCATOR()
 }
 
 /*
@@ -585,7 +580,7 @@ static int selfdestruct_gc( lua_State* L)
         U->timer_deep = NULL;
     }
 
-    close_keepers( U, L);
+    close_keepers( U);
 
     // remove the protected allocator, if any
     cleanup_allocator_function( U, L);
@@ -844,8 +839,7 @@ LUAG_FUNC( set_thread_affinity)
     THREAD_SET_AFFINITY( (unsigned int) affinity);
     return 0;
 }
-
-
+#if USE_DEBUG_SPEW()
 // can't use direct LUA_x errcode indexing because the sequence is not the same between Lua 5.1 and 5.2 :-(
 // LUA_ERRERR doesn't have the same value
 struct errcode_name
@@ -876,6 +870,7 @@ static char const* get_errcode_name( int _code)
     }
     return "<NULL>";
 }
+#endif // USE_DEBUG_SPEW()
 
 #if THREADWAIT_METHOD == THREADWAIT_CONDVAR // implies THREADAPI == THREADAPI_PTHREAD
 static void thread_cleanup_handler( void* opaque)
@@ -1056,21 +1051,22 @@ LUAG_FUNC( lane_new)
     Lane** ud;
 
     char const* libs_str = lua_tostring( L, 2);
-    int const priority = (int) luaL_optinteger( L, 3, 0);
-    uint_t globals_idx = lua_isnoneornil( L, 4) ? 0 : 4;
-    uint_t package_idx = lua_isnoneornil( L, 5) ? 0 : 5;
-    uint_t required_idx = lua_isnoneornil( L, 6) ? 0 : 6;
-    uint_t gc_cb_idx = lua_isnoneornil( L, 7) ? 0 : 7;
+    bool_t const have_priority = !lua_isnoneornil( L, 3);
+    int const priority = have_priority ? (int) lua_tointeger( L, 3) : THREAD_PRIO_DEFAULT;
+    uint_t const globals_idx = lua_isnoneornil( L, 4) ? 0 : 4;
+    uint_t const package_idx = lua_isnoneornil( L, 5) ? 0 : 5;
+    uint_t const required_idx = lua_isnoneornil( L, 6) ? 0 : 6;
+    uint_t const gc_cb_idx = lua_isnoneornil( L, 7) ? 0 : 7;
 
 #define FIXED_ARGS 7
     int const nargs = lua_gettop(L) - FIXED_ARGS;
-    Universe* U = universe_get( L);
+    Universe* const U = universe_get( L);
     ASSERT_L( nargs >= 0);
 
     // public Lanes API accepts a generic range -3/+3
     // that will be remapped into the platform-specific scheduler priority scheme
     // On some platforms, -3 is equivalent to -2 and +3 to +2
-    if( priority < THREAD_PRIO_MIN || priority > THREAD_PRIO_MAX)
+    if( have_priority && (priority < THREAD_PRIO_MIN || priority > THREAD_PRIO_MAX))
     {
         return luaL_error( L, "Priority out of range: %d..+%d (%d)", THREAD_PRIO_MIN, THREAD_PRIO_MAX, priority);
     }
@@ -1234,15 +1230,10 @@ LUAG_FUNC( lane_new)
     //
     // a Lane full userdata needs a single uservalue
     ud = lua_newuserdatauv( L, sizeof( Lane*), 1);           // func libs priority globals package required gc_cb lane
-    // don't hijack the state allocator when running LuaJIT because it looks like LuaJIT does not expect it and might invalidate the memory unexpectedly
-#if USE_LUA_STATE_ALLOCATOR()
     {
-        AllocatorDefinition* const allocD = &U->protected_allocator.definition;
+        AllocatorDefinition* const allocD = &U->internal_allocator;
         s = *ud = (Lane*)allocD->allocF(allocD->allocUD, NULL, 0, sizeof(Lane));
     }
-#else // USE_LUA_STATE_ALLOCATOR()
-    s = *ud = (Lane*) malloc(sizeof(Lane));
-#endif // USE_LUA_STATE_ALLOCATOR()
     if( s == NULL)
     {
         return luaL_error( L, "could not create lane: out of memory");
@@ -2095,6 +2086,17 @@ int LANES_API luaopen_lanes_core( lua_State* L)
 
     STACK_GROW( L, 4);
     STACK_CHECK( L, 0);
+
+    // Prevent PUC-Lua/LuaJIT mismatch. Hopefully this works for MoonJIT too
+    lua_getglobal( L, "jit");                           // {jit?}
+#if LUAJIT_FLAVOR() == 0
+    if (!lua_isnil( L, -1))
+        return luaL_error( L, "Lanes is built for PUC-Lua, don't run from LuaJIT");
+#else
+    if (lua_isnil( L, -1))
+        return luaL_error( L, "Lanes is built for LuaJIT, don't run from PUC-Lua");
+#endif
+    lua_pop( L, 1);                                     //
 
     // Create main module interface table
     // we only have 1 closure, which must be called to configure Lanes

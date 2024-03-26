@@ -77,7 +77,9 @@ lanes.configure = function( settings_)
         demote_full_userdata = nil,
         verbose_errors = false,
         -- LuaJIT provides a thread-unsafe allocator by default, so we need to protect it when used in parallel lanes
-        allocator = (package.loaded.jit and jit.version) and "protected" or nil
+        allocator = (package.loaded.jit and jit.version) and "protected" or nil,
+        -- it looks also like LuaJIT allocator may not appreciate direct use of its allocator for other purposes than the VM operation
+        internal_allocator = (package.loaded.jit and jit.version) and "libc" or "allocator"
     }
     local boolean_param_checker = function( val_)
         -- non-'boolean-false' should be 'boolean-true' or nil
@@ -93,6 +95,10 @@ lanes.configure = function( settings_)
         allocator = function( val_)
             -- can be nil, "protected", or a function
             return val_ and (type( val_) == "function" or val_ == "protected") or true
+        end,
+        internal_allocator = function( val_)
+            -- can be "libc" or "allocator"
+            return val_ == "libc" or val_ == "allocator"
         end,
         on_state_create = function( val_)
             -- on_state_create may be nil or a function
@@ -147,7 +153,7 @@ lanes.configure = function( settings_)
         author= "Asko Kauppi <akauppi@gmail.com>, Benoit Germain <bnt.germain@gmail.com>",
         description= "Running multiple Lua states in parallel",
         license= "MIT/X11",
-        copyright= "Copyright (c) 2007-10, Asko Kauppi; (c) 2011-19, Benoit Germain",
+        copyright= "Copyright (c) 2007-10, Asko Kauppi; (c) 2011-23, Benoit Germain",
         version = assert( core.version)
     }
 

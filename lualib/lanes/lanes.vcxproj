@@ -124,6 +124,7 @@
       <AdditionalIncludeDirectories>../../src/scite/lua/src;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>USE_DEBUG_SPEW;NDEBUG;LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <BrowseInformation>false</BrowseInformation>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

@@ -32,8 +32,10 @@ enum e_status { PENDING, RUNNING, WAITING, DONE, ERROR_ST, CANCELLED };
 #define THREADAPI_PTHREAD 2
 
 #if( defined( PLATFORM_XBOX) || defined( PLATFORM_WIN32) || defined( PLATFORM_POCKETPC)) && !defined( HAVE_WIN32_PTHREAD)
+//#pragma message ( "THREADAPI_WINDOWS" )
 #define THREADAPI THREADAPI_WINDOWS
 #else // (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
+//#pragma message ( "THREADAPI_PTHREAD" )
 #define THREADAPI THREADAPI_PTHREAD
 #endif // (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
 
@@ -111,7 +113,11 @@ enum e_status { PENDING, RUNNING, WAITING, DONE, ERROR_ST, CANCELLED };
   #include <pthread.h>
 
   #ifdef PLATFORM_LINUX
-  # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+    #if defined(__GLIBC__)
+      # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+    #else
+      # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+    #endif
   #else
     /* OS X, ... */
   # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
@@ -168,6 +174,8 @@ bool_t SIGNAL_WAIT( SIGNAL_T *ref, MUTEX_T *mu, time_d timeout );
 
 /*---=== Threading ===---
 */
+
+#define THREAD_PRIO_DEFAULT (-999)
 
 #if THREADAPI == THREADAPI_WINDOWS
 

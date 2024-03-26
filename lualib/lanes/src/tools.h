@@ -13,7 +13,7 @@ struct s_Universe;
 typedef struct s_Universe Universe;
 
 #define SCITE_NOTIFYTREAD 0x8008
-HWND m_hwnd;
+HWND m_hwnd; 
 
 // ################################################################################################
 
