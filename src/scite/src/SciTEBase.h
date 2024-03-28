@@ -934,7 +934,7 @@ protected:
 	}GrepOut;
 	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
 	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);
-	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf);
+	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
 
 	void SendOneProperty(const char *kind, const char *key, const char *val);

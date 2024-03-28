@@ -1162,11 +1162,10 @@ public:
 };
 
 static bool IsWordCharacter(int ch, const char *chSet) {		
-	if (strchr(chSet, ch)) return true;
-	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')  || (ch >= '0' && ch <= '9')  || (ch == '_');
+	return ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (ch == '_')) || static_cast<bool>(strchr(chSet, ch));
 }
 
-bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf)
+bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented)
 {//При инициализированной luaState использует поиск regex_search для определения индекса первого вхождения подстроки в текст
 	if (!pRegExp) {
 		char *lineEnd = text + strlen(text);
@@ -1174,11 +1173,14 @@ bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFla
 		if (!(gf & grepWholeWord)) return match ? true : false;
 
 		size_t searchLength = strlen(sub);
-		bool bLeft = !IsWordCharacter(sub[0], props.GetExpanded("chars.accented").c_str());
-		bool bRight = !IsWordCharacter(sub[lstrlenA(sub) - 1], props.GetExpanded("chars.accented").c_str());
+		bool bLeft = !IsWordCharacter(sub[0], charsAccented);
+		bool bRight = !IsWordCharacter(sub[lstrlenA(sub) - 1], charsAccented);
 		while (match) {
-			if (((match == text) || (bLeft || !IsWordCharacter(match[-1], props.GetExpanded("chars.accented").c_str())) &&
-				((match + searchLength == (lineEnd)) || (bRight || !IsWordCharacter(match[searchLength], props.GetExpanded("chars.accented").c_str()))))) {
+			if (
+				((match == text) || (bLeft || !IsWordCharacter(match[-1], charsAccented))) &&
+				((match + searchLength == (lineEnd)) || (bRight || !IsWordCharacter(match[searchLength], charsAccented)))
+				
+				) {
 				return true;
 			}
 			match = strstr(match + 1, sub);
@@ -1228,7 +1230,7 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 		FileReader fr(fPath, gf & grepMatchCase);
 		if ((gf & grepBinary) ||  !fr.BufferContainsNull()) {					  			
 			while (char *line = fr.Next()) {
-				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? pRegExp : 0, gf)) {
+				if (strstrRegExp(line, searchString, (gf & grepRegExp) ? pRegExp : 0, gf, props.GetExpanded("chars.accented").c_str())) {
 					grepOut->iLines += 1;
 					if (!bFindInFiles) {
 						if (gf & grepGroup){
