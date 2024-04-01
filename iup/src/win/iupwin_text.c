@@ -1979,6 +1979,18 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       PostMessage(ih->handle, WM_IUPCARET, 0, 0L);
       break;
     }
+  case WM_CONTEXTMENU:
+  {
+      IFn cb = (IFn)IupGetCallback(ih, "POPUPMENU_CB");
+      if (cb)
+      {
+          SetFocus(ih->handle);
+          cb(ih);
+
+          ret = 1;
+      }
+      break;
+  }
   case WM_LBUTTONDBLCLK:
   case WM_MBUTTONDBLCLK:
   case WM_RBUTTONDBLCLK:

@@ -51,6 +51,12 @@ static int list_multiselect_cb(Ihandle *self, char * p0)
   return iuplua_call(L, 1);
 }
 
+static int list_popupmenu_cb(Ihandle *self)
+{
+  lua_State *L = iuplua_call_start(self, "popupmenu_cb");
+  return iuplua_call(L, 0);
+}
+
 static int List(lua_State *L)
 {
   Ihandle *ih = IupList(NULL);
@@ -68,6 +74,7 @@ int iuplistlua_open(lua_State * L)
   iuplua_register_cb(L, "DROPDOWN_CB", (lua_CFunction)list_dropdown_cb, NULL);
   iuplua_register_cb(L, "EDIT_CB", (lua_CFunction)list_edit_cb, NULL);
   iuplua_register_cb(L, "MULTISELECT_CB", (lua_CFunction)list_multiselect_cb, NULL);
+  iuplua_register_cb(L, "POPUPMENU_CB", (lua_CFunction)list_popupmenu_cb, NULL);
 
 #ifdef IUPLUA_USELOH
 #include "list.loh"

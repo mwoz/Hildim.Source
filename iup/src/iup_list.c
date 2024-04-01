@@ -1083,6 +1083,7 @@ Iclass* iupListNewClass(void)
 
   iupClassRegisterCallback(ic, "EDIT_CB", "is");
   iupClassRegisterCallback(ic, "CARET_CB", "iii");
+  iupClassRegisterCallback(ic, "POPUPMENU_CB", "");
 
   /* Common Callbacks */
   iupBaseRegisterCommonCallbacks(ic);

@@ -12,6 +12,7 @@ local ctrl = {
      edit_cb = "ns", 
      dropdown_cb = "n",
      dblclick_cb = "ns",
+     popupmenu_cb = "",
    }
 } 
 

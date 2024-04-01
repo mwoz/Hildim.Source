@@ -1,15 +1,16 @@
 ------------------------------------------------------------------------------
--- Text class 
+-- Text class
 ------------------------------------------------------------------------------
 local ctrl = {
   nick = "text",
   parent = iup.WIDGET,
   subdir = "elem",
-  creation = "-", 
+  creation = "-",
   callback = {
     action = "ns",
-    caret_cb = "nnn", 
+    caret_cb = "nnn",
     valuechanged_cb = "",  -- used by many other controls
+    popupmenu_cb = "",
   }
 }
 

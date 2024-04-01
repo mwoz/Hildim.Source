@@ -1495,10 +1495,34 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
 
       break;
     }
-  case WM_KEYUP:
+  case WM_CONTEXTMENU:
+    {
+      IFn cb = (IFn)IupGetCallback(ih, "POPUPMENU_CB");
+      if (cb)
+      {
+        SetFocus(cbedit);
+        cb(ih);
+
+        ret = 1;
+      }
+      break;
+    }
   case WM_LBUTTONDBLCLK:
-  case WM_MBUTTONDBLCLK:
+  {
+      IFnis cb = (IFnis)IupGetCallback(ih, "DBLCLICK_CB");
+      if (cb)
+      {
+          cb(ih, 0, "");
+          ret = 1;
+      }
+      else {
+          PostMessage(cbedit, WM_IUPCARET, 0, 0L);
+      }
+      break;
+  }
+  case WM_KEYUP:
   case WM_RBUTTONDBLCLK:
+  case WM_MBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
   case WM_MBUTTONDOWN:
   case WM_RBUTTONDOWN:

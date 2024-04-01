@@ -647,6 +647,7 @@ Iclass* iupTextNewClass(void)
   iupClassRegisterCallback(ic, "MOTION_CB", "iis");
   iupClassRegisterCallback(ic, "SPIN_CB", "i");
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
+  iupClassRegisterCallback(ic, "POPUPMENU_CB", "");
 
   /* Common Callbacks */
   iupBaseRegisterCommonCallbacks(ic);

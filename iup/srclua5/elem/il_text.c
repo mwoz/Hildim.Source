@@ -35,6 +35,12 @@ static int text_valuechanged_cb(Ihandle *self)
   return iuplua_call(L, 0);
 }
 
+static int text_popupmenu_cb(Ihandle* self)
+{
+	lua_State* L = iuplua_call_start(self, "popupmenu_cb");
+	return iuplua_call(L, 0);
+}
+
 static int Text(lua_State *L)
 {
   Ihandle *ih = IupText(NULL);
@@ -50,6 +56,7 @@ int iuptextlua_open(lua_State * L)
   iuplua_register_cb(L, "ACTION", (lua_CFunction)text_action, "text");
   iuplua_register_cb(L, "CARET_CB", (lua_CFunction)text_caret_cb, NULL);
   iuplua_register_cb(L, "VALUECHANGED_CB", (lua_CFunction)text_valuechanged_cb, NULL);
+  iuplua_register_cb(L, "POPUPMENU_CB", (lua_CFunction)text_popupmenu_cb, NULL);
 
 #ifdef IUPLUA_USELOH
 #include "text.loh"
