@@ -386,6 +386,15 @@ static int cf_scite_InvertColor(lua_State* L) {
 	}
 	return 0;
 }
+static int cf_get_keyboard_layout(lua_State* L) {
+	
+	char buff[KL_NAMELENGTH];
+	if (GetKeyboardLayoutNameA(buff)) {
+		lua_pushstring(L, buff);
+		return 1;
+	}
+	return 0;
+}
 
 static int cf_scite_LAB2RGB(lua_State *L) {
 	std::string err;
@@ -1402,6 +1411,25 @@ static int cf_global_dostring(lua_State *L) {
 	}
 	return 0;
 }
+static void procrssError(lua_State* L, int result) {
+	if (result == LUA_ERRRUN) {
+		lua_getglobal(L, "print");
+		lua_insert(L, -2); // use pushed error message
+		lua_pcall(L, 1, 0, 0);
+	}
+	else {
+		lua_pop(L, 1);
+		if (result == LUA_ERRMEM) {
+			host->Trace("> Lua: memory allocation error\n");
+		}
+		else if (result == LUA_ERRERR) {
+			host->Trace("> Lua: an error occurred, but cannot be reported due to failure in _TRACEBACK\n");
+		}
+		else {
+			host->Trace("> Lua: unexpected error\n");
+		}
+	}
+}
 
 static bool call_function(lua_State *L, int nargs, int nresult = 1) {
 	bool handled = false;
@@ -1431,19 +1459,8 @@ static bool call_function(lua_State *L, int nargs, int nresult = 1) {
 				handled = (0 != lua_toboolean(L, -1));
 				lua_pop(L, 1);
 			}
-		} else if (result == LUA_ERRRUN) {
-			lua_getglobal(L, "print");
-			lua_insert(L, -2); // use pushed error message
-			lua_pcall(L, 1, 0, 0);
 		} else {
-			lua_pop(L, 1);
-			if (result == LUA_ERRMEM) {
-				host->Trace("> Lua: memory allocation error\n");
-			} else if (result == LUA_ERRERR) {
-				host->Trace("> Lua: an error occurred, but cannot be reported due to failure in _TRACEBACK\n");
-			} else {
-				host->Trace("> Lua: unexpected error\n");
-			}
+			procrssError(L, result);
 		}
 	}
 	return handled;
@@ -1602,19 +1619,8 @@ static const char *call_sfunction(lua_State *L, int nargs, bool ignoreFunctionRe
 				handled = lua_tostring(L, -1);
 				lua_pop(L, 1);
 			}
-		} else if (result == LUA_ERRRUN) {
-			lua_getglobal(L, "print");
-			lua_insert(L, -2); // use pushed error message
-			lua_pcall(L, 1, 0, 0);
 		} else {
-			lua_pop(L, 1);
-			if (result == LUA_ERRMEM) {
-				host->Trace("> Lua: memory allocation error\n");
-			} else if (result == LUA_ERRERR) {
-				host->Trace("> Lua: an error occurred, but cannot be reported due to failure in _TRACEBACK\n");
-			} else {
-				host->Trace("> Lua: unexpected error\n");
-			}
+			procrssError(L, result);
 		}
 	}
 	return handled;
@@ -2538,6 +2544,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_scite_InvertColor);
 	lua_setfield(luaState, -2, "InvertColor");
+
+	lua_pushcfunction(luaState, cf_get_keyboard_layout);
+	lua_setfield(luaState, -2, "GetKeyboardLayout");
 
 	// buffers
 	lua_newtable(luaState);
@@ -3528,8 +3537,31 @@ bool LuaExtension::OnMacroBlocked(int msg, int wParam, int lParam) {
 	return CallNamedFunction("OnMacroBlockedEvents", msg, wParam, lParam);
 }
 
-int LuaExtension::OnMenuChar(int flag, const char* key) {
-	return CallNamedFunction("event_MenuChar", flag, key);
+unsigned long  LuaExtension::OnMenuChar(int flag, const char* key) {
+	//return CallNamedFunction("event_MenuChar", flag, key);
+
+	unsigned long r = 0;
+	if (luaState) {
+		lua_getglobal(luaState, "event_MenuChar");
+		if (lua_isfunction(luaState, -1)) {
+			lua_pushinteger(luaState, flag);
+			lua_pushstring(luaState, key);
+
+			int result = lua_pcall(luaState, 2, 1, false);
+			if (0 == result) {
+				r = lua_tointeger(luaState, -1);
+				lua_pop(luaState, 1);
+			}
+			else  {
+				procrssError(luaState, result);
+			}
+
+		}
+		else {
+			lua_pop(luaState, 1);
+		}
+	}
+	return r;
 }
 
 void LuaExtension::OnMouseHook(int x, int y) {

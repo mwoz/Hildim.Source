@@ -1384,9 +1384,28 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
     else
       iupAttribSet(ih, "_IUPWIN_IGNORE_CHAR", NULL);
   }
+  else if (msg == WM_SYSKEYDOWN) {
+      ret = iupwinBaseMsgProc(ih, msg, wp, lp, result);
+      if (ret)
+      {
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", "1");
+          *result = 0;
+          return 1;
+      }
+      else
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", NULL);
+  }
 
   switch (msg)
   {
+  case WM_SYSCHAR:
+      if (iupAttribGet(ih, "_IUPWIN_IGNORE_SYSCHAR"))
+      {
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", NULL);
+          *result = 0;
+          return 1;
+      }
+      break;
   case WM_CHAR:
     {
       TCHAR c = (TCHAR)wp;
@@ -1507,6 +1526,22 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
       }
       break;
     }
+  case WM_SETCURSOR:
+      if (iupAttribGet(ih, "CURSOR")) {
+          char* name = iupAttribGet(ih, "CURSOR");
+          HCURSOR c;
+          if (*name == 'l')
+              c = LoadCursor(NULL, IDC_ARROW);
+          else if (*name == 'e')
+              c = iupwinGetCursor(ih, iupAttribGet(ih, "CURSOR") + 1);
+          else
+              c = iupwinGetCursor(ih, iupAttribGet(ih, "CURSOR"));
+
+          SetCursor(c);
+          *result = 0;
+          return 1;
+      }
+      break;
   case WM_LBUTTONDBLCLK:
   {
       IFnis cb = (IFnis)IupGetCallback(ih, "DBLCLICK_CB");
@@ -1937,6 +1972,22 @@ static int winListMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
           }
         }
       }
+    case WM_SETCURSOR:
+        if (iupAttribGet(ih, "CURSOR")) {
+            char* name = iupAttribGet(ih, "CURSOR");
+            HCURSOR c;
+            if(*name=='e')
+                c = LoadCursor(NULL, IDC_ARROW); 
+            else if(*name == 'l')
+                c = iupwinGetCursor(ih, iupAttribGet(ih, "CURSOR") + 1);
+            else 
+                c = iupwinGetCursor(ih, iupAttribGet(ih, "CURSOR"));
+
+            SetCursor(c);
+            *result = 0;
+            return 1;
+        }
+        break;
     }
   }
 

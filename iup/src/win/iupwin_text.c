@@ -1821,9 +1821,28 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
     else
       iupAttribSet(ih, "_IUPWIN_IGNORE_CHAR", NULL);
   }
+  else if (msg == WM_SYSKEYDOWN) {
+      ret = iupwinBaseMsgProc(ih, msg, wp, lp, result);
+      if (ret)
+      {
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", "1");
+          *result = 0;
+          return 1;
+      }
+      else
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", NULL);
+  }
 
   switch (msg)
   {
+  case WM_SYSCHAR:
+      if (iupAttribGet(ih, "_IUPWIN_IGNORE_SYSCHAR"))
+      {
+          iupAttribSet(ih, "_IUPWIN_IGNORE_SYSCHAR", NULL);
+          *result = 0;
+          return 1;
+      }
+      break;
   case WM_CHAR:
     {
       TCHAR c = (TCHAR)wp;
@@ -2048,6 +2067,15 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       }
       break;
     }
+
+  case WM_SETCURSOR:
+      if (iupAttribGet(ih, "CURSOR")) {
+          HCURSOR c = iupwinGetCursor(ih, iupAttribGet(ih, "CURSOR"));
+          SetCursor(c);
+          *result = 0;
+          return 1;
+      }
+      break;
 
   case WM_NCPAINT:
 	  if (iupAttribGetBoolean(ih, "FLAT") && iupAttribGetBoolean(ih, "BORDER")) {

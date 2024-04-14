@@ -144,7 +144,7 @@ public:
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
-	virtual int OnMenuChar(int flag, const char* key) { return 0; };
+	virtual unsigned long  OnMenuChar(int flag, const char* key) { return 0; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
 	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag) { return; };

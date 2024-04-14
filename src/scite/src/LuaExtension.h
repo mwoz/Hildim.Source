@@ -64,7 +64,7 @@ public:
 	virtual void DoLua(const char *c);
 	virtual void OnMouseHook(int x, int y);
 	virtual bool OnMacroBlocked(int msg, int wParam, int lParam);
-	virtual int OnMenuChar(int flag, const char* key);
+	virtual unsigned long OnMenuChar(int flag, const char* key);
 	virtual bool OnDrawClipboard(int flag);
 	virtual void OnRightEditorVisibility(bool show);
 	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag);

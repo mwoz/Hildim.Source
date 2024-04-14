@@ -40,6 +40,7 @@
 
 #include "LuaExtension.h"
 #include <sstream>
+#include "../../iup/src/win/iupwin_drv.h"
 
 const GUI::gui_char appName[] = GUI_TEXT("HildiM");
 
@@ -1830,16 +1831,28 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 					extender->OnMenuChar(1, "");
 			}
 			break;
+		case WM_INITMENUPOPUP:
+		case WM_UNINITMENUPOPUP:
+			iupwinMenuDialogProc(NULL, iMessage, wParam, lParam);
+
+			break;
 		case WM_MENUCHAR:
-			if(MF_SYSMENU == HIWORD(wParam)){
-				WCHAR key[2];
+		{
+			WORD wp = HIWORD(wParam);
+			switch (wp) {
+			case MF_SYSMENU:
+			case 0x00000010L:
+			{
+				char key[2];
 				key[1] = 0;
 				key[0] = LOWORD(wParam);
-				std::string keyUtf = GUI::UTF8FromString(key).c_str();
-				return MAKELRESULT(0, extender->OnMenuChar(0, keyUtf.c_str()));
+				return extender->OnMenuChar(wp & 0xff, key);
 			}
 			break;
 
+			}
+		}
+		break;
 		case WM_SYSCHAR:
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 
