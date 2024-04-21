@@ -1520,9 +1520,7 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
       if (cb)
       {
         SetFocus(cbedit);
-        cb(ih);
-
-        ret = 1;
+        ret = cb(ih);
       }
       break;
     }

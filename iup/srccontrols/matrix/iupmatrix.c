@@ -2192,6 +2192,7 @@ Iclass* iupMatrixNewClass(void)
   iupClassRegisterCallback(ic, "DROPSELECT_CB", "iinsii");
   iupClassRegisterCallback(ic, "EDITION_CB", "iii");
   iupClassRegisterCallback(ic, "VALUECHANGED_CB", "");
+  iupClassRegisterCallback(ic, "EDITPOPUPMENU_CB", "nii");
   /* --- Callback Mode --- */
   iupClassRegisterCallback(ic, "VALUE_CB", "ii=s");
   iupClassRegisterCallback(ic, "VALUE_EDIT_CB", "iis");

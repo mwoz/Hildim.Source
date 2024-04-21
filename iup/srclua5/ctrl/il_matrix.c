@@ -184,6 +184,16 @@ static int matrix_menudrop_cb(Ihandle *self, Ihandle * p0, int p1, int p2)
   return iuplua_call(L, 3);
 }
 
+static int matrix_edit_popmenu_cb(Ihandle *self, Ihandle * p0, int p1, int p2)
+{
+  lua_State *L = iuplua_call_start(self, "editpopupmenu_cb");
+  iuplua_pushihandle(L, p0);
+  lua_pushinteger(L, p1);
+  lua_pushinteger(L, p2);
+  return iuplua_call(L, 3);
+}
+
+
 static int matrix_mousemove_cb(Ihandle *self, int p0, int p1)
 {
   lua_State *L = iuplua_call_start(self, "mousemove_cb");
@@ -302,6 +312,7 @@ int iupmatrixlua_open(lua_State * L)
   iuplua_register_cb(L, "TYPE_CB", (lua_CFunction)matrix_type_cb, NULL);
   iuplua_register_cb(L, "VALUE_CB", (lua_CFunction)matrix_value_cb, NULL);
   iuplua_register_cb(L, "VALUE_EDIT_CB", (lua_CFunction)matrix_value_edit_cb, NULL);
+  iuplua_register_cb(L, "EDITPOPUPMENU_CB", (lua_CFunction)matrix_edit_popmenu_cb, NULL);
 
   iuplua_matrixfuncs_open(L);
 

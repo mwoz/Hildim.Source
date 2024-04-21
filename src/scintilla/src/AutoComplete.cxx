@@ -252,8 +252,18 @@ bool IsAbbr(const char *item, const char *abr)
 	return true;
 }
 
-void AutoComplete::Select(const char *word) {
+void AutoComplete::Select(const char *w) {
+	const char* word;
+	if (separator == '\r' && *w == '\"')
+		word = w + 1;
+	else
+		word = w;
+	
 	const size_t lenWord = strlen(word);
+	if (!lenWord)
+		return;
+
+
 	int location = -1;
 	std::string item;
 	int start = 0; // lower bound of the api array block to search
@@ -309,19 +319,19 @@ void AutoComplete::Select(const char *word) {
 			case 'О': s[i] = 'J';  break;
 			case 'Л': s[i] = 'K';  break;
 			case 'Д': s[i] = 'L';  break;
-			case 'Я': s[i] = 'Z';    break;
-			case 'Ч': s[i] = 'X';    break;
-			case 'С': s[i] = 'C';    break;
-			case 'М': s[i] = 'V';    break;
-			case 'И': s[i] = 'B';    break;
-			case 'Т': s[i] = 'N';    break;
-			case 'Ь': s[i] = 'M';    break;
+			case 'Я': s[i] = 'Z';  break;
+			case 'Ч': s[i] = 'X';  break;
+			case 'С': s[i] = 'C';  break;
+			case 'М': s[i] = 'V';  break;
+			case 'И': s[i] = 'B';  break;
+			case 'Т': s[i] = 'N';  break;
+			case 'Ь': s[i] = 'M';  break;
 			default: s[i] = word[i]; break;
 			}
 			if (!s[i]) break;
 		}
 	}
-	if (separator == '\t' && lenWord > 1 && lenWord < 20)
+	if ((separator == '\t' || separator == '\r') && lenWord > 1 && lenWord < 20)
 	{ //Автозавершение по аббревиатуре. Выполняем, только для сепаратора '\t'
 		char testUpper[21];
 		strncpy(testUpper, pword, lenWord + 1);

@@ -412,26 +412,27 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 					sc.ChangeState(SCE_LUA_WORD8);
 				} else if (isObject || isSubObject) {
 					// colourise objects part separately&& sc.currentPos <= objectPartEndPos
-					if (isObject ) {
-						int currPos = sc.currentPos;
-						sc.MoveTo(objectPartEndPos);
-						if (isObjectStart && sc.currentPos <= objectPartEndPos) {
+					if (isObject) {
+						int currPos = sc.currentPos;						
+	//					sc.MoveTo(objectPartEndPos); && sc.currentPos <= objectPartEndPos
+						if (isObjectStart && strlen(s) > sc.currentPos - objectPartEndPos) {
+							char* s2 = s + strlen(s) - sc.currentPos + objectPartEndPos;
 							sc.GetCurrent(s, sizeof(s));
-							if (keywords[0].InList(s)) {
+							if (keywords[0].InList(s2)) {
 						        sc.ChangeState(SCE_LUA_WORD);
-							} else if (keywords[1].InList(s)) {
+							} else if (keywords[1].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD2);
-							} else if (keywords[2].InList(s)) {
+							} else if (keywords[2].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD3);
-							} else if (keywords[3].InList(s)) {
+							} else if (keywords[3].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD4);
-							} else if (keywords[4].InList(s)) {
+							} else if (keywords[4].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD5);
-							} else if (keywords[5].InList(s)) {
+							} else if (keywords[5].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD6);
-							} else if (keywords[6].InList(s)) {
+							} else if (keywords[6].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD7);
-							} else if (keywords[7].InList(s)) {
+							} else if (keywords[7].InList(s2)) {
 								sc.ChangeState(SCE_LUA_WORD8);
 							}
 							isObjectStart = false;
@@ -440,7 +441,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 						s[0] = static_cast<char>(sc.ch);
 						sc.Forward();
 						sc.SetState(SCE_LUA_IDENTIFIER);
-						sc.MoveTo(currPos);
+						//sc.MoveTo(currPos);
 					} else {
 						s[0] = sChar;
 					}

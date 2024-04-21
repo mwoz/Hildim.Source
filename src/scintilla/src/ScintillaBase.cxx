@@ -929,8 +929,8 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		return static_cast<sptr_t>(ac.autoSort);
 
 	case Message::UserListShow:
-		listType = static_cast<int>(wParam);
-		AutoCompleteStart(0, ConstCharPtrFromSPtr(lParam));
+		listType = static_cast<int>(wParam & 0x0000FFFF);
+		AutoCompleteStart((wParam & 0xFFFF0000)>>16, ConstCharPtrFromSPtr(lParam));
 		break;
 
 	case Message::AutoCSetAutoHide:

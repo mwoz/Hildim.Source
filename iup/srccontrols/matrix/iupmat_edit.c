@@ -530,6 +530,15 @@ static int iMatrixEditTextAction_CB(Ihandle* ih_text, int c, char* after)
   return IUP_DEFAULT;
 }
 
+static int iMatrixEditPopMenu_CB(Ihandle* ih_text) {
+    Ihandle* ih = ih_text->parent;
+    IFnnii cb = (IFnnii)IupGetCallback(ih, "EDITPOPUPMENU_CB");
+    if (cb) {
+        return cb(ih, ih_text, ih->data->edit_lin, ih->data->edit_col);
+    }
+    return 0;
+}
+
 static int iMatrixEditTextKeyAny_CB(Ihandle* ih_text, int c)
 {
   Ihandle* ih = ih_text->parent;
@@ -691,6 +700,7 @@ void iupMatrixEditCreate(Ihandle* ih)
   IupSetCallback(ih->data->texth, "ACTION",       (Icallback)iMatrixEditTextAction_CB);
   IupSetCallback(ih->data->texth, "K_ANY",        (Icallback)iMatrixEditTextKeyAny_CB);
   IupSetCallback(ih->data->texth, "KILLFOCUS_CB", (Icallback)iMatrixEditKillFocus_CB);
+  IupSetCallback(ih->data->texth, "POPUPMENU_CB", (Icallback)iMatrixEditPopMenu_CB);
   IupSetAttribute(ih->data->texth, "VALUE",  "");
   IupSetAttribute(ih->data->texth, "VISIBLE", "NO");
   IupSetAttribute(ih->data->texth, "ACTIVE",  "NO");

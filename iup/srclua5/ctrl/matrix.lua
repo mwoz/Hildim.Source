@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
--- Matrix class 
+-- Matrix class
 ------------------------------------------------------------------------------
 local ctrl = {
   nick = "matrix",
@@ -35,6 +35,7 @@ local ctrl = {
     mark_cb = "nn",
     markedit_cb = "nnn",
     resizematrix_cb = "nn",
+    editpopupmenu_cb = "inn",
   },
   include = "iupcontrols.h",
   extrafuncs = 1,

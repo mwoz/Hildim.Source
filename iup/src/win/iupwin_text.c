@@ -2004,9 +2004,8 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
       if (cb)
       {
           SetFocus(ih->handle);
-          cb(ih);
+          ret = cb(ih);
 
-          ret = 1;
       }
       break;
   }
