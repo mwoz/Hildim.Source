@@ -219,13 +219,13 @@ SelectionRange &Selection::Rectangular() noexcept {
 
 SelectionSegment Selection::Limits() const noexcept {
 	PLATFORM_ASSERT(!ranges.empty());
-		SelectionSegment sr(ranges[0].anchor, ranges[0].caret);
-		for (size_t i=1; i<ranges.size(); i++) {
-			sr.Extend(ranges[i].anchor);
-			sr.Extend(ranges[i].caret);
-		}
-		return sr;
+	SelectionSegment sr(ranges[0].anchor, ranges[0].caret);
+	for (size_t i=1; i<ranges.size(); i++) {
+		sr.Extend(ranges[i].anchor);
+		sr.Extend(ranges[i].caret);
 	}
+	return sr;
+}
 
 SelectionSegment Selection::LimitsForRectangularElseMain() const noexcept {
 	if (IsRectangular()) {

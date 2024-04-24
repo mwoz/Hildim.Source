@@ -256,10 +256,10 @@ unsigned int UTF16FromUTF32Character(unsigned int val, wchar_t *tbuf) noexcept {
 		tbuf[0] = static_cast<wchar_t>(val);
 		return 1;
 	}
-		tbuf[0] = static_cast<wchar_t>(((val - SUPPLEMENTAL_PLANE_FIRST) >> 10) + SURROGATE_LEAD_FIRST);
-		tbuf[1] = static_cast<wchar_t>((val & 0x3ff) + SURROGATE_TRAIL_FIRST);
-		return 2;
-	}
+	tbuf[0] = static_cast<wchar_t>(((val - SUPPLEMENTAL_PLANE_FIRST) >> 10) + SURROGATE_LEAD_FIRST);
+	tbuf[1] = static_cast<wchar_t>((val & 0x3ff) + SURROGATE_TRAIL_FIRST);
+	return 2;
+}
 
 const unsigned char UTF8BytesOfLead[256] = {
 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 00 - 0F
@@ -374,10 +374,10 @@ bool UTF8IsValid(std::string_view svu8) noexcept {
 		if (utf8Status & UTF8MaskInvalid) {
 			return false;
 		}
-			const int lenChar = utf8Status & UTF8MaskWidth;
+		const int lenChar = utf8Status & UTF8MaskWidth;
 		s += lenChar;
-			remaining -= lenChar;
-		}
+		remaining -= lenChar;
+	}
 	return true;
 }
 

@@ -110,6 +110,7 @@ bool ValidStyledText(const ViewStyle &vs, size_t styleOffset, const StyledText &
 	}
 	return true;
 }
+
 int WidestLineWidth(Surface *surface, const ViewStyle &vs, int styleOffset, const StyledText &st) {
 	int widthMax = 0;
 	size_t start = 0;
@@ -350,8 +351,8 @@ void LayoutSegments(IPositionCache *pCache,
 		if (vstyle.styles[styleSegment].visible) {
 			if (ts.representation) {
 				XYPOSITION representationWidth = 0.0;
-					// Tab is a special case of representation, taking a variable amount of space
-					// which will be filled in later.
+				// Tab is a special case of representation, taking a variable amount of space
+				// which will be filled in later.
 				if (ll->chars[ts.start] != '\t') {
 					representationWidth = vstyle.controlCharWidth;
 					if (representationWidth <= 0.0) {
@@ -359,7 +360,7 @@ void LayoutSegments(IPositionCache *pCache,
 						XYPOSITION positionsRepr[Representation::maxLength + 1];
 						// ts.representation->stringRep is UTF-8.
 						pCache->MeasureWidths(surface, vstyle, StyleControlChar, true, ts.representation->stringRep,
-								positionsRepr, multiThreaded);
+							positionsRepr, multiThreaded);
 						representationWidth = positionsRepr[ts.representation->stringRep.length() - 1];
 						if (FlagSet(ts.representation->appearance, RepresentationAppearance::Blob)) {
 							representationWidth += vstyle.ctrlCharPadding;
@@ -843,8 +844,16 @@ ColourRGBA SelectionBackground(const EditModel &model, const ViewStyle &vsDraw, 
 		element = Element::SelectionAdditionalBack;
 	if (!model.primarySelection)
 		element = Element::SelectionSecondaryBack;
-	if (!model.hasFocus && vsDraw.ElementColour(Element::SelectionInactiveBack))
-		element = Element::SelectionInactiveBack;
+	if (!model.hasFocus) {
+		if (inSelection == InSelection::inAdditional) {
+			if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveAdditionalBack)) {
+				return *colour;
+			}
+		}
+		if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveBack)) {
+			return *colour;
+		}
+	}
 	return vsDraw.ElementColour(element).value_or(colourBug);
 }
 
@@ -857,11 +866,12 @@ ColourOptional SelectionForeground(const EditModel &model, const ViewStyle &vsDr
 	if (!model.primarySelection)	// Secondary selection
 		element = Element::SelectionSecondaryText;
 	if (!model.hasFocus) {
-		if (vsDraw.ElementColour(Element::SelectionInactiveText)) {
-			element = Element::SelectionInactiveText;
-		} else {
-			return {};
+		if (inSelection == InSelection::inAdditional) {
+			if (ColourOptional colour = vsDraw.ElementColour(Element::SelectionInactiveAdditionalText)) {
+				return colour;
+			}
 		}
+		element = Element::SelectionInactiveText;
 	}
 	return vsDraw.ElementColour(element);
 }
@@ -929,12 +939,13 @@ void FillLineRemainder(Surface *surface, const EditModel &model, const ViewStyle
 			surface->FillRectangleAligned(rcArea, Fill(vsDraw.styles[ll->styles[ll->numCharsInLine]].back));
 		} else {
 			surface->FillRectangleAligned(rcArea, Fill(vsDraw.styles[StyleDefault].back));
-	}
+		}
 		if (eolInSelection && vsDraw.selection.eolFilled && (line < model.pdoc->LinesTotal() - 1) && (vsDraw.selection.layer != Layer::Base)) {
 			surface->FillRectangleAligned(rcArea, SelectionBackground(model, vsDraw, eolInSelection));
+		}
 	}
-	}
-	}
+}
+
 }
 
 void EditView::DrawEOL(Surface *surface, const EditModel &model, const ViewStyle &vsDraw, const LineLayout *ll,
@@ -1742,7 +1753,7 @@ void DrawEdgeLine(Surface *surface, const ViewStyle &vsDraw, const LineLayout *l
 void DrawMarkUnderline(Surface *surface, const EditModel &model, const ViewStyle &vsDraw,
 	Sci::Line line, PRectangle rcLine) {
 	int marks = model.GetMark(line);
-	for (int markBit = 0; (markBit < 32) && marks; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marks; markBit++) {
 		if ((marks & 1) && (vsDraw.markers[markBit].markType == MarkerSymbol::Underline) &&
 			(vsDraw.markers[markBit].layer == Layer::Base)) {
 			PRectangle rcUnderline = rcLine;
@@ -1862,7 +1873,7 @@ void DrawTranslucentLineState(Surface *surface, const EditModel &model, const Vi
 	}
 	const int marksOfLine = model.GetMark(line);
 	int marksDrawnInText = marksOfLine & vsDraw.maskDrawInText;
-	for (int markBit = 0; (markBit < 32) && marksDrawnInText; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marksDrawnInText; markBit++) {
 		if ((marksDrawnInText & 1) && (vsDraw.markers[markBit].layer == layer)) {
 			if (vsDraw.markers[markBit].markType == MarkerSymbol::Background) {
 				surface->FillRectangleAligned(rcLine, vsDraw.markers[markBit].BackWithAlpha());
@@ -1875,7 +1886,7 @@ void DrawTranslucentLineState(Surface *surface, const EditModel &model, const Vi
 		marksDrawnInText >>= 1;
 	}
 	int marksDrawnInLine = marksOfLine & vsDraw.maskInLine;
-	for (int markBit = 0; (markBit < 32) && marksDrawnInLine; markBit++) {
+	for (int markBit = 0; (markBit <= MarkerMax) && marksDrawnInLine; markBit++) {
 		if ((marksDrawnInLine & 1) && (vsDraw.markers[markBit].layer == layer)) {
 			surface->FillRectangleAligned(rcLine, vsDraw.markers[markBit].BackWithAlpha());
 		}
@@ -2302,7 +2313,7 @@ void EditView::DrawForeground(Surface *surface, const EditModel &model, const Vi
 				rcUL.top = ybase + 1;
 				rcUL.bottom = ybase + 2;
 				ColourRGBA colourUnderline = textFore;
-			if (inHotspot && vsDraw.hotspotUnderline) {
+				if (inHotspot && vsDraw.hotspotUnderline) {
 					colourUnderline = vsDraw.ElementColour(Element::HotSpotActive).value_or(textFore);
 				}
 				surface->FillRectangleAligned(rcUL, colourUnderline);
