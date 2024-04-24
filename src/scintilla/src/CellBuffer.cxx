@@ -47,7 +47,7 @@ struct CountWidths {
 		countOtherPlanes(countOtherPlanes_) {
 	}
 	CountWidths operator-() const noexcept {
-		return CountWidths(-countBasePlane, -countOtherPlanes);
+		return CountWidths(-countBasePlane , -countOtherPlanes);
 	}
 	Sci::Position WidthUTF32() const noexcept {
 		// All code points take one code unit in UTF-32.
@@ -172,7 +172,7 @@ class LineVector : public ILineVector {
 		return static_cast<POS>(pos);
 	}
 
-	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line
+	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line 
 	// This avoids warnings from Visual C++ Code Analysis and shortens code
 	static constexpr Sci::Line line_from_pos_cast(POS line) noexcept {
 		return static_cast<Sci::Line>(line);
@@ -832,7 +832,7 @@ void CellBuffer::BasicInsertString(Sci::Position position, const char *s, Sci::P
 	const Sci::Line lineStart = lineInsert;
 
 	// s may not NULL-terminated, ensure *ptr == '\n' or *next == '\n' is valid.
-	const char *const end = s + insertLength - 1;
+	const char * const end = s + insertLength - 1;
 	const char *ptr = s;
 	unsigned char ch = 0;
 
@@ -1066,8 +1066,8 @@ void CellBuffer::BeginUndoAction(bool mayCoalesce) noexcept {
 	uh->BeginUndoAction(mayCoalesce);
 }
 
-void CellBuffer::EndUndoAction() noexcept {
-	uh->EndUndoAction();
+int CellBuffer::EndUndoAction() {
+	return uh->EndUndoAction();
 }
 
 void CellBuffer::AddUndoAction(Sci::Position token, bool mayCoalesce) {

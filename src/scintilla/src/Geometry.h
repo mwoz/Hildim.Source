@@ -182,7 +182,7 @@ public:
 	constexpr explicit ColourRGBA(int co_ = 0) noexcept : co(co_) {
 	}
 
-	constexpr ColourRGBA(unsigned int red, unsigned int green, unsigned int blue, unsigned int alpha=maximumByte) noexcept :
+	constexpr ColourRGBA(unsigned int red, unsigned int green, unsigned int blue, unsigned int alpha= maximumByte) noexcept :
 		ColourRGBA(red | (green << 8) | (blue << 16) | (alpha << 24)) {
 	}
 

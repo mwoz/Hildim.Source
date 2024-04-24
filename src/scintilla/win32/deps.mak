@@ -101,7 +101,6 @@ $(DIR_O)/CellBuffer.o: \
 	../src/SparseVector.h \
 	../src/ChangeHistory.h \
 	../src/CellBuffer.h \
-	../src/UndoHistory.h \
 	../src/UniConversion.h
 $(DIR_O)/ChangeHistory.o: \
 	../src/ChangeHistory.cxx \
@@ -374,7 +373,6 @@ $(DIR_O)/PositionCache.o: \
 	../src/CaseFolder.h \
 	../src/Document.h \
 	../src/UniConversion.h \
-	../src/DBCS.h \
 	../src/Selection.h \
 	../src/PositionCache.h
 $(DIR_O)/RESearch.o: \
@@ -438,18 +436,6 @@ $(DIR_O)/Style.o: \
 	../src/Geometry.h \
 	../src/Platform.h \
 	../src/Style.h
-$(DIR_O)/UndoHistory.o: \
-	../src/UndoHistory.cxx \
-	../include/ScintillaTypes.h \
-	../src/Debugging.h \
-	../src/Position.h \
-	../src/SplitVector.h \
-	../src/Partitioning.h \
-	../src/RunStyles.h \
-	../src/SparseVector.h \
-	../src/ChangeHistory.h \
-	../src/CellBuffer.h \
-	../src/UndoHistory.h
 $(DIR_O)/UniConversion.o: \
 	../src/UniConversion.cxx \
 	../src/UniConversion.h

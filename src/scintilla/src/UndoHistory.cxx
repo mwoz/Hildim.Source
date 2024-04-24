@@ -340,14 +340,18 @@ void UndoHistory::BeginUndoAction(bool mayCoalesce) noexcept {
 	undoSequenceDepth++;
 }
 
-void UndoHistory::EndUndoAction() noexcept {
-	PLATFORM_ASSERT(undoSequenceDepth > 0);
+int UndoHistory::EndUndoAction() noexcept {
+    int res = undoSequenceDepth;
+	if (!res)
+    return res;
+    PLATFORM_ASSERT(undoSequenceDepth > 0);
 	undoSequenceDepth--;
 	if (0 == undoSequenceDepth) {
 		if (currentAction > 0) {
 			actions.types[PreviousAction()].mayCoalesce = false;
 		}
 	}
+    return res;
 }
 
 void UndoHistory::DropUndoSequence() noexcept {

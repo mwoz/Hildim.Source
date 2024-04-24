@@ -385,7 +385,7 @@ public:
 	void ChangeInsertion(const char *s, Sci::Position length);
 	int SCI_METHOD AddData(const char *data, Sci_Position length) override;
 	IDocumentEditable *AsDocumentEditable() noexcept;
-	void *SCI_METHOD ConvertToDocument() override;
+	void * SCI_METHOD ConvertToDocument() override;
 	Sci::Position Undo();
 	Sci::Position Redo();
 	bool CanUndo() const noexcept { return cb.CanUndo(); }
@@ -396,7 +396,7 @@ public:
 	}
 	bool IsCollectingUndo() const noexcept { return cb.IsCollectingUndo(); }
 	void BeginUndoAction(bool coalesceWithPrior=false) noexcept { cb.BeginUndoAction(coalesceWithPrior); }
-	void EndUndoAction() noexcept { cb.EndUndoAction(); }
+	int EndUndoAction() { return cb.EndUndoAction(); }
 	void AddUndoAction(Sci::Position token, bool mayCoalesce) { cb.AddUndoAction(token, mayCoalesce); }
 	void SetSavePoint();
 	bool IsSavePoint() const noexcept { return cb.IsSavePoint(); }
@@ -427,7 +427,7 @@ public:
 	[[nodiscard]] unsigned int EditionDeletesAt(Sci::Position pos) const noexcept { return cb.EditionDeletesAt(pos); }
 	[[nodiscard]] Sci::Position EditionNextDelete(Sci::Position pos) const noexcept { return cb.EditionNextDelete(pos); }
 
-	const char *SCI_METHOD BufferPointer() override { return cb.BufferPointer(); }
+	const char * SCI_METHOD BufferPointer() override { return cb.BufferPointer(); }
 	const char *RangePointer(Sci::Position position, Sci::Position rangeLength) noexcept { return cb.RangePointer(position, rangeLength); }
 	Sci::Position GapPosition() const noexcept { return cb.GapPosition(); }
 
@@ -663,6 +663,7 @@ public:
 	virtual void NotifyDeleted(Document *doc, void *userData) noexcept = 0;
 	virtual void NotifyStyleNeeded(Document *doc, void *userData, Sci::Position endPos) = 0;
 	virtual void NotifyErrorOccurred(Document *doc, void *userData, Scintilla::Status status) = 0;
+	virtual void NotifyExColorized(Document *doc, void *userData, uptr_t wParam, uptr_t lParam) = 0;
 };
 
 }

@@ -4054,8 +4054,8 @@ CharacterCategory CategoriseCharacter(int character) noexcept {
 	const int baseValue = character * (maskCategory+1) + maskCategory;
 	try {
 		// lower_bound will never throw with these args but its not marked noexcept so add catch to pretend.
-		const int *placeAfter = std::lower_bound(catRanges, std::end(catRanges), baseValue);
-		return static_cast<CharacterCategory>(*(placeAfter - 1) & maskCategory);
+	const int *placeAfter = std::lower_bound(catRanges, std::end(catRanges), baseValue);
+	return static_cast<CharacterCategory>(*(placeAfter-1) & maskCategory);
 	} catch (...) {
 		return ccCn;
 	}

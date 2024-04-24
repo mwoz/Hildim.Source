@@ -7,10 +7,12 @@
 // Copyright 1998-2012 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <cstdlib>
-#include <cassert>
-#include <cstring>
-#include <cctype>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <assert.h>
+#include <ctype.h>
 
 #include <string>
 #include <string_view>
@@ -36,27 +38,25 @@
 using namespace Scintilla;
 using namespace Lexilla;
 
-namespace {
-
-bool IsAWordChar(int ch, bool sqlAllowDottedWord) noexcept {
+static inline bool IsAWordChar(int ch, bool sqlAllowDottedWord) {
 	if (!sqlAllowDottedWord)
 		return (ch < 0x80) && (isalnum(ch) || ch == '_');
 	else
 		return (ch < 0x80) && (isalnum(ch) || ch == '_' || ch == '.');
 }
 
-bool IsAWordStart(int ch) noexcept {
+static inline bool IsAWordStart(int ch) {
 	return (ch < 0x80) && (isalpha(ch) || ch == '_');
 }
 
-bool IsADoxygenChar(int ch) noexcept {
+static inline bool IsADoxygenChar(int ch) {
 	return (islower(ch) || ch == '$' || ch == '@' ||
 	        ch == '\\' || ch == '&' || ch == '<' ||
 	        ch == '>' || ch == '#' || ch == '{' ||
 	        ch == '}' || ch == '[' || ch == ']');
 }
 
-bool IsANumberChar(int ch, int chPrev) noexcept {
+static inline bool IsANumberChar(int ch, int chPrev) {
 	// Not exactly following number definition (several dots are seen as OK, etc.)
 	// but probably enough in most cases.
 	return (ch < 0x80) &&
@@ -263,7 +263,7 @@ struct OptionsSQL {
 	}
 };
 
-const char * const sqlWordListDesc[] = {
+static const char * const sqlWordListDesc[] = {
 	"Keywords",
 	"Database Objects",
 	"PLDoc",
@@ -272,7 +272,7 @@ const char * const sqlWordListDesc[] = {
 	"User Keywords 2",
 	"User Keywords 3",
 	"User Keywords 4",
-	nullptr
+	0
 };
 
 struct OptionSetSQL : public OptionSet<OptionsSQL> {
@@ -381,10 +381,10 @@ private:
 	}
 
 	bool IsCommentLine (Sci_Position line, LexAccessor &styler) {
-		const Sci_Position pos = styler.LineStart(line);
-		const Sci_Position eol_pos = styler.LineStart(line + 1) - 1;
+		Sci_Position pos = styler.LineStart(line);
+		Sci_Position eol_pos = styler.LineStart(line + 1) - 1;
 		for (Sci_Position i = pos; i + 1 < eol_pos; i++) {
-			const int style = styler.StyleAt(i);
+			int style = styler.StyleAt(i);
 			// MySQL needs -- comments to be followed by space or control char
 			if (style == SCE_SQL_COMMENTLINE && styler.Match(i, "--"))
 				return true;
@@ -437,7 +437,10 @@ Sci_Position SCI_METHOD LexerSQL::WordListSet(int n, const char *wl) {
 	}
 	Sci_Position firstModification = -1;
 	if (wordListN) {
-		if (wordListN->Set(wl)) {
+		WordList wlNew;
+		wlNew.Set(wl);
+		if (*wordListN != wlNew) {
+			wordListN->Set(wl);
 			firstModification = 0;
 		}
 	}
@@ -624,7 +627,7 @@ void SCI_METHOD LexerSQL::Lex(Sci_PositionU startPos, Sci_Position length, int i
 				sc.SetState(SCE_SQL_CHARACTER);
 			} else if (sc.ch == '\"') {
 				sc.SetState(SCE_SQL_STRING);
-			} else if (isoperator(sc.ch)) {
+			} else if (isoperator(static_cast<char>(sc.ch))) {
 				sc.SetState(SCE_SQL_OPERATOR);
 			}
 		}
@@ -647,7 +650,7 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 		// And keep going back until we find an operator ';' followed
 		// by white-space and/or comments. This will improve folding.
 		while (--startPos > 0) {
-			const char ch = styler[startPos];
+			char ch = styler[startPos];
 			if (ch == '\n' || (ch == '\r' && styler[startPos + 1] != '\n')) {
 				lastNLPos = startPos;
 			} else if (ch == ';' &&
@@ -656,7 +659,7 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 				for (Sci_Position tempPos = startPos + 1;
 				     tempPos < lastNLPos;
 				     ++tempPos) {
-					const int tempStyle = styler.StyleAt(tempPos);
+					int tempStyle = styler.StyleAt(tempPos);
 					if (!IsCommentStyle(tempStyle)
 					    && tempStyle != SCE_SQL_DEFAULT) {
 						isAllClear = false;
@@ -676,7 +679,7 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 	// And because folding ends at ';', keep going until we find one
 	// Otherwise if create ... view ... as is split over multiple
 	// lines the folding won't always update immediately.
-	const Sci_PositionU docLength = styler.Length();
+	Sci_PositionU docLength = styler.Length();
 	for (; endPos < docLength; ++endPos) {
 		if (styler.SafeGetCharAt(endPos) == ';') {
 			break;
@@ -697,12 +700,12 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 		sqlStatesCurrentLine = sqlStates.ForLine(lineCurrent);
 	}
 	for (Sci_PositionU i = startPos; i < endPos; i++) {
-		const char ch = chNext;
+		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
-		const int stylePrev = style;
+		int stylePrev = style;
 		style = styleNext;
 		styleNext = styler.StyleAt(i + 1);
-		const bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
+		bool atEOL = (ch == '\r' && chNext != '\n') || (ch == '\n');
 		if (atEOL || (!IsCommentStyle(style) && ch == ';')) {
 			if (endFound) {
 				//Maybe this is the end of "EXCEPTION" BLOCK (eg. "BEGIN ... EXCEPTION ... END;")
@@ -747,8 +750,8 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 		if (options.foldComment && (style == SCE_SQL_COMMENTLINE)) {
 			// MySQL needs -- comments to be followed by space or control char
 			if ((ch == '-') && (chNext == '-')) {
-				const char chNext2 = styler.SafeGetCharAt(i + 2);
-				const char chNext3 = styler.SafeGetCharAt(i + 3);
+				char chNext2 = styler.SafeGetCharAt(i + 2);
+				char chNext3 = styler.SafeGetCharAt(i + 3);
 				if (chNext2 == '{' || chNext3 == '{') {
 					levelNext++;
 				} else if (chNext2 == '}' || chNext3 == '}') {
@@ -776,7 +779,7 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 		}
 		// If new keyword (cannot trigger on elseif or nullif, does less tests)
 		if (style == SCE_SQL_WORD && stylePrev != SCE_SQL_WORD) {
-			constexpr int MAX_KW_LEN = 9;	// Maximum length of folding keywords
+			const int MAX_KW_LEN = 9;	// Maximum length of folding keywords
 			char s[MAX_KW_LEN + 2];
 			unsigned int j = 0;
 			for (; j < MAX_KW_LEN + 1; j++) {
@@ -947,7 +950,7 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 			}
 		}
 		if (atEOL) {
-			const int levelUse = levelCurrent;
+			int levelUse = levelCurrent;
 			int lev = levelUse | levelNext << 16;
 			if (visibleChars == 0 && options.foldCompact)
 				lev |= SC_FOLDLEVELWHITEFLAG;
@@ -967,8 +970,6 @@ void SCI_METHOD LexerSQL::Fold(Sci_PositionU startPos, Sci_Position length, int 
 			visibleChars++;
 		}
 	}
-}
-
 }
 
 LexerModule lmSQL(SCLEX_SQL, LexerSQL::LexerFactorySQL, "sql", sqlWordListDesc);

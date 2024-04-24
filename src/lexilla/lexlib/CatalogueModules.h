@@ -51,8 +51,8 @@ public:
 		if (index < lexerCatalogue.size()) {
 			return lexerCatalogue[index]->languageName;
 		}
-		return "";
-	}
+			return "";
+		}
 
 	LexerFactoryFunction Factory(size_t index) const noexcept {
 		// Works for object lexers but not for function lexers
