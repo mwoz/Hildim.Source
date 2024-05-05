@@ -204,6 +204,7 @@ class LexerFormEngine : public ILexer5 {
 	const std::regex reSyntax;
 	const std::regex reLogDate;
 	const std::regex rePgLongEnd;
+	char xmlQuotMark = 0;
 
 	std::string $tag = "";
 	char $transparent_tagNum = 0;
@@ -977,8 +978,9 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 		//}
 	return;
 	case SCE_FM_X_TAG:
-		if(sc.ch == '"'){
+		if(sc.ch == '"' || sc.ch == '\'') {
 			sc.SetState(SCE_FM_X_STRING);
+			xmlQuotMark = sc.ch;
 		}else if(sc.ch == '>'){
 			if(!sc.Match("><")){
 				sc.ForwardSetState(SCE_FM_X_DEFAULT);
@@ -1008,12 +1010,13 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 		}
 	return;
 	case SCE_FM_X_STRING:
-		if(sc.ch == '"'){
+		if(sc.ch == xmlQuotMark){
 			if((sc.chNext != '>' && sc.chNext != '/' && sc.chNext != '?' && !IsASpace(sc.chNext)) ||(sc.chNext == '/' && sc.GetRelative(2) != '>') ){
 				sc.ForwardSetState(SCE_FM_X_ERROR);
 			}else{
 				sc.ForwardSetState(SCE_FM_X_TAG);
 			}
+			xmlQuotMark = 0;
 		}else if(sc.ch == '<'){
 			sc.SetState(SCE_FM_X_ERROR);
 		}
@@ -1570,6 +1573,17 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 					for (j = i + 1; styler.SafeGetCharAt(j) == '='; j++){
 						rawLevel++;
 					}
+					break;
+				}
+			}
+		}
+	}
+	else if (startPos && sc.state == SCE_FM_X_STRING) {
+		if (vbRAWStart > startPos) {
+			for (Sci_PositionU i = startPos - 1; i; i--) {
+				if ((unsigned char)styler.StyleAt(i) != SCE_FM_X_STRING) {
+					Sci_PositionU j;
+					xmlQuotMark = styler.SafeGetCharAt(i + 1);
 					break;
 				}
 			}
