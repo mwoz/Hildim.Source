@@ -552,7 +552,7 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 		} else {
 			back = sd.BackAsLong(false);
 		}
-		if (needRecalc == 1) {
+		if (needRecalc >= 1) {
 			//float l_s, a_s, b_s;
 			//rgb2lab((back & 0x0000FF), ((back & 0x00FF00) >> 8), ((back & 0xFF0000) >> 16), l_s, a_s, b_s);
 

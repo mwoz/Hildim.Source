@@ -1962,10 +1962,12 @@ static int iFlatTreeCallDragDropCb(Ihandle* ih, int drag_id, int drop_id, int is
 {
   IFniiii cbDragDrop = (IFniiii)IupGetCallback(ih, "DRAGDROP_CB");
 
-  /* ignore a drop that will do nothing */
-  if (is_ctrl == 0 && (drag_id - 1 == drop_id || drag_id == drop_id))
+  /* ignore a drop that will do nothing 
+  if (is_ctrl == 0 && (drag_id == drop_id || drag_id == drop_id))
     return IUP_DEFAULT;
   if (is_ctrl != 0 && drag_id == drop_id)
+    return IUP_DEFAULT; */ 
+  if (drag_id == drop_id)
     return IUP_DEFAULT;
 
   if (drop_id < 0)
