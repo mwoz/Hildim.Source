@@ -578,7 +578,7 @@ static int lp_choice (lua_State *L) {
   TTree *t2 = getpatt(L, 2, NULL);
   if (tocharset(t1, &st1) && tocharset(t2, &st2)) {
     loopset(i, st1.cs[i] |= st2.cs[i]);
-    newcharset(L, st1.cs);
+    newcharset(L, st1.cs); 
   }
   else if (nofail(t1) || t2->tag == TFalse)
     lua_pushvalue(L, 1);  /* true / x => true, x / false => x */
@@ -669,7 +669,28 @@ static int lp_sub (lua_State *L) {
   return 1;
 }
 
-
+static int lp_anycase(lua_State *L) {
+  size_t l, l0;
+  const char *s = luaL_checklstring(L, 1, &l);
+  l0 = l;
+  byte buff[CHARSETSIZE];
+  lua_pop(L, 1);
+  newleaf(L, TTrue);
+  while (l--) {
+    if (l < l0 - 1) {
+        lua_rotate(L, 1, 1);
+        lua_pop(L, 2);
+    }       
+    clearset(buff);
+    setchar(buff, (byte)(toupper(*s)));
+    setchar(buff, (byte)(tolower(*s)));
+   
+    newcharset(L, buff);
+    lp_seq(L);
+    s++;
+  }
+  return 1;
+}
 static int lp_set (lua_State *L) {
   size_t l;
   const char *s = luaL_checklstring(L, 1, &l);
@@ -1370,6 +1391,7 @@ static struct luaL_Reg pattreg[] = {
   {"setmaxstack", lp_setmax},
   {"type", lp_type},
   {"Cl", lp_linescapture},  
+  {"anyCase", lp_anycase},  
   {NULL, NULL}
 };
 
