@@ -69,7 +69,7 @@ BEGIN
             VALUE "FileVersion", VERSION_HILDIM
             VALUE "InternalName", "HildiM"
             VALUE "IUPVersion", VERSION_IUP
-            VALUE "LegalCopyright", "Copyright 2016-2019 Michal Voznesenskiy"
+            VALUE "LegalCopyright", "Copyright 2016-2024 Michal Voznesenskiy"
             VALUE "OriginalFilename", "HildiM.EXE"
             VALUE "ProductName", "HildiM"
             VALUE "ProductVersion", VERSION_HILDIM

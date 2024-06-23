@@ -252,7 +252,7 @@ void ScintillaBase::AutoCompleteStart(Sci::Position lenEntered, const char *list
 	//Platform::DebugPrintf("AutoComplete %s\n", list);
 	ct.CallTipCancel();
 
-	if (ac.chooseSingle && (listType == 0)) {
+	if (ac.chooseSingle && (listType == 0 || (ac.chooseSingle == listType))){
 		if (list && !strchr(list, ac.GetSeparator())) {
 			// list contains just one item so choose it
 			const std::string_view item(list);
@@ -894,7 +894,7 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case Message::AutoCSetChooseSingle:
-		ac.chooseSingle = wParam != 0;
+		ac.chooseSingle = wParam;
 		break;
 
 	case Message::AutoCGetChooseSingle:

@@ -39,7 +39,7 @@ AutoComplete::AutoComplete() :
 	separator(' '),
 	typesep('?'),
 	ignoreCase(false),
-	chooseSingle(false),
+	chooseSingle(0),
 	options(AutoCompleteOption::Normal),
 	posStart(0),
 	startLen(0),

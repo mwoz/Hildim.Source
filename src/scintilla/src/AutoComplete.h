@@ -24,7 +24,7 @@ class AutoComplete {
 public:
 
 	bool ignoreCase;
-	bool chooseSingle;
+	int chooseSingle;
 	AutoCompleteOption options;
 	std::unique_ptr<ListBox> lb;
 	Sci::Position posStart;

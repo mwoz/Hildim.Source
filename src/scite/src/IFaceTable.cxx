@@ -3155,7 +3155,7 @@ static IFaceProperty ifaceProperties[] = {
 	{"AutoCAutoHide", 2119, 2118, iface_bool, iface_void},
 	{"AutoCCancelAtStart", 2111, 2110, iface_bool, iface_void},
 	{"AutoCCaseInsensitiveBehaviour", 2635, 2634, iface_int, iface_void},
-	{"AutoCChooseSingle", 2114, 2113, iface_bool, iface_void},
+	{"AutoCChooseSingle", 2114, 2113, iface_int, iface_void},
 	{"AutoCCurrent", 2445, 0, iface_int, iface_void},
 	{"AutoCCurrentText", 2610, 0, iface_stringresult, iface_void},
 	{"AutoCDropRestOfWord", 2271, 2270, iface_bool, iface_void},

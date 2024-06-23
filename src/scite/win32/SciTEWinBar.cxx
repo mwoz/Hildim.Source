@@ -145,7 +145,9 @@ int OnTabShift(Ihandle * ih, int old_tab, int new_tab) {
 }
 
 int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
+	extender->OnNavigation("Switch");
 	SetDocumentAt(IupGetIntId(ih, "TABBUFFERID", new_pos));
+	extender->OnNavigation("Switch-");
 	CheckReload();
 	return IUP_DEFAULT;
 }
