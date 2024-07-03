@@ -779,10 +779,10 @@ protected:
 	SString GetRange(GUI::ScintillaWindow &win, int selStart, int selEnd);
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd);
 	SString GetLine(GUI::ScintillaWindow &win, int line);
-	SString RangeExtendAndGrab(GUI::ScintillaWindow &wCurrent, int &selStart, int &selEnd,
+	SString RangeExtendAndGrab(GUI::ScintillaWindow &wCurrent, Sci_Position &selStart, Sci_Position &selEnd,
 	        bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	SString SelectionExtend(bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
-	void FindWordAtCaret(int &start, int &end);
+	void FindWordAtCaret(Sci_Position &start, Sci_Position &end);
 	bool SelectWordAtCaret();
 	SString SelectionWord(bool stripEol = true);
 	SString SelectionFilename();

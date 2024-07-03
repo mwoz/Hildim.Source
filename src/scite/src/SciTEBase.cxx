@@ -1284,14 +1284,14 @@ SString SciTEBase::GetLine(GUI::ScintillaWindow &win, int line) {
 
 SString SciTEBase::RangeExtendAndGrab(
     GUI::ScintillaWindow &wCurrent,
-    int &selStart,
-    int &selEnd,
+	Sci_Position &selStart,
+	Sci_Position &selEnd,
     bool (SciTEBase::*ischarforsel)(char ch),	///< Function returning @c true if the given char. is part of the selection.
     bool stripEol /*=true*/) {
 
 	if (selStart == selEnd && ischarforsel) {
 		// Empty range and have a function to extend it
-		int lengthDoc = wCurrent.Call(SCI_GETLENGTH);
+		Sci_Position lengthDoc = wCurrent.Call(SCI_GETLENGTH);
 		TextReader acc(wCurrent);
 		// Try and find a word at the caret
 		// On the left...
@@ -1336,12 +1336,12 @@ SString SciTEBase::SelectionExtend(
 //!	GUI::ScintillaWindow &wCurrent = wOutput.HasFocus() ? wOutput : wEditor;		!!!TODO!!!
 	GUI::ScintillaWindow &wCurrent = wOutput.HasFocus() ? wOutput : reinterpret_cast<GUI::ScintillaWindow&>(wEditor); //!-change-[OnSendEditor]
 
-	int selStart = wCurrent.Call(SCI_GETSELECTIONSTART);
-	int selEnd = wCurrent.Call(SCI_GETSELECTIONEND);
+	Sci_Position selStart = wCurrent.Call(SCI_GETSELECTIONSTART);
+	Sci_Position selEnd = wCurrent.Call(SCI_GETSELECTIONEND);
 	return RangeExtendAndGrab(wCurrent, selStart, selEnd, ischarforsel, stripEol);
 }
 
-void SciTEBase::FindWordAtCaret(int &start, int &end) {
+void SciTEBase::FindWordAtCaret(Sci_Position &start, Sci_Position &end) {
 
 //!	GUI::ScintillaWindow &wCurrent = wOutput.HasFocus() ? wOutput : wEditor;
 	GUI::ScintillaWindow &wCurrent = wOutput.HasFocus() ? wOutput : reinterpret_cast<GUI::ScintillaWindow&>(wEditor); //!-change-[OnSendEditor]
@@ -1353,8 +1353,8 @@ void SciTEBase::FindWordAtCaret(int &start, int &end) {
 }
 
 bool SciTEBase::SelectWordAtCaret() {
-	int selStart = 0;
-	int selEnd = 0;
+	Sci_Position selStart = 0;
+	Sci_Position selEnd = 0;
 	FindWordAtCaret(selStart, selEnd);
 	SetSelection(selStart, selEnd);
 	return selStart != selEnd;
@@ -3777,7 +3777,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_DWELLSTART:
 		if (extender && (INVALID_POSITION != notification->position)) {
 //////ToDelete
-			int endWord = notification->position;
+			Sci_Position endWord = notification->position;
 			SString message="";
 			auto original = _set_se_translator([](unsigned int u, EXCEPTION_POINTERS *pExp) {
 				std::string error = "!!!WARNING: SCN_DWELLSTART exeption: ";

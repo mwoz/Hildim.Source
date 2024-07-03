@@ -85,7 +85,7 @@ static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine,
 	}
 }
 
-static void ColouriseSearchResultDoc(unsigned int startPos, int length, int, WordList*[], Accessor &styler) {
+static void ColouriseSearchResultDoc(Sci_PositionU startPos, Sci_Position length, int, WordList*[], Accessor &styler) {
 
 	char lineBuffer[SC_SEARCHRESULT_LINEBUFFERMAXLENGTH];
 	styler.StartAt(startPos);
@@ -109,7 +109,7 @@ static void ColouriseSearchResultDoc(unsigned int startPos, int length, int, Wor
 	}
 }
 
-static void FoldSearchResultDoc(unsigned int startPos, int length, int, WordList *[], Accessor &styler) {
+static void FoldSearchResultDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
 	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
 
 	unsigned int endPos = startPos + length;

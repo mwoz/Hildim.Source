@@ -1792,9 +1792,10 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 
 	int arg = 2;
 
-	long params[2] = {0,0};
+	intptr_t params[2] = {0,0};
 
-	char *stringResult = 0;
+	std::string stringResult;
+
 	bool needStringResult = false;
 
 	int loopParamCount = 2;
@@ -1820,7 +1821,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	for (int i=0; i<loopParamCount; ++i) {
 		if (func.paramType[i] == iface_string || func.paramType[i] == iface_stringresult) {
 			const char *s = lua_tostring(L, arg++);
-			params[i] = reinterpret_cast<long>(s ? s : "");
+			params[i] = reinterpret_cast<intptr_t>(s ? s : "");
 		} else if (func.paramType[i] == iface_keymod) {
 			int keycode = static_cast<int>(luaL_checknumber(L, arg++)) & 0xFFFF;
 			int modifiers = static_cast<int>(luaL_checknumber(L, arg++)) & (SCMOD_SHIFT|SCMOD_CTRL|SCMOD_ALT);
@@ -1835,22 +1836,10 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 		params[1] = params[0];
 
 	if (needStringResult) {
-		int stringResultLen = host->Send(p, func.value, params[0], 0);
-		if (stringResultLen >= 0) {
-			// not all string result methods are guaranteed to add a null terminator
-			stringResult = new char[stringResultLen+1];
-			if (stringResult) {
-				stringResult[stringResultLen]='\0';
-				params[1] = reinterpret_cast<long>(stringResult);
-			} else {
-				raise_error(L, "String result buffer allocation failed");
-				return 0;
-			}
-		} else {
-			// Is this an error?  Are there any cases where it's not an error,
-			// and where the right thing to do is just return a blank string?
-			return 0;
-		}
+		const intptr_t stringResultLen = host->Send(p, func.value, params[0], 0);
+		stringResult.assign(stringResultLen, '\0');
+		params[1] = reinterpret_cast<intptr_t>(stringResult.data());
+
 		if (func.paramType[0] == iface_length) {
 			params[0] = stringResultLen;
 		}
@@ -1861,13 +1850,13 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	// - numeric return type gets returned to lua as a number (following the stringresult)
 	// - other return types e.g. void get dropped.
 
-	int result = host->Send(p, func.value, reinterpret_cast<uptr_t&>(params[0]), reinterpret_cast<sptr_t&>(params[1]));
+	int result = host->Send(p, func.value, params[0], params[1]);
 
 	int resultCount = 0;
 
-	if (stringResult) {
-		lua_pushstring(L, stringResult);
-		delete[] stringResult;
+	if (needStringResult) {
+		//push_string(L, stringResult);
+		lua_pushlstring(L, stringResult.data(), stringResult.length());
 		resultCount++;
 	}
 

@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -32,7 +40,25 @@
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '17.0'">v143</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '16.0'">v142</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '15.0'">v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '17.0'">v143</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '16.0'">v142</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '15.0'">v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '17.0'">v143</PlatformToolset>
@@ -47,7 +73,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -57,11 +89,19 @@
     <IntDir>$(Configuration)/</IntDir>
     <TargetName>HildiM</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>HildiM</TargetName>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)/</OutDir>
     <IntDir>$(Configuration)/</IntDir>
     <TargetName>HildiM</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>HildiM</TargetName>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -84,6 +124,41 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)$(Configuration)\HildiM.exe</OutputFile>
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;./$(Configuration)/lua.lib;$(SolutionDir)\cd\lib\$(Configuration)\cd.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\freetype6.lib;$(SolutionDir)\cd\lib\$(Configuration)\Lua54\cdlua54.lib;$(SolutionDir)\cd\lib\$(Configuration)\cdcontextplus.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib;$(SolutionDir)\iup\lib\Debug\Lua54\iupluacontrols54.lib;$(SolutionDir)\iup\lib\Debug\Lua54\iuplua54.lib;$(SolutionDir)\iup\lib\Debug\iup.lib;$(SolutionDir)\iup\lib\Debug\iupcontrols.lib;$(SolutionDir)\iup\lib\Debug\iupcore.lib;$(SolutionDir)\iup\lib\Debug\Lua54\iupluacd54.lib;$(SolutionDir)\iup\lib\Debug\iupcd.lib;$(SolutionDir)\iup\lib\Debug\iupweb.lib;$(SolutionDir)\iup\lib\Debug\Lua54\iupluaweb54.lib;$(SolutionDir)\iup\lib\Debug\Lua54\iupluaole54.lib;$(SolutionDir)\iup\lib\Debug\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>.\Debug/SciTE.pdb</ProgramDatabaseFile>
+      <ProfileGuidedDatabase>$(OutDir)$(TargetName).pgd</ProfileGuidedDatabase>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Platform)\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Platform)\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\HildiM.exe</OutputFile>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;./$(Platform)/$(Configuration)/lua.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\cd.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\freetype6.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\Lua54\cdlua54.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\cdcontextplus.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\zlib1.lib;$(SolutionDir)\iup\lib\Debug_64\Lua54\iupluacontrols54.lib;$(SolutionDir)\iup\lib\Debug_64\Lua54\iuplua54.lib;$(SolutionDir)\iup\lib\Debug_64\iup.lib;$(SolutionDir)\iup\lib\Debug_64\iupcontrols.lib;$(SolutionDir)\iup\lib\Debug_64\iupcore.lib;$(SolutionDir)\iup\lib\Debug_64\Lua54\iupluacd54.lib;$(SolutionDir)\iup\lib\Debug_64\iupcd.lib;$(SolutionDir)\iup\lib\Debug_64\iupweb.lib;$(SolutionDir)\iup\lib\Debug_64\Lua54\iupluaweb54.lib;$(SolutionDir)\iup\lib\Debug_64\Lua54\iupluaole54.lib;$(SolutionDir)\iup\lib\Debug_64\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>.\Debug/SciTE.pdb</ProgramDatabaseFile>
       <ProfileGuidedDatabase>$(OutDir)$(TargetName).pgd</ProfileGuidedDatabase>
       <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
@@ -129,6 +204,47 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(SolutionDir)$(Configuration)\HildiM.exe</OutputFile>
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;./$(Configuration)/lua.lib;$(SolutionDir)\cd\lib\$(Configuration)\cd.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\freetype6.lib;$(SolutionDir)\cd\lib\$(Configuration)\Lua54\cdlua54.lib;$(SolutionDir)\cd\lib\$(Configuration)\cdcontextplus.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib;$(SolutionDir)\iup\lib\Release\Lua54\iupluacontrols54.lib;$(SolutionDir)\iup\lib\Release\Lua54\iuplua54.lib;$(SolutionDir)\iup\lib\Release\iup.lib;$(SolutionDir)\iup\lib\Release\iupcontrols.lib;$(SolutionDir)\iup\lib\Release\iupcore.lib;$(SolutionDir)\iup\lib\Release\Lua54\iupluacd54.lib;$(SolutionDir)\iup\lib\Release\iupcd.lib;$(SolutionDir)\iup\lib\Release\iupweb.lib;$(SolutionDir)\iup\lib\Release\Lua54\iupluaweb54.lib;$(SolutionDir)\iup\lib\Release\Lua54\iupluaole54.lib;$(SolutionDir)\iup\lib\Release\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;NDEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(SolutionDir)$(Configuration)\HildiM.exe</OutputFile>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;./$(Configuration)/lua.lib;$(SolutionDir)\cd\lib\$(Configuration)\cd.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\freetype6.lib;$(SolutionDir)\cd\lib\$(Configuration)\Lua54\cdlua54.lib;$(SolutionDir)\cd\lib\$(Configuration)\cdcontextplus.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib;$(SolutionDir)\iup\lib\Release_64\Lua54\iupluacontrols54.lib;$(SolutionDir)\iup\lib\Release_64\Lua54\iuplua54.lib;$(SolutionDir)\iup\lib\Release_64\iup.lib;$(SolutionDir)\iup\lib\Release_64\iupcontrols.lib;$(SolutionDir)\iup\lib\Release_64\iupcore.lib;$(SolutionDir)\iup\lib\Release_64\Lua54\iupluacd54.lib;$(SolutionDir)\iup\lib\Release_64\iupcd.lib;$(SolutionDir)\iup\lib\Release_64\iupweb.lib;$(SolutionDir)\iup\lib\Release_64\Lua54\iupluaweb54.lib;$(SolutionDir)\iup\lib\Release_64\Lua54\iupluaole54.lib;$(SolutionDir)\iup\lib\Release_64\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>

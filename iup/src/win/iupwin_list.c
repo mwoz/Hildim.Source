@@ -1827,7 +1827,9 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 					text = "";
 
 				int len = text ? strlen(text) : 0;
-				font = IupDrawGetTextSize(ih, text, len, &w1, &h1);
+				IupDrawGetTextSize(ih, text, len, &w1, &h1);
+
+                font = IupGetAttribute(ih, "FONT");
 
 				HFONT hFont = (HFONT)iupwinGetHFont(font);
 				SelectObject(hdc, hFont);
