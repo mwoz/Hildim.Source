@@ -369,7 +369,7 @@ static int getfiletime(lua_State *L) {
 	} catch (...) {
 		return 0;
 	}
-	HANDLE hf = ::CreateFileW(f.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hf = ::CreateFileW(f.c_str(), GENERIC_READ, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hf != INVALID_HANDLE_VALUE) {
 		FILETIME ft;
 		::GetFileTime(hf, NULL, NULL, &ft);

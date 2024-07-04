@@ -694,7 +694,7 @@ static void iSplitSetZOrderRecr(Ihandle *ih, char *hwnd, int bSetVisible) {
 	if (iupStrEqual(ih->iclass->name, "expander") && iupStrEqual(IupGetAttribute(ih,"STATE"), "CLOSE")) {
 		return;
 	}
-	if (ih->handle && ih->handle != 0xffffffff) {
+	if (ih->iclass->nativetype != IUP_TYPEVOID) { 
 		if (bSetVisible && iupStrEqual(hwnd, "TOP"))
 			IupSetAttribute(ih, "VISIBLE", "YES");
 		IupSetAttribute(ih, "ZORDER", hwnd);
@@ -720,7 +720,7 @@ static void iSplitSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
   if (ih->data->orientation == ISPLIT_VERT)
   {
-    int width1 = iSplitGetWidth1(ih);
+      int width1 = iSplitGetWidth1(ih);
     if (iSplitAdjustWidth1(ih, &width1))    /* this will check for child1 and child2 */
       iSplitCalcVal(ih, width1);  /* has a MINMAX size, must fix split value */
 

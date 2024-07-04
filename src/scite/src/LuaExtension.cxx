@@ -1579,6 +1579,9 @@ static int sf_FileVersionInfo(lua_State* L) {
 	sf_FileVersionInfo_value(L, pbVersionInfo, "OriginalFilename");
 	sf_FileVersionInfo_value(L, pbVersionInfo, "ProductName");
 	sf_FileVersionInfo_value(L, pbVersionInfo, "IUPVersion");
+
+	lua_pushstring(L, sizeof(intptr_t)==4 ? "32":"64");
+	lua_setfield(L, -2, "BITS");
 	
 	delete[] pbVersionInfo;
 	return 1;
@@ -1801,8 +1804,8 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	int loopParamCount = 2;
 
 	if (func.paramType[0] == iface_length && func.paramType[1] == iface_string) {
-		params[0] = static_cast<long>(lua_rawlen(L, arg));
-		params[1] = reinterpret_cast<long>(params[0] ? lua_tostring(L, arg) : "");
+		params[0] = static_cast<intptr_t>(lua_rawlen(L, arg));
+		params[1] = reinterpret_cast<intptr_t>(params[0] ? lua_tostring(L, arg) : "");
 		loopParamCount = 0;
 	} else if ((func.paramType[1] == iface_stringresult) || (func.returnType == iface_stringresult)) {
 		needStringResult = true;

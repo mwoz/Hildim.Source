@@ -160,9 +160,9 @@
       <LinkDLL>true</LinkDLL>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>.\shell.lib</ImportLibrary>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Platform)/$(Configuration)/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -184,7 +184,7 @@
     <Link>
       <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)/$(Platform)/$(Configuration)/HildiM.lib;shlwapi.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ClCompile>
       <PreprocessorDefinitions>LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;WIN32;_WINDOWS;_USRDLL;SHELL_EXPORTS;_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>

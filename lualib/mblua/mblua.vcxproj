@@ -301,13 +301,13 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>$(SolutionDir)/$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\zlib1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\zlib1.lib</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreSpecificDefaultLibraries>MSVCRTD.lib;MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -471,8 +471,8 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../lib/SciTE.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\zlib1.lib</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -554,8 +554,8 @@
       <Culture>0x0419</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>../lib/SciTE.lib;msxml2.lib;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\zlib.lib</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)/HildiM.lib;msxml2.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\zlib1.lib</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

@@ -712,7 +712,7 @@ IUP_SDK_API int iupdrvBaseSetZorderAttrib(Ihandle* ih, const char* value)
   {
     if (iupStrEqualNoCase(value, "TOP"))
       SetWindowPos(ih->handle, HWND_TOP, 0, 0, 0, 0, 
-                  SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOACTIVATE);
+          SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOACTIVATE);
     else
       SetWindowPos(ih->handle, HWND_BOTTOM, 0, 0, 0, 0, 
                   SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOACTIVATE);

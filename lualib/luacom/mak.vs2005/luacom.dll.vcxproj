@@ -183,8 +183,8 @@
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)/$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(SolutionDir)$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>htmlhelp.lib;shlwapi.lib;$(SolutionDir)$(Platform)\$(Configuration)/HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
       <ModuleDefinitionFile>..\src\dll\luacom_dll.def</ModuleDefinitionFile>
