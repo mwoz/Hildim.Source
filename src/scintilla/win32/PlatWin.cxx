@@ -3827,7 +3827,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 			si.cbSize = sizeof(SCROLLINFO);
 			si.fMask = SIF_PAGE | SIF_RANGE;
 			si.nMin = 0;
-			si.nMax = ControlWndProc(lb, LB_GETCOUNT, 0, 0) - 1;
+			si.nMax = static_cast<int>(ControlWndProc(lb, LB_GETCOUNT, 0, 0)) - 1;
 			si.nPage = HIWORD(lParam) / ItemHeight();
 			::SetScrollInfo(scb, SB_CTL, &si, false);
 
@@ -3965,7 +3965,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 	{
 		SHORT pos = HIWORD(wParam);
 		SHORT flag = LOWORD(wParam);
-		int r = ControlWndProc(lb, iMessage, wParam, lParam);
+		sptr_t r = ControlWndProc(lb, iMessage, wParam, lParam);
 
 		if (!pListcolors->inizialized)
 			return r;
@@ -4146,8 +4146,8 @@ void Platform_Finalise(bool fromDllMain) noexcept {
 }
 	
 void ListBoxX::OnScrollChange() {
-	int ind = ControlWndProc(lb, LB_GETTOPINDEX, 0, 0);
-	::SetScrollPos(scb, SB_CTL, ind, !pListcolors->inizialized);
+	sptr_t ind = ControlWndProc(lb, LB_GETTOPINDEX, 0, 0);
+	::SetScrollPos(scb, SB_CTL, static_cast<int>(ind), !pListcolors->inizialized);
 }
 
 void ListBoxX::sc_Paint(bool bDrag, int nTrackPos) {
@@ -4184,10 +4184,10 @@ void ListBoxX::sc_OnPaint(HDC hDC, RECT *rcPaint, bool bDrag, int nTrackPos) {
 	r.right = rcPaint->right - 2;
 
 
-	int count = ControlWndProc(lb, LB_GETCOUNT, 0, 0);
+	int count = static_cast<int>(ControlWndProc(lb, LB_GETCOUNT, 0, 0));
 	int hs = h - 2 * w;
 	int lenT = hs  * (rcPaint->bottom - rcPaint ->top)/ (count * ItemHeight()); ;
-	int hTop = hs  * ControlWndProc(lb, LB_GETTOPINDEX, 0, 0) / count;
+	int hTop = hs  * static_cast<int>(ControlWndProc(lb, LB_GETTOPINDEX, 0, 0)) / count;
 	r.top = rcPaint->top + w + hTop;
 	r.bottom = rcPaint->top + w + hTop + lenT;
 
@@ -4275,14 +4275,14 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 		if (!lbx->pListcolors->inizialized)
 			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
 		if (iMessage == WM_MOUSEMOVE && !::GetAsyncKeyState(VK_LBUTTON)) {
-			int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+			LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
 			lbx->sc_Paint(false, 0);
 			return res;
 		}
 
 		::DefWindowProcW(hWnd, WM_SETREDRAW, 0, 0);
 		lbx->bBlockRedraw = true;
-		int res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+		LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
 		::DefWindowProcW(hWnd, WM_SETREDRAW, 1, 0);
 		lbx->bBlockRedraw = false;
 		if(!::GetAsyncKeyState(VK_LBUTTON))

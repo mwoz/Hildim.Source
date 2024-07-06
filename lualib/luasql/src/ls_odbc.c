@@ -637,7 +637,7 @@ static int cur_more(lua_State* L) {
 		}
 		else {
 			/* if action has no results (e.g., UPDATE) */
-			SQLLEN numrows;
+			SQLLEN numrows; 
 			ret = SQLRowCount(hstmt, &numrows);
 			if (error(ret)) {
 				ret = fail(L, hSTMT, hstmt);
@@ -645,7 +645,7 @@ static int cur_more(lua_State* L) {
 				return ret;
 			}
 			lua_pushnumber(L, 0);
-			lua_pushnumber(L, numrows);
+			lua_pushnumber(L, (lua_Number)(numrows));
 			ret = 2;
 		}
 		return ret;
@@ -821,7 +821,7 @@ static int raw_execute(lua_State *L, int istmt)
 			return fail(L, hSTMT, stmt->hstmt);
 		}
 
-		lua_pushnumber(L, numrows);
+		lua_pushnumber(L, (lua_Number)numrows);
 		return ret + 1;
 	}
 }
@@ -1217,14 +1217,14 @@ static int env_connect (lua_State *L) {
 	}
 	else {
 		SQLCHAR out[1024];
-		int lOut = strlen(sourcename);
+		int lOut = (int)strlen(sourcename);
 		ret = SQLDriverConnect(
 			hdbc, NULL,
 			sourcename,
-			strlen(sourcename),
+			(SQLSMALLINT)strlen(sourcename),
 			out,
 			1024,
-			&lOut,
+			(SQLSMALLINT*)&lOut,
 			SQL_DRIVER_NOPROMPT
 		);
 	}

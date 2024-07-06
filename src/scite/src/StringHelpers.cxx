@@ -119,7 +119,7 @@ static int GetHexaDigit(char ch) {
 /**
  * Convert C style \a, \b, \f, \n, \r, \t, \v, \ooo and \xhh into their indicated characters.
  */
-unsigned int UnSlash(char *s) {
+size_t UnSlash(char *s) {
 	char *sStart = s;
 	char *o = s;
 
@@ -187,7 +187,7 @@ unsigned int UnSlash(char *s) {
  * Convert C style \0oo into their indicated characters.
  * This is used to get control characters into the regular expresion engine.
  */
-unsigned int UnSlashLowOctal(char *s) {
+size_t UnSlashLowOctal(char *s) { 
 	char *sStart = s;
 	char *o = s;
 	while (*s) {

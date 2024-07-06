@@ -58,13 +58,13 @@ PropSetFile::~PropSetFile() {
 	Clear();
 }
 
-void PropSetFile::Set(const char *key, const char *val, int lenKey, int lenVal) {
+void PropSetFile::Set(const char *key, const char *val, sptr_t lenKey, sptr_t lenVal) {
 	if (!*key)	// Empty keys are not supported
 		return;
 	if (lenKey == -1)
-		lenKey = static_cast<int>(strlen(key));
+		lenKey = strlen(key);
 	if (lenVal == -1)
-		lenVal = static_cast<int>(strlen(val));
+		lenVal = strlen(val); 
 	props[std::string(key, lenKey)] = std::string(val, lenVal);
 }
 
@@ -143,7 +143,7 @@ void PropSetFile::SetEx(char *keyVal, const char * &data, int &len) {
 			}
 			if (!dtEnd)
 				dtEnd = data;
-			Set(keyVal, endVal, eqAt - keyVal, dtEnd - endVal - 2);
+			Set(keyVal, endVal, eqAt - keyVal, dtEnd - endVal - 2); 
 		} else
 		    Set(keyVal, eqAt + 1, eqAt - keyVal, endVal - eqAt - 1);
 	}
@@ -218,16 +218,16 @@ struct VarChain {
 };
 
 static int ExpandAllInPlace(const PropSetFile &props, SString &withVars, int maxExpands, const VarChain &blankVars = VarChain()) {
-	int varStart = withVars.search("$(");
+	intptr_t varStart = withVars.search("$(");
 	while ((varStart >= 0) && (maxExpands > 0)) {
-		int varEnd = withVars.search(")", varStart+2);
+		intptr_t varEnd = withVars.search(")", varStart+2);
 		if (varEnd < 0) {
 			break;
 		}
 
 		// For consistency, when we see '$(ab$(cde))', expand the inner variable first,
 		// regardless whether there is actually a degenerate variable named 'ab$(cde'.
-		int innerVarStart = withVars.search("$(", varStart+2);
+		intptr_t innerVarStart = withVars.search("$(", varStart+2);
 		while ((innerVarStart > varStart) && (innerVarStart < varEnd)) {
 			varStart = innerVarStart;
 			innerVarStart = withVars.search("$(", varStart+2);
@@ -402,7 +402,7 @@ bool PropSetFile::Read(FilePath filename, FilePath directoryForImports,
 	return false;
 }
 
-void PropSetFile::SetInteger(const char *key, int i) {
+void PropSetFile::SetInteger(const char *key, sptr_t i) {
 	char tmp[32];
 	sprintf(tmp, "%d", static_cast<int>(i));
 	Set(key, tmp);
@@ -506,7 +506,7 @@ SString PropSetFile::GetNewExpand(const char *keybase, const char *filename) {
 	while (cpvar && (maxExpands > 0)) {
 		const char *cpendvar = strchr(cpvar, ')');
 		if (cpendvar) {
-			int lenvar = cpendvar - cpvar - 2;  	// Subtract the $()
+			sptr_t lenvar = cpendvar - cpvar - 2;  	// Subtract the $()
 			char *var = StringDup(cpvar + 2, lenvar);
 			SString val = GetWild(var, filename);
 			if (0 == strcmp(var, keybase))
@@ -795,9 +795,9 @@ bool SString::endswith(const char *suffix) {
 	return strncmp(s + sLen - lenSuffix, suffix, lenSuffix) == 0;
 }
 
-int SString::search(const char *sFind, lenpos_t start) const {
+intptr_t SString::search(const char *sFind, lenpos_t start) const {
 	if (start < sLen) {
-		const char *sFound = strstr(s + start, sFind);
+		const char *sFound = strstr(s + start, sFind); 
 		if (sFound) {
 			return sFound - s;
 		}
@@ -823,7 +823,7 @@ int SString::substitute(const char *sFind, const char *sReplace) {
 	int c = 0;
 	lenpos_t lenFind = strlen(sFind);
 	lenpos_t lenReplace = strlen(sReplace);
-	int posFound = search(sFind);
+	intptr_t posFound = search(sFind); 
 	while (posFound >= 0) {
 		remove(posFound, lenFind);
 		insert(posFound, sReplace, lenReplace);

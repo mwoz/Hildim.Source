@@ -122,7 +122,7 @@ int BufferList::Add(sptr_t doc) {
 	return length - 1;
 }
 
-int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, int forIdm) {
+int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t forIdm) {
 	if (!filename.IsSet()) {
 		return -1;
 	}
@@ -445,8 +445,8 @@ int SciTEBase::ShiftToVisible(int index) {
 			if (side == buffers.buffers[pos].editorSide) {
 				if (!realIndex)
 					firstSide = pos;
-				if (pos == index) {
-					if ((int)IupGetAttribute(IupTab(side), "LASTVISIBLE") <= realIndex && index != firstSide) {
+				if (pos == index) { 
+					if (reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(side), "LASTVISIBLE")) <= realIndex && index != firstSide) {
 						ShiftTab(index, firstSide);
 						index = firstSide;
 					}
@@ -534,8 +534,8 @@ void SciTEBase::UpdateBuffersCoCurrent() {
 	if (index < 0)
 		return;
 
-	buffers.buffers[index].selection.cpMin = wEditor.coEditor.Call(SCI_GETSELECTIONSTART);
-	buffers.buffers[index].selection.cpMax = wEditor.coEditor.Call(SCI_GETSELECTIONEND);
+	buffers.buffers[index].selection.cpMin = static_cast<Sci_PositionCR>(wEditor.coEditor.Call(SCI_GETSELECTIONSTART));
+	buffers.buffers[index].selection.cpMax = static_cast<Sci_PositionCR>(wEditor.coEditor.Call(SCI_GETSELECTIONEND));
 	buffers.buffers[index].scrollPosition = wEditor.coEditor.Call(SCI_DOCLINEFROMVISIBLE, wEditor.coEditor.Call(SCI_GETFIRSTVISIBLELINE));
 }
 
@@ -545,16 +545,16 @@ void SciTEBase::UpdateBuffersCurrent() {
 	if ((buffers.length > 0) && (currentbuf >= 0)) {
 		buffers.buffers[currentbuf].Set(filePath);
 		buffers.buffers[currentbuf].selection = GetSelection();
-		buffers.buffers[currentbuf].scrollPosition = GetCurrentScrollPosition();
+		buffers.buffers[currentbuf].scrollPosition = GetCurrentScrollPosition(); 
 
 		// Retrieve fold state and store in buffer state info
 
-		std::vector<int> *f = &buffers.buffers[currentbuf].foldState;
+		std::vector<Sci_Position> *f = &buffers.buffers[currentbuf].foldState;
 		f->clear();
 
 		if (props.GetInt("fold")) {
-			for (int line = 0; ; line++) {
-				int lineNext = wEditor.Call(SCI_CONTRACTEDFOLDNEXT, line);
+			for (Sci_Position line = 0; ; line++) {
+				Sci_Position lineNext = wEditor.Call(SCI_CONTRACTEDFOLDNEXT, line);
 				if ((line < 0) || (lineNext < line))
 					break;
 				line = lineNext;
@@ -961,13 +961,13 @@ void SciTEBase::EndStackedTabbing() {
 }
 
 std::string ToAnsi(const GUI::gui_string &sWide) {
-
-	int cchMulti = ::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sWide.length(), NULL, 0, NULL, NULL);
+	int sz = static_cast<int>(sWide.length());
+	int cchMulti = ::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sz, NULL, 0, NULL, NULL);
 	char *pszMulti = new char[cchMulti + 1];
-	::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sWide.length(), pszMulti, cchMulti + 1, NULL, NULL);
+	::WideCharToMultiByte(CP_ACP, 0, sWide.c_str(), sz, pszMulti, cchMulti + 1, NULL, NULL);
 	pszMulti[cchMulti] = 0;
 	std::string ret(pszMulti);
-	delete[]pszMulti;
+	delete[]pszMulti; 
 	return ret;
 
 }
@@ -1015,8 +1015,8 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 	IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
 	IupStoreAttribute(IupTab(IDM_SRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
 
-	int oldLCount = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT");
-	int oldLCountR = (int)IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT");
+	intptr_t oldLCount = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT"));
+	intptr_t oldLCountR = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT"));
 	int posL = 0, posR = 0;
 	if (buffers.size > 1) {
 
@@ -1110,7 +1110,8 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, ihui);
 
 				if (pos == buffers.Current()) {
-					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", (const char*)posR);
+					intptr_t p = posR;
+					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", reinterpret_cast<const char*>(p));
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? chtabActForeROColor : chtabActForeColor);
 				}
 			} else {
@@ -1127,15 +1128,16 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 				IupSetIntId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, ihui);
 
 				if (pos == buffers.Current()) {
-					int maxP = (int)IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE");
-					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", (const char*)posL);
+					intptr_t maxP = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE"));
+					intptr_t p = posL;
+					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", reinterpret_cast<const char*>(p));
 					IupSetAttribute(IupTab(IDM_SRCWIN), "FORECOLOR", ro ? chtabActForeROColor : chtabActForeColor);
 				}
 			}
 		}
-		for (pos = oldLCount - 1; pos >= posL; pos--)
+		for (pos = static_cast<int>(oldLCount) - 1; pos >= posL; pos--)
 			IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", pos, NULL);
-		for (pos = oldLCountR - 1; pos >= posR; pos--)
+		for (pos = static_cast<int>(oldLCountR) - 1; pos >= posR; pos--)
 			IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", pos, NULL);
 
 		IupRedraw(IupGetParent(IupTab(IDM_SRCWIN)), 1);
@@ -1169,7 +1171,7 @@ bool SciTEBase::AddFileToBuffer(FilePath file, int pos) {
 	}
 }
 
-void SciTEBase::AddFileToStack(FilePath file, Sci_CharacterRange selection, int scrollPos) {
+void SciTEBase::AddFileToStack(FilePath file, Sci_CharacterRange selection, Sci_Position scrollPos) {
 	if (!file.IsSet())
 		return;
 	// Only stack non-empty names
@@ -1210,14 +1212,14 @@ RecentFile SciTEBase::GetFilePosition() {
 
 void SciTEBase::DisplayAround(const RecentFile &rf) {
 	if ((rf.selection.cpMin != INVALID_POSITION) && (rf.selection.cpMax != INVALID_POSITION)) {
-		int lineStart = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMin);
+		Sci_Position lineStart = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMin);
 		wEditor.Call(SCI_ENSUREVISIBLEENFORCEPOLICY, lineStart);
-		int lineEnd = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMax);
+		Sci_Position lineEnd = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMax);
 		wEditor.Call(SCI_ENSUREVISIBLEENFORCEPOLICY, lineEnd);
 		SetSelection(rf.selection.cpMax, rf.selection.cpMin);
 
-		int curTop = wEditor.Call(SCI_GETFIRSTVISIBLELINE);
-		int lineTop = wEditor.Call(SCI_VISIBLEFROMDOCLINE, rf.scrollPosition);
+		Sci_Position curTop = wEditor.Call(SCI_GETFIRSTVISIBLELINE);
+		Sci_Position lineTop = wEditor.Call(SCI_VISIBLEFROMDOCLINE, rf.scrollPosition);
 		wEditor.Call(SCI_LINESCROLL, 0, lineTop - curTop);
 	}
 }
@@ -1327,7 +1329,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 				startPath++;
 				const char *endPath = strchr(startPath, '\"');
 				if (endPath) {
-					int length = endPath - startPath;
+					intptr_t length = endPath - startPath;
 					if (length > 0) {
 						strncpy(sourcePath, startPath, length);
 						sourcePath[length] = 0;
@@ -1366,7 +1368,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 				start++;
 			}
 			const char *endPath = strchr(start, '(');
-			int length = endPath - start;
+			intptr_t length = endPath - start;
 			if ((length > 0) && (length < MAX_PATH)) {
 				strncpy(sourcePath, start, length);
 				sourcePath[length] = 0;
@@ -1403,7 +1405,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 						space2--;
 					}
 
-					int length = space2 - space;
+					intptr_t length = space2 - space;
 
 					if (length > 0) {
 						strncpy(sourcePath, space, length);
@@ -1418,7 +1420,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 			// perl
 			const char *at = strstr(cdoc, " at ");
 			const char *line = strstr(cdoc, " line ");
-			int length = line - (at + 4);
+			intptr_t length = line - (at + 4);
 			if (at && line && length > 0) {
 				strncpy(sourcePath, at + 4, length);
 				sourcePath[length] = 0;
@@ -1627,7 +1629,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 				 */
 			const char *startPath = strrchr(cdoc, '(') + 1;
 			const char *endPath = strchr(startPath, ':');
-			int length = endPath - startPath;
+			intptr_t length = endPath - startPath;
 			if (length > 0) {
 				strncpy(sourcePath, startPath, length);
 				sourcePath[length] = 0;
@@ -1643,7 +1645,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 			const char *startPath = cdoc + 4;
 			const char *endPath = strchr(startPath, '\t');
 			if (endPath) {
-				int length = endPath - startPath;
+				intptr_t length = endPath - startPath;
 				strncpy(sourcePath, startPath, length);
 				sourcePath[length] = 0;
 				return 0;
@@ -1657,20 +1659,20 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 //!void SciTEBase::GoMessage(int dir) {
 bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[GoMessageImprovement]
 	Sci_CharacterRange crange;
-	crange.cpMin = wBottom.Call(SCI_GETSELECTIONSTART);
-	crange.cpMax = wBottom.Call(SCI_GETSELECTIONEND);
+	crange.cpMin = static_cast<Sci_PositionCR>(wBottom.Call(SCI_GETSELECTIONSTART));
+	crange.cpMax = static_cast<Sci_PositionCR>(wBottom.Call(SCI_GETSELECTIONEND));
 	int selStart = crange.cpMin;
-	int curLine = wBottom.Call(SCI_LINEFROMPOSITION, selStart);
-	int maxLine = wBottom.Call(SCI_GETLINECOUNT);
-	int lookLine = curLine + dir;
+	Sci_Position curLine = wBottom.Call(SCI_LINEFROMPOSITION, selStart);
+	Sci_Position maxLine = wBottom.Call(SCI_GETLINECOUNT);
+	Sci_Position lookLine = curLine + dir;
 	if (lookLine < 0)
 		lookLine = maxLine - 1;
 	else if (lookLine >= maxLine)
 		lookLine = 0;
 	TextReader acc(wBottom);
 	while ((dir == 0) || (lookLine != curLine)) {
-		int startPosLine = wBottom.Call(SCI_POSITIONFROMLINE, lookLine, 0);
-		int lineLength = wBottom.Call(SCI_LINELENGTH, lookLine, 0);
+		Sci_Position startPosLine = wBottom.Call(SCI_POSITIONFROMLINE, lookLine, 0);
+		Sci_Position lineLength = wBottom.Call(SCI_LINELENGTH, lookLine, 0);
 		char style = acc.StyleAt(startPosLine);
 		if (style != SCE_ERR_DEFAULT &&
 		        style != SCE_ERR_CMD &&
@@ -1686,7 +1688,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 			SString message = GetRange(wBottom, startPosLine, startPosLine + lineLength);
 			char source[MAX_PATH];
 			int column;
-			int sourceLine = DecodeMessage(message.c_str(), source, style, column);
+			Sci_Position sourceLine = DecodeMessage(message.c_str(), source, style, column);
 			SString findHiglight = "";
 			if (style == SCE_ERR_GCC){
 				int posInLine = 0; //позиция в строке редактора, с которой начинается найденное слово
@@ -1702,11 +1704,11 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 //!-start-[FindResultListStyle]
 				if (props.GetInt("lexer.errorlist.findliststyle", 1)&& '.' == source[0] && pathSepChar == source[1]) {
 					// it can be internal search result line, so try to find the base path in topic
-					int topLine = lookLine - 1;
+					Sci_Position topLine = lookLine - 1;
 					SString topic;
 					while (topLine >= 0) {
-						int startPos = wBottom.Call(SCI_POSITIONFROMLINE, topLine, 0);
-						int lineLen = wBottom.Call(SCI_LINELENGTH, topLine, 0);
+						Sci_Position startPos = wBottom.Call(SCI_POSITIONFROMLINE, topLine, 0);
+						Sci_Position lineLen = wBottom.Call(SCI_LINELENGTH, topLine, 0);
 						topic = GetRange(wBottom, startPos, startPos + lineLen);
 						if ('>' == topic[0]) {
 							break;
@@ -1717,9 +1719,9 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					}
 					if (topic.length() > 0 && 0 == strncmp(">??Internal search",topic.c_str(),18)) {
 						// get base path from topic text
-						int toPos = topic.length() - 1;
+						Sci_Position toPos = topic.length() - 1;
 						while (toPos >= 0 && pathSepChar != topic[toPos]) toPos--;
-						int fromPos = toPos - 1;
+						Sci_Position fromPos = toPos - 1;
 						while (fromPos >= 0 && '"' != topic[fromPos]) fromPos--;
 						if (fromPos > 0) {
 							SString path = topic.substr(fromPos + 1, toPos - fromPos - 1);
@@ -1786,8 +1788,8 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 				wEditor.Call(SCI_MARKERDELETEALL, markerError);
 
 				wEditor.Call(SCI_MARKERADD, sourceLine, markerError);
-				int startSourceLine = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine, 0);
-				int endSourceline = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine + 1, 0);
+				Sci_Position startSourceLine = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine, 0);
+				Sci_Position endSourceline = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine + 1, 0);
 				if (column >= 0) {
 					// Get the position in line according to current tab setting
 					startSourceLine = wEditor.Call(SCI_FINDCOLUMN, sourceLine, column);
@@ -1797,7 +1799,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					//select whole source source line from column with error
 					if (findHiglight != "") {
 						SString findingStr = GetRange(wEditor, startSourceLine, endSourceline);
-						int fPos = findingStr.search(findHiglight.c_str());
+						Sci_Position fPos = findingStr.search(findHiglight.c_str());
 						SetSelection(startSourceLine + fPos, startSourceLine + fPos + findHiglight.length());
 						wEditor.Call(SCI_SCROLLCARET);
 					} else {

@@ -352,7 +352,7 @@ void IupChildWnd::ColorSettings_CB(Ihandle* ih, int side, int markerid, const ch
 void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int pos, int pos2, int highlight, char* fgcolor_drag, char * bgcolor) {
 	IdrawCanvas* dc = (IdrawCanvas*)c;
 
-	int size = pixelMap.size();
+	int size = static_cast<int>(pixelMap.size());
 
 	int clrId, lineFrom;
 	int clrNew, lineFromNew;
@@ -486,13 +486,13 @@ void IupChildWnd::VScrollDraw_CB(Ihandle*ih, void* c, int sb_size, int ymax, int
 
 	iupFlatDrawBox(dc, 2 + dL, sb_size - 3 - dR, pos, pos2, fgcolor_drag, bgcolor, 1);
 	if (curLine >= 0) {
-		int cur = static_cast<int>(lineheightPx * curLine + sb_size);
+		int cur = static_cast<int>(lineheightPx * curLine + sb_size); 
 		iupdrvDrawLine(dc, 0, cur, sb_size, cur, caretColor, IUP_DRAW_FILL, 1);
 	}
 
 }
 
-void IupChildWnd::setCurLine(int l) {
+void IupChildWnd::setCurLine(Sci_Position l) {
 	curLine = l;
 	lineChanged = true;
 }
@@ -506,17 +506,18 @@ void IupChildWnd::resetPixelMap() {
 
 	pixelMap.assign(vHeight + 1, { 0, 0 });
 
-	int docCount = pS->Call(SCI_GETLINECOUNT);
-	int count = pS->Call(SCI_VISIBLEFROMDOCLINE, docCount) + pS->Call(SCI_LINESONSCREEN);
+	Sci_Position docCount = pS->Call(SCI_GETLINECOUNT);
+	Sci_Position count = pS->Call(SCI_VISIBLEFROMDOCLINE, docCount) + pS->Call(SCI_LINESONSCREEN);
 	if (!count)
 		return;
 
 	lineheightPx = (float)vHeight / (float)count;
 	
-	int vLine, curMark;
-	for(int line = 0; line <= docCount; line ++){
+	Sci_Position vLine;
+	int curMark;
+	for(Sci_Position line = 0; line <= docCount; line ++){
 		if (pS->Call(SCI_GETLINEVISIBLE, line)) {
-			curMark = pS->Call(SCI_MARKERGET, line);
+			curMark = static_cast<int>(pS->Call(SCI_MARKERGET, line));
 			if (curMark & leftClr.mask) {
 				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int id = -1;
@@ -571,7 +572,7 @@ void IupChildWnd::resetPixelMap() {
 						pixelMap[i].right = id + 1;
 				}
 			}
-			int annotLines;
+			Sci_Position annotLines;
 			if ((rightClr.annotation || leftClr.annotation || middleClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
 				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
 				int pFirst = static_cast<int>(round((vLine + 1) * lineheightPx));

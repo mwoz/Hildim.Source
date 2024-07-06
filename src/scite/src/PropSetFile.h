@@ -20,7 +20,7 @@ public:
 	PropSetFile *superPS;
 	PropSetFile(bool lowerKeys_=false);
 	virtual ~PropSetFile();
-	void Set(const char *key, const char *val, int lenKey=-1, int lenVal=-1);
+	void Set(const char *key, const char *val, sptr_t lenKey=-1, sptr_t lenVal=-1);
 	void Set(const char *keyVal);
 	void SetEx(char *keyVal, const char * &data, int &len);
 	void Unset(const char *key, int lenKey=-1);
@@ -37,7 +37,7 @@ public:
 	void ReadFromMemory(const char *data, int len, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
 	bool Read(FilePath filename, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
 	bool Read(const char *sciteDefaultHome, FilePath filename, FilePath directoryForImports, FilePath imports[] = 0, int sizeImports = 0);
-	void SetInteger(const char *key, int i);
+	void SetInteger(const char *key, sptr_t i);
 	SString GetWild(const char *keybase, const char *filename);
 	SString GetNewExpand(const char *keybase, const char *filename="");
 	bool GetFirst(const char *&key, const char *&val);

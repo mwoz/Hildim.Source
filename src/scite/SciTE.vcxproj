@@ -111,10 +111,10 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
-      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
-      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -146,10 +146,10 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;_DEBUG;WIN32;_WINDOWS;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>src;..\scintilla\include;..\lexilla\include;..\scintilla\src;..\scintilla\lexlib;lua\src;..\..\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\$(Platform)\$(Configuration)/</AssemblerListingLocation>
-      <ObjectFileName>.\$(Platform)\$(Configuration)/</ObjectFileName>
-      <ProgramDataBaseFileName>.\$(Platform)\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -186,10 +186,10 @@
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
-      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
-      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
@@ -226,10 +226,10 @@
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <PrecompiledHeaderOutputFile>.\$(Configuration)/SciTE.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\$(Configuration)/</AssemblerListingLocation>
-      <ObjectFileName>.\$(Configuration)/</ObjectFileName>
-      <ProgramDataBaseFileName>.\$(Configuration)/vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <DebugInformationFormat>None</DebugInformationFormat>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
@@ -244,8 +244,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(SolutionDir)$(Platform)\$(Configuration)\HildiM.exe</OutputFile>
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;./$(Platform)/$(Configuration)/lua.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\cd.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\freetype6.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\Lua54\cdlua54.lib;$(SolutionDir)\cd\lib\$(Configuration)_64\cdcontextplus.lib;$(SolutionDir)\iup\cdlib.$(PlatformToolset)\x64\zlib1.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\Lua54\iupluacontrols54.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\Lua54\iuplua54.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iup.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iupcontrols.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iupcore.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\Lua54\iupluacd54.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iupcd.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iupweb.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\Lua54\iupluaweb54.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\Lua54\iupluaole54.lib;$(SolutionDir)\iup\lib\$(Configuration)_64\iupole.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>
-      </IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib;LIBCMTD.lib</IgnoreSpecificDefaultLibraries>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>

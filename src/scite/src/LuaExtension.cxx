@@ -386,6 +386,11 @@ static int cf_scite_InvertColor(lua_State* L) {
 	}
 	return 0;
 }
+static int cf_get_is64bit(lua_State* L) {
+	lua_pushboolean(L, sizeof(size_t) == 8);
+	return 1;
+}
+
 static int cf_get_keyboard_layout(lua_State* L) {
 	
 	char buff[KL_NAMELENGTH];
@@ -492,7 +497,7 @@ static int cf_scite_check_menus(lua_State *) {
 //!-start-[EncodingToLua]
 static int cf_pane_get_codepage(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
-	UINT codePage = host->Send(p, SCI_GETCODEPAGE);
+	UINT codePage = static_cast<UINT>(host->Send(p, SCI_GETCODEPAGE));
 	if(codePage != SC_CP_UTF8) {
 		unsigned int cs = SC_CHARSET_DEFAULT;
 		char* charSet = host->Property("character.set");
@@ -700,7 +705,7 @@ static int cf_pane_remove(lua_State *L) {
 static int cf_pane_append(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	const char *s = luaL_checkstring(L, 2);
-	host->Insert(p, host->Send(p, SCI_GETLENGTH, 0, 0), s);
+	host->Insert(p, host->Send(p, SCI_GETLENGTH, 0, 0), s); 
 	return 0;
 }
 
@@ -732,12 +737,12 @@ static int cf_pane_findtext(lua_State *L) {
 				ft.chrg.cpMax = static_cast<int>(luaL_checkinteger(L,5));
 				hasError = (lua_gettop(L) > nArgs);
 			} else {
-				ft.chrg.cpMax = host->Send(p, SCI_GETLENGTH, 0, 0);
+				ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(p, SCI_GETLENGTH, 0, 0));
 			}
 		}
 
 		if (!hasError) {
-			int result = host->Send(p, SCI_FINDTEXT, static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
+			sptr_t result = host->Send(p, SCI_FINDTEXT, static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
 			if (result >= 0) {
 				lua_pushinteger(L, ft.chrgText.cpMin);
 				lua_pushinteger(L, ft.chrgText.cpMax);
@@ -986,10 +991,10 @@ static int sf_CheckRegexp(lua_State* L){
 
 struct PaneMatchObject {
 	ExtensionAPI::Pane pane;
-	long startPos;
-	long endPos;
+	Sci_Position startPos;
+	Sci_Position endPos;
 	int flags; // this is really part of the state, but is kept here for convenience
-	long endPosOrig; // has to do with preventing infinite loop on a 0-length match
+	Sci_Position endPosOrig; // has to do with preventing infinite loop on a 0-length match
 };
 
 static int cf_match_replace(lua_State *L) {
@@ -1013,7 +1018,7 @@ static int cf_match_replace(lua_State *L) {
 	host->Send(pmo->pane, SCI_SETTARGETSTART, pmo->startPos, 0);
 	host->Send(pmo->pane, SCI_SETTARGETEND, pmo->endPos, 0);
 	host->Send(pmo->pane, SCI_REPLACETARGET, static_cast<uptr_t>(lua_rawlen(L, 2)), reinterpret_cast<sptr_t>(replacement));
-	pmo->endPos = host->Send(pmo->pane, SCI_GETTARGETEND, 0, 0);
+	pmo->endPos = host->Send(pmo->pane, SCI_GETTARGETEND, 0, 0); 
 	return 0;
 }
 
@@ -1034,10 +1039,10 @@ static int cf_match_metatable_index(lua_State *L) {
 			lua_pushinteger(L, pmo->startPos);
 			return 1;
 		} else if (0 == strcmp(key, "len")) {
-			lua_pushinteger(L, pmo->endPos - pmo->startPos);
+			lua_pushinteger(L, pmo->endPos - pmo->startPos); 
 			return 1;
 		} else if (0 == strcmp(key, "text")) {
-			// If the document is changed while in the match loop, this will be broken.
+			// If the document is changed while in the match loop, this will be broken. 
 			// Exception: if the changes are made exclusively through match:replace,
 			// everything will be fine.
 			char *range = host->Range(pmo->pane, pmo->startPos, pmo->endPos);
@@ -1144,26 +1149,26 @@ static int cf_pane_match_generator(lua_State *L) {
 	}
 
 	if ((pmo->endPos < 0) || (pmo->endPos < pmo->startPos)) {
-		raise_error(L, "Blocked attempt to use invalidated pane match object.");
+		raise_error(L, "Blocked attempt to use invalidated pane match object.");  
 		return 0;
 	}
 
-	int searchPos = pmo->endPos;
+	Sci_Position searchPos = pmo->endPos;
 	if ((pmo->startPos == pmo->endPosOrig) && (pmo->endPos == pmo->endPosOrig)) {
 		// prevent infinite loop on zero-length match by stepping forward
 		searchPos++;
 	}
 
 	Sci_TextToFind ft = { {0,0}, 0, {0,0} };
-	ft.chrg.cpMin = searchPos;
-	ft.chrg.cpMax = host->Send(pmo->pane, SCI_GETLENGTH, 0, 0);
+	ft.chrg.cpMin = static_cast<Sci_PositionCR>(searchPos);
+	ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(pmo->pane, SCI_GETLENGTH, 0, 0));
 	ft.lpstrText = const_cast<char*>(text);
 
 	if (ft.chrg.cpMax > ft.chrg.cpMin) {
-		int result = host->Send(pmo->pane, SCI_FINDTEXT, static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
+		sptr_t result = host->Send(pmo->pane, SCI_FINDTEXT, static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
 		if (result >= 0) {
 			pmo->startPos = ft.chrgText.cpMin;
-			pmo->endPos = pmo->endPosOrig = ft.chrgText.cpMax;
+			pmo->endPos = pmo->endPosOrig = ft.chrgText.cpMax; 
 			lua_pushvalue(L, 2);
 			return 1;
 		}
@@ -1657,7 +1662,7 @@ static bool CallNamedFunction(const char *name, const char *arg) {
 	return handled;
 }
 
-static bool CallNamedFunction(const char *name, int numberArg, const char *stringArg) {
+static bool CallNamedFunction(const char *name, LUA_INTEGER numberArg, const char *stringArg) {
 	bool handled = false;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1672,7 +1677,7 @@ static bool CallNamedFunction(const char *name, int numberArg, const char *strin
 	return handled;
 }
 
-static bool CallNamedFunction(const char *name, int numberArg, const char *stringArg, int numberArg2, int numberArg3 ) {
+static bool CallNamedFunction(const char *name, LUA_INTEGER numberArg, const char *stringArg, LUA_INTEGER numberArg2, LUA_INTEGER numberArg3 ) {
 	bool handled = false;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1707,7 +1712,7 @@ static bool CallNamedFunction(const char *name, const char *stringArg, const cha
 //!-end-[macro]
 
 //!-start-[OnMenuCommand]
-static bool CallNamedFunction(const char *name, int numberArg, int numberArg2) {
+static bool CallNamedFunction(const char *name, LUA_INTEGER numberArg, LUA_INTEGER numberArg2) {
 	bool handled = false;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1721,10 +1726,8 @@ static bool CallNamedFunction(const char *name, int numberArg, int numberArg2) {
 	}
 	return handled;
 }
-//!-end-[OnMenuCommand]
 
-//!-start-[OnSendEditor]
-static const char *CallNamedFunction(const char *name, unsigned int numberArg, unsigned int numberArg2, const char *stringArg) {
+static const char *CallNamedFunction(const char *name, LUA_INTEGER numberArg, LUA_INTEGER numberArg2, const char *stringArg) {
 	const char *handled = NULL;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1740,7 +1743,7 @@ static const char *CallNamedFunction(const char *name, unsigned int numberArg, u
 	return handled;
 }
 
-static const char *CallNamedFunction(const char *name, unsigned int numberArg, const char *stringArg, int numberArg2) {
+static const char *CallNamedFunction(const char *name, LUA_INTEGER numberArg, const char *stringArg, int numberArg2) {
 	const char *handled = NULL;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1756,7 +1759,7 @@ static const char *CallNamedFunction(const char *name, unsigned int numberArg, c
 	return handled;
 }
 
-static const char *CallNamedFunction(const char *name, unsigned int numberArg, unsigned int numberArg2, long numberArg3, unsigned int numberArg4) {
+static const char *CallNamedFunction(const char *name, LUA_INTEGER numberArg, LUA_INTEGER numberArg2, LUA_INTEGER numberArg3, LUA_INTEGER numberArg4) {
 	const char *handled = NULL;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1773,7 +1776,7 @@ static const char *CallNamedFunction(const char *name, unsigned int numberArg, u
 	return handled;
 }
 
-static const char *CallNamedFunction(const char *name, unsigned int numberArg, unsigned int numberArg2, long numberArg3) {
+static const char *CallNamedFunction(const char *name, LUA_INTEGER numberArg, LUA_INTEGER numberArg2, LUA_INTEGER numberArg3) {
 	const char *handled = NULL;
 	if (luaState) {
 		lua_getglobal(luaState, name);
@@ -1853,7 +1856,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	// - numeric return type gets returned to lua as a number (following the stringresult)
 	// - other return types e.g. void get dropped.
 
-	int result = host->Send(p, func.value, params[0], params[1]);
+	lua_Integer result = host->Send(p, func.value, params[0], params[1]);
 
 	int resultCount = 0;
 
@@ -1864,13 +1867,13 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	}
 
 	if (func.returnType == iface_bool) {
-		lua_pushboolean(L, result);
+		lua_pushboolean(L, static_cast<int>(result));
 		resultCount++;
 	}	if (func.returnType == iface_bool) {
 		lua_pushboolean(L, static_cast<int>(result));
 		resultCount++;
 	} else if (IFaceTypeIsNumeric(func.returnType)) {
-		lua_pushinteger(L, static_cast<int>(result));
+		lua_pushinteger(L, result);
 		resultCount++;
 	}
 
@@ -2540,6 +2543,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_get_keyboard_layout);
 	lua_setfield(luaState, -2, "GetKeyboardLayout");
 
+	lua_pushcfunction(luaState, cf_get_is64bit);
+	lua_setfield(luaState, -2, "Is64Bit");
+
 	// buffers
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
@@ -2718,7 +2724,7 @@ bool LuaExtension::Load(const char *filename) {
 	bool loaded = false;
 
 	if (!luaDisabled) {
-		int sl = strlen(filename);
+		size_t sl = strlen(filename);
 		if (sl >= 4 && strcmp(filename+sl-4, ".lua")==0) {
 			if (luaState || InitGlobalScope(false)) {
 				extensionScript = filename;
@@ -2952,10 +2958,10 @@ struct StylingContext {
 	int initStyle;
 	StyleWriter *styler;
 
-	unsigned int endPos;
-	unsigned int endDoc;
+	Sci_Position endPos;
+	Sci_Position endDoc;
 
-	unsigned int currentPos;
+	Sci_Position currentPos;
 	bool atLineStart;
 	bool atLineEnd;
 	int state;
@@ -2972,7 +2978,7 @@ struct StylingContext {
 	}
 
 	void Colourize() {
-		int end = currentPos - 1;
+		Sci_Position end = currentPos - 1;
 		if (end >= static_cast<int>(endDoc))
 			end = static_cast<int>(endDoc)-1;
 		styler->ColourTo(end, state);
@@ -3033,7 +3039,7 @@ struct StylingContext {
 	void GetNextChar() {
 		lenCurrent = lenNext;
 		lenNext = 1;
-		int nextPos = currentPos + lenCurrent;
+		Sci_Position nextPos = currentPos + lenCurrent;
 		unsigned char byteNext = static_cast<unsigned char>(styler->SafeGetCharAt(nextPos));
 		unsigned int nextSlot = (cursorPos + 1) % 3;
 		memcpy(cursor[nextSlot], "\0\0\0\0\0\0\0\0", 8);
@@ -3199,9 +3205,9 @@ struct StylingContext {
 
 	static int Token(lua_State *L) {
 		StylingContext *context = Context(L);
-		int start = context->styler->GetStartSegment();
-		int end = context->currentPos - 1;
-		int len = end - start + 1;
+		Sci_Position start = context->styler->GetStartSegment();
+		Sci_Position end = context->currentPos - 1;
+		Sci_Position len = end - start + 1;
 		if (len <= 0)
 			len = 1;
 		char *sReturn = new char[len+1];
@@ -3237,18 +3243,18 @@ struct StylingContext {
 	}
 };
 
-bool LuaExtension::OnStyle(unsigned int startPos, int lengthDoc, int initStyle, StyleWriter *styler) {
+bool LuaExtension::OnStyle(Sci_Position startPos, Sci_Position lengthDoc, int initStyle, StyleWriter *styler) {
 	bool handled = false;
 	if (luaState) {
 		lua_getglobal(luaState, "OnStyle");
 		if (lua_isfunction(luaState, -1)) {
 
-			StylingContext sc;
-			sc.startPos = startPos;
-			sc.lengthDoc = lengthDoc;
+			StylingContext sc; 
+			sc.startPos = static_cast<unsigned int>(startPos);
+			sc.lengthDoc = static_cast<int>(lengthDoc);
 			sc.initStyle = initStyle;
 			sc.styler = styler;
-			sc.codePage = host->Send(ExtensionAPI::paneEditor, SCI_GETCODEPAGE);
+			sc.codePage = static_cast<int>(host->Send(ExtensionAPI::paneEditor, SCI_GETCODEPAGE));
 
 			lua_newtable(luaState);
 
@@ -3395,17 +3401,17 @@ bool LuaExtension::PaneOnUpdateUI(bool bModified, bool bSelChange, int flag) {
 }
 
 bool LuaExtension::OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) {
-	return CallNamedFunction("OnMarginClick", margin, modif, line, id);
+	return CallNamedFunction("OnMarginClick", margin, modif, line, static_cast<unsigned int>(id));
 }
-bool LuaExtension::OnCallTipClick(int pos) {
+bool LuaExtension::OnCallTipClick(Sci_Position pos) { 
 	return CallNamedFunction("OnCallTipClick", pos, 0, 0);
 }
 
-bool LuaExtension::OnUserListSelection(int listType, const char *selection, int id, int method) {
+bool LuaExtension::OnUserListSelection(int listType, const char *selection, Sci_Position id, int method) {
 	return CallNamedFunction("OnUserListSelection", listType, selection, id, method) != NULL;
 }
 
-bool LuaExtension::OnNavigation(const char *item){
+bool LuaExtension::OnNavigation(const char *item){ 
 	return CallNamedFunction("OnNavigation" ,item);
 }
 //! bool LuaExtension::OnKey(int keyval, int modifiers) {
@@ -3431,8 +3437,8 @@ bool LuaExtension::OnKey(int keyval, int modifiers, char ch) { //!-chage-[OnKey]
 	return handled;
 }
 
-bool LuaExtension::OnDwellStart(int pos, const char *word, bool ctrl) {
-	return CallNamedFunction("OnDwellStart", pos, word, ctrl);
+bool LuaExtension::OnDwellStart(Sci_Position pos, const char *word, bool ctrl) {
+	return CallNamedFunction("OnDwellStart", pos, word, ctrl); 
 }
 
 bool LuaExtension::OnClose(const char *filename) {
@@ -3440,10 +3446,10 @@ bool LuaExtension::OnClose(const char *filename) {
 }
 
 //!-start-[macro]
-bool LuaExtension::OnMacro(const char *func, unsigned int w, unsigned int l, const char *s){
+bool LuaExtension::OnMacro(const char *func, uptr_t w, sptr_t l, const char *s){
 	const char *handled = NULL;
 	if (luaState) {
-		lua_getglobal(luaState, "OnMacro");
+		lua_getglobal(luaState, "OnMacro"); 
 		if (lua_isfunction(luaState, -1)) {
 			lua_pushstring(luaState, "F");
 			lua_pushstring(luaState, func);
@@ -3477,12 +3483,12 @@ bool LuaExtension::OnMenuCommand(int cmd, int source) {
 //!-end-[OnMenuCommand]
 
 //!-start-[OnSendEditor]
-const char *LuaExtension::OnSendEditor(unsigned int msg, unsigned int wp, const char *lp) {
-	return CallNamedFunction("OnSendEditor", msg, wp, lp);
+const char *LuaExtension::OnSendEditor(unsigned int msg, uptr_t wp, const char *lp) {
+	return CallNamedFunction("OnSendEditor", msg, static_cast<unsigned int>(wp), lp);
 }
 
-const char *LuaExtension::OnSendEditor(unsigned int msg, unsigned int wp, long lp) {
-	return CallNamedFunction("OnSendEditor", msg, wp, lp);
+const char *LuaExtension::OnSendEditor(unsigned int msg, uptr_t wp, sptr_t lp) { 
+	return CallNamedFunction("OnSendEditor", msg, static_cast<unsigned int>(wp), static_cast<unsigned int>(lp));
 }
 //!-end-[OnSendEditor]
 bool LuaExtension::OnLindaNotify(const char* key, const char* msg) {
@@ -3493,7 +3499,7 @@ bool LuaExtension::OnLindaNotify(const char* key, const char* msg) {
 	return CallNamedFunction("OnLindaNotify", key);
 }
 
-bool LuaExtension::OnColorized(unsigned int wp, unsigned int lp) {
+bool LuaExtension::OnColorized(Sci_Position wp, Sci_Position lp) {
 	return CallNamedFunction("OnColorized", wp, lp);
 }
 
@@ -3501,7 +3507,7 @@ const char *LuaExtension::OnContextMenu(unsigned int msg, unsigned int wp, const
 	return CallNamedFunction("OnContextMenu", msg, wp, lp);
 }
 
-bool LuaExtension::OnFindProgress(int state, int all) {
+bool LuaExtension::OnFindProgress(uptr_t state, sptr_t all) {
 	return CallNamedFunction("OnFindProgress", state, all);
 }
 
@@ -3513,7 +3519,7 @@ bool LuaExtension::OnLayOutNotify(const char *command) {
 	return CallNamedFunction("OnLayOutNotify", command);
 }
 bool LuaExtension::OnGeneratedHotKey(long hotkey) {
-	return CallNamedFunction("event_MenuHotKey", hotkey,0);
+	return CallNamedFunction("event_MenuHotKey", hotkey, (LUA_INTEGER)0);
 }
 
 void LuaExtension::DoReboot(){
@@ -3525,23 +3531,23 @@ void LuaExtension::DoLua(const char *c) {
 	CallNamedFunction("dostring", c);
 }
 
-bool LuaExtension::OnMacroBlocked(int msg, int wParam, int lParam) {
+bool LuaExtension::OnMacroBlocked(int msg, intptr_t wParam, intptr_t lParam) {
 	return CallNamedFunction("OnMacroBlockedEvents", msg, wParam, lParam);
 }
 
-unsigned long  LuaExtension::OnMenuChar(int flag, const char* key) {
+sptr_t  LuaExtension::OnMenuChar(int flag, const char* key) {
 	//return CallNamedFunction("event_MenuChar", flag, key);
 
-	unsigned long r = 0;
+	sptr_t r = 0;
 	if (luaState) {
 		lua_getglobal(luaState, "event_MenuChar");
 		if (lua_isfunction(luaState, -1)) {
 			lua_pushinteger(luaState, flag);
 			lua_pushstring(luaState, key);
 
-			int result = lua_pcall(luaState, 2, 1, false);
+			int result = lua_pcall(luaState, 2, 1, false); 
 			if (0 == result) {
-				r = lua_tointeger(luaState, -1);
+				r = (sptr_t)lua_tointeger(luaState, -1);
 				lua_pop(luaState, 1);
 			}
 			else  {
@@ -3564,30 +3570,30 @@ void LuaExtension::OnChangeFocus(int src, int focus) {
 }
 
 bool LuaExtension::OnDrawClipboard(int flag){
-	return CallNamedFunction("OnDrawClipboard", flag, 0);
+	return CallNamedFunction("OnDrawClipboard", flag, (LUA_INTEGER)0);
 }
 
 void LuaExtension::OnRightEditorVisibility(bool show) {
-	CallNamedFunction("OnRightEditorVisibility", show, 0);
+	CallNamedFunction("OnRightEditorVisibility", show, (LUA_INTEGER)0);
 }
 
-void LuaExtension::OnTextChanged(int position, int leg, int linesAdded, int flag) {
-	CallNamedFunction("OnTextChanged", position, flag, linesAdded, leg);
+void LuaExtension::OnTextChanged(Sci_Position position, int leg, Sci_Position linesAdded, int flag) {
+	CallNamedFunction("OnTextChanged", position, flag, linesAdded, leg); 
 }
 
-void LuaExtension::BeforeTextChanged(int position, int leg, const char* t, int type) {
+void LuaExtension::BeforeTextChanged(Sci_Position position, int leg, const char* t, int type) {
 	CallNamedFunction("BeforeTextChanged", leg, t, position, type) ;
 }
 
-void LuaExtension::OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) {
+void LuaExtension::OnCurrentLineFold(Sci_Position line, int leg, int foldLevelPrev, int foldLevelNow) {
 	CallNamedFunction("OnCurrentLineFold", line, foldLevelPrev, foldLevelNow);
 }
 
-bool LuaExtension::OnAutocSelection(int method, int firstPos) {
+bool LuaExtension::OnAutocSelection(int method, Sci_Position firstPos) { 
 	return CallNamedFunction("OnAutocSelection", method, firstPos);
 }
 
-void LuaExtension::OnCommandLine(const char* line) {
+void LuaExtension::OnCommandLine(const char* line) { 
 	CallNamedFunction("OnCommandLine", line);
 }
 

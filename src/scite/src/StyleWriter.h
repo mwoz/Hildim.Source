@@ -21,15 +21,15 @@ protected:
 	 * in case there is some backtracking. */
 	enum {bufferSize=4000, slopSize=bufferSize/8};
 	char buf[bufferSize+1];
-	int startPos;
-	int endPos;
+	Sci_Position startPos;
+	Sci_Position endPos;
 	int codePage;
 
 	GUI::ScintillaWindow &sw;
-	int lenDoc;
+	Sci_Position lenDoc;
 
 	bool InternalIsLeadByte(char ch) const;
-	void Fill(int position);
+	void Fill(Sci_Position position);
 public:
 	TextReader(GUI::ScintillaWindow &sw_) :
 		startPos(extremePosition),
@@ -38,14 +38,14 @@ public:
 		sw(sw_),
 		lenDoc(-1) {
 	}
-	char operator[](int position) {
+	char operator[](Sci_Position position) {
 		if (position < startPos || position >= endPos) {
 			Fill(position);
 		}
 		return buf[position - startPos];
 	}
 	/** Safe version of operator[], returning a defined value for invalid position. */
-	char SafeGetCharAt(int position, char chDefault=' ') {
+	char SafeGetCharAt(Sci_Position position, char chDefault=' ') {
 		if (position < startPos || position >= endPos) {
 			Fill(position);
 			if (position < startPos || position >= endPos) {
@@ -62,12 +62,12 @@ public:
 		codePage = codePage_;
 	}
 	bool Match(int pos, const char *s);
-	char StyleAt(int position);
-	int GetLine(int position);
-	int LineStart(int line);
-	int LevelAt(int line);
-	int Length();
-	int GetLineState(int line);
+	char StyleAt(Sci_Position position);
+	Sci_Position GetLine(Sci_Position position);
+	Sci_Position LineStart(Sci_Position line);
+	int LevelAt(Sci_Position line);
+	Sci_Position Length();
+	int GetLineState(Sci_Position line);
 };
 
 // Adds methods needed to write styles and folding
@@ -78,7 +78,7 @@ class StyleWriter : public TextReader {
 protected:
 	char styleBuf[bufferSize];
 	int validLen;
-	unsigned int startSeg;
+	Sci_Position startSeg;
 public:
 	StyleWriter(GUI::ScintillaWindow &sw_) :
 		TextReader(sw_),
@@ -86,13 +86,13 @@ public:
 		startSeg(0) {
 	}
 	void Flush();
-	int SetLineState(int line, int state);
+	int SetLineState(Sci_Position line, int state);
 
-	void StartAt(unsigned int start, char chMask=31);
-	unsigned int GetStartSegment() { return startSeg; }
-	void StartSegment(unsigned int pos);
-	void ColourTo(unsigned int pos, int chAttr);
-	void SetLevel(int line, int level);
+	void StartAt(Sci_Position start, char chMask=31);
+	Sci_Position GetStartSegment() { return startSeg; }
+	void StartSegment(Sci_Position pos);
+	void ColourTo(Sci_Position pos, int chAttr);
+	void SetLevel(Sci_Position line, int level);
 };
 
 #endif

@@ -1178,7 +1178,7 @@ static int iFlatTabsLeaveWindow_CB(Ihandle* ih) {
 
 
 static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value) {
-	int pos = (int)value;
+	intptr_t pos = (intptr_t)value;
 	pos--;
 
 	if (iFlatTabsGetCountAttrib(ih) <= pos)
@@ -1186,10 +1186,10 @@ static int iFlatTabsSetValuePosAttrib(Ihandle* ih, const char* value) {
 
 	int scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
 	if (pos < scroll_pos)
-		iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", pos);
+		iupAttribSetInt(ih, "_IUPFTABS_SCROLLPOS", (int)pos);
 
 	iupAttribSetInt(ih, "_SCIPAUTOSCROLL", 0);
-	iupAttribSetInt(ih, "VALUEPOS", pos);
+	iupAttribSetInt(ih, "VALUEPOS", (int)pos);
 	return 0;
 }
 

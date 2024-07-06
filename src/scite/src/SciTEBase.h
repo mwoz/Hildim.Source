@@ -39,13 +39,18 @@ extern "C" {
 
 #define ELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
-inline int Minimum(int a, int b) {
+inline Sci_Position Minimum(Sci_Position a, Sci_Position b) {
 	return (a < b) ? a : b;
 }
 
+inline Sci_Position Maximum(Sci_Position a, Sci_Position b) {
+	return (a > b) ? a : b;
+}
+#ifdef _WIN64
 inline int Maximum(int a, int b) {
 	return (a > b) ? a : b;
 }
+#endif
 
 inline long LongFromTwoShorts(short a,short b) {
 	return (a) | ((b) << 16);
@@ -69,7 +74,7 @@ enum {
 class RecentFile : public FilePath {
 public:
 	Sci_CharacterRange selection;
-	int scrollPosition;
+	Sci_Position scrollPosition;
 	RecentFile() {
 		selection.cpMin = INVALID_POSITION;
 		selection.cpMax = INVALID_POSITION;
@@ -91,7 +96,7 @@ enum UniMode {
 
 class BufferListAPI {
 public:
-	virtual int GetDocumentByName(FilePath filename, bool excludeCurrent = false, int forIdm = NULL) = 0;
+	virtual int GetDocumentByName(FilePath filename, bool excludeCurrent = false, uptr_t forIdm = NULL) = 0;
 	virtual void* GetAt(int index) = 0;
 };
 
@@ -106,7 +111,7 @@ public:
 	time_t fileModLastAsk;
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
-	std::vector<int> foldState;
+	std::vector<Sci_Position> foldState;
 	int editorSide;
 	bool pFriend;
 	BufferListAPI* pBase;
@@ -161,7 +166,7 @@ public:
 
 class EditSwitcher{
 public:
-	virtual void SwitchTo(int wndIdm, FilePath* pBuf) = 0;
+	virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) = 0;
 	virtual int GetWindowIdm() = 0;
 	virtual void SetBuffPointer(FilePath* pBuf) = 0;
 	virtual void SetBuffEncoding(int e) = 0;
@@ -182,7 +187,7 @@ public:
 	~BufferList();
 	void Allocate(int maxSize);
 	int Add(sptr_t doc = NULL);
-	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, int forIdm = NULL);
+	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, uptr_t forIdm = NULL);
 	void RemoveCurrent();
 	int NextByIdm(int idm);
 	int Current() const;
@@ -334,10 +339,10 @@ public:
 	void HideScrolls();
 	void OnIdle();
 	void resetPixelMap();
-	void setCurLine(int l);
+	void setCurLine(Sci_Position l);
 	void Redraw();
 private:
-	int curLine = -1;
+	Sci_Position curLine = -1;
 	bool lineChanged = false;
 	float lineheightPx;
 	char name[16];
@@ -499,7 +504,7 @@ protected:
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
-		virtual void SwitchTo(int wndIdm, FilePath* pBuf) ;
+		virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) ;
 		virtual int GetWindowIdm();
 		virtual void SetBuffPointer(FilePath* pBuf);
 		virtual void SetCoBuffPointer(FilePath* pBuf);
@@ -687,15 +692,15 @@ protected:
 	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	void CallChildren(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 
-	int LengthDocument();
-	int GetCaretInLine();
-	void GetLine(char *text, int sizeText, int line = -1);
-	SString GetLine(int line = -1);
-	void GetRange(GUI::ScintillaWindow &win, int start, int end, char *text);
+	Sci_Position LengthDocument();
+	Sci_Position GetCaretInLine();
+	void GetLine(char *text, int sizeText, Sci_Position line = -1);
+	SString GetLine(Sci_Position line = -1);
+	void GetRange(GUI::ScintillaWindow &win, Sci_Position start, Sci_Position end, char *text);
 	int IsLinePreprocessorCondition(char *line);
-	bool FindMatchingPreprocessorCondition(int &curLine, int direction, int condEnd1, int condEnd2);
-	bool FindMatchingPreprocCondPosition(bool isForward, int &mppcAtCaret, int &mppcMatch);
-	bool FindMatchingBracePosition(bool editor, int &braceAtCaret, int &braceOpposite, bool sloppy);
+	bool FindMatchingPreprocessorCondition(Sci_Position &curLine, int direction, int condEnd1, int condEnd2);
+	bool FindMatchingPreprocCondPosition(bool isForward, Sci_Position &mppcAtCaret, Sci_Position &mppcMatch);
+	bool FindMatchingBracePosition(bool editor, Sci_Position &braceAtCaret, Sci_Position &braceOpposite, bool sloppy);
 	void BraceMatch(bool editor);
 
 //!	virtual void WarnUser(int warnID) = 0;
@@ -751,7 +756,7 @@ protected:
 	void EnsureFinalNewLine();
 	bool SaveBuffer(FilePath saveName, bool bNotSaveNotChanged = false);
 	virtual void SaveAsHTML() = 0;
-	void SaveToStreamRTF(std::ostream &os, int start = 0, int end = -1);
+	void SaveToStreamRTF(std::ostream &os, Sci_Position start = 0, Sci_Position end = -1);
 	void SaveToRTF(const FilePath &saveName, int start = 0, int end = -1);
 	virtual void SaveAsRTF() = 0;
 	void SaveToPDF(FilePath saveName);
@@ -773,12 +778,12 @@ protected:
 	virtual void Print(bool) {}
 	virtual void PrintSetup() {}
 	Sci_CharacterRange GetSelection();
-	void SetSelection(int anchor, int currentPos);
+	void SetSelection(Sci_Position anchor, Sci_Position currentPos);
 	//	void SelectionExtend(char *sel, int len, char *notselchar);
 	void GetCTag(char *sel, int len);
-	SString GetRange(GUI::ScintillaWindow &win, int selStart, int selEnd);
-	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd);
-	SString GetLine(GUI::ScintillaWindow &win, int line);
+	SString GetRange(GUI::ScintillaWindow &win, Sci_Position selStart, Sci_Position selEnd);
+	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &win, Sci_Position selStart, Sci_Position selEnd);
+	SString GetLine(GUI::ScintillaWindow &win, Sci_Position line);
 	SString RangeExtendAndGrab(GUI::ScintillaWindow &wCurrent, Sci_Position &selStart, Sci_Position &selEnd,
 	        bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	SString SelectionExtend(bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
@@ -790,7 +795,7 @@ protected:
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
-	int FindInTarget(const char *findWhat, int lenFind, int startPosition, int endPosition);
+	Sci_Position FindInTarget(const char *findWhat, Sci_Position lenFind, Sci_Position startPosition, Sci_Position endPosition);
 	virtual bool FindHasText() const;
 	virtual void MoveBack(int distance);
 	virtual void ScrollEditorIfNeeded();
@@ -808,7 +813,7 @@ protected:
 	virtual void StopExecute() = 0;
 
 	bool GoMessage(int dir, GUI::ScintillaWindow &wBottom);
-	char *GetNearestWords(const char *wordStart, int searchLen,
+	char *GetNearestWords(const char *wordStart, size_t searchLen,
 		const char *separators, bool ignoreCase=false, bool exactLen=false);
 	virtual void EliminateDuplicateWords(char *words);
 	virtual bool StartAutoComplete();
@@ -816,23 +821,23 @@ protected:
 	virtual bool StartBlockComment();
 	virtual bool StartBoxComment();
 	virtual bool StartStreamComment();
-	unsigned int GetLinePartsInStyle(int line, int style1, int style2, SString sv[], int len);
-	void SetLineIndentation(int line, int indent);
-	int GetLineIndentation(int line);
-	int GetLineIndentPosition(int line);
+	unsigned int GetLinePartsInStyle(Sci_Position line, int style1, int style2, SString sv[], int len);
+	void SetLineIndentation(Sci_Position line, Sci_Position indent);
+	Sci_Position GetLineIndentation(Sci_Position line);
+	Sci_Position GetLineIndentPosition(Sci_Position line);
 	void ConvertIndentation(int tabSize, int useTabs);
-	bool RangeIsAllWhitespace(int start, int end);
-	IndentationStatus GetIndentState(int line);
-	int IndentOfBlock(int line);
+	bool RangeIsAllWhitespace(Sci_Position start, Sci_Position end);
+	IndentationStatus GetIndentState(Sci_Position line);
+	Sci_Position IndentOfBlock(Sci_Position line);
 	void MaintainIndentation(char ch);
 	void AutomaticIndentation(char ch);
 	void CharAdded(char ch);
 	void CharAddedOutput(int ch);
 	void SetTextProperties(PropSetFile &ps);
 	virtual void SetFileProperties(PropSetFile &ps) = 0;
-	int GetLineLength(int line);
-	int GetCurrentLineNumber();
-	int GetCurrentScrollPosition();
+	Sci_Position GetLineLength(Sci_Position line);
+	Sci_Position GetCurrentLineNumber();
+	Sci_Position GetCurrentScrollPosition();
 	virtual void AddCommand(const SString &cmd, const SString &dir,
 	        JobSubsystem jobType, const SString &input = "",
 	        int flags = 0);
@@ -849,17 +854,17 @@ protected:
 	virtual void Command(WPARAM wParam, LPARAM lParam) = 0;
 	void MenuCommand(int cmdID, int source = 0);
 	void CollapseOutput();
-	void EnsureRangeVisible(int posStart, int posEnd, bool enforcePolicy = true);
-	void GotoLineEnsureVisible(int line);
+	void EnsureRangeVisible(Sci_Position posStart, Sci_Position posEnd, bool enforcePolicy = true);
+	void GotoLineEnsureVisible(Sci_Position line);
 	void NewLineInOutput();
 	virtual void Notify(SCNotification *notification);
 
 	virtual void ActivateWindow(const char *timestamp) = 0;
 
-	void BookmarkAdd(int lineno = -1);
-	void BookmarkDelete(int lineno = -1);
-	bool BookmarkPresent(int lineno = -1);
-	void BookmarkToggle(int lineno = -1);
+	void BookmarkAdd(Sci_Position lineno = -1);
+	void BookmarkDelete(Sci_Position lineno = -1);
+	bool BookmarkPresent(Sci_Position lineno = -1);
+	void BookmarkToggle(Sci_Position lineno = -1);
 	void BookmarkNext(bool forwardScan = true, bool select = false);
 
 	virtual void CheckMenus();
@@ -870,7 +875,7 @@ protected:
 
 //!-end-[ExtendedContextMenu]
 	bool AddFileToBuffer(FilePath file, int pos);
-	void AddFileToStack(FilePath file, Sci_CharacterRange selection, int scrollPos);
+	void AddFileToStack(FilePath file, Sci_CharacterRange selection, Sci_Position scrollPos);
 	void RemoveFileFromStack(FilePath file);
 	RecentFile GetFilePosition();
 	void DisplayAround(const RecentFile &rf);
@@ -932,7 +937,7 @@ protected:
 		int iFiles;
 		int iInFiles;
 	}GrepOut;
-	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
+	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, size_t basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
 	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);
 	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
@@ -945,10 +950,10 @@ protected:
 
 	// ExtensionAPI
 	sptr_t Send(Pane p, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	char *Range(Pane p, int start, int end);
-	char *Line(Pane p, int line, int bNeedEnd);
-	void Remove(Pane p, int start, int end);
-	void Insert(Pane p, int pos, const char *s);
+	char *Range(Pane p, Sci_Position start, Sci_Position end);
+	char *Line(Pane p, Sci_Position line, int bNeedEnd);
+	void Remove(Pane p, Sci_Position start, Sci_Position end);
+	void Insert(Pane p, Sci_Position pos, const char *s);
 	void Trace(const char *s);
 	void UnsetProperty(const char *key);
 	uptr_t GetInstance();

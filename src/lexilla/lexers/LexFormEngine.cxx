@@ -200,7 +200,7 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD ColoriseCubeFormula(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc);
 	void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc);
-	bool PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler);
+	bool PlainFold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess, LexAccessor &styler);
 	const std::regex reSyntax;
 	const std::regex reLogDate;
 	const std::regex rePgLongEnd;
@@ -407,11 +407,11 @@ inline bool HasNotLwr(const char* s) {
 	return true;
 }
 inline bool IsStringTag(const char* s) {
-	int l = strlen(s);
+	size_t l = strlen(s);
 	if (s[l - 1] != '$')
 		return false;
 
-	for (int i = 0; i < l - 1; i++) {
+	for (size_t i = 0; i < l - 1; i++) {
 		if (s[i] == '$')
 			return false;
 	}
@@ -661,7 +661,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 			int nextState = SCE_FM_PGSQL_DEFAULT;
 			char s[100];
 			sc.GetCurrent(s, sizeof(s));
-			int lenW = strlen(s);
+			size_t lenW = strlen(s);
 
 			if (s[0] == '_') {
 				sc.ChangeState(SCE_FM_PGSQL_VARIABLE);
@@ -1582,7 +1582,6 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 		if (vbRAWStart > startPos) {
 			for (Sci_PositionU i = startPos - 1; i; i--) {
 				if ((unsigned char)styler.StyleAt(i) != SCE_FM_X_STRING) {
-					Sci_PositionU j;
 					xmlQuotMark = styler.SafeGetCharAt(i + 1);
 					break;
 				}
@@ -1657,7 +1656,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 						ColoriseWireFormat(sc);
 					} else if (sc.Match("::")) {
 						std::string le = styler.GetRange(sc.currentPos, sc.lineEnd);
-						int p = le.find("::]");
+						size_t p = le.find("::]");
 						if (p > 1) {
 							sc.Forward(p);
 							sc.ForwardSetState(SCE_FM_LOGLINK);
@@ -1802,7 +1801,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 // level store to make it easy to pick up with each increment
 // and to make it possible to fiddle the current level for "} else {".
 class FoldContext {
-	unsigned int endPos;
+	Sci_Position endPos;
 	LexAccessor &styler;
 	//FoldContext &operator=(const FoldContext &);
 	void GetNextChar(unsigned int pos) {
@@ -1827,7 +1826,7 @@ class FoldContext {
 		currentLine = styler.GetLine(currentPos);
 	}
 public:
-	unsigned int currentPos;
+	Sci_Position currentPos;
 	bool atLineStart;
 	bool atLineEnd;
 	int state;
@@ -1844,7 +1843,7 @@ public:
 	bool foldAtElse;
 	int lineFlag;
 	bool startLineResolved; //Иногда в начале строки для корректной обработке придется подняться вверх; переменная выставляется в True, когда такая ситуация уже невозможна
-	FoldContext(unsigned int startPos, unsigned int length,LexAccessor &styler_,  bool bFoldCompact, bool bFoldAtEsle):
+	FoldContext(Sci_PositionU startPos, Sci_Position length,LexAccessor &styler_,  bool bFoldCompact, bool bFoldAtEsle):
 	styler(styler_),
 		endPos(startPos + length),
 		currentPos(startPos),
@@ -1917,7 +1916,7 @@ public:
 		Init();
 	}
 	std::string GetCurLowered() {
-		Sci_PositionU prevPos = currentPos;
+		Sci_Position prevPos = currentPos;
 		SkipSameStyle();
 		if (prevPos <= currentPos + 1)
 			return "";
@@ -2090,7 +2089,7 @@ bool FoldContext::FindThen() {
 	return !strcmp(s, "then");
 }
 
-bool LexerFormEngine::PlainFold(Sci_PositionU startPos, int length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
+bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
 	
 	while ( initStyle == SCE_FM_VB_STRINGCONT) {
 		//Возможно разрешить фолдинг начиная с данной строки не удасться, и тогда нам нужно перезапустить фолдинг со строчки выше

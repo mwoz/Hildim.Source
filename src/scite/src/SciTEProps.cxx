@@ -326,7 +326,7 @@ const char *SciTEBase::GetNextPropItem(
 	char *pPropItem,	///< pointer on a buffer receiving the requested prop item
 	int maxLen)			///< size of the above buffer
 {
-	int size = maxLen - 1;
+	sptr_t size = maxLen - 1;
 
 	*pPropItem = '\0';
 	if (pStart == NULL) {
@@ -570,8 +570,8 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 		//LineNumberColors(fore, back, sd);
 		win.Send(SCI_STYLESETFORE, style, fore);
 		win.Send(SCI_STYLESETBACK, style, back);
-		int iMrg = win.Call(SCI_GETMARGINS);
-		for (int i = 1; i < iMrg; i++) {
+		sptr_t iMrg = win.Call(SCI_GETMARGINS);
+		for (sptr_t i = 1; i < iMrg; i++) {
 			win.Call(SCI_SETMARGINBACKN, i, back);
 		}
 		bSetClr = false;
@@ -1054,7 +1054,7 @@ void SciTEBase::ReadProperties() {
 	invertColors = props.GetInt("invert.lexer.colors");
 	hideHiddenStyles = props.GetInt("hide.hidden.styles");
 
-	lexLanguage = wEditor.Call(SCI_GETLEXER);
+	lexLanguage = static_cast<int>(wEditor.Call(SCI_GETLEXER));
 
 	wEditor.Call(SCI_SETSTYLEBITS, wEditor.Call(SCI_GETSTYLEBITSNEEDED));
 

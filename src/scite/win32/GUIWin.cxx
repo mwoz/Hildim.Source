@@ -37,7 +37,7 @@ enum { SURROGATE_LEAD_FIRST = 0xD800 };
 enum { SURROGATE_TRAIL_FIRST = 0xDC00 };
 enum { SURROGATE_TRAIL_LAST = 0xDFFF };
 
-static unsigned int UTF8Length(const wchar_t *uptr, size_t tlen) {
+static size_t UTF8Len(const wchar_t *uptr, size_t tlen) {
 	size_t len = 0;
 	for (size_t i = 0; i < tlen && uptr[i];) {
 		unsigned int uch = uptr[i];
@@ -85,7 +85,7 @@ static void UTF8FromUTF16(const wchar_t *uptr, size_t tlen, char *putf, size_t l
 	putf[len] = '\0';
 }
 
-static size_t UTF16Length(const char *s, unsigned int len) {
+static size_t UTF16Length(const char *s, size_t len) {
 	size_t ulen = 0;
 	size_t charLen;
 	for (size_t i=0; i<len;) {
@@ -159,7 +159,7 @@ std::string UTF8FromString(const gui_string &s) {
 	//return conv.to_bytes(s);
 
 	size_t sLen = s.size();
-	size_t narrowLen = UTF8Length(s.c_str(), sLen);
+	size_t narrowLen = UTF8Len(s.c_str(), sLen);
 	std::vector<char> vc(narrowLen + 1);
 	UTF8FromUTF16(s.c_str(), sLen, &vc[0], narrowLen);
 	return std::string(&vc[0], narrowLen);
@@ -215,7 +215,8 @@ std::string UTF8ToLower(const std::string &str) {
 // from ScintillaWin.cxx
 unsigned int CodePageFromCharSet(unsigned long characterSet, unsigned int documentCodePage) {
 	CHARSETINFO ci = { 0, 0, { { 0, 0, 0, 0 }, { 0, 0 } } };
-	BOOL bci = ::TranslateCharsetInfo((DWORD*)characterSet,
+	intptr_t cs = characterSet;
+	BOOL bci = ::TranslateCharsetInfo(reinterpret_cast<DWORD*>(cs),
 	                                  &ci, TCI_SRCCHARSET);
 
 	UINT cp;
@@ -238,9 +239,10 @@ std::string ConvertFromUTF8(const std::string &s, int codePage){
 		return s;
 	} else {
 		GUI::gui_string sWide = GUI::StringFromUTF8(s.c_str());
-		int cchMulti = ::WideCharToMultiByte(codePage, 0, sWide.c_str(), sWide.length(), NULL, 0, NULL, NULL);
+		int sz = static_cast<int>(sWide.length());
+		int cchMulti = ::WideCharToMultiByte(codePage, 0, sWide.c_str(), sz, NULL, 0, NULL, NULL);
 		char *pszMulti = new char[cchMulti + 1];
-		::WideCharToMultiByte(codePage, 0, sWide.c_str(), sWide.length(), pszMulti, cchMulti + 1, NULL, NULL);
+		::WideCharToMultiByte(codePage, 0, sWide.c_str(), sz, pszMulti, cchMulti + 1, NULL, NULL);
 		pszMulti[cchMulti] = 0;
 		std::string ret(pszMulti);
 		delete []pszMulti;

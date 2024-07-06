@@ -85,7 +85,7 @@ public:
 
 	static int FindFunctionByConstantId(int id);
 
-	static int GetConstantName(int value, char *nameOut, unsigned nameBufferLen);
+	static size_t GetConstantName(int value, char *nameOut, unsigned nameBufferLen);
 	static int GetConstantValue(int idx){ return constants[idx].value; };
 };
 

@@ -94,7 +94,7 @@ int IFaceTable::FindProperty(const char *name) {
 	return -1;
 }
 
-int IFaceTable::GetConstantName(int value, char *nameOut, unsigned nameBufferLen) {
+size_t IFaceTable::GetConstantName(int value, char *nameOut, unsigned nameBufferLen) {
 	if (nameOut && nameBufferLen > 0) {
 		*nameOut = '\0';
 	}

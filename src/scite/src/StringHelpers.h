@@ -10,8 +10,8 @@ bool EndsWith(GUI::gui_string const &s, GUI::gui_string const &end);
 int Substitute(GUI::gui_string &s, const GUI::gui_string &sFind, const GUI::gui_string &sReplace);
 
 char *Slash(const char *s, bool quoteQuotes);
-unsigned int UnSlash(char *s);
-unsigned int UnSlashLowOctal(char *s);
+size_t UnSlash(char *s);
+size_t UnSlashLowOctal(char *s);
 
 class ILocalize {
 public:

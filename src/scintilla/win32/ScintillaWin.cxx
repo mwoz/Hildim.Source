@@ -512,7 +512,7 @@ class ScintillaWin :
 	void ChangeScrollPos(int barType, Sci::Position pos);
 	sptr_t GetTextLength();
 	sptr_t GetText(uptr_t wParam, sptr_t lParam);
-	void InsertMultiPasteText(const char *text, int len); //!-add-[InsertMultiPasteText] 
+	void InsertMultiPasteText(const char *text, size_t len); 
 	 
 	Window::Cursor ContextCursor(Point pt);
 	sptr_t ShowContextMenu(unsigned int iMessage, uptr_t wParam, sptr_t lParam);
@@ -2779,7 +2779,7 @@ bool SupportedFormat(const FORMATETC *pFE) noexcept {
 
 
 //!-start-[InsertMultiPasteText]
-void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
+void ScintillaWin::InsertMultiPasteText(const char *text, size_t len) {
 	std::string	convertedText;
 	if (convertPastes) {
 		// Convert line endings of the paste into our local line-endings mode
@@ -2791,7 +2791,7 @@ void ScintillaWin::InsertMultiPasteText(const char *text, int len) {
 	for (size_t r=0; r<sel.Count(); r++) {
 		if (!RangeContainsProtected(sel.Range(r).Start().Position(),
 			sel.Range(r).End().Position())) {
-			int positionInsert = sel.Range(r).Start().Position();
+			Position positionInsert = sel.Range(r).Start().Position();
 			if (!sel.Range(r).Empty()) {
 				if (sel.Range(r).Length()) {
 					pdoc->DeleteChars(positionInsert, sel.Range(r).Length());

@@ -482,7 +482,7 @@ FilePath SciTEWin::GetSciteUserHome() {
 // Help command lines contain topic!path
 void SciTEWin::ExecuteOtherHelp(const char *cmd) {
 	GUI::gui_string s = GUI::StringFromUTF8(cmd);
-	unsigned int pos = s.find_first_of('!');
+	size_t pos = s.find_first_of('!');
 	if (pos != GUI::gui_string::npos) {
 		GUI::gui_string topic = s.substr(0, pos);
 		GUI::gui_string path = s.substr(pos+1);
@@ -518,7 +518,7 @@ void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 			switch (hh_cmd){
 			case 0x000d:
 			{
-				unsigned int pos = s.find_first_of('!');
+				size_t pos = s.find_first_of('!');
 				if (pos != GUI::gui_string::npos) {
 					GUI::gui_string topic = s.substr(0, pos);
 					GUI::gui_string path = s.substr(pos + 1);
@@ -730,7 +730,7 @@ HWND SciTEWin::MainHWND() {
 }
 
 void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
-	int cmdID = ControlIDOfCommand(wParam);
+	int cmdID = ControlIDOfCommand(static_cast<unsigned long>(wParam));
 	if (wParam & 0x10000) {
 		// From accelerator -> goes to focused pane.
 		menuSource = 0;
@@ -804,9 +804,10 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 }
 
 void SciTEWin::OutputAppendEncodedStringSynchronised(GUI::gui_string s, int codePage) {
-	int cchMulti = ::WideCharToMultiByte(codePage, 0, s.c_str(), s.size(), NULL, 0, NULL, NULL);
+	int sz = static_cast<int>(s.size());
+	int cchMulti = ::WideCharToMultiByte(codePage, 0, s.c_str(), sz, NULL, 0, NULL, NULL);
 	char *pszMulti = new char[cchMulti + 1];
-	::WideCharToMultiByte(codePage, 0, s.c_str(), s.size(), pszMulti, cchMulti + 1, NULL, NULL);
+	::WideCharToMultiByte(codePage, 0, s.c_str(), sz, pszMulti, cchMulti + 1, NULL, NULL);
 	pszMulti[cchMulti] = 0;
 	OutputAppendStringSynchronised(pszMulti);
 	delete []pszMulti;
@@ -894,7 +895,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 		return exitcode;
 	}
 
-	UINT codePage = wOutput.Send(SCI_GETCODEPAGE);
+	UINT codePage = static_cast<UINT>(wOutput.Send(SCI_GETCODEPAGE));
 	if (codePage != SC_CP_UTF8) {
 //!		codePage = CodePageFromCharSet(characterSet, codePage);
 		codePage = GUI::CodePageFromCharSet(characterSet, codePage); //!-change-[FixEncoding]
@@ -1033,7 +1034,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 				// with reads, so that our hRead buffer will not be overrun with results.
 
 				size_t bytesToWrite;
-				int eol_pos = jobToRun.input.search("\n", writingPosition);
+				intptr_t eol_pos = jobToRun.input.search("\n", writingPosition);
 				if (eol_pos == -1) {
 					bytesToWrite = totalBytesToWrite - writingPosition;
 				} else {
@@ -1047,7 +1048,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 
 				int bTest = ::WriteFile(hWriteSubProcess,
 					    const_cast<char *>(jobToRun.input.c_str() + writingPosition),
-					    bytesToWrite, &bytesWrote, NULL);
+					static_cast<DWORD>(bytesToWrite), &bytesWrote, NULL);
 
 				if (bTest) {
 					if ((writingPosition + bytesToWrite) / 1024 > writingPosition / 1024) {
@@ -1157,7 +1158,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 				doRepSel = (0 == exitcode);
 
 			if (doRepSel) {
-				int cpMin = wEditor.Send(SCI_GETSELECTIONSTART, 0, 0);
+				Sci_Position cpMin = wEditor.Send(SCI_GETSELECTIONSTART, 0, 0);
 				wEditor.Send(SCI_REPLACESEL,0,(sptr_t)(repSelBuf.c_str()));
 				wEditor.Send(SCI_SETSEL, cpMin, cpMin+repSelBuf.length());
 			}
@@ -1189,7 +1190,7 @@ void SciTEWin::ProcessExecute() {
 	DWORD exitcode = 0;
 	if (scrollOutput)
 		wOutput.Send(SCI_GOTOPOS, wOutput.Send(SCI_GETTEXTLENGTH));
-	int originalEnd = wOutput.Send(SCI_GETCURRENTPOS);
+	Sci_Position originalEnd = wOutput.Send(SCI_GETCURRENTPOS);
 	bool seenOutput = false;
 
 	JobSubsystem initJobType = jobQueue.jobQueue[0].jobType;
@@ -1242,7 +1243,7 @@ void SciTEWin::ShellExec(const SString &cmd, const char *dir) {
 	if (s == NULL)
 		s = strstr(mycmdcopy, ".com");
 	if ((s != NULL) && ((*(s + 4) == '\0') || (*(s + 4) == ' '))) {
-		int len_mycmd = s - mycmdcopy + 4;
+		size_t len_mycmd = s - mycmdcopy + 4;
 		delete []mycmdcopy;
 		mycmdcopy = StringDup(cmd.c_str());
 		mycmd = mycmdcopy;
@@ -1655,7 +1656,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 
 		static bool sPrevIsDeadKey = false;
 
-		bool bIsDeadKey = ::MapVirtualKeyA( wParam, 2 ) & 0x80008000;
+		bool bIsDeadKey = ::MapVirtualKeyA(static_cast<UINT>(wParam), 2 ) & 0x80008000;
 		if ( bIsDeadKey ) {
 			sPrevIsDeadKey == true ? sPrevIsDeadKey = false : sPrevIsDeadKey = true;
 		}
@@ -1666,10 +1667,9 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 					uFlags = 0;
 				}
 
-				unsigned char masKS[256] = { 0 };
-				::GetKeyboardState( masKS );
+				unsigned char masKS[256] = { 0 }; 
 
- 				if ( ::ToAscii( wParam, ::MapVirtualKeyA( wParam, 0 ), masKS, (LPWORD)ch, uFlags ) != 1 ) {
+ 				if (::GetKeyboardState(masKS) && ::ToAscii(static_cast<UINT>(wParam), ::MapVirtualKeyA(static_cast<UINT>(wParam), 0 ), masKS, (LPWORD)ch, uFlags ) != 1 ) {
  					ch[0] = 0;
 				}
  			}
@@ -1697,16 +1697,16 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	if (wOutput.Call(SCI_GETFOCUS)) w = &wOutput;
 	else if (wFindRes.Call(SCI_GETFOCUS)) w = &wFindRes;
 	if ((WPARAM)w->GetID() != wParam) return 0;		//ћы можем сюда попасть, когда закрываетс€ без выбора другое меню иуп - отсекаем этот вариант
-	GUI::Point pt = PointFromLong(lParam);
+	GUI::Point pt = PointFromLong(static_cast<long>(lParam));
 	if ((pt.x == -1) && (pt.y == -1)) {
 		// Caused by keyboard so display menu near caret
 		if (wOutput.HasFocus())
 			w = &wOutput;
 		else if (wFindRes.HasFocus())
 			w = &wFindRes;
-		int position = w->Call(SCI_GETCURRENTPOS);
-		pt.x = w->Call(SCI_POINTXFROMPOSITION, 0, position);
-		pt.y = w->Call(SCI_POINTYFROMPOSITION, 0, position) + w->Call(SCI_TEXTHEIGHT, w->Call(SCI_LINEFROMPOSITION,position));
+		Sci_Position position = w->Call(SCI_GETCURRENTPOS);
+		pt.x = static_cast<int>(w->Call(SCI_POINTXFROMPOSITION, 0, position));
+		pt.y = static_cast<int>(w->Call(SCI_POINTYFROMPOSITION, 0, position) + w->Call(SCI_TEXTHEIGHT, w->Call(SCI_LINEFROMPOSITION,position)));
 		POINT spt = {pt.x, pt.y};
 		::ClientToScreen(static_cast<HWND>(w->GetID()), &spt);
 		pt = GUI::Point(spt.x, spt.y);
@@ -1749,12 +1749,12 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_NCACTIVATE:
 		{
 			if (IsWindowVisible(MainHWND()))
-				layout.OnNcPaint(MainHWND(), wParam);
+				layout.OnNcPaint(MainHWND(), wParam != 0);
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
 		case WM_NCMOUSEMOVE:
 			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) {
-				layout.OnNcMouseMove(MainHWND(), wParam);
+				layout.OnNcMouseMove(MainHWND(), static_cast<int>(wParam));
 				return 0;
 			}
 			layout.OnNcMouseMove(MainHWND(), 0);
@@ -1765,7 +1765,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			//return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 		case WM_NCLBUTTONDOWN:
 			if ((wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
-				return layout.OnNcLMouseDown(MainHWND(), wParam);
+				return layout.OnNcLMouseDown(MainHWND(), static_cast<int>(wParam));
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			break;
 		case SCITE_NEEDNCPAINT:
@@ -1798,7 +1798,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		break;
 		case WM_NCLBUTTONUP:
 			if ((wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
-				return layout.OnNcLMouseUp(MainHWND(), wParam);
+				return layout.OnNcLMouseUp(MainHWND(), static_cast<int>(wParam));
 
 			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
 			break;
@@ -1845,7 +1845,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			{
 				char key[2];
 				key[1] = 0;
-				key[0] = LOWORD(wParam);
+				key[0] = static_cast<char>(LOWORD(wParam));
 				return extender->OnMenuChar(wp & 0xff, key);
 			}
 			break;
@@ -1888,7 +1888,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			//закончилс€ консольный поток - выполним скрипт в луа
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTEXIT, lParam, wParam);
 		case SCI_POSTCALBACK:
-			return (LRESULT)extender->OnPostCallback(wParam);
+			return (LRESULT)extender->OnPostCallback(static_cast<int>(wParam));
 		case SCI_FINDPROGRESS:
 			return (LRESULT)extender->OnFindProgress(wParam, lParam);
 		case SCI_POSTPONECHECKRELOAD:
@@ -2266,7 +2266,7 @@ LRESULT PASCAL BaseWin::StWndProc(
 SString SciTEWin::EncodeString(const SString &s) {
 	//::MessageBox(GetFocus(),SString(s).c_str(),"EncodeString:in",0);
 
-	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
+	UINT codePage = static_cast<UINT>(wEditor.Call(SCI_GETCODEPAGE));
 
 	if (codePage != SC_CP_UTF8) {
 		codePage = GUI::CodePageFromCharSet(characterSet, codePage); 
@@ -2280,7 +2280,7 @@ SString SciTEWin::EncodeString(const SString &s) {
 SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd) {
 	SString s = SciTEBase::GetRangeInUIEncoding(win, selStart, selEnd);
 
-	UINT codePage = wEditor.Call(SCI_GETCODEPAGE);
+	UINT codePage = static_cast<UINT>(wEditor.Call(SCI_GETCODEPAGE));
 
 	if (codePage != SC_CP_UTF8) {
 		codePage = GUI::CodePageFromCharSet(characterSet, codePage);
@@ -2387,10 +2387,10 @@ BRK:
 			&si, &pi);
 
 	}
-	return msg.wParam;
+	return static_cast<int>(msg.wParam);
 }
 
-int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 	typedef BOOL (WINAPI *SetDllDirectorySig)(LPCTSTR lpPathName);
 	SetDllDirectorySig SetDllDirectoryFn = (SetDllDirectorySig)::GetProcAddress(
@@ -2399,7 +2399,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 		// For security, remove current directory from the DLL search path
 		SetDllDirectoryFn(TEXT(""));
 	}
-
+	 
 	LuaExtension multiExtender;
 	Extension *extender = &multiExtender;
 
@@ -2501,7 +2501,7 @@ LRESULT SciTEWin::NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
 		case WM_MBUTTONDBLCLK:
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
-			if(extender->OnMacroBlocked(pMessage->message, (int)pMessage - wParam, (int)pMessage->lParam))
+			if(extender->OnMacroBlocked(pMessage->message, reinterpret_cast<intptr_t>(pMessage) - wParam, static_cast<intptr_t>(pMessage->lParam)))
 				pMessage->message = 0;
 			break;
 		}

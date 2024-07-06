@@ -581,9 +581,9 @@ void SciTEWin::Print(
 		return;
 	}
 
-	LONG lengthDoc = wEditor.Call(SCI_GETLENGTH);
-	LONG lengthDocMax = lengthDoc;
-	LONG lengthPrinted = 0;
+	Sci_Position lengthDoc = wEditor.Call(SCI_GETLENGTH);
+	Sci_Position lengthDocMax = lengthDoc;
+	Sci_Position lengthPrinted = 0;
 
 	// Requested to print selection
 	if (pdlg.Flags & PD_SELECTION) {
@@ -659,8 +659,8 @@ void SciTEWin::Print(
 			}
 		}
 
-		frPrint.chrg.cpMin = lengthPrinted;
-		frPrint.chrg.cpMax = lengthDoc;
+		frPrint.chrg.cpMin = static_cast<int>(lengthPrinted);
+		frPrint.chrg.cpMax = static_cast<int>(lengthDoc);
 
 		lengthPrinted = wEditor.Call(SCI_FORMATRANGE,
 		                           printPage,

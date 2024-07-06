@@ -134,7 +134,7 @@ unsigned int UTF32Character(const char *utf8) noexcept {
 
 // extract the next RTF control word from *style
 void GetRTFNextControl(char **style, char *control) {
-	int len;
+	size_t len;
 	char *pos = *style;
 	*control = '\0';
 	if ('\0' == *pos) return;
@@ -201,10 +201,10 @@ static size_t FindCaseInsensitive(const std::vector<std::string> &values, const 
 	return values.size();
 }
 
-void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
-	const int lengthDoc = LengthDocument();
+void SciTEBase::SaveToStreamRTF(std::ostream &os, Sci_Position start, Sci_Position end) {
+	const Sci_Position lengthDoc = LengthDocument();
 	if (end < 0)
-		end = lengthDoc;
+		end = lengthDoc; 
 	//RemoveFindMarks();
 	wEditor.Call(SCI_COLOURISE, 0, -1);
 
@@ -319,15 +319,15 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 	std::ostringstream osStyleDefault;
 	osStyleDefault << RTF_SETFONTFACE "0" RTF_SETFONTSIZE << defaultStyle.size <<
 		RTF_SETCOLOR "0" RTF_SETBACKGROUND "1"
-		RTF_BOLD_OFF RTF_ITALIC_OFF;
+		RTF_BOLD_OFF RTF_ITALIC_OFF; 
 	std::string lastStyle = osStyleDefault.str();
 	bool prevCR = false;
 	int styleCurrent = -1;
-	TextReader acc(wEditor);
+	TextReader acc(wEditor); 
 	int column = 0;
-	for (int iPos = start; iPos < end; iPos++) {
+	for (Sci_Position iPos = start; iPos < end; iPos++) {
 		const char ch = acc[iPos];
-		const UCHAR style = acc.StyleAt(iPos);
+		const UCHAR style = acc.StyleAt(iPos); 
 
 		if (style != styleCurrent) {
 			const std::string deltaStyle = GetRTFStyleChange(lastStyle.c_str(), styles[style].c_str());
@@ -361,7 +361,7 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, int start, int end) {
 			os << RTF_EOLN;
 			column = -1;
 		} else if (isUTF8 && !IsASCII(ch)) {
-			const int nextPosition = wEditor.Call(SCI_POSITIONAFTER, iPos);
+			const Sci_Position nextPosition = wEditor.Call(SCI_POSITIONAFTER, iPos);
 			wEditor.Call(SCI_SETTARGETSTART, iPos);
 			wEditor.Call(SCI_SETTARGETEND, nextPosition);
 			char u8Char[5] = "";
@@ -413,7 +413,7 @@ void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
 		tabSize = 4;
-	const int lengthDoc = end == -1 ? LengthDocument() : end;
+	const Sci_Position lengthDoc = end == -1 ? LengthDocument() : end;
 	TextReader acc(wEditor);
 	constexpr int StyleLastPredefined = STYLE_LASTPREDEFINED;
 
@@ -567,7 +567,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	const int onlyStylesUsed = end == -1 ? props.GetInt("export.html.styleused", 0) : 1;
 	const int titleFullPath = props.GetInt("export.html.title.fullpath", 0);
 
-	const int lengthDoc = end == -1 ? LengthDocument() : end;
+	const Sci_Position lengthDoc = end == -1 ? LengthDocument() : end;
 	TextReader acc(wEditor);
 
 	constexpr int StyleLastPredefined = STYLE_LASTPREDEFINED;
@@ -708,8 +708,8 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	if (end != -1)
 		os << "<!--StartFragment-->\n";
 
-	int line = acc.GetLine(start);
-	int level = (acc.LevelAt(line) & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
+	Sci_Position line = acc.GetLine(start);
+	Sci_Position level = (acc.LevelAt(line) & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE;
 	UCHAR styleCurrent = acc.StyleAt(start);
 	bool inStyleSpan = false;
 	bool inFoldSpan = false;
@@ -1002,7 +1002,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 			delete []offsetList;
 		}
 		void write(const char *objectData) {
-			unsigned int length = strlen(objectData);
+			size_t length = strlen(objectData);
 			// note binary write used, open with "wb"
 			fwrite(objectData, sizeof(char), length, fp);
 		}
@@ -1392,7 +1392,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	pr.startPDF();
 
 	// do here all the writing
-	int lengthDoc = LengthDocument();
+	Sci_Position lengthDoc = LengthDocument();
 	TextReader acc(wEditor);
 
 	if (!lengthDoc) {	// enable zero length docs
@@ -1491,7 +1491,7 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 		tabSize = 4;
 
 	char key[200];
-	int lengthDoc = LengthDocument();
+	Sci_Position lengthDoc = LengthDocument();
 	TextReader acc(wEditor);
 	bool styleIsUsed[STYLE_MAX + 1];
 
@@ -1645,7 +1645,7 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 		tabSize = 4;
 	}
 
-	int lengthDoc = LengthDocument();
+	Sci_Position lengthDoc = LengthDocument();
 
 	TextReader acc(wEditor);
 

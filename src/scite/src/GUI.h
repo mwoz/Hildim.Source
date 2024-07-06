@@ -169,7 +169,7 @@ public:
 //!	sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0) {
 	virtual sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0) {//!-chage-[OnSendEditor]
 		sptr_t retVal = fn(ptr, msg, wParam, lParam);
-		sptr_t status = fn(ptr, SCI_GETSTATUS, 0, 0);
+		int status = static_cast<int>(fn(ptr, SCI_GETSTATUS, 0, 0));
 		if (status > 0)
 			throw ScintillaFailure(status);
 		return retVal;

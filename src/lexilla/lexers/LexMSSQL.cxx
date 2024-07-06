@@ -99,8 +99,8 @@ class LexerMSSQL : public DefaultLexer {
 	class StyleContextEx : public StyleContext
 	{
 	public:
-		StyleContextEx(unsigned int startPos,
-			unsigned int length,
+		StyleContextEx(Sci_PositionU startPos,
+			Sci_PositionU length,
 			int initStyle,
 			LexAccessor &styler_, char chMask)
 			: StyleContext(startPos, length, initStyle, styler_, chMask)

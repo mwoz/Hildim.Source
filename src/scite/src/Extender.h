@@ -18,10 +18,10 @@ public:
 	}
 	enum Pane { paneEditor = 1, paneCoEditor = 2, paneOutput = 3, paneFindRes = 4 };
 	virtual sptr_t Send(Pane p, unsigned int msg, uptr_t wParam=0, sptr_t lParam=0)=0;
-	virtual char *Range(Pane p, int start, int end)=0;
-	virtual char *Line(Pane p, int line, int bNeedEnd)=0;
-	virtual void Remove(Pane p, int start, int end)=0;
-	virtual void Insert(Pane p, int pos, const char *s)=0;
+	virtual char *Range(Pane p, Sci_Position start, Sci_Position end)=0;
+	virtual char *Line(Pane p, Sci_Position line, int bNeedEnd)=0;
+	virtual void Remove(Pane p, Sci_Position start, Sci_Position end)=0;
+	virtual void Insert(Pane p, Sci_Position pos, const char *s)=0;
 	virtual void Trace(const char *s)=0;
 	virtual char *Property(const char *key)=0;
 	virtual void SetProperty(const char *key, const char *val)=0;
@@ -105,7 +105,7 @@ public:
 	virtual bool OnExecute(const char *) { return false; }
 	virtual bool OnSavePointReached() { return false; }
 	virtual bool OnSavePointLeft() { return false; }
-	virtual bool OnStyle(unsigned int, int, int, StyleWriter *) {
+	virtual bool OnStyle(Sci_Position, Sci_Position, int, StyleWriter *) {
 		return false;
 	}
 //!	virtual bool OnDoubleClick() { return false; }
@@ -117,25 +117,25 @@ public:
 	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag) { return false; }
 	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id) { return false; }
-	virtual bool OnMacro(const char *, unsigned int, unsigned int, const char *) { return false; }
-	virtual bool OnUserListSelection(int, const char *,int, int) { return false; } //!-change-[UserListItemID]
+	virtual bool OnMacro(const char *, uptr_t, sptr_t, const char *) { return false; }
+	virtual bool OnUserListSelection(int, const char *, Sci_Position, int) { return false; } //!-change-[UserListItemID]
 	virtual bool OnNavigation(const char *item) { return false; }
 	virtual bool OnMenuCommand(int, int) { return false; } //!-add-[OnMenuCommand]
-	virtual const char *OnSendEditor(unsigned int, unsigned int, const char *) { return 0; } //!-add-[OnSendEditor]
-	virtual const char *OnSendEditor(unsigned int, unsigned int, long) { return 0; } //!-add-[OnSendEditor]
+	virtual const char *OnSendEditor(unsigned int, uptr_t, const char *) { return 0; } //!-add-[OnSendEditor]
+	virtual const char *OnSendEditor(unsigned int, uptr_t, sptr_t) { return 0; } //!-add-[OnSendEditor]
 	virtual bool OnLindaNotify(const char*, const char*) { return false; }
-	virtual bool OnCallTipClick(int pos) { return false; }
+	virtual bool OnCallTipClick(Sci_Position pos) { return false; }
 
 	virtual bool SendProperty(const char *) { return false; }
 
 //!	virtual bool OnKey(int, int) { return false; }
 	virtual bool OnKey(int, int, char) { return false; } //!-change-[OnKey]
 
-	virtual bool OnDwellStart(int, const char *, bool) { return false; }
+	virtual bool OnDwellStart(Sci_Position, const char *, bool) { return false; }
 	virtual bool OnClose(const char *) { return false; }
-	virtual bool OnColorized(unsigned int, unsigned int) { return false; }
+	virtual bool OnColorized(Sci_Position, Sci_Position) { return false; }
 	virtual const char *OnContextMenu(unsigned int msg, unsigned int wp, const char *lp){ return 0; }
-	virtual bool OnFindProgress(int state, int all){ return false; }
+	virtual bool OnFindProgress(uptr_t state, sptr_t all){ return false; }
 	virtual bool OnPostCallback(int idx){ return false; }
 	virtual bool OnIdle(){ return false; }
 	virtual bool OnLayOutNotify(const char *){ return false; }
@@ -143,14 +143,14 @@ public:
 	virtual void DoReboot(){ return; };
 	virtual void DoLua(const char * c){ return; };
 	virtual void OnMouseHook(int x, int y){ return; };
-	virtual bool OnMacroBlocked(int msg, int wParam, int lParam){ return false; };
-	virtual unsigned long  OnMenuChar(int flag, const char* key) { return 0; };
+	virtual bool OnMacroBlocked(int msg, intptr_t wParam, intptr_t lParam){ return false; };
+	virtual sptr_t  OnMenuChar(int flag, const char* key) { return 0; };
 	virtual bool OnDrawClipboard(int) { return false; }
 	virtual void OnRightEditorVisibility(bool) {}
-	virtual void OnTextChanged(int position, int leg, int linesAdded, int flag) { return; };
-	virtual void BeforeTextChanged(int position, int leg, const char * t, int type) { return; };
-	virtual void OnCurrentLineFold(int line, int leg, int foldLevelPrev, int foldLevelNow) { return; };
-	virtual bool OnAutocSelection(int method, int firstPos) { return false; };
+	virtual void OnTextChanged(Sci_Position position, int leg, Sci_Position linesAdded, int flag) { return; };
+	virtual void BeforeTextChanged(Sci_Position position, int leg, const char * t, int type) { return; };
+	virtual void OnCurrentLineFold(Sci_Position line, int leg, int foldLevelPrev, int foldLevelNow) { return; };
+	virtual bool OnAutocSelection(int method, Sci_Position firstPos) { return false; };
 	virtual void OnCommandLine(const char* line) { };
 	virtual void OnChangeFocus(int, int) {};
 	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) { return 0; }

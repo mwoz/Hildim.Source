@@ -88,18 +88,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <TargetName>luasql_$(ProjectName)</TargetName>
+    <IntDir>$(Configuration)\odbc\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\tools\LuaLib\</OutDir>
     <TargetName>luasql_$(ProjectName)</TargetName>
+    <IntDir>$(Configuration)\odbc\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\</OutDir>
     <TargetName>luasql_$(ProjectName)</TargetName>
+    <IntDir>$(Platform)\$(Configuration)\odbc\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>luasql_$(ProjectName)</TargetName>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\odbc\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

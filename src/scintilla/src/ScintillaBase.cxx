@@ -894,7 +894,7 @@ sptr_t ScintillaBase::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		break;
 
 	case Message::AutoCSetChooseSingle:
-		ac.chooseSingle = wParam;
+		ac.chooseSingle = static_cast<int>(wParam);
 		break;
 
 	case Message::AutoCGetChooseSingle:

@@ -228,7 +228,7 @@ size_t Utf8_16_Write::fwrite(const void* p, size_t _size) {
 			WcharMbcsConvertor* wmc = WcharMbcsConvertor::getInstance();
 			int newDataLen = 0;
 			int incompleteMultibyteChar = 0;
-			char *newData = wmc->encode(0, _encoding, (char*)p, _size, &newDataLen, &incompleteMultibyteChar);
+			char *newData = wmc->encode(0, _encoding, (char*)p, static_cast<int>(_size), &newDataLen, &incompleteMultibyteChar);
 			_size -= incompleteMultibyteChar;
 			return ::fwrite(newData, _size, 1, m_pFile);
 		} else {

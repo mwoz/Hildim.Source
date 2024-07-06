@@ -294,7 +294,7 @@ const char *StringList::GetNearestWord(const char *wordStart, int searchLen, boo
  * there may be extra spaces after the identifier that should not be
  * counted in the length.
  */
-static unsigned int LengthWord(const char *word, char otherSeparator) {
+static size_t LengthWord(const char *word, char otherSeparator) {
 	const char *endWord = 0;
 	// Find an otherSeparator
 	if (otherSeparator)
@@ -329,11 +329,11 @@ static unsigned int LengthWord(const char *word, char otherSeparator) {
  */
 char *StringList::GetNearestWords(
     const char *wordStart,
-    int searchLen,
+	size_t searchLen,
     bool ignoreCase /*= false*/,
     char otherSeparator /*= '\0'*/,
     bool exactLen /*=false*/) {
-	unsigned int wordlen; // length of the word part (before the '(' brace) of the api array element
+	size_t wordlen; // length of the word part (before the '(' brace) of the api array element
 	SString wordsNear;
 	wordsNear.setsizegrowth(1000);
 	int start = 0; // lower bound of the api array block to search

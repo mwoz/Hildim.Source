@@ -222,6 +222,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(SolutionDir)../CommonLib/Common_CPP/libxml2/lib/Release_v140;$(SolutionDir)..\CommonLib\Common_CPP\ZLIB\Lib\$(Configuration)\;$(LibraryPath)</LibraryPath>
     <IncludePath>$(SolutionDir)..\CommonLib\Common_CPP\libxml2\include;$(SolutionDir)..\CommonLib\Common_CPP\libxml2\include\win-iconv;$(SolutionDir)..\CommonLib\Common_CPP\libxslt\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\LuaLib\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Midl>
@@ -243,10 +244,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Release/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Release/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -287,10 +288,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Release/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Release/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -329,10 +330,10 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Debug/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Debug/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -372,10 +373,10 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Debug/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Debug/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -415,10 +416,10 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Debug/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Debug/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -457,10 +458,10 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Debug/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Debug/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Debug/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -501,10 +502,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Release/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Release/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>
@@ -542,10 +543,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>.\..\..\Obj\RadiusServer_Dlg_Release/mplua.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\..\..\Obj\RadiusServer_Dlg_Release/</AssemblerListingLocation>
-      <ObjectFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ObjectFileName>
-      <ProgramDataBaseFileName>.\..\..\Obj\RadiusServer_Dlg_Release/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </ClCompile>

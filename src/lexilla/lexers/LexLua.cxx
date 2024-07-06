@@ -207,7 +207,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 		initStyle = SCE_LUA_DEFAULT;
 	}
 
-	unsigned int objectPartEndPos = 0;
+	Sci_PositionU objectPartEndPos = 0;
 	bool isObject = false;
 	bool isObjectStart = false;
 	bool isSubObject = false;
@@ -215,20 +215,20 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 	class StyleContextEx : public StyleContext
 	{
 	public:
-		StyleContextEx( unsigned int startPos,
-						unsigned int length,
-						int initStyle,
-						LexAccessor &styler_ )
+		StyleContextEx(Sci_PositionU startPos,
+			Sci_PositionU length,
+			int initStyle,
+			LexAccessor &styler_ )
 		: StyleContext( startPos, length, initStyle, styler_)
 		, endPosEx( startPos + length )
 		, stylerEx( styler_ )
 		{
 		}
-		void ShiftChangeState(unsigned int pos, int _state) {
+		void ShiftChangeState(Sci_PositionU pos, int _state) {
 			stylerEx.ColourTo(pos, state);
 			ChangeState(_state);
 		}
-		void MoveTo(unsigned int pos) {
+		void MoveTo(Sci_PositionU pos) {
 			if (pos < endPosEx) {
 				pos--;
 				currentPos = pos;
@@ -261,7 +261,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 			}
 		}
 	private:
-		unsigned int endPosEx;
+		Sci_PositionU endPosEx;
 		LexAccessor &stylerEx;
 	};
 	StyleContextEx sc(startPos, length, initStyle, styler);
@@ -431,8 +431,6 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 						continue;
 					}
 					else if (isObject) {
-						int currPos = sc.currentPos;						
-	//					sc.MoveTo(objectPartEndPos); && sc.currentPos <= objectPartEndPos
 						if ((isObjectStart && strlen(s) > sc.currentPos - objectPartEndPos) ||
 							strlen(s) == sc.currentPos - objectPartEndPos) {
 							char* s2 = s + strlen(s) - sc.currentPos + objectPartEndPos;

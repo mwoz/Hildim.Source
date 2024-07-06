@@ -15,8 +15,8 @@ bool TextReader::InternalIsLeadByte(char ch) const {
 	return GUI::IsDBCSLeadByte(codePage, ch);
 }
 
-void TextReader::Fill(int position) {
-	if (lenDoc == -1)
+void TextReader::Fill(Sci_Position position) { 
+	if (lenDoc == -1) 
 		lenDoc = sw.Send(SCI_GETTEXTLENGTH, 0, 0);
 	startPos = position - slopSize;
 	if (startPos + bufferSize > lenDoc)
@@ -27,7 +27,7 @@ void TextReader::Fill(int position) {
 	if (endPos > lenDoc)
 		endPos = lenDoc;
 
-	Sci_TextRange tr = {{startPos, endPos}, buf};
+	Sci_TextRange tr = {{static_cast<Sci_PositionCR>(startPos), static_cast<Sci_PositionCR>(endPos)}, buf};
 	sw.SendPointer(SCI_GETTEXTRANGE, 0, &tr);
 }
 
@@ -40,55 +40,55 @@ bool TextReader::Match(int pos, const char *s) {
 	return true;
 }
 
-char TextReader::StyleAt(int position) {
+char TextReader::StyleAt(Sci_Position position) {
 	return static_cast<char>(sw.Send(
 		SCI_GETSTYLEAT, position, 0));
 }
 
-int TextReader::GetLine(int position) {
+Sci_Position TextReader::GetLine(Sci_Position position) {
 	return sw.Send(SCI_LINEFROMPOSITION, position, 0);
 }
 
-int TextReader::LineStart(int line) {
+Sci_Position TextReader::LineStart(Sci_Position line) {
 	return sw.Send(SCI_POSITIONFROMLINE, line, 0);
 }
-
-int TextReader::LevelAt(int line) {
-	return sw.Send(SCI_GETFOLDLEVEL, line, 0);
+ 
+int TextReader::LevelAt(Sci_Position line) {
+	return static_cast<int>(sw.Send(SCI_GETFOLDLEVEL, line, 0));
 }
 
-int TextReader::Length() {
+Sci_Position TextReader::Length() {
 	if (lenDoc == -1)
 		lenDoc = sw.Send(SCI_GETTEXTLENGTH, 0, 0);
 	return lenDoc;
 }
 
-int TextReader::GetLineState(int line) {
-	return sw.Send(SCI_GETLINESTATE, line);
+int TextReader::GetLineState(Sci_Position line) {
+	return static_cast<int>(sw.Send(SCI_GETLINESTATE, line));
 }
 
-int StyleWriter::SetLineState(int line, int state) {
-	return sw.Send(SCI_SETLINESTATE, line, state);
+int StyleWriter::SetLineState(Sci_Position line, int state) {
+	return static_cast<int>(sw.Send(SCI_SETLINESTATE, line, state));
 }
 
-void StyleWriter::StartAt(unsigned int start, char chMask) {
+void StyleWriter::StartAt(Sci_Position start, char chMask) {
 	sw.Send(SCI_STARTSTYLING, start, chMask);
 }
 
-void StyleWriter::StartSegment(unsigned int pos) {
-	startSeg = pos;
+void StyleWriter::StartSegment(Sci_Position pos) {
+	startSeg = pos; 
 }
 
-void StyleWriter::ColourTo(unsigned int pos, int chAttr) {
+void StyleWriter::ColourTo(Sci_Position pos, int chAttr) {
 	// Only perform styling if non empty range
-	if (pos != startSeg - 1) {
+	if (pos != startSeg - 1) { 
 		if (validLen + (pos - startSeg + 1) >= bufferSize)
 			Flush();
 		if (validLen + (pos - startSeg + 1) >= bufferSize) {
 			// Too big for buffer so send directly
 			sw.Send(SCI_SETSTYLING, pos - startSeg + 1, chAttr);
 		} else {
-			for (unsigned int i = startSeg; i <= pos; i++) {
+			for (Sci_Position i = startSeg; i <= pos; i++) {
 				styleBuf[validLen++] = static_cast<char>(chAttr);
 			}
 		}
@@ -96,7 +96,7 @@ void StyleWriter::ColourTo(unsigned int pos, int chAttr) {
 	startSeg = pos+1;
 }
 
-void StyleWriter::SetLevel(int line, int level) {
+void StyleWriter::SetLevel(Sci_Position line, int level) {
 	sw.Send(SCI_SETFOLDLEVEL, line, level);
 }
 

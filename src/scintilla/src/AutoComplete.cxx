@@ -239,11 +239,11 @@ void AutoComplete::Move(int delta) {
 
 bool IsAbbr(const char *item, const char *abr)
 {//Проверка, что слово является аббревиатурой
-	int l = strlen(abr);
-	int l2 = strlen(item);
+	size_t l = strlen(abr);
+	size_t l2 = strlen(item);
 	if (l2< l) return false;
-	int i2 = 0;
-	for (int i = 0; i<l; i++)
+	size_t i2 = 0;
+	for (size_t i = 0; i<l; i++)
 	{
 		for (; i2<l2 && (item[i2] > 'Z'|| item[i2] < 'A') && i2>0; i2++);
 		if ((item[i2] != abr[i]) && !(i2 == 0 && item[i2] == abr[i] + 32)) return false;

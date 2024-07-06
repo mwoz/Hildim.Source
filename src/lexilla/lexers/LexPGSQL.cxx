@@ -240,7 +240,7 @@ inline bool HasNotLwr(const char* s) {
 	return true;
 }
 inline bool IsStringTag(const char* s) {
-	int l = strlen(s);
+	size_t l = strlen(s);
 	if (s[l - 1] != '$')
 		return false;
 
@@ -394,7 +394,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				int nextState = SCE_PGSQL_DEFAULT;
 				char s[1000];
 				sc.GetCurrent(s, sizeof(s));
-				int lenW = strlen(s);
+				size_t lenW = strlen(s);
 
 				if (s[0] == '_') {
 					if (s[1] == '_' && HasNotLwr(s)) {

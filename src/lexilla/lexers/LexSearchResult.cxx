@@ -46,7 +46,7 @@ struct SearchResultMarking {
 	long _end;
 };
 
-static inline bool AtEOL(Accessor &styler, unsigned int i) {
+static inline bool AtEOL(Accessor &styler, Sci_PositionU i) {
 	return (styler[i] == '\n') ||
 	       ((styler[i] == '\r') && (styler.SafeGetCharAt(i + 1) != '\n'));
 }
@@ -55,7 +55,7 @@ static const char * const emptyWordListDesc[] = {
 	0
 };
 
-static void ColouriseSearchResultLine(char *lineBuffer, unsigned int lengthLine, unsigned int startLine, unsigned int endPos, Accessor &styler, int)
+static void ColouriseSearchResultLine(char *lineBuffer, Sci_PositionU lengthLine, Sci_PositionU startLine, Sci_PositionU endPos, Accessor &styler, int)
 {
 	// startLine and endPos are the absolute positions.
 
@@ -90,10 +90,10 @@ static void ColouriseSearchResultDoc(Sci_PositionU startPos, Sci_Position length
 	char lineBuffer[SC_SEARCHRESULT_LINEBUFFERMAXLENGTH];
 	styler.StartAt(startPos);
 	styler.StartSegment(startPos);
-	unsigned int linePos = 0;
-	unsigned int startLine = startPos;
+	Sci_PositionU linePos = 0;
+	Sci_PositionU startLine = startPos;
 
-	for (unsigned int i = startPos; i < startPos + length; i++) {
+	for (Sci_PositionU i = startPos; i < startPos + length; i++) {
 		lineBuffer[linePos++] = styler[i];
 		if (AtEOL(styler, i) || (linePos >= sizeof(lineBuffer) - 1)) {
 			// End of line (or of line buffer) met, colourise it
@@ -112,7 +112,7 @@ static void ColouriseSearchResultDoc(Sci_PositionU startPos, Sci_Position length
 static void FoldSearchResultDoc(Sci_PositionU startPos, Sci_Position length, int, WordList *[], Accessor &styler) {
 	bool foldCompact = styler.GetPropertyInt("fold.compact", 1) != 0;
 
-	unsigned int endPos = startPos + length;
+	Sci_PositionU endPos = startPos + length;
 	int visibleChars = 0;
 	int lineCurrent = styler.GetLine(startPos);
 
@@ -121,7 +121,7 @@ static void FoldSearchResultDoc(Sci_PositionU startPos, Sci_Position length, int
 	int headerPoint = 0;
 	int lev;
 
-	for (unsigned int i = startPos; i < endPos; i++) {
+	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler[i+1];
 

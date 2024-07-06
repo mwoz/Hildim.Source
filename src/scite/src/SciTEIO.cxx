@@ -143,7 +143,7 @@ void SciTEBase::CountLineEnds(int &linesCR, int &linesLF, int &linesCRLF) {
 	linesCR = 0;
 	linesLF = 0;
 	linesCRLF = 0;
-	int lengthDoc = LengthDocument();
+	Sci_Position lengthDoc = LengthDocument();
 	char chPrev = ' ';
 	TextReader acc(wEditor);
 	char chNext = acc.SafeGetCharAt(0);
@@ -193,19 +193,19 @@ static SString ExtractLine(const char *buf, size_t length) {
 static const char codingCookie[] = "coding";
 
 static UniMode CookieValue(const SString &s) {
-	int posCoding = s.search(codingCookie);
+	intptr_t posCoding = s.search(codingCookie);
 	if (posCoding >= 0) {
-		posCoding += static_cast<int>(strlen(codingCookie));
+		posCoding += strlen(codingCookie);
 		if ((s[posCoding] == ':') || (s[posCoding] == '=')) {
 			posCoding++;
 			if ((s[posCoding] == '\"') || (s[posCoding] == '\'')) {
 				posCoding++;
 			}
-			while ((posCoding < static_cast<int>(s.length())) &&
+			while ((unsigned(posCoding) < s.length()) &&
 			        (isSpaceChar(s[posCoding]))) {
 				posCoding++;
 			}
-			size_t endCoding = static_cast<size_t>(posCoding);
+			size_t endCoding = unsigned(posCoding);
 			while ((endCoding < s.length()) &&
 			        (isEncodingChar(s[endCoding]))) {
 				endCoding++;
@@ -284,7 +284,7 @@ SString SciTEBase::DiscoverLanguage(const char *buf, size_t length) {
 }
 
 void SciTEBase::DiscoverIndentSetting() {
-	int lengthDoc = LengthDocument();
+	Sci_Position lengthDoc = LengthDocument();
 	TextReader acc(wEditor);
 	bool newline = true;
 	int indent = 0; // current line indentation
@@ -451,7 +451,7 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 		Utf8_16_Read convert(codingCookie == uni8Bit );
 		convert._encoding = filePath._encoding;
 
-		int lenCompare = 0;
+		size_t lenCompare = 0;
 		
 		while (lenFile > 0) {
 			lenFile = convert.convert(data, lenFile);
@@ -635,7 +635,7 @@ void SciTEBase::Activate(bool activeApp) {
 FilePath SciTEBase::SaveName(const char *ext) {
 	GUI::gui_string savePath = filePath.AsInternal();
 	if (ext) {
-		int dot = savePath.length() - 1;
+		size_t dot = savePath.length() - 1;
 		while ((dot >= 0) && (savePath[dot] != '.')) {
 			dot--;
 		}
@@ -716,11 +716,11 @@ int SciTEBase::SaveIfUnsureForBuilt() {
 }
 
 void SciTEBase::StripTrailingSpaces() {
-	int maxLines = wEditor.Call(SCI_GETLINECOUNT);
-	for (int line = 0; line < maxLines; line++) {
-		int lineStart = wEditor.Call(SCI_POSITIONFROMLINE, line);
-		int lineEnd = wEditor.Call(SCI_GETLINEENDPOSITION, line);
-		int i = lineEnd - 1;
+	Sci_Position maxLines = wEditor.Call(SCI_GETLINECOUNT);
+	for (Sci_Position line = 0; line < maxLines; line++) {
+		Sci_Position lineStart = wEditor.Call(SCI_POSITIONFROMLINE, line);
+		Sci_Position lineEnd = wEditor.Call(SCI_GETLINEENDPOSITION, line);
+		Sci_Position i = lineEnd - 1;
 		char ch = static_cast<char>(wEditor.Call(SCI_GETCHARAT, i));
 		while ((i >= lineStart) && ((ch == ' ') || (ch == '\t'))) {
 			i--;
@@ -735,9 +735,9 @@ void SciTEBase::StripTrailingSpaces() {
 }
 
 void SciTEBase::EnsureFinalNewLine() {
-	int maxLines = wEditor.Call(SCI_GETLINECOUNT);
+	Sci_Position maxLines = wEditor.Call(SCI_GETLINECOUNT);
 	bool appendNewLine = maxLines == 1;
-	int endDocument = wEditor.Call(SCI_POSITIONFROMLINE, maxLines);
+	Sci_Position endDocument = wEditor.Call(SCI_POSITIONFROMLINE, maxLines);
 	if (maxLines > 1) {
 		appendNewLine = endDocument > wEditor.Call(SCI_POSITIONFROMLINE, maxLines - 1);
 	}
@@ -790,10 +790,10 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 				convert.setfile(fp);
 				convert._encoding = saveName._encoding;
 				char data[blockSize + 1];
-				int lengthDoc = LengthDocument();
+				Sci_Position lengthDoc = LengthDocument();
 				retVal = true;
-				int grabSize;
-				for (int i = 0; i < lengthDoc; i += grabSize) {
+				Sci_Position grabSize;
+				for (Sci_Position i = 0; i < lengthDoc; i += grabSize) {
 					grabSize = lengthDoc - i;
 					if (grabSize > blockSize)
 						grabSize = blockSize;
@@ -1080,7 +1080,7 @@ public:
 		bf = NULL;
 	}
 	void Encode(char *buf, int i){
-		int l = 0;
+		size_t l = 0;
 		if (!lineNum || encType != Utf8_16::encodingType::eUnknown) {
 			l = convert->convert(buf, i + 1, true);
 			if (!isEncoding && i > 0) {
@@ -1197,7 +1197,7 @@ void SciTEBase::CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_ch
 	FilePathSet files;
 	baseDir.List(directories, files, fileTypes);
 
-	grepOut->iFiles += files.Length();
+	grepOut->iFiles += static_cast<int>(files.Length());
 	if (gf & grepSubDir){
 		for (size_t j = 0; (j < directories.Length() && jobQueue.ContinueSearch()); j++) {
 			FilePath fPath = directories.At(j);
@@ -1209,10 +1209,10 @@ void SciTEBase::CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_ch
 }
 
 static bool LessStdNoCase(std::string a, std::string b){
-	return _stricmp(a.c_str(), b.c_str()) < 0;
+	return _stricmp(a.c_str(), b.c_str()) < 0; 
 }
 
-void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, unsigned int basePath, GrepOut *grepOut, std::regex *pRegExp){
+void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, size_t basePath, GrepOut *grepOut, std::regex *pRegExp){
 	FilePathSet directories;
 	FilePathSet files;
 	baseDir.List(directories, files, fileTypes);
@@ -1304,9 +1304,9 @@ void SciTEBase::GrepRecursive(GrepFlags gf, FilePath baseDir, const char *search
 }
 
 void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *fileTypes, const char *search) {
-	int originalEnd = 0;
+	size_t originalEnd = 0;
 	GUI::ElapsedTime commandTime;
-	unsigned int basePathLen = 0; //!-add-[FindResultListStyle]
+	size_t basePathLen = 0; //!-add-[FindResultListStyle]
 	SString searchString;
 	WideChrToMyltiBate(search, searchString); 
 	SString os = "";
@@ -1335,10 +1335,7 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 		originalEnd = wFindRes.Send(SCI_GETCURRENTPOS);
 	}
 	if (!(gf & grepMatchCase) && !(gf & grepRegExp)) {
-		char chtmp[1000];
-		lstrcpynA(chtmp, searchString.c_str(), 999);
-		CharLowerBuffA(chtmp, searchString.length());
-		searchString = chtmp;
+		searchString.lowercase();
 	}
 
 	std::regex regexp;
@@ -1405,13 +1402,13 @@ void SciTEBase::InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const
 	wFindRes.Send(SCI_SETSEL, 0, 8);
 	wFindRes.Send(SCI_SETFIRSTVISIBLELINE, 0);
 	wFindRes.Send(SCI_COLOURISE, 0, -1);
-	int maxLine = wFindRes.Send(SCI_GETLINECOUNT);
+	Sci_Position maxLine = wFindRes.Send(SCI_GETLINECOUNT);
 
-	for (int line = 0; line < maxLine; line++) {
-		int level = wFindRes.Send(SCI_GETFOLDLEVEL, line);
+	for (Sci_Position line = 0; line < maxLine; line++) {
+		int level = static_cast<int>(wFindRes.Send(SCI_GETFOLDLEVEL, line));
 		if ((level & SC_FOLDLEVELHEADERFLAG) &&
 			(SC_FOLDLEVELBASE == (level & SC_FOLDLEVELNUMBERMASK))) {
-				int lineMaxSubord = wFindRes.Send(SCI_GETLASTCHILD, line, -1);
+			Sci_Position lineMaxSubord = wFindRes.Send(SCI_GETLASTCHILD, line, -1);
 				wFindRes.Send(SCI_SETFOLDEXPANDED, line, 0);
 				if (lineMaxSubord > line)
 					wFindRes.Send(SCI_HIDELINES, line + 1, lineMaxSubord);
