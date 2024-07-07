@@ -1,7 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource."
-#include "../../../HildimVer.h"
+
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "windows.h"
-
+#include "../../../HildimVer.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 

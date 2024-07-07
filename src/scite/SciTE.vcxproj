@@ -166,7 +166,7 @@
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>src;..\Scintilla\Win32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(Platform);_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Manifest>
       <AdditionalManifestFiles>

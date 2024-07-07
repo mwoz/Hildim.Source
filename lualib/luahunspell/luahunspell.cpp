@@ -14,7 +14,7 @@ static Hunspell* CheckH(lua_State* L) {
 }
 
 static int pushVector(lua_State* L,const std::vector<std::string>& vs) {
-	int n = vs.size();
+	int n = static_cast<int>(vs.size());
 	lua_createtable(L, n, 0);
 	if (n > 0) {
 		for (int i = 0; i < n; i++) {
