@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B56D17BC-072B-42F3-844A-870A07AFBAAA}</ProjectGuid>
+    <RootNamespace>zlib1</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemGroup>
+    <ClCompile Include="src\adler32.c" />
+    <ClCompile Include="src\compress.c" />
+    <ClCompile Include="src\crc32.c" />
+    <ClCompile Include="src\deflate.c" />
+    <ClCompile Include="src\gzclose.c" />
+    <ClCompile Include="src\gzlib.c" />
+    <ClCompile Include="src\gzread.c" />
+    <ClCompile Include="src\gzwrite.c" />
+    <ClCompile Include="src\infback.c" />
+    <ClCompile Include="src\inffast.c" />
+    <ClCompile Include="src\inflate.c" />
+    <ClCompile Include="src\inftrees.c" />
+    <ClCompile Include="src\trees.c" />
+    <ClCompile Include="src\uncompr.c" />
+    <ClCompile Include="src\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\crc32.h" />
+    <ClInclude Include="src\deflate.h" />
+    <ClInclude Include="src\gzguts.h" />
+    <ClInclude Include="src\inffast.h" />
+    <ClInclude Include="src\inffixed.h" />
+    <ClInclude Include="src\inflate.h" />
+    <ClInclude Include="src\inftrees.h" />
+    <ClInclude Include="src\trees.h" />
+    <ClInclude Include="src\zconf.h" />
+    <ClInclude Include="src\zlib.h" />
+    <ClInclude Include="src\zutil.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

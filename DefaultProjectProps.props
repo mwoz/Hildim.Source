@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolsetVersion>143</PlatformToolsetVersion>
+    <_PropertySheetDisplayName>Hildim Default</_PropertySheetDisplayName>
+    <StaticLibs>$(SolutionDir)LIB\$(Platform)_$(Configuration)\</StaticLibs>
+    <HlldimCoreDir>$(SolutionDir)BIN\$(Platform)_$(Configuration)\</HlldimCoreDir>
+    <LuaLib>$(HlldimCoreDir)tools\lualib</LuaLib>
+    <IntDir>$(SolutionDir)OBJ\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
+    <OutDir>$(HlldimCoreDir)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
+    <OutDir>$(StaticLibs)</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigurationType)'=='DynamicLibrary'">
+    <OutDir>$(HlldimCoreDir)</OutDir>
+    <IsLuaLib Condition="'$(SolutionDir)lualib\$(MSBuildProjectName)'=='$(MSBuildProjectDirectory)'">true</IsLuaLib>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsLuaLib)'=='true'">
+    <OutDir>$(LuaLib)</OutDir>
+    <_PropertySheetDisplayName Condition="'$(IsLuaLib)'=='true'">Hildim Default(For LuaLib)</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\scite\lua\src\;$(SolutionDir)Ext\zlib1\src\;$(SolutionDir)Ext\freetype6\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(IsLuaLib)'=='true'">LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;_USEDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(StaticLibs)$(TargetName).lib</ImportLibrary>
+      <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>$(StaticLibs)</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition="'$(IsLuaLib)'=='true'">HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(StaticLibs)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+</Project>

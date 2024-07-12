@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{01818D2C-65AF-4D5C-9452-4DFF401C6461}</ProjectGuid>
+    <RootNamespace>cdwin</RootNamespace>
+    <TargetName>cd</TargetName>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemDefinitionGroup>
+    <Lib>
+      <AdditionalDependencies>cdcore.lib;zlib1.lib;freetype6.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\win32\cdwin.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\cd.def"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\win32\cdwclp.c" />
+    <ClCompile Include="..\src\win32\cdwdbuf.c" />
+    <ClCompile Include="..\src\win32\cdwdib.c" />
+    <ClCompile Include="..\src\win32\cdwemf.c" />
+    <ClCompile Include="..\src\win32\cdwimg.c" />
+    <ClCompile Include="..\src\win32\cdwin.c" />
+    <ClCompile Include="..\src\win32\cdwnative.c" />
+    <ClCompile Include="..\src\win32\cdwprn.c" />
+    <ClCompile Include="..\src\win32\cdwwmf.c" />
+    <ClCompile Include="..\src\win32\wmf_emf.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="cdcore.vcxproj">
+      <Project>{01818d2c-1234-4d5c-abcd-4dff401c6461}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

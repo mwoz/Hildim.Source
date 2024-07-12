@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ProjectGuid>{BE7472E1-E76E-4969-A35F-054614F5884E}</ProjectGuid>
+    <RootNamespace>iupcd</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemGroup>
+    <ClCompile Include="..\srccd\iup_cd.c" />
+    <ClCompile Include="..\srccd\iup_cdutil.c" />
+    <ClCompile Include="..\srccd\iup_draw_cd.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\srccd\iupcd.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\cd\include\cdiup.h" />
+    <ClInclude Include="..\include\iupdraw_cd.h" />
+    <ClInclude Include="..\srccd\iup_cdutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="iupcore.vcxproj">
+      <Project>{2c7e83b9-7fe8-432a-97ba-fcf4d0728408}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

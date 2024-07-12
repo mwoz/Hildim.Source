@@ -198,8 +198,8 @@ class LexerFormEngine : public ILexer5 {
 	void SCI_METHOD ColorisePSQL(StyleContext &sc, LexAccessor &styler);
 	bool SCI_METHOD ColoriseWireFormat(StyleContext &sc);
 	void SCI_METHOD ColoriseCubeFormula(StyleContext &sc);
-	void SCI_METHOD LexerFormEngine::ResolveSqlID(StyleContext &sc);
-	void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc);
+	void SCI_METHOD ResolveSqlID(StyleContext &sc);
+	void SCI_METHOD ResolveVBId(StyleContext &sc);
 	bool PlainFold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess, LexAccessor &styler);
 	const std::regex reSyntax;
 	const std::regex reLogDate;
@@ -1898,13 +1898,13 @@ public:
 	bool Skip();
 	bool WalkToEOL(bool to2Dot=true);
 	bool FindThen();
-	void FoldContext::UpAll() {
+	void UpAll() {
 		currentLevel++;
 		prevLevel++;
 		levelMinCurrent++;
 
 	}
-	void FoldContext::Up() {
+	void Up() {
 		if (levelMinCurrent > currentLevel)
 			levelMinCurrent = currentLevel;
 		currentLevel++;
@@ -2141,7 +2141,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 		}
 	}
 	bool found2dot = false;//При найденном двоеточии не двгиемся вперед!
-	for (bool doing = fc.More(); doing; doing = fc.More(), found2dot ? (found2dot = false): fc.Forward()) {
+	for (bool doing = fc.More(); doing; doing = fc.More(), found2dot ? (found2dot = false): true, fc.Forward()) {
 		int sector = GetSector(fc.style);
 		if (fc.atLineStart) 
 			fc.AddFlag(sector<<4);

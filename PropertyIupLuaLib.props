@@ -1,0 +1,21 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PropertySheetDisplayName>All IUP LUA Lib</_PropertySheetDisplayName>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>IUPLUA_USELH;_CRT_SECURE_NO_DEPRECATE;CD_NO_OLD_INTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)src/scite/lua/src;$(SolutionDir)Iup/include;$(SolutionDir)cd/include;$(SolutionDir)Iup/srclua5;$(SolutionDir)Iup/srclua5/lh;$(SolutionDir)Iup/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <Culture>0x0416</Culture>
+    </ResourceCompile>
+    <Lib>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

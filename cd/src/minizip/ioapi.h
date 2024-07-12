@@ -37,7 +37,7 @@
         #ifndef __USE_LARGEFILE64
                 #define __USE_LARGEFILE64
         #endif
-        #ifndef _LARGEFILE64_SOURCE
+        #ifndef _LARGEFILE64_SOURCEC:\Projects\Hildim\Ext\zlib1\src
                 #define _LARGEFILE64_SOURCE
         #endif
         #ifndef _FILE_OFFSET_BIT

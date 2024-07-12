@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <RootNamespace>cdgdiplus</RootNamespace>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ProjectGuid>{51A96255-7EAB-4F36-A6E5-1BAF6245FA18}</ProjectGuid>
+    <TargetName>cdcontextplus</TargetName>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemGroup>
+    <ClInclude Include="..\include\cdgdiplus.h" />
+    <ClInclude Include="..\src\gdiplus\cdwinp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\gdiplus\cdcontextplus.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\gdiplus\cdwclpp.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwdbufp.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwemfp.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwgdiplus.c" />
+    <ClCompile Include="..\src\gdiplus\cdwimgp.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwinp.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwnativep.cpp" />
+    <ClCompile Include="..\src\gdiplus\cdwprnp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="cd.vcxproj">
+      <Project>{01818d2c-65af-4d5c-9452-4dff401c6461}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

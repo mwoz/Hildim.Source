@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{53609BB3-D874-465C-AF7B-DF626DB0D89B}</ProjectGuid>
+    <RootNamespace>Hunspell</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemGroup>
+    <ClInclude Include="src\hunspell\affentry.hxx" />
+    <ClInclude Include="src\hunspell\affixmgr.hxx" />
+    <ClInclude Include="src\hunspell\atypes.hxx" />
+    <ClInclude Include="src\hunspell\baseaffix.hxx" />
+    <ClInclude Include="src\hunspell\csutil.hxx" />
+    <ClInclude Include="src\hunspell\filemgr.hxx" />
+    <ClInclude Include="src\hunspell\hashmgr.hxx" />
+    <ClInclude Include="src\hunspell\htypes.hxx" />
+    <ClInclude Include="src\hunspell\hunspell.h" />
+    <ClInclude Include="src\hunspell\hunspell.hxx" />
+    <ClInclude Include="src\hunspell\hunzip.hxx" />
+    <ClInclude Include="src\hunspell\langnum.hxx" />
+    <ClInclude Include="src\hunspell\phonet.hxx" />
+    <ClInclude Include="src\hunspell\replist.hxx" />
+    <ClInclude Include="src\hunspell\suggestmgr.hxx" />
+    <ClInclude Include="src\hunspell\w_char.hxx" />
+    <ClInclude Include="config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\hunspell\affentry.cxx" />
+    <ClCompile Include="src\hunspell\affixmgr.cxx" />
+    <ClCompile Include="src\hunspell\csutil.cxx" />
+    <ClCompile Include="src\hunspell\filemgr.cxx" />
+    <ClCompile Include="src\hunspell\hashmgr.cxx" />
+    <ClCompile Include="src\hunspell\hunspell.cxx" />
+    <ClCompile Include="src\hunspell\hunzip.cxx" />
+    <ClCompile Include="src\hunspell\phonet.cxx" />
+    <ClCompile Include="src\hunspell\replist.cxx" />
+    <ClCompile Include="src\hunspell\suggestmgr.cxx" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

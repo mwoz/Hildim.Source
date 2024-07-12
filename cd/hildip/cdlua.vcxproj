@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{53FC9752-81C1-4AA6-B366-A7890A2B81F6}</ProjectGuid>
+    <RootNamespace>cdlua</RootNamespace>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+<!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" >
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+<!---->
+  <ItemGroup>
+    <ClInclude Include="..\include\cdlua.h" />
+    <ClInclude Include="..\include\cdlua5_private.h" />
+    <ClInclude Include="..\src\lua5\cdvoid5.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\lua5\cdlua5.c" />
+    <ClCompile Include="..\src\lua5\cdlua5_active.c" />
+    <ClCompile Include="..\src\lua5\cdlua5_canvas.c" />
+    <ClCompile Include="..\src\lua5\cdlua5ctx.c" />
+    <ClCompile Include="..\src\lua5\cdvoid5.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\lua5\cdlua5.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="cd.vcxproj">
+      <Project>{01818d2c-65af-4d5c-9452-4dff401c6461}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

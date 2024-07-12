@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <PropertyGroup>
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>HildiM</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>INCLUDE_DEPRECATED_FEATURES;D_SCL_SECURE_NO_WARNINGS;;UNICODE;_CRT_SECURE_NO_WARNINGS;__IUPDEF_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src\scite\src;$(SolutionDir)\src\scintilla\include;$(SolutionDir)\src\lexilla\include;$(SolutionDir)\src\scite\lua\src;$(SolutionDir)\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;lua.lib;cd.lib;cdcontextplus.lib;cdlua.lib;iup.lib;iupcd.lib;iupcontrols.lib;iupcore.lib;iupole.lib;iupweb.lib;iuplua.lib;iupluacd.lib;iupluacontrols.lib;iupluaole.lib;iupluaweb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <!--<IgnoreSpecificDefaultLibraries>LIBCMT.lib;LIBCMTD.lib</IgnoreSpecificDefaultLibraries>-->
+      <!--<IgnoreSpecificDefaultLibraries>LIBCMTD.lib</IgnoreSpecificDefaultLibraries>-->
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG2323;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

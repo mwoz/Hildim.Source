@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <StaticLibs>$(SolutionDir)LIB\$(Platform)_$(Configuration)</StaticLibs>-->
+
+    <ProgectPropertiesFile Condition="'$(SolutionDir)cd\hildip'=='$(MSBuildProjectDirectory)'">$(SolutionDir)PropertyCdLib.props</ProgectPropertiesFile>
+    <ProgectPropertiesFile Condition="'$(SolutionDir)iup\hildip'=='$(MSBuildProjectDirectory)'">$(SolutionDir)PropertyIupLib.props</ProgectPropertiesFile>
+    <ProgectPropertiesFile Condition="'$(SolutionDir)iup\hildip\iuplua'=='$(MSBuildProjectDirectory)'">$(SolutionDir)PropertyIupLuaLib.props</ProgectPropertiesFile>
+    <ProgectPropertiesFile Condition="exists('$(MSBuildProjectDirectory)\$(MSBuildProjectName).props')">$(MSBuildProjectDirectory)\$(MSBuildProjectName).props</ProgectPropertiesFile>
+    <ProgectPropertiesFile Condition="' $(ProgectPropertiesFile)'==' '">$(SolutionDir)DefaultProjectProps.props</ProgectPropertiesFile>
+  </PropertyGroup>
+
+
+</Project>

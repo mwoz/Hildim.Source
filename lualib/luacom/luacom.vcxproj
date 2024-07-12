@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9B245550-2DC3-4A2E-870B-9E165EDC3916}</ProjectGuid>
+    <RootNamespace>makvs2005</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+  <!---->
+  <ItemGroup>
+    <ClCompile Include="src\library\LuaAux.cpp" />
+    <ClCompile Include="src\library\luabeans.cpp" />
+    <ClCompile Include="src\library\luacom.cpp" />
+    <ClCompile Include="src\dll\luacom_dll.cpp" />
+    <ClCompile Include="src\library\LuaCompat.cpp" />
+    <ClCompile Include="src\library\tCOMUtil.cpp" />
+    <ClCompile Include="src\library\tLuaCOM.cpp" />
+    <ClCompile Include="src\library\tLuaCOMClassFactory.cpp" />
+    <ClCompile Include="src\library\tLuaCOMConnPoints.cpp" />
+    <ClCompile Include="src\library\tLuaCOMEnumerator.cpp" />
+    <ClCompile Include="src\library\tLuaCOMException.cpp" />
+    <ClCompile Include="src\library\tLuaCOMTypeHandler.cpp" />
+    <ClCompile Include="src\library\tLuaControl.cpp" />
+    <ClCompile Include="src\library\tLuaDispatch.cpp" />
+    <ClCompile Include="src\library\tLuaObject.cpp" />
+    <ClCompile Include="src\library\tLuaObjList.cpp" />
+    <ClCompile Include="src\library\tLuaTLB.cpp" />
+    <ClCompile Include="src\library\tLuaVector.cpp" />
+    <ClCompile Include="src\library\tStringBuffer.cpp" />
+    <ClCompile Include="src\library\tUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\library\LuaAux.h" />
+    <ClInclude Include="src\library\luabeans.h" />
+    <ClInclude Include="src\dll\luacom_dll.h" />
+    <ClInclude Include="src\library\luacom_internal.h" />
+    <ClInclude Include="src\library\LuaCompat.h" />
+    <ClInclude Include="src\library\tCOMUtil.h" />
+    <ClInclude Include="src\library\tLuaCOM.h" />
+    <ClInclude Include="src\library\tLuaCOMClassFactory.h" />
+    <ClInclude Include="src\library\tLuaCOMConnPoints.h" />
+    <ClInclude Include="src\library\tLuaCOMEnumerator.h" />
+    <ClInclude Include="src\library\tLuaCOMException.h" />
+    <ClInclude Include="src\library\tLuaCOMTypeHandler.h" />
+    <ClInclude Include="src\library\tLuaControl.h" />
+    <ClInclude Include="src\library\tLuaDispatch.h" />
+    <ClInclude Include="src\library\tLuaObject.h" />
+    <ClInclude Include="src\library\tLuaObjList.h" />
+    <ClInclude Include="src\library\tLuaTLB.h" />
+    <ClInclude Include="src\library\tLuaVector.h" />
+    <ClInclude Include="src\library\tStringBuffer.h" />
+    <ClInclude Include="src\library\tUtil.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\dll\luacom_dll.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <lua2c Include="src\library\luacom5.lua">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)luacom5.loh</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)luacom5.loh</OutputFile>
+    </lua2c>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="luacom.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!--<ImportGroup Label="ExtensionTargets">
+    <Import Project="luacom.targets" />
+  </ImportGroup>-->
+</Project>

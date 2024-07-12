@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PropertySheetDisplayName>All IUP Lib</_PropertySheetDisplayName>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>IUP_DLL;_CRT_SECURE_NO_DEPRECATE;CD_NO_OLD_INTERFACE;_LIB;_WIN32_WINNT=0x0501;_WIN32_IE=0x0600;COBJMACROS;WINVER=0x0501;IUP_ASSERT;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Iup/src;$(SolutionDir)Iup/include;$(SolutionDir)Iup/src/win/wdl;$(SolutionDir)Iup/src/win;$(SolutionDir)/cd/include;$(SolutionDir)Iup/srccd;$(SolutionDir)Iup/srccontrols;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <Culture>0x0416</Culture>
+    </ResourceCompile>
+    <Lib>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
