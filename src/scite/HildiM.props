@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <HildimVersion>8.1.6</HildimVersion>
+    <IUPVersion>3.31</IUPVersion>
+  </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
     <ConfigurationType>Application</ConfigurationType>
@@ -17,12 +20,20 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;lua.lib;cd.lib;cdcontextplus.lib;cdlua.lib;iup.lib;iupcd.lib;iupcontrols.lib;iupcore.lib;iupole.lib;iupweb.lib;iuplua.lib;iupluacd.lib;iupluacontrols.lib;iupluaole.lib;iupluaweb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <!--<IgnoreSpecificDefaultLibraries>LIBCMT.lib;LIBCMTD.lib</IgnoreSpecificDefaultLibraries>-->
-      <!--<IgnoreSpecificDefaultLibraries>LIBCMTD.lib</IgnoreSpecificDefaultLibraries>-->
     </Link>
-    <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG2323;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
+    <PreBuildEvent Condition="$(Configuration)=='Release'">
+      <Command>"$(BuildUtils)lua.exe" "$(BuildUtils)Version.lua"  "$(HildimVersion)"  "$(IUPVersion)"   "$(SolutionDir)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent Condition="$(Configuration)=='Release'">
+      <Message>Перенос версии в файл ресурсов</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <BuildMacro Include="HildimVersion">
+      <Value>$(HildimVersion)</Value>
+    </BuildMacro>
+    <BuildMacro Include="IUPVersion">
+      <Value>$(IUPVersion)</Value>
+    </BuildMacro>
+  </ItemGroup>
 </Project>

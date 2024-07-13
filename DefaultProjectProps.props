@@ -6,12 +6,13 @@
     <_PropertySheetDisplayName>Hildim Default</_PropertySheetDisplayName>
     <StaticLibs>$(SolutionDir)LIB\$(Platform)_$(Configuration)\</StaticLibs>
     <HlldimCoreDir>$(SolutionDir)BIN\$(Platform)_$(Configuration)\</HlldimCoreDir>
-    <LuaLib>$(HlldimCoreDir)tools\lualib</LuaLib>
+    <LuaLib>$(HlldimCoreDir)tools\lualib\</LuaLib>
     <IntDir>$(SolutionDir)OBJ\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
     <OutDir>$(HlldimCoreDir)</OutDir>
+    <IsHildiMApp>IsHildiMApp</IsHildiMApp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
     <OutDir>$(StaticLibs)</OutDir>
@@ -36,10 +37,14 @@
       <ImportLibrary>$(StaticLibs)$(TargetName).lib</ImportLibrary>
       <OutputFile>$(OutDir)\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>$(StaticLibs)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>$(StaticLibs)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies Condition="'$(IsLuaLib)'=='true'">HildiM.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(StaticLibs)</AdditionalLibraryDirectories>
     </Lib>
+    <ResourceCompile>
+      <PreprocessorDefinitions>$(IsHildiMApp);$(PlatformTarget);$(ConfigurationName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 </Project>

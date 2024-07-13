@@ -1,6 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource1.h"
+#define FILEDESCRIPTION "Message Bas + VB Checker "
 #include "../../HildimVer.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -79,9 +80,9 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Systematica"
-            VALUE "FileDescription", "Message Bas(02.02.24) for HildiM"
+            VALUE "FileDescription", FILEDESCRIPTIONEX
             VALUE "FileVersion", "2.2.5.1"
-            VALUE "InternalName", "MbLua"
+            VALUE "InternalName", "MbLua.dll"
             VALUE "LegalCopyright", "Copyright (C) 2024"
             VALUE "OriginalFilename", "MbLua"
             VALUE "ProductName", "HildiM"

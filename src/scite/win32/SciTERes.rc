@@ -6,9 +6,10 @@
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
-// Generated from the TEXTINCLUDE 2 resource.
+// Generated from the TEXTINCLUDE 2 resource .
 //
 #include "windows.h"
+#define FILEDESCRIPTION "HildiM - a Scintilla based Text Editor "
 #include "../../../HildimVer.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -42,7 +43,7 @@ SCITESES                ICON                    "SciTE-ses.ico"
 1                       RT_MANIFEST             "SciTE.exe.manifest"
 
 
-/////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////// /
 //
 // Version
 //
@@ -65,7 +66,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "mwoz"
-            VALUE "FileDescription", "HildiM - a Scintilla based Text Editor"
+            VALUE "FileDescription", FILEDESCRIPTIONEX
             VALUE "FileVersion", VERSION_HILDIM
             VALUE "InternalName", "HildiM"
             VALUE "IUPVersion", VERSION_IUP

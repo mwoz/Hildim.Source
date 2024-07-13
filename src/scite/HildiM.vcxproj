@@ -20,18 +20,7 @@
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ExceptionHandling>Async</ExceptionHandling>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <!---->
-  <!--  <ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
-    <Link>
-      <IgnoreSpecificDefaultLibraries>LIBCMT.lib;</IgnoreSpecificDefaultLibraries>
-    </Link>
-  </ItemDefinitionGroup>-->
   <ItemGroup>
     <ClInclude Include="..\lexilla\access\LexillaAccess.h" />
     <ClInclude Include="lua\include\lauxlib.h" />

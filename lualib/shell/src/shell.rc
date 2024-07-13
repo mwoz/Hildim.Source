@@ -1,6 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+#define FILEDESCRIPTION "Windows Shell via Lua "
 #include "../../HildimVer.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -34,7 +35,7 @@ BEGIN
         BEGIN
             VALUE "Comments", "Windows Shell Lua Lib for HildiM"
             VALUE "CompanyName", "SciTE-Ru"
-            VALUE "FileDescription", "Windows Shell Lua Lib for HildiM"
+            VALUE "FileDescription", FILEDESCRIPTIONEX
             VALUE "FileVersion", "1.14"
             VALUE "InternalName", "shell"
             VALUE "LegalCopyright", "Copyright © 2008-2024"

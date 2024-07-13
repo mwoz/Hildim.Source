@@ -3,6 +3,7 @@
 // The License.txt file describes the conditions under which this software may be distributed.
 
 #include <windows.h>
+#define FILEDESCRIPTION "Scintilla - a Source Editing Component "
 #include "../../../HildimVer.h"
 
 #define VERSION_SCINTILLA "5.5.1.1"
@@ -26,7 +27,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE	"CompanyName",	"Neil Hodgson neilh@scintilla.org\0"
-			VALUE	"FileDescription",	"Scintilla for HildiM - a Source Editing Component"
+			VALUE	"FileDescription",	FILEDESCRIPTIONEX
 			VALUE	"FileVersion",	VERSION_SCINTILLA
 			VALUE	"InternalName",	"Scintilla\0"
 			VALUE	"LegalCopyright",	"Copyright 1998-2024 by Neil Hodgson\0"

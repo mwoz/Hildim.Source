@@ -28,6 +28,7 @@
     <ProgectPropertiesFile Condition="'$(SolutionDir)iup\hildip\iuplua'=='$(MSBuildProjectDirectory)'">$(SolutionDir)PropertyIupLuaLib.props</ProgectPropertiesFile>
     <ProgectPropertiesFile Condition="exists('$(MSBuildProjectDirectory)\$(MSBuildProjectName).props')">$(MSBuildProjectDirectory)\$(MSBuildProjectName).props</ProgectPropertiesFile>
     <ProgectPropertiesFile Condition="' $(ProgectPropertiesFile)'==' '">$(SolutionDir)DefaultProjectProps.props</ProgectPropertiesFile>
+    <BuildUtils>$(SolutionDir)BuildUtils/</BuildUtils>
   </PropertyGroup>
 
 
