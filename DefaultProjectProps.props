@@ -9,6 +9,8 @@
     <LuaLib>$(HlldimCoreDir)tools\lualib\</LuaLib>
     <IntDir>$(SolutionDir)OBJ\$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <LUA_DIR>$(SolutionDir)BuildUtils/</LUA_DIR>
+    <LUA>$(LUA_DIR)lua.exe</LUA>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
     <OutDir>$(HlldimCoreDir)</OutDir>

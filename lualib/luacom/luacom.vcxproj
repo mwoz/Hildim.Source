@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\dll\luacom_dll.def" />
+    <CustomBuild Include="src\library\luacom5.lua"/>
   </ItemGroup>
   <ItemGroup>
     <lua2c Include="src\library\luacom5.lua">
@@ -78,7 +79,5 @@
     <ResourceCompile Include="luacom.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <!--<ImportGroup Label="ExtensionTargets">
-    <Import Project="luacom.targets" />
-  </ImportGroup>-->
+  <ImportGroup Label="ExtensionTargets"/>
 </Project>

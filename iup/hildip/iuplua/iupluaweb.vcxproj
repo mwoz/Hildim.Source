@@ -1,32 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{42A210A8-4E51-4D6A-9FAC-5C0E6B19FD4D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>iupluaweb</RootNamespace>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
-<!---->
+  <!---->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(SolutionDir)\Hildim.Default.props" />
   <PropertyGroup Label="Configuration">
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" >
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)DefaultProjectProps.props" />
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
-<!---->
+  <!---->
   <ItemGroup>
     <ClCompile Include="..\..\srclua5\ctrl\il_webbrowser.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\srclua5\ctrl\iupluaweb.def" />
-    <None Include="..\..\srclua5\ctrl\webbrowser.lua" />
-    <None Include="..\..\srclua5\lh\webbrowser.lh" />
+    <CustomBuild Include="..\..\srclua5\ctrl\webbrowser.lua" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\iupluaweb.h" />

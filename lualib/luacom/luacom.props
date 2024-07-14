@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <Lua2lhTrmplate>if (luaL_loadbuffer(L,(const char*)B1,sizeof(B1),%q)==0) lua_call(L, 0, 0);</Lua2lhTrmplate>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CustomBuildAfterTargets>PreBuildEvent</CustomBuildAfterTargets>
+    <CustomBuildBeforeTargets>Compile</CustomBuildBeforeTargets>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>NLUA51;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -9,6 +16,20 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;htmlhelp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>src\dll\luacom_dll.def</ModuleDefinitionFile>
     </Link>
+    <CustomBuild>
+      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" &gt; src/library/%(FileName).lh </Command>
+    </CustomBuild>
+    <CustomBuild>
+      <Message>%(Filename).%(Extension) Generate %(Filename).lh</Message>
+    </CustomBuild>
+    <CustomBuild>
+      <Outputs>src/library/%(FileName).lh</Outputs>
+    </CustomBuild>
   </ItemDefinitionGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <BuildMacro Include="Lua2lhTrmplate">
+      <Value>$(Lua2lhTrmplate)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
 </Project>

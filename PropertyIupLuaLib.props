@@ -1,10 +1,22 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <Lua2lhTrmplate>iuplua_dobuffer(L,(const char*)B1,sizeof(B1),"="%q);</Lua2lhTrmplate>
+  </PropertyGroup>
   <PropertyGroup>
     <_PropertySheetDisplayName>All IUP LUA Lib</_PropertySheetDisplayName>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
+    <LhDirPrefix>ctrl/</LhDirPrefix>
+    <LhDirPrefix Condition="'$(ProjectName)'=='iuplua'">elem/</LhDirPrefix>
   </PropertyGroup>
   <ItemDefinitionGroup>
+    <PropertyGroup Label="UserMacros">
+      <Lua2lhTrmplate>iuplua_dobuffer(L,(const char*)B1,sizeof(B1),"="%q);</Lua2lhTrmplate>
+    </PropertyGroup>
+    <PropertyGroup>
+      <CustomBuildAfterTargets>PreBuildEvent</CustomBuildAfterTargets>
+      <CustomBuildBeforeTargets>Compile</CustomBuildBeforeTargets>
+    </PropertyGroup>
     <ClCompile>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PreprocessorDefinitions>IUPLUA_USELH;_CRT_SECURE_NO_DEPRECATE;CD_NO_OLD_INTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -16,6 +28,20 @@
     <Lib>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Lib>
+    <CustomBuild>
+      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" "$(LhDirPrefix)%(FileName).lua" &gt; $(SolutionDir)Iup/Srclua5/lh/%(FileName).lh </Command>
+    </CustomBuild>
+    <CustomBuild>
+      <Message>%(Filename).%(Extension) Generate %(Filename).lh</Message>
+    </CustomBuild>
+    <CustomBuild>
+      <Outputs>$(SolutionDir)Iup/Srclua5/lh/%(FileName).lh </Outputs>
+    </CustomBuild>
   </ItemDefinitionGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <BuildMacro Include="Lua2lhTrmplate">
+      <Value>$(Lua2lhTrmplate)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
 </Project>

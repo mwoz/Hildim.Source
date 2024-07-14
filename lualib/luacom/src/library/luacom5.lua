@@ -6,20 +6,20 @@
 -- startup code: presumes LuaCOM has already been initialized
 -- and lies in the luacom table
 
-assert(luacom)
-luacomE = luacom
+assert(luacom) 
+luacomE = luacom     
 
--- tests for other dependencies
-assert(table)
-assert(string)
-assert(io)
-
+-- tests for other dependencies  
+assert(table)       
+assert(string)   
+assert(io)   
+ 
 
 --
 -- ExportConstants
 --
---   Exports all the constants defined in the type library
---   to the global environment
+--   Exports all the constants defined in the type library 
+--   to the global environment 
 --
 
 function luacomE.ExportConstants(obj, const_table)
@@ -38,13 +38,13 @@ function luacomE.ExportConstants(obj, const_table)
     const_table = _G
   end
   
-  obj:ExportConstants(const_table)
+  obj:ExportConstants(const_table) 
 end
 
-
+ 
 
 --
--- Proxies for luacom.CreateObject
+-- Proxies for luacom.CreateObject 
 --
 
 function luacomE.CreateLocalObject(ID)
@@ -52,13 +52,13 @@ function luacomE.CreateLocalObject(ID)
 end
 
 function luacomE.CreateInprocObject(ID)
-  return luacom.CreateObject(ID, "inproc_server")
+  return luacom.CreateObject(ID, "inproc_server") 
 end
 
 --
--- luacomE.pairs
+-- luacomE.pairs    
 --
---   Returns an iterator for a COM enumerator
+--   Returns an iterator for a COM enumerator     
 --
 
 function luacomE.pairs(luacom_obj)

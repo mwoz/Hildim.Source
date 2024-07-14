@@ -12,6 +12,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetName>HildiM</TargetName>
+    <PreBuildEventUseInBuild Condition="$(Configuration)=='Debug'">false</PreBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -21,10 +22,10 @@
     <Link>
       <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;lua.lib;cd.lib;cdcontextplus.lib;cdlua.lib;iup.lib;iupcd.lib;iupcontrols.lib;iupcore.lib;iupole.lib;iupweb.lib;iuplua.lib;iupluacd.lib;iupluacontrols.lib;iupluaole.lib;iupluaweb.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PreBuildEvent Condition="$(Configuration)=='Release'">
-      <Command>"$(BuildUtils)lua.exe" "$(BuildUtils)Version.lua"  "$(HildimVersion)"  "$(IUPVersion)"   "$(SolutionDir)</Command>
+    <PreBuildEvent>
+      <Command>$(LUA) "$(LUA_DIR)Version.lua"  "$(HildimVersion)" "$(IUPVersion)"  "$(SolutionDir)/"</Command>
     </PreBuildEvent>
-    <PreBuildEvent Condition="$(Configuration)=='Release'">
+    <PreBuildEvent>
       <Message>Перенос версии в файл ресурсов</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>

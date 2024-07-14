@@ -1,7 +1,7 @@
 ﻿
 local vCur = ''
 
-local fname = arg[3]..'\\HildimVer.h'
+local fname = arg[3]..'HildimVer.h'
 local f = io.input(fname)
 if f then
     vCur = f:read('*a')
