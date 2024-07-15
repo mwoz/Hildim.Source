@@ -11,6 +11,12 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <LUA_DIR>$(SolutionDir)BuildUtils/</LUA_DIR>
     <LUA>$(LUA_DIR)lua.exe</LUA>
+    <LocalDebuggerCommand>$(HlldimCoreDir)$(SolutionName).exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>$(HlldimCoreDir)</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <LocalDebuggerCommandArguments>-d</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
     <OutDir>$(HlldimCoreDir)</OutDir>

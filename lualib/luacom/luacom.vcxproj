@@ -68,14 +68,6 @@
     <CustomBuild Include="src\library\luacom5.lua"/>
   </ItemGroup>
   <ItemGroup>
-    <lua2c Include="src\library\luacom5.lua">
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)luacom5.loh</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)luacom5.loh</OutputFile>
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)luacom5.loh</OutputFile>
-    </lua2c>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="luacom.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

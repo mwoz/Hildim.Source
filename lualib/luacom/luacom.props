@@ -10,20 +10,20 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>NLUA51;_CRT_SECURE_NO_DEPRECATE;LUACOM_DLL=luacom.dll;LUA_USE_APICHECK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;src/library;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;src/library;$(IntDir)lh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;htmlhelp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>src\dll\luacom_dll.def</ModuleDefinitionFile>
     </Link>
     <CustomBuild>
-      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" &gt; src/library/%(FileName).lh </Command>
+      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" &gt; $(IntDir)lh/%(FileName).lh</Command>
     </CustomBuild>
     <CustomBuild>
       <Message>%(Filename).%(Extension) Generate %(Filename).lh</Message>
     </CustomBuild>
     <CustomBuild>
-      <Outputs>src/library/%(FileName).lh</Outputs>
+      <Outputs>$(IntDir)lh/%(FileName).lh</Outputs>
     </CustomBuild>
   </ItemDefinitionGroup>
   <ItemGroup>

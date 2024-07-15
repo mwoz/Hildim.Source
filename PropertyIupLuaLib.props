@@ -20,7 +20,7 @@
     <ClCompile>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <PreprocessorDefinitions>IUPLUA_USELH;_CRT_SECURE_NO_DEPRECATE;CD_NO_OLD_INTERFACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)src/scite/lua/src;$(SolutionDir)Iup/include;$(SolutionDir)cd/include;$(SolutionDir)Iup/srclua5;$(SolutionDir)Iup/srclua5/lh;$(SolutionDir)Iup/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src/scite/lua/src;$(SolutionDir)Iup/include;$(SolutionDir)cd/include;$(SolutionDir)Iup/srclua5;$(IntDir)lh;$(SolutionDir)Iup/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <Culture>0x0416</Culture>
@@ -29,13 +29,13 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Lib>
     <CustomBuild>
-      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" "$(LhDirPrefix)%(FileName).lua" &gt; $(SolutionDir)Iup/Srclua5/lh/%(FileName).lh </Command>
+      <Command>$(LUA) "$(LUA_DIR)Lua2lh.lua"  "%(FullPath)" "$(LhDirPrefix)%(FileName).lua" &gt; $(IntDir)lh/%(FileName).lh </Command>
     </CustomBuild>
     <CustomBuild>
       <Message>%(Filename).%(Extension) Generate %(Filename).lh</Message>
     </CustomBuild>
     <CustomBuild>
-      <Outputs>$(SolutionDir)Iup/Srclua5/lh/%(FileName).lh </Outputs>
+      <Outputs>$(IntDir)lh/%(FileName).lh</Outputs>
     </CustomBuild>
   </ItemDefinitionGroup>
   <ItemGroup>
