@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков\LuaBridge">
+      <UniqueIdentifier>{a06d1a73-26a6-4ac7-88f6-bfae2e7cb838}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\LuaBridge\detail">
+      <UniqueIdentifier>{15eb482b-3923-4d7e-ae92-175cc10f9a9a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\lualibxml2.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LuaBridge\Array.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\List.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\LuaBridge.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\Map.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\Optional.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\Pair.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\RefCountedObject.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\RefCountedPtr.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\UnorderedMap.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\Vector.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\CFunctions.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\ClassInfo.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Config.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Constructor.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\dump.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\FuncTraits.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Iterator.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\LuaException.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\LuaHelpers.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\LuaRef.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Namespace.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Security.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Stack.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\TypeList.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\TypeTraits.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\detail\Userdata.h">
+      <Filter>Файлы заголовков\LuaBridge\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lualibxml2.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

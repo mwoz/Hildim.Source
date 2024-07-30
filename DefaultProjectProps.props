@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\scite\lua\src\;$(SolutionDir)Ext\zlib1\src\;$(SolutionDir)Ext\freetype6\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\scite\lua\src\;$(SolutionDir)Ext\zlib1\src\;$(SolutionDir)Ext\freetype6\include\;$(SolutionDir)Ext\libxml2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(IsLuaLib)'=='true'">LUA_COMPAT_MODULE;LUA_COMPAT_APIINTCASTS;_USEDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>

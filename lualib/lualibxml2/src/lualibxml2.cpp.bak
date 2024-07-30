@@ -1,0 +1,55 @@
+// luahunspell.cpp : Defines the exported functions for the DLL application.
+//
+
+#include "stdafx.h"
+
+static int l_test(lua_State *L) {
+
+	lua_pushstring(L, "test");
+	return 1;
+}
+
+
+luaL_Reg libxml2_method[] = {
+
+	{"test", l_test},
+	{NULL, NULL}
+};
+
+
+
+static int g_spell(lua_State *L) {
+
+	luaL_getmetatable(L, "xml2");
+	lua_setmetatable(L, -2);
+
+	return 1;
+}
+
+luaL_Reg lualibxml2_methods[] = {
+	{"Create", g_spell},
+	{NULL, NULL}
+};
+
+static void createMetatable(lua_State *L, const char *name, luaL_Reg *methods) {
+	luaL_newmetatable(L, name);
+	luaL_setfuncs(L, methods, 0);
+	lua_getfield(L, -1, "__index");
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1);
+		lua_pushvalue(L, -1);
+		lua_setfield(L, -2, "__index");
+	}
+}
+
+ 
+extern "C" __declspec(dllexport) int luaopen_lualibxml2(lua_State *L) {
+		// copy locale from environment
+		//setlocale(LC_ALL, "");
+
+	createMetatable(L, "xml2", libxml2_method);
+	luaL_setfuncs(L, lualibxml2_methods, 0);
+
+		///lua_pushcfunction(L, g_spell);
+		return 1;
+	}

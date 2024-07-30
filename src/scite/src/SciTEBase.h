@@ -995,7 +995,11 @@ public:
 	}
 //!-end-[GetApplicationProps]
 	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
+#if defined(_DEBUG) && defined(H_CONCOLEMODE)
+	OutputMode curOutMode = static_cast<OutputMode>(H_CONCOLEMODE);
+#else
 	OutputMode curOutMode = outNull;
+#endif
 	virtual Ihandle * IupTab(int id) = 0;
 	bool bFinalise = false;
 	bool bBlockUIUpdate = false;
