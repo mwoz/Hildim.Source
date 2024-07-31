@@ -63,7 +63,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2, 2, 5, 1
+ FILEVERSION 2, 2, 6, 0
  PRODUCTVERSION VERSION_HILDIM_W
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -81,7 +81,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Systematica"
             VALUE "FileDescription", FILEDESCRIPTIONEX
-            VALUE "FileVersion", "2.2.5.1"
+            VALUE "FileVersion", "2.2.6.0"
             VALUE "InternalName", "MbLua.dll"
             VALUE "LegalCopyright", "Copyright (C) 2024"
             VALUE "OriginalFilename", "MbLua"

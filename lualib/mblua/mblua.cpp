@@ -537,6 +537,27 @@ int do_CreateMbTransport(lua_State* L)
 	CString strLan = luaL_checkstring(L,2);
 	CString strNetwork = luaL_checkstring(L,3);
 	CString strService = luaL_checkstring(L,4);
+	CString strUser = _T("<NotSet>");
+	CString strApp = _T("HildiM (");
+	lua_getglobal(L, "_ONMBCONNECT");
+	if (lua_isfunction(L, -1)) {
+		if (!lua_pcall(L, 0, 1, 0)) {
+			strUser = luaL_checkstring(L, -1);
+			lua_pop(L, 1);
+		}
+		else {
+			lua_pop(L, 1);
+			throw_L_error(L, "OnMbConnet - internal error");
+		}
+	}
+	else {
+		lua_pop(L, 1);
+		throw_L_error(L, "_ONMBCONNECT function not found. Outdated scripts version. Disconnected.");
+	}
+	strApp += strUser;
+	strApp += _T(")");
+
+
 	if(m_strDaemon != strDaemon || m_strLan != strLan || m_strNetwork != strNetwork || m_strService != strService)
 	{
 		if( m_strLan != "xxx") ////xxx может быть только при перворм запуске - не делаем дисконнект
@@ -547,7 +568,7 @@ int do_CreateMbTransport(lua_State* L)
 		m_strLan = strLan;
 		m_strNetwork = strNetwork;
 		m_strService = strService;
-		mbTransport->setAppName(_T("HildiM"));
+		mbTransport->setAppName(strApp);
 		mbTransport->create(strDaemon,strLan,strNetwork, strService);
 	}
 	return 0;

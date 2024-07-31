@@ -135,8 +135,8 @@ namespace luabridge {
          RCNode luaCreateURINode(int type, const std::string name, const std::string namespaceURI , lua_State* L);
          inline RCNode luaCreateNode(int type, const std::string name, lua_State* L) { return luaCreateURINode(type, name, "", L); }
          RCNode luaCreateElement(const char* name);
-        // const std::string luaGetProperty(const char* name, lua_State* L);
-        // void luaSetProperty(const std::string name, std::string value, lua_State* L);
+         std::string luaGetProperty(const std::string name, lua_State* L);
+         void luaSetProperty(const std::string name, std::string value, lua_State* L);
 
     private:
         void FreeDoc();
@@ -149,7 +149,6 @@ namespace luabridge {
         domParseError* m_parseError;
         std::map<xmlNodePtr, domNode*> m_mapNodeRefs;  // alive ScriptObjects created for VB
         std::map<std::string, std::string> m_selectNamespaces;
-        //    CMap<CStringA, LPCSTR, CStringA, CStringA> m_selectNamespaces;
         std::string m_propNamespaces;
         xmlNsPtr m_nsList{ nullptr };
      };

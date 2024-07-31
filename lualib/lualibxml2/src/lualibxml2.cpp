@@ -953,7 +953,7 @@ namespace luabridge {
     //    void domGetProperty(vb::CallContext& ctx);       
     //    void domSetProperty(vb::CallContext& ctx);
 
- /*   const std::string  domDocument::luaGetProperty(const char* name, lua_State* L)
+    std::string  domDocument::luaGetProperty(const std::string name, lua_State* L)
     {
         if (name == "SelectionNamespaces")
         {
@@ -965,6 +965,7 @@ namespace luabridge {
         }
         else
             LuaException::Throw(LuaException(L, "luaGetProperty", "Unsupported property name.", 1));
+        return std::string("");
 
     }
     // trim from start (in place)
@@ -995,7 +996,7 @@ namespace luabridge {
                 if (s.find("xmlns:") != 0)
                     LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': every item should start with 'xmlns:'.", 1));
 
-                int posSeparator = s.find('=');
+                size_t posSeparator = s.find('=');
                 if (posSeparator == std::string::npos)
                     LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no corresponding '='.", 1));
 
@@ -1014,38 +1015,37 @@ namespace luabridge {
                     LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': string literal for URI not found.", 1));
 
                 std::string uri = s.substr(1, posSeparator - 1);
-                if (namespaces.PLookup(prefix))
+                if (namespaces.find(prefix) != namespaces.cend())
                     LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': non-unique prefix.", 1));
 
-                namespaces.insert(prefix, uri);
+                namespaces[prefix] = uri;
 
-                s.Delete(0, posSeparator + 1);
-                if (!s.IsEmpty() && !_istspace(s[0]))
+                s.erase(0, posSeparator + 1);
+                if (!s.empty() && !std::isspace(s[0]))
                     LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no whitespace between items.", 1));
 
                 ltrim(s);
             }
 
             // copy to m_selectNamespaces
-            m_selectNamespaces.RemoveAll();
-            auto pair = namespaces.PGetFirstAssoc();
-            while (pair)
-            {
-                m_selectNamespaces.SetAt((LPCSTR)STR2XML(pair->key), (LPCSTR)STR2XML(pair->value));
-                pair = namespaces.PGetNextAssoc(pair);
-            }
+            m_selectNamespaces.erase(m_selectNamespaces.cbegin(), m_selectNamespaces.cend());
+            auto iterator = namespaces.begin();
+            while (iterator != namespaces.cend() )
+           {
+                m_selectNamespaces[iterator->first] = iterator->second;
+                iterator++;
+           }
 
             m_propNamespaces = value;
         }
         else if (name == "SelectionLanguage")
         {
-            CString value = GetString(*ctx.pParams[1]);
-            if (value.CompareNoCase(_T("XPath")) != 0)
-                throw VbRuntimeException(VbErrorNumber::InvalidArgument, _T("Unsupported value for property 'SelectionLanguage'."));
+            if (value != "XPath")
+                LuaException::Throw(LuaException(L, "luaSetProperty", "Only 'XPath' supported for 'SelectionLanguage' property. ", 1));
         }
         else
             LuaException::Throw(LuaException(L, "luaSetProperty", "Unsupported property name.", 1));
-    }*/
+    }
     void domDocument::FreeDoc()
     {
         auto iterator = m_mapNodeRefs.begin();
@@ -1142,8 +1142,6 @@ namespace luabridge {
        m_isAttributeList = false; 
        for (int i = 0; i < count; i++)
            m_nodes.insert(m_nodes.end(), doc->CreateNodeRef(nodeArray[i]));
-
-       int tt = 99;
    }
    domNodeList::~domNodeList()
    {
@@ -1282,6 +1280,8 @@ namespace luabridge {
                 .addProperty("preserveWhiteSpace", &domDocument::m_preserveSpaces, true)
                 .addProperty("parseError", &domDocument::luaGetParseError)
                 .addProperty("documentElement", &domDocument::luaGetDocumentElement)
+                .addFunction("setProperty", &domDocument::luaSetProperty)
+                .addFunction("getProperty", &domDocument::luaGetProperty)
             .endClass()
             .beginClass <AttributeIdx>("AttributeIdx")
                 .addFunction("__index", &AttributeIdx::get)
