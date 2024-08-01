@@ -7,7 +7,16 @@
 // Use as a param to function (does not outlive a function call)
 #define CHR2XML(s) reinterpret_cast<const xmlChar*>(s)
 static lua_State* GL;
-
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+    int size_s = std::snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+    if (size_s <= 0) { throw std::runtime_error("Error during formatting."); }
+    auto size = static_cast<size_t>(size_s);
+    std::unique_ptr<char[]> buf(new char[size]);
+    std::snprintf(buf.get(), size, format.c_str(), args ...);
+    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
 namespace luabridge {
     static LuaRef print = NULL;
     static LuaRef tracebak = NULL;
@@ -889,8 +898,8 @@ namespace luabridge {
 
         return (result == 0);
     }
-    RefCountedObjectPtr<domParseError> domDocument::luaGetParseError() const {
-        return RefCountedObjectPtr<domParseError>(m_parseError);
+    RCError domDocument::luaGetParseError() const {
+        return RCError(m_parseError);
     };
     RCNode domDocument::luaCreateURINode(int type, const std::string name, std::string namespaceURI, lua_State* L){
  
@@ -950,8 +959,6 @@ namespace luabridge {
         domNode* n = CreateNodeRef(xmlNewDocNode(m_doc, nullptr, CHR2XML(name), nullptr));
         return RCNode(n);
     }
-    //    void domGetProperty(vb::CallContext& ctx);       
-    //    void domSetProperty(vb::CallContext& ctx);
 
     std::string  domDocument::luaGetProperty(const std::string name, lua_State* L)
     {
@@ -1206,6 +1213,224 @@ namespace luabridge {
        return RCNode(m_nodeRef->GetDocRef()->CreateNodeRef(m_nodeRef->InsertNode(node, L)));
    }
 
+   //////////////////////////////////////////////////////////////////////////////////////////
+   
+
+   domXmlSchema::domXmlSchema()
+   {
+       m_schema = nullptr;
+       m_schemaDoc = nullptr;
+       m_parseError = new domParseError();
+   }
+
+   domXmlSchema::~domXmlSchema()
+   {
+       m_parseError->decReferenceCount();
+       m_parseError = nullptr;
+       FreeSchema();
+   }
+
+   void domXmlSchema::FreeSchema()
+   {
+       xmlSchemaFree(m_schema);
+       m_schema = nullptr;
+       xmlFreeDoc(m_schemaDoc);
+       m_schemaDoc = nullptr;
+   }
+
+   RCSchema domXmlSchema::luaNewObject()
+   {
+       return RCSchema(new domXmlSchema());
+   }
+
+   RCError domXmlSchema::luaGetParseError() const{
+       return RCError(m_parseError);
+   }
+
+   bool domXmlSchema::luaLoadXml(const char* xml) {
+   
+       auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
+       if (parserCtx->sax)
+       {
+           parserCtx->sax->warning = XmlCommonErrorHandler;
+           parserCtx->sax->error = XmlCommonErrorHandler;
+       }
+       xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
+       int result = xmlParseDocument(parserCtx);
+       if (result == 0)
+       {
+           m_parseError->Clear();
+           FreeSchema();
+
+           m_schemaDoc = parserCtx->myDoc;
+           xmlSchemaParserCtxtPtr schemaParserCtx = xmlSchemaNewDocParserCtxt(m_schemaDoc);
+           xmlSchemaSetParserErrors(schemaParserCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
+           m_schema = xmlSchemaParse(schemaParserCtx);
+           if (m_schema == nullptr)
+           {
+               result = -1;
+               FreeSchema();
+               m_parseError->Set(xmlGetLastError());
+           }
+           xmlSchemaFreeParserCtxt(schemaParserCtx);
+       }
+       else
+           m_parseError->Set(xmlGetLastError());
+
+       xmlFreeParserCtxt(parserCtx);
+
+       return (result == 0);
+   }
+
+   bool domXmlSchema::luaValidate(domDocument* docRef)
+   {
+
+       if (m_schema == nullptr)
+       {
+           m_parseError->Set(-1, "No XML schema provided.");
+           return false;
+       }
+       m_parseError->Clear();
+
+       xmlSchemaValidCtxtPtr validCtx = xmlSchemaNewValidCtxt(m_schema);
+       xmlSchemaSetValidErrors(validCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
+       int result = xmlSchemaValidateDoc(validCtx, docRef->GetDoc());
+       if (result != 0)
+           m_parseError->Set(xmlGetLastError());
+       xmlSchemaFreeValidCtxt(validCtx);
+
+       return (result == 0);
+   }
+   std::string  domXmlSchema::luaTostring(lua_State* L) {
+       domDocument d(xmlCopyDoc(m_schemaDoc, 1));
+       return d.luaTostring(L);
+   }
+   
+   //////////////////////////////////////////////////////////////////////////////////////////
+
+   static void XMLCDECL XsltTransformError(void* ctx, const char* msg, ...)
+   {
+       // do nothing - it prevents printing error text to console
+       va_list args;
+       std::string s(msg);
+       va_start(args, msg);
+       std::string errorText = string_format(s, args);
+       va_end(args);
+      
+       domXsltProcessor* processor = (domXsltProcessor*)ctx;
+       processor->AddErrorText(errorText);
+   }
+
+   domXsltProcessor::domXsltProcessor()
+   {
+       m_stylesheet = nullptr;
+       m_parseError = new domParseError();
+   }
+
+   domXsltProcessor::~domXsltProcessor()
+   {
+       m_parseError->decReferenceCount();
+       m_parseError = nullptr;
+       FreeStylesheet();
+   }
+
+   void domXsltProcessor::FreeStylesheet()
+   {
+       xsltFreeStylesheet(m_stylesheet);
+       m_stylesheet = nullptr;
+   }
+
+   void domXsltProcessor::AddErrorText(const std::string& errorText)
+   {
+       m_errorText += errorText;
+   }
+
+   RCProcessor domXsltProcessor::luaNewObject()
+   {
+       return RCProcessor(new domXsltProcessor());
+   }
+
+   RCError domXsltProcessor::luaGetParseError() const
+   {
+       return RCError(m_parseError);
+   }
+
+   void domXsltProcessor::luaSetParameter(const char* name, const char* value)
+   {
+       if (m_parameters.find(name) == m_parameters.cend())
+           m_parameters.insert(m_parameters.end(),std::pair(std::string(name), std::string(value)));
+       else
+           m_parameters[name] = value; 
+   }
+
+   bool domXsltProcessor::luaLoadXml(const char* xml)
+   {
+       auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
+       if (parserCtx->sax)
+       {
+           parserCtx->sax->warning = XmlCommonErrorHandler;
+           parserCtx->sax->error = XmlCommonErrorHandler;
+       }
+       xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
+       int result = xmlParseDocument(parserCtx);
+       if (result == 0)
+       {
+           m_parseError->Clear();
+           FreeStylesheet();
+
+           xmlDocPtr doc = parserCtx->myDoc;
+           xmlResetLastError();
+           m_stylesheet = xsltParseStylesheetDoc(doc);  // to prevent error output to console call xsltSetGenericErrorFunc from main() function
+           if (m_stylesheet == nullptr)
+           {
+               result = -1;
+               m_parseError->Set(-1, "Failed to process XSLT document.");
+               xmlFreeDoc(doc);
+               parserCtx->myDoc = nullptr;
+           }
+       }
+       else
+           m_parseError->Set(xmlGetLastError());
+
+       xmlFreeParserCtxt(parserCtx);
+
+       return (result == 0);
+   }
+
+   RCDocument domXsltProcessor::luaTransform(domDocument* docRef)
+   {
+       if (m_stylesheet == nullptr)
+       {
+           m_parseError->Set(-1, "No XSLT provided.");
+           return RCDocument(nullptr);
+       }
+       (void)m_errorText.empty();
+       m_parseError->Clear();
+
+       std::vector<const char*> params;
+       for (auto iterator = m_parameters.begin(); iterator != m_parameters.cend(); iterator++)
+       {
+           params.push_back(iterator->first.c_str());
+           params.push_back(iterator->second.c_str());
+       }
+       params.push_back(nullptr);
+      
+       xsltTransformContextPtr transformCtx = xsltNewTransformContext(m_stylesheet, docRef->GetDoc());
+       xsltSetTransformErrorFunc(transformCtx, this, XsltTransformError);
+       xmlDocPtr docResult = xsltApplyStylesheetUser(m_stylesheet, docRef->GetDoc(), params.data(), nullptr, nullptr, transformCtx);
+       xsltFreeTransformContext(transformCtx);
+
+       if (docResult)
+           return RCDocument(new domDocument(docResult));
+       else
+       {
+           m_parseError->Set(-1, m_errorText);
+           return RCDocument(nullptr);
+       }
+   }
+
+
+
     void bindToLUA(lua_State* L)
     {
         GL = L;
@@ -1298,7 +1523,22 @@ namespace luabridge {
                 .addFunction("getItem", &domNodeList::luaGetItem)
                 .addFunction("getNamedItem", &domNodeList::luaGetNamedItem)
                 .addFunction("setNamedItem", &domNodeList::luaSetNamedItem)
-
+            .endClass()
+            .beginClass <domXmlSchema>("XmlSchema")
+                .addConstructor <void (*) (void), RCSchema >()
+                .addStaticFunction("newObject", &domXmlSchema::luaNewObject)
+                .addProperty("parseError", &domXmlSchema::luaGetParseError)
+                .addFunction("loadXml", &domXmlSchema::luaLoadXml)
+                .addFunction("validate", &domXmlSchema::luaValidate)
+                .addFunction("__tostring", &domXmlSchema::luaTostring)
+            .endClass()
+            .beginClass <domXsltProcessor>("XsltProcessor")
+                .addConstructor <void (*) (void), RCProcessor >()
+                .addProperty("parseError", &domXsltProcessor::luaGetParseError)
+                .addFunction("setParameter", &domXsltProcessor::luaSetParameter)
+                .addFunction("loadXml", &domXsltProcessor::luaLoadXml)
+                .addFunction("transform", &domXsltProcessor::luaTransform)
+                .addStaticFunction("newObject", &domXsltProcessor::luaNewObject)
             .endClass()
             .endNamespace();
 

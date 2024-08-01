@@ -1,5 +1,5 @@
 #pragma once
-#include <stdlib.h>
+#include <stdlib.h>#
 #undef near
 extern "C" {
 #include <lua.h>
@@ -16,16 +16,24 @@ extern "C" {
 #include <libxml/xpath.h>
 #include <libxml/parserInternals.h>
 #include <libxml/xpathInternals.h>
-//#include <libxml/xmlschemas.h>
-//#include <libxslt/xsltInternals.h>
+#include <libxml/xmlschemas.h>
+#include <libxslt/xsltInternals.h>
+#include <libxslt/xsltUtils.h>
+#include <libxslt/transform.h>
 namespace luabridge {
     class domDocument;
     class AttributeIdx;
     class domNodeList;
     class domNode;
+    class domXsltProcessor;
+    class domXmlSchema;
+    class domParseError;
     typedef RefCountedObjectPtr<domDocument> RCDocument;
     typedef RefCountedObjectPtr<domNode> RCNode;
     typedef RefCountedObjectPtr<domNodeList> RCNodeList;
+    typedef RefCountedObjectPtr<domXsltProcessor> RCProcessor;
+    typedef RefCountedObjectPtr<domParseError> RCError;
+    typedef RefCountedObjectPtr<domXmlSchema> RCSchema;
 
     class domNode : public RefCountedObject
     {
@@ -35,7 +43,7 @@ namespace luabridge {
 
         domNode(domDocument* docRef, xmlNodePtr node, bool owner);
         ~domNode(
-        
+
         );
         xmlNodePtr GetNode() { return m_node; }
         void Invalidate(bool removeRef = false);
@@ -76,7 +84,7 @@ namespace luabridge {
         inline std::string luaGetXml(lua_State* L) { return GetXml(L, false); }
         inline std::string luaTostring(lua_State* L) { return GetXml(L, true); }
         std::string GetXml(lua_State* L, bool format);
-      
+
         RCNode luaAppendChild(domNode* node, lua_State* L);
         RCNode luaCloneNode(bool deep, lua_State* L);
         RCDocument luaCloneDocument(bool deep, lua_State* L);
@@ -96,14 +104,13 @@ namespace luabridge {
         domNode() {}  // needed for VbXmlDocument constructor
         void InvalidateNodeList(xmlNodePtr cur);
         void ClearOwnership() { m_isNodeOwner = false; }
- 
+
     protected:
         xmlNodePtr m_node{ nullptr };
         domDocument* m_docRef{ nullptr };  // weak reference (ref count is not affected)
         bool m_isNodeOwner{ false };         // true for 'dangling' nodes only (without parent)
     };
 
-    class domParseError;
     class domDocument : public domNode
     {
     public:
@@ -111,7 +118,7 @@ namespace luabridge {
         domDocument();
         domDocument(xmlDocPtr doc);
         ~domDocument(
-        
+
         );
         xmlDocPtr GetDoc() { return m_doc; }
 
@@ -120,23 +127,23 @@ namespace luabridge {
         void RemoveNodeRef(domNode* nodeRef);
         domNode* RemoveNodeRef(xmlNodePtr node);
         void AttachNodeRef(domNode* nodeRef);
- //
+        //
         xmlXPathContextPtr NewXPathContext(lua_State* L);
- //
- //       static void domNewObject(vb::CallContext& ctx);
- //
-        RCNode luaGetDocumentElement() ;
+        //
+        //       static void domNewObject(vb::CallContext& ctx);
+        //
+        RCNode luaGetDocumentElement();
 
-        RefCountedObjectPtr<domParseError> luaGetParseError() const ;
+        RCError luaGetParseError() const;
         bool m_preserveSpaces{ false };
 
         bool luaLoadXml(const char* xml);
 
-         RCNode luaCreateURINode(int type, const std::string name, const std::string namespaceURI , lua_State* L);
-         inline RCNode luaCreateNode(int type, const std::string name, lua_State* L) { return luaCreateURINode(type, name, "", L); }
-         RCNode luaCreateElement(const char* name);
-         std::string luaGetProperty(const std::string name, lua_State* L);
-         void luaSetProperty(const std::string name, std::string value, lua_State* L);
+        RCNode luaCreateURINode(int type, const std::string name, const std::string namespaceURI, lua_State* L);
+        inline RCNode luaCreateNode(int type, const std::string name, lua_State* L) { return luaCreateURINode(type, name, "", L); }
+        RCNode luaCreateElement(const char* name);
+        std::string luaGetProperty(const std::string name, lua_State* L);
+        void luaSetProperty(const std::string name, std::string value, lua_State* L);
 
     private:
         void FreeDoc();
@@ -151,17 +158,17 @@ namespace luabridge {
         std::map<std::string, std::string> m_selectNamespaces;
         std::string m_propNamespaces;
         xmlNsPtr m_nsList{ nullptr };
-     };
+    };
 
-    class AttributeIdx: public RefCountedObject {
+    class AttributeIdx : public RefCountedObject {
     public:
         domNode* m_pNode;
         AttributeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
-        inline std::string get(const char* name, lua_State* L) { 
-            return m_pNode->luaGetAttribute(name, L); 
+        inline std::string get(const char* name, lua_State* L) {
+            return m_pNode->luaGetAttribute(name, L);
         }
-        inline void set(const char* name, const char* value, lua_State* L) { 
-            m_pNode->luaSetAttribute(name, value, L); 
+        inline void set(const char* name, const char* value, lua_State* L) {
+            m_pNode->luaSetAttribute(name, value, L);
         }
         ~AttributeIdx() {
             m_pNode->m_pAttributeIdx = nullptr;
@@ -176,8 +183,8 @@ namespace luabridge {
         std::string m_reasonText;
 
         domParseError() { incReferenceCount(); }
-        domParseError(domParseError* p):
-            m_errorCode(p->m_errorCode), 
+        domParseError(domParseError* p) :
+            m_errorCode(p->m_errorCode),
             m_line(p->m_line),
             m_linePos(p->m_linePos),
             m_reasonText(p->m_reasonText) {}
@@ -185,7 +192,7 @@ namespace luabridge {
         void Set(const xmlError* error);
         void Set(int errorCode, const std::string& text);
         void Clear();
- 
+
     };
     class domNodeList : public RefCountedObject//, public VbEnumerable
     {
@@ -213,7 +220,57 @@ namespace luabridge {
     private:
         bool m_isAttributeList{ false };
         int m_index{ 0 };
-        std::vector<domNode*> m_nodes; 
+        std::vector<domNode*> m_nodes;
         domNode* m_nodeRef{ nullptr };
+    };
+
+    class domXmlSchema : public RefCountedObject
+    {
+    public:
+
+        domXmlSchema();
+        ~domXmlSchema();
+
+        static RCSchema luaNewObject();
+
+        RCError luaGetParseError() const;
+        bool luaLoadXml(const char* xml);
+        bool luaValidate(domDocument* docRef);
+        std::string luaTostring(lua_State* L);
+
+    private:
+        void FreeSchema();
+
+    private:
+        xmlSchemaPtr m_schema;
+        xmlDocPtr m_schemaDoc;
+        domParseError* m_parseError;
+    };
+
+    class domXsltProcessor : public RefCountedObject
+    {
+    public:
+        domXsltProcessor();
+        ~domXsltProcessor();
+
+        void AddErrorText(const std::string& errorText);
+
+        static RCProcessor luaNewObject();
+
+        RCError luaGetParseError() const;
+
+        void luaSetParameter(const char* name, const char* value);
+
+        bool luaLoadXml(const char* xml);
+        RCDocument luaTransform(domDocument* docRef);
+
+    private:
+        void FreeStylesheet();
+
+    private:
+        xsltStylesheetPtr m_stylesheet;
+        domParseError* m_parseError;
+        std::string m_errorText;
+        std::map<std::string, std::string> m_parameters;
     };
 }
