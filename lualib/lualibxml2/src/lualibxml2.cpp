@@ -191,8 +191,10 @@ namespace luabridge {
             newChild = xmlAddChild(m_node, nodeRef->GetNode());
         else
             newChild = xmlAddPrevSibling(nodeBeforeRef->GetNode(), nodeRef->GetNode());
-        if (newChild == nullptr)
+        if (newChild == nullptr) {
             LuaException::Throw(LuaException(L, "InsertNode", "Failed to add child node.", 1));
+            return nullptr;
+        }
 
         if (reconcileNs)
         {
@@ -626,7 +628,7 @@ namespace luabridge {
             LuaException::Throw(LuaException(L, "luaSelectSingleNode", "Invalid node for XPath search.", 1));
         }
 
-        auto xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
+        xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
         xmlXPathFreeContext(xpathCtx);
         if (xpathResult == NULL)
         {
@@ -634,6 +636,7 @@ namespace luabridge {
             s += xpath;
             s += ".";
             LuaException::Throw(LuaException(L, "luaSelectSingleNode", s.c_str(), 1));
+            return result;
         }
 
         if (xpathResult->nodesetval == nullptr || xpathResult->nodesetval->nodeNr == 0)
@@ -654,7 +657,7 @@ namespace luabridge {
             LuaException::Throw(LuaException(L, "luaSelectNodes", "Invalid node for XPath search.", 1));
         }
 
-        auto xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
+        xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
         xmlXPathFreeContext(xpathCtx);
         if (xpathResult == NULL)
         {
@@ -662,8 +665,9 @@ namespace luabridge {
             s += xpath;
             s += ".";
             LuaException::Throw(LuaException(L, "luaSelectNodes", s.c_str(), 1));
+            return result;
         }
-        auto noteSet = xpathResult->nodesetval;
+        xmlNodeSetPtr noteSet = xpathResult->nodesetval;
         domNodeList* l = new domNodeList(m_docRef, noteSet ? noteSet->nodeTab : nullptr, noteSet ? noteSet->nodeNr : 0);
        // l->incReferenceCount()
         result = RCNodeList(l);
@@ -671,8 +675,8 @@ namespace luabridge {
         return result;
 
     }
-//        void SelectSingleNode(vb::CallContext& ctx);
-    std::string domNode::luaGetAttribute(const char* name, lua_State* L) {
+
+    std::string domNode::luaGetAttribute(const char* name, lua_State* L) const{
         AssertValid(L, "luaGetAttribute");
 
 
@@ -745,8 +749,38 @@ namespace luabridge {
     void domNode::InvalidateNodeList(xmlNodePtr cur) {
 
     }
+    int domNode::luaGetEnumerator(lua_State* L) {
+        domNode* node = detail::Userdata::get<domNode>(L, 1, false);
 
+        auto ienum = [](lua_State* L) -> int {
+            domNode* nodeParent = detail::Userdata::get<domNode>(L, 1, false);
+            domNode* node = nullptr;
+            if (lua_type(L, 2) == LUA_TBOOLEAN && nodeParent->hasChildren()) {
+                node = nodeParent->luaGetFirstChild(L);
+            }
+            else {
+                nodeParent = detail::Userdata::get<domNode>(L, 2, false);
+                if (nodeParent->hasNextSibling())
+                    node = nodeParent->luaGetNextSibling(L);
+            }
 
+            if (node) {
+                detail::UserdataPtr::push<domNode>(L, node);
+                return 1;
+            }
+            else {
+                lua_pushnil(L);
+                return 1;
+            }
+            };
+        lua_pushcfunction(L, ienum);  /* iteration function */
+        lua_pushvalue(L, 1);  /* state */
+        lua_pushboolean(L, true);  /* initial value */
+        return 3;
+
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 
     domDocument::domDocument()
         {
@@ -1213,6 +1247,44 @@ namespace luabridge {
        return RCNode(m_nodeRef->GetDocRef()->CreateNodeRef(m_nodeRef->InsertNode(node, L)));
    }
 
+   static int ipairsaux(lua_State* L) {
+       lua_Integer i = luaL_checkinteger(L, 2);
+       i = luaL_intop(+, i, 1);
+       lua_pushinteger(L, i);
+       return (lua_geti(L, 1, i) == LUA_TNIL) ? 1 : 2;
+   }
+   struct enumcnt {
+       auto next() {
+           return [*this](lua_State* L) -> int {
+               return 3;
+               };
+       }
+
+       domNodeList * lst;
+   };
+
+   int domNodeList::luaGetEnumerator(lua_State* L) {
+       domNodeList* lst = detail::Userdata::get<domNodeList>(L, 1, false);
+
+        auto ienum = [](lua_State* L) -> int {
+            domNodeList* lst = detail::Userdata::get<domNodeList>(L, 1, false);
+            LUA_INTEGER i = luaL_checkinteger(L, 2);
+            if (static_cast<LUA_INTEGER>(lst->luaGetLength(L)) > i) {
+                lua_pushinteger(L, i + 1);                   
+                detail::UserdataPtr::push<domNode>(L, lst->GetItem(i));
+                return 2;
+            }
+            else{
+                lua_pushnil(L);
+                return 1;
+            }
+            };
+        lua_pushcfunction(L, ienum);  /* iteration function */
+        lua_pushvalue(L, 1);  /* state */
+        lua_pushinteger(L, 0);  /* initial value */
+        return 3;
+   }
+
    //////////////////////////////////////////////////////////////////////////////////////////
    
 
@@ -1439,9 +1511,9 @@ namespace luabridge {
         error = getGlobal(L, "error");
         //lprint = print;
         // These all evaluate to true
-
-        getGlobalNamespace(L)
-            .beginNamespace("XML")
+        auto nspace =
+            getGlobalNamespace(L)
+            .beginNamespace("DOMXML2")
             .addConstant("XML_ELEMENT_NODE", 1)
             .addConstant("XML_ATTRIBUTE_NODE", 2)
             .addConstant("XML_TEXT_NODE", 3)
@@ -1463,37 +1535,40 @@ namespace luabridge {
             .addConstant("XML_XINCLUDE_START", 19)
             .addConstant("XML_XINCLUDE_END", 20)
             .beginClass <domNode>("xmlNode")
-                .addProperty("xml", &domNode::luaGetXml)
-                .addFunction("__tostring", &domNode::luaTostring)
-                .addFunction("getAttribute", &domNode::luaGetAttribute)
-                .addFunction("setAttribute", &domNode::luaSetAttribute)
-                .addProperty("attribute", &domNode::luaAttribute)
-                .addProperty("nodeType", &domNode::luaGetNodeType)
-                .addProperty("baseName", &domNode::luaGetBaseName)
-                .addProperty("nodeName", &domNode::luaGetNodeName)
-                .addProperty("name", &domNode::luaGetName)
-                .addProperty("prefix", &domNode::luaGetPrefix)
-                .addProperty("namespaceURI", &domNode::luaGetNamespaceURI)
-                .addProperty("ownerDocument", &domNode::luaGetOwnerDocument)
-                .addProperty("parentNode", &domNode::luaGetParentNode)
-                .addProperty("firstChildren", &domNode::luaGetFirstChild)
-                .addProperty("lastChildren", &domNode::luaGetLastChild)
-                .addProperty("nextSibling", &domNode::luaGetNextSibling)
-                .addProperty("previousSibling", &domNode::luaGetPreviousSibling)
-                .addProperty("attibutes", &domNode::luaGetAttributes)
-                .addFunction("attibutes", &domNode::luaRemoveAttribute)
-                .addProperty("childNodes", &domNode::luaGetChildNodes)
-                .addProperty("text", &domNode::luaGetText, &domNode::luaSetText)
-                .addProperty("nodeValue", &domNode::luaGetNodeValue)
+            .addProperty("xml", &domNode::luaGetXml)
+            .addFunction("__tostring", &domNode::luaTostring)
+            .addProperty("attribute", &domNode::luaAttribute) //- get/set
+            .addProperty("nodeType", &domNode::luaGetNodeType)
+            .addProperty("baseName", &domNode::luaGetBaseName)
+            .addProperty("nodeName", &domNode::luaGetNodeName)
+            .addProperty("name", &domNode::luaGetName)
+            .addProperty("prefix", &domNode::luaGetPrefix)
+            .addProperty("namespaceURI", &domNode::luaGetNamespaceURI)
+            .addProperty("ownerDocument", &domNode::luaGetOwnerDocument)
+            .addProperty("parentNode", &domNode::luaGetParentNode)
+            .addProperty("firstChildren", &domNode::luaGetFirstChild)
+            .addProperty("lastChildren", &domNode::luaGetLastChild)
+            .addProperty("nextSibling", &domNode::luaGetNextSibling)
+            .addProperty("previousSibling", &domNode::luaGetPreviousSibling)
+            .addProperty("attibutes", &domNode::luaGetAttributes)
+            .addFunction("attibutes", &domNode::luaRemoveAttribute)
+            .addProperty("childNodes", &domNode::luaGetChildNodes)
+            .addProperty("text", &domNode::luaGetText, &domNode::luaSetText)
+            .addProperty("nodeValue", &domNode::luaGetNodeValue)
 
-                .addFunction("appendChild", &domNode::luaAppendChild)
-                .addFunction("cloneNode", &domNode::luaCloneNode)
-                .addFunction("cloneDocument", &domNode::luaCloneDocument) 
-                .addProperty("hasChildNodes", &domNode::luaHasChildNodes)
-                .addFunction("insertBefore", &domNode::luaInsertBefore)
-                .addFunction("removeChild", &domNode::luaRemoveChild)
-                .addFunction("selectSingleNode", &domNode::luaSelectSingleNode)
-                .addFunction("selectNodes", &domNode::luaSelectNodes)
+            .addFunction("appendChild", &domNode::luaAppendChild)
+            .addFunction("cloneNode", &domNode::luaCloneNode)
+            .addFunction("cloneDocument", &domNode::luaCloneDocument)
+            .addProperty("hasChildNodes", &domNode::luaHasChildNodes)
+            .addFunction("insertBefore", &domNode::luaInsertBefore)
+            .addFunction("removeChild", &domNode::luaRemoveChild)
+            .addFunction("selectSingleNode", &domNode::luaSelectSingleNode)
+            .addFunction("selectNodes", &domNode::luaSelectNodes);
+        lua_pushcfunction(L, &domNode::luaGetEnumerator);
+        rawsetfield(L, -3, "childNodes"); // class table
+
+            
+        auto nspace2 = nspace
             .endClass()
             .deriveClass <domDocument, domNode>("Document")
                 .addConstructor <void (*) (void), RCDocument >()
@@ -1522,8 +1597,12 @@ namespace luabridge {
                 .addProperty("length", &domNodeList::luaGetLength)
                 .addFunction("getItem", &domNodeList::luaGetItem)
                 .addFunction("getNamedItem", &domNodeList::luaGetNamedItem)
-                .addFunction("setNamedItem", &domNodeList::luaSetNamedItem)
-            .endClass()
+                .addFunction("setNamedItem", &domNodeList::luaSetNamedItem);
+
+        lua_pushcfunction(L, &domNodeList::luaGetEnumerator);
+        rawsetfield(L, -3, "elements"); // class table
+     
+      nspace2.endClass()
             .beginClass <domXmlSchema>("XmlSchema")
                 .addConstructor <void (*) (void), RCSchema >()
                 .addStaticFunction("newObject", &domXmlSchema::luaNewObject)

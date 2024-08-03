@@ -1,5 +1,5 @@
 #pragma once
-#include <stdlib.h>#
+#include <stdlib.h>
 #undef near
 extern "C" {
 #include <lua.h>
@@ -22,7 +22,7 @@ extern "C" {
 #include <libxslt/transform.h>
 namespace luabridge {
     class domDocument;
-    class AttributeIdx;
+    struct AttributeIdx;
     class domNodeList;
     class domNode;
     class domXsltProcessor;
@@ -59,10 +59,6 @@ namespace luabridge {
         //
         int GetChildCount(lua_State* L);
         domNode* GetChild(int index, lua_State* L);
-        //
-        //        void GetNextSibling(Variant& result);
-        //
-
 
         int luaGetNodeType(lua_State* L);
         std::string luaGetBaseName(lua_State* L);
@@ -93,11 +89,16 @@ namespace luabridge {
         void luaRemoveChild(domNode* nodeRef, lua_State* L);
         RCNode luaSelectSingleNode(const char* xpath, lua_State* L);
         RCNodeList luaSelectNodes(const char* xpath, lua_State* L);
-        std::string luaGetAttribute(const char* name, lua_State* L);
+        std::string luaGetAttribute(const char* name, lua_State* L) const;
         void luaSetAttribute(const char* name, const char* value, lua_State* L);
         RefCountedObjectPtr<AttributeIdx> luaAttribute();
         void luaRemoveAttribute(const char* name, lua_State* L);
         void SetDocRef(domDocument* docRef);
+        
+        
+        inline bool hasChildren() { return m_node->children != nullptr; }
+        inline bool hasNextSibling() { return m_node->next != nullptr; }
+        static int luaGetEnumerator(lua_State* L);
 
     protected:
         friend class domlDocument;
@@ -160,7 +161,7 @@ namespace luabridge {
         xmlNsPtr m_nsList{ nullptr };
     };
 
-    class AttributeIdx : public RefCountedObject {
+    struct AttributeIdx : public RefCountedObject {
     public:
         domNode* m_pNode;
         AttributeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
@@ -207,7 +208,7 @@ namespace luabridge {
         //virtual VbEnumerator* CreateEnumerator() override;
 
         inline size_t GetItemCount() { return m_nodes.size(); }
-        inline domNode* GetItem(int i) { return m_nodes[i]; };
+        inline domNode* GetItem(LUA_INTEGER i) { return m_nodes[i]; };
         inline domNode* GetParentNodeRef() { return m_nodeRef; }
         inline bool IsAttributeList() { return m_isAttributeList; }
 
@@ -216,7 +217,7 @@ namespace luabridge {
 
         RCNode luaGetNamedItem(const char* name, lua_State* L); // available when m_isAttributeList is true
         RCNode luaSetNamedItem(domNode* node, lua_State* L);  // available when m_isAttributeList is true
-
+        static int luaGetEnumerator(lua_State* L);
     private:
         bool m_isAttributeList{ false };
         int m_index{ 0 };

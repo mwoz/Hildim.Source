@@ -161,7 +161,7 @@ public:
 
         @param refCountedObject A reference counted object to own.
     */
-    RefCountedObjectPtr(ReferenceCountedObjectClass* const refCountedObject)
+    RefCountedObjectPtr(ReferenceCountedObjectClass* const refCountedObject) noexcept
         : referencedObject(refCountedObject)
     {
         if (refCountedObject != nullptr)
@@ -173,7 +173,7 @@ public:
 
         @param other Another pointer.
     */
-    RefCountedObjectPtr(const RefCountedObjectPtr& other) : referencedObject(other.referencedObject)
+    RefCountedObjectPtr(const RefCountedObjectPtr& other) noexcept : referencedObject(other.referencedObject)
     {
         if (referencedObject != nullptr)
             referencedObject->incReferenceCount();
