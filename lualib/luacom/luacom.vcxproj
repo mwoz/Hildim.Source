@@ -17,6 +17,11 @@
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <!---->
   <ItemGroup>
     <ClCompile Include="src\library\LuaAux.cpp" />
@@ -65,11 +70,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\dll\luacom_dll.def" />
-    <CustomBuild Include="src\library\luacom5.lua"/>
+    <CustomBuild Include="src\library\luacom5.lua" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="luacom.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets"/>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -562,7 +562,7 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	if (tabSize == 0)
 		tabSize = 4;
 	const int wysiwyg = props.GetInt("export.html.wysiwyg", 1);
-	const int tabs = props.GetInt("export.html.tabs", 0) && (end == -1);
+	const bool tabs = (props.GetInt("export.html.tabs", 0) != 0) && (end == -1);
 	const int folding = props.GetInt("export.html.folding", 0);
 	const int onlyStylesUsed = end == -1 ? props.GetInt("export.html.styleused", 0) : 1;
 	const int titleFullPath = props.GetInt("export.html.title.fullpath", 0);

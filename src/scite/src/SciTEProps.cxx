@@ -1107,11 +1107,7 @@ void SciTEBase::ReadProperties() {
 	}
 	props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
 	wEditor.Call(SCI_SETCODEPAGE, codePage);
-	// int outputCodePage = props.GetInt("output.code.page", codePage);
-	// wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
-	// wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
 
-	// characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
 
 #ifdef __unix__
 	SString localeCType = props.Get("LC_CTYPE");
@@ -1245,6 +1241,7 @@ void SciTEBase::ReadProperties() {
 		props.SetInteger("system.code.page", ::GetACP());
 	}
 
+	characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
 	ReadFontProperties();
 
 	COLORREF cFold = layout.GetColorRef("SCR_BACKCOLOR");
@@ -1521,7 +1518,6 @@ void SciTEBase::ReadPropertiesEx() {
 	wOutput.Call(SCI_SETCODEPAGE, outputCodePage);
 	wFindRes.Call(SCI_SETCODEPAGE, outputCodePage);
 
-	characterSet = props.GetInt("character.set", SC_CHARSET_DEFAULT);
 
 #ifdef __unix__
 	SString localeCType = props.Get("LC_CTYPE");

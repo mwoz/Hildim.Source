@@ -21,13 +21,16 @@ extern "C" {
 #include <libxslt/xsltUtils.h>
 #include <libxslt/transform.h>
 namespace luabridge {
-    class domDocument;
     struct AttributeIdx;
+    struct NodesIdx;
+    struct SingleNodeIdx;
+    class domDocument;
     class domNodeList;
     class domNode;
     class domXsltProcessor;
     class domXmlSchema;
     class domParseError;
+
     typedef RefCountedObjectPtr<domDocument> RCDocument;
     typedef RefCountedObjectPtr<domNode> RCNode;
     typedef RefCountedObjectPtr<domNodeList> RCNodeList;
@@ -38,66 +41,65 @@ namespace luabridge {
     class domNode : public RefCountedObject
     {
     public:
-
-        AttributeIdx* m_pAttributeIdx = nullptr;
-
         domNode(domDocument* docRef, xmlNodePtr node, bool owner);
         ~domNode(
 
         );
-        xmlNodePtr GetNode() { return m_node; }
+        xmlNodePtr GetNode() const { return m_node; }
         void Invalidate(bool removeRef = false);
         void AssertValid(lua_State* L, const char* funcname) const;
         domDocument* GetDocRef() { return m_docRef; }
         xmlNodePtr InsertNode(domNode* nodeRef, lua_State* L, domNode* nodeBeforeRef = nullptr);
         void UnlinkNode() noexcept;
         //
-        int GetAttributeCount(lua_State* L);
+        int GetAttributeCount(lua_State* L) const;
         domNode* GetAttribute(int index, lua_State* L);
         domNode* GetAttribute(const char* name, lua_State* L);
         //std::string GetAttribute(const char* name);
         //
-        int GetChildCount(lua_State* L);
+        int GetChildCount(lua_State* L) const;
         domNode* GetChild(int index, lua_State* L);
 
-        int luaGetNodeType(lua_State* L);
+        int luaGetNodeType(lua_State* L) const;
         std::string luaGetBaseName(lua_State* L);
-        std::string luaGetNodeName(lua_State* L);
-        std::string luaGetName(lua_State* L);
-        std::string luaGetPrefix(lua_State* L);
-        std::string luaGetNamespaceURI(lua_State* L);
+        std::string luaGetNodeName(lua_State* L) const;
+        std::string luaGetName(lua_State* L) const;
+        std::string luaGetPrefix(lua_State* L) const;
+        std::string luaGetNamespaceURI(lua_State* L) const;
         RCDocument luaGetOwnerDocument(lua_State* L);
-        RCNode luaGetParentNode(lua_State* L);
-        RCNode luaGetFirstChild(lua_State* L);
-        RCNode luaGetLastChild(lua_State* L);
-        RCNode luaGetNextSibling(lua_State* L);
-        RCNode luaGetPreviousSibling(lua_State* L);
-        RCNodeList luaGetAttributes(lua_State* L);
+        RCNode luaGetParentNode(lua_State* L) const;
+        RCNode luaGetFirstChild(lua_State* L) const;
+        RCNode luaGetLastChild(lua_State* L) const;
+        RCNode luaGetNextSibling(lua_State* L)const;
+        RCNode luaGetPreviousSibling(lua_State* L) const;
+        RCNodeList luaGetAttributes(lua_State* L) ;
         RCNodeList luaGetChildNodes(lua_State* L);
         std::string luaGetText(lua_State* L) const;
         void luaSetText(const char* text, lua_State* L);
-        std::string  domNode::luaGetNodeValue(lua_State* L);
+        std::string  domNode::luaGetNodeValue(lua_State* L) const;
         inline std::string luaGetXml(lua_State* L) { return GetXml(L, false); }
         inline std::string luaTostring(lua_State* L) { return GetXml(L, true); }
         std::string GetXml(lua_State* L, bool format);
 
-        RCNode luaAppendChild(domNode* node, lua_State* L);
+        RCNode luaAppendChild(domNode* node, lua_State* L) ;
         RCNode luaCloneNode(bool deep, lua_State* L);
         RCDocument luaCloneDocument(bool deep, lua_State* L);
-        bool luaHasChildNodes(lua_State* L);
+        bool luaHasChildNodes(lua_State* L) const;
         RCNode luaInsertBefore(domNode* node, domNode* nodeBefore, lua_State* L);
         void luaRemoveChild(domNode* nodeRef, lua_State* L);
         RCNode luaSelectSingleNode(const char* xpath, lua_State* L);
         RCNodeList luaSelectNodes(const char* xpath, lua_State* L);
         std::string luaGetAttribute(const char* name, lua_State* L) const;
         void luaSetAttribute(const char* name, const char* value, lua_State* L);
-        RefCountedObjectPtr<AttributeIdx> luaAttribute();
+        inline AttributeIdx luaAttribute();
+        inline NodesIdx luaNodes();
+        inline SingleNodeIdx luaSingleNode();
         void luaRemoveAttribute(const char* name, lua_State* L);
         void SetDocRef(domDocument* docRef);
         
         
-        inline bool hasChildren() { return m_node->children != nullptr; }
-        inline bool hasNextSibling() { return m_node->next != nullptr; }
+        inline bool hasChildren() const { return m_node->children != nullptr; }
+        inline bool hasNextSibling() const { return m_node->next != nullptr; }
         static int luaGetEnumerator(lua_State* L);
 
     protected:
@@ -121,7 +123,7 @@ namespace luabridge {
         ~domDocument(
 
         );
-        xmlDocPtr GetDoc() { return m_doc; }
+        xmlDocPtr GetDoc() const { return m_doc; }
 
         domNode* CreateNodeRef(xmlNodePtr node);
         domNode* GetNodeRef(xmlNodePtr node);
@@ -138,6 +140,7 @@ namespace luabridge {
         RCError luaGetParseError() const;
         bool m_preserveSpaces{ false };
 
+        void luaSetValidator(domXmlSchema* schema);
         bool luaLoadXml(const char* xml);
 
         RCNode luaCreateURINode(int type, const std::string name, const std::string namespaceURI, lua_State* L);
@@ -154,26 +157,46 @@ namespace luabridge {
 
     private:
         xmlDocPtr m_doc;
+        xmlNodePtr m_child;
         domParseError* m_parseError;
+        domXmlSchema* m_xmlScema = nullptr;
         std::map<xmlNodePtr, domNode*> m_mapNodeRefs;  // alive ScriptObjects created for VB
         std::map<std::string, std::string> m_selectNamespaces;
         std::string m_propNamespaces;
         xmlNsPtr m_nsList{ nullptr };
     };
 
-    struct AttributeIdx : public RefCountedObject {
+    struct AttributeIdx {//; : public RefCountedObject {
     public:
         domNode* m_pNode;
         AttributeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
-        inline std::string get(const char* name, lua_State* L) {
+        inline std::string get(const char* name, lua_State* L)  const{
             return m_pNode->luaGetAttribute(name, L);
         }
         inline void set(const char* name, const char* value, lua_State* L) {
             m_pNode->luaSetAttribute(name, value, L);
         }
         ~AttributeIdx() {
-            m_pNode->m_pAttributeIdx = nullptr;
             m_pNode->decReferenceCount();
+        }
+    };
+    struct SingleNodeIdx {//; : public RefCountedObject {
+    public:
+        domNode* m_pNode;
+        SingleNodeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
+        inline RCNode get(const char* name, lua_State* L) {
+            return RCNode(m_pNode->luaSelectSingleNode(name, L));
+        }
+        ~SingleNodeIdx() {
+            m_pNode->decReferenceCount();
+        }
+    };
+    struct NodesIdx {//; : public RefCountedObject {
+    public:
+        domNode* m_pNode;
+        NodesIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
+        inline RCNodeList get(const char* name, lua_State* L) {
+            return RCNodeList(m_pNode->luaSelectNodes(name, L));
         }
     };
 
@@ -204,13 +227,10 @@ namespace luabridge {
         domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count);
         virtual ~domNodeList();
 
-        // Inherited via VbEnumerable
-        //virtual VbEnumerator* CreateEnumerator() override;
-
         inline size_t GetItemCount() { return m_nodes.size(); }
         inline domNode* GetItem(LUA_INTEGER i) { return m_nodes[i]; };
         inline domNode* GetParentNodeRef() { return m_nodeRef; }
-        inline bool IsAttributeList() { return m_isAttributeList; }
+        inline bool IsAttributeList()  const{ return m_isAttributeList; }
 
         size_t luaGetLength(lua_State* L);
         RCNode luaGetItem(int index, lua_State* L);
@@ -237,6 +257,7 @@ namespace luabridge {
         RCError luaGetParseError() const;
         bool luaLoadXml(const char* xml);
         bool luaValidate(domDocument* docRef);
+        int InrernalValidate(xmlDocPtr doc);
         std::string luaTostring(lua_State* L);
 
     private:

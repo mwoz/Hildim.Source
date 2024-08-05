@@ -15,53 +15,53 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lpcap.h">
+    <ClInclude Include="src\lpcap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lpcode.h">
+    <ClInclude Include="src\lpcode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lpprint.h">
+    <ClInclude Include="src\lpcset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lptree.h">
+    <ClInclude Include="src\lpprint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lptypes.h">
+    <ClInclude Include="src\lptree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lpvm.h">
+    <ClInclude Include="src\lptypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="src\lpvm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lpcset.h">
+    <ClInclude Include="src\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lpcap.c">
+    <ClCompile Include="src\lpcap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lpcode.c">
+    <ClCompile Include="src\lpcode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lpprint.c">
+    <ClCompile Include="src\lpcset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lptree.c">
+    <ClCompile Include="src\lpprint.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lpvm.c">
+    <ClCompile Include="src\lptree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lpcset.c">
+    <ClCompile Include="src\lpvm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="lpeg.rc">
+    <ResourceCompile Include="src\lpeg.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

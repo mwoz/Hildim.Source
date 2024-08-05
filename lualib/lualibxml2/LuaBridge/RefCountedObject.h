@@ -184,7 +184,7 @@ public:
 
       @param other Another pointer.
     */
-    RefCountedObjectPtr(RefCountedObjectPtr&& other) : referencedObject(other.referencedObject)
+    RefCountedObjectPtr(RefCountedObjectPtr&& other) noexcept : referencedObject(other.referencedObject)
     {
         other.referencedObject = nullptr;
     }
@@ -234,7 +234,7 @@ public:
       @param other A pointer to assign from.
       @returns This pointer.
      */
-    RefCountedObjectPtr& operator=(RefCountedObjectPtr&& other)
+    RefCountedObjectPtr& operator=(RefCountedObjectPtr&& other) noexcept
     {
         std::swap(referencedObject, other.referencedObject);
         return *this;
