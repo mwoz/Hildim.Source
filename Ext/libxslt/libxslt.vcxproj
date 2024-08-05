@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F8BD0B29-0447-4D95-9551-F54A69DE826D}</ProjectGuid>
+    <RootNamespace>libxslt</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <!---->
+  <ItemGroup>
+    <ClCompile Include="libxslt\attributes.c" />
+    <ClCompile Include="libxslt\attrvt.c" />
+    <ClCompile Include="libxslt\documents.c" />
+    <ClCompile Include="libxslt\extensions.c" />
+    <ClCompile Include="libxslt\extra.c" />
+    <ClCompile Include="libxslt\functions.c" />
+    <ClCompile Include="libxslt\imports.c" />
+    <ClCompile Include="libxslt\keys.c" />
+    <ClCompile Include="libxslt\namespaces.c" />
+    <ClCompile Include="libxslt\numbers.c" />
+    <ClCompile Include="libxslt\pattern.c" />
+    <ClCompile Include="libxslt\preproc.c" />
+    <ClCompile Include="libxslt\security.c" />
+    <ClCompile Include="libxslt\templates.c" />
+    <ClCompile Include="libxslt\transform.c" />
+    <ClCompile Include="libxslt\variables.c" />
+    <ClCompile Include="libxslt\xslt.c" />
+    <ClCompile Include="libxslt\xsltlocale.c" />
+    <ClCompile Include="libxslt\xsltutils.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="libxslt\attributes.h" />
+    <ClInclude Include="libxslt\documents.h" />
+    <ClInclude Include="libxslt\extensions.h" />
+    <ClInclude Include="libxslt\extra.h" />
+    <ClInclude Include="libxslt\functions.h" />
+    <ClInclude Include="libxslt\imports.h" />
+    <ClInclude Include="libxslt\keys.h" />
+    <ClInclude Include="libxslt\libxslt.h" />
+    <ClInclude Include="libxslt\namespaces.h" />
+    <ClInclude Include="libxslt\numbersInternals.h" />
+    <ClInclude Include="libxslt\pattern.h" />
+    <ClInclude Include="libxslt\preproc.h" />
+    <ClInclude Include="libxslt\security.h" />
+    <ClInclude Include="libxslt\templates.h" />
+    <ClInclude Include="libxslt\transform.h" />
+    <ClInclude Include="libxslt\variables.h" />
+    <ClInclude Include="libxslt\win32config.h" />
+    <ClInclude Include="libxslt\xslt.h" />
+    <ClInclude Include="libxslt\xsltconfig.h" />
+    <ClInclude Include="libxslt\xsltexports.h" />
+    <ClInclude Include="libxslt\xsltInternals.h" />
+    <ClInclude Include="libxslt\xsltlocale.h" />
+    <ClInclude Include="libxslt\xsltutils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
