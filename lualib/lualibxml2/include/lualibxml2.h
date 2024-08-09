@@ -256,6 +256,7 @@ namespace luabridge {
 
         RCError luaGetParseError() const;
         bool luaLoadXml(const char* xml);
+        inline bool SchemaLoaded() { return m_schema != nullptr; }
         bool luaValidate(domDocument* docRef);
         int InrernalValidate(xmlDocPtr doc);
         std::string luaTostring(lua_State* L);

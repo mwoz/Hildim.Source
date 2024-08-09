@@ -917,6 +917,12 @@ namespace luabridge {
 
     bool domDocument::luaLoadXml(const char* xml)
     {
+        if (m_xmlScema && !m_xmlScema->SchemaLoaded()) {
+            m_parseError->Clear();
+            m_parseError->Set(1, "An attempt to use a validator without a loaded schema");
+            return false;
+        }
+
         auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
         xmlSwitchEncodingName(parserCtx, "UTF-8");
         //xmlLineNumbersDefault(1);
