@@ -2,13 +2,13 @@
 //
 
 #include "stdafx.h"
-#include "TLX_LIB/CrashStat.h"
+#include "Utils/CrashStat.h"
 #include "mblua.h"
-#include "TLX_LIB/tlxMessage.h"
+#include "Containers/tlxMessage.h"
 #include "MessageBus/mbTransport.h"
 #include "L_mbConnector.h"
 #include "mblua_util.h"
-#include "tlx_lib/syslog.h"
+#include "Utils/syslog.h"
 #include "msxml2.h"
 #include <string>
 #include <io.h>  
@@ -19,6 +19,8 @@
 #include "VbEngine\VbLexer.h"
 #include "VbEngine\VbRuntime.h"
 #include <functional>
+#include <sstream>
+#include <thread>
 
 extern "C" {
 #include <lua.h>
@@ -96,6 +98,42 @@ public:
 	bool isError = false;
 	lua_State* L;
 };
+
+class SysLogCalback : public IsysLogCallback
+{
+public:
+	SysLogCalback() {
+	}
+	void StopLogging(lua_State* L, bool bPrint) {
+		sysLOGProfiler()->SetLogLevel(-1);
+		if (bPrint) {
+			lua_getglobal(L, "print");
+			lua_pushstringW(L, ssOut.str().c_str());
+			lua_pcall(L, 1, 0, 0);
+		}
+		curLen = 0; 
+		ssOut.str(_T(""));
+
+	}
+	virtual void OnLog(const CString& strLogFile, SYSTEMTIME st, TCHAR chSeverity, const CString& sOut) {
+
+		if (curLen > 50000) {
+			curLen = 0;
+			ssOut.str(_T(""));
+			sysLOGProfiler()->SetLogLevel(-1);
+			return;
+		}
+		curLen += sOut.GetLength();
+		ssOut << st.wHour << ':' << st.wMinute << ':' << st.wSecond << '.' << st.wMilliseconds << " \t" << sOut.GetString() << '\n';
+	}
+protected:
+	CString out = _T("");
+	std::wstringstream ssOut;
+	size_t curLen = 0;
+};
+
+static SysLogCalback* m_pSysLogCalback = nullptr;
+
 
 STDMETHODIMP_(ULONG) CSimpleScriptSite::AddRef() {
 	return InterlockedIncrement(&m_cRefCount);
@@ -461,6 +499,9 @@ BOOL CmbluaApp::InitInstance()
 {
 	CWinApp::InitInstance();
 	mbTransport = new CmbTransport();
+	sysLOGInit(L"XX:", L"", -1);
+	m_pSysLogCalback = new SysLogCalback();
+	sysLOGProfiler()->SetLogCallback(m_pSysLogCalback);
 	return TRUE; 
 }
 int CmbluaApp::ExitInstance()
@@ -470,7 +511,6 @@ int CmbluaApp::ExitInstance()
 	{
 		delete mbTransport;
 		mbTransport = NULL;
-		//::ExitProcess(0);
 	}
 	return 0;
 }
@@ -531,22 +571,39 @@ int do_RestoreMessage(lua_State* L)
 	return 1;
 }
 
+int do_StopSyslog(lua_State* L) {
+	bool bPrint = lua_toboolean(L, 1);
+	if(m_pSysLogCalback)
+		m_pSysLogCalback->StopLogging(L, bPrint);
+	return 0;
+}
+
 int do_CreateMbTransport(lua_State* L)
 {
 	CString strDaemon = luaL_checkstring(L,1);
 	CString strLan = luaL_checkstring(L,2);
 	CString strNetwork = luaL_checkstring(L,3);
 	CString strService = luaL_checkstring(L,4);
+
+	CString DaemonCertificatePath = lua_tostring(L,5);
+	CString CertificatePath = lua_tostring(L,6);
+	CString PrivateKeyPath = lua_tostring(L,7);
+
 	CString strUser = _T("<NotSet>");
-	CString strApp = _T("HildiM (");
+	CString strApp = _T("HildiM_");
+	CString strVer = _T("");
+	CString strPath = _T("");
+
 	lua_getglobal(L, "_ONMBCONNECT");
 	if (lua_isfunction(L, -1)) {
-		if (!lua_pcall(L, 0, 1, 0)) {
-			strUser = luaL_checkstring(L, -1);
-			lua_pop(L, 1);
+		if (!lua_pcall(L, 0, 3, 0)) {
+			strVer = luaL_checkstring(L, -1);
+			strPath = luaL_checkstring(L, -2);
+			strUser = luaL_checkstring(L, -3);
+			lua_pop(L, 3);
 		}
 		else {
-			lua_pop(L, 1);
+			lua_pop(L, 3);
 			throw_L_error(L, "OnMbConnet - internal error");
 		}
 	}
@@ -554,9 +611,27 @@ int do_CreateMbTransport(lua_State* L)
 		lua_pop(L, 1);
 		throw_L_error(L, "_ONMBCONNECT function not found. Outdated scripts version. Disconnected.");
 	}
+	strApp += strVer;
+	strApp += _T(" (");
 	strApp += strUser;
 	strApp += _T(")");
+	
+	const WCHAR* wDaemonCertificatePath = nullptr;
+	const WCHAR* wCertificatePath = nullptr;
+	const WCHAR* wPrivateKeyPath = nullptr;
 
+	if (DaemonCertificatePath != _T("")) {
+		DaemonCertificatePath = strPath + DaemonCertificatePath;
+		wDaemonCertificatePath = DaemonCertificatePath;
+	}
+	if (CertificatePath != _T("")) {
+		CertificatePath = strPath + CertificatePath;
+		wCertificatePath = CertificatePath;
+	}
+	if (PrivateKeyPath != _T("")) {
+		PrivateKeyPath = strPath + PrivateKeyPath;
+		wPrivateKeyPath = PrivateKeyPath;
+	}
 
 	if(m_strDaemon != strDaemon || m_strLan != strLan || m_strNetwork != strNetwork || m_strService != strService)
 	{
@@ -569,7 +644,18 @@ int do_CreateMbTransport(lua_State* L)
 		m_strNetwork = strNetwork;
 		m_strService = strService;
 		mbTransport->setAppName(strApp);
-		mbTransport->create(strDaemon,strLan,strNetwork, strService);
+		sysLOGProfiler()->SetLogLevel(1);
+		if (!mbTransport->create(strDaemon, strLan, strNetwork, strService,
+			wDaemonCertificatePath, wCertificatePath, wPrivateKeyPath)) {
+			delete mbTransport;
+			mbTransport = new CmbTransport();
+			m_pSysLogCalback = new SysLogCalback();
+			sysLOGProfiler()->SetLogCallback(m_pSysLogCalback);
+			sysLOGProfiler()->SetLogLevel(-1);
+			sysLOGProfiler()->SetPath("XX:");
+
+			throw_L_error(L, "MbConnet - critical Error. The certificate file path may be incorrect");
+		}
 	}
 	return 0;
 }
@@ -593,7 +679,7 @@ int do_Subscribe(lua_State* L)
 	if( m_strLan != "xxx")
 	{
 		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L);
-		cn->SetCallback();
+		cn->SetCallback(); 
 		//mb_handle h = mbTransport->mbSubscribe(cn,luaL_checkstring(L,2),lua_touserdata(L,3));
 		mb_handle h = mbTransport->mbSubscribe((CmbConnectorBase*)cn, luaL_checkstring(L, 2), lua_touserdata(L, 3));
 		lua_pushlightuserdata(L,(void*)h);
@@ -1506,12 +1592,13 @@ luaL_Reg mblua[] = {
 	{"CreateMessage",do_CreateMessage},
 	{"RestoreMessage",do_RestoreMessage},
 	{"CreateMbTransport",do_CreateMbTransport},
+	{"StopSyslog",do_StopSyslog},
 	{"Publish",do_Publish},
 	{"Subscribe", do_Subscribe},
 	{"UnSubscribe", do_UnSubscribe},
 	{"Request", do_Request},
 	{"Destroy",do_Destroy},
-	{ "CheckXML",do_CheckXML },
+	{"CheckXML",do_CheckXML },
 	{"GetGuid",do_GetGuid },
 	{"CheckVbScript",do_CheckVbScriptPlus },
 	{"CheckVbScriptMS",do_CheckVbScript },
@@ -1560,7 +1647,6 @@ int luaopen_mblua(lua_State *L)
 	// that it is the foreground window, so we hunt through all windows
 	// associated with this thread (the main GUI thread) to find a window
 	// matching the appropriate class name
-	sysLOGInit(L"", L"", -1);
 	luaL_newmetatable(L, MESSAGEOBJECT);  // create metatable for window objects
 	lua_pushvalue(L, -1);  // push metatable
 	lua_setfield(L, -2, "__index");  // metatable.__index = metatable

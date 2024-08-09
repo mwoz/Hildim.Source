@@ -32,9 +32,9 @@
 
 
   <ItemGroup>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\CrashStat.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\CrashStat.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransportBase.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\sysData.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysData.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\DualScriptObject.cpp">
       <PrecompiledHeader >NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -91,28 +91,28 @@
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbSocket.cpp"/>
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.cpp"/>
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransport.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\md5.cpp">
+    <ClCompile Include="$(CommonLibCPPDir)/Encryption\md5.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\MemCompress.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\MemCompress.cpp"/>
     <ClCompile Include="$(CommonLibCPPDir)/Http\ServerSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\StatHtmlGen.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\stmStreamBuffer.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\StatHtmlGen.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.cpp"/>
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\StringBuffer.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\StringTokenizer.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\sysLog.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\sysRegistry.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\tlxDynamicBuffer.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\tlxlib_misc.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\tlxMessage.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\tlxSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\TypedStorage.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\Variant.cpp">
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\StringBuffer.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\StringTokenizer.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysLog.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\sysRegistry.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxMessage.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\tlxSocket.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\TypedStorage.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\Variant.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\WinAuth.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/TLX_LIB\WMIquery.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\WinAuth.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\WMIquery.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="mblua.def" />
@@ -141,7 +141,8 @@
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntime.h" />
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.h" />
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbUtils.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/ZLIB\infblock.h" />
+    <ClInclude Include="$(SolutionDir)\Ext\freetype6\src\gzip\infblock.h" />
+
     <ClInclude Include="L_mbConnector.h" />
     <ClInclude Include="mblua.h" />
     <ClInclude Include="mblua_util.h" />
@@ -155,24 +156,24 @@
     <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbSocket.h" />
     <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.h" />
     <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbTransport.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\md5.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\MemCompress.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Encryption\md5.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\MemCompress.h" />
     <ClInclude Include="$(CommonLibCPPDir)/Http\ServerSocket.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\StatHtmlGen.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\stmStreamBuffer.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\StatHtmlGen.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.h" />
     <ClInclude Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\StringBuffer.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\StringTokenizer.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\sysLog.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\sysRegistry.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\tlxDynamicBuffer.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\tlxlib_misc.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\tlxMessage.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\tlxSocket.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\TypedStorage.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\Variant.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\WinAuth.h" />
-    <ClInclude Include="$(CommonLibCPPDir)/TLX_LIB\WMIquery.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\StringBuffer.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\StringTokenizer.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\sysLog.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\sysRegistry.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\tlxMessage.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/IO\tlxSocket.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/IO\TypedStorage.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\Variant.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\WinAuth.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\WMIquery.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -30,8 +30,8 @@
 #include <afxsock.h>		// MFC socket extensions
 #include <atlconv.h>
 
-#include <TLX_LIB\tlxlib_misc.h>
-#include <TLX_LIB\sysLog.h>
+#include <Utils\tlxlib_misc.h>
+#include <Utils\sysLog.h>
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
