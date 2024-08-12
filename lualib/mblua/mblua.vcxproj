@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{465000B6-959F-4B72-A71B-425D586996D1}</ProjectGuid>
     <RootNamespace>mplua</RootNamespace>
@@ -10,104 +9,106 @@
     <CharacterSet>Unicode</CharacterSet>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
-<!---->
+  <!---->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(SolutionDir)\Hildim.Default.props" />
   <PropertyGroup Label="Configuration">
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" >
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)DefaultProjectProps.props" />
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
-<!---->
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+  <!---->
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
-
-  <PropertyGroup Label="UserMacros" />
-
-
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(CommonLibCPPDir)/Utils\CrashStat.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransportBase.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/Utils\sysData.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\DualScriptObject.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\Heap.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\OleCallback.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\ScriptObject.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\ScriptObjectOleWrapper.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbArray.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbError.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbExpr.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbFunctions.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbLexer.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbParser.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRegExp.cpp">
-     <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRuntime.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbUtils.cpp">
-      <PrecompiledHeader >NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="L_mbConnector.cpp" />
     <ClCompile Include="mblua.cpp" />
     <ClCompile Include="mblua_util.cpp" />
     <ClCompile Include="StdAfx.cpp">
-      <PrecompiledHeader >Create</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(CommonLibCPPDir)/Http\HttpServerSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbMonitorAgent.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransport.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Http\HttpServerSocket.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbMonitorAgent.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbSocket.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransport.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/Encryption\md5.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(CommonLibCPPDir)/Utils\MemCompress.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Http\ServerSocket.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\MemCompress.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Http\ServerSocket.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/Utils\StatHtmlGen.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/Containers\StringBuffer.cpp" />
-    <ClCompile Include="$(CommonLibCPPDir)/Utils\StringTokenizer.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysLog.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Windows\sysRegistry.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxMessage.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/IO\tlxSocket.cpp"/>
-    <ClCompile Include="$(CommonLibCPPDir)/IO\TypedStorage.cpp"/>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\StringTokenizer.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysLog.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\sysRegistry.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxMessage.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/IO\tlxSocket.cpp" />
+    <ClCompile Include="$(CommonLibCPPDir)/IO\TypedStorage.cpp" />
     <ClCompile Include="$(CommonLibCPPDir)/Containers\Variant.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -142,7 +143,6 @@
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.h" />
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbUtils.h" />
     <ClInclude Include="$(SolutionDir)\Ext\freetype6\src\gzip\infblock.h" />
-
     <ClInclude Include="L_mbConnector.h" />
     <ClInclude Include="mblua.h" />
     <ClInclude Include="mblua_util.h" />

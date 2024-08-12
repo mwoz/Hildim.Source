@@ -571,13 +571,22 @@ int do_RestoreMessage(lua_State* L)
 	return 1;
 }
 
+int do_StartMbDebug(lua_State* L) {
+	CString path = luaL_checkstring(L, 1);
+	int lvl = static_cast<int>(luaL_checkinteger(L, 2));
+	mbTransport->StartDebugLog(path, _T("HildiMb"), lvl);
+	return 0;
+}
+int do_StopMbDebug(lua_State* L) {
+	mbTransport->StopDebugLog();
+	return 0;
+}
 int do_StopSyslog(lua_State* L) {
 	bool bPrint = lua_toboolean(L, 1);
 	if(m_pSysLogCalback)
 		m_pSysLogCalback->StopLogging(L, bPrint);
 	return 0;
 }
-
 int do_CreateMbTransport(lua_State* L)
 {
 	CString strDaemon = luaL_checkstring(L,1);
@@ -1593,6 +1602,8 @@ luaL_Reg mblua[] = {
 	{"RestoreMessage",do_RestoreMessage},
 	{"CreateMbTransport",do_CreateMbTransport},
 	{"StopSyslog",do_StopSyslog},
+	{"StartMbDebug",do_StartMbDebug},
+	{"StopMbDebug",do_StopMbDebug},
 	{"Publish",do_Publish},
 	{"Subscribe", do_Subscribe},
 	{"UnSubscribe", do_UnSubscribe},

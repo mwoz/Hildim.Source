@@ -1563,6 +1563,14 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   case WM_RBUTTONUP:
   case WM_LBUTTONUP:
     PostMessage(cbedit, WM_IUPCARET, 0, 0L);
+    if ((msg == WM_LBUTTONDOWN) && IupGetCallback(ih, "DBLCLICK_CB") && (GetKeyState(VK_LBUTTON) & 0x1000)) {
+        iupwinBaseMsgProc(ih, msg, wp, lp, result);
+        POINT cursor;
+        GetCursorPos(&cursor);
+        MapWindowPoints(HWND_DESKTOP, cbedit, &cursor, 1);
+        long p = SendMessage(cbedit, EM_CHARFROMPOS, 0, MAKELPARAM(cursor.x, cursor.y));
+        PostMessage(cbedit, EM_SETSEL, p, p);
+    }
     break;
   case WM_IUPCARET:
     winListCallCaretCb(ih, cbedit);
@@ -1922,6 +1930,14 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
   case WM_MOUSELEAVE:
     iupwinBaseMsgProc(ih, msg, wp, lp, result); /* to process ENTER/LEAVE */
     break;
+  case WM_CONTEXTMENU:
+  {
+      IFn cb = (IFn)IupGetCallback(ih, "POPUPMENU_CB");
+      if (cb) {
+          return cb(ih);
+      }
+      break;
+  }
   }
 
   return 0;

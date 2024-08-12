@@ -27,9 +27,11 @@ CMessage* cmessage_arg(lua_State* L,LPCSTR module , int idx)
 	if (!wrp) 
 	{	
 		throw_L_error(L, string_format("%s:Argument %d isn't a message", module, idx).c_str());
+		return new CMessage();
 	}
 	if (!wrp->msg) {
 		throw_L_error(L, string_format("%s:Argument %d deleted", module, idx).c_str());
+		return new CMessage();
 	}
 	return wrp->msg;
 }

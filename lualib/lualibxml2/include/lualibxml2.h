@@ -87,13 +87,13 @@ namespace luabridge {
         bool luaHasChildNodes(lua_State* L) const;
         RCNode luaInsertBefore(domNode* node, domNode* nodeBefore, lua_State* L);
         void luaRemoveChild(domNode* nodeRef, lua_State* L);
-        RCNode luaSelectSingleNode(const char* xpath, lua_State* L);
+        RCNode luaSelectSingleNode(const char* xpath, lua_State* L) const;
         RCNodeList luaSelectNodes(const char* xpath, lua_State* L);
         std::string luaGetAttribute(const char* name, lua_State* L) const;
         void luaSetAttribute(const char* name, const char* value, lua_State* L);
         inline AttributeIdx luaAttribute();
         inline NodesIdx luaNodes();
-        inline SingleNodeIdx luaSingleNode();
+        inline SingleNodeIdx luaSingleNode() const;
         void luaRemoveAttribute(const char* name, lua_State* L);
         void SetDocRef(domDocument* docRef);
         
@@ -125,7 +125,7 @@ namespace luabridge {
         );
         xmlDocPtr GetDoc() const { return m_doc; }
 
-        domNode* CreateNodeRef(xmlNodePtr node);
+        domNode* CreateNodeRef(xmlNodePtr node, bool setIncr = false);
         domNode* GetNodeRef(xmlNodePtr node);
         void RemoveNodeRef(domNode* nodeRef);
         domNode* RemoveNodeRef(xmlNodePtr node);
@@ -157,7 +157,6 @@ namespace luabridge {
 
     private:
         xmlDocPtr m_doc;
-        xmlNodePtr m_child;
         domParseError* m_parseError;
         domXmlSchema* m_xmlScema = nullptr;
         std::map<xmlNodePtr, domNode*> m_mapNodeRefs;  // alive ScriptObjects created for VB
@@ -169,7 +168,10 @@ namespace luabridge {
     struct AttributeIdx {//; : public RefCountedObject {
     public:
         domNode* m_pNode;
-        AttributeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
+        AttributeIdx(domNode* pNode) { 
+            m_pNode = pNode; 
+           // m_pNode->incReferenceCount(); 
+        }
         inline std::string get(const char* name, lua_State* L)  const{
             return m_pNode->luaGetAttribute(name, L);
         }
@@ -177,26 +179,34 @@ namespace luabridge {
             m_pNode->luaSetAttribute(name, value, L);
         }
         ~AttributeIdx() {
-            m_pNode->decReferenceCount();
+          //  m_pNode->decReferenceCount();
         }
     };
     struct SingleNodeIdx {//; : public RefCountedObject {
     public:
-        domNode* m_pNode;
-        SingleNodeIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
-        inline RCNode get(const char* name, lua_State* L) {
-            return RCNode(m_pNode->luaSelectSingleNode(name, L));
+        const domNode* m_pNode;
+        SingleNodeIdx(const domNode* pNode) { 
+            m_pNode = pNode; 
         }
-        ~SingleNodeIdx() {
-            m_pNode->decReferenceCount();
+        inline RCNode get(const char* name, lua_State* L) {
+            if (!m_pNode)
+                return RCNode(nullptr);
+            RCNode rez = m_pNode->luaSelectSingleNode(name, L);
+            m_pNode = nullptr;
+            return rez;
         }
     };
     struct NodesIdx {//; : public RefCountedObject {
     public:
         domNode* m_pNode;
-        NodesIdx(domNode* pNode) { m_pNode = pNode; m_pNode->incReferenceCount(); }
+        NodesIdx(domNode* pNode) { 
+            m_pNode = pNode; 
+        }
         inline RCNodeList get(const char* name, lua_State* L) {
-            return RCNodeList(m_pNode->luaSelectNodes(name, L));
+            if (!m_pNode)
+                return RCNodeList(nullptr);
+            RCNodeList rez = m_pNode->luaSelectNodes(name, L);
+            return rez;
         }
     };
 

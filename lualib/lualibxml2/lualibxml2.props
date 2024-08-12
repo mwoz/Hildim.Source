@@ -16,6 +16,9 @@
       <AdditionalDependencies>libxml2.lib;libxslt.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(StaticLibs);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)Ext\libxml2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <!--<Link>
       <AdditionalDependencies>gdi32.lib;imm32.lib;ole32.lib;oleaut32.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>-->

@@ -53,6 +53,7 @@
     </Lib>
     <ResourceCompile>
       <PreprocessorDefinitions>$(IsHildiMApp);$(PlatformTarget);$(ConfigurationName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
     </ResourceCompile>
   </ItemDefinitionGroup>
 </Project>

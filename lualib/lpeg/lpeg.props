@@ -8,6 +8,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>_USRDLL;LPEG_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ResourceCompile />
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

@@ -20,9 +20,7 @@
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-    </ClCompile>
+    <ClCompile />
   </ItemDefinitionGroup>
   <!---->
   <ItemGroup>

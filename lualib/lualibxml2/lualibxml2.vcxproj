@@ -57,6 +57,9 @@
     <ClInclude Include="LuaBridge\Vector.h" />
     <ClInclude Include="include\lualibxml2.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\lualibxml2.rc" />
+  </ItemGroup>
   <!-- <ItemGroup>
     <ResourceCompile Include="luahunspell.rc" />
   </ItemGroup>-->

@@ -630,6 +630,17 @@ static int cf_pane_getstyle(lua_State *L) {
 static int cf_pane_getchar(lua_State *L) {
 	return cf_pane_getU(L, SCI_GETCHARAT);
 }
+static int cf_pane_getutf8text(lua_State *L) {
+	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	sptr_t cp = host->Send(p, SCI_GETCODEPAGE, 0, 0);
+	sptr_t size = host->Send(p, SCI_GETLENGTH, 0, 0);
+	char* buff = new char[size + 1];
+	host->Send(p, SCI_GETTEXT, size, reinterpret_cast<sptr_t>(buff));
+	std::string ss = GUI::ConvertToUTF8(buff, cp);
+	lua_pushstring(L, ss.c_str());
+	delete[] buff;
+	return 1;
+}
 static int cf_pane_line(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	if (lua_gettop(L) >= 2) {
@@ -2108,6 +2119,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		lua_setfield(L, -2, "ustyle");
 		lua_pushcfunction(L, cf_pane_getchar);
 		lua_setfield(L, -2, "uchar");
+		lua_pushcfunction(L, cf_pane_getutf8text);
+		lua_setfield(L, -2, "utf8text");
 
 //!-start-[EncodingToLua]
 		lua_pushcfunction(luaState, cf_pane_get_codepage);

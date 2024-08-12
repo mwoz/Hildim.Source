@@ -39,128 +39,128 @@
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Http\HttpServerSocket.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\mbMonitorAgent.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\mbSocket.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\mbStreamSocket.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\mbTransport.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Encryption\md5.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\MemCompress.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Http\ServerSocket.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\StatHtmlGen.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\IO\stmStreamBuffer.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\stmSubjectsWatchlist.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Containers\StringBuffer.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\StringTokenizer.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\sysLog.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Windows\sysRegistry.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Containers\tlxDynamicBuffer.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\tlxlib_misc.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Containers\tlxMessage.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\IO\tlxSocket.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\IO\TypedStorage.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Windows\WinAuth.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Windows\WMIquery.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\sysData.cpp">
-      <Filter>Source Files\mb</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\MessageBus\mbTransportBase.cpp">
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\CrashStat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Utils\CrashStat.cpp">
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransportBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\Containers\Variant.cpp">
-      <Filter>Source Files\mb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysData.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbParser.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\DualScriptObject.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbLexer.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\Heap.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbRuntime.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\OleCallback.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\DualScriptObject.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\ScriptObject.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\Heap.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\ScriptObjectOleWrapper.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\OleCallback.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbArray.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\ScriptObject.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbError.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\ScriptObjectOleWrapper.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbExpr.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbArray.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbFunctions.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbError.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbLexer.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbExpr.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbParser.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbFunctions.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRegExp.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbRegExp.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRuntime.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbRuntimeManager.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\CommonLib\VbEngine\VbUtils.cpp">
-      <Filter>Source Files\vb</Filter>
+    <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Http\HttpServerSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbMonitorAgent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\mbTransport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Encryption\md5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\MemCompress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Http\ServerSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\StatHtmlGen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\StringBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\StringTokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\sysLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\sysRegistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\tlxMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\tlxSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\TypedStorage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Containers\Variant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\WinAuth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/Windows\WMIquery.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -201,134 +201,134 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Http\HttpServerSocket.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbMonitorAgent.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbProtocol.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbSocket.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbStreamSocket.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbTransport.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Encryption\md5.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Utils\MemCompress.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Http\ServerSocket.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Utils\StatHtmlGen.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\IO\stmStreamBuffer.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\stmSubjectsWatchlist.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Containers\StringBuffer.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Utils\StringTokenizer.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Utils\sysLog.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Windows\sysRegistry.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Containers\tlxDynamicBuffer.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Containers\tlxMessage.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\IO\tlxSocket.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\IO\TypedStorage.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Windows\WinAuth.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Windows\WMIquery.h">
-      <Filter>Header Files\mb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Ext\freetype6\src\gzip\infblock.h">
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbTransportBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\MessageBus\mbTransportBase.h">
-      <Filter>Header Files\mb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\DualScriptObject.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Utils\tlxlib_misc.h">
-      <Filter>Header Files\mb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\Heap.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\Containers\Variant.h">
-      <Filter>Header Files\mb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\OleCallback.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbLexer.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\RuntimeStorage.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbParser.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\ScriptObject.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbRuntime.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\ScriptObjectOleWrapper.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\DualScriptObject.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\StackContainer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\Heap.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbArray.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\OleCallback.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbError.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\RuntimeStorage.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbExpr.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\ScriptObject.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbFunctions.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\ScriptObjectOleWrapper.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbLexer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\StackContainer.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbParser.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbArray.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRegExp.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbError.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntime.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbExpr.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbFunctions.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbUtils.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbRegExp.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(SolutionDir)\Ext\freetype6\src\gzip\infblock.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbRuntimeManager.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/Http\HttpServerSocket.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\CommonLib\VbEngine\VbUtils.h">
-      <Filter>Header Files\vb</Filter>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbMonitorAgent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbProtocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbStreamSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\mbTransport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Encryption\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\MemCompress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Http\ServerSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\StatHtmlGen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/IO\stmStreamBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/MessageBus\stmSubjectsWatchlist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\StringBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\StringTokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\sysLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\sysRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\tlxDynamicBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Utils\tlxlib_misc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\tlxMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/IO\tlxSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/IO\TypedStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Containers\Variant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\WinAuth.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CommonLibCPPDir)/Windows\WMIquery.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
