@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <HildimVersion>8.2.1</HildimVersion>
+    <HildimVersion>8.2.2</HildimVersion>
     <IUPVersion>3.31</IUPVersion>
   </PropertyGroup>
   <PropertyGroup />

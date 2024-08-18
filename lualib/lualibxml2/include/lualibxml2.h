@@ -80,6 +80,7 @@ namespace luabridge {
         inline std::string luaGetXml(lua_State* L) { return GetXml(L, false); }
         inline std::string luaTostring(lua_State* L) { return GetXml(L, true); }
         std::string GetXml(lua_State* L, bool format);
+        void CheckXpathResult(xmlXPathObjectPtr xpathResult, xmlXPathContextPtr xpathCtx, lua_State* L) const;
 
         RCNode luaAppendChild(domNode* node, lua_State* L) ;
         RCNode luaCloneNode(bool deep, lua_State* L);
@@ -170,16 +171,20 @@ namespace luabridge {
         domNode* m_pNode;
         AttributeIdx(domNode* pNode) { 
             m_pNode = pNode; 
-           // m_pNode->incReferenceCount(); 
         }
-        inline std::string get(const char* name, lua_State* L)  const{
-            return m_pNode->luaGetAttribute(name, L);
+        inline std::string get(const char* name, lua_State* L)  {
+            if (!m_pNode)
+                return std::string();
+            std::string rez = m_pNode->luaGetAttribute(name, L);
+            m_pNode = nullptr;
+            return rez;
         }
         inline void set(const char* name, const char* value, lua_State* L) {
-            m_pNode->luaSetAttribute(name, value, L);
+            if (m_pNode)
+                m_pNode->luaSetAttribute(name, value, L);
+            m_pNode = nullptr;
         }
         ~AttributeIdx() {
-          //  m_pNode->decReferenceCount();
         }
     };
     struct SingleNodeIdx {//; : public RefCountedObject {
@@ -190,7 +195,7 @@ namespace luabridge {
         }
         inline RCNode get(const char* name, lua_State* L) {
             if (!m_pNode)
-                return RCNode(nullptr);
+                return RCNode();
             RCNode rez = m_pNode->luaSelectSingleNode(name, L);
             m_pNode = nullptr;
             return rez;
@@ -204,7 +209,7 @@ namespace luabridge {
         }
         inline RCNodeList get(const char* name, lua_State* L) {
             if (!m_pNode)
-                return RCNodeList(nullptr);
+                return RCNodeList();
             RCNodeList rez = m_pNode->luaSelectNodes(name, L);
             return rez;
         }

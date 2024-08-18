@@ -662,8 +662,10 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 		swprintf(cnt, 9, L"%0d", buffers.length);
 		decision = extender->HildiAlarm("%1 files have already been opened.\nClose '%2'?",
 			MB_OKCANCEL, cnt, filePath.Name().AsInternal());
-		if (decision != IDCANCEL)
-			extender->OnClose(filePath.AsUTF8().c_str());
+		if (decision == IDCANCEL)
+			return IDCANCEL;
+			
+		extender->OnClose(filePath.AsUTF8().c_str());
 	}
 	if ((CurrentBuffer()->isDirty) && (LengthDocument() || !filePath.IsUntitled() || forceQuestion)) {
 		if ((props.GetInt("are.you.sure", 1) && props.GetInt("are.you.sure.close", 1)) ||

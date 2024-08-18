@@ -692,8 +692,13 @@ SString &SString::lowercase(lenpos_t subPos, lenpos_t subLen) {
 		subLen = sLen - subPos;		// don't apply past end of string
 	}
 	for (lenpos_t i = subPos; i < subPos + subLen; i++) {
-		if (s[i] < 'A' || s[i] > 'Z')
+		if (s[i] < 'A' || s[i] > 'Z'){
+			if (s[i] >= 'À' && s[i] <= 'ß')
+				s[i] = static_cast<char>(s[i] - 'À' + 'à');
+			else if (s[i] == '¨')
+				s[i] = '¸';
 			continue;
+		}
 		else
 			s[i] = static_cast<char>(s[i] - 'A' + 'a');
 	}
@@ -705,8 +710,13 @@ SString &SString::uppercase(lenpos_t subPos, lenpos_t subLen) {
 		subLen = sLen - subPos;		// don't apply past end of string
 	}
 	for (lenpos_t i = subPos; i < subPos + subLen; i++) {
-		if (s[i] < 'a' || s[i] > 'z')
+		if (s[i] < 'a' || s[i] > 'z') {
+			if (s[i] >= 'à' && s[i] <= 'ÿ')
+				s[i] = static_cast<char>(s[i] - 'à' + 'À');
+			else if (s[i] == '¸')
+				s[i] = '¨';
 			continue;
+		}
 		else
 			s[i] = static_cast<char>(s[i] - 'a' + 'A');
 	}

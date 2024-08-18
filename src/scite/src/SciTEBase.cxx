@@ -1169,6 +1169,8 @@ void SciTEBase::SetWindowName() {
 		windowName += extender->LocalizeText("of");
 		windowName += GUI_TEXT(" ");
 		windowName += GUI::StringFromInteger(buffers.length);
+		if(buffers.length == buffers.size)
+			windowName += GUI_TEXT("(max)");
 		windowName += GUI_TEXT("]");
 	}
 	

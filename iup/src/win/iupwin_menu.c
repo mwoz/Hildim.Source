@@ -458,7 +458,7 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
     COLORREF fgcolor;
     COLORREF bgcolor;
-    COLORREF barcolor, barfgcolor;
+    COLORREF barcolor = RGB(0,0,0), barfgcolor = RGB(0, 0, 0);
     RECT rect, rectIcon;
 
     BOOL isSubmenu = FALSE;
@@ -475,18 +475,17 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
     char* clr = drawitem->itemState & ODS_SELECTED ? (drawitem->itemState & ODS_GRAYED ? "HLINACTIVECOLOR" : "HLCOLOR") : "DRAWBGCOLOR";
 
-    if (iupwinGetColorRef(root, clr, &bgcolor))
-    {
-        SetDCBrushColor(hDC, bgcolor);
-        SetBkColor(hDC, bgcolor);
-        FillRect(hDC, &rect, (HBRUSH)GetStockObject(DC_BRUSH));
-    }
-    if (!bFullSelect) {
-        if (iupwinGetColorRef(root, "BARCOLOR", &barcolor)) {
-            SetDCBrushColor(hDC, barcolor);
-            FillRect(hDC, &rectIcon, (HBRUSH)GetStockObject(DC_BRUSH));
-        }
+    iupwinGetColorRef(root, "BARCOLOR", &barcolor);
+    iupwinGetColorRef(root, clr, &bgcolor);
+    
 
+    SetDCBrushColor(hDC, bgcolor);
+    SetBkColor(hDC, bgcolor);
+    FillRect(hDC, &rect, (HBRUSH)GetStockObject(DC_BRUSH));
+
+    if (!bFullSelect) {
+        SetDCBrushColor(hDC, barcolor);
+        FillRect(hDC, &rectIcon, (HBRUSH)GetStockObject(DC_BRUSH));
     }
 
     if (iupStrEqual(ih->iclass->name, "separator")){
@@ -519,9 +518,6 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
         char* img = iupAttribGet(ih, "IMAGE");
 
-        //if (drawitem->itemState & ODS_CHECKED)
-        //    img = "check_t_µ";
-
         if (img) {
             HBITMAP hb = (HBITMAP)iupImageGetImage(img, NULL, drawitem->itemState & ODS_GRAYED, NULL);
             
@@ -533,49 +529,28 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
         if (text && iupwinGetColorRef(root, drawitem->itemState & ODS_GRAYED ? "FGINACTIVECOLOR" : "FGCOLOR", &fgcolor))
         {
+            HFONT hFont = (HFONT)iupwinGetHFont(font);
+            SetTextColor(hDC, fgcolor);
+            SelectObject(hDC, hFont);
             if (drawitem->itemState & ODS_CHECKED) {
 
                 if(!iupwinGetColorRef(root, "BARFGCOLOR", &barfgcolor))
                     barfgcolor = fgcolor;
               
                 if (IupGetInt(parent, "RADIO")) {
-                    HRGN hr = CreateEllipticRgn((parent->x - icon_w) / 2 + BCMENU_PAD + 1,
-                                                (parent->x - icon_w) / 2 + BCMENU_PAD + 1,
-                                                (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
-                                                (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
-                    HBRUSH hbr = CreateSolidBrush(barfgcolor);
-                    FillRgn(hDC, hr, hbr);
-
-                    DeleteObject(hbr);
-                    DeleteObject(hr);
-
-                    //Ellipse(hDC, (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
-                    //             (parent->x - icon_w) / 2 + BCMENU_PAD + 1, 
-                    //             (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1,
-                    //             (parent->x - icon_w) / 2 + icon_w - BCMENU_PAD - 1);
+                    SetBkColor(hDC, barcolor);
+                    SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
+                    DrawText(hDC, L"\x25CF", 1, &rect, 0); //Circle, Black
+                    SetBkColor(hDC, bgcolor);
                 }
                 else {
-                    hPen = CreatePen(PS_SOLID, 3, barfgcolor);
-
-                    hPenOld = SelectObject(hDC, hPen);
-                    line_poly[0].x = (parent->x - icon_w) / 2 + BCMENU_PAD;
-                    line_poly[0].y = (height / 2) + 1;
-                    line_poly[1].x = parent->x / 2;
-                    line_poly[1].y = height - (parent->y - icon_h) / 2 - BCMENU_PAD;
-                    line_poly[2].x = parent->x - (parent->x - icon_h) / 2 - BCMENU_PAD;
-                    line_poly[2].y = (parent->y - icon_h) / 2 + BCMENU_PAD;
-
-                    Polyline(hDC, line_poly, 3);
-                    SelectObject(hDC, hPenOld);
-                    DeleteObject(hPen);
-
+                    SetBkColor(hDC, barcolor);
+                    SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
+                    DrawText(hDC, L"\x2713", 1, &rect, 0);
+                    SetBkColor(hDC, bgcolor);
                 }
 
             }
-            
-            HFONT hFont = (HFONT)iupwinGetHFont(font);
-            SetTextColor(hDC, fgcolor);
-            SelectObject(hDC, hFont);
             
             int len = text ? strlen(text) : 0;
             
@@ -605,35 +580,10 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
              {
                  isSubmenu = TRUE;
 
-                 //lenW = 1;
-                 //wtext = L"›";// iupwinStrToSystemLen(">", &lenW);
-                 //
-                 //
-                 //SetRect(&rect, width - 15, BCMENU_PAD, width, height - BCMENU_PAD);
-                 //
-                 //DrawText(hDC, wtext, lenW, &rect, 0);
+                 SetRect(&rect, width - icon_w - BCMENU_PAD, BCMENU_PAD, width, height);
 
-                 int left = parent->x + parent->userwidth + parent->naturalwidth + BCMENU_PAD ;
-                 left = left + (width - left) / 2;
+                 DrawText(hDC, L"\x276F", 1, &rect, 0);
 
-                 line_poly[0].x = left - 4;
-                 line_poly[0].y = height / 2 - 6;
-                 line_poly[1].x = left + 4;
-                 line_poly[1].y = height / 2 ;
-                 line_poly[2].x = left - 5;
-                 line_poly[2].y = height / 2 + 7;
-
-                 hPen = CreatePen(PS_SOLID, 3, fgcolor);
-                 hPenOld = SelectObject(hDC, hPen);
-
-                 Polyline(hDC, line_poly, 3);
-                 //line_poly[0].y++;
-                 //line_poly[1].y++;
-                 //line_poly[2].y++;
-                 //Polyline(hDC, line_poly, 3);
-
-                 SelectObject(hDC, hPenOld);
-                 DeleteObject(hPen);
              }
         }
 

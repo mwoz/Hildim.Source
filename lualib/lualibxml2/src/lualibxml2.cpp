@@ -124,7 +124,18 @@ namespace luabridge {
         }
         }
     }
-
+    // trim from start (in place)
+    inline void ltrim(std::string& s) {
+        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+            }));
+    }
+    // trim from end (in place)
+    inline void rtrim(std::string& s) {
+        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+            }).base(), s.end());
+    }
     domNode::domNode(domDocument* docRef, xmlNodePtr node, bool owner)
     {
         m_docRef = docRef;
@@ -308,7 +319,6 @@ namespace luabridge {
 
         return (m_docRef->CreateNodeRef(node));
     }
-
 
     int domNode::luaGetNodeType(lua_State* L) const
     {
@@ -628,15 +638,8 @@ namespace luabridge {
         }
 
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
-        xmlXPathFreeContext(xpathCtx);
-        if (xpathResult == NULL)
-        {
-            std::string s = "Invalid XPath expression ";
-            s += xpath;
-            s += ".";
-            LuaException::Throw(LuaException(L, "luaSelectSingleNode", s.c_str(), 1));
-            return result;
-        }
+        CheckXpathResult(xpathResult, xpathCtx, L);
+
 
         if (xpathResult->nodesetval == nullptr || xpathResult->nodesetval->nodeNr == 0)
             return RCNode(nullptr);
@@ -649,10 +652,50 @@ namespace luabridge {
         return result;
     }
 
+    void domNode::CheckXpathResult(xmlXPathObjectPtr xpathResult, xmlXPathContextPtr xpathCtx, lua_State* L) const{
+
+        if (xpathResult == NULL)
+        {
+            std::string s = "Invalid XPath expression ";
+            char* erCode = "";
+            switch (xpathCtx->lastError.code) {
+                case XML_XPATH_NUMBER_ERROR: erCode = "NUMBER_ERROR "; break;
+                case XML_XPATH_UNFINISHED_LITERAL_ERROR: erCode = "UNFINISHED_LITERAL_ERROR "; break;
+                case XML_XPATH_START_LITERAL_ERROR: erCode = "START_LITERAL_ERROR "; break;
+                case XML_XPATH_VARIABLE_REF_ERROR: erCode = "VARIABLE_REF_ERROR "; break;
+                case XML_XPATH_UNDEF_VARIABLE_ERROR: erCode = "UNDEF_VARIABLE_ERROR "; break;
+                case XML_XPATH_INVALID_PREDICATE_ERROR: erCode = "INVALID_PREDICATE_ERROR "; break;
+                case XML_XPATH_EXPR_ERROR: erCode = "EXPR_ERROR "; break;
+                case XML_XPATH_UNCLOSED_ERROR: erCode = "UNCLOSED_ERROR "; break;
+                case XML_XPATH_UNKNOWN_FUNC_ERROR: erCode = "UNKNOWN_FUNC_ERROR "; break;
+                case XML_XPATH_INVALID_OPERAND: erCode = "INVALID_OPERAND "; break;
+                case XML_XPATH_INVALID_TYPE: erCode = "INVALID_TYPE "; break;
+                case XML_XPATH_INVALID_ARITY: erCode = "INVALID_ARITY "; break;
+                case XML_XPATH_INVALID_CTXT_SIZE: erCode = "INVALID_CTXT_SIZE "; break;
+                case XML_XPATH_INVALID_CTXT_POSITION: erCode = "INVALID_CTXT_POSITION "; break;
+                case XML_XPATH_MEMORY_ERROR: erCode = "MEMORY_ERROR "; break;
+            }
+            s += erCode;
+
+            s += xpathCtx->lastError.str1;
+            s += ".\n";
+            std::string parse = xpathCtx->lastError.str1;
+            s += parse.substr(0, xpathCtx->lastError.int1);
+            s += "-->";
+            s += parse.substr(xpathCtx->lastError.int1 , 1);
+            s += "<--";
+            if(parse.length() > xpathCtx->lastError.int1)
+                s += parse.substr(xpathCtx->lastError.int1 + 1);
+            xmlXPathFreeContext(xpathCtx);
+            LuaException::Throw(LuaException(L, "CheckXpathResult", s.c_str(), 1));
+        }
+        xmlXPathFreeContext(xpathCtx);    
+    }
+
     RCNodeList domNode::luaSelectNodes(const char* xpath, lua_State* L) {
         AssertValid(L, "luaSelectNodes");
         RCNodeList result;
-        auto xpathCtx = m_docRef->NewXPathContext(L);
+        xmlXPathContextPtr xpathCtx = m_docRef->NewXPathContext(L);
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
             xmlXPathFreeContext(xpathCtx);
@@ -660,18 +703,11 @@ namespace luabridge {
         }
 
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
-        xmlXPathFreeContext(xpathCtx);
-        if (xpathResult == NULL)
-        {
-            std::string s = "Invalid XPath expression ";
-            s += xpath;
-            s += ".";
-            LuaException::Throw(LuaException(L, "luaSelectNodes", s.c_str(), 1));
-            return result;
-        }
+        CheckXpathResult(xpathResult, xpathCtx, L);
+
         xmlNodeSetPtr noteSet = xpathResult->nodesetval;
         domNodeList* l = new domNodeList(m_docRef, noteSet ? noteSet->nodeTab : nullptr, noteSet ? noteSet->nodeNr : 0);
-       // l->incReferenceCount()
+
         result = RCNodeList(l);
         xmlXPathFreeObject(xpathResult);
         return result;
@@ -1044,18 +1080,7 @@ namespace luabridge {
         return std::string("");
 
     }
-    // trim from start (in place)
-    inline void ltrim(std::string& s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-            return !std::isspace(ch);
-            }));
-    }
-    // trim from end (in place)
-    inline void rtrim(std::string& s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-            return !std::isspace(ch);
-            }).base(), s.end());
-    }
+
     void domDocument::luaSetProperty(const std::string name, const std::string value, lua_State* L)
     {
 

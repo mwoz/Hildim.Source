@@ -25,7 +25,7 @@ public:
 
     //----------------------------------------------------------------------------
 
-    LuaException(lua_State* L, char const* f, char const* d, long) : m_L(L) { m_what += f; m_what += ":\n"; m_what += d; whatFromStack(); }
+    LuaException(lua_State* L, char const* f, char const* d, long ec) : m_L(L) { m_what += f; m_what += ":\n"; m_what += d; if(ec>1) whatFromStack(); }
 
     //----------------------------------------------------------------------------
 
