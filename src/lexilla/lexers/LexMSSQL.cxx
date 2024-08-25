@@ -549,4 +549,4 @@ void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 	// styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
-LexerModule lmMSSQL(SCLEX_MSSQL, LexerMSSQL::LexerFactoryMSSQL, "mssql", sqlWordListDesc);
+extern const LexerModule lmMSSQL(SCLEX_MSSQL, LexerMSSQL::LexerFactoryMSSQL, "mssql", sqlWordListDesc);

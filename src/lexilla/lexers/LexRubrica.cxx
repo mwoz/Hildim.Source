@@ -7,7 +7,7 @@
 // Copyright 1998-2005 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <string.h>
 #include <regex>
 #include <ctype.h>
@@ -207,7 +207,7 @@ void LexerRubrica::Anchor(LexAccessor &styler, StyleContext &sc) {
 	sc.Forward();
 
 	std::string l = LineEnd(styler, sc);
-	std::smatch mtch;  
+	std::smatch mtch;
 	if (l.length() && std::regex_search(l, mtch, reCellEx2) && (mtch.length() > 0) ) {
 
 		sc.SetState(SCE_RBR_CELL);
@@ -249,7 +249,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 					sc.SetState(SCE_RBR_DEFAULT);
 				}
 
-				l = LineEnd(styler, sc); 
+				l = LineEnd(styler, sc);
 				if (l.length() && std::regex_search(l, mtch, reCellEx) && mtch.length() > 0) {
 
 					sc.SetState(SCE_RBR_CELL);
@@ -401,7 +401,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 			}
 			goto forward;
 		}
-		
+
 		if (sc.atLineStart) {
 			if (curState == SCE_RBR_OPERATOR_END || curState == SCE_RBR_KEYWORD) {
 				sc.SetState(SCE_RBR_DEFAULT);
@@ -493,7 +493,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 		} else if(sc.state == SCE_RBR_KEYWORD) {
 			sc.SetState(SCE_RBR_DEFAULT);
 		}
-forward:		
+forward:
 		sc.Forward();
 	}
 
@@ -507,5 +507,5 @@ void SCI_METHOD LexerRubrica::Fold(Sci_PositionU, Sci_Position, int, IDocument*)
 
 }
 
-LexerModule lmRubrica(SCLEX_RUBRICA, LexerRubrica::LexerFactoryRubrica, "rubrica", rbrWordLists);
+extern const LexerModule lmRubrica(SCLEX_RUBRICA, LexerRubrica::LexerFactoryRubrica, "rubrica", rbrWordLists);
 

@@ -1549,6 +1549,10 @@ Sci::Position Document::Redo() {
 	return newPos;
 }
 
+int Document::UndoSequenceDepth() const noexcept {
+	return cb.UndoSequenceDepth();
+}
+
 void Document::DelChar(Sci::Position pos) {
 	DeleteChars(pos, LenChar(pos));
 }

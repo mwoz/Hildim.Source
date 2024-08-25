@@ -256,7 +256,7 @@ void LexerPGSQL::SetTransparentTagNum(const char* tag) {
 	$transparent_tag = "";
 	if (!tag)
 		return;
-	// Первые 2 (function procedure) тэга не помечаем - чтобы в них был фолдинг и возможность 
+	// Первые 2 (function procedure) тэга не помечаем - чтобы в них был фолдинг и возможность
 	//вкладывать другие теги с подсветкой
 	if(!strcmp("$function$", tag) || !strcmp("$procedure$", tag) || !strcmp("$block$", tag))
 		return;
@@ -311,7 +311,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				commentLevel = 0;
 				Sci_PositionU i;
 				for (i = startPos - 1; i && styler.StyleAt(i) == SCE_PGSQL_COMMENT; i--);
-				for(Sci_PositionU j = i + 1; j <= startPos; j++)				
+				for(Sci_PositionU j = i + 1; j <= startPos; j++)
 				{
 					if (styler.Match(j, "/*")) {
 						commentLevel++;
@@ -331,7 +331,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			styler.SetLineState(sc.currentLine, TransparentTagNum2LineState());
 		}
 		// Determine if the current state should terminate.
-		switch (sc.state) { 
+		switch (sc.state) {
 		case SCE_PGSQL_$TAG:
 			if (sc.ch == '$') {
 				int nextState = SCE_PGSQL_$STRING;
@@ -377,7 +377,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			}
 			break;
 		}
-		
+
 		switch (sc.state) {
 		case SCE_PGSQL_OPERATOR_NOFOLD:
 		case SCE_PGSQL_OPERATOR:
@@ -474,7 +474,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 					sc.ForwardSetState(SCE_PGSQL_DEFAULT);
 				}
 			}
-			else{ 
+			else{
 				TryClearTransTagStyle(sc);
 			}
 			break;
@@ -510,7 +510,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			else if (sc.ch != '0' && sc.ch != '1') {
 				sc.ChangeState(SCE_PGSQL_DEFAULT);
 			}
-			break;		
+			break;
 		case SCE_PGSQL_HEXSTRING:
 			if (sc.ch == '\'') {
 				sc.ForwardSetState(SCE_PGSQL_DEFAULT);
@@ -531,7 +531,7 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 			else if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)) ||
 			          ((sc.ch == '-' || sc.ch == '+') && IsADigit(sc.chNext) && !IsADigit(sc.chPrev))) {
 				sc.SetState(SCE_PGSQL_NUMBER);
-			} 
+			}
 			else if (sc.MatchIgnoreCase("b'")) {
 				sc.SetState(SCE_PGSQL_BYTESTRING);
 				sc.Forward();
@@ -620,7 +620,7 @@ public:
 		currentPos--;
 
 		Init();
-	}	
+	}
 	std::string GetCurLowered() {
 		Sci_PositionU prevPos = currentPos;
 		SkipSameStyle();
@@ -671,7 +671,7 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 	int lineState = 0;
 	if (fc.lineCurrent > 0)
 		lineState = styler.GetLineState(fc.lineCurrent - 1) & 0x1000000;
-	
+
 	for (; fc.More(); fc.Forward()) {
 
 		// Comment folding
@@ -717,7 +717,7 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 				char c = static_cast<char>(tolower(fc.ch));
 				if ((c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'i' || c == 'l' || c == 'f' || c == 'w') && isspacechar(fc.chPrev)) {
 					std::string strSt = fc.GetCurLowered();
-					
+
 					if (strSt == "loop" || strSt == "case" || strSt == "begin" || strSt == "if") {
 						if (levelMinCurrent > levelCurrent)
 							levelMinCurrent = levelCurrent;
@@ -726,7 +726,7 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 
 					else if (strSt == "create") {
 						strSt = fc.GetNextLowered(SCE_PGSQL_DEFAULT);
-						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц						
+						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц
 							if (levelMinCurrent > levelCurrent)
 								levelMinCurrent = levelCurrent;
 							levelCurrent++;
@@ -794,7 +794,7 @@ void SCI_METHOD LexerPGSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 	}
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
 	// int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
-	// styler.SetLevel(lineCurrent, levelPrev | flagsNext);	
+	// styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
-LexerModule lmPGSQL(SCLEX_PGSQL, LexerPGSQL::LexerFactoryPGSQL, "pgsql", pgsqlWordListDesc);
+extern const LexerModule lmPGSQL(SCLEX_PGSQL, LexerPGSQL::LexerFactoryPGSQL, "pgsql", pgsqlWordListDesc);

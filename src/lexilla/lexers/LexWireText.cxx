@@ -60,7 +60,7 @@ class LexerWireFormat : public ILexer5 {
 	CharacterSet setFoldingWordsBegin;
 	WordList wTypes;	//переданные нам вордлисты
 
-	const std::regex reCase, reIfElse, reComment; 
+	const std::regex reCase, reIfElse, reComment;
 	constexpr bool IsOperator(int ch) noexcept {
 		if (IsAlphaNumeric(ch))
 			return false;
@@ -321,10 +321,10 @@ void SCI_METHOD LexerWireFormat::Fold(Sci_PositionU startPos, Sci_Position lengt
 				styler.SetLevel(lineCurrent, (levelCurrent | levelCurrent << 16) | SC_FOLDLEVELWHITEFLAG);
 			}
 			visibleChars = 0;
-		}	
+		}
 	}
 
 }
 
-LexerModule lmWireFormat(SCLEX_WIREFORMAT, LexerWireFormat::LexerFactoryWireFormat, "wireformat", wfWordLists);
+extern const LexerModule lmWireFormat(SCLEX_WIREFORMAT, LexerWireFormat::LexerFactoryWireFormat, "wireformat", wfWordLists);
 

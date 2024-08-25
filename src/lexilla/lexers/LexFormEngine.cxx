@@ -368,7 +368,7 @@ Sci_Position SCI_METHOD LexerFormEngine::WordListSet(int n, const char *wl) {
 	wordListN = &keywords[n];
 	int firstModification = -1;
 	if (wordListN && n < KW_FM_NKEYWORDS) {
-		WordList wlNew;  
+		WordList wlNew;
 		wlNew.Set(wl);
 		if (*wordListN != wlNew) {
 			wordListN->Set(wl);
@@ -595,7 +595,7 @@ bool LexerFormEngine::TryClearTransTagStyle(StyleContext& sc) {
 	return false;
 }
 
-void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& styler) {	
+void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& styler) {
 	switch (sc.state) {
 	case SCE_FM_PGSQL_$TAG:
 		if (sc.ch == '$') {
@@ -613,7 +613,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 					$transparent_tagNum = 0;
 					nextState = SCE_FM_PGSQL_DEFAULT;
 				}
-			} 
+			}
 			else if (transparentTags.InList($tag)) {
 				SetTransparentTagNum($tag.c_str());
 				$tag = "";
@@ -639,7 +639,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 					$transparent_tag = "";
 					$transparent_tagNum = 0;
 				}
-			} 
+			}
 		}
 		break;
 	}
@@ -805,7 +805,7 @@ void SCI_METHOD LexerFormEngine::ColorisePSQL(StyleContext& sc, LexAccessor& sty
 		else if (sc.MatchIgnoreCase("e'")) {
 			sc.SetState(SCE_FM_PGSQL_ESCQSTRING);
 			sc.Forward();
-		}		
+		}
 		else if (IsAWordStart(sc.ch)) {
 			sc.SetState(SCE_FM_PGSQL_IDENTIFIER);
 		}
@@ -1525,7 +1525,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 	int lineState = 0;
 
 	ReadTransparentTagNum(styler, startPos);
-	
+
 	if (startPos && sc.state >= SCE_FM_PGSQL_DEFAULT) {
 		switch (sc.state) {
 		case SCE_FM_PGSQL_$STRING:
@@ -1590,7 +1590,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 	}
 
 
-	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) { 
+	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 
 		if (sc.atLineStart){
 			sc.SetState(onStartNextLine(sc.state));
@@ -1624,7 +1624,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 				sc.SetState(SCE_FM_CDATA);
 				continue;
 			}
-			
+
 		}
 		switch(GetSector(sc.state)){
 		case TYPE_SPACE:
@@ -1715,7 +1715,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 							else
 								sc.ForwardSetState(SCE_FM_PLAINCDATA);
 						}
-					} 
+					}
 					else if (sc.Match("[--]")) {
 						if (options.isSyslog) {
 							sc.Forward((3));
@@ -1740,7 +1740,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 					}else
 						sc.ForwardSetState(SCE_FM_PLAINCDATA);
 				}
-				
+
 			} else if(options.isSyslog && sc.state == SCE_FM_DEFAULT) {// && sc.chPrev == '<'
 				if (sc.Match("<![CDATA[")) {
 					sc.SetState(SCE_FM_CDATA);
@@ -1950,7 +1950,7 @@ void FoldContext::Forward(){
 		lineFlag |= GetSector(style);
 		styler.SetLineState(currentLine, lineFlag);
 		lineFlag = lineFlag & FM_STARTCDATA ? FM_PREVCDATA : 0;
-	} 
+	}
 	if (atLineEnd && currentPos < endPos){
 		lineFlag |= styler.GetLineState(currentLine + 1);
 		int lev = foldAtElse ? levelMinCurrent : prevLevel;
@@ -1964,7 +1964,7 @@ void FoldContext::Forward(){
 		if (lev != styler.LevelAt(currentLine)) {
 			styler.SetLevel(currentLine, lev);
 		}
-		
+
 		visibleChars = 0;
 		if (currentPos < endPos) {
 			currentLine++;
@@ -2003,7 +2003,7 @@ void FoldContext::GetRangeLowered(unsigned int start,
 	unsigned int end,
 	char *s,
 	unsigned int len) {
-		unsigned int i = 0; 
+		unsigned int i = 0;
 		while ((i < end - start + 1) && (i < len-1)) {
 			s[i] = static_cast<char>(tolower(styler[start + i]));
 			i++;
@@ -2047,16 +2047,16 @@ bool FoldContext::WalkToEOL(bool to2Dot){
 		bool found2dot = false;
 		if (to2Dot && ch == ':' && style == SCE_FM_VB_OPERATOR)
 			found2dot = true;
-		
+
 		atLineStart = atLineEnd;
 		currentPos++;
 		if (ch >= 0x100)
 			currentPos++;
-					
+
 		ch = chNext;
 		GetNextChar(currentPos + ((ch >= 0x100) ? 1 : 0));
 		style = styler.StyleAt(currentPos) & 0xFF;
-		
+
 		if (found2dot) {
 			visibleChars = 0;
 			return true;
@@ -2076,7 +2076,7 @@ bool FoldContext::FindThen() {
 				s[0] = 0;
 			}
 		}
-		
+
 		if (More()) {
 			prevStrCont = (style == SCE_FM_VB_STRINGCONT);
 			Forward();
@@ -2090,7 +2090,7 @@ bool FoldContext::FindThen() {
 }
 
 bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess, LexAccessor &styler) {
-	
+
 	while ( initStyle == SCE_FM_VB_STRINGCONT) {
 		//Возможно разрешить фолдинг начиная с данной строки не удасться, и тогда нам нужно перезапустить фолдинг со строчки выше
 		int prevLine = pAccess->LineFromPosition(startPos) - 1;
@@ -2114,7 +2114,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 			int prevFold = prevLev & SC_FOLDLEVELNUMBERMASK;
 			int prevFoldNext = (prevLev >> 16) & SC_FOLDLEVELNUMBERMASK;
 			if (fc.MatchLowerStyledLine(0, pAccess) != SCE_FM_VB_COMMENT) 				{
-			
+
 				if ((prevFold < prevFoldNext) || (prevFold == prevFoldNext && processComment > 1)) {
 					fc.currentLevel--;
 					fc.prevLevel--;
@@ -2143,7 +2143,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 	bool found2dot = false;//При найденном двоеточии не двгиемся вперед!
 	for (bool doing = fc.More(); doing; doing = fc.More(), found2dot ? (found2dot = false): true, fc.Forward()) {
 		int sector = GetSector(fc.style);
-		if (fc.atLineStart) 
+		if (fc.atLineStart)
 			fc.AddFlag(sector<<4);
 
 		switch (sector) {
@@ -2225,7 +2225,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
  					} else if (wFold.InList(s)) {//начало фолдинга - do function sub for with property while
 						fc.Up();
 					} else if (!strcmp(s, "case")) {
-						fc.DecreaseLevel(FM_NEXTFOLD); 
+						fc.DecreaseLevel(FM_NEXTFOLD);
 						fc.Up();
 					} else if (wRefold.InList(s) && options.foldAtElse) {//промежуточный фолдинг для ифа и свитча - case else elseif
 						//if (!strcmp(s, "elseif") && !fc.FindThen()) {
@@ -2248,7 +2248,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 									break;//Енд непоняно чего не фолдим
 							} else
 								break;
-							
+
 						}
 						fc.currentLevel--;
 					}
@@ -2291,9 +2291,9 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 						processComment = 0;
 					} else {
 						processComment++;
-					}	
+					}
 					found2dot = fc.WalkToEOL(to2Dot);
-					continue;	
+					continue;
 				}
 			default:
 				break;
@@ -2329,7 +2329,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 				// Folding between begin or case and end
 				char c = static_cast<char>(tolower(fc.ch));
 				if ((c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'i' || c == 'l' || c == 'f' || c == 'w') && isspacechar(fc.chPrev)) {
-						
+
 					fc.GetNextLowered(s, 100);
 
 					if (!strcmp(s, "loop") || !strcmp(s, "case") || !strcmp(s, "if") || !strcmp(s, "begin")) {
@@ -2337,12 +2337,12 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 					}
 					else if (!strcmp(s, "create")) {
 						std::string strSt = fc.GetStyleLowered(SCE_FM_PGSQL_DEFAULT);
-						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц						
+						if (strSt == "proc" || strSt == "procedure" || strSt == "function" || strSt == "trigget" || strSt == "view" || strSt == "table") {//не фолдим создание транзакций и временных таблиц
 							fc.Up();
 						}
 					}
 					else if (!strcmp(s, "end") && ((styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK) < fc.currentLevel)) {
-						fc.currentLevel--; 
+						fc.currentLevel--;
 						std::string test = styler.GetRange(fc.currentPos, styler.LineEnd(fc.currentLine) + 1);
 						std::smatch mtch;
 						if (std::regex_search(test, mtch, rePgLongEnd)) {
@@ -2353,7 +2353,7 @@ bool LexerFormEngine::PlainFold(Sci_PositionU startPos, Sci_Position length, int
 						fc.currentLevel = styler.LevelAt(0) & SC_FOLDLEVELNUMBERMASK;
 					}
 				}
-			} 
+			}
 			if (fc.style == SCE_FM_PGSQL_OPERATOR) {
 				if (fc.ch == ')')
 					fc.currentLevel--;
@@ -2380,5 +2380,5 @@ void SCI_METHOD LexerFormEngine::Fold(Sci_PositionU startPos, Sci_Position lengt
 
 
 
-LexerModule lmFormEngine(SCLEX_FORMENJINE, LexerFormEngine::LexerFactoryFM, "formenjine", fnWordLists);
+extern const LexerModule lmFormEngine(SCLEX_FORMENJINE, LexerFormEngine::LexerFactoryFM, "formenjine", fnWordLists);
 

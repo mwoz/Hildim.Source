@@ -777,4 +777,4 @@ LexicalClass lexicalClasses[] = {
 
 }
 
-LexerModule lmLua(SCLEX_LUA, LexerLua::LexerFactoryLua, "lua", luaWordListDesc);
+extern const LexerModule lmLua(SCLEX_LUA, LexerLua::LexerFactoryLua, "lua", luaWordListDesc);

@@ -20,7 +20,7 @@
 #endif
 #ifdef __BORLANDC__
 // Borland C++ displays warnings in vector header without this
-#pragma option -w-ccc -w-rch 
+#pragma option -w-ccc -w-rch
 #endif
 
 #include <string>
@@ -253,10 +253,10 @@ const char* SCI_METHOD LexerCubeFormula::PropertyGet(const char* key) {
 void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument* pAccess) {
 	if (initStyle == SCE_CF_COMMENT)
 		initStyle = SCE_CF_DEFAULT;
-	
+
 	LexAccessor styler(pAccess);
 	StyleContext sc(startPos, length, initStyle, styler, static_cast<char>(STYLE_MAX));
-	
+
 	for (bool doing = sc.More(); doing; doing = sc.More(), sc.Forward()) {
 		if (sc.state == SCE_CF_IDENTIFIER && !iswordchar(sc.ch)) {
 			char s[256];
@@ -308,7 +308,7 @@ void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position lengt
 			if (!IsOperator(sc.ch)) {
 				sc.SetState(SCE_CF_DEFAULT);
 			}
-			
+
 		}
 
 		if (sc.state == SCE_CF_DEFAULT) {
@@ -350,7 +350,7 @@ void SCI_METHOD LexerCubeFormula::Lex(Sci_PositionU startPos, Sci_Position lengt
 
 
 void SCI_METHOD LexerCubeFormula::Fold(Sci_PositionU, Sci_Position, int, IDocument*) {
-	
+
 
 
 
@@ -358,5 +358,5 @@ void SCI_METHOD LexerCubeFormula::Fold(Sci_PositionU, Sci_Position, int, IDocume
 
 
 
-LexerModule lmCubeFormula(SCLEX_CUBEFORMULA, LexerCubeFormula::LexerFactoryCubeFormula, "cubeformula", cfWordLists);
+extern const LexerModule lmCubeFormula(SCLEX_CUBEFORMULA, LexerCubeFormula::LexerFactoryCubeFormula, "cubeformula", cfWordLists);
 

@@ -1554,25 +1554,25 @@ LRESULT IupLayoutWnd::OnNcHitTestClient(HWND hwnd, POINT cursor) {
 	const char * childName = IupGetAttribute(ih, "NAME");
 	if (childName && !strcmp("SYSMENU_ICON", childName))
 		return HTSYSMENU;
-	else if (wp.showCmd != SW_SHOWMAXIMIZED && childName && !strcmp("HILDIM_FRAME", childName)) {
+	else if (childName && !strcmp("HILDIM_FRAME", childName)) {
 		if (cursor.x <= 3) {
 			if (cursor.y <= 3)
-				return HTTOPLEFT;
+				return wp.showCmd == SW_SHOWMAXIMIZED ? HTCAPTION : HTTOPLEFT;
 			if (cursor.y >= rect.bottom - rect.top - 3)
-				return HTBOTTOMLEFT;
-			return HTLEFT;
+				return wp.showCmd == SW_SHOWMAXIMIZED ? HTCLIENT : HTBOTTOMLEFT;
+			return wp.showCmd == SW_SHOWMAXIMIZED ? HTCLIENT : HTLEFT;
 		}
 		else if (cursor.x >= rect.right - rect.left - 3) {
 			if (cursor.y <= 3)
-				return HTTOPRIGHT;
+				return wp.showCmd == SW_SHOWMAXIMIZED ? HTCAPTION : HTTOPRIGHT;
 			if (cursor.y >= rect.bottom - rect.top - 3)
-				return HTBOTTOMRIGHT;
-			return HTRIGHT;
+				return wp.showCmd == SW_SHOWMAXIMIZED ? HTCLIENT : HTBOTTOMRIGHT;
+			return wp.showCmd == SW_SHOWMAXIMIZED ? HTCLIENT : HTRIGHT;
 		}
 		else if (cursor.y <= 3)
-			return HTTOP;
+			return wp.showCmd == SW_SHOWMAXIMIZED ? HTCAPTION : HTTOP;
 		else if (cursor.y >= rect.bottom - rect.top - 3)
-			return HTBOTTOM;
+			return wp.showCmd == SW_SHOWMAXIMIZED ? HTCLIENT : HTBOTTOM;
 	}
 
 	return HTCAPTION;
