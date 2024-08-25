@@ -225,7 +225,6 @@ protected:
 	void CopyAsRTF();
 	void CopyAsHTML();
 	void CopyAsHTMLText();
-	void FullScreenToggle();
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);
 	void Command(WPARAM wParam, LPARAM lParam);
 	HWND MainHWND();

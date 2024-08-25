@@ -11,7 +11,8 @@ extern "C" {
 #include "../../iup/src/iup_str.h"
 #include "../../iup/src/win/iupwin_drv.h"
 #include "../../iup/srccontrols/color/iup_colorhsi.h"
-
+#include "../../iup/src/iup_object.h"
+#include "../../iup/src/win/iupwin_handle.h"
 
 std::map<std::string, IupChildWnd*> classList;
 
@@ -1261,33 +1262,41 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		NULL);
 
 
-	containers[1] = IupSetAtt(NULL, IupCreatep("vbox",
-		IupSetAtt(NULL, IupCreatep("expander",
-			pTab,
-			NULL),
-			"NAME", "TabbarExpander",
-			"BARSIZE", "0",
-			"EXPAND", "HORIZONTAL",
-			"MINSIZE", "x0",
-			"STATEREFRESH", "NO",
-			NULL),
+	containers[1] = IupSetAtt(NULL, IupCreatep("flatframe",
+		IupSetAtt(NULL, IupCreatep("vbox",
+			IupSetAtt(NULL, IupCreatep("expander",
+				pTab,
+				NULL),
+				"NAME", "TabbarExpander",
+				"BARSIZE", "0",
+				"EXPAND", "HORIZONTAL",
+				"MINSIZE", "x0",
+				"STATEREFRESH", "NO",
+				NULL),
 
-		IupSetAtt(NULL, IupCreatep("split", containers[2],
-			containers[4], NULL),
-			"ORIENTATION", "HORIZONTAL",
-			"NAME", "BottomBarSplit",
-			"SHOWGRIP", "NO",
-			"COLOR", scrSPLITCOLOR,
-			"FILLCOLOR", scrSPLITCOLOR,
-			"BORDERCOLOR", scrBORDERCOLOR ,
-			"BARSIZE", "5",
-			"LAYOUTDRAG", layoutdrag,
+			IupSetAtt(NULL, IupCreatep("split", containers[2],
+				containers[4], NULL),
+				"ORIENTATION", "HORIZONTAL",
+				"NAME", "BottomBarSplit",
+				"SHOWGRIP", "NO",
+				"COLOR", scrSPLITCOLOR,
+				"FILLCOLOR", scrSPLITCOLOR,
+				"BORDERCOLOR", scrBORDERCOLOR,
+				"BARSIZE", "5",
+				"LAYOUTDRAG", layoutdrag,
+				NULL),
+			NULL),
+			"NAME", "SciteVB",
+			"MINSIZE", "100x100",
 			NULL),
 		NULL),
-		"NAME", "SciteVB",
-		"MINSIZE", "100x100",
-		//"VISIBLE", "NO",
+		"NAME", "HILDIM_FRAME",
+		"HTTRANSPARENT", "YES",
+		"FRAMESPACE", "1",
+		"FRAMEWIDTH", "2",
+		"FRAMECOLOR", scrBORDERCOLOR,
 		NULL);
+	ihBorder = containers[1];
 
 	containers[0] = IupSetAtt(NULL, IupCreatep("dialog",
 		containers[1],
@@ -1299,6 +1308,7 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		"SHRINK", "YES",
 		"FLAT", "YES",
 		"HLCOLOR", scrHLCOLOR,
+		//"MARGIN", "5x5",
 		"BORDERHLCOLOR", scrBORDERHLCOLOR,
 		"BORDERCOLOR", scrBORDERCOLOR,
 		"BGCOLOR", scrBGCOLOR,
@@ -1318,8 +1328,16 @@ Ihandle* IupLayoutWnd::Create_dialog()
 		NULL);
 	//IupSetGlobal("DLGBGCOLOR", "0 0 250");
 	//IupSetGlobal("MENUBGCOLOR", "0 255 255");
-	
+	ihDialog = containers[0];
 	return containers[0];
+}
+UINT IupLayoutWnd::ShowBorder(bool bShow) {
+	WINDOWPLACEMENT wp = WINDOWPLACEMENT();
+	::GetWindowPlacement((HWND)IupGetAttribute(hMain, "NATIVEPARENT"), &wp);//(::GetAsyncKeyState(VK_LBUTTON) || sysminimized) &&
+	
+	IupSetAttribute(ihBorder, "FRAMECOLOR", IupGetAttribute(ihDialog, (bShow && (wp.showCmd != SW_SHOWMAXIMIZED)) ? "BORDERCOLOR" : "BGCOLOR"));
+	IupRedraw(ihBorder, false);
+	return wp.showCmd;
 }
 
 static int cf_iup_get_layout(lua_State *L){
@@ -1350,7 +1368,7 @@ void IupLayoutWnd::CreateLayout(lua_State *L, void *pS){
 	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)((SciTEWin*)pSciteWin)->GetID());
 	IupShowXY(hMain, 0, 0);
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
-	//subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
+	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 }
 
@@ -1385,7 +1403,6 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 		ci.scrollsize = 15;
 
 		pW->Call(SCI_LISTCUSTOMCOLORS, (WPARAM)&ci);
-
 	}
 }
 
@@ -1440,23 +1457,9 @@ void IupLayoutWnd::AdjustTabBar(){
 
 LRESULT PASCAL IupLayoutWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
 	switch (uMsg){
-	case WM_SIZE:
-	{
-		RECT rc;
-		HWND hTab = ::GetWindow(GetChildHWND("SciTeTabCtrl"), GW_CHILD);
-		GetPaneRect("SciTeTabCtrl", &rc);
-		rc.right = LOWORD(lParam) - 2;
-			SetWindowPos(hTab,
-			NULL, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOACTIVATE);
-
-		RECT r = {0,0,LOWORD(lParam) - 2,0};
-		::SendMessage(hTab, TCM_ADJUSTRECT, TRUE, LPARAM(&r));
-		SetPaneHeight("SciTeTabCtrl", r.bottom - r.top -2);
-		char *cc = IupGetAttribute(IupGetDialogChild(hMain, "SciteVB"), "SIZE");
-		int tt = 0;
-		return subclassedProc(hwnd, uMsg, wParam, lParam);
-
-	}
+	case WM_NCHITTEST:
+		return HTTRANSPARENT;
+		break;
 	}
 	return subclassedProc(hwnd, uMsg, wParam, lParam); 
 	
@@ -1478,231 +1481,99 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 }
 
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
-	LRESULT r =::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
-	if (bCalcValidRects && !FullScreen ) {
+	LRESULT r = 0;//    ::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
+	//lpncsp->rgrc[1].top = 0;
+	//lpncsp->rgrc[1].bottom = 0;
+	WINDOWPLACEMENT wp;
+	::GetWindowPlacement(hwnd, &wp);
 
-		lpncsp->rgrc[0].top = lpncsp->rgrc[1].top + captWidth;
-		borderX = lpncsp->rgrc[0].left - lpncsp->rgrc[1].left;
-		borderY = lpncsp->rgrc[1].bottom - lpncsp->rgrc[0].bottom;
-	}
+	if (wp.showCmd == SW_SHOWMAXIMIZED) {
+		HMONITOR hMon = MonitorFromRect(lpncsp->rgrc, MONITOR_DEFAULTTONULL);
+		MONITORINFO hMi = MONITORINFO();
+		hMi.cbSize = sizeof(MONITORINFO);
+		
+		::GetMonitorInfo(hMon, &hMi);
+
+		if (hMi.rcMonitor.left == hMi.rcWork.left &&
+			hMi.rcMonitor.right == hMi.rcWork.right &&
+			hMi.rcMonitor.top == hMi.rcWork.top &&
+			hMi.rcMonitor.bottom == hMi.rcWork.bottom) {
+			
+
+			APPBARDATA bd = APPBARDATA();
+			bd.cbSize = sizeof(APPBARDATA);
+			bd.uEdge = ABE_LEFT;
+			SHAppBarMessage(ABM_GETTASKBARPOS, &bd);
+			bd.rc.left += hMi.rcMonitor.left;
+			bd.rc.right += hMi.rcMonitor.left;
+			bd.rc.top += hMi.rcMonitor.top;
+			bd.rc.bottom += hMi.rcMonitor.top;
+			if (SHAppBarMessage(0x0000000B, &bd)) {
+				switch (bd.uEdge) {
+				case ABE_LEFT:
+					hMi.rcWork.left++;
+					break;
+				case ABE_RIGHT:
+					hMi.rcWork.right--;
+					break;
+				case ABE_TOP:
+					hMi.rcWork.top++;
+					break;
+				case ABE_BOTTOM:
+					hMi.rcWork.bottom--;
+					break;
+				}
+			}
+		}
+
+		lpncsp->rgrc[0].left = hMi.rcWork.left;
+		lpncsp->rgrc[0].top = hMi.rcWork.top;
+		lpncsp->rgrc[0].right = hMi.rcWork.right;
+		lpncsp->rgrc[0].bottom = hMi.rcWork.bottom;
+}
+	
 	return r;
 }
 
-void drawWinBtn(HDC hDC, HBITMAP hBitmap, int x, int y) {
-	HDC hMemDC = CreateCompatibleDC(hDC);
-	HBITMAP oldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
-
-	BitBlt(hDC, x, y, 15, 15, hMemDC, 0, 0, SRCCOPY);
-
-	SelectObject(hMemDC, oldBitmap);
-	DeleteDC(hMemDC);
-}
-
-bool IupLayoutWnd::HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr, int rx, int ry) {
-	RECT r = { rect->right - rect->left - (captWidth + 10) * iBtn + 2 * rx, ry,
-		rect->right - rect->left - (captWidth + 10) * (iBtn - 1) + 2 * rx, captWidth + ry };
-	bool rez = (r.left <= p->x) && (r.right > p->x) && (r.top <= p->y) && (r.bottom >= p->y);
-	if (rez && clr) {
-		rez = ((iBtn == 1 && nBtn == HTCLOSE) || (iBtn == 2 && nBtn == HTMAXBUTTON) || (iBtn == 3 && nBtn == HTMINBUTTON));
-		if (rez) {
-			HBRUSH b = CreateSolidBrush(clr);
-			FillRect(hdc, &r, b);
-			DeleteObject(b);
-		}
-	}
-	return rez;
-}
-
-LRESULT IupLayoutWnd::OnNcHitTest(HWND hwnd, POINT mouse) {
-	WINDOWPLACEMENT wp;
+LRESULT IupLayoutWnd::OnNcHitTestClient(HWND hwnd, POINT cursor) {
+	WINDOWPLACEMENT wp = WINDOWPLACEMENT();
 	::GetWindowPlacement(hwnd, &wp);
 	RECT rect;
-	GetWindowRect(hwnd, &rect);
+	HWND hwndPrev = nullptr;
+	do {
+		GetWindowRect(hwnd, &rect);
+		MapWindowPoints(hwndPrev, hwnd, &cursor, 1);
 
-	int rx = 0, ry = 0;
-    if (wp.showCmd == SW_SHOWMAXIMIZED) {
-		rx = GetSystemMetrics(SM_CXSIZEFRAME) + 1;
-		ry = GetSystemMetrics(SM_CYSIZEFRAME) + 1;
-		rect.left += rx;
-		rect.right -= rx;
-		rect.top += ry;
-		rect.bottom -= ry;
+
+		hwndPrev = hwnd;
+		hwnd = ::ChildWindowFromPoint(hwnd, cursor);
+
+	} while (hwnd && hwndPrev != hwnd);
+
+	Ihandle* ih = iupwinHandleGet(hwndPrev);
+	const char * childName = IupGetAttribute(ih, "NAME");
+	if (childName && !strcmp("SYSMENU_ICON", childName))
+		return HTSYSMENU;
+	else if (wp.showCmd != SW_SHOWMAXIMIZED && childName && !strcmp("HILDIM_FRAME", childName)) {
+		if (cursor.x <= 3) {
+			if (cursor.y <= 3)
+				return HTTOPLEFT;
+			if (cursor.y >= rect.bottom - rect.top - 3)
+				return HTBOTTOMLEFT;
+			return HTLEFT;
+		}
+		else if (cursor.x >= rect.right - rect.left - 3) {
+			if (cursor.y <= 3)
+				return HTTOPRIGHT;
+			if (cursor.y >= rect.bottom - rect.top - 3)
+				return HTBOTTOMRIGHT;
+			return HTRIGHT;
+		}
+		else if (cursor.y <= 3)
+			return HTTOP;
+		else if (cursor.y >= rect.bottom - rect.top - 3)
+			return HTBOTTOM;
 	}
-	mouse.x -= rect.left;
-	mouse.y -= rect.top;
-	TRACKMOUSEEVENT tme;
-	tme.cbSize = sizeof(TRACKMOUSEEVENT);
-	tme.dwFlags = TME_NONCLIENT | TME_LEAVE;
-	tme.hwndTrack = hwnd;
-	tme.dwHoverTime = HOVER_DEFAULT;
-	TrackMouseEvent(&tme);
 
-	if (HilightBtn(&rect, &mouse, NULL, 1, NULL, rx, ry))
-		return HTCLOSE;
-	if (HilightBtn(&rect, &mouse, NULL, 2, NULL, rx, ry))
-		return HTMAXBUTTON;
-	if (HilightBtn(&rect, &mouse, NULL, 3, NULL, rx, ry))
-		return HTMINBUTTON;
 	return HTCAPTION;
-
-}
-LRESULT IupLayoutWnd::OnNcMouseMove(HWND hwnd, int iBtn) {
-	if (iBtn != nBtn) {
-		nBtn = iBtn;
-		if (nBtnPressed != iBtn)
-			nBtnPressed = 0;
-		OnNcPaint(hwnd, true, true);
-	}
-	return 0;
-}
-LRESULT IupLayoutWnd::OnNcLMouseDown(HWND hwnd, int iBtn) {
-	nBtnPressed = iBtn;
-	return 0;
-}
-LRESULT IupLayoutWnd::OnNcLMouseUp(HWND hwnd, int iBtn) {
-	if (nBtnPressed == iBtn) {
-		switch (iBtn) {
-		case HTMINBUTTON:
-			::ShowWindow(hwnd, SW_MINIMIZE);
-			break;
-		case HTMAXBUTTON:
-			{
-				WINDOWPLACEMENT wp;
-				::GetWindowPlacement(hwnd, &wp);
-				if (wp.showCmd == SW_SHOWNORMAL)
-					::ShowWindow(hwnd, SW_MAXIMIZE);
-				else
-					::ShowWindow(hwnd, SW_NORMAL);
-			}
-			break;
-		case HTCLOSE:
-			((SciTEWin*)pSciteWin)->DoMenuCommand(IDM_QUIT);
-		}
-	}
-	return 0;
-}
-
-void IupLayoutWnd::SetTitle(const GUI::gui_char *s) {
-	title = s;
-	OnNcPaint((HWND)((SciTEWin*)pSciteWin)->GetID(), TRUE);
-}
-
-LRESULT IupLayoutWnd::OnNcPaint(HWND hwnd, BOOL bActiv, BOOL bOnlyBtns) {
-	WINDOWPLACEMENT wp;
-	::GetWindowPlacement(hwnd, &wp);
-	static int bRedraw = -1;
-	if (wp.showCmd == SW_SHOWMINIMIZED) {
-		bRedraw = wp.showCmd;
-		return 0;	
-	}
-	HDC hdc;
-	RECT rect;
-	HBRUSH b;
-
-	hdc = ::GetWindowDC(hwnd);
-	bool bActive = ((hwnd == ::GetForegroundWindow()) && bActiv);
-
-	GetWindowRect(hwnd, &rect);
-	int rx = 0, ry = 0;
-	if (wp.showCmd == SW_SHOWMAXIMIZED) {
-		rx = GetSystemMetrics(SM_CXSIZEFRAME) + 1;
-		ry = GetSystemMetrics(SM_CYSIZEFRAME) + 1;
-		rect.left += rx;
-		rect.right -= rx;
-		rect.top += ry;
-		rect.bottom -= ry;
-	}
-
-	HRGN hrgn = CreateRectRgn(rx, ry, rect.right - rect.left + rx, rect.bottom - rect.top + ry);
-
-	b = CreateSolidBrush(GetColorRef("CAPTBGCOLOR"));
-	::SetWindowRgn(hwnd, hrgn, false);
-
-	POINT mouse;
-	::GetCursorPos(&mouse);
-	mouse.x -= rect.left;
-	mouse.y -= rect.top;
-
-	//int ibrd = ::GetSystemMetrics(SM_CYSIZEFRAME) + 1;
-
-	RECT rdraw;
-	if (!bOnlyBtns) {
-		if (wp.showCmd == SW_SHOWNORMAL) {
-			rdraw = { 0, 0, borderX, rect.bottom - rect.top };
-			FillRect(hdc, &rdraw, b);
-			rdraw = { rect.right - rect.left - borderX, 0, rect.right - rect.left, rect.bottom - rect.top };
-			FillRect(hdc, &rdraw, b);
-			rdraw = { 0, rect.bottom - rect.top - borderY, rect.right - rect.left, rect.bottom - rect.top };
-			FillRect(hdc, &rdraw, b);
-		}
-		rdraw = { 0, 0, rect.right - rect.left + rx, captWidth };
-		FillRect(hdc, &rdraw, b);
-
-		DeleteObject(b);
-
-
-		if (captWidth > 30) {
-			if (!hicon)
-				hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 24, 24, 0);
-			::DrawIconEx(hdc, 8, 6, hicon, 24, 24, 0, NULL, DI_NORMAL);
-		} else {
-			if (!hicon)
-				hicon = (HICON)::LoadImage(::GetModuleHandle(NULL), L"SCITE", IMAGE_ICON, 16, 16, 0);
-			::DrawIconEx(hdc, 6, 8, hicon, 16, 16, 0, NULL, DI_NORMAL);
-
-		}
-
-		char* font;
-		font = IupGetGlobal("DEFAULTFONT");
-
-		HFONT hFont = (HFONT)iupwinGetHFont(font);
-		SelectObject(hdc, hFont);
-		SetBkColor(hdc, GetColorRef("CAPTBGCOLOR"));
-		SetTextColor(hdc, bActive ? GetColorRef("FGCOLOR") : GetColorRef("TXTINACTIVCOLOR"));
-
-		rdraw = { 40, 4, rect.right - rect.left - captWidth * 3 - 30, captWidth };
-
-		::DrawText(hdc, title.c_str(), -1, &rdraw, DT_SINGLELINE | DT_VCENTER);
-
-		//rdraw = { rect.right - rect.left - (captWidth + 10) + captWidth / 2 , 0, rect.right - rect.left , captWidth };
-	} else {
-		RECT rdraw = { rect.right - rect.left - (captWidth + 10) * 3 + 2 * rx, ry,
-			rect.right - rect.left + 2 * rx, captWidth + ry };
-		FillRect(hdc, &rdraw, b);
-	}
-
-	COLORREF hl = GetColorRef("HLCOLOR");
-
-	bool bHl = HilightBtn(&rect, &mouse, hdc, 1, hl, rx, ry);
-	HBITMAP hb = (HBITMAP)iupImageGetImage(bHl ? "CLOSE_H_µ": "CLOSE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
-
-	bHl = HilightBtn(&rect, &mouse, hdc, 2, hl, rx, ry);
-	hb = (HBITMAP)iupImageGetImage(wp.showCmd == SW_SHOWNORMAL ? (bHl ? "MAXIMISE_H_µ" : "MAXIMISE_µ") : (bHl ? "NORMAL_H_µ" : "NORMAL_µ"), NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 2 + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
-
-	bHl = HilightBtn(&rect, &mouse, hdc, 3, hl, rx, ry);
-	hb = (HBITMAP)iupImageGetImage(bHl ? "MINIMISE_H_µ" : "MINIMISE_µ", NULL, FALSE, NULL);
-	drawWinBtn(hdc, hb, rect.right - rect.left - (captWidth + 10) * 3 + captWidth / 2 + 2 * rx, (captWidth - 10) / 2 + 1);
-
-
-	if (bActive && wp.showCmd == SW_SHOWNORMAL) {
-		HPEN hPen, hPenOld;
-		hPen = CreatePen(PS_SOLID, 2, GetColorRef("BORDERCOLOR"));
-		hPenOld = (HPEN)SelectObject(hdc, hPen);
-		POINT line_poly[5] = {1, 1, 1, rect.bottom - rect.top -1, rect.right - rect.left -1, rect.bottom - rect.top -1, rect.right - rect.left -1, 1, 1, 1};
-		BOOL b = Polyline(hdc, line_poly, 5);
-		SelectObject(hdc, hPenOld);
-		DeleteObject(hPen);
-		DeleteObject(hPenOld);
-	}
-
-	//Rectangle(hdc, 0, 0, 6000, ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYSIZEFRAME));
-	//int tt = ::BitBlt(hdcw, 0, 0, rect.right - rect.left, rect.bottom - rect.top, hdc, 0, 0, SRCCOPY);
-	DeleteObject(hrgn);
-	ReleaseDC(hwnd, hdc);
-	if(bRedraw != wp.showCmd)
-	RedrawWindow(hwnd, &rect, NULL, RDW_UPDATENOW);
-	bRedraw = wp.showCmd;
-	return 0;
 }

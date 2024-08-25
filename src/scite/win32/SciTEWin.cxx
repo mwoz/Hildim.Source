@@ -10,6 +10,7 @@
 //#include "Platform.h" //!-add-[no_wornings]
 #include "SciTEWin.h"
 #include "Windowsx.h"
+#include "versionhelpers.h"
 
 #ifdef DTBG_CLIPRECT
 #define THEME_AVAILABLE
@@ -698,23 +699,6 @@ void SciTEWin::CopyAsRTF() {
 	CopyWithColors(CopyColorsType::rtf);
 }
 
-void SciTEWin::FullScreenToggle() {
-	LONG_PTR oldstyle = ::GetWindowLongPtr(MainHWND(), GWL_STYLE);
-	if (oldstyle & WS_CAPTION) {
-		layout.FullScreen = true;
-		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle & (~ WS_CAPTION));
-		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
-		::ShowWindow(MainHWND(), SW_SHOWMAXIMIZED);
-		extender->OnLayOutNotify("FULLSCREEN_ON");
-	}
-	else{
-		layout.FullScreen = false;
-		::SetWindowLongPtr(MainHWND(), GWL_STYLE, oldstyle | WS_CAPTION);
-		::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
-		extender->OnLayOutNotify("FULLSCREEN_OFF");
-	}
-}
-
 void SciTEWin::MakeOutputVisible(GUI::ScintillaWindow &wBottom)
 {
 	if (wFindRes.GetID() == wBottom.GetID()){
@@ -776,10 +760,6 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 	case IDM_OPENFILESHERE:
 		uniqueInstance.ToggleOpenFilesHere();
-		break;
-
-	case IDM_FULLSCREEN:
-		FullScreenToggle();
 		break;
 
 	case IDC_TABCLOSE:
@@ -1388,10 +1368,10 @@ void SciTEWin::CreateUI() {
 	wSciTE = ::CreateWindowEx(
 	             0,
 	             className,
-	             windowName.c_str(),
-	             WS_CAPTION | WS_SYSMENU | WS_THICKFRAME |
-	             WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
-	             WS_CLIPCHILDREN,
+		windowName.c_str(),
+		WS_CAPTION | WS_SYSMENU | WS_THICKFRAME |
+		WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
+		WS_CLIPCHILDREN,
 	             left, top, width, height,
 	             NULL,
 	             NULL,
@@ -1399,6 +1379,14 @@ void SciTEWin::CreateUI() {
 	             reinterpret_cast<LPSTR>(this));
 	if (!wSciTE.Created())
 		exit(FALSE);
+
+	if(!IsWindows8OrGreater())
+	    SetWindowLongPtr(MainHWND(), GWL_STYLE, WS_SYSMENU | WS_THICKFRAME |
+	    	WS_MINIMIZEBOX | WS_MAXIMIZEBOX |
+	    	WS_CLIPCHILDREN);
+	::SetWindowPos(MainHWND(), NULL, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOSIZE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+
 	jobQueue.hwnd = (HWND)wSciTE.GetID();
 	IupSetGlobal("DEFAULTNATUVEPARENT", (const char *)wSciTE.GetID());
 
@@ -1417,6 +1405,7 @@ void SciTEWin::CreateUI() {
 	BOOL b = FALSE;
 					 	
 	extender->PostInit((void*)layout.hMain);
+
 }
 
 static bool IsASpace(int ch) {
@@ -1487,28 +1476,14 @@ void KillThreadProc(void *p) {
 	::Sleep(60000);
 	::TerminateProcess(GetCurrentProcess(), 2);
 }
-//
-//void TimerExit(
-//	HWND Arg1,
-//	UINT Arg2,
-//	UINT_PTR Arg3,
-//	DWORD Arg4
-//) {
-//	::KillTimer((HWND)pSciTEWin->GetID(), 666);
-//	::MessageBox(NULL, TEXT("HildiM Close Error!"), TEXT("HildiM"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
-//	::ExitProcess(666);
-//}
+
 void SciTEWin::HideForeReolad(int close){
 	WINDOWPLACEMENT wp;
 	wp.length = sizeof(wp);
 	::GetWindowPlacement(MainHWND(), &wp);
 	cmdShow = wp.showCmd;
 	::ShowWindow(MainHWND(), SW_HIDE);
-//	if (close) //таймер на 100 секунд - если за это время не закрылись - вырубим процесс 
-//		SetTimer((HWND)wSciTE.GetID(),666, 100000, (TIMERPROC)TimerExit);
-	//if (close)
-	//	_beginthread(KillThreadProc, 1024 * 1024, NULL);
-	//int ttt = 44;
+
 }
 
 void SciTEWin::RunAsync(int idx)	{
@@ -1731,77 +1706,35 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		}
 
 		switch (iMessage) {
-		case WM_NCPAINT:
-			return layout.OnNcPaint(MainHWND(), TRUE);
-			break;
 		case WM_NCCALCSIZE:
 			return layout.OnNcCalcSize(MainHWND(), (BOOL)wParam, (NCCALCSIZE_PARAMS*)lParam);
+			break;
 		case WM_NCHITTEST:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
+			POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 			if ((r == HTCLOSE || r == HTMINBUTTON || r == HTMAXBUTTON || r == HTCAPTION)) {
-				POINT p = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-				r = layout.OnNcHitTest(MainHWND(), p );
+				r = HTCLIENT;
 			}
+			else if (r == HTCLIENT)
+				r = layout.OnNcHitTestClient(MainHWND(), p);
 			return r;
 		}
-			
+
 		case WM_NCACTIVATE:
 		{
-			if (IsWindowVisible(MainHWND()))
-				layout.OnNcPaint(MainHWND(), wParam != 0);
+			extender->OnShowActivate(wParam ? 1 : 0, layout.ShowBorder(wParam));
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
-		case WM_NCMOUSEMOVE:
-			if (wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ) {
-				layout.OnNcMouseMove(MainHWND(), static_cast<int>(wParam));
-				return 0;
-			}
-			layout.OnNcMouseMove(MainHWND(), 0);
-			break;
-		case WM_NCMOUSELEAVE:
-			layout.OnNcMouseMove(MainHWND(), 0);
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			//return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-		case WM_NCLBUTTONDOWN:
-			if ((wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
-				return layout.OnNcLMouseDown(MainHWND(), static_cast<int>(wParam));
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			break;
-		case SCITE_NEEDNCPAINT:
-		{
-			::DefWindowProcW(MainHWND(), WM_SETREDRAW, 0, 0);
-			::DefWindowProcW(MainHWND(), WM_SETCURSOR, (WPARAM)MainHWND(), MAKELPARAM(HTTOP, WM_MOUSEMOVE) );
-			::DefWindowProcW(MainHWND(), WM_SETCURSOR, (WPARAM)MainHWND(), MAKELPARAM(HTCAPTION, WM_MOUSEMOVE) );
-			::DefWindowProcW(MainHWND(), WM_NCLBUTTONDOWN, HTCAPTION, 0);
-			::DefWindowProcW(MainHWND(), WM_SETREDRAW, 1, 0);
-			//::UpdateWindow(MainHWND());
-			::RedrawWindow(MainHWND(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
-			sysminimized = false;
-		}
+		break;
 
-			break;
 		case WM_WINDOWPOSCHANGED:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-
-			WINDOWPLACEMENT wp;
-			::GetWindowPlacement(MainHWND(), &wp);//(::GetAsyncKeyState(VK_LBUTTON) || sysminimized) &&
-			
-			if (macro1stLoaded && wp.showCmd != SW_SHOWMINIMIZED &&
-				prevShowCmd != wp.showCmd && MainHWND() == ::GetForegroundWindow())
-				::PostMessage(MainHWND(), SCITE_NEEDNCPAINT, 0, 0);
-			prevShowCmd = wp.showCmd;
-
+			extender->OnShowActivate(-1, layout.ShowBorder(true));
 			return r;
 		}
-		break;
-		case WM_NCLBUTTONUP:
-			if ((wParam == HTCLOSE || wParam == HTMINBUTTON || wParam == HTMAXBUTTON ))
-				return layout.OnNcLMouseUp(MainHWND(), static_cast<int>(wParam));
 
-			return ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			break;
 		case WM_CREATE:
 			Creation();
 			keyBoardHook = SetWindowsHookEx(WH_KEYBOARD, KeyBoardProc, hInstance, GetCurrentThreadId());
@@ -1810,7 +1743,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		{
 			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 			layout.Fit();
-			extender->OnSize();
+			extender->OnShowActivate(-1, -1);
 			return r;
 		}
 		break;

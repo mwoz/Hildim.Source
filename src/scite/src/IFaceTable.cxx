@@ -285,6 +285,9 @@ static IFaceConstant ifaceConstants[] = {
 	{"IDM_SELECTTOPREVMATCHPPC",261},
 	{"IDM_SELMARGIN",405},
 	{"IDM_SHOWCALLTIP",232},
+	{"IDM_SHOWMAXIMIZED",156},
+	{"IDM_SHOWMINIMIZED",155},
+	{"IDM_SHOWNORMAL",157},
 	{"IDM_SPLIT",249},
 	{"IDM_SPLITVERTICAL",401},
 	{"IDM_SRCWIN",350},
@@ -3411,7 +3414,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 330,
-	ifaceConstantCount = 2656,
+	ifaceConstantCount = 2659,
 	ifacePropertyCount = 272
 };
 

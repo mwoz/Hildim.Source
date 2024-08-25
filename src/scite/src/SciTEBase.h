@@ -282,22 +282,22 @@ public:
 	SString findWhat;
 	SString replaceWhat;
 
-	bool wholeWord;
-	bool matchCase;
-	bool regExp;
-	bool unSlash;
-	bool wrapFind;
-	bool reverseFind;
-	bool subDirSearch;
+	bool wholeWord = false;
+	bool matchCase = false;
+	bool regExp = false;
+	bool unSlash = false;
+	bool wrapFind = true;
+	bool reverseFind = false;
+	bool subDirSearch = false;
 
-	bool replacing;
-	bool havefound;
-	bool findInStyle;
-	int findStyle;
+	bool replacing = false;
+	bool havefound = false;
+	bool findInStyle = false;
+	int  findStyle = 0;
 
-	bool focusOnReplace;
+	bool focusOnReplace = false;
 
-	Searcher();
+	Searcher() {}
 
 	virtual bool FindHasText() const = 0;
 	virtual void MoveBack(int distance) = 0;
@@ -394,30 +394,25 @@ public:
 	Ihandle *pLeftTab;
 	Ihandle *pRightTab;
 	LRESULT OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
-	LRESULT OnNcPaint(HWND hwnd, BOOL bActiv, BOOL bOnlyBtns = false);
-	LRESULT OnNcHitTest(HWND hwnd, POINT cursor);
-	LRESULT OnNcMouseMove(HWND hwnd, int iBtn);
-	LRESULT OnNcLMouseDown(HWND hwnd, int iBtn);
-	LRESULT OnNcLMouseUp(HWND hwnd, int iBtn);
-	bool FullScreen = false; 
-	void SetTitle(const GUI::gui_char *s);
+	LRESULT OnNcHitTestClient(HWND hwnd, POINT cursor);
 	mapsICW childMap;
+	UINT ShowBorder(bool bShow);
 private:
 	void * pSciteWin;
 	IupChildWnd ichFindRes;
 	Ihandle* Create_dialog();
+	Ihandle* ihBorder = nullptr;
+	Ihandle* ihDialog = nullptr;
 	
 	WNDPROC subclassedProc;
 	LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void PropGet(const char *name, const char *defoult, char* buff);
-	bool HilightBtn(RECT *rect, POINT *p, HDC hdc, int iBtn, COLORREF clr, int rx, int ry);
 	int captWidth = 32;
 	int nBtn = 0;
 	int nBtnPressed = 0;
 	int borderX = 0;
 	int borderY = 0;
-	GUI::gui_string title = L"";
 	HICON hicon = NULL;
 };
 

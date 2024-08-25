@@ -437,10 +437,14 @@ static int winMenuMapMethod(Ihandle* ih)
 /*******************************************************************************************/
 static const int BCMENU_PAD = 2;
 static int icon_h, icon_w;
+static char menuDrawState = 0; // 1 - measure 2-draw
+static WCHAR submenuSYM[2] = { 0,0 }; checkSYM[2] = { 0,0 }, radioSYM[2] = { 0,0 };
+static char  *font = 0;
+
 
 static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 {
-
+    menuDrawState = 2;
     Ihandle* root, * parent;
     parent = ih->parent;
     if (!parent) {
@@ -475,8 +479,8 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
     char* clr = drawitem->itemState & ODS_SELECTED ? (drawitem->itemState & ODS_GRAYED ? "HLINACTIVECOLOR" : "HLCOLOR") : "DRAWBGCOLOR";
 
-    iupwinGetColorRef(root, "BARCOLOR", &barcolor);
-    iupwinGetColorRef(root, clr, &bgcolor);
+     iupwinGetColorRef(root, "BARCOLOR", &barcolor);
+     iupwinGetColorRef(root, clr, &bgcolor);
     
 
     SetDCBrushColor(hDC, bgcolor);
@@ -510,10 +514,9 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
     }
     else {
         
-        char* text, *font;
+        char* text;
         TCHAR* wtext;
         int lenW;
-        font = IupGetAttribute(root, "FONT");
         text = iupAttribGet(ih, "TITLE");
 
         char* img = iupAttribGet(ih, "IMAGE");
@@ -540,13 +543,13 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
                 if (IupGetInt(parent, "RADIO")) {
                     SetBkColor(hDC, barcolor);
                     SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
-                    DrawText(hDC, L"\x25CF", 1, &rect, 0); //Circle, Black
+                    DrawText(hDC, radioSYM, 1, &rect, 0); //Circle, Black
                     SetBkColor(hDC, bgcolor);
                 }
                 else {
                     SetBkColor(hDC, barcolor);
                     SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
-                    DrawText(hDC, L"\x2713", 1, &rect, 0);
+                    DrawText(hDC, checkSYM, 1, &rect, 0);
                     SetBkColor(hDC, bgcolor);
                 }
 
@@ -581,8 +584,8 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
                  isSubmenu = TRUE;
 
                  SetRect(&rect, width - icon_w - BCMENU_PAD, BCMENU_PAD, width, height);
-
-                 DrawText(hDC, L"\x276F", 1, &rect, 0);
+                 DrawText(hDC, submenuSYM, 1, &rect, 0);
+                 //DrawText(hDC, L"\x3009", 1, &rect, 0);
 
              }
         }
@@ -598,24 +601,47 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
 }
 
+unsigned int iupAttribGetWchar(Ihandle* ih, const char* name, unsigned int def)
+{
+    unsigned int w = def;
+    char* value = iupAttribGetStr(ih, name);
+    if (value)
+    {
+        if (sscanf(value, "%i", &w) != 1) return def;
+
+    }
+    return w;
+}
+
 static void winMeasureItem(Ihandle* ih, MEASUREITEMSTRUCT* measureitem)
 {
-    Ihandle* root, * parent;
 
-    parent = ih->parent;
-    if (!parent) {
-        return;
-    }
-    root = parent;
-    while (root->parent)
-        root = root->parent;
+   Ihandle* root, * parent;
+   parent = ih->parent;
+   if (!parent) {
+       return;
+   }
+   root = parent;
+   while (root->parent)
+       root = root->parent;
+
+   if (menuDrawState != 1) {
+        menuDrawState = 1;
+        iupStrToIntInt(IupGetAttribute(root, "ICONSIZE"), &icon_w, &icon_h, 'x');
+        font = IupGetAttribute(root, "FONT");
+        
+        submenuSYM[0] = iupAttribGetWchar(root, "SYM_SUBMENU", 0x276F);
+
+        radioSYM[0] = iupAttribGetWchar(root, "SYM_RADIO", 0x25CF);
+
+        checkSYM[0] = iupAttribGetWchar(root, "SYM_CHECK", 0x2713);
+
+   }
 
     if (!parent->y)
     {
-        iupStrToIntInt(IupGetAttribute(root, "ICONSIZE"), &icon_w, &icon_h, 'x');
-
-        char* text, * font;
-        font = IupGetAttribute(root, "FONT");
+        
+        char* text;       
         Ihandle* brother = parent->firstchild;
 
         int w, h = 0, w1Max, w2Max;

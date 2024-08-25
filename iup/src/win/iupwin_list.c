@@ -1563,7 +1563,7 @@ static int winListEditProc(Ihandle* ih, HWND cbedit, UINT msg, WPARAM wp, LPARAM
   case WM_RBUTTONUP:
   case WM_LBUTTONUP:
     PostMessage(cbedit, WM_IUPCARET, 0, 0L);
-    if ((msg == WM_LBUTTONDOWN) && IupGetCallback(ih, "DBLCLICK_CB") && (GetKeyState(VK_LBUTTON) & 0x1000)) {
+    if ((msg == WM_LBUTTONDOWN) && IupGetAttribute(ih, "CURSOR") && !strcmp(IupGetAttribute(ih, "CURSOR"), "eHAND") && (GetKeyState(VK_LBUTTON) & 0x1000)) {
         iupwinBaseMsgProc(ih, msg, wp, lp, result);
         POINT cursor;
         GetCursorPos(&cursor);

@@ -188,7 +188,7 @@ static void iHboxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 {
   /* update children */
   Ihandle* child;
-  int empty_w0 = 0, empty_w1 = 0, client_height;
+  int empty_w0 = 0, empty_w1 = 0, empty_wEx = 0, client_height;
 
   if (ih->data->is_homogeneous)
     ih->data->homogeneous_size = iHboxCalcHomogeneousWidth(ih);
@@ -217,6 +217,10 @@ static void iHboxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
       else
       {
         int empty = (child->expand & IUP_EXPAND_W1)? empty_w1: ((child->expand & IUP_EXPAND_W0)? empty_w0: 0);
+        if (empty_wEx && (child->expand == IUP_EXPAND_W0)) {
+            empty = empty_wEx;
+            empty_wEx = 0;
+        }
         char* weight_str = iupAttribGet(child, "EXPANDWEIGHT");
         if (weight_str)
         {
@@ -225,6 +229,9 @@ static void iHboxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
             empty = iupRound(empty * weight);
         }
         iupBaseSetCurrentSize(child, child->naturalwidth+empty, client_height, shrink);
+        if (empty && !empty_wEx && (child->currentwidth < child->naturalwidth + empty)) {
+            empty_wEx = child->naturalwidth + empty - child->currentwidth;
+        }
       }
     }
     else if (!(child->flags & IUP_FLOATING_IGNORE))

@@ -72,5 +72,5 @@ public:
 	virtual void OnChangeFocus(int, int);
 	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
 	virtual GUI::gui_string LocalizeText(const char* msg);
-	virtual void OnSize();
+	virtual void OnShowActivate(int bActivate, int cmdShow);
 };
