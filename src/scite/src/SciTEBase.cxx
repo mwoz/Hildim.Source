@@ -3263,8 +3263,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_SAVEPOINTREACHED:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
-			if (extender)
+			if (extender) {
 				handled = extender->OnSavePointReached();
+				extender->OnShowActivate(-1, -1, 1);
+			}
 			if (!handled) {
 				CurrentBuffer()->isDirty = false;
 				if (CurrentBuffer()->pFriend)
@@ -3309,8 +3311,10 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 	case SCN_SAVEPOINTLEFT:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
-			if (extender)
+			if (extender) {
 				handled = extender->OnSavePointLeft();
+				extender->OnShowActivate(-1, -1, -1);
+			}
 			if (!handled) {
 				if(wEditor.GetWindowIdm() == notification->nmhdr.idFrom)
 					CurrentBuffer()->isDirty = true;

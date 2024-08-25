@@ -2952,8 +2952,8 @@ bool LuaExtension::OnChar(char ch) {
 	return CallNamedFunction("OnChar", chs);
 }
 
-void LuaExtension::OnShowActivate(int bActivate, int cmdShow) {
-	CallNamedFunction("OnShowActivate", bActivate, cmdShow);
+void LuaExtension::OnShowActivate(int bActivate, int cmdShow, int SavePoint) {
+	CallNamedFunction("OnShowActivate", bActivate, cmdShow, SavePoint);
 }
 
 bool LuaExtension::OnSavePointReached() {
