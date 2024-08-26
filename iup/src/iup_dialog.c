@@ -351,6 +351,8 @@ static void iDialogSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
   }
 
   iupDialogGetDecorSize(ih, &decorwidth, &decorheight);
+  if (decorheight < 0)
+      decorheight = 0;
 
   client_width  -= decorwidth;
   client_height -= decorheight;

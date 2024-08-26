@@ -496,29 +496,31 @@ static LRESULT winDialogCustomFrameHitTest(Ihandle* ih, LPARAM lp)
 
   result = HTNOWHERE;
 
+  BOOL allowH = !iupAttribGetBoolean(ih, "FIXEDHEIGHT");
+
   if (x >= 0 && x < border)
   {
-    if (y >= 0 && y < border)
-      result = HTTOPLEFT;
-    else if (y > h - border && y <= h)
-      result = HTBOTTOMLEFT;
-    else if (y >= border && y <= h - border)
-      result = HTLEFT;
+      if ((y >= 0 && y < border) && allowH)
+        result = HTTOPLEFT;
+      else if ((y > h - border && y <= h) && allowH)
+        result = HTBOTTOMLEFT;
+      else if ((y >= border && y <= h) - border)
+        result = HTLEFT;
   }
   else if (x > w - border && x <= w)
   {
-    if (y >= 0 && y < border)
-      result = HTTOPRIGHT;
-    else if (y > h - border && y <= h)
-      result = HTBOTTOMRIGHT;
+    if ((y >= 0 && y < border) && allowH)
+        result = HTTOPRIGHT;
+    else if ((y > h - border && y <= h) && allowH)
+        result = HTBOTTOMRIGHT;
     else if (y >= border && y <= h - border)
-      result = HTRIGHT;
+        result = HTRIGHT;
   }
   else if (x >= border && x <= w - border)
   {
-    if (y >= 0 && y < border)
+      if ((y >= 0 && y < border) && allowH)
       result = HTTOP;
-    else if (y > h - border && y <= h)
+    else if ((y > h - border && y <= h) && allowH)
       result = HTBOTTOM;
     else if (y >= border && y < caption + border)
     {
@@ -542,8 +544,16 @@ static LRESULT winDialogCustomFrameHitTest(Ihandle* ih, LPARAM lp)
       if (x >= border + caption_left && x <= w - border - caption_right)
         result = HTCAPTION;
     }
-    else if (y >= caption + border && y < h - border)
-      result = HTCLIENT;
+    else if ((result == HTNOWHERE) && (y >= caption + border) && (y < h - border)) {
+        result = HTCLIENT;
+        Ihandle* ih_caption = IupGetDialogChild(ih, "CUSTOMFRAMECAPTION");
+        if (ih_caption)
+        {
+            int caption_x = winDialogGetChildPosX(ih_caption);
+            if (x >= caption_x && x <= caption_x + ih_caption->currentwidth)
+                result = HTCAPTION;
+        }
+    }
   }
 
   return result;
@@ -1382,7 +1392,7 @@ static int winDialogMapMethod(Ihandle* ih)
                                 (HMENU)0,           /* Menu or child-window identifier */
                                 iupwin_hinstance,   /* instance of app. */
                                 NULL);              /* no creation parameters */
-  }
+   }
 
   /* clear handle right after CreateWindowEx */
   winMinMaxHandle = NULL;
