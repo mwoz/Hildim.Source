@@ -529,7 +529,7 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
             iupwinDrawBitmap(hDC, hb, (parent->x - icon_w)/2, (parent->y - icon_h) / 2, icon_w, icon_h, icon_w, icon_h, bpp);
         }
 
-
+        SetBkMode(hDC, TRANSPARENT);
         if (text && iupwinGetColorRef(root, drawitem->itemState & ODS_GRAYED ? "FGINACTIVECOLOR" : "FGCOLOR", &fgcolor))
         {
             HFONT hFont = (HFONT)iupwinGetHFont(font);
@@ -539,20 +539,9 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
                 if(!iupwinGetColorRef(root, "BARFGCOLOR", &barfgcolor))
                     barfgcolor = fgcolor;
-              
-                if (IupGetInt(parent, "RADIO")) {
-                    SetBkColor(hDC, barcolor);
-                    SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
-                    DrawText(hDC, radioSYM, 1, &rect, 0); //Circle, Black
-                    SetBkColor(hDC, bgcolor);
-                }
-                else {
-                    SetBkColor(hDC, barcolor);
-                    SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
-                    DrawText(hDC, checkSYM, 1, &rect, 0);
-                    SetBkColor(hDC, bgcolor);
-                }
-
+                
+                SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
+                DrawText(hDC, IupGetInt(parent, "RADIO") ? radioSYM : checkSYM, 1, &rect, 0);
             }
             
             int len = text ? strlen(text) : 0;

@@ -1518,9 +1518,8 @@ LRESULT PASCAL IupLayoutWnd::StatWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 }
 
 LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp) {
-	LRESULT r = 0;//    ::DefWindowProc(hwnd, WM_NCCALCSIZE, (WPARAM)bCalcValidRects, (LPARAM)lpncsp);
-	//lpncsp->rgrc[1].top = 0;
-	//lpncsp->rgrc[1].bottom = 0;
+	LRESULT r = 0;
+
 	WINDOWPLACEMENT wp;
 	::GetWindowPlacement(hwnd, &wp);
 
@@ -1541,26 +1540,53 @@ LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_P
 			bd.cbSize = sizeof(APPBARDATA);
 			bd.uEdge = ABE_LEFT;
 			SHAppBarMessage(ABM_GETTASKBARPOS, &bd);
-			bd.rc.left += hMi.rcMonitor.left;
-			bd.rc.right += hMi.rcMonitor.left;
-			bd.rc.top += hMi.rcMonitor.top;
-			bd.rc.bottom += hMi.rcMonitor.top;
-			if (SHAppBarMessage(0x0000000B, &bd)) {
-				switch (bd.uEdge) {
-				case ABE_LEFT:
-					hMi.rcWork.left++;
-					break;
-				case ABE_RIGHT:
-					hMi.rcWork.right--;
-					break;
-				case ABE_TOP:
-					hMi.rcWork.top++;
-					break;
-				case ABE_BOTTOM:
-					hMi.rcWork.bottom--;
-					break;
-				}
+			switch (bd.uEdge) {
+			case ABE_LEFT:
+				hMi.rcWork.left++;
+				break;
+			case ABE_RIGHT:
+				hMi.rcWork.right--;
+				break;
+			case ABE_TOP:
+				hMi.rcWork.top++;
+				break;
+			case ABE_BOTTOM:
+				hMi.rcWork.bottom--;
+				break;
 			}
+
+			bd.rc.left = hMi.rcMonitor.left;
+			bd.rc.right = hMi.rcMonitor.right;
+			bd.rc.top = hMi.rcMonitor.top;
+ 			bd.rc.bottom = hMi.rcMonitor.bottom;
+			
+			//второй метод позволяет работать на втором мониторе... но не всегда срабатывает. поэтому сначала отработали по ABM_GETTASKBARPOS
+			 for(int i=ABE_LEFT;i<=ABE_BOTTOM; i++){
+				 bd.uEdge = i;
+				 bd.cbSize = sizeof(bd);
+				 UINT_PTR p = SHAppBarMessage(0x0000000B, &bd);
+				 if (p) {
+					hMi.rcWork.left = hMi.rcMonitor.left;
+					hMi.rcWork.right = hMi.rcMonitor.right;
+					hMi.rcWork.top = hMi.rcMonitor.top;
+					hMi.rcWork.bottom = hMi.rcMonitor.bottom;
+					 switch (bd.uEdge) {
+					 case ABE_LEFT:
+						 hMi.rcWork.left++;
+						 break;
+					 case ABE_RIGHT:
+						 hMi.rcWork.right--;
+						 break;
+					 case ABE_TOP:
+						 hMi.rcWork.top++;
+						 break;
+					 case ABE_BOTTOM:
+						 hMi.rcWork.bottom--;
+						 break;
+					 }
+					 break;
+				 }
+			 }
 		}
 
 		lpncsp->rgrc[0].left = hMi.rcWork.left;
