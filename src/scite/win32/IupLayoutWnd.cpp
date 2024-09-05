@@ -874,7 +874,11 @@ IupLayoutWnd::IupLayoutWnd()
 IupLayoutWnd::~IupLayoutWnd()
 {
 	DestroyIcon(hicon);
-	hicon = NULL;
+	hicon = nullptr;
+	if (m_fonthandle) {
+		RemoveFontMemResourceEx(m_fonthandle);
+		m_fonthandle = nullptr;
+	}
 }
 
 void IupLayoutWnd::PropGet(const char *name, const char *defoult, char* buff) {
@@ -1399,7 +1403,7 @@ void IupLayoutWnd::Close(){
 	IupClose();
 }
 
-void IupLayoutWnd::CreateLayout(lua_State *L, void *pS){
+void IupLayoutWnd::CreateLayout(lua_State* L, void* pS) {
 	pSciteWin = (SciTEBase*)pS;
 	hMain = Create_dialog();
 	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)((SciTEWin*)pSciteWin)->GetID());
@@ -1407,6 +1411,31 @@ void IupLayoutWnd::CreateLayout(lua_State *L, void *pS){
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
 	SetWindowLongPtr(h, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+
+	HINSTANCE hResInstance = reinterpret_cast<HINSTANCE>(::GetWindowLongPtr(h, GWLP_HINSTANCE));
+
+	if (!m_fonthandle) {
+		HRSRC res = FindResource(hResInstance,
+			MAKEINTRESOURCE(125), L"BINARY");
+		if (res)
+		{
+			HGLOBAL mem = LoadResource(hResInstance, res);
+			void* data = LockResource(mem);
+			size_t len = SizeofResource(hResInstance, res);
+
+			DWORD nFonts;
+			m_fonthandle = AddFontMemResourceEx(
+				data,       	// font resource
+				len,       	// number of bytes in font resource 
+				NULL,          	// Reserved. Must be 0.
+				&nFonts      	// number of fonts installed
+			);
+			assert(m_fonthandle);
+
+		}
+	}
+
 }
 
 HWND IupLayoutWnd::GetChildHWND(const char* name){

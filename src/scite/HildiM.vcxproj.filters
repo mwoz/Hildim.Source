@@ -307,4 +307,7 @@
       <Filter>Source Files</Filter>
     </Manifest>
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="win32\hildim.ttf" />
+  </ItemGroup>
 </Project>

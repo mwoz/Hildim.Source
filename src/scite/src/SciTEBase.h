@@ -403,6 +403,7 @@ private:
 	Ihandle* Create_dialog();
 	Ihandle* ihBorder = nullptr;
 	Ihandle* ihDialog = nullptr;
+	HANDLE m_fonthandle = nullptr;
 	
 	WNDPROC subclassedProc;
 	LRESULT PASCAL WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
