@@ -222,18 +222,20 @@ static void iFlatLabelComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int 
     char* title = iupAttribGet(ih, "TITLE");
     static char titleex[501];
     double text_orientation = iupAttribGetDouble(ih, "TEXTORIENTATION");
-    int lTitle = strlen(title);
-    if (iupStrCompareFind(title, "&", 0, 0) && (lTitle < 500)) {
-        int j = 0;
-        for (int i = 0; i < lTitle; i++) {
-            if (title[i] != '&' || title[i + 1] == '&') {
-                titleex[j] = title[i];
-                j++;
+    if (title) {
+        int lTitle = strlen(title);
+        if (iupStrCompareFind(title, "&", 0, 0) && (lTitle < 500)) {
+            int j = 0;
+            for (int i = 0; i < lTitle; i++) {
+                if (title[i] != '&' || title[i + 1] == '&') {
+                    titleex[j] = title[i];
+                    j++;
+                }
             }
+            titleex[j] = 0;
+            title = titleex;
         }
-        titleex[j] = 0;
-        title = titleex;
-    } 
+    }
 
     iupFlatDrawGetIconSize(ih, ih->data->img_position, ih->data->spacing, ih->data->horiz_padding, ih->data->vert_padding, imagename, title, w, h, text_orientation);
     
