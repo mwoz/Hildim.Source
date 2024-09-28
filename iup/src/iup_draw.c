@@ -730,7 +730,12 @@ IUP_SDK_API void iupFlatDrawGetIconSize(Ihandle* ih, int img_position, int spaci
   if (imagename)
   {
     int img_width = 0, img_height = 0;
-    iupImageGetInfo(imagename, &img_width, &img_height, NULL);
+    if (imagename[0] == '#') {
+        iupDrawGetTextSize(ih, "0", 0, &img_width, &img_height, text_orientation);
+        img_width = img_height;
+    }
+    else
+        iupImageGetInfo(imagename, &img_width, &img_height, NULL);
 
     if (title)
     {
@@ -849,7 +854,12 @@ IUP_SDK_API void iupFlatDrawIcon(Ihandle* ih, IdrawCanvas* dc, int icon_x, int i
                                 img_width, img_height, txt_width, txt_height,
                                 &img_x, &img_y, &txt_x, &txt_y);
 
-      iupdrvDrawImage(dc, imagename, make_inactive, bgcolor, icon_x + img_x, icon_y + img_y, img_width, img_height);  /* no zoom */
+      if (imagename[0] == '#') {
+          txt_x = icon_height;
+          iupdrwDrawFontIcon(dc, NULL, imagename, make_inactive, bgcolor, icon_x, icon_y, icon_width, icon_height);
+      }
+      else
+          iupdrvDrawImage(dc, imagename, make_inactive, bgcolor, icon_x + img_x, icon_y + img_y, img_width, img_height);  /* no zoom */
       iFlatDrawText(dc, icon_x + txt_x, icon_y + txt_y, txt_width, txt_height, title, font, text_flags, text_orientation, fgcolor, bgcolor, active);
     }
     else
@@ -857,10 +867,12 @@ IUP_SDK_API void iupFlatDrawIcon(Ihandle* ih, IdrawCanvas* dc, int icon_x, int i
       /* if image is larger than the icon space, then the position can be negative, clipping will crop the result */
       width = img_width;
       height = img_height;
-
+      
       iFlatGetIconPosition(icon_width, icon_height, &x, &y, width, height, horiz_alignment, vert_alignment);
-
-      iupdrvDrawImage(dc, imagename, make_inactive, bgcolor, icon_x + x, icon_y + y, img_width, img_height);  /* no zoom */
+      if (imagename[0] == '#')
+        iupdrwDrawFontIcon(dc, NULL, imagename, make_inactive, bgcolor, icon_x, icon_y, icon_width, icon_height);
+      else
+        iupdrvDrawImage(dc, imagename, make_inactive, bgcolor, icon_x + x, icon_y + y, img_width, img_height);  /* no zoom */
     }
   }
   else if (title)

@@ -251,6 +251,9 @@
     <ClCompile Include="..\..\srclua5\iuplua_tree_aux.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\srclua5\elem\il_fonticon.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\srclua5\il.h">
@@ -481,6 +484,9 @@
       <Filter>Lua</Filter>
     </CustomBuild>
     <CustomBuild Include="..\..\srclua5\iup_config.lua">
+      <Filter>Lua</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\srclua5\elem\fonticon.lua">
       <Filter>Lua</Filter>
     </CustomBuild>
   </ItemGroup>

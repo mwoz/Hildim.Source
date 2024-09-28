@@ -49,6 +49,7 @@
     <ClCompile Include="..\..\srclua5\elem\il_flattree.c" />
     <ClCompile Include="..\..\srclua5\elem\il_flatval.c" />
     <ClCompile Include="..\..\srclua5\elem\il_fontdlg.c" />
+    <ClCompile Include="..\..\srclua5\elem\il_fonticon.c" />
     <ClCompile Include="..\..\srclua5\elem\il_frame.c" />
     <ClCompile Include="..\..\srclua5\elem\il_gauge.c" />
     <ClCompile Include="..\..\srclua5\elem\il_gridbox.c" />
@@ -176,6 +177,11 @@
   <ItemGroup>
     <ClInclude Include="..\..\srclua5\il.h" />
     <ClInclude Include="..\..\include\iuplua.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\srclua5\elem\fonticon.lua">
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

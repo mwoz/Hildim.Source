@@ -174,4 +174,6 @@ void iupRegisterInternalClasses(void)
   iupRegisterClassInternal(iupFlatListNewClass());
   iupRegisterClassInternal(iupFlatValNewClass());
   iupRegisterClassInternal(iupFlatTreeNewClass());
+
+  iupRegisterClassInternal(iupFontIconNewClass());
 }

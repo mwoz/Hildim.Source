@@ -1533,6 +1533,9 @@ static void iFlatTabsComputeNaturalSizeMethod(Ihandle* ih, int *w, int *h, int *
 }
 
 static int iFlatTabsCreateMethod(Ihandle* ih, void **params) {
+	/* free the data allocated by IupCanvas */
+	free(ih->data);
+	ih->data = iupALLOCCTRLDATA();
 	/* add children */
 	if (params) {
 		Ihandle** iparams = (Ihandle**)params;
@@ -1562,12 +1565,14 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params) {
 	IupSetCallback(ih, "MOTION_CB", (Icallback)iFlatTabsMotion_CB);
 	IupSetCallback(ih, "LEAVEWINDOW_CB", (Icallback)iFlatTabsLeaveWindow_CB);
 	IupSetCallback(ih, "RESIZE_CB", (Icallback)iFlatTabsResize_CB);
+	
 	ih->data->dragTab = ITABS_NONE;
 	ih->data->xStart = -1;
 	ih->data->yStart = -1;
 	ih->data->start = 0;
 	ih->data->xFreeMax = 0;
 	ih->data->xFree = 0;
+	ih->data->inside_resize = 0;
 	return IUP_NOERROR;
 }
 

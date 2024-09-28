@@ -26,6 +26,7 @@ struct _IcontrolData
 	int start;
 	int xFree;
 	int xFreeMax;
+	int inside_resize;
 };
 
 #endif

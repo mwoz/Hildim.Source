@@ -522,11 +522,17 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
         char* img = iupAttribGet(ih, "IMAGE");
 
         if (img) {
-            HBITMAP hb = (HBITMAP)iupImageGetImage(img, NULL, drawitem->itemState & ODS_GRAYED, NULL);
-            
-            int bpp;
-            iupdrvImageGetInfo(hb, NULL, NULL, &bpp);
-            iupwinDrawBitmap(hDC, hb, (parent->x - icon_w)/2, (parent->y - icon_h) / 2, icon_w, icon_h, icon_w, icon_h, bpp);
+            if (img[0] == '#') {
+                iupdrwDrawFontIcon(NULL, hDC, img, drawitem->itemState & ODS_GRAYED, IupGetAttribute(ih, "BARCOLOR"), BCMENU_PAD, BCMENU_PAD, height - BCMENU_PAD * 2, height - BCMENU_PAD * 2);
+            }
+            else {
+                HBITMAP hb = (HBITMAP)iupImageGetImage(img, NULL, drawitem->itemState & ODS_GRAYED, NULL);
+                if (hb) {
+                    int bpp;
+                    iupdrvImageGetInfo(hb, NULL, NULL, &bpp);
+                    iupwinDrawBitmap(hDC, hb, (parent->x - icon_w) / 2, (parent->y - icon_h) / 2, icon_w, icon_h, icon_w, icon_h, bpp);
+                }
+            } 
         }
 
         SetBkMode(hDC, TRANSPARENT);

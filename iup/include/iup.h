@@ -275,6 +275,8 @@ IUP_API Ihandle*  IupGauge      (void);
 IUP_API Ihandle*  IupDial       (const char* type);
 IUP_API Ihandle*  IupColorBrowser(void);
 
+IUP_API Ihandle*  IupFontIcon    (const char* imgdescription);
+
 /* Old controls, use SPIN attribute of IupText */
 IUP_API Ihandle*  IupSpin       (void);
 IUP_API Ihandle*  IupSpinbox    (Ihandle* child);

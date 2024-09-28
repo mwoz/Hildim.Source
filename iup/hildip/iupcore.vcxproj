@@ -1,26 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2C7E83B9-7FE8-432A-97BA-FCF4D0728408}</ProjectGuid>
     <RootNamespace>iupcore</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
-<!---->
+  <!---->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(SolutionDir)\Hildim.Default.props" />
   <PropertyGroup Label="Configuration">
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" >
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)DefaultProjectProps.props" />
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
-<!---->
-
+  <!---->
   <ItemGroup>
     <ClCompile Include="..\src\iup.c" />
     <ClCompile Include="..\src\iup_animatedlabel.c" />
@@ -47,10 +45,10 @@
     <ClCompile Include="..\src\iup_expander.c" />
     <ClCompile Include="..\src\iup_export.c" />
     <ClCompile Include="..\src\iup_flatbutton.c" />
-    <ClCompile Include="..\src\iup_flatframe.c"/>
+    <ClCompile Include="..\src\iup_flatframe.c" />
     <ClCompile Include="..\src\iup_flatlabel.c" />
     <ClCompile Include="..\src\iup_flatlist.c" />
-    <ClCompile Include="..\src\iup_flatscrollbar.c"/>
+    <ClCompile Include="..\src\iup_flatscrollbar.c" />
     <ClCompile Include="..\src\iup_flatscrollbox.c" />
     <ClCompile Include="..\src\iup_flatseparator.c" />
     <ClCompile Include="..\src\iup_flattabs.c" />
@@ -59,6 +57,7 @@
     <ClCompile Include="..\src\iup_flatval.c" />
     <ClCompile Include="..\src\iup_focus.c" />
     <ClCompile Include="..\src\iup_font.c" />
+    <ClCompile Include="..\src\iup_fonticon.c" />
     <ClCompile Include="..\src\iup_func.c" />
     <ClCompile Include="..\src\iup_gauge.c" />
     <ClCompile Include="..\src\iup_globalattrib.c" />
@@ -149,6 +148,7 @@
     <ClInclude Include="..\src\iup_flatscrollbar.h" />
     <ClInclude Include="..\src\iup_flattree.h" />
     <ClInclude Include="..\src\iup_focus.h" />
+    <ClInclude Include="..\src\iup_fonticon.h" />
     <ClInclude Include="..\src\iup_func.h" />
     <ClInclude Include="..\src\iup_globalattrib.h" />
     <ClInclude Include="..\src\iup_key.h" />

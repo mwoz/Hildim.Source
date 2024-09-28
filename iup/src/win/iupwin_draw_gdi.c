@@ -13,10 +13,12 @@
 #include <math.h>
 
 #include "iup.h"
+#include "iup_str.h"
 
 #include "iup_attrib.h"
 #include "iup_class.h"
 #include "iup_image.h"
+#include "iup_fonticon.h"
 #include "iup_drvdraw.h"
 #include "iup_draw.h"
 
@@ -751,6 +753,82 @@ IUP_SDK_API void iupdrvDrawText(IdrawCanvas* dc, const char* text, int len, int 
   }
 }
 
+IUP_SDK_API int iupdrwDrawFontIcon(IdrawCanvas* dc, HDC hbitmap, const char* name, int make_inactive, const char* bgcolor, int x, int y, int w, int h) {
+
+    Ihandle* ih = IupGetHandle(name);
+    if (!ih || !iupStrEqual(IupGetClassName(ih), "fonticon"))
+        return 0;
+
+    if(!hbitmap)
+        hbitmap = dc->hBitmapDC;
+
+ 
+    int len, value_len, rez = 0;
+    len = (int)strlen(name);
+    WCHAR icons[20];
+    COLORREF clrs[20];
+    char value[100];
+    int maxIcon = -1;
+
+    unsigned char r, g, b, bg_r, bg_g, bg_b;
+    iupStrToRGB(bgcolor, &bg_r, &bg_g, &bg_b);
+    
+     float fSize = 0;
+
+    rez = 1;
+    float dpi;
+    iupStrToFloat(IupGetGlobal("SCREENDPI"), &dpi);
+    char font[100];
+    strcpy(font, "hildim ,");
+
+    if (!fSize) //{
+        fSize = min(h, w) * 72.0 / dpi;
+
+     strcat(font, iupStrReturnFloat(fSize));
+
+    
+    HFONT hOldFont, hFont = (HFONT)iupwinGetHFont(font);
+    hOldFont = SelectObject(hbitmap, hFont);
+
+    RECT rect, rect2;
+    rect.left = x;
+    rect.right = x + fSize * dpi/72.0;
+    rect.top = y;
+    rect.bottom = y + fSize * dpi / 72.0;
+    WCHAR wtext[2];
+    wtext[1] = 0;
+
+    UINT uFormat = DT_CENTER | DT_VCENTER | DT_NOCLIP;
+    SetBkMode(hbitmap, TRANSPARENT);
+    int iCount = IupGetInt(ih, "COUNT");
+    FontIconData* fid = (FontIconData*)iupAttribGet(ih, "WID");
+
+    int numTxtColor = IupGetInt(ih, "NUMCOLORTEXT");
+
+    for (int i = 0; i < iCount; i++) {
+        wtext[0] = fid[i].ch;
+        unsigned char r = fid[i].r, g = fid[i].g, b = fid[i].b;
+        if (i == numTxtColor) {
+            if ((bg_b * 299.0 + bg_g * 587.0 + bg_r * 114.0) / 1000. > 125.0) {
+                r = 0, g = 0, b = 0;
+            }
+            else
+            {
+                r = 255, g = 255, b = 255;
+            }
+        }
+        if (make_inactive)
+            iupImageColorMakeInactive(&r, &g, &b, bg_r, bg_g, bg_b);
+        SetTextColor(hbitmap, RGB(r, g, b));
+        DrawText(hbitmap, wtext, 1, &rect, uFormat);
+
+    }
+    SelectObject(hbitmap, hOldFont);
+
+  err:
+    return rez;
+}
+
 IUP_SDK_API void iupdrvDrawImage(IdrawCanvas* dc, const char* name, int make_inactive, const char* bgcolor, int x, int y, int w, int h)
 {
   int bpp, img_w, img_h;
@@ -761,6 +839,9 @@ IUP_SDK_API void iupdrvDrawImage(IdrawCanvas* dc, const char* name, int make_ina
     iupdrvDrawImageWDL(dc->wdl_gc, name, make_inactive, bgcolor, x, y, w, h);
     return;
   }
+
+  if (name && name[0] == '#' && iupdrwDrawFontIcon(dc, NULL, name, make_inactive, bgcolor, x, y, w, h))
+      return;
 
   hBitmap = (HBITMAP)iupImageGetImage(name, dc->ih, make_inactive, bgcolor);
   if (!hBitmap)

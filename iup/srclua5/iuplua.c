@@ -1543,6 +1543,7 @@ IUPLUA_API int iuplua_open(lua_State * L)
   iupdiallua_open(L);
   iupcolorbarlua_open(L);
   iupcolorbrowserlua_open(L);
+  iupfonticonlua_open(L);
 
   return 0; /* nothing in stack */
 }

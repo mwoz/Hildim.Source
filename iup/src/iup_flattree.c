@@ -1279,7 +1279,10 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
       const char *back_color = (node->bg_color) ? node->bg_color : bg_color;
       const char *image = iFlatTreeGetNodeImage(ih, node, 1);
 
-      iupImageGetInfo(image, &image_gap, NULL, NULL);
+      if (image && image[0] == '#')
+          image_gap = node_h - ih->data->icon_spacing * 2;
+      else
+        iupImageGetInfo(image, &image_gap, NULL, NULL);
       image_gap += ih->data->icon_spacing;
 
       /* toggle */

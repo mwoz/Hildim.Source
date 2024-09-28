@@ -85,6 +85,8 @@ Iclass* iupImageRGBANewClass(void);
 Iclass* iupUserNewClass(void);
 Iclass* iupClipboardNewClass(void);
 
+Iclass* iupFontIconNewClass(void);
+
 /*************************************************/
 
 void iupdrvMessageDlgInitClass(Iclass* ic);
