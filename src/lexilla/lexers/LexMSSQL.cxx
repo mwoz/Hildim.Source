@@ -453,7 +453,7 @@ void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 				}
             // Folding between begin or case and end
 				char c = static_cast<char>(tolower(ch));
-				if (c == 'b' || c == 'c' || c == 'e' || c == 'g') {
+				if (c == 'b' || c == 'c' || c == 'e' || c == 'g' || c == 'a') {
 					Sci_PositionU j;
 					for (j = 0; j < 6; j++) {
 					if (!iswordchar(styler[i + j])) {
@@ -485,7 +485,7 @@ void SCI_METHOD LexerMSSQL::Fold(Sci_PositionU startPos, Sci_Position length, in
 								levelCurrent--;
 							}
 						}
-					} else if (strcmp(s, "create") == 0) {
+					} else if (strcmp(s, "create") == 0 || strcmp(s, "alter") == 0) {
 						std::string s = styler.GetRangeLowered(i, styler.LineEnd(lineCurrent) + 1);
 						if (std::regex_search(s, reCreateFold)) {//не фолдим создание транзакций и временных таблиц						
 							if (levelMinCurrent > levelCurrent)

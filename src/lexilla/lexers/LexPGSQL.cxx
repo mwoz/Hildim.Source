@@ -380,7 +380,8 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 
 		switch (sc.state) {
 		case SCE_PGSQL_OPERATOR_NOFOLD:
-		case SCE_PGSQL_OPERATOR:
+		case SCE_PGSQL_OPERATOR: 
+		case SCE_PGSQL_M4KBRASHES:
 			sc.SetState(SCE_PGSQL_DEFAULT);
 			break;
 		case SCE_PGSQL_NUMBER:
@@ -563,11 +564,12 @@ void SCI_METHOD LexerPGSQL::Lex(Sci_PositionU startPos, Sci_Position length, int
 				sc.SetState(SCE_PGSQL_2QSTRING);
 			} else if (sc.ch == '$' && (IsAWordStart(sc.chNext) || sc.chNext == '$')) {
 				sc.SetState(SCE_PGSQL_$TAG);
-			} else if (isoperator(static_cast<char>(sc.ch))) {
-				sc.SetState($transparent_tagNum ? SCE_PGSQL_OPERATOR_NOFOLD : SCE_PGSQL_OPERATOR);
-			}
+			} 
 			else if ((sc.ch == '{' || sc.ch == '}') && keywords[KW_PGSQL_M4KEYS].InList("}")) {
 				sc.SetState(SCE_PGSQL_M4KBRASHES);
+			}
+			else if (isoperator(static_cast<char>(sc.ch))) {
+				sc.SetState($transparent_tagNum ? SCE_PGSQL_OPERATOR_NOFOLD : SCE_PGSQL_OPERATOR);
 			}
 		}
 	}

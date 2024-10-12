@@ -732,7 +732,11 @@ IUP_SDK_API void iupFlatDrawGetIconSize(Ihandle* ih, int img_position, int spaci
     int img_width = 0, img_height = 0;
     if (imagename[0] == '#') {
         iupDrawGetTextSize(ih, "0", 0, &img_width, &img_height, text_orientation);
-        img_width = img_height;
+        if (img_width > img_height)
+            img_height = img_width;
+        else
+            img_width = img_height;
+            
     }
     else
         iupImageGetInfo(imagename, &img_width, &img_height, NULL);

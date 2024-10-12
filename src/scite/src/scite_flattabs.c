@@ -257,7 +257,10 @@ static int iFlatTabsGetExtraWidthId(Ihandle* ih, int i, int img_position, int ho
 	iFlatTabsSetExtraFont(ih, i);
 
 	if (image) {
-		iupImageGetInfo(image, &w, NULL, NULL);
+		if(image[0] == '#')
+			IupDrawGetTextSize(ih, "0", 0, NULL, &w);
+		else
+			iupImageGetInfo(image, &w, NULL, NULL);
 
 		if (title) {
 			int spacing = iupAttribGetInt(ih, "TABSIMAGESPACING");
@@ -660,18 +663,18 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			extra_horiz_alignment = horiz_alignment;
 			extra_vert_alignment = vert_alignment;
 			iFlatTabsGetAlignment(extra_alignment, &extra_horiz_alignment, &extra_vert_alignment);
-
+			                                                                                 
 			if (!active)
 				extra_active = active;
 			else
-				extra_active = iFlatTabsGetExtraActive(ih, i);
+  				extra_active = iFlatTabsGetExtraActive(ih, i);
 
 			if (!extra_forecolor)
 				extra_forecolor = tabs_forecolor;
 
 			extra_id = ITABS_EXTRABUT2TABID(i);
 
-			extra_w = iFlatTabsGetExtraWidthId(ih, i, img_position, horiz_padding);  /* this will also set any id based font */
+ 			extra_w = iFlatTabsGetExtraWidthId(ih, i, img_position, horiz_padding);  /* this will also set any id based font */
 
 			extra_x = iWidth - right_extra_width - extra_w;
 
@@ -693,7 +696,10 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
 			iupFlatDrawIcon(ih, dc, extra_x, 0,
 				extra_w, title_height - 1,
-				img_position, spacing, extra_horiz_alignment, extra_vert_alignment, horiz_padding, vert_padding,
+				img_position, spacing, extra_horiz_alignment, extra_vert_alignment, 
+				//extra_image && (extra_image[0] == '#') ? 0 : horiz_padding,
+				horiz_padding,
+				vert_padding,
 				extra_image, make_inactive, extra_title, 0, 0, extra_forecolor, tabs_bgcolor, extra_active);
 
 			right_extra_width += extra_w;
@@ -1246,7 +1252,7 @@ static char* iFlatTabsGetBgColorAttrib(Ihandle* ih) {
 
 static int iFlatTabsSetTipAttrib(Ihandle* ih, const char* value) {
 	iupAttribSetStr(ih, "TABSTIP", value);
-	return iupdrvBaseSetTipAttrib(ih, value);
+	return iupdrvBaseSetTipAttrib(ih, value);                 
 }
 
 static int iFlatTabsSetActiveAttrib(Ihandle* ih, const char* value) {
