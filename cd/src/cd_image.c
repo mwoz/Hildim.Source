@@ -57,6 +57,11 @@ void cdRGB2Gray(int width, int height, const unsigned char* red, const unsigned 
   }
 }
 
+void cdCanvasPutIconImage(cdCanvas* canvas, int iw, int ih, const char* name, int x, int y, int w, int h, int active, const char* bgcolor)
+{ 
+    canvas->cxDrawFontIcon(canvas->ctxcanvas, iw, ih, name, x, y, w, h, active, bgcolor);
+}
+
 void cdCanvasPutImageRectRGB(cdCanvas* canvas, int iw, int ih, const unsigned char *r, const unsigned char *g, const unsigned char *b, int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax)
 {
   assert(canvas);

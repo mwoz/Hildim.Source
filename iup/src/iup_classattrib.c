@@ -456,7 +456,7 @@ void iupClassObjectGetAttributeInfo(Ihandle* ih, const char* name, char* *def_va
   }
 }
 
-void iupClassGetAttribNameInfo(Iclass* ic, const char* name, char* *def_value, int *flags)
+int iupClassGetAttribNameInfo(Iclass* ic, const char* name, char* *def_value, int *flags)
 {
   IattribFunc* afunc = (IattribFunc*)iupTableGet(ic->attrib_func, name);
   *def_value = NULL;
@@ -465,7 +465,9 @@ void iupClassGetAttribNameInfo(Iclass* ic, const char* name, char* *def_value, i
   {
     *flags = afunc->flags;
     *def_value = iClassGetDefaultValue(afunc);
+    return 1;
   }
+  return 0;
 }
 
 int iupClassObjectCurAttribIsInherit(Iclass* ic)

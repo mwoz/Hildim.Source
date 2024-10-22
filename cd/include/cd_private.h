@@ -83,6 +83,9 @@ struct _cdCanvas
 {
   char signature[2];  /* must be "CD" */
 
+  void (*   cxDrawFontIcon)(cdCtxCanvas* ctxcanvas, int iw, int ih, const char* name,
+      int x, int y, int w, int h, int active, const char* bgcolor);
+
   /* can NOT be NULL */
   void   (*cxPixel)(cdCtxCanvas* ctxcanvas, int x, int y, long color);
   void   (*cxLine)(cdCtxCanvas* ctxcanvas, int x1, int y1, int x2, int y2);

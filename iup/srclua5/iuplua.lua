@@ -110,7 +110,7 @@ local ihandle_gettable = function(ih, index)
       local widget = iup.GetWidget(ih)
       if (not widget or type(widget)~="table") then error("invalid IUP handle") end
       return widget[index]
-    elseif type(value)== "number" or type(value) == "string" then
+    elseif (type(value)== "number" or type(value) == "string") and iup._isHandleParam(ih, INDEX) then
       local ih = iup.GetHandle(value)
       if ih then 
         return ih

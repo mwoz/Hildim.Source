@@ -87,6 +87,15 @@ static int dialog_dropdata_cb(Ihandle *self, char * p0, void* p1, int p2, int p3
   return iuplua_call(L, 5);
 }
 
+static int dialog_dropmotion_cb(Ihandle *self, int p0, int p1, char * p2)
+{
+  lua_State *L = iuplua_call_start(self, "dropmotion_cb");
+  lua_pushinteger(L, p0);
+  lua_pushinteger(L, p1);
+  lua_pushstring(L, p2);
+  return iuplua_call(L, 3);
+}
+
 static int dialog_dropfiles_cb(Ihandle *self, char * p0, int p1, int p2, int p3)
 {
   lua_State *L = iuplua_call_start(self, "dropfiles_cb");
@@ -173,6 +182,7 @@ int iupdialoglua_open(lua_State * L)
   iuplua_register_cb(L, "DRAGDATASIZE_CB", (lua_CFunction)dialog_dragdatasize_cb, NULL);
   iuplua_register_cb(L, "DRAGEND_CB", (lua_CFunction)dialog_dragend_cb, NULL);
   iuplua_register_cb(L, "DROPDATA_CB", (lua_CFunction)dialog_dropdata_cb, NULL);
+  iuplua_register_cb(L, "DROPMOTION_CB", (lua_CFunction)dialog_dropmotion_cb, NULL);
   iuplua_register_cb(L, "DROPFILES_CB", (lua_CFunction)dialog_dropfiles_cb, NULL);
   iuplua_register_cb(L, "MAP_CB", (lua_CFunction)dialog_map_cb, NULL);
   iuplua_register_cb(L, "MOVE_CB", (lua_CFunction)dialog_move_cb, NULL);

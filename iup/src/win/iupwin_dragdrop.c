@@ -683,7 +683,13 @@ static HRESULT STDMETHODCALLTYPE IwinDropTarget_DragOver(IwinDropTarget* pThis, 
 
 static HRESULT STDMETHODCALLTYPE IwinDropTarget_DragLeave(IwinDropTarget* pThis)
 {
-  (void)pThis;
+    if (pThis->fAllowDrop)
+    {
+        IFniis cbDropMotion = (IFniis)IupGetCallback(pThis->ih, "DROPMOTION_CB");
+
+        if (cbDropMotion)
+            cbDropMotion(pThis->ih, -2, -2, IUPKEY_STATUS_INIT);
+    }
   return S_OK;
 }
 

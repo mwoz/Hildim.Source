@@ -474,7 +474,7 @@ void iupClassUpdate(Iclass* ic);
 
 /* Used in IupLayoutDialog */
 int iupClassAttribIsRegistered(Iclass* ic, const char* name);
-void iupClassGetAttribNameInfo(Iclass* ic, const char* name, char* *def_value, int *flags);
+int iupClassGetAttribNameInfo(Iclass* ic, const char* name, char* *def_value, int *flags);
 
 /* Used in iupClassRegisterAttribute and iGlobalChangingDefaultColor */
 int iupClassIsGlobalDefault(const char* name, int colors);

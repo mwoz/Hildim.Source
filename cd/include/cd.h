@@ -205,6 +205,8 @@ int  cdCanvasGetColorPlanes(cdCanvas* canvas);
 /* color */
 void cdCanvasPalette(cdCanvas* canvas, int n, const long *palette, int mode);
 
+void cdCanvasPutIconImage(cdCanvas* canvas, int iw, int ih, const char* name, int x, int y, int w, int h, int active, const char* bgcolor);
+
 /* client images */
 void cdCanvasGetImageRGB(cdCanvas* canvas, unsigned char* r, unsigned char* g, unsigned char* b, int x, int y, int iw, int ih);
 

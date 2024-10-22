@@ -679,36 +679,72 @@ static void iMatrixDrawImage(Ihandle* ih, int x1, int x2, int y1, int y2, int co
 
   iMatrixDrawSetCellClipping(ih, x1, x2, y1, y2);
 
-  /* Create an space between image and cell frame */
-  x1 += IMAT_PADDING_W / 2;       x2 -= IMAT_PADDING_W / 2;
-  y1 += IMAT_PADDING_H / 2;       y2 -= IMAT_PADDING_H / 2;
-
+ 
   image = IupImageGetHandle(name);
   if (image)
   {
-    long bgcolor;
-    int x, y;
-    int image_width = IupGetInt(image, "WIDTH");
-    int image_height = IupGetInt(image, "HEIGHT");
-    unsigned char r = 255, g = 255, b = 255;
-    iupMatrixGetBgRGB(ih, lin, col, &r, &g, &b, marked, active);
-    bgcolor = cdEncodeColor(r, g, b);
+      if (name[0] == '#') {
+          /* Create an space between image and cell frame */
+          //x1 += 1;       x2 -= 1;
+          //y1 += 1;       y2 -= 1;
 
-    if (lin_alignment == IMAT_ALIGN_CENTER)
-      y = (y2 + y1 + image_height) / 2;
-    else if (lin_alignment == IMAT_ALIGN_START)
-      y = y1;
-    else  /* BOTTOM */
-      y = y2 + image_height;
+          //ih->data->cd_canvas->ctxcanvas->dc;
+          int dd =  IupGetInt(ih, "FONTSIZE");
+          dd = 0;
+          int image_height = y2 - y1;
+          int image_width = image_height;
+          int x, y;
 
-    if (col_alignment == IMAT_ALIGN_CENTER)
-      x = (x2 + x1 - image_width) / 2;
-    else if (col_alignment == IMAT_ALIGN_START)
-      x = x1;
-    else  /* RIGHT */
-      x = x2 - image_width;
+          if (lin_alignment == IMAT_ALIGN_CENTER)
+              y = (y2 + y1 + image_height) / 2;
+          else if (lin_alignment == IMAT_ALIGN_START)
+              y = y1;
+          else  /* BOTTOM */
+              y = y2 + image_height;
 
-    cdIupDrawImage(ih->data->cd_canvas, image, x, iupMATRIX_INVERTYAXIS(ih, y), 0, 0, !active, bgcolor);
+          if (col_alignment == IMAT_ALIGN_CENTER)
+              x = (x2 + x1 - image_width) / 2;
+          else if (col_alignment == IMAT_ALIGN_START)
+              x = x1;
+          else  /* RIGHT */
+              x = x2 - image_width;
+
+          iupMatrixGetBgColorStr(ih, lin, col);
+
+          cdCanvasPutIconImage(ih->data->cd_canvas, image_height, image_height, name, x, y1, x2 - x, image_height, 0, 0, 0, 0);
+
+
+          //image_width = image_height;
+      } 
+      else
+      {
+          /* Create an space between image and cell frame */
+          x1 += IMAT_PADDING_W / 2;       x2 -= IMAT_PADDING_W / 2;
+          y1 += IMAT_PADDING_H / 2;       y2 -= IMAT_PADDING_H / 2;
+
+          long bgcolor;
+          int x, y;
+          int image_width = IupGetInt(image, "WIDTH");
+          int image_height = IupGetInt(image, "HEIGHT");
+          unsigned char r = 255, g = 255, b = 255;
+          iupMatrixGetBgRGB(ih, lin, col, &r, &g, &b, marked, active);
+          bgcolor = cdEncodeColor(r, g, b);
+
+          if (lin_alignment == IMAT_ALIGN_CENTER)
+              y = (y2 + y1 + image_height) / 2;
+          else if (lin_alignment == IMAT_ALIGN_START)
+              y = y1;
+          else  /* BOTTOM */
+              y = y2 + image_height;
+
+          if (col_alignment == IMAT_ALIGN_CENTER)
+              x = (x2 + x1 - image_width) / 2;
+          else if (col_alignment == IMAT_ALIGN_START)
+              x = x1;
+          else  /* RIGHT */
+              x = x2 - image_width;
+          cdIupDrawImage(ih->data->cd_canvas, image, x, iupMATRIX_INVERTYAXIS(ih, y), 0, 0, !active, bgcolor);
+      }
   }
 
   iMatrixDrawResetCellClipping(ih);

@@ -1094,6 +1094,23 @@ static int StoreGlobal(lua_State *L)
   return 0;
 }
 
+static int priv_isHanleParam(lua_State* L)
+{
+    Ihandle* ih = iuplua_checkihandle(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    char* def_value;
+    int flags;
+
+    int b = !iupClassGetAttribNameInfo(ih->iclass, name, &def_value, &flags);
+
+    b = b || (flags & IUPAF_IHANDLE) || (flags & IUPAF_IHANDLENAME);
+    lua_pushboolean(L, b);
+
+    return 1;
+}
+
+
+
 /*****************************************************************************
 * iupluaapi_open                                                               *
 ****************************************************************************/
@@ -1225,6 +1242,7 @@ void iupluaapi_open(lua_State * L)
     {"StoreAttributeId2", StoreAttributeId2},
     {"GetAttributeId2", GetAttributeId2},
     {"SetAttributeId2", StoreAttributeId2},
+    {"_isHandleParam", priv_isHanleParam},
     {NULL, NULL},
   };
 

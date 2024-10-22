@@ -7,107 +7,7 @@
 
 #include "scite_images.h"
 
-static Ihandle* load_image_IMGLEAF_WW(void)
-{
-    unsigned char imgdata[] = {
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 4, 4, 5, 5, 5, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 4, 5, 5, 1, 6, 1, 5, 0, 0, 0, 0,
-      0, 0, 0, 0, 3, 4, 4, 5, 5, 1, 6, 1, 5, 0, 0, 0,
-      0, 0, 0, 0, 3, 4, 4, 4, 5, 5, 1, 1, 5, 0, 0, 0,
-      0, 0, 0, 0, 2, 3, 4, 4, 4, 5, 5, 5, 4, 0, 0, 0,
-      0, 0, 0, 0, 2, 3, 3, 4, 4, 4, 5, 4, 4, 0, 0, 0,
-      0, 0, 0, 0, 0, 2, 3, 3, 4, 4, 4, 4, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-    Ihandle* image = IupImage(16, 16, imgdata);
-
-    IupSetAttribute(image, "0", "BGCOLOR");
-    IupSetAttribute(image, "1", "192 192 192");
-    IupSetAttribute(image, "2", "56 56 56");
-    IupSetAttribute(image, "3", "99 99 99");
-    IupSetAttribute(image, "4", "128 128 128");
-    IupSetAttribute(image, "5", "161 161 161");
-    IupSetAttribute(image, "6", "222 222 222");
-
-    return image;
-}
-
-
-static Ihandle* load_image_IMGCOLLAPSED_WW(void)
-{
-    unsigned char imgdata[] = {
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 2, 2, 2, 2, 3, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 2, 6, 5, 5, 7, 2, 3, 0, 0, 0, 0, 0, 0,
-      0, 0, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 0,
-      0, 0, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 1, 7, 1, 7, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 7, 1, 7, 1, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 1, 7, 1, 7, 1, 7, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 7, 1, 7, 1, 7, 1, 4, 3,
-      0, 0, 2, 5, 7, 7, 7, 7, 1, 7, 1, 7, 1, 1, 4, 3,
-      0, 0, 2, 5, 1, 7, 1, 1, 7, 1, 7, 1, 1, 1, 4, 3,
-      0, 0, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3,
-      0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-    Ihandle* image = IupImage(16, 16, imgdata);
-
-    IupSetAttribute(image, "0", "BGCOLOR");
-    IupSetAttribute(image, "1", "255 206 156");
-    IupSetAttribute(image, "2", "156 156 0");
-    IupSetAttribute(image, "3", "0 0 0");
-    IupSetAttribute(image, "4", "206 206 99");
-    IupSetAttribute(image, "5", "255 255 206");
-    IupSetAttribute(image, "6", "247 247 247");
-    IupSetAttribute(image, "7", "255 255 156");
-
-    return image;
-}
-
-static Ihandle* load_image_IMGEXPANDED_WW(void)
-{
-    unsigned char imgdata[] = {
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 2, 1, 3, 3, 3, 3, 1, 2, 2, 2, 2, 2, 2, 0,
-      0, 0, 2, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 6, 4,
-      0, 0, 2, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 4,
-      0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 3, 6, 4,
-      0, 2, 1, 3, 3, 3, 3, 3, 5, 3, 5, 6, 4, 6, 6, 4,
-      0, 2, 1, 3, 3, 3, 3, 3, 3, 5, 3, 6, 4, 6, 6, 4,
-      0, 0, 2, 1, 3, 3, 3, 3, 5, 3, 5, 5, 2, 4, 2, 4,
-      0, 0, 2, 1, 3, 3, 5, 5, 3, 5, 5, 5, 6, 4, 2, 4,
-      0, 0, 0, 2, 1, 5, 3, 3, 5, 5, 5, 5, 6, 2, 4, 4,
-      0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4,
-      0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-    Ihandle* image = IupImage(16, 16, imgdata);
-
-    IupSetAttribute(image, "0", "BGCOLOR");
-    IupSetAttribute(image, "1", "255 255 255");
-    IupSetAttribute(image, "2", "156 156 0");
-    IupSetAttribute(image, "3", "255 255 156");
-    IupSetAttribute(image, "4", "0 0 0");
-    IupSetAttribute(image, "5", "255 206 156");
-    IupSetAttribute(image, "6", "206 206 99");
-
-    return image;
-}
-
+/*
 static Ihandle* load_image_disk_WW(void)
 {
     unsigned char imgdata[] = {
@@ -4260,151 +4160,262 @@ static Ihandle* load_image_Switch_WW(void) {
 
 	return image;
 }
+
 static Ihandle* load_image_Event(void) {
-	unsigned char imgdata[] = {
-	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 15, 13, 6, 6, 6, 6, 2, 2, 7, 15, 15,
-	  15, 15, 15, 15, 15, 15, 3, 7, 6, 6, 5, 4, 0, 14, 15, 15,
-	  15, 15, 15, 15, 15, 11, 3, 11, 3, 5, 4, 0, 9, 15, 15, 15,
-	  15, 15, 15, 15, 15, 3, 7, 3, 5, 4, 1, 9, 15, 15, 15, 15,
-	  15, 15, 15, 15, 10, 3, 11, 3, 4, 1, 8, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 3, 6, 6, 6, 5, 5, 4, 0, 9, 15, 15, 15,
-	  15, 15, 15, 15, 2, 1, 0, 1, 3, 4, 0, 8, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 14, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 8, 6, 4, 1, 8, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 5, 5, 1, 9, 15, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 8, 2, 9, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	  15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 };
+    unsigned char imgdata[] = {
+      15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 15, 13, 6, 6, 6, 6, 2, 2, 7, 15, 15,
+      15, 15, 15, 15, 15, 15, 3, 7, 6, 6, 5, 4, 0, 14, 15, 15,
+      15, 15, 15, 15, 15, 11, 3, 11, 3, 5, 4, 0, 9, 15, 15, 15,
+      15, 15, 15, 15, 15, 3, 7, 3, 5, 4, 1, 9, 15, 15, 15, 15,
+      15, 15, 15, 15, 10, 3, 11, 3, 4, 1, 8, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 3, 6, 6, 6, 5, 5, 4, 0, 9, 15, 15, 15,
+      15, 15, 15, 15, 2, 1, 0, 1, 3, 4, 0, 8, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 14, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 5, 3, 4, 1, 8, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 8, 6, 4, 1, 8, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 5, 5, 1, 9, 15, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 8, 2, 9, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+      15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 };
 
-	Ihandle* image = IupImage(16, 16, imgdata);
+    Ihandle* image = IupImage(16, 16, imgdata);
 
-	IupSetAttribute(image, "0", "109 89 56");
-	IupSetAttribute(image, "1", "154 129 61");
-	IupSetAttribute(image, "2", "184 159 109");
-	IupSetAttribute(image, "3", "242 191 111");
-	IupSetAttribute(image, "4", "231 132 132");
-	IupSetAttribute(image, "5", "224 182 141");
-	IupSetAttribute(image, "6", "232 211 135");
-	IupSetAttribute(image, "7", "229 208 170");
-	IupSetAttribute(image, "8", "231 226 214");
-	IupSetAttribute(image, "9", "233 231 222");
-	IupSetAttribute(image, "10", "243 235 218");
-	IupSetAttribute(image, "11", "255 247 222");
-	IupSetAttribute(image, "12", "239 231 231");
-	IupSetAttribute(image, "13", "255 247 231");
-	IupSetAttribute(image, "14", "247 247 247");
-	IupSetAttribute(image, "15", "BGCOLOR");
-	IupSetAttribute(image, "16", "0 102 204");
+    IupSetAttribute(image, "0", "109 89 56");
+    IupSetAttribute(image, "1", "154 129 61");
+    IupSetAttribute(image, "2", "184 159 109");
+    IupSetAttribute(image, "3", "242 191 111");
+    IupSetAttribute(image, "4", "231 132 132");
+    IupSetAttribute(image, "5", "224 182 141");
+    IupSetAttribute(image, "6", "232 211 135");
+    IupSetAttribute(image, "7", "229 208 170");
+    IupSetAttribute(image, "8", "231 226 214");
+    IupSetAttribute(image, "9", "233 231 222");
+    IupSetAttribute(image, "10", "243 235 218");
+    IupSetAttribute(image, "11", "255 247 222");
+    IupSetAttribute(image, "12", "239 231 231");
+    IupSetAttribute(image, "13", "255 247 231");
+    IupSetAttribute(image, "14", "247 247 247");
+    IupSetAttribute(image, "15", "BGCOLOR");
+    IupSetAttribute(image, "16", "0 102 204");
 
-	return image;
+    return image;
 }
+
+*/
+
+
+
+static Ihandle* load_image_IMGCOLLAPSED_WW(void)
+{
+    unsigned char imgdata[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 2, 2, 2, 2, 3, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 2, 6, 5, 5, 7, 2, 3, 0, 0, 0, 0, 0, 0,
+      0, 0, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 0,
+      0, 0, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 1, 7, 1, 7, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 7, 7, 7, 1, 7, 1, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 1, 7, 1, 7, 1, 7, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 7, 1, 7, 1, 7, 1, 4, 3,
+      0, 0, 2, 5, 7, 7, 7, 7, 1, 7, 1, 7, 1, 1, 4, 3,
+      0, 0, 2, 5, 1, 7, 1, 1, 7, 1, 7, 1, 1, 1, 4, 3,
+      0, 0, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3,
+      0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    Ihandle* image = IupImage(16, 16, imgdata);
+
+    IupSetAttribute(image, "0", "BGCOLOR");
+    IupSetAttribute(image, "1", "255 206 156");
+    IupSetAttribute(image, "2", "156 156 0");
+    IupSetAttribute(image, "3", "0 0 0");
+    IupSetAttribute(image, "4", "206 206 99");
+    IupSetAttribute(image, "5", "255 255 206");
+    IupSetAttribute(image, "6", "247 247 247");
+    IupSetAttribute(image, "7", "255 255 156");
+
+    return image;
+}
+
+static Ihandle* load_image_IMGEXPANDED_WW(void)
+{
+    unsigned char imgdata[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 2, 1, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 2, 1, 3, 3, 3, 3, 1, 2, 2, 2, 2, 2, 2, 0,
+      0, 0, 2, 1, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 6, 4,
+      0, 0, 2, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 4,
+      0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 6, 3, 6, 4,
+      0, 2, 1, 3, 3, 3, 3, 3, 5, 3, 5, 6, 4, 6, 6, 4,
+      0, 2, 1, 3, 3, 3, 3, 3, 3, 5, 3, 6, 4, 6, 6, 4,
+      0, 0, 2, 1, 3, 3, 3, 3, 5, 3, 5, 5, 2, 4, 2, 4,
+      0, 0, 2, 1, 3, 3, 5, 5, 3, 5, 5, 5, 6, 4, 2, 4,
+      0, 0, 0, 2, 1, 5, 3, 3, 5, 5, 5, 5, 6, 2, 4, 4,
+      0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4,
+      0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    Ihandle* image = IupImage(16, 16, imgdata);
+
+    IupSetAttribute(image, "0", "BGCOLOR");
+    IupSetAttribute(image, "1", "255 255 255");
+    IupSetAttribute(image, "2", "156 156 0");
+    IupSetAttribute(image, "3", "255 255 156");
+    IupSetAttribute(image, "4", "0 0 0");
+    IupSetAttribute(image, "5", "255 206 156");
+    IupSetAttribute(image, "6", "206 206 99");
+
+    return image;
+}
+
+
+
+
+static Ihandle* load_image_IMGLEAF_WW(void)
+{
+    unsigned char imgdata[] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 4, 4, 5, 5, 5, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 4, 5, 5, 1, 6, 1, 5, 0, 0, 0, 0,
+      0, 0, 0, 0, 3, 4, 4, 5, 5, 1, 6, 1, 5, 0, 0, 0,
+      0, 0, 0, 0, 3, 4, 4, 4, 5, 5, 1, 1, 5, 0, 0, 0,
+      0, 0, 0, 0, 2, 3, 4, 4, 4, 5, 5, 5, 4, 0, 0, 0,
+      0, 0, 0, 0, 2, 3, 3, 4, 4, 4, 5, 4, 4, 0, 0, 0,
+      0, 0, 0, 0, 0, 2, 3, 3, 4, 4, 4, 4, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    Ihandle* image = IupImage(16, 16, imgdata);
+
+    IupSetAttribute(image, "0", "BGCOLOR");
+    IupSetAttribute(image, "1", "192 192 192");
+    IupSetAttribute(image, "2", "56 56 56");
+    IupSetAttribute(image, "3", "99 99 99");
+    IupSetAttribute(image, "4", "128 128 128");
+    IupSetAttribute(image, "5", "161 161 161");
+    IupSetAttribute(image, "6", "222 222 222");
+
+    return image;
+}
+
 
 void load_all_images_Images(const char* scrTXTFGCOLOR, const char* scrFGCOLOR)
 {
-  IupSetHandle("HildiM_µ", load_image_HildiM_WW());
-  IupSetHandle("HildiM_24_µ", load_image_HildiM_24());
-  IupSetHandle("disk_µ", load_image_disk_WW());
-  IupSetHandle("bookmark__arrow_left_µ", load_image_bookmark__arrow_left_WW());
-  IupSetHandle("IMAGE_Constant", load_image_IMAGE_Constant());
-  IupSetHandle("compile_µ", load_image_compile_WW());
-  IupSetHandle("Tree_Null_µ", load_image_Tree_Null_WW());
-  IupSetHandle("document__plus_µ", load_image_document__plus_WW());
-  IupSetHandle("IMAGE_PinPush", load_image_IMAGE_PinPush());
-  IupSetHandle("Tree_Number_µ", load_image_Tree_Number_WW());
-  IupSetHandle("application_sidebar_left_µ", load_image_application_sidebar_left_WW());
-  IupSetHandle("IMAGE_ArrowDown", load_image_IMAGE_ArrowDown());
-  IupSetHandle("ui_status_bar_blue_µ", load_image_ui_status_bar_blue_WW());
-  IupSetHandle("windows_µ", load_image_windows_WW());
-  IupSetHandle("cross_button_µ", load_image_cross_button_WW());
-  IupSetHandle("building__arrow_µ", load_image_building__arrow_WW());
-  IupSetHandle("document_copy_µ", load_image_document_copy_WW());
-  IupSetHandle("arrow_curve_270_µ", load_image_arrow_curve_270_WW());
-  IupSetHandle("key__plus_µ", load_image_key__plus_WW());
-  IupSetHandle("IMAGE_ArrowUp", load_image_IMAGE_ArrowUp());
-  IupSetHandle("tree_µ", load_image_tree_WW());
-  IupSetHandle("layout_design_µ", load_image_layout_design_WW());
-  IupSetHandle("control_double_180_µ", load_image_control_double_180_WW());
-  IupSetHandle("IMAGE_CheckSpelling", load_image_IMAGE_CheckSpelling());
-  IupSetHandle("printer_µ", load_image_printer_WW());
-  IupSetHandle("IMAGE_View", load_image_IMAGE_View());
-  IupSetHandle("clipboard_paste_µ", load_image_clipboard_paste_WW());
-  IupSetHandle("IMAGE_Replace", load_image_IMAGE_Replace());
-  IupSetHandle("IMAGE_WithLineNumber", load_image_IMAGE_WithLineNumber());
-  IupSetHandle("IMAGE_FormatBasic", load_image_IMAGE_FormatBasic());
-  IupSetHandle("color_µ", load_image_color_WW());
-  IupSetHandle("yin_yang_µ", load_image_yin_yang_WW());
-  IupSetHandle("folder_search_result_µ", load_image_folder_search_result_WW());
-  IupSetHandle("IMAGE_FormRun", load_image_IMAGE_FormRun());
-  IupSetHandle("disk__plus_µ", load_image_disk__plus_WW());
-  IupSetHandle("arrow_return_270_µ", load_image_arrow_return_270_WW());
-  IupSetHandle("disk__pencil_µ", load_image_disk__pencil_WW());
-  IupSetHandle("arrow_return_270_left_µ", load_image_arrow_return_270_left_WW());
-  IupSetHandle("IMAGE_String", load_image_IMAGE_String());
-  IupSetHandle("ui_menu_blue_µ", load_image_ui_menu_blue_WW());
-  IupSetHandle("settings_µ", load_image_settings_WW(scrFGCOLOR));
-  IupSetHandle("edit_lowercase_µ", load_image_edit_lowercase_WW(scrFGCOLOR));
-  IupSetHandle("IMAGE_AlignToGridHS", load_image_IMAGE_AlignToGridHS());
-  IupSetHandle("navigation_µ", load_image_navigation_WW());
-  IupSetHandle("key_µ", load_image_key_WW());
-  IupSetHandle("Tree_String_µ", load_image_Tree_String_WW());
-  IupSetHandle("IMAGE_Function", load_image_IMAGE_Function(scrTXTFGCOLOR));
-  IupSetHandle("IMAGE_Trigger", load_image_IMAGE_Trigger());
-  IupSetHandle("IMAGE_Pin", load_image_IMAGE_Pin());
-  IupSetHandle("edit_uppercase_µ", load_image_edit_uppercase_WW(scrFGCOLOR));
-  IupSetHandle("IMAGE_RunPart", load_image_IMAGE_RunPart());
-  IupSetHandle("binocular__pencil_µ", load_image_binocular__pencil_WW(scrFGCOLOR));
-  IupSetHandle("folder_open_document_µ", load_image_folder_open_document_WW());
-  IupSetHandle("bookmark_µ", load_image_bookmark_WW());
-  IupSetHandle("IMAGE_AddDocument", load_image_IMAGE_AddDocument());
-  IupSetHandle("IMAGE_Sub", load_image_IMAGE_Sub());
-  IupSetHandle("edit_symbol_µ", load_image_edit_symbol_WW(scrFGCOLOR));
-  IupSetHandle("cross_script_µ", load_image_cross_script_WW());
-  IupSetHandle("Tree_Binary_µ", load_image_Tree_Binary_WW());
-  IupSetHandle("clipboard_list_µ", load_image_clipboard_list_WW());
-  IupSetHandle("bookmark__arrow_µ", load_image_bookmark__arrow_WW());
-  IupSetHandle("ui_tab__pencil_µ", load_image_ui_tab__pencil_WW());
-  IupSetHandle("IMAGE_Library", load_image_IMAGE_Library());
-  IupSetHandle("disks_µ", load_image_disks_WW());
-  IupSetHandle("IMAGE_LocaleFun", load_image_IMAGE_LocaleFun());
-  IupSetHandle("control_double_µ", load_image_control_double_WW());
-  IupSetHandle("broom_code_µ", load_image_broom_code_WW());
-  IupSetHandle("edit_column_µ", load_image_edit_column_WW(scrFGCOLOR));
-  IupSetHandle("application_sidebar_right_µ", load_image_application_sidebar_right_WW());
-  IupSetHandle("IMAGE_Folder", load_image_IMAGE_Folder());
-  IupSetHandle("edit_indent_µ", load_image_edit_indent_WW(scrFGCOLOR));
-  IupSetHandle("arrow_curve_090_µ", load_image_arrow_curve_090_WW());
-  IupSetHandle("property2_µ", load_image_property2_WW());
-  IupSetHandle("terminal_µ", load_image_terminal_WW());
-  IupSetHandle("edit_diff_µ", load_image_edit_diff_WW(scrFGCOLOR));
-  IupSetHandle("IMAGE_Dim", load_image_IMAGE_Dim());
-  IupSetHandle("tag__arrow_µ", load_image_tag__arrow_WW());
-  IupSetHandle("IMAGE_Frame", load_image_IMAGE_Frame());
-  IupSetHandle("Tree_DateTime_µ", load_image_Tree_DateTime_WW());
-  IupSetHandle("marker_µ", load_image_marker_WW());
-  IupSetHandle("control_µ", load_image_control_WW());
-  IupSetHandle("edit_µ", load_image_edit_WW());
-  IupSetHandle("navigation_180_µ", load_image_navigation_180_WW());
-  IupSetHandle("edit_signiture_µ", load_image_edit_signiture_WW());
-  IupSetHandle("ui_tooltip_balloon_bottom_µ", load_image_ui_tooltip_balloon_bottom_WW());
-  IupSetHandle("node_insert_next_µ", load_image_node_insert_next_WW());
-  IupSetHandle("node_insert_µ", load_image_node_insert_WW());
-  IupSetHandle("IMAGE_UpFolder", load_image_IMAGE_UpFolder());
-  IupSetHandle("ui_toolbar__arrow_µ", load_image_ui_toolbar__arrow_WW());
-  IupSetHandle("keyboards_µ", load_image_keyboards_WW());
-  IupSetHandle("IMAGE_AlignObjectsLeft", load_image_IMAGE_AlignObjectsLeft());
-  IupSetHandle("IMAGE_CheckSpelling2", load_image_IMAGE_CheckSpelling2());
-  IupSetHandle("report__exclamation_µ", load_image_report__exclamation_WW());
-  IupSetHandle("Tree_Bool_µ", load_image_Tree_Bool_WW());
-  IupSetHandle("IMAGE_search", load_image_IMAGE_search());
-  IupSetHandle("scissors_µ", load_image_scissors_WW());
-  IupSetHandle("control_record_µ", load_image_control_record_WW());
-  IupSetHandle("control_stop_square_µ", load_image_control_stop_square_WW());
-  IupSetHandle("IMAGE_Class", load_image_Class_WW());
-  IupSetHandle("IMAGE_Switch", load_image_Switch_WW());
-  IupSetHandle("IMAGE_Event", load_image_Event());
+//  IupSetHandle("HildiM_µ", load_image_HildiM_WW());
+//  IupSetHandle("HildiM_24_µ", load_image_HildiM_24());
+//  IupSetHandle("disk_µ", load_image_disk_WW());
+//  IupSetHandle("bookmark__arrow_left_µ", load_image_bookmark__arrow_left_WW());
+//  IupSetHandle("IMAGE_Constant", load_image_IMAGE_Constant());
+//  IupSetHandle("compile_µ", load_image_compile_WW());
+//  IupSetHandle("Tree_Null_µ", load_image_Tree_Null_WW());
+//  IupSetHandle("document__plus_µ", load_image_document__plus_WW());
+//  IupSetHandle("IMAGE_PinPush", load_image_IMAGE_PinPush());
+//  IupSetHandle("Tree_Number_µ", load_image_Tree_Number_WW());
+//  IupSetHandle("application_sidebar_left_µ", load_image_application_sidebar_left_WW());
+//  IupSetHandle("IMAGE_ArrowDown", load_image_IMAGE_ArrowDown());
+//  IupSetHandle("ui_status_bar_blue_µ", load_image_ui_status_bar_blue_WW());
+//  IupSetHandle("windows_µ", load_image_windows_WW());
+//  IupSetHandle("cross_button_µ", load_image_cross_button_WW());
+//  IupSetHandle("building__arrow_µ", load_image_building__arrow_WW());
+//  IupSetHandle("document_copy_µ", load_image_document_copy_WW());
+//  IupSetHandle("arrow_curve_270_µ", load_image_arrow_curve_270_WW());
+//  IupSetHandle("key__plus_µ", load_image_key__plus_WW());
+//  IupSetHandle("IMAGE_ArrowUp", load_image_IMAGE_ArrowUp());
+//  IupSetHandle("tree_µ", load_image_tree_WW());
+//  IupSetHandle("layout_design_µ", load_image_layout_design_WW());
+//  IupSetHandle("control_double_180_µ", load_image_control_double_180_WW());
+//  IupSetHandle("IMAGE_CheckSpelling", load_image_IMAGE_CheckSpelling());
+//  IupSetHandle("printer_µ", load_image_printer_WW());
+//  IupSetHandle("IMAGE_View", load_image_IMAGE_View());
+//  IupSetHandle("clipboard_paste_µ", load_image_clipboard_paste_WW());
+//  IupSetHandle("IMAGE_Replace", load_image_IMAGE_Replace());
+//  IupSetHandle("IMAGE_WithLineNumber", load_image_IMAGE_WithLineNumber());
+//  IupSetHandle("IMAGE_FormatBasic", load_image_IMAGE_FormatBasic());
+//  IupSetHandle("color_µ", load_image_color_WW());
+//  IupSetHandle("yin_yang_µ", load_image_yin_yang_WW());
+//  IupSetHandle("folder_search_result_µ", load_image_folder_search_result_WW());
+//  IupSetHandle("IMAGE_FormRun", load_image_IMAGE_FormRun());
+//  IupSetHandle("disk__plus_µ", load_image_disk__plus_WW());
+//  IupSetHandle("arrow_return_270_µ", load_image_arrow_return_270_WW());
+//  IupSetHandle("disk__pencil_µ", load_image_disk__pencil_WW());
+//  IupSetHandle("arrow_return_270_left_µ", load_image_arrow_return_270_left_WW());
+//  IupSetHandle("IMAGE_String", load_image_IMAGE_String());
+//  IupSetHandle("ui_menu_blue_µ", load_image_ui_menu_blue_WW());
+//  IupSetHandle("settings_µ", load_image_settings_WW(scrFGCOLOR));
+//  IupSetHandle("edit_lowercase_µ", load_image_edit_lowercase_WW(scrFGCOLOR));
+//  IupSetHandle("IMAGE_AlignToGridHS", load_image_IMAGE_AlignToGridHS());
+//  IupSetHandle("navigation_µ", load_image_navigation_WW());
+//  IupSetHandle("key_µ", load_image_key_WW());
+//  IupSetHandle("Tree_String_µ", load_image_Tree_String_WW());
+//  IupSetHandle("IMAGE_Function", load_image_IMAGE_Function(scrTXTFGCOLOR));
+//  IupSetHandle("IMAGE_Trigger", load_image_IMAGE_Trigger());
+//  IupSetHandle("IMAGE_Pin", load_image_IMAGE_Pin());
+//  IupSetHandle("edit_uppercase_µ", load_image_edit_uppercase_WW(scrFGCOLOR));
+//  IupSetHandle("IMAGE_RunPart", load_image_IMAGE_RunPart());
+//  IupSetHandle("binocular__pencil_µ", load_image_binocular__pencil_WW(scrFGCOLOR));
+//  IupSetHandle("folder_open_document_µ", load_image_folder_open_document_WW());
+//  IupSetHandle("bookmark_µ", load_image_bookmark_WW());
+//  IupSetHandle("IMAGE_AddDocument", load_image_IMAGE_AddDocument());
+//  IupSetHandle("IMAGE_Sub", load_image_IMAGE_Sub());
+//  IupSetHandle("edit_symbol_µ", load_image_edit_symbol_WW(scrFGCOLOR));
+//  IupSetHandle("cross_script_µ", load_image_cross_script_WW());
+//  IupSetHandle("Tree_Binary_µ", load_image_Tree_Binary_WW());
+//  IupSetHandle("clipboard_list_µ", load_image_clipboard_list_WW());
+//  IupSetHandle("bookmark__arrow_µ", load_image_bookmark__arrow_WW());
+//  IupSetHandle("ui_tab__pencil_µ", load_image_ui_tab__pencil_WW());
+//  IupSetHandle("IMAGE_Library", load_image_IMAGE_Library());
+//  IupSetHandle("disks_µ", load_image_disks_WW());
+//  IupSetHandle("IMAGE_LocaleFun", load_image_IMAGE_LocaleFun());
+//  IupSetHandle("control_double_µ", load_image_control_double_WW());
+//  IupSetHandle("broom_code_µ", load_image_broom_code_WW());
+//  IupSetHandle("edit_column_µ", load_image_edit_column_WW(scrFGCOLOR));
+//  IupSetHandle("application_sidebar_right_µ", load_image_application_sidebar_right_WW());
+//  IupSetHandle("IMAGE_Folder", load_image_IMAGE_Folder());
+//  IupSetHandle("edit_indent_µ", load_image_edit_indent_WW(scrFGCOLOR));
+//  IupSetHandle("arrow_curve_090_µ", load_image_arrow_curve_090_WW());
+//  IupSetHandle("property2_µ", load_image_property2_WW());
+//  IupSetHandle("terminal_µ", load_image_terminal_WW());
+//  IupSetHandle("edit_diff_µ", load_image_edit_diff_WW(scrFGCOLOR));
+//  IupSetHandle("IMAGE_Dim", load_image_IMAGE_Dim());
+//  IupSetHandle("tag__arrow_µ", load_image_tag__arrow_WW());
+//  IupSetHandle("IMAGE_Frame", load_image_IMAGE_Frame());
+//  IupSetHandle("Tree_DateTime_µ", load_image_Tree_DateTime_WW());
+//  IupSetHandle("marker_µ", load_image_marker_WW());
+//  IupSetHandle("control_µ", load_image_control_WW());
+//  IupSetHandle("edit_µ", load_image_edit_WW());
+//  IupSetHandle("navigation_180_µ", load_image_navigation_180_WW());
+//  IupSetHandle("edit_signiture_µ", load_image_edit_signiture_WW());
+//  IupSetHandle("ui_tooltip_balloon_bottom_µ", load_image_ui_tooltip_balloon_bottom_WW());
+//  IupSetHandle("node_insert_next_µ", load_image_node_insert_next_WW());
+//  IupSetHandle("node_insert_µ", load_image_node_insert_WW());
+//  IupSetHandle("IMAGE_UpFolder", load_image_IMAGE_UpFolder());
+//  IupSetHandle("ui_toolbar__arrow_µ", load_image_ui_toolbar__arrow_WW());
+//  IupSetHandle("keyboards_µ", load_image_keyboards_WW());
+//  IupSetHandle("IMAGE_AlignObjectsLeft", load_image_IMAGE_AlignObjectsLeft());
+//  IupSetHandle("IMAGE_CheckSpelling2", load_image_IMAGE_CheckSpelling2());
+//  IupSetHandle("report__exclamation_µ", load_image_report__exclamation_WW());
+//  IupSetHandle("Tree_Bool_µ", load_image_Tree_Bool_WW());
+//  IupSetHandle("IMAGE_search", load_image_IMAGE_search());
+//  IupSetHandle("scissors_µ", load_image_scissors_WW());
+//  IupSetHandle("control_record_µ", load_image_control_record_WW());
+//  IupSetHandle("control_stop_square_µ", load_image_control_stop_square_WW());
+//  IupSetHandle("IMAGE_Class", load_image_Class_WW());
+//  IupSetHandle("IMAGE_Switch", load_image_Switch_WW());
+//  IupSetHandle("IMAGE_Event", load_image_Event());
+
+
   IupSetHandle("IMGCOLLAPSED_µ", load_image_IMGCOLLAPSED_WW());
   IupSetHandle("IMGEXPANDED_µ", load_image_IMGEXPANDED_WW());
   IupSetHandle("IMGLEAF_µ", load_image_IMGLEAF_WW());

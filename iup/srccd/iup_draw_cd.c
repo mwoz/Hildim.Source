@@ -410,6 +410,14 @@ static void cdputimagerectrgb(cdCtxCanvas* ctxcanvas, int width, int height, con
   IupSetHandle("_IUPDRAW_CD_IMAGE", NULL);
 }
 
+static void cddrawfonticon(cdCtxCanvas* ctxcanvas, int iw, int ih, const char* name, 
+    int x, int y, int w, int h, int active, const char* bgcolor)
+{
+   // iupdrvDrawImage(ctxcanvas->dc, name, 0, NULL, x, y, iw, ih);
+    iupdrwDrawFontIcon(ctxcanvas->dc, NULL, name, active, bgcolor, x, y, iw, ih);
+    //iupdrvDrawImage(ctxcanvas->dc, name, 0, NULL, x, y, iw, ih);
+}
+
 static void cdputimagerectmap(cdCtxCanvas *ctxcanvas, int iw, int ih, const unsigned char *index, const long *colors,
                               int x, int y, int w, int h, int xmin, int xmax, int ymin, int ymax)
 {
@@ -500,6 +508,7 @@ static void cdinittable(cdCanvas* canvas)
   canvas->cxPutImageRectRGBA = cdputimagerectrgba;
   canvas->cxPutImageRectRGB = cdputimagerectrgb;
   canvas->cxPutImageRectMap = cdputimagerectmap;
+  canvas->cxDrawFontIcon = cddrawfonticon;
 
   canvas->cxClip = cdclip;
   canvas->cxClipArea = cdcliparea;
