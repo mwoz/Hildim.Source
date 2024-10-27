@@ -688,7 +688,7 @@ static HRESULT STDMETHODCALLTYPE IwinDropTarget_DragLeave(IwinDropTarget* pThis)
         IFniis cbDropMotion = (IFniis)IupGetCallback(pThis->ih, "DROPMOTION_CB");
 
         if (cbDropMotion)
-            cbDropMotion(pThis->ih, -2, -2, IUPKEY_STATUS_INIT);
+            cbDropMotion(pThis->ih, INT_MIN, INT_MIN, IUPKEY_STATUS_INIT);
     }
   return S_OK;
 }
