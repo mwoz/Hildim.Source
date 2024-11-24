@@ -518,9 +518,12 @@ static void iDialogFirstShow(Ihandle* ih)
 static void iDialogModalLoop(Ihandle* ih)
 {
   iDialogSetModal(ih);
-
-  /* interrupt processing here */
+  char* prevH = IupGetGlobal("_IUP_WND_MODAL");
+  IupSetGlobal("_IUP_WND_MODAL", (char*)ih);
+  /* interrupt processing here   */
   IupMainLoop();
+
+  IupSetGlobal("_IUP_WND_MODAL", prevH);
 
   /* if window is still valid (IupDestroy not called),
   hide the dialog if still visible. */

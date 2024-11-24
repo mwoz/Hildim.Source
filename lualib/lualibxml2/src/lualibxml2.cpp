@@ -575,7 +575,7 @@ namespace luabridge {
         std::string result = XML2CHR(xmlBufferContent(buf));// XmlCharsToString(xmlBufferContent(buf), xmlBufferLength(buf));
         xmlSaveClose(saveCtx);
         m_node->nsDef = nsDef_Saved;  // restore ns declaration
-
+        xmlBufferFree(buf);
        return result.c_str();
     }
 

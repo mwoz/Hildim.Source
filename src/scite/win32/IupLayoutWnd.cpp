@@ -1628,6 +1628,14 @@ LRESULT IupLayoutWnd::OnNcCalcSize(HWND hwnd, BOOL bCalcValidRects, NCCALCSIZE_P
 }
 
 LRESULT IupLayoutWnd::OnNcHitTestClient(HWND hwnd, POINT cursor) {
+	Ihandle* ihModal = reinterpret_cast<Ihandle*>(IupGetGlobal("_IUP_WND_MODAL"));
+	if (ihModal) {
+		if (::GetAsyncKeyState(VK_LBUTTON) && ::IsWindowVisible(ihModal->handle)) {
+			::MessageBeep(MB_ICONASTERISK);
+			::FlashWindow(ihModal->handle, true);
+		}
+		return HTNOWHERE;
+	}
 	WINDOWPLACEMENT wp = WINDOWPLACEMENT();
 	::GetWindowPlacement(hwnd, &wp);
 	RECT rect;
