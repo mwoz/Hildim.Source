@@ -208,6 +208,7 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 	}
 
 	Sci_PositionU objectPartEndPos = 0;
+	Sci_PositionU prevSegment = 0;
 	bool isObject = false;
 	bool isObjectStart = false;
 	bool isSubObject = false;
@@ -369,21 +370,36 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 			if (!setWord.Contains(sc.ch)) {
 				bool isFin;
 				if ((sc.ch == ':' || sc.ch == '.') && setWordStart.Contains(sc.chNext)) {
+					int prevSt = sc.state;
+					prevSegment = styler.GetStartSegment();
+
+
 					// continue with object fields
 					if (!isObject) {
 						isObject = true;
 						isObjectStart = true;
-						objectPartEndPos = sc.currentPos;
+						objectPartEndPos = sc.currentPos + 1;
 						char s[100];
-						sc.GetCurrent(s, sizeof(s));
+						//sc.GetCurrent(s, sizeof(s));
+						styler.GetRange(prevSegment, sc.currentPos , s, sizeof(s));
 						if (keywords[1].InList(s)) {
-							sc.ChangeState(SCE_LUA_WORD2);
+							prevSt = SCE_LUA_WORD2;
 						}
 						else if (keywords[5].InList(s)) {
-							sc.ChangeState(SCE_LUA_WORD6);
+							prevSt = SCE_LUA_WORD6;
+							prevSegment = sc.currentPos;
 						}
+						else
+							prevSegment = sc.currentPos;
+						styler.ColourTo(sc.currentPos - 1, prevSt);
+						sc.ChangeState(SCE_LUA_OPERATOR);
 						continue;
-				}
+					}
+					else
+						prevSegment = 0;
+					styler.ColourTo(sc.currentPos - 1, prevSt);
+					sc.ChangeState(SCE_LUA_OPERATOR);
+
 					isFin = false;
 			} else {
 					isFin = true;
@@ -431,37 +447,34 @@ void SCI_METHOD LexerLua::Lex(Sci_PositionU startPos, Sci_Position length, int i
 						continue;
 					}
 					else if (isObject) {
-						if ((isObjectStart && strlen(s) > sc.currentPos - objectPartEndPos) ||
-							strlen(s) == sc.currentPos - objectPartEndPos) {
-							char* s2 = s + strlen(s) - sc.currentPos + objectPartEndPos;
-							sc.GetCurrent(s, sizeof(s));
+						if (prevSegment && ((isObjectStart && strlen(s) > sc.currentPos - objectPartEndPos) ||
+							strlen(s) == sc.currentPos - objectPartEndPos)) {
+							//char* s2 = s + strlen(s) - sc.currentPos + objectPartEndPos;
+							std::string sall = styler.GetRange(prevSegment, sc.currentPos);
+							//sc.GetCurrent(s, sizeof(s));
 							isObjectStart = false;
-							if (keywords[0].InList(s2)) {
+							if (keywords[0].InList(sall)) {
 						        sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD);
-							} else if (keywords[1].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD2);
-							} else if (keywords[2].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD3);
-							} else if (keywords[3].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD4);
-							} else if (keywords[4].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD5);
-							} else if (keywords[5].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD6);
-							} else if (keywords[6].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD7);
-							} else if (keywords[7].InList(s2)) {
-								sc.ShiftChangeState(objectPartEndPos, SCE_LUA_WORD8);
+							} else if (keywords[1].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD2);
+							} else if (keywords[2].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD3);
+							} else if (keywords[3].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD4);
+							} else if (keywords[4].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD5);
+							} else if (keywords[5].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD6);
+							} else if (keywords[6].InList(sall)) {
+								sc.ChangeState(SCE_LUA_WORD7);
+							} else if (keywords[7].InList(sall)) {             
+								sc.ChangeState(SCE_LUA_WORD8);
 							} else if((sc.ch == ':' || sc.ch == '.') && setWordStart.Contains(sc.chNext)) {
 								objectPartEndPos = sc.currentPos;
 								isObjectStart = true;
 								continue;
 							}
 						}
-						//sc.SetState(SCE_LUA_OPERATOR);
-						//s[0] = static_cast<char>(sc.ch);
-						//sc.Forward();
-						//sc.SetState(SCE_LUA_IDENTIFIER);
 						
 						sc.SetState(SCE_LUA_DEFAULT);
 					} else {

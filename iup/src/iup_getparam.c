@@ -1662,7 +1662,18 @@ IUP_SDK_API int iupGetParamCount(const char *format, int *param_extra)
 /*******************************************************************************************
                     Dialog Functions
 *******************************************************************************************/
+static int iParamBoxIntGetFocus_CB(Ihandle* ih)
+{
+    IupSetAttribute(ih, "SELECTIONPOS", "ALL");
 
+    return IUP_DEFAULT;
+}
+static int iParamBoxIntKillFocus_CB(Ihandle* ih)
+{
+    IupSetAttribute(ih, "SELECTIONPOS", "NONE");
+
+    return IUP_DEFAULT;
+}
 
 IUP_API int IupGetParamv(const char* title, Iparamcb action, void* user_data, const char* format, int param_count, int param_extra, void** param_data)
 {
@@ -1742,7 +1753,21 @@ IUP_API int IupGetParamv(const char* title, Iparamcb action, void* user_data, co
 
     IupMap(dlg);
 
+     
+    for (i = 0; i < count; i++)
+    {
+        char* data_type;
+
+        data_type = iupAttribGet(params[i], "DATATYPE");
+        if (iupStrEqualNoCase(data_type, "INT"))
+        {
+            IupSetCallback((Ihandle*)iupAttribGetInherit(params[i], "CONTROL"), "GETFOCUS_CB", (Icallback)iParamBoxIntGetFocus_CB);
+            IupSetCallback((Ihandle*)iupAttribGetInherit(params[i], "CONTROL"), "KILLFOCUS_CB", (Icallback)iParamBoxIntKillFocus_CB);
+        }
+    }
+
     action(param_box, IUP_GETPARAM_INIT, user_data);
+   
   }
 
   IupPopup(dlg, IUP_CENTERPARENT, IUP_CENTERPARENT);

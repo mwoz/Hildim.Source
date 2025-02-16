@@ -1062,7 +1062,7 @@ static int winTextSetSelectionPosAttrib(Ihandle* ih, const char* value)
 
   if (iupStrEqualNoCase(value, "ALL"))
   {
-    SendMessage(ih->handle, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+    PostMessage(ih->handle, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
     return 0;
   }
 
