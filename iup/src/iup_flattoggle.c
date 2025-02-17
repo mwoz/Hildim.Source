@@ -227,9 +227,12 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
     if (check_image)
     {
       if (selected == -1)
-        draw_image = iupFlatGetImageName(ih, "CHECKIMAGENOTDEF", check_image, ih->data->pressed, ih->data->highlighted, active, &make_inactive);
+        draw_image = iupFlatGetImageName(ih, "CHECKIMAGENOTDEF", NULL, ih->data->pressed, ih->data->highlighted, active, &make_inactive);
       else if (selected)
-        draw_image = iupFlatGetImageName(ih, "CHECKIMAGEON", check_image, ih->data->pressed, ih->data->highlighted, active, &make_inactive);
+        draw_image = iupFlatGetImageName(ih, "CHECKIMAGEON", NULL, ih->data->pressed, ih->data->highlighted, active, &make_inactive);
+      
+      if (!draw_image)
+        draw_image = iupFlatGetImageName(ih, "CHECKIMAGE", check_image, ih->data->pressed, ih->data->highlighted, active, &make_inactive);
 
       iupdrvDrawImage(dc, draw_image, make_inactive, bgcolor, check_xmin, check_ymin, -1, -1);
     }
@@ -329,6 +332,30 @@ static void iFlatToggleNotify(Ihandle* ih)
     iupBaseCallValueChangedCb(ih);
 }
 
+static int iFlatToggleUpdateHighlighted(Ihandle* ih, int x, int y)
+{
+  /* handle when mouse is pressed and moved to/from inside the canvas */
+  if (x < 0 || x > ih->currentwidth - 1 ||
+      y < 0 || y > ih->currentheight - 1)
+  {
+    if (ih->data->highlighted)
+    {
+      ih->data->highlighted = 0;
+      return 1;
+    }
+  }
+  else
+  {
+    if (!ih->data->highlighted)
+    {
+      ih->data->highlighted = 1;
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int y, char* status)
 {
   IFniiiis cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
@@ -342,6 +369,8 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
   {
     Ihandle* radio = iupRadioFindToggleParent(ih);
     Ihandle* last_tg = NULL;
+
+    iFlatToggleUpdateHighlighted(ih, x, y);
 
     if (!pressed && ih->data->highlighted)  /* released inside the button area */
     {
@@ -367,7 +396,7 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
       {
         if (radio)
         {
-          last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLAT_LASTTOGGLE");
+          last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE");
           if (iupObjectCheck(last_tg) && last_tg != ih)
           {
             last_tg->data->value = 0;
@@ -377,11 +406,10 @@ static int iFlatToggleButton_CB(Ihandle* ih, int button, int pressed, int x, int
           else
             last_tg = NULL;
 
-          iupAttribSet(radio, "_IUP_FLAT_LASTTOGGLE", (char*)ih);
+          iupAttribSet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE", (char*)ih);
         }
 
         ih->data->value = 1;
-        selected = 1;
       }
     }
 
@@ -416,24 +444,7 @@ static int iFlatToggleMotion_CB(Ihandle* ih, int x, int y, char* status)
 
   if (iup_isbutton1(status))
   {
-    /* handle when mouse is pressed and moved to/from inside the canvas */
-    if (x < 0 || x > ih->currentwidth - 1 ||
-        y < 0 || y > ih->currentheight - 1)
-    {
-      if (ih->data->highlighted)
-      {
-        redraw = 1;
-        ih->data->highlighted = 0;
-      }
-    }
-    else
-    {
-      if (!ih->data->highlighted)
-      {
-        redraw = 1;
-        ih->data->highlighted = 1;
-      }
-    }
+    redraw = iFlatToggleUpdateHighlighted(ih, x, y);
   }
 
   if (redraw)
@@ -646,7 +657,7 @@ static int iFlatToggleSetValueAttrib(Ihandle* ih, const char* value)
     /* can only set Radio to ON */
     if (iupStrBoolean(value))
     {
-      Ihandle* last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLAT_LASTTOGGLE");
+      Ihandle* last_tg = (Ihandle*)iupAttribGet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE");
       if (iupObjectCheck(last_tg) && last_tg != ih)
       {
         last_tg->data->value = 0;
@@ -654,7 +665,7 @@ static int iFlatToggleSetValueAttrib(Ihandle* ih, const char* value)
           iupdrvRedrawNow(last_tg);
       }
 
-      iupAttribSet(radio, "_IUP_FLAT_LASTTOGGLE", (char*)ih);
+      iupAttribSet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE", (char*)ih);
       ih->data->value = 1;
     }
     else
@@ -769,10 +780,12 @@ static int iFlatToggleMapMethod(Ihandle* ih)
   Ihandle* radio = iupRadioFindToggleParent(ih);
   if (radio)
   {
-    if (!iupAttribGet(radio, "_IUP_FLAT_LASTTOGGLE"))
+    if (!iupAttribGet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE"))
     {
       /* this is the first toggle in the radio, and then set it with VALUE=ON */
       ih->data->value = 1;
+      /* value is already set, attribute will not be updated after map, must set last toggle here */
+      iupAttribSet(radio, "_IUP_FLATTOGGLE_LASTTOGGLE", (char*)ih);
     }
 
     /* make sure it has at least one name */

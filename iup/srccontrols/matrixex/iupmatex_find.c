@@ -222,13 +222,13 @@ static int iMatrixMatch(Ihandle *ih, const char* findvalue, int lin, int col, in
     return iupStrCompareFind(value, findvalue, matchcase, utf8);  /* search only for the first occurrence */
 }
 
-static int iMatrixExSetFind(Ihandle *ih, const char* value, int inc, int flip, int matchcase, int matchwholecell, int *lin, int *col, int search_cur_cell)
+static int iMatrixExSetFind(Ihandle *ih, const char* value, int inc, int flip, int matchcase, int matchwholecell, int find_col, int *lin, int *col, int search_cur_cell)
 {
   int utf8 = IupGetInt(NULL, "UTF8MODE");
   int num_lin = IupGetInt(ih, "NUMLIN");
   int num_col = IupGetInt(ih, "NUMCOL");
   int count = (num_lin+1)*(num_col+1);
-  int pos, start_pos;
+  int pos, start_pos, match = 0;
   char* find_value;
 
   find_value = iupStrDup(value);
@@ -270,6 +270,18 @@ static int iMatrixExSetFind(Ihandle *ih, const char* value, int inc, int flip, i
     if (*lin == 0 || *col == 0)  /* don't search on titles */
       continue;
 
+    if (find_col != 0)
+    {
+      if (pos == start_pos)
+      {
+        free(find_value);
+        return 0;
+      }
+
+      if (*col != find_col)
+        continue;
+    }
+
     if (pos == start_pos)
     {
       if (!search_cur_cell)
@@ -288,7 +300,9 @@ static int iMatrixExSetFind(Ihandle *ih, const char* value, int inc, int flip, i
     if (!iupMatrixExIsLineVisible(ih, *lin) || !iupMatrixExIsColumnVisible(ih, *col))
       continue;
 
-  } while (!iMatrixMatch(ih, find_value, *lin, *col, matchcase, matchwholecell, utf8));
+    match = iMatrixMatch(ih, find_value, *lin, *col, matchcase, matchwholecell, utf8);
+
+  } while (!match);
 
   free(find_value);
   return 1;
@@ -296,7 +310,7 @@ static int iMatrixExSetFind(Ihandle *ih, const char* value, int inc, int flip, i
 
 static int iMatrixExSetFindAttrib(Ihandle *ih, const char* value)
 {
-  int lin=1, col=1, search_cur_cell = 0;
+  int lin=1, col=1, search_cur_cell = 0, find_col;
   int inc, flip, matchcase, matchwholecell;
   char* direction;
 
@@ -304,6 +318,8 @@ static int iMatrixExSetFindAttrib(Ihandle *ih, const char* value)
     return 0;
 
   IupGetIntInt(ih, "FOCUSCELL", &lin, &col);
+
+  find_col = iupAttribGetInt(ih, "FINDCOL");
 
   direction = iupAttribGetStr(ih, "FINDDIRECTION");
   if (iupStrEqualNoCase(direction, "LEFTTOP"))
@@ -336,7 +352,7 @@ static int iMatrixExSetFindAttrib(Ihandle *ih, const char* value)
       search_cur_cell = 1;  /* search in the current cell */
   }
 
-  if (iMatrixExSetFind(ih, value, inc, flip, matchcase, matchwholecell, &lin, &col, search_cur_cell))
+  if (iMatrixExSetFind(ih, value, inc, flip, matchcase, matchwholecell, find_col, &lin, &col, search_cur_cell))
   {
     IupSetfAttribute(ih,"FOCUSCELL", "%d:%d", lin, col);
     IupSetfAttribute(ih,"SHOW", "%d:%d", lin, col);
@@ -359,4 +375,5 @@ void iupMatrixExRegisterFind(Iclass* ic)
   iupClassRegisterAttribute(ic, "FINDDIRECTION", NULL, NULL, IUPAF_SAMEASSYSTEM, "RIGHTBOTTOM", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FINDMATCHCASE", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "FINDMATCHWHOLECELL", NULL, NULL, IUPAF_SAMEASSYSTEM, "Yes", IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "FINDCOL", NULL, NULL, IUPAF_SAMEASSYSTEM, NULL, IUPAF_NO_INHERIT);
 }

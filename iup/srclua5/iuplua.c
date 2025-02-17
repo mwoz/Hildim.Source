@@ -55,7 +55,7 @@ static int StringCompare(lua_State *L)
 
 static int StringChangeCase(lua_State *L)
 {
-  int utf8 = IupGetInt(NULL, "UTF8MODE");
+  int utf8mode = IupGetInt(NULL, "UTF8MODE");
   const char* str = luaL_checkstring(L, 1);
   char* dst_str = iupStrDup(str);
   const char* flag = luaL_checkstring(L, 2);
@@ -68,12 +68,50 @@ static int StringChangeCase(lua_State *L)
     case_flag = IUP_CASE_TOGGLE;
   else if (iupStrEqualNoCase(flag, "TITLE"))
     case_flag = IUP_CASE_TITLE;
-  iupStrChangeCase(dst_str, str, case_flag, utf8);
+  iupStrChangeCase(dst_str, str, case_flag, utf8mode);
   lua_pushstring(L, dst_str);
   free(dst_str);
   return 1;
 }
 
+IUP_SDK_API char* iupStrConvertToUTF8(const char* str, int len, char* utf8_buffer, int *utf8_buffer_max, int utf8mode);
+IUP_SDK_API void iupStrUtf8ToAnsi(char* dstr, const char* sstr);
+IUP_SDK_API void iupStrAnsiToUtf8(char* dstr, const char* sstr);
+
+static int StringConvertToUTF8(lua_State *L)
+{
+  int utf8mode = IupGetInt(NULL, "UTF8MODE");
+  const char* str = luaL_checkstring(L, 1);
+  int len = (int)strlen(str);
+  int utf8_buffer_max = 2 * len;
+  char* utf8_buffer = malloc(utf8_buffer_max);
+  utf8_buffer = iupStrConvertToUTF8(str, len, utf8_buffer, &utf8_buffer_max, utf8mode);
+  lua_pushstring(L, utf8_buffer);
+  free(utf8_buffer);
+  return 1;
+}
+
+static int StringUtf8ToAnsi(lua_State *L)
+{
+  const char* str = luaL_checkstring(L, 1);
+  int len = (int)strlen(str);
+  char* ansi_buffer = malloc(len+1);
+  iupStrUtf8ToAnsi(ansi_buffer, str);
+  lua_pushstring(L, ansi_buffer);
+  free(ansi_buffer);
+  return 1;
+}
+
+static int StringAnsiToUtf8(lua_State *L)
+{
+  const char* str = luaL_checkstring(L, 1);
+  int len = (int)strlen(str);
+  char* utf8_buffer = malloc(2 * len);
+  iupStrAnsiToUtf8(utf8_buffer, str);
+  lua_pushstring(L, utf8_buffer);
+  free(utf8_buffer);
+  return 1;
+}
 
 
 /*******************************  Error Handling *****************************************/
@@ -1403,6 +1441,9 @@ IUPLUA_API int iuplua_open(lua_State * L)
     {"dofile", il_dofile},
     { "StringCompare", StringCompare },
     { "StringChangeCase", StringChangeCase },
+    {"StringConvertToUTF8",StringConvertToUTF8},
+    {"StringAnsiToUtf8",StringAnsiToUtf8},
+    {"StringUtf8ToAnsi",StringUtf8ToAnsi},
     { "CopyUserData2String", CopyUserData2String },
     { "CopyString2UserData", CopyString2UserData },
 

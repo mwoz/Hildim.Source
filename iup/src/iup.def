@@ -557,6 +557,8 @@ iupStrCompareEqual
 iupStrCompareFind
 iupStrConvertToC
 iupStrConvertToUTF8
+iupStrAnsiToUtf8
+iupStrUtf8ToAnsi
 iupStrCopyN
 iupStrCountChar
 iupStrDup
@@ -731,3 +733,4 @@ iupwinStrToSystem
 iupwinStrToSystemFilename
 iupwinStrToSystemLen
 iupwinStrWide2Char
+iupwinPostMessageFilter
