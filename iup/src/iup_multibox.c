@@ -242,7 +242,8 @@ static void iMultiBoxSetChildrenExpandWeight(Ihandle* ih1St, Ihandle* ihLast, in
 
 
     for (child = ih1St; child; child = child->brother) {
-        weight_str = iupAttribGet(child, "EXPANDWEIGHT");
+
+        weight_str = child->expand ? iupAttribGet(child, "EXPANDWEIGHT") : NULL;
 
         if (weight_str && iupStrToDouble(weight_str, &weight) && weight) {
             size = iupRound(empty * weight * (1.0 / allWeight));
@@ -307,23 +308,40 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
         child_width = child_max_width;
       if (child_max_height != 0 && child_height > child_max_height)
         child_height = child_max_height;
+      
+      weight_str = child->expand ? iupAttribGet(child, "EXPANDWEIGHT") : NULL;
 
-      weight_str = iupAttribGet(child, "EXPANDWEIGHT");
+      int bCurWeight = 0;
       if (weight_str && iupStrToDouble(weight_str, &weight) && weight) {
         bHasWeight ++;
         allWeight += weight;
+        bCurWeight = 1;
+        if (ih->data->orientation == IMBOX_HORIZONTAL){
+            child_height = child->currentheight;
+            if (child_min_height != 0 && child_height < child_min_height)
+                child_height = child_min_height;
+        }
+        else {
+            child_width = child->currentwidth;
+            if (child_min_width != 0 && child_width < child_min_width)
+                child_width = child_min_width;
+        }
       } else{
+          weight_str = NULL;
         /* update children to their own natural size limited to the maximum size if any */
         iupBaseSetCurrentSize(child, child_width, child_height, shrink);
         /* CHILDMINSPACE affects child used space size, but does not affect the child size */
-        child_width = child->currentwidth;
-        child_height = child->currentheight;
-        if (child_min_width != 0 && child_width < child_min_width)
-            child_width = child_min_width;
-        if (child_min_height != 0 && child_height < child_min_height)
-            child_height = child_min_height;
       }
-
+      if (ih->data->orientation == IMBOX_HORIZONTAL || !bCurWeight) {
+          child_height = child->currentheight;
+          if (child_min_height != 0 && child_height < child_min_height)
+              child_height = child_min_height;
+      }
+      if (ih->data->orientation == IMBOX_VERTICAL || !bCurWeight){
+          child_width = child->currentwidth;
+          if (child_min_width != 0 && child_width < child_min_width)
+              child_width = child_min_width;
+      }
      
 
       if (ih->data->orientation == IMBOX_HORIZONTAL)
@@ -342,13 +360,18 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
           total_height += lin_height + ih->data->gap_vert;
           if (lin_width > total_width)
             total_width = lin_width;
+          
+          if (weight_str) {
+              bHasWeight --;
+              allWeight -= weight;
+          }
 
           if (bHasWeight) {
               iMultiBoxSetChildrenExpandWeight(child1stInLine, prev_child, ih->currentwidth - lin_width, allWeight);
           }
           /* next line */
           num_col = 1;
-          if (weight_str && iupStrToDouble(weight_str, &weight) && weight) {
+          if (weight_str) {
               bHasWeight = 1;
               allWeight = weight;
           }
@@ -358,6 +381,7 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
           }
           lin_width = child_width;
           lin_height = child_height;
+          child1stInLine = child;
         }
         else
         {
@@ -370,7 +394,7 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
           num_col++;
           lin_width = new_lin_width;
           if (num_col > 1) {
-              lin_width += ih->data->gap_horiz;  /* for the previous child */
+              lin_width += ih->data->gap_horiz + 2 * ih->data->margin_horiz;  /* for the previous child */
           }
           else {
               child1stInLine = child;
@@ -390,7 +414,7 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
 
           num_col++;
 
-          total_width += col_width + ih->data->gap_horiz;
+          total_width += col_width + ih->data->gap_horiz ;
           if (col_height > total_height)
             total_height = col_height;
 
@@ -409,6 +433,7 @@ static void iMultiBoxSetChildrenCurrentSizeMethod(Ihandle* ih, int shrink)
           }
           col_height = child_height;
           col_width = child_width;
+          child1stInLine = child;
         }
         else
         {
