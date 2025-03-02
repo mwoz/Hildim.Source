@@ -166,6 +166,7 @@ public:
 	void BeginUndoAction(bool mayCoalesce=false) noexcept;
 	int EndUndoAction() noexcept;
 	int UndoSequenceDepth() const noexcept;
+	bool AfterUndoSequenceStart() const noexcept;
 	void AddUndoAction(Sci::Position token, bool mayCoalesce);
 	void DeleteUndoHistory() noexcept;
 

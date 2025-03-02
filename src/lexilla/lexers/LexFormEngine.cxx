@@ -199,12 +199,13 @@ class LexerFormEngine : public ILexer5 {
 	bool SCI_METHOD ColoriseWireFormat(StyleContext &sc);
 	void SCI_METHOD ColoriseCubeFormula(StyleContext &sc);
 	void SCI_METHOD ResolveSqlID(StyleContext &sc);
-	void SCI_METHOD ResolveVBId(StyleContext &sc);
+	void SCI_METHOD ResolveVBId(StyleContext &sc, int visibleChars);
 	bool PlainFold(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess, LexAccessor &styler);
 	const std::regex reSyntax;
 	const std::regex reLogDate;
 	const std::regex rePgLongEnd;
 	char xmlQuotMark = 0;
+	LexAccessor* pStyler = 0;
 
 	std::string $tag = "";
 	char $transparent_tagNum = 0;
@@ -1061,7 +1062,7 @@ void SCI_METHOD LexerFormEngine::ColoriseXML(StyleContext &sc){
 	}
 }
 
-void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc)
+void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc, int visibleChars)
 {
 	bool skipType = false;
 	switch(sc.state){
@@ -1086,7 +1087,27 @@ void SCI_METHOD LexerFormEngine::ResolveVBId(StyleContext &sc)
 		if (strcmp(s, "rem") == 0) {
 			sc.ChangeState(SCE_FM_VB_COMMENT);
 		} else {
-			if (keywords[KW_VB_KEYWORDS].InList(s)) {
+			
+			if (strcmp(s, "if") == 0) {
+				if (sc.currentPos == 2) {
+					sc.ChangeState(SCE_FM_VB_KEYWORD);
+				}
+				else if (pStyler->BufferStyleAt(sc.currentPos - 3) == SCE_FM_VB_AFTERSTRINGCONT || pStyler->BufferStyleAt(sc.currentPos - 3) == SCE_FM_VB_STRINGCONT) {
+					sc.ChangeState(SCE_FM_VB_FUNCTIONS);
+				}
+				else if(pStyler->LineStart(sc.currentLine) == sc.currentPos - 2) {
+					sc.ChangeState(SCE_FM_VB_KEYWORD);
+				}
+				else {
+					const std::string sStart = pStyler->GetRangeLowered(pStyler->LineStart(sc.currentLine), sc.currentPos - 2);
+					int lEnd = sStart.find_last_not_of("\t ");
+					if (lEnd > -1 && (sStart[lEnd] != ':') && (lEnd < 2 || (pStyler->BufferStyleAt(pStyler->LineStart(sc.currentLine) + lEnd - 1) != SCE_FM_VB_KEYWORD) ||
+						(sStart.substr(lEnd - 2, 3) != "end"))) 
+						sc.ChangeState(SCE_FM_VB_FUNCTIONS);
+					else
+						sc.ChangeState(SCE_FM_VB_KEYWORD);
+				}
+			} else if (keywords[KW_VB_KEYWORDS].InList(s)) {
 				sc.ChangeState(SCE_FM_VB_KEYWORD);
 				if (startExSpellID.InList(s))
 					exSpellID = true;
@@ -1123,7 +1144,7 @@ void SCI_METHOD LexerFormEngine::ColoriseVBS(StyleContext &sc, int &visibleChars
 	case SCE_FM_VB_IDENTIFIER_SPELL:
 	case SCE_FM_VB_IDENTIFIER:
 	case SCE_FM_VB_UNKNOWNPROP:
-		if (!IsAWordChar(sc.ch)) ResolveVBId(sc);
+		if (!IsAWordChar(sc.ch)) ResolveVBId(sc, visibleChars);
 	break;
 	case SCE_FM_VB_NUMBER:
 		// We stop the number definition on non-numerical non-dot non-eE non-sign char
@@ -1517,6 +1538,7 @@ bool SCI_METHOD LexerFormEngine::ColoriseWireFormat(StyleContext &sc) {
 void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length, int initStyle, IDocument *pAccess) {
 	if(options.frozen) return;
 	LexAccessor styler(pAccess);
+	pStyler = &styler;
 	int visibleChars = 0;
 	int fileNbDigits = 0;
 
@@ -1784,7 +1806,7 @@ void SCI_METHOD LexerFormEngine::Lex(Sci_PositionU startPos, Sci_Position length
 		switch(sc.state){
 		case SCE_FM_VB_IDENTIFIER:
 		case SCE_FM_X_UNKNOWNPROP:
-			ResolveVBId(sc);
+			ResolveVBId(sc, visibleChars);
 			break;
 		case SCE_FM_SQL_GLOBAL_VARIABLE_2:
 		case SCE_FM_SQL_IDENTIFIER:
