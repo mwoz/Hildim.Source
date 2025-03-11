@@ -1487,6 +1487,11 @@ void SciTEBase::ReadProperties() {
 void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
+	wEditorL.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
+	wEditorR.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
+	wOutput.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
+	wFindRes.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
+
 
 	std::string languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 	if (strcmp("errorlist", languageCurrent.c_str())) {
