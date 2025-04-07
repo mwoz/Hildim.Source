@@ -996,10 +996,12 @@ void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem,const char
 	SString clr = props.Get(colourProp);
 	if (clr.length()) {
 		Colour c = ColourFromString(clr);
-		int a = props.GetInt(alphaProp, 30) & 0xFF;
+		int a = props.GetInt(alphaProp, 255) & 0xFF;
 		if (invertColors) {
 			c = convMain.Convert(c);
 			a *= 2;
+			if (a > 255)
+				a = 255;
 		}
 		c |= a << 24;
 		if (!pWin)
@@ -1487,11 +1489,7 @@ void SciTEBase::ReadProperties() {
 void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
-	wEditorL.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
-	wEditorR.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
-	wOutput.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
-	wFindRes.Call(SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DIRECTWRITEDC);
-
+	CallChildren(SCI_SETTECHNOLOGY, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
 
 	std::string languageCurrent = wOutput.CallReturnString(SCI_GETLEXERLANGUAGE, 0);
 	if (strcmp("errorlist", languageCurrent.c_str())) {
@@ -1547,7 +1545,7 @@ void SciTEBase::ReadPropertiesEx() {
 	           props.GetInt("dwell.period", SC_TIME_FOREVER), 0);
 
 
-
+		
 	CallChildren(SCI_SETCARETWIDTH, props.GetInt("caret.width", 1));
 	
 	SetColourElement(&wFindRes, SC_ELEMENT_CARET_LINE_BACK, "findres.caret.line.back", "findres.caret.line.back.alpha");

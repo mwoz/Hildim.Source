@@ -179,6 +179,7 @@ void Indicator::Draw(Surface *surface, const PRectangle &rc, const PRectangle &r
 		}
 		break;
 
+	case IndicatorStyle::GradientBottom:
 	case IndicatorStyle::Gradient:
 	case IndicatorStyle::GradientCentre: {
 			PRectangle rcBox = rcFullHeightAligned;
@@ -193,8 +194,13 @@ void Indicator::Draw(Surface *surface, const PRectangle &rc, const PRectangle &r
 				stops.push_back(ColourStop(1.0, end));
 				break;
 			case IndicatorStyle::GradientCentre:
-				stops.push_back(ColourStop(0.0, end));
-				stops.push_back(ColourStop(0.5, start));
+				stops.push_back(ColourStop(0, end));
+				stops.push_back(ColourStop(0.25, start));
+				stops.push_back(ColourStop(1.0, end));
+				break;
+			case IndicatorStyle::GradientBottom:
+				stops.push_back(ColourStop(0.25, end));
+				stops.push_back(ColourStop(0.75, start));
 				stops.push_back(ColourStop(1.0, end));
 				break;
 			default:

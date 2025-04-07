@@ -605,7 +605,7 @@ class CaseConverter final : public ICaseConverter {
 			return character < other.character;
 		}
 	};
-	typedef std::vector<CharacterConversion> CharacterToConversion;
+	using CharacterToConversion = std::vector<CharacterConversion>;
 	CharacterToConversion characterToConversion;
 	// The parallel arrays
 	std::vector<int> characters;
@@ -613,7 +613,7 @@ class CaseConverter final : public ICaseConverter {
 
 public:
 	CaseConverter() noexcept = default;
-	bool Initialised() const noexcept {
+	[[nodiscard]] bool Initialised() const noexcept {
 		return !characters.empty();
 	}
 	void Add(int character, std::string_view conversion_) {

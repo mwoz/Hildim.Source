@@ -126,6 +126,15 @@
     <ClCompile Include="src\UndoHistory.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="win32\ListBox.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\SurfaceD2D.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\SurfaceGDI.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="win32\PlatWin.h">
@@ -291,6 +300,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\UndoHistory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\ListBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\SurfaceD2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\SurfaceGDI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

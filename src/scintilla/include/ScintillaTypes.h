@@ -233,6 +233,7 @@ enum class IndicatorStyle {
 	Gradient = 20,
 	GradientCentre = 21,
 	PointTop = 22,
+	GradientBottom = 23,
 };
 
 enum class IndicatorNumbers {
