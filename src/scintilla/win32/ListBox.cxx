@@ -407,21 +407,6 @@ void ListBoxX::ClearRegisteredImages() {
 	images.Clear();
 }
 
-int ColourOfElement(std::optional<ColourRGBA> colour, int nIndex) {
-	if (colour.has_value()) {
-		return colour.value().OpaqueRGB();
-	}
-	return ::GetSysColor(nIndex);
-}
-
-void FillRectColour(HDC hdc, const RECT* lprc, int colour) noexcept {
-	const HBRUSH brush = ::CreateSolidBrush(colour);
-	::FillRect(hdc, lprc, brush);
-	::DeleteObject(brush);
-}
-
-/*
-
 void ListBoxX::Draw(DRAWITEMSTRUCT *pDrawItem) {
 	if ((pDrawItem->itemAction != ODA_SELECT) && (pDrawItem->itemAction != ODA_DRAWENTIRE)) {
 		return;
@@ -494,94 +479,7 @@ void ListBoxX::Draw(DRAWITEMSTRUCT *pDrawItem) {
 	const SIZE extent = SizeOfRect(pDrawItem->rcItem);
 	::BitBlt(pDrawItem->hDC, pDrawItem->rcItem.left, pDrawItem->rcItem.top, extent.cx, extent.cy, graphics.bm.DC(), 0, 0, SRCCOPY);
 }
-*/
 
-//*
-void ListBoxX::Draw(DRAWITEMSTRUCT* pDrawItem) {
-	if ((pDrawItem->itemAction == ODA_SELECT) || (pDrawItem->itemAction == ODA_DRAWENTIRE)) {
-		RECT rcBox = pDrawItem->rcItem;
-		rcBox.left += TextOffset();
-		if (pDrawItem->itemState & ODS_SELECTED) {
-			RECT rcImage = pDrawItem->rcItem; 
-			rcImage.right = rcBox.left;
-			// The image is not highlighted
-			FillRectColour(pDrawItem->hDC, &rcImage, ColourOfElement(options.back, COLOR_WINDOW));
-			FillRectColour(pDrawItem->hDC, &rcBox, ColourOfElement(options.backSelected, COLOR_HIGHLIGHT));
-			::SetBkColor(pDrawItem->hDC, ColourOfElement(options.backSelected, COLOR_HIGHLIGHT));
-			::SetTextColor(pDrawItem->hDC, ColourOfElement(options.foreSelected, COLOR_HIGHLIGHTTEXT));
-		}
-		else {
-			FillRectColour(pDrawItem->hDC, &pDrawItem->rcItem, ColourOfElement(options.back, COLOR_WINDOW));
-			::SetBkColor(pDrawItem->hDC, ColourOfElement(options.back, COLOR_WINDOW));
-			::SetTextColor(pDrawItem->hDC, ColourOfElement(options.fore, COLOR_WINDOWTEXT));
-		}
-
-		const ListItemData item = lti.Get(pDrawItem->itemID);
-		const int pixId = item.pixId;
-		const char* text = item.text;
-		const int len = static_cast<int>(strlen(text));
-
-		RECT rcText = rcBox;
-		::InsetRect(&rcText, TextInset.x, TextInset.y);
-
-		if (unicodeMode) {
-			const TextWide tbuf(text, CpUtf8);
-			::DrawTextW(pDrawItem->hDC, tbuf.buffer, tbuf.tlen, &rcText, DT_NOPREFIX | DT_END_ELLIPSIS | DT_SINGLELINE | DT_NOCLIP);
-		}
-		else {
-			::DrawTextA(pDrawItem->hDC, text, len, &rcText, DT_NOPREFIX | DT_END_ELLIPSIS | DT_SINGLELINE | DT_NOCLIP);
-		}
-
-		// Draw the image, if any
-		const RGBAImage* pimage = images.Get(pixId);
-		if (pimage) {
-			std::unique_ptr<Surface> surfaceItem(Surface::Allocate(technology));
-			if (technology == Technology::Default) {
-				surfaceItem->Init(pDrawItem->hDC, pDrawItem->hwndItem);
-				const long left = pDrawItem->rcItem.left + ItemInset.x + ImageInset.x;
-				const PRectangle rcImage = PRectangle::FromInts(left, pDrawItem->rcItem.top,
-					left + images.GetWidth(), pDrawItem->rcItem.bottom);
-				surfaceItem->DrawRGBAImage(rcImage,
-					pimage->GetWidth(), pimage->GetHeight(), pimage->Pixels());
-				::SetTextAlign(pDrawItem->hDC, TA_TOP);
-			}
-			else {
-#if defined(USE_D2D)
-				const D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties(
-					D2D1_RENDER_TARGET_TYPE_DEFAULT,
-					D2D1::PixelFormat(
-						DXGI_FORMAT_B8G8R8A8_UNORM,
-						D2D1_ALPHA_MODE_IGNORE),
-					0,
-					0,
-					D2D1_RENDER_TARGET_USAGE_NONE,
-					D2D1_FEATURE_LEVEL_DEFAULT
-				);
-				DCRenderTarget pDCRT;
-				HRESULT hr = CreateDCRenderTarget(&props, pDCRT);
-				if (SUCCEEDED(hr) && pDCRT) {
-					const long left = pDrawItem->rcItem.left + ItemInset.x + ImageInset.x;
-
-					RECT rcItem = pDrawItem->rcItem;
-					rcItem.left = left;
-					rcItem.right = rcItem.left + images.GetWidth();
-
-					hr = pDCRT->BindDC(pDrawItem->hDC, &rcItem);
-					if (SUCCEEDED(hr)) {
-						surfaceItem->Init(pDCRT.Get(), pDrawItem->hwndItem);
-						pDCRT->BeginDraw();
-						const PRectangle rcImage = PRectangle::FromInts(0, 0, images.GetWidth(), rcItem.bottom - rcItem.top);
-						surfaceItem->DrawRGBAImage(rcImage,
-							pimage->GetWidth(), pimage->GetHeight(), pimage->Pixels());
-						pDCRT->EndDraw();
-					}
-				}
-#endif
-			}
-		}
-	}
-}
-//*/
 void ListBoxX::AppendListItem(const char *text, const char *numword) {
 	int pixId = -1;
 	if (numword) {
@@ -910,7 +808,18 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 	try {
 		ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
 		switch (iMessage) {
+		case WM_MOUSEWHEEL:
+			return lbx->WndProc(GetParent(hWnd), iMessage, wParam, lParam);
 		case WM_ERASEBKGND:
+		{
+			HBRUSH brush;
+			RECT rect;
+			brush = CreateSolidBrush(lbx->options.back->OpaqueRGB());
+			SelectObject((HDC)wParam, brush);
+			GetClientRect(hWnd, &rect) ;
+			FillRect((HDC)wParam, &rect, brush);
+			DeleteObject(brush);
+		}
 			return TRUE;
 
 		case WM_MOUSEACTIVATE:
@@ -1050,16 +959,15 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 		return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
 
 	case WM_ERASEBKGND:
-	//{
-	//	HDC hdc = reinterpret_cast<HDC>(wParam);
-	//	HBRUSH brush = CreateSolidBrush(options.back->OpaqueRGB());
-	//	RECT rdraw;
-	//
-	//	GetWindowRect(hWnd, &rdraw);
-	//	FillRect(hdc, &rdraw, brush);
-	//	DeleteObject(brush);
-	//
-	//}
+	{
+		HBRUSH brush;
+		RECT rect;
+		brush = CreateSolidBrush(options.back->OpaqueRGB());
+		SelectObject((HDC)wParam, brush);
+		GetClientRect(hWnd, &rect);
+		FillRect((HDC)wParam, &rect, brush);
+		DeleteObject(brush);
+	}
 		// To reduce flicker we can elide background erasure since this window is
 		// completely covered by its child.
 		return TRUE;
@@ -1302,6 +1210,8 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	ListBoxX* lbx = static_cast<ListBoxX*>(PointerFromWindow(::GetParent(hWnd)));
 	switch (iMessage) {
+	case WM_ERASEBKGND:
+	return TRUE;
 	case WM_PAINT:
 	{
 		if (!lbx->pListcolors->inizialized)
@@ -1311,6 +1221,7 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 		lbx->sc_OnPaint(hdc, &ps.rcPaint, false, 0);
 
 		EndPaint(hWnd, &ps);
+		return TRUE;
 	}
 	break;
 	case WM_LBUTTONUP:
