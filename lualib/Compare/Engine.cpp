@@ -149,7 +149,8 @@ Word *getWord(varray *words, int index, void * /*context*/)
 
 int compareWord(Word *word1, Word *word2, void * /*context*/)
 {
-    if(word1->hash == word2->hash) return 0;
+    if(word1->hash == word2->hash) 
+        return 0;
     return 1;
 }
 
@@ -184,7 +185,6 @@ bool compareWords(diff_edit* e1,diff_edit *e2,char** doc1,char** doc2, bool Incl
     //Compare the two chunks
     int sn;
     struct varray *ses = varray_new(sizeof(struct diff_edit), NULL);
-
     diff(chunk1.words, 0, chunk1.count, chunk2.words, 0, chunk2.count, (idx_fn)(getWord), (cmp_fn)(compareWord), NULL, 0, ses, &sn, NULL);
 
     chunk1.changes = varray_new(sizeof(struct diff_change), NULL);

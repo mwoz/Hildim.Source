@@ -769,11 +769,15 @@ namespace luabridge {
         if (prop == nullptr)
             return;
 
-        auto nodeRef = m_docRef->GetNodeRef((xmlNodePtr)prop);
-        if (nodeRef)
-            nodeRef->UnlinkNode();
-        else
+        try {
+            auto nodeRef = m_docRef->GetNodeRef((xmlNodePtr)prop);
+            if (nodeRef)
+                nodeRef->UnlinkNode();
+        }
+        catch (const std::exception& e)
+        {
             xmlRemoveProp(prop);
+        }
     }
 
    void domNode::SetDocRef(domDocument* docRef) {
@@ -1626,8 +1630,8 @@ namespace luabridge {
             .addProperty("lastChild", &domNode::luaGetLastChild)
             .addProperty("nextSibling", &domNode::luaGetNextSibling)
             .addProperty("previousSibling", &domNode::luaGetPreviousSibling)
-            .addProperty("attibutes", &domNode::luaGetAttributes)
-            .addFunction("removeAttribut", &domNode::luaRemoveAttribute)
+            .addProperty("attributes", &domNode::luaGetAttributes)
+            .addFunction("removeAttribute", &domNode::luaRemoveAttribute)
             .addProperty("childNodes", &domNode::luaGetChildNodes)
             .addProperty("text", &domNode::luaGetText, &domNode::luaSetText)
             .addProperty("nodeValue", &domNode::luaGetNodeValue)

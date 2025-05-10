@@ -711,7 +711,7 @@ static void iMatrixDrawImage(Ihandle* ih, int x1, int x2, int y1, int y2, int co
 
           iupMatrixGetBgColorStr(ih, lin, col);
 
-          cdCanvasPutIconImage(ih->data->cd_canvas, image_height, image_height, name, x, y1, x2 - x, image_height, 0, 0, 0, 0);
+          cdCanvasPutIconImage(ih->data->cd_canvas, image_height, image_height, name, x, y1, x2 - x, image_height, 0, 0);
 
 
           //image_width = image_height;
