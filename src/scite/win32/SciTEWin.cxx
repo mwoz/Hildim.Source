@@ -551,7 +551,7 @@ void SciTEWin::ExecuteHelp(const char *cmd, int hh_cmd) {
 }
 
 void SciTEWin::CopyWithColors(CopyColorsType clrType){
-	const Sci_CharacterRange cr = GetSelection();
+	const Scintilla::Sci_CharacterRange cr = GetSelection();
 
 	bool bOpen = false;
 
@@ -2364,7 +2364,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
 	if (hmod == NULL) {
-		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  SciTE will now close"),
+		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  HoldiM will now close"),
 			TEXT("Error loading Scintilla"), MB_OK | MB_ICONERROR);
 		return 1;
 	}
@@ -2458,5 +2458,7 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 }
 void SciTEWin::PostLoadScript() {
 }
-
+__declspec(dllexport) void* GetCaller(SciCaller c) {
+	return reinterpret_cast<void*>(pSciTEWin->GetCaler(c));
+}
 

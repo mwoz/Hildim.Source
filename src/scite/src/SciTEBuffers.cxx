@@ -1171,7 +1171,7 @@ bool SciTEBase::AddFileToBuffer(FilePath file, int pos) {
 	}
 }
 
-void SciTEBase::AddFileToStack(FilePath file, Sci_CharacterRange selection, Sci_Position scrollPos) {
+void SciTEBase::AddFileToStack(FilePath file, Scintilla::Sci_CharacterRange selection, Sci_Position scrollPos) {
 	if (!file.IsSet())
 		return;
 	// Only stack non-empty names

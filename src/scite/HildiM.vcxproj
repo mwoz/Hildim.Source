@@ -99,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\lexilla\access\LexillaAccess.cxx" />
+    <ClCompile Include="..\scintilla\call\ScintillaCall.cxx" />
     <ClCompile Include="src\Encoding.cpp" />
     <ClCompile Include="src\Exporters.cxx" />
     <ClCompile Include="src\FilePath.cxx" />

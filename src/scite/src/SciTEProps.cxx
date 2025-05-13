@@ -141,7 +141,7 @@ int IntFromHexByte(const char *hexByte) {
 	return IntFromHexDigit(hexByte[0]) * 16 + IntFromHexDigit(hexByte[1]);
 }
 
-static Colour ColourFromString(const SString &s) {
+static Scintilla::Colour ColourFromString(const SString &s) {
 	if (s.length()) {
 		int r = IntFromHexByte(s.c_str() + 1);
 		int g = IntFromHexByte(s.c_str() + 3);
@@ -152,7 +152,7 @@ static Colour ColourFromString(const SString &s) {
 	}
 }
 
-Colour SciTEBase::ColourOfProperty(const char *key, Colour colourDefault, bool invClr) {
+Scintilla::Colour SciTEBase::ColourOfProperty(const char *key, Scintilla::Colour colourDefault, bool invClr) {
 	SString colour = props.GetExpanded(key);
 	if (colour.length()) {
 		colourDefault = ColourFromString(colour);
@@ -282,7 +282,7 @@ void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
 	inicialized = true;
 	prevPoints = points;
 }
-Colour ColorConvertorLAB::Convert(Colour colorIn) {
+Scintilla::Colour ColorConvertorLAB::Convert(Scintilla::Colour colorIn) {
 	if(!inicialized)
 		return colorIn;
 
@@ -469,7 +469,7 @@ bool StyleDefinition::ParseStyleDefinition(const char *definition) {
 	return true;
 }
 
-Colour invertColor2(Colour clr) {
+Scintilla::Colour invertColor2(Scintilla::Colour clr) {
 	if (!clr)
 		return 0xFFFFFF;
 	if (clr == 0xFFFFFF)
@@ -537,7 +537,7 @@ long StyleDefinition::BackAsLong(bool useInv) const {
 void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd) {
 	bool bSetClr = true;
 	if (style == STYLE_LINENUMBER) {
-		Colour fore, back; 
+		Scintilla::Colour fore, back;
 
 		int needRecalc = 0;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
@@ -576,7 +576,7 @@ void SciTEBase::SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDef
 		}
 		bSetClr = false;
 	} else if (style == STYLE_CALLTIP) {
-		Colour fore, back;
+		Scintilla::Colour fore, back;
 
 		int needRecalc = 0;
 		if (!(sd.specified & StyleDefinition::sdFore)) {
@@ -710,8 +710,8 @@ void SciTEBase::ForwardPropertyToEditor(const char *key) {
 }
 
 void SciTEBase::SetFoldingMarkers(bool main) {
-	Colour fore = layout.GetColorRef("SCR_FORECOLOR");  //props.GetInt("invert.lexer.colors") ? ColourRGB(0x80, 0x80, 0x80) : ColourRGB(0xff, 0xff, 0xff);
-	Colour back = layout.GetColorRef("FGCOLOR"); //props.GetInt("invert.lexer.colors") ? ColourRGB(0xff, 0xff, 0xff) : ColourRGB(0x80, 0x80, 0x80);
+	Scintilla::Colour fore = layout.GetColorRef("SCR_FORECOLOR");  //props.GetInt("invert.lexer.colors") ? ColourRGB(0x80, 0x80, 0x80) : ColourRGB(0xff, 0xff, 0xff);
+	Scintilla::Colour back = layout.GetColorRef("FGCOLOR"); //props.GetInt("invert.lexer.colors") ? ColourRGB(0xff, 0xff, 0xff) : ColourRGB(0x80, 0x80, 0x80);
 	
 	float brBack = clr_brightness(back);
 	float brFore = clr_brightness(fore);
@@ -762,7 +762,7 @@ void SciTEBase::SetFoldingMarkers(bool main) {
 	}
 }
 
-void SciTEBase::DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back) {
+void SciTEBase::DefineMarker(bool main, int marker, int markerType, Scintilla::Colour fore, Scintilla::Colour back) {
 	if (main) {
 		wEditor.Call(SCI_MARKERDEFINE, marker, markerType);
 		wEditor.Call(SCI_MARKERSETFORE, marker, fore);
@@ -995,7 +995,7 @@ SString SciTEBase::GetFileNameProperty(const char *name) {
 void SciTEBase::SetColourElement(GUI::ScintillaWindow *pWin, int elem,const char *colourProp,const char *alphaProp) {
 	SString clr = props.Get(colourProp);
 	if (clr.length()) {
-		Colour c = ColourFromString(clr);
+		Scintilla::Colour c = ColourFromString(clr);
 		int a = props.GetInt(alphaProp, 255) & 0xFF;
 		if (invertColors) {
 			c = convMain.Convert(c);

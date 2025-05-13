@@ -67,6 +67,7 @@ typedef HANDLE HTHEME;
 #include "ScintillaTypes.h"
 #include "ScintillaMessages.h"
 #include "ScintillaStructures.h"
+#include "ScintillaCall.h"
 #include "Lexilla.h"
 #include "../Access/LexillaAccess.h"
 
@@ -101,6 +102,9 @@ class Dialog;
 
 class SciTEWin;
 
+enum SciCaller {
+	sciLeft = 1, sciRight, sciOutput, sciFindres
+};
 
 inline HWND HwndOf(GUI::Window w) {
 	return reinterpret_cast<HWND>(w.GetID());
@@ -300,16 +304,27 @@ public:
 	LRESULT NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam);
 	virtual Ihandle * IupTab(int id);
 	virtual void PostLoadScript();
+	Scintilla::ScintillaCall* GetCaler(SciCaller c) {
+		switch (c) {
+		case sciLeft:
+			return &wEditorL;
+		case sciRight:
+			return &wEditorR;
+		case sciOutput:
+			return &wOutput;
+		case sciFindres:
+			return &wFindRes;
+		}
+	}
 };
-
-
 
 inline bool IsKeyDown(int key) {
 	return (::GetKeyState(key) & 0x80000000) != 0;
 }
 
-
 inline GUI::Point PointFromLong(long lPoint) {
 	return GUI::Point(static_cast<short>(LOWORD(lPoint)), static_cast<short>(HIWORD(lPoint)));
 }
+
+__declspec(dllexport) void* GetCaller(SciCaller c);
 

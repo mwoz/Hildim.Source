@@ -425,7 +425,7 @@ void SciTEWin::Print(
 	pdlg.hDevNames = hDevNames;
 
 	// See if a range has been selected
-	Sci_CharacterRange crange = GetSelection();
+	Scintilla::Sci_CharacterRange crange = GetSelection();
 	int startPos = crange.cpMin;
 	int endPos = crange.cpMax;
 

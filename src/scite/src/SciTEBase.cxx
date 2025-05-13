@@ -51,7 +51,6 @@
 #endif
 
 #endif
-
 #include "Scintilla.h"
 #include "SciLexer.h"
 
@@ -898,8 +897,8 @@ void SciTEBase::SetWindowName() {
 
 }
 
-Sci_CharacterRange SciTEBase::GetSelection() {
-	Sci_CharacterRange crange;
+Scintilla::Sci_CharacterRange SciTEBase::GetSelection() {
+	Scintilla::Sci_CharacterRange crange;
 	crange.cpMin = static_cast<Sci_PositionCR>(wEditor.Call(SCI_GETSELECTIONSTART));
 	crange.cpMax = static_cast<Sci_PositionCR>(wEditor.Call(SCI_GETSELECTIONEND));
 	return crange;
@@ -1131,7 +1130,7 @@ bool SciTEBase::FindHasText() const {
 }
 
 void SciTEBase::MoveBack(int distance) {
-	Sci_CharacterRange cr = GetSelection();
+	Scintilla::Sci_CharacterRange cr = GetSelection();
 	SetSelection(cr.cpMin - distance, cr.cpMin - distance);
 }
 
@@ -1884,7 +1883,7 @@ void SciTEBase::SetTextProperties(
 
 	ps.SetInteger("NbOfLines", wEditor.Call(SCI_GETLINECOUNT));
 
-	Sci_CharacterRange crange = GetSelection();
+	Scintilla::Sci_CharacterRange crange = GetSelection();
 	Sci_Position selFirstLine = wEditor.Call(SCI_LINEFROMPOSITION, crange.cpMin);
 	Sci_Position selLastLine = wEditor.Call(SCI_LINEFROMPOSITION, crange.cpMax);
 	if (wEditor.Call(SCI_GETSELECTIONMODE) == SC_SEL_RECTANGLE) {
@@ -1917,7 +1916,7 @@ void SciTEBase::SetTextProperties(
 void SciTEBase::SetLineIndentation(Sci_Position line, Sci_Position indent) {
 	if (indent < 0)
 		return;
-	Sci_CharacterRange crange = GetSelection();
+	Scintilla::Sci_CharacterRange crange = GetSelection();
 	Sci_Position posBefore = GetLineIndentPosition(line);
 	wEditor.Call(SCI_SETLINEINDENTATION, line, indent);
 	Sci_Position posAfter = GetLineIndentPosition(line);
@@ -2149,7 +2148,7 @@ void SciTEBase::MaintainIndentation(char ch) {
 }
 
 void SciTEBase::AutomaticIndentation(char ch) {
-	Sci_CharacterRange crange = GetSelection();
+	Scintilla::Sci_CharacterRange crange = GetSelection();
 	int selStart = crange.cpMin;
 	Sci_Position curLine = GetCurrentLineNumber();
 	Sci_Position thisLineStart = wEditor.Call(SCI_POSITIONFROMLINE, curLine);
@@ -2201,7 +2200,7 @@ void SciTEBase::CharAdded(char ch) {
 	static int prevAutoCHooseSingle = 0;
 	if (recording)
 		return;	
-	Sci_CharacterRange crange = GetSelection();
+	Scintilla::Sci_CharacterRange crange = GetSelection();
 	int selStart = crange.cpMin;
 	int selEnd = crange.cpMax;
 	if ((selEnd == selStart) && (selStart > 0)) {

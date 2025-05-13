@@ -25,6 +25,7 @@
   </ItemDefinitionGroup>
   <!---->
   <ItemGroup>
+    <ClInclude Include="..\..\src\scintilla\include\IScintillaCall.h" />
     <ClInclude Include="Compare.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="icon_add_16.h" />

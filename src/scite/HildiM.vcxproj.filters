@@ -102,6 +102,9 @@
     <ClCompile Include="..\lexilla\access\LexillaAccess.cxx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\scintilla\call\ScintillaCall.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Containers.h">

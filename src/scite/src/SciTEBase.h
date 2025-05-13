@@ -57,7 +57,7 @@ inline long LongFromTwoShorts(short a,short b) {
 }
 
 typedef long Colour;
-inline Colour ColourRGB(unsigned int red, unsigned int green, unsigned int blue) {
+inline Scintilla::Colour ColourRGB(unsigned int red, unsigned int green, unsigned int blue) {
 	return red | (green << 8) | (blue << 16);
 }
 
@@ -73,7 +73,7 @@ enum {
 
 class RecentFile : public FilePath {
 public:
-	Sci_CharacterRange selection;
+	Scintilla::Sci_CharacterRange selection;
 	Sci_Position scrollPosition;
 	RecentFile() {
 		selection.cpMin = INVALID_POSITION;
@@ -239,7 +239,7 @@ int IntFromHexByte(const char *hexByte);
 class ColorConvertor {
 public:
 	virtual void Init(const char *points, ExtensionAPI *h) = 0;
-	virtual Colour Convert(Colour colorIn) = 0;
+	virtual Scintilla::Colour Convert(Scintilla::Colour colorIn) = 0;
 };
 
 class StyleDefinition {
@@ -434,7 +434,7 @@ public:
 	ColorConvertorLAB() {}
 	~ColorConvertorLAB() {}
 	virtual void Init(const char *points, ExtensionAPI *h);
-	virtual Colour Convert(Colour colorIn);
+	virtual Scintilla::Colour Convert(Scintilla::Colour colorIn);
 };
 
 class SciTEBase : public ExtensionAPI, public Searcher {
@@ -524,7 +524,6 @@ protected:
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
-	GUI::Window wIncrement;
 	bool viewWs;
 	bool viewIndent;
 	bool viewHisoryIndicators;
@@ -773,7 +772,7 @@ protected:
 	int GetMenuCommandAsInt(SString commandName);
 	virtual void Print(bool) {}
 	virtual void PrintSetup() {}
-	Sci_CharacterRange GetSelection();
+	Scintilla::Sci_CharacterRange GetSelection();
 	void SetSelection(Sci_Position anchor, Sci_Position currentPos);
 	//	void SelectionExtend(char *sel, int len, char *notselchar);
 	void GetCTag(char *sel, int len);
@@ -871,7 +870,7 @@ protected:
 
 //!-end-[ExtendedContextMenu]
 	bool AddFileToBuffer(FilePath file, int pos);
-	void AddFileToStack(FilePath file, Sci_CharacterRange selection, Sci_Position scrollPos);
+	void AddFileToStack(FilePath file, Scintilla::Sci_CharacterRange selection, Sci_Position scrollPos);
 	void RemoveFileFromStack(FilePath file);
 	RecentFile GetFilePosition();
 	void DisplayAround(const RecentFile &rf);
@@ -896,7 +895,7 @@ protected:
 	SString ExtensionFileName();
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
 	void ForwardPropertyToEditor(const char *key);
-	void DefineMarker(bool main, int marker, int markerType, Colour fore, Colour back);
+	void DefineMarker(bool main, int marker, int markerType, Scintilla::Colour fore, Scintilla::Colour back);
 	void SetFoldingMarkers(bool main);
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
@@ -1002,7 +1001,7 @@ public:
 	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
 	virtual bool IsRunAsAdmin() = 0;
 	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
-	long ColourOfProperty(const char *key, Colour colourDefault, bool invClr = false);
+	Scintilla::Colour ColourOfProperty(const char *key, Scintilla::Colour colourDefault, bool invClr = false);
 	unsigned long InvertColor(unsigned long clr);
 	IupLayoutWnd layout;
 

@@ -9,7 +9,11 @@
 
 #ifndef GUI_H
 #define GUI_H
-
+#include "Scintilla.h"
+#include "ScintillaTypes.h"
+#include "ScintillaMessages.h"
+#include "ScintillaStructures.h"
+#include "ScintillaCall.h"
 #include <algorithm>
 void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B);
 void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s);
@@ -144,7 +148,7 @@ struct ScintillaFailure {
 	}
 };
 
-class ScintillaWindow : public Window {
+class ScintillaWindow : public Window, public Scintilla::ScintillaCall {
 	// Private so ScintillaWindow objects can not be copied
 	ScintillaWindow(const ScintillaWindow &source);
 	ScintillaWindow &operator=(const ScintillaWindow &);
@@ -161,6 +165,7 @@ public:
 			fn = reinterpret_cast<SciFnDirect>(
 				Send(SCI_GETDIRECTFUNCTION, 0, 0));
 			ptr = Send(SCI_GETDIRECTPOINTER, 0, 0);
+			SetFnPtr(reinterpret_cast<Scintilla::FunctionDirect>(fn), ptr);
 		}
 	}
 	bool CanCall() const {

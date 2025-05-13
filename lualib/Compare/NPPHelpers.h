@@ -19,29 +19,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NPPHELPERS_H
 #define NPPHELPERS_H
 
-void markTextAsChanged(HWND window,int start,int length);
-void markAsMoved(HWND window,int line, bool symbol);
-void markAsRemoved(HWND window,int line, bool symbol);
-void markAsChanged(HWND window,int line, bool symbol);
-void markAsAdded(HWND window,int line, bool symbol);
-void markAsBlank(HWND window,int line);
+#include "Scintilla.h"
+//#include "ScintillaMessages.h"
+#include "ScintillaTypes.h"
+#include "ScintillaStructures.h"
+#include "ILoader.h"
+#include "ScintillaCall.h"
+
+enum SciCaller {
+	sciLeft = 1, sciRight, sciOutput, sciFindres
+};
+
+void markTextAsChanged(pSciCaller pc,int start,int length);
+void markAsMoved(pSciCaller pc,int line, bool symbol);
+void markAsRemoved(pSciCaller pc,int line, bool symbol);
+void markAsChanged(pSciCaller pc,int line, bool symbol);
+void markAsAdded(pSciCaller pc,int line, bool symbol);
+void markAsBlank(pSciCaller pc,int line);
 void setStyles(sUserSettings Settings);
-void setBlank(HWND window,int color);
+void setBlank(pSciCaller pc,int color);
 void ready();
 void wait();
-void setCursor(int type);
+void setCursor(Scintilla::CursorShape type);
 void setTextStyles(sColorSettings Settings);
-void setTextStyle(HWND window, sColorSettings Settings);
-void setChangedStyle(HWND window, int color);
+void setTextStyle(pSciCaller pc, sColorSettings Settings);
+void setChangedStyle(pSciCaller pc, sColorSettings Settings);
+//void setChangedStyle(HWND window, int color);
 void defineSymbol(int type,int symbol);
 void defineColor(int type,int color);
-void clearWindow(HWND window,bool clearUndo);
-void clearUndoBuffer(HWND window);
-blankLineList *removeEmptyLines(HWND window,bool saveList);
-int deleteLine(HWND window,int line);
-char **getAllLines(HWND window,int *length, int **lineNum);
-void addBlankLines(HWND window,blankLineList *list);
-void addEmptyLines(HWND hSci, int offset, int length, const char *lines);
+//void clearWindow(pSciCaller pc,bool clearUndo);
+//void clearUndoBuffer(HWND window);
+blankLineList *removeEmptyLines(pSciCaller pc,bool saveList);
+int deleteLine(pSciCaller pc, Scintilla::Line);
+char **getAllLines(pSciCaller pc,int *length, int **lineNum);
+void addBlankLines(pSciCaller pc,blankLineList *list);
+void addEmptyLines(pSciCaller pc, int offset, int length, const char *lines);
 void resetPrevOffset();
-
+__declspec(dllimport) void* GetCaller(SciCaller c);
 #endif
