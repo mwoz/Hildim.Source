@@ -8,6 +8,7 @@
     <RootNamespace>Compare</RootNamespace>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <!---->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -22,38 +23,29 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile />
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
   </ItemDefinitionGroup>
   <!---->
   <ItemGroup>
     <ClInclude Include="..\..\src\scintilla\include\IScintillaCall.h" />
     <ClInclude Include="Compare.h" />
+    <ClInclude Include="diff.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="icon_add_16.h" />
-    <ClInclude Include="icon_moved_16.h" />
-    <ClInclude Include="icon_sub_16.h" />
-    <ClInclude Include="icon_warning_16.h" />
-    <ClInclude Include="mba\allocator.h" />
-    <ClInclude Include="mba\dbug.h" />
-    <ClInclude Include="mba\diff.h" />
-    <ClInclude Include="mba\hashmap.h" />
-    <ClInclude Include="mba\iterator.h" />
-    <ClInclude Include="mba\msgno.h" />
-    <ClInclude Include="mba\suba.h" />
-    <ClInclude Include="mba\varray.h" />
     <ClInclude Include="NPPHelpers.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="varray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compare.cpp" />
     <ClCompile Include="Engine.cpp" />
-    <ClCompile Include="mba\allocator.c" />
-    <ClCompile Include="mba\dbug.c" />
-    <ClCompile Include="mba\diff.c" />
-    <ClCompile Include="mba\hashmap.c" />
-    <ClCompile Include="mba\msgno.c" />
-    <ClCompile Include="mba\suba.c" />
-    <ClCompile Include="mba\varray.c" />
     <ClCompile Include="NPPHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>

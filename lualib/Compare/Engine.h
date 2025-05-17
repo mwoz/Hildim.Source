@@ -1,91 +1,159 @@
 /*
-This file is part of Compare plugin for Notepad++
-Copyright (C)2011 Jean-Sébastien Leroy (jean.sebastien.leroy@gmail.com)
+ * This file is part of ComparePlus plugin for Notepad++
+ * Copyright (C)2011 Jean-Sebastien Leroy (jean.sebastien.leroy@gmail.com)
+ * Copyright (C)2017-2022 Pavel Nedev (pg.nedev@gmail.com)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+#pragma once
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#ifndef ENGINE_H
-#define ENGINE_H
-
-#include "diff.h"
+#include <windows.h>
+#include <cstdint>
+#include <vector>
+#include <utility>
+#include <memory>
 #include <string>
-#include <assert.h>
+#include <regex>
 
-using namespace std;
+#include "Compare.h"
+#include "NppHelpers.h"
+#include "ScintillaCall.h"
 
-#define CLEANUP	1
+#define MAIN_VIEW 0
+#define SUB_VIEW 1
 
-/* Given a hash value and a new character, return a new hash value. */
-#define HASH(h, c) ((c) + ROL (h, 7))
-
-/* Rotate a value n bits to the left. */
-#define UINT_BIT (sizeof (unsigned) * CHAR_BIT)
-#define ROL(v, n) ((v) << (n) | (v) >> (UINT_BIT - (n)))
-
-struct chunk_info
+enum class CompareResult
 {
-	int *linePos;
-	int *lineEndPos;
-	int lineCount;
-	int lineStart;
-	struct varray *changes;
-	struct varray *words;
-	int changeCount;
-	char *text;
-	int count;
-	//int *mappings;
-	int *lineMappings;
+	COMPARE_ERROR,
+	COMPARE_CANCELLED,
+	COMPARE_MATCH,
+	COMPARE_MISMATCH
 };
 
-enum wordType 
+
+struct section_t
 {
-	SPACECHAR,ALPHANUMCHAR,OTHERCHAR
+	section_t() : off(0), len(0) {}
+	section_t(intptr_t o, intptr_t l) : off(o), len(l) {}
+
+	intptr_t off;
+	intptr_t len;
 };
 
-struct Word
+
+struct CompareOptions
 {
-	int line;
-	int pos;
-	int length;
-	wordType type;
-	string text;
-	unsigned int hash;
+	CompareOptions()
+	{
+		selections[0] = std::make_pair(-1, -1);
+		selections[1] = std::make_pair(-1, -1);
+	}
+
+	inline void setIgnoreRegex(const std::wstring& regexStr, bool invert)
+	{
+		if (!regexStr.empty())
+		{
+			ignoreRegex = std::make_unique<std::wregex>(regexStr, std::regex::ECMAScript | std::regex::optimize);
+			invertRegex = invert;
+		}
+		else
+		{
+			ignoreRegex = nullptr;
+		}
+	}
+
+	inline void clearIgnoreRegex()
+	{
+		ignoreRegex = nullptr;
+	}
+
+	int		newFileViewId;
+
+	bool	findUniqueMode;
+
+	bool	alignAllMatches;
+	bool	neverMarkIgnored;
+	bool	detectMoves;
+	bool	detectCharDiffs;
+	bool	ignoreEmptyLines;
+	bool	ignoreFoldedLines;
+	bool	ignoreChangedSpaces;
+	bool	ignoreAllSpaces;
+	bool	ignoreCase;
+
+	bool	recompareOnChange;
+
+	std::unique_ptr<std::wregex>	ignoreRegex;
+	bool							invertRegex;
+
+	int		changedThresholdPercent;
+
+	bool	selectionCompare;
+
+	std::pair<intptr_t, intptr_t>	selections[2];
 };
+
+
+struct AlignmentViewData
+{
+	intptr_t	line {0};
+	int			diffMask {0};
+};
+
+
+struct AlignmentPair
+{
+	AlignmentViewData main;
+	AlignmentViewData sub;
+};
+
+
+using AlignmentInfo_t = std::vector<AlignmentPair>;
+
+
+struct CompareSummary
+{
+	inline void clear()
+	{
+		diffLines	= 0;
+		added		= 0;
+		removed		= 0;
+		moved		= 0;
+		changed		= 0;
+		match		= 0;
+
+		alignmentInfo.clear();
+	}
+
+	intptr_t	diffLines;
+	intptr_t	added;
+	intptr_t	removed;
+	intptr_t	moved;
+	intptr_t	changed;
+	intptr_t	match;
+
+	AlignmentInfo_t	alignmentInfo;
+};
+
+
+CompareResult compareViews(const CompareOptions& options, CompareSummary& summary);
+
 
 struct blankLineList
 {
 	int line;
 	int length;
-	struct blankLineList *next;
+	struct blankLineList* next;
 };
-
-int compareLines(unsigned int line1, unsigned int line2, void * /*context*/);
-unsigned int getLineFromIndex(unsigned int *arr, int index, void * /*context*/);
-int checkWords(diff_edit* e,chunk_info* chunk,chunk_info* otherChunk);
-int compareWord(Word *word1, Word *word2, void * /*context*/);
-Word *getWord(varray *words, int index, void * /*context*/);
-bool compareWords(diff_edit* e1,diff_edit *e2,char** doc1,char** doc2, bool IncludeSpace);
-int getWords(diff_edit* e, char** doc, chunk_info *chunk, bool IncludeSpace);
-wordType getWordType(char letter);
-int setDiffLines(diff_edit *e, diff_edit changes[], int *i, short op, int altLocation);
-diff_edit *find_anchor(int line, varray *ses, int sn, unsigned int *doc1, unsigned int *doc2, int *line2);
-void find_moves(varray *ses,int sn,unsigned int *doc1, unsigned int *doc2, bool DetectMove);
-void shift_boundries(varray *ses, int sn, unsigned int *doc1, unsigned int *doc2, int doc1Length, int doc2Length);
-unsigned int *computeHashes(char** doc, int docLength, bool IncludeSpace);
-void clearEdits(varray *ses,int sn);
-void clearEdit(diff_edit *e);
-void cleanEmptyLines(blankLineList *line);
-
-#endif // ENGINE_H
