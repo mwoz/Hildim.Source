@@ -42,6 +42,7 @@ struct ColorSettings
 };
 struct UserSettings
 {
+	unsigned long   IconMask;
 
 	bool			FirstFileIsNew;
 	int				NewFileViewId;
@@ -105,16 +106,11 @@ void setCursor(Scintilla::CursorShape type);
 void setTextStyles(ColorSettings s);
 void setTextStyle(pSciCaller pc, ColorSettings s);
 void setChangedStyle(pSciCaller pc, ColorSettings s);
-//void setChangedStyle(HWND window, int color);
 void defineSymbol(int type,int symbol);
 void defineColor(int type,int color);
-//void clearWindow(pSciCaller pc,bool clearUndo);
-//void clearUndoBuffer(HWND window);
-//blankLineList *removeEmptyLines(pSciCaller pc,bool saveList);
 int deleteLine(pSciCaller pc, Scintilla::Line);
 char **getAllLines(pSciCaller pc,int *length, int **lineNum);
 
-void addEmptyLines(pSciCaller pc, int offset, int length, const char *lines);
 void resetPrevOffset();
 __declspec(dllimport) void* GetCaller(SciCaller c);
 
@@ -129,6 +125,8 @@ inline intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line);
 void addBlankSection(pSciCaller pc, intptr_t line, intptr_t length, intptr_t textLinePos = 0, const char* text = nullptr);
 void addBlankSectionAfter(pSciCaller pc, intptr_t line, intptr_t length);
 bool isLineFolded(pSciCaller pc, intptr_t line);
+void hideOutsideRange(pSciCaller pc, intptr_t startLine, intptr_t endLine);
+void hideUnmarked(pSciCaller pc, int markMask);
 
 enum Marker_t
 {
@@ -149,8 +147,6 @@ enum Marker_t
 	MARKER_MOVED_BLOCK_END_SYMBOL,
 	MARKER_ARROW_SYMBOL
 };
-
-
 
 constexpr int MARKER_MASK_CHANGED = (1 << MARKER_CHANGED_LINE) | (1 << MARKER_CHANGED_SYMBOL);
 constexpr int MARKER_MASK_CHANGED_LOCAL = (1 << MARKER_CHANGED_LINE) | (1 << MARKER_CHANGED_LOCAL_SYMBOL);

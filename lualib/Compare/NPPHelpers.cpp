@@ -268,71 +268,9 @@ int deleteLine(pSciCaller pc,Scintilla::Line line)
 
 }
 
-//blankLineList *removeEmptyLines(pSciCaller pc,bool saveList)
-//{
-//	pc->SetUndoCollection(false);
-//	blankLineList *list=NULL;	
-//
-//    int marker = 1 << MARKER_BLANK;
-//    Scintilla::Line line = pc->MarkerNext(0, marker);
-//	while(line!=-1){
-//		int lines=deleteLine(pc,line);
-//		if(lines>0&&saveList){
-//			//add to list
-//			blankLineList *newLine=new blankLineList;
-//			newLine->next=list;
-//			newLine->line=line;
-//			newLine->length=lines;
-//			list=newLine;
-//		}
-//		//line=SendMessageA(window, SCI_MARKERNEXT, 0, marker);	
-//        line = pc->MarkerNext(0, marker);
-//	}
-//
-//	//::SendMessage(window, SCI_SETSEL, curPosBeg, curPosEnd);
-//	pc->SetUndoCollection(true);
-//	return list;
-//}
-
-//void addBlankLines(pSciCaller pc,blankLineList *list){
-//	pc->SetUndoCollection(false);
-//	while(list!=NULL){
-//		addEmptyLines(pc,list->line,list->length, NULL);
-//		list=list->next;
-//	}
-//	pc->SetUndoCollection(true);
-//}
-
 static int prev_offset;
 void resetPrevOffset() {
 	prev_offset = -2;
-}
-
-void addEmptyLines(pSciCaller pc, int offset, int length, const char *lines) {
-	static int prev_length;
-	bool l0l1 = false;
-	if (offset == -1) {
-		offset = 0;
-		prev_offset = -1;
-	} else if(offset == 0 && prev_offset == -1) {
-		length += prev_length;
-		prev_offset = offset;
-		l0l1 = true;
-	} else {
-		prev_offset = offset;
-	}
-	prev_length = length;
-
-	
-	if(l0l1) {
-		std::string b = "";
-		b += "\n   --------------------\\/under 1-st line\\/";
-		b += lines;
-
-		pc->AnnotationSetText(offset, b.c_str());
-	}else
-		pc->AnnotationSetText(offset, lines);
-	pc->AnnotationSetStyle(offset, 0);
 }
 
 bool getNextLineAfterFold(pSciCaller pS, intptr_t* line)
@@ -472,16 +410,18 @@ void addBlankSection(pSciCaller pc, intptr_t line, intptr_t length, intptr_t tex
 
 	std::vector<char> blank(length - 1, '\n');
 	//std::vector<char> blank(length, '\n');
+	blank.push_back('\0');
 
 	if (textLinePos > 0 && text != nullptr)
 	{
 		if (length < textLinePos)
 			return;
-
 		blank.insert(blank.begin() + textLinePos - 1, text, text + strlen(text));
+
+		//blank.resize(blank.size() - 1);
 	}
 
-	blank.push_back('\0');
+	
 
 	pc->AnnotationSetText(getPreviousUnhiddenLine(pc, line), blank.data());
 }
@@ -502,4 +442,45 @@ bool isLineFolded(pSciCaller pc, intptr_t line)
 	const intptr_t foldParent = pc->FoldParent(line); 
 
 	return (foldParent >= 0 && !pc->FoldExpanded(SCI_GETFOLDEXPANDED));
+}
+
+void hideOutsideRange(pSciCaller pc, intptr_t startLine, intptr_t endLine)
+{
+	const intptr_t linesCount = pc->LineCount();
+
+	if (startLine >= 0 && (endLine > startLine && endLine < linesCount))
+	{
+		auto foldedLines = getFoldedLines(pc);
+		pc->ShowLines(startLine, endLine);
+		setFoldedLines(pc, foldedLines);
+	}
+
+	// First line (0) cannot be hidden so start from line 1
+	if (startLine > 1)
+		pc->HideLines(1, startLine - 1);
+
+	if (endLine > 0 && endLine + 1 < linesCount)
+		pc->HideLines(endLine + 1, linesCount - 1);
+}
+
+void hideUnmarked(pSciCaller pc, int markMask)
+{
+	const intptr_t linesCount = pc->LineCount();
+
+	// First line (0) cannot be hidden so start from line 1
+	for (intptr_t nextMarkedLine, nextUnmarkedLine = 1; nextUnmarkedLine < linesCount;
+		nextUnmarkedLine = nextMarkedLine)
+	{
+		for (; (nextUnmarkedLine < linesCount) && (pc->MarkerGet(nextUnmarkedLine) & markMask); ++nextUnmarkedLine);
+
+		if (nextUnmarkedLine == linesCount)
+			break;
+
+		nextMarkedLine = pc->MarkerNext(nextUnmarkedLine, markMask);
+
+		if (nextMarkedLine < 0)
+			nextMarkedLine = linesCount;
+
+		pc->HideLines(nextUnmarkedLine, nextMarkedLine - 1);
+	}
 }

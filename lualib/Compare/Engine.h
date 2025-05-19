@@ -26,7 +26,6 @@
 #include <memory>
 #include <string>
 #include <regex>
-
 #include "Compare.h"
 #include "NppHelpers.h"
 #include "ScintillaCall.h"
@@ -45,13 +44,21 @@ enum class CompareResult
 
 struct section_t
 {
-	section_t() : off(0), len(0) {}
-	section_t(intptr_t o, intptr_t l) : off(o), len(l) {}
+	section_t() : off(0), len(0), src(0) {}
+	section_t(intptr_t o, intptr_t l, intptr_t s) : off(o), len(l), src(s) {}
 
 	intptr_t off;
 	intptr_t len;
+	intptr_t src;
 };
 
+enum FoldType_t
+{
+	NOT_SET = 0,
+	NO_FOLD,
+	FOLD_MATCHES,
+	FOLD_OUTSIDE_SELECTIONS
+};
 
 struct CompareOptions
 {
@@ -61,12 +68,27 @@ struct CompareOptions
 		selections[1] = std::make_pair(-1, -1);
 	}
 
-	inline void setIgnoreRegex(const std::wstring& regexStr, bool invert)
+	inline void setIgnoreRegex(const std::string& regexStr, UINT codepage)
 	{
 		if (!regexStr.empty())
 		{
-			ignoreRegex = std::make_unique<std::wregex>(regexStr, std::regex::ECMAScript | std::regex::optimize);
-			invertRegex = invert;
+			std::vector<char> line(regexStr.begin(), regexStr.end());
+			line.push_back('\0');
+
+			const int len = static_cast<int>(line.size());
+
+			const int wLen = ::MultiByteToWideChar(codepage, 0, line.data(), len, NULL, 0);
+
+			std::vector<wchar_t> wLine(wLen);
+
+			::MultiByteToWideChar(codepage, 0, line.data(), len, wLine.data(), wLen);
+
+
+
+			std::wstring wr(wLine.begin(), wLine.end());
+
+			ignoreRegex = std::make_unique<std::wregex>(wr, std::regex::ECMAScript | std::regex::optimize);
+		
 		}
 		else
 		{
@@ -90,13 +112,15 @@ struct CompareOptions
 	bool	ignoreEmptyLines;
 	bool	ignoreFoldedLines;
 	bool	ignoreChangedSpaces;
+	bool    ignoreIndent;
 	bool	ignoreAllSpaces;
 	bool	ignoreCase;
+	FoldType_t     foldType = NOT_SET;
 
 	bool	recompareOnChange;
 
 	std::unique_ptr<std::wregex>	ignoreRegex;
-	bool							invertRegex;
+	bool						    invertRegex;
 
 	int		changedThresholdPercent;
 
@@ -121,7 +145,6 @@ struct AlignmentPair
 
 
 using AlignmentInfo_t = std::vector<AlignmentPair>;
-
 
 struct CompareSummary
 {
@@ -148,7 +171,6 @@ struct CompareSummary
 };
 
 
-CompareResult compareViews(const CompareOptions& options, CompareSummary& summary);
 
 
 struct blankLineList
@@ -157,3 +179,66 @@ struct blankLineList
 	int length;
 	struct blankLineList* next;
 };
+
+struct moveSrc
+{
+	intptr_t off;
+	intptr_t sub_off;
+	intptr_t len;
+	intptr_t src;
+	intptr_t block_len;
+};
+class MovedMapElement_t :public std::vector<moveSrc>
+{
+private:
+	iterator cursor;
+	//std::string sOut;
+public:
+	void close_and_sort() {
+		moveSrc m;
+		m.off = INTPTR_MAX;
+		m.sub_off = 0;
+		m.len = 0;
+		m.src = 0;
+		m.block_len = 0;
+		push_back(m);
+		std::sort(begin(), end(),
+			[](moveSrc& a, moveSrc& b) {return (a.off == b.off ? a.sub_off < b.sub_off : a.off < b.off); });
+		cursor = begin();
+	}
+	const char* text4annotation(intptr_t start, intptr_t annotLen) {
+		static std::string sOut;
+		sOut.clear();
+		while (cursor != end() && start > cursor._Ptr->off)
+			cursor++;
+		moveSrc* src = nullptr;
+		if (cursor._Ptr->off == start) {
+			src = cursor._Ptr;
+		}
+		for (intptr_t i = 0; i < annotLen; i++) {
+			if(i)
+				sOut += '\n';
+			intptr_t dLen;
+			if (src && i >= (dLen = src->sub_off - (src->block_len - annotLen))) {
+				sOut += " >>> ";
+				sOut += std::to_string(i + - src->sub_off + src->src + 1);
+				if (i == dLen + src->len - 1) {
+					cursor++;
+					src = (cursor._Ptr->off == start ? cursor._Ptr : nullptr);
+				}
+			}	
+		}
+		return sOut.c_str();
+		//return "h";
+	}
+};
+
+
+struct movedMap
+{
+
+	MovedMapElement_t main;
+	MovedMapElement_t sub;
+};
+
+CompareResult compareViews(const CompareOptions& options, CompareSummary& summary, movedMap& moves);

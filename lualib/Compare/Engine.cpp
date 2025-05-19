@@ -39,7 +39,7 @@
 // #include "fast_myers_diff.h"
 
 #define MULTITHREAD		0
-
+extern CompareOptions cmpOptions;
 
 #if defined(MULTITHREAD) && (MULTITHREAD != 0)
 
@@ -322,14 +322,16 @@ inline uint64_t getSectionRangeHash(uint64_t hashSeed, std::vector<wchar_t>& sec
 
 		sec[endPos] = storedChar;
 	}
+	bool inStart = options.ignoreIndent;
 
 	for (; pos < endPos; ++pos)
 	{
 		if (options.ignoreAllSpaces && (sec[pos] == L' ' || sec[pos] == L'\t'))
 			continue;
 
-		if (options.ignoreChangedSpaces && (sec[pos] == L' ' || sec[pos] == L'\t'))
+		if ((options.ignoreChangedSpaces || (inStart) ) && (sec[pos] == L' ' || sec[pos] == L'\t'))
 		{
+			inStart = false;
 			hashSeed = Hash(hashSeed, L' ');
 
 			while (++pos < endPos && (sec[pos] == L' ' || sec[pos] == L'\t'));
@@ -337,7 +339,7 @@ inline uint64_t getSectionRangeHash(uint64_t hashSeed, std::vector<wchar_t>& sec
 			if (pos == endPos)
 				return hashSeed;
 		}
-
+		
 		hashSeed = Hash(hashSeed, sec[pos]);
 	}
 
@@ -486,7 +488,7 @@ void getLines(DocCmpInfo& doc, const CompareOptions& options)
 				intptr_t pos = 0;
 				intptr_t endPos = lineEnd - lineStart;
 
-				if (options.ignoreChangedSpaces)
+				if (options.ignoreChangedSpaces || options.ignoreIndent)
 				{
 					while (pos < endPos && (line[pos] == ' ' || line[pos] == '\t'))
 						++pos;
@@ -501,7 +503,7 @@ void getLines(DocCmpInfo& doc, const CompareOptions& options)
 					if (options.ignoreAllSpaces && (line[pos] == ' ' || line[pos] == '\t'))
 						continue;
 
-					if (options.ignoreChangedSpaces && (line[pos] == ' ' || line[pos] == '\t'))
+					if ((options.ignoreChangedSpaces) && (line[pos] == ' ' || line[pos] == '\t'))
 					{
 						newLine.hash = Hash(newLine.hash, ' ');
 
@@ -576,8 +578,8 @@ inline void getSectionRangeWords(std::vector<Word>& words, std::vector<wchar_t>&
 	Word word;
 	word.pos = pos;
 	word.len = 1;
-
-	if (options.ignoreChangedSpaces && currentWordType == charType::SPACECHAR)
+	bool instart = options.ignoreIndent;
+	if ((options.ignoreChangedSpaces || instart) && currentWordType == charType::SPACECHAR)
 		word.hash = Hash(cHashSeed, L' ');
 	else
 		word.hash = Hash(cHashSeed, line[pos]);
@@ -590,11 +592,12 @@ inline void getSectionRangeWords(std::vector<Word>& words, std::vector<wchar_t>&
 		{
 			++word.len;
 
-			if (currentWordType != charType::SPACECHAR || !options.ignoreChangedSpaces)
+			if (currentWordType != charType::SPACECHAR || !(options.ignoreChangedSpaces || instart))
 				word.hash = Hash(word.hash, line[pos]);
 		}
 		else
 		{
+			instart = false;
 			if (!options.ignoreAllSpaces || currentWordType != charType::SPACECHAR)
 				words.emplace_back(word);
 
@@ -1038,8 +1041,8 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 		{
 			LOGD(LOG_ALGO, "Move match found, len: " + std::to_string(lookupMi.matchLen) + "\n");
 
-			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen);
-			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen);
+			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen, lookupMi.matchDiff->off + lookupMi.matchOff);
+			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen, reverseMi.matchDiff->off + reverseMi.matchOff);
 			ret = true;
 		}
 		else if (reverseMi.matchDiff)
@@ -1056,7 +1059,6 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 void findMoves(CompareInfo& cmpInfo)
 {
 	LOGD(LOG_ALGO, "FIND MOVES\n");
-
 	bool repeat = true;
 
 	while (repeat)
@@ -1825,8 +1827,8 @@ bool compareBlocks(const DocCmpInfo& doc1, const DocCmpInfo& doc2, diffInfo& blo
 
 		bestLineMappings = std::move(groupedLines[bestGroupIdx]);
 	}
-
-	compareLines(doc1, doc2, blockDiff1, blockDiff2, bestLineMappings, options);
+	if (cmpOptions.detectCharDiffs)
+	    compareLines(doc1, doc2, blockDiff1, blockDiff2, bestLineMappings, options);
 
 	return true;
 }
@@ -1836,7 +1838,7 @@ inline void markLine(int view, intptr_t line, int mark)
 {
 	pSciCaller pS = nppData.viewCaller(view);
 	pS->EnsureVisible(line);
-	pS->MarkerAddSet(line, mark);
+	pS->MarkerAddSet(line, mark & Settings.IconMask);
 }
 
 
@@ -1925,7 +1927,7 @@ void markLineDiffs(const CompareInfo& cmpInfo, const diffInfo& bd, intptr_t line
 	int color = (cmpInfo.doc1.blockDiffMask == MARKER_MASK_ADDED) ?
 			Settings.colors.add_highlight : Settings.colors.rem_highlight;
 
-	for (const auto& change: bd.info.changedLines[lineIdx].changes)
+	for (const auto& change : bd.info.changedLines[lineIdx].changes)
 		markTextAsChanged(pS1, linePos + change.off, change.len, color);
 
 	markLine(cmpInfo.doc1.view, line, cmpInfo.doc1.nonUniqueLines.find(line) == cmpInfo.doc1.nonUniqueLines.end() ?
@@ -1956,7 +1958,7 @@ bool markAllDiffs(CompareInfo& cmpInfo, const CompareOptions& options, CompareSu
 
 	std::pair<intptr_t, intptr_t> alignLines {0, 0};
 
-	AlignmentPair alignPair;
+	AlignmentPair alignPair; 
 
 	AlignmentViewData* pMainAlignData	= &alignPair.main;
 	AlignmentViewData* pSubAlignData	= &alignPair.sub;
@@ -2272,7 +2274,7 @@ bool markAllDiffs(CompareInfo& cmpInfo, const CompareOptions& options, CompareSu
 }
 
 
-CompareResult runCompare(const CompareOptions& options, CompareSummary& summary)
+CompareResult runCompare(const CompareOptions& options, CompareSummary& summary, movedMap& moves)
 {
 	//progress_ptr& progress = ProgressDlg::Get();
 
@@ -2374,6 +2376,23 @@ CompareResult runCompare(const CompareOptions& options, CompareSummary& summary)
 
 	if (!markAllDiffs(cmpInfo, options, summary))
 		return CompareResult::COMPARE_CANCELLED;
+
+	for (diffInfo dif : cmpInfo.blockDiffs) {
+		if (dif.type != diff_type::DIFF_MATCH && dif.info.moves.size()) {
+			for (section_t mov : dif.info.moves) {
+				moveSrc m;
+				m.off = dif.off;
+				m.sub_off = mov.off;
+				m.len = mov.len;
+				m.src = mov.src;
+				m.block_len = dif.len;
+				if(dif.type == diff_type::DIFF_IN_1)
+					moves.main.push_back(m);
+				else
+					moves.sub.push_back(m);
+			}
+		}
+	}
 
 	return CompareResult::COMPARE_MISMATCH;
 }
@@ -2511,7 +2530,7 @@ CompareResult runFindUnique(const CompareOptions& options, CompareSummary& summa
 }
 
 
-CompareResult compareViews(const CompareOptions& options, CompareSummary& summary)
+CompareResult compareViews(const CompareOptions& options, CompareSummary& summary, movedMap& moves)
 {
 	CompareResult result = CompareResult::COMPARE_ERROR;
 
@@ -2523,7 +2542,7 @@ CompareResult compareViews(const CompareOptions& options, CompareSummary& summar
 		if (options.findUniqueMode)
 			result = runFindUnique(options, summary);
 		else
-			result = runCompare(options, summary);
+			result = runCompare(options, summary, moves);
 
  		//ProgressDlg::Close();
 
