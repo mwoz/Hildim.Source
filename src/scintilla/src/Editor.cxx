@@ -1864,6 +1864,11 @@ void Editor::RefreshPixMaps(Surface *surfaceWindow) {
 }
 
 void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
+	if (redrawPendingText && paintState == PaintState::painting) {
+		ChangeScrollBars();
+	}
+	
+	
 	redrawPendingText = false;
 	redrawPendingMargin = false;
 
@@ -2025,6 +2030,9 @@ void Editor::ChangeScrollBars() {
 
 void Editor::SetScrollBars() {
 	// Overridden on GTK to defer to idle
+	if (redrawPendingText) {
+		return;
+	}
 	ChangeScrollBars();
 }
 

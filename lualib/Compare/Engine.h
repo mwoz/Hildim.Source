@@ -44,12 +44,15 @@ enum class CompareResult
 
 struct section_t
 {
-	section_t() : off(0), len(0), src(0) {}
-	section_t(intptr_t o, intptr_t l, intptr_t s) : off(o), len(l), src(s) {}
+	section_t() : off(0), len(0), src(0) {} 
+	section_t(intptr_t o, intptr_t l, intptr_t s, intptr_t t, int i) : off(o), len(l), src(s), target(t), type(i){}
 
 	intptr_t off;
 	intptr_t len;
 	intptr_t src;
+	intptr_t target;
+	int type;
+
 };
 
 enum FoldType_t
@@ -183,10 +186,8 @@ struct blankLineList
 struct moveSrc
 {
 	intptr_t off;
-	intptr_t sub_off;
 	intptr_t len;
 	intptr_t src;
-	intptr_t block_len;
 };
 class MovedMapElement_t :public std::vector<moveSrc>
 {
@@ -197,40 +198,44 @@ public:
 	void close_and_sort() {
 		moveSrc m;
 		m.off = INTPTR_MAX;
-		m.sub_off = 0;
 		m.len = 0;
 		m.src = 0;
-		m.block_len = 0;
 		push_back(m);
 		std::sort(begin(), end(),
-			[](moveSrc& a, moveSrc& b) {return (a.off == b.off ? a.sub_off < b.sub_off : a.off < b.off); });
+			[](moveSrc& a, moveSrc& b) {return ( a.off < b.off); });
 		cursor = begin();
 	}
-	const char* text4annotation(intptr_t start, intptr_t annotLen) {
+	const char* text4annotation(intptr_t start, intptr_t annotLen, intptr_t line) {
 		static std::string sOut;
 		sOut.clear();
-		while (cursor != end() && start > cursor._Ptr->off)
+		while (cursor != end() && start > cursor._Ptr->off )
 			cursor++;
 		moveSrc* src = nullptr;
-		if (cursor._Ptr->off == start) {
-			src = cursor._Ptr;
-		}
+
+		intptr_t i0 = 0;
 		for (intptr_t i = 0; i < annotLen; i++) {
-			if(i)
+			if (i)
 				sOut += '\n';
-			intptr_t dLen;
-			if (src && i >= (dLen = src->sub_off - (src->block_len - annotLen))) {
-				sOut += " >>> ";
-				sOut += std::to_string(i + - src->sub_off + src->src + 1);
-				if (i == dLen + src->len - 1) {
+			if (!src && cursor._Ptr->off == i + start && i + start + annotLen >= cursor._Ptr->off + cursor._Ptr->len) {
+				src = cursor._Ptr;
+				i0 = i;
+			}
+
+			if (src ) {
+				sOut += src->src < line ? " ^^^ " : " vvv ";
+				sOut += std::to_string(i + src->src + 1 - i0);
+				sOut += src->src < line ? " ^^^ " : " vvv ";
+				if (i == src->len - 1 + i0)  {
 					cursor++;
-					src = (cursor._Ptr->off == start ? cursor._Ptr : nullptr);
+					src = ((cursor._Ptr->off >= start && cursor._Ptr->off <= start+ annotLen)? cursor._Ptr : nullptr);
+					i0 = i + 1;
 				}
-			}	
+			}
 		}
 		return sOut.c_str();
 		//return "h";
-	}
+	};
+
 };
 
 

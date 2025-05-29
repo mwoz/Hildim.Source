@@ -1026,7 +1026,7 @@ void findBestMatch(const CompareInfo& cmpInfo, const diffInfo& lookupDiff, intpt
 
 
 // Recursively resolve the best match
-bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t lookupOff, MatchInfo& lookupMi)
+bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t lookupOff, MatchInfo& lookupMi, bool isSecond)
 {
 	bool ret = false;
 
@@ -1040,14 +1040,17 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 		if ((reverseMi.matchDiff == &lookupDiff) && (reverseMi.matchOff == lookupMi.lookupOff))
 		{
 			LOGD(LOG_ALGO, "Move match found, len: " + std::to_string(lookupMi.matchLen) + "\n");
+			//int side1 = reverseMi.matchDiff->off + reverseMi.matchOff < lookupMi.matchDiff->off + lookupMi.matchOff ? 1 : 2;
 
-			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen, lookupMi.matchDiff->off + lookupMi.matchOff);
-			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen, reverseMi.matchDiff->off + reverseMi.matchOff);
+			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen, lookupMi.matchDiff->off + lookupMi.matchOff, 
+				                                                   reverseMi.matchDiff->off + reverseMi.matchOff, isSecond ? 1: 2);  ////////////////////////////////////////////////////
+			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen, reverseMi.matchDiff->off + reverseMi.matchOff, 
+				                                                                              lookupMi.matchDiff->off + lookupMi.matchOff, isSecond ? 2 : 1);
 			ret = true;
 		}
 		else if (reverseMi.matchDiff)
 		{
-			ret = resolveMatch(cmpInfo, *(lookupMi.matchDiff), lookupOff, reverseMi);
+			ret = resolveMatch(cmpInfo, *(lookupMi.matchDiff), lookupOff, reverseMi, isSecond);
 			lookupMi.matchLen = 0;
 		}
 	}
@@ -1056,7 +1059,7 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 }
 
 
-void findMoves(CompareInfo& cmpInfo)
+void findMoves(CompareInfo& cmpInfo, bool isSecond)
 {
 	LOGD(LOG_ALGO, "FIND MOVES\n");
 	bool repeat = true;
@@ -1085,7 +1088,7 @@ void findMoves(CompareInfo& cmpInfo)
 				MatchInfo mi;
 				findBestMatch(cmpInfo, lookupDiff, lookupEi, mi);
 
-				if (resolveMatch(cmpInfo, lookupDiff, lookupEi, mi))
+				if (resolveMatch(cmpInfo, lookupDiff, lookupEi, mi, isSecond))
 				{
 					repeat = true;
 
@@ -2330,7 +2333,7 @@ CompareResult runCompare(const CompareOptions& options, CompareSummary& summary,
 	findUniqueLines(cmpInfo);
 
 	if (options.detectMoves)
-		findMoves(cmpInfo);
+		findMoves(cmpInfo, diffRes.second);
 
 	//if (!progress->NextPhase())
 	//	return CompareResult::COMPARE_CANCELLED;
@@ -2370,7 +2373,7 @@ CompareResult runCompare(const CompareOptions& options, CompareSummary& summary,
 
 	//if (!progress->NextPhase())
 	//	return CompareResult::COMPARE_CANCELLED;
-
+		
 	clearWindow(nppData.viewCaller(MAIN_VIEW));
 	clearWindow(nppData.viewCaller(SUB_VIEW));
 
@@ -2381,12 +2384,10 @@ CompareResult runCompare(const CompareOptions& options, CompareSummary& summary,
 		if (dif.type != diff_type::DIFF_MATCH && dif.info.moves.size()) {
 			for (section_t mov : dif.info.moves) {
 				moveSrc m;
-				m.off = dif.off;
-				m.sub_off = mov.off;
+				m.off = mov.src;
 				m.len = mov.len;
-				m.src = mov.src;
-				m.block_len = dif.len;
-				if(dif.type == diff_type::DIFF_IN_1)
+				m.src = mov.target;
+				if(mov.type == static_cast<int>(diff_type::DIFF_IN_1))
 					moves.main.push_back(m);
 				else
 					moves.sub.push_back(m);
