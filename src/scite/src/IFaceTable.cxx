@@ -2503,6 +2503,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCLEX_CPPNOCASE",35},
 	{"SCLEX_CSOUND",74},
 	{"SCLEX_CSS",38},
+	{"SCLEX_CUBEFORMULA",149},
 	{"SCLEX_D",79},
 	{"SCLEX_DIFF",16},
 	{"SCLEX_ECL",105},
@@ -2562,6 +2563,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCLEX_PYTHON",2},
 	{"SCLEX_R",86},
 	{"SCLEX_REBOL",71},
+	{"SCLEX_RUBRICA",147},
 	{"SCLEX_RUBY",22},
 	{"SCLEX_SCRIPTOL",33},
 	{"SCLEX_SMALLTALK",72},
@@ -2570,6 +2572,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCLEX_SPECMAN",59},
 	{"SCLEX_SPICE",78},
 	{"SCLEX_SQL",7},
+	{"SCLEX_SEARCHRESULT",150},
 	{"SCLEX_TACL",93},
 	{"SCLEX_TADS3",70},
 	{"SCLEX_TAL",91},
@@ -2582,6 +2585,7 @@ static IFaceConstant ifaceConstants[] = {
 	{"SCLEX_VERILOG",56},
 	{"SCLEX_VHDL",64},
 	{"SCLEX_VISUALPROLOG",107},
+	{"SCLEX_WIREFORMAT",148},
 	{"SCLEX_XCODE",13},
 	{"SCLEX_XML",5},
 	{"SCLEX_YAML",48},
@@ -3425,7 +3429,7 @@ static IFaceProperty ifaceProperties[] = {
 
 enum {
 	ifaceFunctionCount = 333,
-	ifaceConstantCount = 2661,
+	ifaceConstantCount = 2665,
 	ifacePropertyCount = 278
 };
 

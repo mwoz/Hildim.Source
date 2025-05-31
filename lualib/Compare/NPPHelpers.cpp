@@ -46,8 +46,8 @@ void defineColor(int type, int color)
 }
 void defineSymbol(int type, int symbol)
 {
-	::SendMessageA(nppData._scintillaMainHandle, SCI_MARKERDEFINE, type, (LPARAM)symbol);
-	::SendMessageA(nppData._scintillaSecondHandle, SCI_MARKERDEFINE, type, (LPARAM)symbol);
+	::SendMessageA(nppData.scintillaMainHandle, SCI_MARKERDEFINE, type, (LPARAM)symbol);
+	::SendMessageA(nppData.scintillaSecondHandle, SCI_MARKERDEFINE, type, (LPARAM)symbol);
 }
 
 
@@ -86,18 +86,11 @@ void ready()
 	setCursor(Scintilla::CursorShape::Normal);
 }
 
-void setBlank(pSciCaller pc, int color)
-{
-	pc->MarkerDefine(MARKER_BLANK, Scintilla::MarkerSymbol::Background);
-	pc->MarkerSetBack(MARKER_BLANK, color);
-	pc->MarkerSetFore(MARKER_BLANK, color);
-}
-
 void DefineXpmSymbol(int type, char ** xpm)
 {
 	//nppData.pMain->MarkerDefinePixmap(type, xpm)
-    SendMessage(nppData._scintillaMainHandle, SCI_MARKERDEFINEPIXMAP, type, (LPARAM)xpm);
-    SendMessage(nppData._scintillaSecondHandle, SCI_MARKERDEFINEPIXMAP, type, (LPARAM)xpm);
+    SendMessage(nppData.scintillaMainHandle, SCI_MARKERDEFINEPIXMAP, type, (LPARAM)xpm);
+    SendMessage(nppData.scintillaSecondHandle, SCI_MARKERDEFINEPIXMAP, type, (LPARAM)xpm);
 }
 
 void defineRgbaSymbol(int type, const unsigned char* rgba)
@@ -112,55 +105,12 @@ void setStyles(UserSettings s)
 	defineColor(MARKER_REMOVED_LINE, s.colors.removed);
 	defineColor(MARKER_MOVED_LINE, s.colors.moved);
 	defineColor(MARKER_CHANGED_LINE, s.colors.changed);
-	defineColor(MARKER_BLANK, s.colors.blank);
 
 	nppData.pMain->RGBAImageSetWidth(14);
 	nppData.pMain->RGBAImageSetHeight(14);
 	nppData.pSecond->RGBAImageSetWidth(14);
 	nppData.pSecond->RGBAImageSetHeight(14);
 
-	defineRgbaSymbol(MARKER_CHANGED_SYMBOL, icon_changed);
-	defineRgbaSymbol(MARKER_CHANGED_LOCAL_SYMBOL, icon_changed_local);
-	defineRgbaSymbol(MARKER_ADDED_SYMBOL, icon_added);
-	defineRgbaSymbol(MARKER_ADDED_LOCAL_SYMBOL, icon_added_local);
-	defineRgbaSymbol(MARKER_REMOVED_SYMBOL, icon_removed);
-	defineRgbaSymbol(MARKER_REMOVED_LOCAL_SYMBOL, icon_removed_local);
-	defineRgbaSymbol(MARKER_MOVED_LINE_SYMBOL, icon_moved_line);
-	defineRgbaSymbol(MARKER_MOVED_BLOCK_BEGIN_SYMBOL, icon_moved_block_start);
-	defineRgbaSymbol(MARKER_MOVED_BLOCK_MID_SYMBOL, icon_moved_block_middle);
-	defineRgbaSymbol(MARKER_MOVED_BLOCK_END_SYMBOL, icon_moved_block_end);
-
-}
-
-void markAsBlank(pSciCaller pc,int line)
-{
-	pc->MarkerAdd(line, MARKER_BLANK);
-}
-
-void markAsAdded(pSciCaller pc,int line, bool symbol)
-{
-	if(symbol)
-		pc->MarkerAdd(line, MARKER_ADDED_SYMBOL);
-	pc->MarkerAdd(line, MARKER_ADDED_LINE);
-}
-void markAsChanged(pSciCaller pc,int line, bool symbol)
-{
-	if (symbol)
-		pc->MarkerAdd(line, MARKER_CHANGED_SYMBOL);
-	pc->MarkerAdd(line, MARKER_CHANGED_LINE);
-}
-void markAsRemoved(pSciCaller pc,int line, bool symbol)
-{
-	if (symbol)
-		pc->MarkerAdd(line, MARKER_REMOVED_SYMBOL);
-	pc->MarkerAdd(line, MARKER_REMOVED_LINE);
-}
-
-void markAsMoved(pSciCaller pc,int line, bool symbol)
-{
-	if (symbol)
-		pc->MarkerAdd(line, MARKER_MOVED_LINE_SYMBOL);
-	pc->MarkerAdd(line, MARKER_MOVED_LINE);
 }
 
 void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color)
@@ -206,67 +156,6 @@ char **getAllLines(pSciCaller pc,int *length, int **lineNum){
 	*length=docLines;
 	return lines;
 }
-int deleteLine(pSciCaller pc,Scintilla::Line line)
-{
-	Scintilla::Position posAdd = pc->PositionFromLine(line);
-	pc->SetTargetStart(posAdd);
-
-	Scintilla::Line docLength = pc->LineCount() - 1;
-
-	Scintilla::Position length = 0;//::SendMessageA(window, SCI_LINELENGTH, line, 0);
-	Scintilla::EndOfLine EOLtype = pc->EOLMode();
-	int eolLen = (EOLtype == Scintilla::EndOfLine::CrLf ? 2 : 1);
-
-	int start = line;
-	int lines = 0;
-	int marker = pc->MarkerGet(line);
-
-	//int blankMask=pow(2.0,blank);
-    int blankMask = 1 << MARKER_BLANK;
-
-	while((marker & blankMask) != 0)
-    {
-		Scintilla::Position lineLength = pc->LineLength(line);	
-		
-		//don't delete lines that actually have text in them
-		if(line < docLength && lineLength > eolLen)
-        {
-			//lineLength-=lenEOL[EOLtype];
-			break;
-		}
-        else if(line == docLength && lineLength > 0)
-        {			
-			break;
-		}
-		lines++;
-		length += lineLength;
-		line++;
-		marker = pc->MarkerGet(line);
-	}
-	
-
-	//select the end of the lines, and unmark them so they aren't called for delete again
-	pc->SetTargetEnd(posAdd + length);
-	for(Scintilla::Line i=start;i<line;i++){
-		pc->MarkerDelete(i, MARKER_BLANK);
-	}
-
-	//if we're at the end of the document, we can't delete that line, because it doesn't have any EOL characters to delete
-	//, so we have to delete the EOL on the previous line
-	if(line>docLength){
-		pc->SetTargetStart(posAdd - eolLen);
-		length+= eolLen;
-	}
-	if(length>0){
-		pc->MarkerDelete(line, MARKER_BLANK);
-		pc->ReplaceTarget(std::string_view(""));
-		return lines;
-	}else{
-		pc->MarkerDelete(line, MARKER_BLANK);
-		return 0;
-	}
-
-}
 
 static int prev_offset;
 void resetPrevOffset() {
@@ -301,6 +190,16 @@ std::vector<char> getText(pSciCaller pS, intptr_t startPos, intptr_t endPos)
 	tr.lpstrText = text.data();
 
 	pS->GetTextRangeFull(&tr);
+
+	if (Settings.ignoreComments && Settings.commentStyles.size()) {
+		for (intptr_t p = startPos; p < endPos; p++) {
+			if (Settings.commentStyles.count(pS->StyleAt(p))) {
+				text[p - startPos] = ' ';
+			}
+		}
+
+	}
+
 
 	return text;
 }
@@ -338,18 +237,6 @@ void clearWindow(pSciCaller pc)
 	pc->MarkerDeleteAll(MARKER_ADDED_LINE);
 	pc->MarkerDeleteAll(MARKER_REMOVED_LINE);
 	pc->MarkerDeleteAll(MARKER_MOVED_LINE);
-	pc->MarkerDeleteAll(MARKER_CHANGED_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_CHANGED_LOCAL_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_ADDED_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_ADDED_LOCAL_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_REMOVED_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_REMOVED_LOCAL_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_MOVED_LINE_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_MOVED_BLOCK_BEGIN_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_MOVED_BLOCK_MID_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_MOVED_BLOCK_END_SYMBOL);
-	pc->MarkerDeleteAll(MARKER_ARROW_SYMBOL);
-
 
 	clearChangedIndicator(pc, 0, pc->Length());
 

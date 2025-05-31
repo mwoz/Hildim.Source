@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ILoader.h"
 #include "ScintillaCall.h"
 #include "Compare.h"
+#include <set>
 
 struct ColorSettings
 {
@@ -42,7 +43,6 @@ struct ColorSettings
 };
 struct UserSettings
 {
-	unsigned long   IconMask;
 
 	bool			FirstFileIsNew;
 	int				NewFileViewId;
@@ -83,6 +83,8 @@ struct UserSettings
 	bool			NavigationTB;
 	bool			ShowOnlyDiffsTB;
 	bool			NavBarTB;
+	bool            ignoreComments;
+	std::set<int>   commentStyles;
 
 	ColorSettings colors;
 };
@@ -93,13 +95,7 @@ enum SciCaller {
 	sciLeft = 1, sciRight, sciOutput, sciFindres
 };
 void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color);
-void markAsMoved(pSciCaller pc,int line, bool symbol);
-void markAsRemoved(pSciCaller pc,int line, bool symbol);
-void markAsChanged(pSciCaller pc,int line, bool symbol);
-void markAsAdded(pSciCaller pc,int line, bool symbol);
-void markAsBlank(pSciCaller pc,int line);
 void setStyles(UserSettings s);
-void setBlank(pSciCaller pc,int color);
 void ready();
 void wait();
 void setCursor(Scintilla::CursorShape type);
@@ -108,7 +104,6 @@ void setTextStyle(pSciCaller pc, ColorSettings s);
 void setChangedStyle(pSciCaller pc, ColorSettings s);
 void defineSymbol(int type,int symbol);
 void defineColor(int type,int color);
-int deleteLine(pSciCaller pc, Scintilla::Line);
 char **getAllLines(pSciCaller pc,int *length, int **lineNum);
 
 void resetPrevOffset();
@@ -133,38 +128,15 @@ enum Marker_t
 	MARKER_CHANGED_LINE = 11,
 	MARKER_ADDED_LINE,
 	MARKER_REMOVED_LINE,
-	MARKER_MOVED_LINE,
-	MARKER_BLANK,
-	MARKER_CHANGED_SYMBOL,
-	MARKER_CHANGED_LOCAL_SYMBOL,
-	MARKER_ADDED_SYMBOL,
-	MARKER_ADDED_LOCAL_SYMBOL,
-	MARKER_REMOVED_SYMBOL,
-	MARKER_REMOVED_LOCAL_SYMBOL,
-	MARKER_MOVED_LINE_SYMBOL,
-	MARKER_MOVED_BLOCK_BEGIN_SYMBOL,
-	MARKER_MOVED_BLOCK_MID_SYMBOL,
-	MARKER_MOVED_BLOCK_END_SYMBOL,
-	MARKER_ARROW_SYMBOL
+	MARKER_MOVED_LINE
 };
 
-constexpr int MARKER_MASK_CHANGED = (1 << MARKER_CHANGED_LINE) | (1 << MARKER_CHANGED_SYMBOL);
-constexpr int MARKER_MASK_CHANGED_LOCAL = (1 << MARKER_CHANGED_LINE) | (1 << MARKER_CHANGED_LOCAL_SYMBOL);
-constexpr int MARKER_MASK_ADDED = (1 << MARKER_ADDED_LINE) | (1 << MARKER_ADDED_SYMBOL);
-constexpr int MARKER_MASK_ADDED_LOCAL = (1 << MARKER_ADDED_LINE) | (1 << MARKER_ADDED_LOCAL_SYMBOL);
-constexpr int MARKER_MASK_REMOVED = (1 << MARKER_REMOVED_LINE) | (1 << MARKER_REMOVED_SYMBOL);
-constexpr int MARKER_MASK_REMOVED_LOCAL = (1 << MARKER_REMOVED_LINE) | (1 << MARKER_REMOVED_LOCAL_SYMBOL);
-constexpr int MARKER_MASK_MOVED_LINE = (1 << MARKER_MOVED_LINE) | (1 << MARKER_MOVED_LINE_SYMBOL);
-constexpr int MARKER_MASK_MOVED_BEGIN = (1 << MARKER_MOVED_LINE) | (1 << MARKER_MOVED_BLOCK_BEGIN_SYMBOL);
-constexpr int MARKER_MASK_MOVED_MID = (1 << MARKER_MOVED_LINE) | (1 << MARKER_MOVED_BLOCK_MID_SYMBOL);
-constexpr int MARKER_MASK_MOVED_END = (1 << MARKER_MOVED_LINE) | (1 << MARKER_MOVED_BLOCK_END_SYMBOL);
-constexpr int MARKER_MASK_MOVED = (1 << MARKER_MOVED_LINE) | (1 << MARKER_MOVED_LINE_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_BEGIN_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_MID_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_END_SYMBOL);
+constexpr int MARKER_MASK_CHANGED = (1 << MARKER_CHANGED_LINE);
+constexpr int MARKER_MASK_ADDED = (1 << MARKER_ADDED_LINE);
+constexpr int MARKER_MASK_REMOVED = (1 << MARKER_REMOVED_LINE);
+constexpr int MARKER_MASK_MOVED_LINE = (1 << MARKER_MOVED_LINE) ;
 
-constexpr int MARKER_MASK_BLANK = (1 << MARKER_BLANK);
-constexpr int MARKER_MASK_ARROW = (1 << MARKER_ARROW_SYMBOL);
+constexpr int MARKER_MASK_MOVED = (1 << MARKER_MOVED_LINE) ;
 
 constexpr int MARKER_MASK_DIFF_LINE = (1 << MARKER_CHANGED_LINE) |
 (1 << MARKER_ADDED_LINE) |
@@ -180,16 +152,7 @@ constexpr int MARKER_MASK_LINE = (1 << MARKER_CHANGED_LINE) |
 (1 << MARKER_REMOVED_LINE) |
 (1 << MARKER_MOVED_LINE);
 
-constexpr int MARKER_MASK_SYMBOL = (1 << MARKER_CHANGED_SYMBOL) |
-(1 << MARKER_CHANGED_LOCAL_SYMBOL) |
-(1 << MARKER_ADDED_SYMBOL) |
-(1 << MARKER_ADDED_LOCAL_SYMBOL) |
-(1 << MARKER_REMOVED_SYMBOL) |
-(1 << MARKER_REMOVED_LOCAL_SYMBOL) |
-(1 << MARKER_MOVED_LINE_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_BEGIN_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_MID_SYMBOL) |
-(1 << MARKER_MOVED_BLOCK_END_SYMBOL);
+constexpr int MARKER_MASK_SYMBOL = 0;
 
 constexpr int MARKER_MASK_ALL = MARKER_MASK_LINE | MARKER_MASK_SYMBOL;
 

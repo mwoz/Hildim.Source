@@ -1449,6 +1449,8 @@ void SciTEBase::ReadProperties() {
 	wEditor.Call(SCI_SETENDATLASTLINE, props.GetInt("end.at.last.line", 1));
 	wEditor.Call(SCI_SETCARETSTICKY, props.GetInt("caret.sticky", 0));
 
+	SetColourElement(&wEditor, SC_ELEMENT_HIDDEN_LINE, "list.colour", "#");
+
 	SetColourElement(&wEditor, SC_ELEMENT_LIST, "list.colour", "#");
 	SetColourElement(&wEditor, SC_ELEMENT_LIST_BACK, "list.back", "#");
 	SetColourElement(&wEditor, SC_ELEMENT_LIST_SELECTED, "list.selection", "#");

@@ -173,9 +173,6 @@ struct CompareSummary
 	AlignmentInfo_t	alignmentInfo;
 };
 
-
-
-
 struct blankLineList
 {
 	int line;

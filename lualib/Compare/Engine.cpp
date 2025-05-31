@@ -1841,7 +1841,7 @@ inline void markLine(int view, intptr_t line, int mark)
 {
 	pSciCaller pS = nppData.viewCaller(view);
 	pS->EnsureVisible(line);
-	pS->MarkerAddSet(line, mark & Settings.IconMask);
+	pS->MarkerAddSet(line, mark);
 }
 
 
@@ -1863,8 +1863,7 @@ void markSection(const DocCmpInfo& doc, const diffInfo& bd, const CompareOptions
 			for (; (i < endOff) && (bd.info.movedSection(i) == 0); ++i, ++line)
 			{
 				const intptr_t docLine = doc.lines[line].line;
-				const int mark = (doc.nonUniqueLines.find(docLine) == doc.nonUniqueLines.end()) ? doc.blockDiffMask :
-						(doc.blockDiffMask == MARKER_MASK_ADDED) ? MARKER_MASK_ADDED_LOCAL : MARKER_MASK_REMOVED_LOCAL;
+				const int mark = doc.blockDiffMask;
 
 				markLine(doc.view, docLine, mark);
 
@@ -1880,41 +1879,9 @@ void markSection(const DocCmpInfo& doc, const diffInfo& bd, const CompareOptions
 			--i;
 			--line;
 		}
-		else if (movedLen == 1)
+		else 
 		{
 			markLine(doc.view, doc.lines[line].line, MARKER_MASK_MOVED_LINE);
-		}
-		else
-		{
-			markLine(doc.view, doc.lines[line].line, MARKER_MASK_MOVED_BEGIN);
-
-			i += --movedLen;
-
-			intptr_t prevLine = doc.lines[line].line + 1;
-			intptr_t endLine = line + movedLen;
-
-			for (++line; line < endLine; ++line)
-			{
-				const intptr_t docLine = doc.lines[line].line;
-				markLine(doc.view, docLine, MARKER_MASK_MOVED_MID);
-
-				if (options.ignoreEmptyLines && !options.neverMarkIgnored)
-				{
-					for (; prevLine < docLine; ++prevLine)
-						markLine(doc.view, prevLine, MARKER_MASK_MOVED_MID & MARKER_MASK_LINE);
-
-					prevLine = docLine + 1;
-				}
-			}
-
-			const intptr_t docLine = doc.lines[line].line;
-			markLine(doc.view, docLine, MARKER_MASK_MOVED_END);
-
-			if (options.ignoreEmptyLines && !options.neverMarkIgnored)
-			{
-				for (; prevLine < docLine; ++prevLine)
-					markLine(doc.view, prevLine, MARKER_MASK_MOVED_MID & MARKER_MASK_LINE);
-			}
 		}
 	}
 }
@@ -1933,8 +1900,7 @@ void markLineDiffs(const CompareInfo& cmpInfo, const diffInfo& bd, intptr_t line
 	for (const auto& change : bd.info.changedLines[lineIdx].changes)
 		markTextAsChanged(pS1, linePos + change.off, change.len, color);
 
-	markLine(cmpInfo.doc1.view, line, cmpInfo.doc1.nonUniqueLines.find(line) == cmpInfo.doc1.nonUniqueLines.end() ?
-			MARKER_MASK_CHANGED : MARKER_MASK_CHANGED_LOCAL);
+	markLine(cmpInfo.doc1.view, line, MARKER_MASK_CHANGED);
 
 	line = cmpInfo.doc2.lines[bd.info.matchBlock->off + bd.info.matchBlock->info.changedLines[lineIdx].line].line;
 	linePos = pS2->LineStart(line);;
@@ -1944,8 +1910,7 @@ void markLineDiffs(const CompareInfo& cmpInfo, const diffInfo& bd, intptr_t line
 	for (const auto& change: bd.info.matchBlock->info.changedLines[lineIdx].changes)
 		markTextAsChanged(pS2, linePos + change.off, change.len, color);
 
-	markLine(cmpInfo.doc2.view, line, cmpInfo.doc2.nonUniqueLines.find(line) == cmpInfo.doc2.nonUniqueLines.end() ?
-			MARKER_MASK_CHANGED : MARKER_MASK_CHANGED_LOCAL);
+	markLine(cmpInfo.doc2.view, line, MARKER_MASK_CHANGED);
 }
 
 
