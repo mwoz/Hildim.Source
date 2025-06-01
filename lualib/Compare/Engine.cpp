@@ -1023,10 +1023,27 @@ void findBestMatch(const CompareInfo& cmpInfo, const diffInfo& lookupDiff, intpt
 		}
 	}
 }
-
+class full2docMap {
+private:
+	pSciCaller pc;
+	std::map<intptr_t, intptr_t> lines;
+	intptr_t lastF = -1;
+public:
+	full2docMap(pSciCaller p) : pc(p) {}
+	intptr_t docLine(intptr_t fullLine) {
+		intptr_t lastD = lastF >= 0 ? lines.at(lastF) : -1;
+		for (; lastF <= fullLine; lastF++) {
+			do {
+				lastD++;
+			} while (pc->LineIndentPosition(lastD) == pc->LineEndPosition(lastD));
+			lines[lastF + 1] = lastD;
+		}
+		return lines.at(fullLine);
+	}
+};
 
 // Recursively resolve the best match
-bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t lookupOff, MatchInfo& lookupMi, bool isSecond)
+bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t lookupOff, MatchInfo& lookupMi, bool isSecond, full2docMap* mp1, full2docMap* mp2)
 {
 	bool ret = false;
 
@@ -1040,17 +1057,25 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 		if ((reverseMi.matchDiff == &lookupDiff) && (reverseMi.matchOff == lookupMi.lookupOff))
 		{
 			LOGD(LOG_ALGO, "Move match found, len: " + std::to_string(lookupMi.matchLen) + "\n");
-			//int side1 = reverseMi.matchDiff->off + reverseMi.matchOff < lookupMi.matchDiff->off + lookupMi.matchOff ? 1 : 2;
 
-			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen, lookupMi.matchDiff->off + lookupMi.matchOff, 
-				                                                   reverseMi.matchDiff->off + reverseMi.matchOff, isSecond ? 1: 2);  ////////////////////////////////////////////////////
-			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen, reverseMi.matchDiff->off + reverseMi.matchOff, 
-				                                                                              lookupMi.matchDiff->off + lookupMi.matchOff, isSecond ? 2 : 1);
+			intptr_t line1 = lookupMi.matchDiff->off + lookupMi.matchOff;
+			intptr_t line2 = reverseMi.matchDiff->off + reverseMi.matchOff;
+
+			if (mp1) {
+				line1 = mp1->docLine(line1);
+				line2 = mp2->docLine(line2);
+			}
+		
+
+			lookupDiff.info.moves.emplace_back(lookupMi.lookupOff, lookupMi.matchLen, line1, line2, isSecond ? 1: 2);
+				
+			lookupMi.matchDiff->info.moves.emplace_back(lookupMi.matchOff, lookupMi.matchLen, line2, line1, isSecond ? 2 : 1);
+				
 			ret = true;
 		}
 		else if (reverseMi.matchDiff)
 		{
-			ret = resolveMatch(cmpInfo, *(lookupMi.matchDiff), lookupOff, reverseMi, isSecond);
+			ret = resolveMatch(cmpInfo, *(lookupMi.matchDiff), lookupOff, reverseMi, isSecond, mp1, mp2); 
 			lookupMi.matchLen = 0;
 		}
 	}
@@ -1059,14 +1084,21 @@ bool resolveMatch(const CompareInfo& cmpInfo, diffInfo& lookupDiff, intptr_t loo
 }
 
 
+
 void findMoves(CompareInfo& cmpInfo, bool isSecond)
 {
 	LOGD(LOG_ALGO, "FIND MOVES\n");
 	bool repeat = true;
-
+	
+	full2docMap *mp1 = nullptr, *mp2 = nullptr;
+	if (cmpOptions.ignoreEmptyLines) {
+		mp1 = new full2docMap(isSecond ? nppData.pMain : nppData.pSecond);
+		mp2 = new full2docMap(isSecond ? nppData.pSecond : nppData.pMain);
+	}
 	while (repeat)
 	{
 		repeat = false;
+
 
 		for (diffInfo& lookupDiff: cmpInfo.blockDiffs)
 		{
@@ -1088,7 +1120,7 @@ void findMoves(CompareInfo& cmpInfo, bool isSecond)
 				MatchInfo mi;
 				findBestMatch(cmpInfo, lookupDiff, lookupEi, mi);
 
-				if (resolveMatch(cmpInfo, lookupDiff, lookupEi, mi, isSecond))
+				if (resolveMatch(cmpInfo, lookupDiff, lookupEi, mi, isSecond, mp1, mp2))
 				{
 					repeat = true;
 
@@ -1099,6 +1131,10 @@ void findMoves(CompareInfo& cmpInfo, bool isSecond)
 				}
 			}
 		}
+	}
+	if (cmpOptions.ignoreEmptyLines) {
+		delete mp1;
+		delete mp2;
 	}
 }
 
@@ -2503,8 +2539,8 @@ CompareResult compareViews(const CompareOptions& options, CompareSummary& summar
 	//if (!progressInfo || !ProgressDlg::Open(progressInfo))
 		//return CompareResult::COMPARE_ERROR;
 
-	try
-	{
+	//try
+	//{
 		if (options.findUniqueMode)
 			result = runFindUnique(options, summary);
 		else
@@ -2517,24 +2553,24 @@ CompareResult compareViews(const CompareOptions& options, CompareSummary& summar
 			clearWindow(nppData.viewCaller(MAIN_VIEW));
 			clearWindow(nppData.viewCaller(SUB_VIEW));
 		}
-	}
-	catch (std::exception& e)
-	{
-		//ProgressDlg::Close();
-
-		clearWindow(nppData.viewCaller(MAIN_VIEW));
-		clearWindow(nppData.viewCaller(SUB_VIEW));
-
-		char msg[128];
-		_snprintf_s(msg, _countof(msg), _TRUNCATE, "Exception occurred: %s", e.what());
-		//::MessageBoxA(nppData._nppHandle, msg, "ComparePlus", MB_OK | MB_ICONWARNING);
-	}
-	catch (...)
-	{
-		//ProgressDlg::Close();
-
-		//::MessageBoxA(nppData._nppHandle, "Unknown exception occurred.", "ComparePlus", MB_OK | MB_ICONWARNING);
-	}
+	//}
+	//catch (std::exception& e)
+	//{
+	//	//ProgressDlg::Close();
+	//
+	//	clearWindow(nppData.viewCaller(MAIN_VIEW));
+	//	clearWindow(nppData.viewCaller(SUB_VIEW));
+	//
+	//	char msg[128];
+	//	_snprintf_s(msg, _countof(msg), _TRUNCATE, "Exception occurred: %s", e.what());
+	//	//::MessageBoxA(nppData._nppHandle, msg, "ComparePlus", MB_OK | MB_ICONWARNING);
+	//}
+	//catch (...)
+	//{
+	//	//ProgressDlg::Close();
+	//
+	//	//::MessageBoxA(nppData._nppHandle, "Unknown exception occurred.", "ComparePlus", MB_OK | MB_ICONWARNING);
+	//}
 
 	return result;
 }
