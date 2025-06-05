@@ -26,6 +26,7 @@
 #include <memory>
 #include <string>
 #include <regex>
+#include <map>
 #include "Compare.h"
 #include "NppHelpers.h"
 #include "ScintillaCall.h"
@@ -113,7 +114,6 @@ struct CompareOptions
 	bool	detectMoves;
 	bool	detectCharDiffs;
 	bool	ignoreEmptyLines;
-	bool	ignoreFoldedLines;
 	bool	ignoreChangedSpaces;
 	bool    ignoreIndent;
 	bool	ignoreAllSpaces;
@@ -202,7 +202,7 @@ public:
 			[](moveSrc& a, moveSrc& b) {return ( a.off < b.off); });
 		cursor = begin();
 	}
-	const char* text4annotation(intptr_t start, intptr_t annotLen, intptr_t line) {
+	std::string text4annotation(intptr_t start, intptr_t annotLen, intptr_t line, std::map<intptr_t, bool>& emptyLines) {
 		static std::string sOut;
 		sOut.clear();
 		while (cursor != end() && start > cursor._Ptr->off )
@@ -211,17 +211,22 @@ public:
 
 		intptr_t i0 = 0;
 		for (intptr_t i = 0; i < annotLen; i++) {
-			if (i)
-				sOut += '\n';
+			if (!emptyLines.count(i))
+				sOut += sOut.empty() ? ' ' : '\n';
+		
 			if (!src && cursor._Ptr->off == i + start && i + start + annotLen >= cursor._Ptr->off + cursor._Ptr->len) {
 				src = cursor._Ptr;
 				i0 = i;
 			}
 
 			if (src ) {
-				sOut += src->src < line ? " ^^^ " : " vvv ";
-				sOut += std::to_string(i + src->src + 1 - i0);
-				sOut += src->src < line ? " ^^^ " : " vvv ";
+				if (!emptyLines.count(i)) {
+					if (sOut.length() > 1)
+						sOut += ' ';
+					sOut += src->src < line ? "^^^ " : "vvv ";
+					sOut += std::to_string(i + src->src + 1 - i0);
+					sOut += src->src < line ? " ^^^ " : " vvv ";
+				}
 				if (i == src->len - 1 + i0)  {
 					cursor++;
 					src = ((cursor._Ptr->off >= start && cursor._Ptr->off <= start+ annotLen)? cursor._Ptr : nullptr);
@@ -229,8 +234,7 @@ public:
 				}
 			}
 		}
-		return sOut.c_str();
-		//return "h";
+		return sOut;
 	};
 
 };

@@ -59,7 +59,6 @@ struct UserSettings
 	bool			DetectMoves;
 	bool			DetectCharDiffs;
 	bool			IgnoreEmptyLines;
-	bool			IgnoreFoldedLines;
 	bool			IgnoreChangedSpaces;
 	bool			IgnoreAllSpaces;
 	bool			IgnoreCase;

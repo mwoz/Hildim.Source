@@ -453,13 +453,6 @@ void getLines(DocCmpInfo& doc, const CompareOptions& options)
 
 		intptr_t docLine = secLine + doc.section.off;
 
-		if (options.ignoreFoldedLines && getNextLineAfterFold(doc.pSci(), &docLine))
-		{
-			--docLine;
-			secLine = docLine - doc.section.off;
-			continue;
-		}
-
 		const intptr_t lineStart    = doc.pSci()->LineStart(docLine); 
 		const intptr_t lineEnd		= doc.pSci()->LineEnd(docLine);
 
