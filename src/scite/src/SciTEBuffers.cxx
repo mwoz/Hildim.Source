@@ -66,6 +66,8 @@
 #include "JobQueue.h"
 #include "SciTEBase.h"
 
+using namespace Scintilla;
+
 BufferList::BufferList() : current(0), stackcurrent(0), stack(0), buffers(0), size(0), length(0), initialised(false) {}
 
 BufferList::~BufferList() {
@@ -327,8 +329,8 @@ void SciTEBase::ChangeTabWnd() {
 	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
-	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
-	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
+	wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
 
 	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
 
@@ -352,9 +354,9 @@ void SciTEBase::ChangeTabWnd() {
 		bBlockRedraw = true;
 	}
 	else {
-		sptr_t d = wEditor.coEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
-		wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
-		wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+		sptr_t d = reinterpret_cast<sptr_t>(wEditor.coEditor.CreateDocument(0, DocumentOption::Default));
+		wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
+		wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
 		wEditor.SetCoBuffPointer(NULL);
 			wEditor.Switch(true);
 		if (iPrevSide == IDM_SRCWIN) {
@@ -378,14 +380,14 @@ void SciTEBase::CloneTab(){
 	int iPrev = buffers.Current();
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
-	wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
-	wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+	wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
+	wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
 	wEditor.SetCoBuffPointer(&absPath);
 
-	wEditor.coEditor.Call(SCI_SETZOOM, wEditor.Call(SCI_GETZOOM));
-	wEditor.coEditor.Call(SCI_SETFIRSTVISIBLELINE, wEditor.Call(SCI_GETFIRSTVISIBLELINE));
-	wEditor.coEditor.Call(SCI_SETSELECTIONSTART, wEditor.Call(SCI_GETSELECTIONSTART));
-	wEditor.coEditor.Call(SCI_SETSELECTIONEND, wEditor.Call(SCI_GETSELECTIONEND));
+	wEditor.coEditor.SetZoom(wEditor.Zoom());
+	wEditor.coEditor.SetFirstVisibleLine(wEditor.FirstVisibleLine());
+	wEditor.coEditor.SetSelectionStart(wEditor.SelectionStart());
+	wEditor.coEditor.SetSelectionEnd(wEditor.SelectionEnd());
 
 	wEditor.Switch();
 
@@ -430,7 +432,7 @@ sptr_t SciTEBase::GetDocumentAt(int index) {
 	}
 	if (buffers.buffers[index].doc == 0) {
 		// Create a new document buffer
-		buffers.buffers[index].doc = wEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
+		buffers.buffers[index].doc = reinterpret_cast<sptr_t>(wEditor.CreateDocument(0, DocumentOption::Default));
 	}
 	return buffers.buffers[index].doc;
 }
@@ -491,12 +493,12 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	Buffer bufferNext = buffers.buffers[buffers.Current()];
 	SetFileName(bufferNext, true, switchTab);
 	if (!bExit) {
-		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
+		wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(GetDocumentAt(buffers.Current())));
 		RestoreState(bufferNext, switchTab);
 		if (startSide == buffers.buffers[index].editorSide) {
-			wEditor.Call(SCI_SETSCROLLWIDTH, 100);
-			wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-			wEditor.Call(SCI_SCROLLCARET);
+			wEditor.SetScrollWidth(100);
+			wEditor.SetScrollWidthTracking(1);
+			wEditor.ScrollCaret();
 		}
 
 		if (lineNumbers && lineNumbersExpand)
@@ -507,9 +509,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		CheckMenus();
 	} else if (startSide == buffers.buffers[index].editorSide) {
 		ReadProperties();
-		wEditor.Call(SCI_SETSCROLLWIDTH, 100);
-		wEditor.Call(SCI_SETSCROLLWIDTHTRACKING, 1);
-		wEditor.Call(SCI_SCROLLCARET);
+		wEditor.SetScrollWidth(100);
+		wEditor.SetScrollWidthTracking(1);
+		wEditor.ScrollCaret();
 	}
 	else {
 		RestoreState(bufferNext, switchTab, true);
@@ -534,9 +536,9 @@ void SciTEBase::UpdateBuffersCoCurrent() {
 	if (index < 0)
 		return;
 
-	buffers.buffers[index].selection.cpMin = static_cast<Sci_PositionCR>(wEditor.coEditor.Call(SCI_GETSELECTIONSTART));
-	buffers.buffers[index].selection.cpMax = static_cast<Sci_PositionCR>(wEditor.coEditor.Call(SCI_GETSELECTIONEND));
-	buffers.buffers[index].scrollPosition = wEditor.coEditor.Call(SCI_DOCLINEFROMVISIBLE, wEditor.coEditor.Call(SCI_GETFIRSTVISIBLELINE));
+	buffers.buffers[index].selection.cpMin = wEditor.coEditor.SelectionStart();
+	buffers.buffers[index].selection.cpMax = wEditor.coEditor.SelectionEnd();
+	buffers.buffers[index].scrollPosition = wEditor.coEditor.DocLineFromVisible(wEditor.coEditor.FirstVisibleLine());
 }
 
 void SciTEBase::UpdateBuffersCurrent() {
@@ -554,7 +556,7 @@ void SciTEBase::UpdateBuffersCurrent() {
 
 		if (props.GetInt("fold")) {
 			for (Sci_Position line = 0; ; line++) {
-				Sci_Position lineNext = wEditor.Call(SCI_CONTRACTEDFOLDNEXT, line);
+				Sci_Position lineNext = wEditor.ContractedFoldNext(line);
 				if ((line < 0) || (lineNext < line))
 					break;
 				line = lineNext;
@@ -584,15 +586,15 @@ bool SciTEBase::CanMakeRoom(bool maySaveIfDirty) {
 }
 
 void SciTEBase::ClearDocument() {
-	wEditor.Call(SCI_SETREADONLY, 0);
-	wEditor.Call(SCI_SETCHANGEHISTORY, SC_CHANGE_HISTORY_DISABLED);
-	wEditor.Call(SCI_SETUNDOCOLLECTION, 0);
-	wEditor.Call(SCI_CLEARALL);
-	wEditor.Call(SCI_EMPTYUNDOBUFFER);
-	wEditor.Call(SCI_SETUNDOCOLLECTION, 1);
-	wEditor.Call(SCI_SETCHANGEHISTORY, (viewHisoryMarkers ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) : 0) | (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0));
-	wEditor.Call(SCI_SETSAVEPOINT);
-	wEditor.Call(SCI_SETREADONLY, isReadOnly);
+	wEditor.SetReadOnly(false);
+	wEditor.SetChangeHistory(Scintilla::ChangeHistoryOption::Disabled);
+	wEditor.SetUndoCollection(false);
+	wEditor.ClearAll();
+	wEditor.EmptyUndoBuffer();
+	wEditor.SetUndoCollection(true);
+	wEditor.SetChangeHistory(static_cast<Scintilla::ChangeHistoryOption>((viewHisoryMarkers ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) : 0) | (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0)));
+	wEditor.SetSavePoint();
+	wEditor.SetReadOnly(isReadOnly);
 }
 
 void SciTEBase::CreateBuffers() {
@@ -610,8 +612,8 @@ void SciTEBase::InitialiseBuffers() {
 	if (!buffers.initialised) {
 		buffers.initialised = true;
 		// First document is the default from creation of control
-		buffers.buffers[0].doc = wEditor.Call(SCI_GETDOCPOINTER, 0, 0);
-		wEditor.Call(SCI_ADDREFDOCUMENT, 0, buffers.buffers[0].doc); // We own this reference
+		buffers.buffers[0].doc = reinterpret_cast<sptr_t>(wEditor.DocPointer());
+		wEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(buffers.buffers[0].doc)); // We own this reference
 	}
 }
 
@@ -642,34 +644,34 @@ void SciTEBase::SetIndentSettings() {
 	SString useTabsChars = props.GetNewExpand("use.tabs.",
 	        fileNameForExtension.c_str());
 	if (useTabsChars.length() != 0) {
-		wEditor.Call(SCI_SETUSETABS, useTabsChars.value());
+		wEditor.SetUseTabs(useTabsChars.value());
 	} else {
-		wEditor.Call(SCI_SETUSETABS, useTabs);
+		wEditor.SetUseTabs(useTabs);
 	}
 	SString tabSizeForExt = props.GetNewExpand("tab.size.",
 	        fileNameForExtension.c_str());
 	if (tabSizeForExt.length() != 0) {
-		wEditor.Call(SCI_SETTABWIDTH, tabSizeForExt.value());
+		wEditor.SetTabWidth(tabSizeForExt.value());
 	} else if (tabSize != 0) {
-		wEditor.Call(SCI_SETTABWIDTH, tabSize);
+		wEditor.SetTabWidth(tabSize);
 	}
 	SString indentSizeForExt = props.GetNewExpand("indent.size.",
 	        fileNameForExtension.c_str());
 	if (indentSizeForExt.length() != 0) {
-		wEditor.Call(SCI_SETINDENT, indentSizeForExt.value());
+		wEditor.SetIndent(indentSizeForExt.value());
 	} else {
-		wEditor.Call(SCI_SETINDENT, indentSize);
+		wEditor.SetIndent(indentSize);
 	}
 }
 
 void SciTEBase::SetEol() {
 	SString eol_mode = props.Get("eol.mode");
 	if (eol_mode == "LF") {
-		wEditor.Call(SCI_SETEOLMODE, SC_EOL_LF);
+		wEditor.SetEOLMode(EndOfLine::Lf);
 	} else if (eol_mode == "CR") {
-		wEditor.Call(SCI_SETEOLMODE, SC_EOL_CR);
+		wEditor.SetEOLMode(EndOfLine::Cr);
 	} else if (eol_mode == "CRLF") {
-		wEditor.Call(SCI_SETEOLMODE, SC_EOL_CRLF);
+		wEditor.SetEOLMode(EndOfLine::CrLf);
 	}
 }
 
@@ -701,7 +703,7 @@ void SciTEBase::New() {
 	}
 
 	sptr_t doc = GetDocumentAt(buffers.Current());
-	wEditor.Call(SCI_SETDOCPOINTER, 0, doc);
+	wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(doc));
 
 	FilePath curDirectory(filePath.Directory());
 	filePath.Set(curDirectory, GUI_TEXT(""));
@@ -725,15 +727,15 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption, bool scipCol
 	if (CurrentBuffer()->unicodeMode != uni8Bit) {
 		// Override the code page if Unicode
 		codePage = SC_CP_UTF8;
-		wEditor.Call(SCI_SETCODEPAGE, codePage);
+		wEditor.SetCodePage(codePage);
 	}
 	props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
-	isReadOnly = wEditor.Call(SCI_GETREADONLY);
+	isReadOnly = wEditor.ReadOnly();
 	if (scipCollapse)
 		return;
 	// check to see whether there is saved fold state, restore
 	for (size_t fold = 0; fold < buffer.foldState.size(); fold++) {
-		wEditor.Call(SCI_TOGGLEFOLD, buffer.foldState[fold]);
+		wEditor.ToggleFold(buffer.foldState[fold]);
 	}
 }
 
@@ -776,11 +778,11 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					buffers.CurrentBuffer()->Friend()->isDirty = true;
 				buffers.CurrentBuffer()->Friend()->pFriend = false;
 				buffers.CurrentBuffer()->pFriend = false;
-				wEditor.Call(SCI_RELEASEDOCUMENT, 0, buffers.CurrentBuffer()->doc);	
+				wEditor.ReleaseDocument(reinterpret_cast<IDocumentEditable*>(buffers.CurrentBuffer()->doc));
 				buffers.CurrentBuffer()->doc = 0;
-				sptr_t d = wEditor.Call(SCI_CREATEDOCUMENT, 0, 0);
-				wEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
-				wEditor.Call(SCI_SETDOCPOINTER, 0, d);
+				IDocumentEditable* d = wEditor.CreateDocument(0, DocumentOption::Default);
+				wEditor.AddRefDocument(d);
+				wEditor.SetDocPointer(d);
 			}
 			ClearDocument();
 
@@ -797,8 +799,8 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					wEditor.SetCoBuffPointer(&p);
 					sptr_t d = buffers.buffers[nextFriend].doc;
 
-					wEditor.coEditor.Call(SCI_ADDREFDOCUMENT, 0, d);
-					wEditor.coEditor.Call(SCI_SETDOCPOINTER, 0, d);
+					wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
+					wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
 				}
 			}
 		}
@@ -808,7 +810,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			SetFileName(bufferNext);
 		else
 			filePath = bufferNext;
-		wEditor.Call(SCI_SETDOCPOINTER, 0, GetDocumentAt(buffers.Current()));
+		wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(GetDocumentAt(buffers.Current())));
 		if (closingLast) {
 			ClearDocument();
 		}
@@ -1161,16 +1163,6 @@ void SciTEBase::DropFileStackTop() {
 	recentFileStack[fileStackMax - 1].Init();
 }
 
-bool SciTEBase::AddFileToBuffer(FilePath file, int pos) {
-	// Return whether file loads successfully
-	if (file.Exists() && Open(file, ofForceLoad)) {
-		wEditor.Call(SCI_GOTOPOS, pos);
-		return true;
-	} else {
-		return false;
-	}
-}
-
 void SciTEBase::AddFileToStack(FilePath file, Scintilla::Sci_CharacterRange selection, Sci_Position scrollPos) {
 	if (!file.IsSet())
 		return;
@@ -1212,15 +1204,15 @@ RecentFile SciTEBase::GetFilePosition() {
 
 void SciTEBase::DisplayAround(const RecentFile &rf) {
 	if ((rf.selection.cpMin != INVALID_POSITION) && (rf.selection.cpMax != INVALID_POSITION)) {
-		Sci_Position lineStart = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMin);
-		wEditor.Call(SCI_ENSUREVISIBLEENFORCEPOLICY, lineStart);
-		Sci_Position lineEnd = wEditor.Call(SCI_LINEFROMPOSITION, rf.selection.cpMax);
-		wEditor.Call(SCI_ENSUREVISIBLEENFORCEPOLICY, lineEnd);
+		Sci_Position lineStart = wEditor.LineFromPosition(rf.selection.cpMin);
+		wEditor.EnsureVisibleEnforcePolicy(lineStart);
+		Sci_Position lineEnd = wEditor.LineFromPosition(rf.selection.cpMax);
+		wEditor.EnsureVisibleEnforcePolicy(lineEnd);
 		SetSelection(rf.selection.cpMax, rf.selection.cpMin);
 
-		Sci_Position curTop = wEditor.Call(SCI_GETFIRSTVISIBLELINE);
-		Sci_Position lineTop = wEditor.Call(SCI_VISIBLEFROMDOCLINE, rf.scrollPosition);
-		wEditor.Call(SCI_LINESCROLL, 0, lineTop - curTop);
+		Sci_Position curTop = wEditor.FirstVisibleLine();
+		Sci_Position lineTop = wEditor.VisibleFromDocLine(rf.scrollPosition);
+		wEditor.LineScroll(0, lineTop - curTop);
 	}
 }
 
@@ -1658,12 +1650,12 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 
 //!void SciTEBase::GoMessage(int dir) {
 bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[GoMessageImprovement]
-	Sci_CharacterRange crange;
-	crange.cpMin = static_cast<Sci_PositionCR>(wBottom.Call(SCI_GETSELECTIONSTART));
-	crange.cpMax = static_cast<Sci_PositionCR>(wBottom.Call(SCI_GETSELECTIONEND));
+	::Sci_CharacterRange crange;
+	crange.cpMin = static_cast<Sci_PositionCR>(wBottom.SelectionStart());
+	crange.cpMax = static_cast<Sci_PositionCR>(wBottom.SelectionEnd());
 	int selStart = crange.cpMin;
-	Sci_Position curLine = wBottom.Call(SCI_LINEFROMPOSITION, selStart);
-	Sci_Position maxLine = wBottom.Call(SCI_GETLINECOUNT);
+	Sci_Position curLine = wBottom.LineFromPosition(selStart);
+	Sci_Position maxLine = wBottom.LineCount();
 	Sci_Position lookLine = curLine + dir;
 	if (lookLine < 0)
 		lookLine = maxLine - 1;
@@ -1671,20 +1663,20 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 		lookLine = 0;
 	TextReader acc(wBottom);
 	while ((dir == 0) || (lookLine != curLine)) {
-		Sci_Position startPosLine = wBottom.Call(SCI_POSITIONFROMLINE, lookLine, 0);
-		Sci_Position lineLength = wBottom.Call(SCI_LINELENGTH, lookLine, 0);
+		Sci_Position startPosLine = wBottom.PositionFromLine(lookLine);
+		Sci_Position lineLength = wBottom.LineLength(lookLine);
 		char style = acc.StyleAt(startPosLine);
 		if (style != SCE_ERR_DEFAULT &&
 		        style != SCE_ERR_CMD &&
 		        style != SCE_ERR_DIFF_ADDITION &&
 		        style != SCE_ERR_DIFF_CHANGED &&
 		        style != SCE_ERR_DIFF_DELETION) {
-			wBottom.Call(SCI_MARKERDELETEALL, static_cast<uptr_t>(-1));
-			wBottom.Call(SCI_MARKERDEFINE, 0, SC_MARK_SMALLRECT);
-			wBottom.Call(SCI_MARKERSETFORE, 0, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
-			wBottom.Call(SCI_MARKERSETBACK, 0, ColourOfProperty("error.line.back", ColourOfProperty("error.marker.back", ColourRGB(0xff, 0xff, 0)))); //!-change-[ErrorLineBack]
-			wBottom.Call(SCI_MARKERADD, lookLine, 0);
-			wBottom.Call(SCI_SETSEL, startPosLine, startPosLine);
+			wBottom.MarkerDeleteAll(static_cast<uptr_t>(-1));
+			wBottom.MarkerDefine(0, Scintilla::MarkerSymbol::SmallRect);
+			wBottom.MarkerSetFore(0, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
+			wBottom.MarkerSetBack(0, ColourOfProperty("error.line.back", ColourOfProperty("error.marker.back", ColourRGB(0xff, 0xff, 0)))); //!-change-[ErrorLineBack]
+			wBottom.MarkerAdd(lookLine, 0);
+			wBottom.SetSel(startPosLine, startPosLine);
 			SString message = GetRange(wBottom, startPosLine, startPosLine + lineLength);
 			char source[MAX_PATH];
 			int column;
@@ -1695,9 +1687,9 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 				int lenSelected = 0; //длина найденного слова
 				int posInFind = 0; //начало найденной строки врезультатах поиска
 				//ищем позицию и длину найденного слова
-				while (wBottom.Call(SCI_GETSTYLEAT, startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
-				while (wBottom.Call(SCI_GETSTYLEAT, startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
-				while (wBottom.Call(SCI_GETSTYLEAT, startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;
+				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;
 				findHiglight = message.substr(posInFind + posInLine, lenSelected);
 			}
 			if (sourceLine >= 0) {
@@ -1707,8 +1699,8 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					Sci_Position topLine = lookLine - 1;
 					SString topic;
 					while (topLine >= 0) {
-						Sci_Position startPos = wBottom.Call(SCI_POSITIONFROMLINE, topLine, 0);
-						Sci_Position lineLen = wBottom.Call(SCI_LINELENGTH, topLine, 0);
+						Sci_Position startPos = wBottom.PositionFromLine(topLine);
+						Sci_Position lineLen = wBottom.LineLength(topLine);
 						topic = GetRange(wBottom, startPos, startPos + lineLen);
 						if ('>' == topic[0]) {
 							break;
@@ -1778,21 +1770,21 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 							findWhat = cTag;
 							//FindNext(false);
 							//get linenumber for marker from found position
-							sourceLine = wEditor.Call(SCI_LINEFROMPOSITION, wEditor.Call(SCI_GETCURRENTPOS));
+							sourceLine = wEditor.LineFromPosition(wEditor.CurrentPos());
 						}
 					}
 				}
 				if (extender) extender->OnNavigation("Go");
 				WindowSetFocus(wEditor);
 
-				wEditor.Call(SCI_MARKERDELETEALL, markerError);
+				wEditor.MarkerDeleteAll(markerError);
 
-				wEditor.Call(SCI_MARKERADD, sourceLine, markerError);
-				Sci_Position startSourceLine = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine, 0);
-				Sci_Position endSourceline = wEditor.Call(SCI_POSITIONFROMLINE, sourceLine + 1, 0);
+				wEditor.MarkerAdd(sourceLine, markerError);
+				Sci_Position startSourceLine = wEditor.PositionFromLine(sourceLine);
+				Sci_Position endSourceline = wEditor.PositionFromLine(sourceLine + 1);
 				if (column >= 0) {
 					// Get the position in line according to current tab setting
-					startSourceLine = wEditor.Call(SCI_FINDCOLUMN, sourceLine, column);
+					startSourceLine = wEditor.FindColumn(sourceLine, column);
 				}
 				EnsureRangeVisible(startSourceLine, startSourceLine);
 				if (props.GetInt("error.select.line") == 1) {
@@ -1801,7 +1793,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 						SString findingStr = GetRange(wEditor, startSourceLine, endSourceline);
 						Sci_Position fPos = findingStr.search(findHiglight.c_str());
 						SetSelection(startSourceLine + fPos, startSourceLine + fPos + findHiglight.length());
-						wEditor.Call(SCI_SCROLLCARET);
+						wEditor.ScrollCaret();
 					} else {
 						SetSelection(endSourceline, startSourceLine);
 					}

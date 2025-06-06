@@ -301,11 +301,9 @@ public:
 
 	virtual bool FindHasText() const = 0;
 	virtual void MoveBack(int distance) = 0;
-	virtual void ScrollEditorIfNeeded() = 0;
 
 	virtual void UIClosed() = 0;
 	virtual void UIHasFocus() = 0;
-	bool &FlagFromCmd(int cmd);
 };
 
 class SearchUI {
@@ -788,17 +786,12 @@ protected:
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
-	Sci_Position FindInTarget(const char *findWhat, Sci_Position lenFind, Sci_Position startPosition, Sci_Position endPosition);
 	virtual bool FindHasText() const;
 	virtual void MoveBack(int distance);
-	virtual void ScrollEditorIfNeeded();
 	virtual void UIClosed();
 	virtual void UIHasFocus();
 	void GoMatchingBrace(bool select);
-	void OutputAppendString(const char *s, int len = -1);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
-	void FindResAppendString(const char *s, int len = -1);
-	void FindResAppendStringSynchronised(const char *s, int len = -1);
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);
 	void ClearJobQueue();
 	virtual void Execute();
@@ -813,16 +806,11 @@ protected:
 	virtual bool StartBlockComment();
 	virtual bool StartBoxComment();
 	virtual bool StartStreamComment();
-	unsigned int GetLinePartsInStyle(Sci_Position line, int style1, int style2, SString sv[], int len);
 	void SetLineIndentation(Sci_Position line, Sci_Position indent);
 	Sci_Position GetLineIndentation(Sci_Position line);
 	Sci_Position GetLineIndentPosition(Sci_Position line);
-	void ConvertIndentation(int tabSize, int useTabs);
-	bool RangeIsAllWhitespace(Sci_Position start, Sci_Position end);
-	IndentationStatus GetIndentState(Sci_Position line);
-	Sci_Position IndentOfBlock(Sci_Position line);
+	//bool RangeIsAllWhitespace(Sci_Position start, Sci_Position end);
 	void MaintainIndentation(char ch);
-	void AutomaticIndentation(char ch);
 	void CharAdded(char ch);
 	void CharAddedOutput(int ch);
 	virtual void SetFileProperties(PropSetFile &ps) = 0;
@@ -846,7 +834,6 @@ protected:
 	void MenuCommand(int cmdID, int source = 0);
 	void CollapseOutput();
 	void EnsureRangeVisible(Sci_Position posStart, Sci_Position posEnd, bool enforcePolicy = true);
-	void GotoLineEnsureVisible(Sci_Position line);
 	void NewLineInOutput();
 	virtual void Notify(SCNotification *notification);
 
@@ -864,8 +851,6 @@ protected:
 
 	void DropFileStackTop();
 
-//!-end-[ExtendedContextMenu]
-	bool AddFileToBuffer(FilePath file, int pos);
 	void AddFileToStack(FilePath file, Scintilla::Sci_CharacterRange selection, Sci_Position scrollPos);
 	void RemoveFileFromStack(FilePath file);
 	RecentFile GetFilePosition();
