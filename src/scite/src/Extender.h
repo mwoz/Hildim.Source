@@ -35,8 +35,8 @@ public:
 	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
-	virtual void GetBufferName(int i, char* c) = 0;
-	virtual void GetCoBufferName(char* c) = 0;
+	virtual std::string GetCoBufferName() = 0;
+	virtual std::string GetBufferName(int i) = 0;
 	virtual void SetBufferEncoding(int i, int e) = 0;
 	virtual int GetBufferEncoding(int i) = 0;
 	virtual void ClearBufferFileTime(int i) = 0;

@@ -815,12 +815,12 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 			// It could also lead to other problems.
 
 			if (jobToRun.flags & jobGroupUndo)
-				wEditor.Send(SCI_BEGINUNDOACTION);
+				wEditor.BeginUndoAction();
 
 			extender->OnExecute(jobToRun.command.c_str());
 
 			if (jobToRun.flags & jobGroupUndo)
-				wEditor.Send(SCI_ENDUNDOACTION);
+				wEditor.EndUndoAction();
 
 			Redraw();
 			// A Redraw "might" be needed, since Lua and Director
@@ -1138,9 +1138,9 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 				doRepSel = (0 == exitcode);
 
 			if (doRepSel) {
-				Sci_Position cpMin = wEditor.Send(SCI_GETSELECTIONSTART, 0, 0);
-				wEditor.Send(SCI_REPLACESEL,0,(sptr_t)(repSelBuf.c_str()));
-				wEditor.Send(SCI_SETSEL, cpMin, cpMin+repSelBuf.length());
+				Sci_Position cpMin = wEditor.SelectionStart();
+				wEditor.ReplaceSel(repSelBuf.c_str());
+				wEditor.SetSel(cpMin, cpMin + repSelBuf.length());
 			}
 		}
 

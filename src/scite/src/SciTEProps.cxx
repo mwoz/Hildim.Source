@@ -1075,12 +1075,6 @@ void SciTEBase::ReadProperties() {
 		wEditor.CallString(SCI_SETKEYWORDS, wl, kw.c_str());
 	}
 
-
-	// FilePath homepath = GetSciteDefaultHome();
-	// props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
-	// homepath = GetSciteUserHome();
-	// props.Set("SciteUserHome", homepath.AsUTF8().c_str());
-
 	for (size_t i = 0; propertiesToForward[i]; i++) {
 		if (*propertiesToForward[i] == '$')
 			wEditor.CallString(SCI_SETPROPERTY,
@@ -1377,26 +1371,14 @@ void SciTEBase::ReadProperties() {
 
 	wEditor.Call(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
 
-	// To put the folder markers in the line number region
-	//wEditor.Call(SCI_SETMARGINMASKN, 0, SC_MASK_FOLDERS);
-
-	wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_CHANGEFOLD);
-
-	if (0 == props.GetInt("undo.redo.lazy")) {
-		// Trap for insert/delete notifications (also fired by undo
-		// and redo) so that the buttons can be enabled if needed.
-		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
-			| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | wEditor.Call(SCI_GETMODEVENTMASK, 0));
-		wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | wOutput.Call(SCI_GETMODEVENTMASK, 0));
-		wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | wFindRes.Call(SCI_GETMODEVENTMASK, 0));
-
-		//SC_LASTSTEPINUNDOREDO is probably not needed in the mask; it
-		//doesn't seem to fire as an event of its own; just modifies the
-		//insert and delete events.
-	}
-
+//	int ttt = wEditorL.Call(SCI_GETMODEVENTMASK);
+//	wEditorL.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
+//		| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | SC_MOD_CHANGEFOLD);
+//	wEditorR.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
+//		| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | SC_MOD_CHANGEFOLD);
+//	wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT	| SC_LASTSTEPINUNDOREDO );
+//	wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT| SC_LASTSTEPINUNDOREDO );
+	int ttt = wEditorL.Call(SCI_GETMODEVENTMASK);
 	// Create a margin column for the folding symbols
 	wEditor.Call(SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
 
@@ -1586,33 +1568,6 @@ void SciTEBase::ReadPropertiesEx() {
 
 	SetColourElement(NULL, SC_ELEMENT_SELECTION_ADDITIONAL_BACK, "selection.additional.back", "selection.additional.alpha");
 
-//	SString foldColour = props.Get("fold.margin.colour");
-//	SString foldColour = props.Get("fold.margin.colour");
-//	if (foldColour.length()) {
-//	if (foldColour.length()) {
-//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
-//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 1, ColourFromString(foldColour));
-//	} else {
-//	} else {
-//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 0, 0);
-//		CallChildren(SCI_SETFOLDMARGINCOLOUR, 0, 0);
-//	}
-//	}
-//	SString foldHiliteColour = props.Get("fold.margin.highlight.colour");
-//	if (foldHiliteColour.length()) {
-//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 1, ColourFromString(foldHiliteColour));
-//	} else {
-//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-//	}
-////!-start-[HighlightCurrFolder]
-//	SString foldHighlightColour = props.Get("fold.highlight.colour");
-//	if (foldHighlightColour.length()) {
-//		CallChildren(SCI_SETFOLDHIGHLIGHTCOLOUR, 1, ColourFromString(foldHighlightColour));
-//	} else {
-//		CallChildren(SCI_SETFOLDMARGINHICOLOUR, 0, 0);
-//	}
-////!-end-[HighlightCurrFolder]
-
 	SString whitespaceFore = props.Get("whitespace.fore");
 	if (whitespaceFore.length()) {
 		CallChildren(SCI_SETWHITESPACEFORE, 1, ColourFromString(whitespaceFore));
@@ -1659,188 +1614,30 @@ void SciTEBase::ReadPropertiesEx() {
 	autoCompleteStartCharacters = props.GetExpanded(key);
 	if (autoCompleteStartCharacters == "")
 		autoCompleteStartCharacters = props.GetExpanded("autocomplete.*.start.characters");
-	// "" is a quite reasonable value for this setting
-
-	// sprintf(key, "autocomplete.%s.fillups", language.c_str());
-	// autoCompleteFillUpCharacters = props.GetExpanded(key);
-	// if (autoCompleteFillUpCharacters == "")
-		// autoCompleteFillUpCharacters =
-			// props.GetExpanded("autocomplete.*.fillups");
-	// wEditor.CallString(SCI_AUTOCSETFILLUPS, 0,
-		// autoCompleteFillUpCharacters.c_str());
-
-	// sprintf(key, "autocomplete.%s.ignorecase", "*");
-	// sval = props.GetNewExpand(key);
-	// autoCompleteIgnoreCase = sval == "1";
-	// sprintf(key, "autocomplete.%s.ignorecase", language.c_str());
-	// sval = props.GetNewExpand(key);
-	// if (sval != "")
-		// autoCompleteIgnoreCase = sval == "1";
-	// wEditor.Call(SCI_AUTOCSETIGNORECASE, autoCompleteIgnoreCase ? 1 : 0);
-	// wOutput.Call(SCI_AUTOCSETIGNORECASE, 1);
-	// wFindRes.Call(SCI_AUTOCSETIGNORECASE, 1);
-
-	// int autoCChooseSingle = props.GetInt("autocomplete.choose.single");
-	// wEditor.Call(SCI_AUTOCSETCHOOSESINGLE, autoCChooseSingle),
-
-	// wEditor.Call(SCI_AUTOCSETCANCELATSTART, 0);
-	// wEditor.Call(SCI_AUTOCSETDROPRESTOFWORD, 0);
-
-	// if (firstPropertiesRead) {
-		// ReadPropertiesInitial();
-		// props.SetInteger("system.code.page", ::GetACP());
-	// }
-
-	//ReadFontProperties();   !!!!!!!!!!!
-	// wEditor.Call(SCI_SETVIEWWS, props.GetInt("view.whitespace"));		
-	// wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides"));
-
-	// //wEditor.Call(SCI_SETUSEPALETTE, props.GetInt("use.palette"));
-	// wEditor.Call(SCI_SETPRINTMAGNIFICATION, props.GetInt("print.magnification"));
-	// wEditor.Call(SCI_SETPRINTCOLOURMODE, props.GetInt("print.colour.mode"));
 
 	jobQueue.clearBeforeExecute = props.GetInt("clear.before.execute");
 	jobQueue.timeCommands = props.GetInt("time.commands");
 
 	int blankMarginLeft = props.GetInt("blank.margin.left", 1);
 	int blankMarginRight = props.GetInt("blank.margin.right", 1);
-	// wEditor.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	// wEditor.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
-	// wOutput.Call(SCI_SETMARGINLEFT, 0, blankMarginLeft);
-	// wOutput.Call(SCI_SETMARGINRIGHT, 0, blankMarginRight);
+
 	CallChildren(SCI_SETMARGINLEFT, 0, blankMarginLeft);
 	CallChildren(SCI_SETMARGINRIGHT, 0, blankMarginRight);
 
-	// wEditor.Call(SCI_SETMARGINWIDTHN, 1, margin ? marginWidth : 0);
-
-	// SString lineMarginProp = props.Get("line.margin.width");
-	// lineNumbersWidth = lineMarginProp.value();
-	// if (lineNumbersWidth == 0)
-		// lineNumbersWidth = lineNumbersWidthDefault;
-	// lineNumbersExpand = lineMarginProp.contains('+');
-
-	// SetLineNumberWidth();
-
-	// bufferedDraw = props.GetInt("buffered.draw", 1);
-	// wEditor.Call(SCI_SETBUFFEREDDRAW, bufferedDraw);
-
-	//twoPhaseDraw = props.GetInt("two.phase.draw", 1);
-	//wEditor.Call(SCI_SETTWOPHASEDRAW, twoPhaseDraw);
-
-	// wEditor.Call(SCI_SETLAYOUTCACHE, props.GetInt("cache.layout", SC_CACHE_CARET));
-	// wOutput.Call(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
 	CallChildren(SCI_SETLAYOUTCACHE, props.GetInt("output.cache.layout", SC_CACHE_CARET));
 
-	// bracesCheck = props.GetInt("braces.check");
-	// bracesSloppy = props.GetInt("braces.sloppy");
-
-	// wEditor.Call(SCI_SETCHARSDEFAULT);
-	// wordCharacters = props.GetNewExpand("word.characters.", fileNameForExtension.c_str());
-	// if (wordCharacters.length()) {
-		// wEditor.CallString(SCI_SETWORDCHARS, 0, wordCharacters.c_str());
-	// } else {
-		// wordCharacters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	// }
-//!-start-[GetWordChars]
 	props.Set("CurrentWordCharacters", wordCharacters.c_str() );
-//!-end-[GetWordChars]
-
-	// whitespaceCharacters = props.GetNewExpand("whitespace.characters.", fileNameForExtension.c_str());
-	// if (whitespaceCharacters.length()) {
-		// wEditor.CallString(SCI_SETWHITESPACECHARS, 0, whitespaceCharacters.c_str());
-	// }
-
-	// SString viewIndentExamine = GetFileNameProperty("view.indentation.examine");
-	// indentExamine = viewIndentExamine.length() ? viewIndentExamine.value() : SC_IV_REAL;
-	// wEditor.Call(SCI_SETINDENTATIONGUIDES, props.GetInt("view.indentation.guides") ?
-		// indentExamine : SC_IV_NONE);
-
-	// wEditor.Call(SCI_SETTABINDENTS, props.GetInt("tab.indents", 1));
-	// wEditor.Call(SCI_SETBACKSPACEUNINDENTS, props.GetInt("backspace.unindents", 1));
-
-	// wEditor.Call(SCI_CALLTIPUSESTYLE, 32);
-
-	// indentOpening = props.GetInt("indent.opening");
-	// indentClosing = props.GetInt("indent.closing");
-	// indentMaintain = props.GetNewExpand("indent.maintain.", fileNameForExtension.c_str()).value();
-
-	// SString lookback = props.GetNewExpand("statement.lookback.", fileNameForExtension.c_str());
-	// statementLookback = lookback.value();
-	// statementIndent = GetStyleAndWords("statement.indent.");
-	// statementEnd = GetStyleAndWords("statement.end.");
-	// blockStart = GetStyleAndWords("block.start.");
-	// blockEnd = GetStyleAndWords("block.end.");
-
-	// SString list;
-	// list = props.GetNewExpand("preprocessor.symbol.", fileNameForExtension.c_str());
-	// preprocessorSymbol = list[0];
-	// list = props.GetNewExpand("preprocessor.start.", fileNameForExtension.c_str());
-	// preprocCondStart.Clear();
-	// preprocCondStart.Set(list.c_str());
-	// list = props.GetNewExpand("preprocessor.middle.", fileNameForExtension.c_str());
-	// preprocCondMiddle.Clear();
-	// preprocCondMiddle.Set(list.c_str());
-	// list = props.GetNewExpand("preprocessor.end.", fileNameForExtension.c_str());
-	// preprocCondEnd.Clear();
-	// preprocCondEnd.Set(list.c_str());
-
-	// wEditor.Call(SCI_SETWRAPVISUALFLAGS, props.GetInt("wrap.visual.flags"));
-	// wEditor.Call(SCI_SETWRAPVISUALFLAGSLOCATION, props.GetInt("wrap.visual.flags.location"));
- 	// wEditor.Call(SCI_SETWRAPSTARTINDENT, props.GetInt("wrap.visual.startindent"));
- 	// wEditor.Call(SCI_SETWRAPINDENTMODE, props.GetInt("wrap.indent.mode"));
-
-	// if (props.GetInt("wrap.aware.home.end.keys",0)) {
-		// if (props.GetInt("vc.home.key", 1)) {
-			// AssignKey(SCK_HOME, 0, SCI_VCHOMEWRAP);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEWRAPEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		// } else {
-			// AssignKey(SCK_HOME, 0, SCI_HOMEWRAP);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEWRAPEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		// }
-		// AssignKey(SCK_END, 0, SCI_LINEENDWRAP);
-		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDWRAPEXTEND);
-	// } else {
-		// if (props.GetInt("vc.home.key", 1)) {
-			// AssignKey(SCK_HOME, 0, SCI_VCHOME);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_VCHOMEEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_VCHOMERECTEXTEND);
-		// } else {
-			// AssignKey(SCK_HOME, 0, SCI_HOME);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT, SCI_HOMEEXTEND);
-			// AssignKey(SCK_HOME, SCMOD_SHIFT | SCMOD_ALT, SCI_HOMERECTEXTEND);
-		// }
-		// AssignKey(SCK_END, 0, SCI_LINEEND);
-		// AssignKey(SCK_END, SCMOD_SHIFT, SCI_LINEENDEXTEND);
-	// }
-
-	// AssignKey('L', SCMOD_SHIFT | SCMOD_CTRL, SCI_LINEDELETE);
 
 	scrollOutput = props.GetInt("output.scroll", 1);
 
 	CallChildren(SCI_SETFOLDFLAGS, props.GetInt("fold.flags"));
 
-	// To put the folder markers in the line number region
-	//wEditor.Call(SCI_SETMARGINMASKN, 0, SC_MASK_FOLDERS);
-
-	CallChildren(SCI_SETMODEVENTMASK, SC_MOD_CHANGEFOLD);
-
-	if (0==props.GetInt("undo.redo.lazy")) {
-		// Trap for insert/delete notifications (also fired by undo
-		// and redo) so that the buttons can be enabled if needed.
-		wEditor.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | wEditor.Call(SCI_GETMODEVENTMASK, 0));
-		wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | wOutput.Call(SCI_GETMODEVENTMASK, 0));
-		wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT
-			| SC_LASTSTEPINUNDOREDO | wFindRes.Call(SCI_GETMODEVENTMASK, 0));
-
-		//SC_LASTSTEPINUNDOREDO is probably not needed in the mask; it
-		//doesn't seem to fire as an event of its own; just modifies the
-		//insert and delete events.
-	}
-
+	wEditorL.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
+		| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | SC_MOD_CHANGEFOLD);
+	wEditorR.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE
+		| SC_LASTSTEPINUNDOREDO | SC_MOD_CHANGEMARKER | SC_MOD_CHANGEFOLD);
+	wOutput.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_LASTSTEPINUNDOREDO | SC_MOD_BEFOREINSERT);
+	wFindRes.Call(SCI_SETMODEVENTMASK, SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT | SC_LASTSTEPINUNDOREDO);
 	// Create a margin column for the folding symbols
 	CallChildren(SCI_SETMARGINTYPEN, 2, SC_MARGIN_SYMBOL);
 
@@ -1877,7 +1674,7 @@ void SciTEBase::ReadFontProperties() {
 		char propStr[256];
 		for (int i = 0; i < STYLE_MAX; i++) {
 			sprintf(key, "style.lpeg.%0d", i);
-			wEditor.Send(SCI_PRIVATELEXERCALL, i - STYLE_MAX, reinterpret_cast<sptr_t>(propStr));
+			wEditor.Call(SCI_PRIVATELEXERCALL, i - STYLE_MAX, reinterpret_cast<sptr_t>(propStr));
 			props.Set(key, static_cast<const char*>(propStr));
 		}
 		languageName = "lpeg";

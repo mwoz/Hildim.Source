@@ -631,8 +631,8 @@ protected:
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
 	int ShiftToVisible(int index);
-	void GetBufferName(int i, char *c) { lstrcpynA(c, buffers.buffers[i].AsUTF8().c_str(), 2000); };
-	void GetCoBufferName(char *c){lstrcpynA( c, wEditor.GetCoBuffPointer().AsUTF8().c_str(), 2000);};
+	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
+	std::string  GetCoBufferName(){ return wEditor.GetCoBuffPointer().AsUTF8();};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
 	int GetBufferFileTime(int i) { return (int)buffers.buffers[i].fileModTime;};
 	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
@@ -690,10 +690,8 @@ protected:
 	Sci_Position LengthDocument();
 	Sci_Position GetCaretInLine();
 	void GetLine(char *text, int sizeText, Sci_Position line = -1);
-	SString GetLine(Sci_Position line = -1);
 	void GetRange(GUI::ScintillaWindow &win, Sci_Position start, Sci_Position end, char *text);
 	int IsLinePreprocessorCondition(char *line);
-	bool FindMatchingPreprocessorCondition(Sci_Position &curLine, int direction, int condEnd1, int condEnd2);
 	bool FindMatchingPreprocCondPosition(bool isForward, Sci_Position &mppcAtCaret, Sci_Position &mppcMatch);
 	bool FindMatchingBracePosition(bool editor, Sci_Position &braceAtCaret, Sci_Position &braceOpposite, bool sloppy);
 	void BraceMatch(bool editor);
@@ -797,7 +795,6 @@ protected:
 	virtual void UIClosed();
 	virtual void UIHasFocus();
 	void GoMatchingBrace(bool select);
-	void GoMatchingPreprocCond(int direction, bool select);
 	void OutputAppendString(const char *s, int len = -1);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
 	void FindResAppendString(const char *s, int len = -1);
@@ -828,7 +825,6 @@ protected:
 	void AutomaticIndentation(char ch);
 	void CharAdded(char ch);
 	void CharAddedOutput(int ch);
-	void SetTextProperties(PropSetFile &ps);
 	virtual void SetFileProperties(PropSetFile &ps) = 0;
 	Sci_Position GetLineLength(Sci_Position line);
 	Sci_Position GetCurrentLineNumber();

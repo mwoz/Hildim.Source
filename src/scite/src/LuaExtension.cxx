@@ -1353,9 +1353,7 @@ static int bf_get_count(lua_State *L){
 
 static int bf_get_buffer_name(lua_State *L){
 	int i = static_cast<int>(luaL_checkinteger(L, 1));
-	char c[2000];
-	host->GetBufferName(i, c);
-	lua_pushstring(L, c);
+	lua_pushstring(L, host->GetBufferName(i).c_str());
 	return 1;
 }
 
@@ -1365,9 +1363,7 @@ static int bf_save_cobuffer_pos(lua_State *L){
 }
 
 static int bf_get_cobuffer_name(lua_State *L){
-	char c[2000];
-	host->GetCoBufferName(c);
-	lua_pushstring(L, c);
+	lua_pushstring(L, host->GetCoBufferName().c_str());
 	return 1;
 }
 
