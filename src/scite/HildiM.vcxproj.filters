@@ -251,6 +251,9 @@
     <ClInclude Include="..\lexilla\access\LexillaAccess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\scintilla\include\ScintillaCall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="win32\SciTERes.rc">

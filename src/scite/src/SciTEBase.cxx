@@ -416,12 +416,14 @@ int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
 	return IDM_COSRCWIN;
 }
 
-sptr_t SciTEBase::CallStringAll(unsigned int msg, uptr_t wParam, const char *s){
+sptr_t SciTEBase::CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s){
 	wEditorR.CallString(msg, wParam, s);
 	return wEditorL.CallString(msg, wParam, s);
 }
 
-sptr_t SciTEBase::CallAll(unsigned int msg, uptr_t wParam, sptr_t lParam) {
+sptr_t SciTEBase::CallAll(Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
+	wOutput.Call(msg, wParam, lParam);
+	wFindRes.Call(msg, wParam, lParam);
 	wEditorR.Call(msg, wParam, lParam);
 	return wEditorL.Call(msg, wParam, lParam);
 }
@@ -1051,14 +1053,14 @@ void SciTEBase::BookmarkToggle(Sci_Position lineno) {
 
 void SciTEBase::BookmarkNext(bool forwardScan, bool select) {
 	Sci_Position lineno = GetCurrentLineNumber();
-	int sci_marker = SCI_MARKERNEXT;
+	Message sci_marker = Message::MarkerNext;
 	Sci_Position lineStart = lineno + 1;	//Scan starting from next line
 	Sci_Position lineRetry = 0;				//If not found, try from the beginning
 	Sci_Position anchor = wEditor.Anchor();
 	if (!forwardScan) {
 		lineStart = lineno - 1;		//Scan starting from previous line
 		lineRetry = wEditor.LineCount();	//If not found, try from the end
-		sci_marker = SCI_MARKERPREVIOUS;
+		sci_marker = Message::MarkerPrevious;
 	}
 	Sci_Position nextLine = wEditor.Call(sci_marker, lineStart, 1 << markerBookmark);
 	if (nextLine < 0)
@@ -1152,7 +1154,7 @@ void SciTEBase::EliminateDuplicateWords(char *words) {
 }
 
 bool SciTEBase::StartAutoComplete() {
-	SString line = wEditor.GetCurLine(wEditor.Call(SCI_GETCURLINE, 0, 0)).c_str();
+	SString line = wEditor.GetCurLine(wEditor.Call(Message::GetCurLine, 0, 0)).c_str();
 	Sci_Position current = GetCaretInLine();
 
 	Sci_Position startword = current;
@@ -1941,7 +1943,7 @@ void SciTEBase::SetLineNumberWidth(ScintillaWindowEditor *pE) {
 		int pixelWidth = 0;
 		DWORD foldMode = props.GetInt("fold.flags");
 		if ((foldMode & SC_FOLDFLAG_LEVELNUMBERS) || (foldMode & SC_FOLDFLAG_LINESTATE)) {
-			pixelWidth = static_cast<int>(pE->CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, " HW9999999"));
+			pixelWidth = static_cast<int>(pE->TextWidth(STYLE_LINENUMBER, " HW9999999"));
 		} 
 		int lineNumWidth = lineNumbersWidth;
 
@@ -1949,7 +1951,7 @@ void SciTEBase::SetLineNumberWidth(ScintillaWindowEditor *pE) {
 			// The margin size will be expanded if the current buffer's maximum
 			// line number would overflow the margin.
 
-			Sci_Position lineCount = pE->Call(SCI_GETLINECOUNT);
+			Sci_Position lineCount = pE->LineCount();
 
 			lineNumWidth = 1;
 			while (lineCount >= 10) {
@@ -1963,11 +1965,11 @@ void SciTEBase::SetLineNumberWidth(ScintillaWindowEditor *pE) {
 		}
 
 		// The 4 here allows for spacing: 1 pixel on left and 3 on right.
-		pixelWidth += 4 + lineNumWidth * static_cast<int>(pE->CallString(SCI_TEXTWIDTH, STYLE_LINENUMBER, "9"));
+		pixelWidth += 4 + lineNumWidth * static_cast<int>(pE->TextWidth(STYLE_LINENUMBER, "9"));
 		
-		pE->Call(SCI_SETMARGINWIDTHN, 0, pixelWidth);
+		pE->SetMarginWidthN(0, pixelWidth);
 	} else {
-		pE->Call(SCI_SETMARGINWIDTHN, 0, 0);
+		pE->SetMarginWidthN(0, 0);
 	}
 }
 
@@ -2882,9 +2884,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 			handled = extender->OnClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
-					wOutput.Call(SCI_SETMOUSECAPTURE, 0);
+					wOutput.Call(Message::SetMouseCapture, 0);
 				else
-					wEditor.Call(SCI_SETMOUSECAPTURE, 0);
+					wEditor.Call(Message::SetMouseCapture, 0);
 			}
 		}
 		break;
@@ -2894,9 +2896,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 			handled = extender->OnHotSpotReleaseClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
-					wOutput.Call(SCI_SETMOUSECAPTURE, 0);
+					wOutput.Call(Message::SetMouseCapture, 0);
 				else
-					wEditor.Call(SCI_SETMOUSECAPTURE, 0);
+					wEditor.Call(Message::SetMouseCapture, 0);
 			}
 		}
 		break;
@@ -2952,7 +2954,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD) && notification->nmhdr.idFrom != IDM_FINDRESWIN) {
 			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - в будущем могут быть еще варианты
 
-			sptr_t p = w->Call(SCI_LINEFROMPOSITION, w->Call(SCI_GETCURRENTPOS), 0);
+			sptr_t p = w->LineFromPosition(w->CurrentPos());
 			if (p == notification->line + 1 || p == notification->line){
 				extender->OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
 					notification->foldLevelPrev, notification->foldLevelNow); 
@@ -2981,7 +2983,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 			w = &wEditor;
 		
 		if (extender)
-			handled = extender->OnMarginClick(notification->margin, notification->modifiers, int(w->Call(SCI_LINEFROMPOSITION, notification->position)), notification->nmhdr.idFrom);
+			handled = extender->OnMarginClick(notification->margin, notification->modifiers, 
+				int(w->LineFromPosition(notification->position)), notification->nmhdr.idFrom);
 
 			if (!handled) {
 				if (notification->margin < 2 && !notification->modifiers) {
@@ -3273,7 +3276,7 @@ std::vector<GUI::gui_string> ListFromString(const GUI::gui_string &args) {
 }
 
 // Implement ExtensionAPI methods
-sptr_t SciTEBase::Send(Pane p, unsigned int msg, uptr_t wParam, sptr_t lParam) {
+sptr_t SciTEBase::Send(Pane p, Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
 	if (p == paneEditor)
 		return wEditor.Call(msg, wParam, lParam);
 	else if (p == paneCoEditor)
@@ -3304,7 +3307,7 @@ char *SciTEBase::Line(Pane p, Sci_Position line, int bNeedEnd) {
 	if (!len)
 		return NULL;
 	char *s = new char[len + 1];
-	w->Call(SCI_GETLINE, line, (sptr_t)s);
+	w->GetLine(line, s);
 	if (!bNeedEnd)
 		len = w->LineEndPosition(line) - w->PositionFromLine(line);
 	s[len] = 0;
@@ -3366,7 +3369,7 @@ void SciTEBase::Trace(const char *s) {
 	} 
 	
 	OutputAppendStringSynchronised(s);
-	for (int i = 0; wEditor.Call(SCI_ENDUNDOACTION) > 0;)//
+	for (int i = 0; wEditor.Call(Message::EndUndoAction) > 0;)//
 	{
 		if(props.GetInt("warning.undoaction") == 0)
 			OutputAppendStringSynchronised("\n!!!Warning!!! ENDUNDOACTION by Trace");

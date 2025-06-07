@@ -17,7 +17,7 @@ public:
 	virtual ~ExtensionAPI() {
 	}
 	enum Pane { paneEditor = 1, paneCoEditor = 2, paneOutput = 3, paneFindRes = 4 };
-	virtual sptr_t Send(Pane p, unsigned int msg, uptr_t wParam=0, sptr_t lParam=0)=0;
+	virtual sptr_t Send(Pane p, Scintilla::Message, uptr_t wParam=0, sptr_t lParam=0)=0;
 	virtual char *Range(Pane p, Sci_Position start, Sci_Position end)=0;
 	virtual char *Line(Pane p, Sci_Position line, int bNeedEnd)=0;
 	virtual void Remove(Pane p, Sci_Position start, Sci_Position end)=0;

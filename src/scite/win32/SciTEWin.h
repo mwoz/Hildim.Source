@@ -192,7 +192,6 @@ protected:
 	virtual void SaveAsPDF();
 	virtual void SaveAsTEX();
 	virtual void SaveAsXML();
-	virtual bool IsStdinBlocked();
 
 	/// Print the current buffer.
 	virtual void Print(bool showDialog);

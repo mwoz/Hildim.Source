@@ -55,9 +55,7 @@ struct Span {
 class ScintillaCall {
 	FunctionDirect fn;
 	intptr_t ptr;
-	intptr_t CallPointer(Message msg, uintptr_t wParam, void *s);
-	intptr_t CallString(Message msg, uintptr_t wParam, const char *s);
-	std::string CallReturnString(Message msg, uintptr_t wParam);
+
 public:
 	Scintilla::Status statusLastCall;
 	ScintillaCall() noexcept;
@@ -66,7 +64,9 @@ public:
 	void SetFnPtr(FunctionDirect fn_, intptr_t ptr_) noexcept;
 	bool IsValid() const noexcept;
 virtual	intptr_t Call(Message msg, uintptr_t wParam=0, intptr_t lParam=0);
-
+virtual	intptr_t CallPointer(Message msg, uintptr_t wParam, void *s);
+virtual	intptr_t CallString(Message msg, uintptr_t wParam, const char *s);
+virtual	std::string CallReturnString(Message msg, uintptr_t wParam);
 	// Common APIs made more structured and type-safe
 virtual	Position LineStart(Line line);
 virtual	Position LineEnd(Line line);

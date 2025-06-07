@@ -52,7 +52,8 @@ extern "C" {
 #include "../../cd/include/cdlua.h"
 #include "../../cd/include/cdluaiup.h"
 }
-
+ 
+using namespace Scintilla;
 
 #if !defined(GTK)
 
@@ -497,7 +498,7 @@ static int cf_scite_check_menus(lua_State *) {
 //!-start-[EncodingToLua]
 static int cf_pane_get_codepage(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
-	UINT codePage = static_cast<UINT>(host->Send(p, SCI_GETCODEPAGE));
+	UINT codePage = static_cast<UINT>(host->Send(p, Message::GetCodePage));
 	if(codePage != SC_CP_UTF8) {
 		unsigned int cs = SC_CHARSET_DEFAULT;
 		char* charSet = host->Property("character.set");
@@ -608,7 +609,7 @@ static int cf_pane_getU(lua_State* L, DWORD msg) {
 		UINT cpPos = static_cast<UINT>(luaL_checknumber(L, 2));
 
 		if (cpPos >= 0) {
-			sptr_t st = host->Send(p, msg, cpPos, cpPos);
+			sptr_t st = host->Send(p, static_cast<Message>(msg), cpPos, cpPos);
 			if (st < 0)
 				st = st + 256;
 			lua_pushinteger(L, st);
@@ -633,11 +634,11 @@ static int cf_pane_getchar(lua_State *L) {
 static int cf_pane_getutf8text(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	int np = lua_gettop(L);
-	sptr_t cp = host->Send(p, SCI_GETCODEPAGE, 0, 0);
+	sptr_t cp = host->Send(p, Message::GetCodePage, 0, 0);
 	if (np == 1) {
-		sptr_t size = host->Send(p, SCI_GETLENGTH, 0, 0);
+		sptr_t size = host->Send(p, Message::GetLength, 0, 0);
 		char* buff = new char[size + 1];
-		host->Send(p, SCI_GETTEXT, size, reinterpret_cast<sptr_t>(buff));
+		host->Send(p, Message::GetText, size, reinterpret_cast<sptr_t>(buff));
 		std::string ss = GUI::ConvertToUTF8(buff, cp);
 		lua_pushstring(L, ss.c_str());
 		delete[] buff;
@@ -646,7 +647,7 @@ static int cf_pane_getutf8text(lua_State *L) {
 	else {
 		const char* str = luaL_checkstring(L, 2);
 		std::string ss = GUI::ConvertFromUTF8(str, cp);
-		host->Send(p, SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(ss.c_str()));
+		host->Send(p, Message::SetText, 0, reinterpret_cast<sptr_t>(ss.c_str()));
 		return 0;
 	}
 }
@@ -725,7 +726,7 @@ static int cf_pane_remove(lua_State *L) {
 static int cf_pane_append(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	const char *s = luaL_checkstring(L, 2);
-	host->Insert(p, host->Send(p, SCI_GETLENGTH, 0, 0), s); 
+	host->Insert(p, host->Send(p, Message::GetLength, 0, 0), s);
 	return 0;
 }
 
@@ -738,7 +739,7 @@ static int cf_pane_findtext(lua_State *L) {
 	bool hasError = (!t);
 
 	if (!hasError) {
-		Sci_TextToFind ft = {{0, 0}, 0, {0, 0}};
+		::Sci_TextToFind ft = {{0, 0}, 0, {0, 0}};
 
 		ft.lpstrText = const_cast<char*>(t);
 
@@ -757,12 +758,12 @@ static int cf_pane_findtext(lua_State *L) {
 				ft.chrg.cpMax = static_cast<int>(luaL_checkinteger(L,5));
 				hasError = (lua_gettop(L) > nArgs);
 			} else {
-				ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(p, SCI_GETLENGTH, 0, 0));
+				ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(p, Message::GetLength, 0, 0));
 			}
 		}
 
 		if (!hasError) {
-			sptr_t result = host->Send(p, SCI_FINDTEXT, static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
+			sptr_t result = host->Send(p, Message::FindText, static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
 			if (result >= 0) {
 				lua_pushinteger(L, ft.chrgText.cpMin);
 				lua_pushinteger(L, ft.chrgText.cpMax);
@@ -1035,10 +1036,10 @@ static int cf_match_replace(lua_State *L) {
 	// whether the back references are still valid.  So for now this is
 	// left out.
 
-	host->Send(pmo->pane, SCI_SETTARGETSTART, pmo->startPos, 0);
-	host->Send(pmo->pane, SCI_SETTARGETEND, pmo->endPos, 0);
-	host->Send(pmo->pane, SCI_REPLACETARGET, static_cast<uptr_t>(lua_rawlen(L, 2)), reinterpret_cast<sptr_t>(replacement));
-	pmo->endPos = host->Send(pmo->pane, SCI_GETTARGETEND, 0, 0); 
+	host->Send(pmo->pane, Message::SetTargetStart, pmo->startPos, 0);
+	host->Send(pmo->pane, Message::SetTargetEnd, pmo->endPos, 0);
+	host->Send(pmo->pane, Message::ReplaceTarget, static_cast<uptr_t>(lua_rawlen(L, 2)), reinterpret_cast<sptr_t>(replacement));
+	pmo->endPos = host->Send(pmo->pane, Message::SetTargetEnd, 0, 0);
 	return 0;
 }
 
@@ -1179,13 +1180,13 @@ static int cf_pane_match_generator(lua_State *L) {
 		searchPos++;
 	}
 
-	Sci_TextToFind ft = { {0,0}, 0, {0,0} };
+	::Sci_TextToFind ft = { {0,0}, 0, {0,0} };
 	ft.chrg.cpMin = static_cast<Sci_PositionCR>(searchPos);
-	ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(pmo->pane, SCI_GETLENGTH, 0, 0));
+	ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(pmo->pane, Message::GetLength, 0, 0));
 	ft.lpstrText = const_cast<char*>(text);
 
 	if (ft.chrg.cpMax > ft.chrg.cpMin) {
-		sptr_t result = host->Send(pmo->pane, SCI_FINDTEXT, static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
+		sptr_t result = host->Send(pmo->pane, Message::FindText, static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
 		if (result >= 0) {
 			pmo->startPos = ft.chrgText.cpMin;
 			pmo->endPos = pmo->endPosOrig = ft.chrgText.cpMax; 
@@ -1858,7 +1859,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 		params[1] = params[0];
 
 	if (needStringResult) {
-		const intptr_t stringResultLen = host->Send(p, func.value, params[0], 0);
+		const intptr_t stringResultLen = host->Send(p, static_cast<Message>(func.value), params[0], 0);
 		stringResult.assign(stringResultLen, '\0');
 		params[1] = reinterpret_cast<intptr_t>(stringResult.data());
 
@@ -1872,7 +1873,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 	// - numeric return type gets returned to lua as a number (following the stringresult)
 	// - other return types e.g. void get dropped.
 
-	lua_Integer result = host->Send(p, func.value, params[0], params[1]);
+	lua_Integer result = host->Send(p, static_cast<Message>(func.value), params[0], params[1]);
 
 	int resultCount = 0;
 
@@ -1993,7 +1994,7 @@ static int push_iface_propval(lua_State *L, const char *name) {
 			ExtensionAPI::Pane p = check_pane_object(L, 1);
 
 			if (prop.getter) {
-				if (host->Send(p, prop.getter, 1, 0)) {
+				if (host->Send(p, static_cast<Message>(prop.getter), 1, 0)) {
 					lua_pushnil(L);
 					return 1;
 				} else {
@@ -3272,7 +3273,7 @@ bool LuaExtension::OnStyle(Sci_Position startPos, Sci_Position lengthDoc, int in
 			sc.lengthDoc = static_cast<int>(lengthDoc);
 			sc.initStyle = initStyle;
 			sc.styler = styler;
-			sc.codePage = static_cast<int>(host->Send(ExtensionAPI::paneEditor, SCI_GETCODEPAGE));
+			sc.codePage = static_cast<int>(host->Send(ExtensionAPI::paneEditor, Message::GetCodePage));
 
 			lua_newtable(luaState);
 

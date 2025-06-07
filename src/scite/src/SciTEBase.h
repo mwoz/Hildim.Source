@@ -495,6 +495,31 @@ protected:
 		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
 		std::string languageCurrent = "xxx";
+
+		virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
+			return ScintillaCall::Call(msg, wParam, lParam);
+		}
+		virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
+			return ScintillaCall::CallPointer(msg, wParam, s);
+		}
+		virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
+			return ScintillaCall::CallString(msg, wParam, s);
+		}
+		virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
+			return ScintillaCall::CallReturnString(msg, wParam);
+		}
+		//virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0) {
+		//	return ScintillaWindow::Call(msg, wParam, lParam);
+		//}
+		//sptr_t CallString(unsigned int msg, uptr_t wParam, const char* s) {
+		//	return ScintillaWindow::Call(msg, wParam, reinterpret_cast<sptr_t>(s));
+		//}
+		//intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void* s) {
+		//	return ScintillaWindow::CallPointer(msg, wParam, s);
+		//}
+		//std::string CallReturnString(unsigned int msg, uintptr_t wParam) {
+		//	return ScintillaWindow::CallReturnString(msg, wParam);
+		//}
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
@@ -506,6 +531,31 @@ protected:
 		FilePath GetCoBuffPointer();
 		void Switch(bool ignorebuff = false);
 		ScintillaWindowEditor coEditor;
+		virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
+			return ScintillaCall::Call(msg, wParam, lParam);
+		}
+		virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
+			return ScintillaCall::CallPointer(msg, wParam, s);
+		}
+		virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
+			return ScintillaCall::CallString(msg, wParam, s);
+		}
+		virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
+			return ScintillaCall::CallReturnString(msg, wParam);
+		}
+		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0) {
+			return ScintillaWindow::Call(msg, wParam, lParam);
+		}
+		sptr_t CallString(unsigned int msg, uptr_t wParam, const char* s) {
+			return ScintillaWindow::Call(msg, wParam, reinterpret_cast<sptr_t>(s));
+		}
+		intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void* s) {
+			return ScintillaWindow::CallPointer(msg, wParam, s);
+		}
+		std::string CallReturnString(unsigned int msg, uintptr_t wParam) {
+			return ScintillaWindow::CallReturnString(msg, wParam);
+		}
+	
 	private:
 		FilePath buffer_L;
 		FilePath buffer_R= NULL;
@@ -516,8 +566,8 @@ protected:
 	ScintillaWindowEditor wEditorL;
 	ColorConvertorLAB convMain;
 	
-	virtual sptr_t CallAll(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	sptr_t CallStringAll(unsigned int msg, uptr_t wParam, const char *s);
+	virtual sptr_t CallAll(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s);
 	friend class ScintillaWindowEditor;
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
@@ -900,9 +950,6 @@ protected:
 
 	bool RecordMacroCommand(SCNotification *notification);
 
-	virtual bool IsStdinBlocked();
-	void OpenFromStdin(bool UseOutputPane);
-	void OpenFilesFromStdin();
 	enum GrepFlags {
 	    grepNone = 0, grepWholeWord = 1, grepMatchCase = 2, grepStdOut = 4,
 		grepDot = 8, grepBinary = 16, grepRegExp = 32, grepSubDir = 64, grepGroup = 128, grepProgress = 256
@@ -925,7 +972,7 @@ protected:
 
 
 	// ExtensionAPI
-	sptr_t Send(Pane p, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t Send(Pane p, Scintilla::Message, uptr_t wParam = 0, sptr_t lParam = 0);
 	char *Range(Pane p, Sci_Position start, Sci_Position end);
 	char *Line(Pane p, Sci_Position line, int bNeedEnd);
 	void Remove(Pane p, Sci_Position start, Sci_Position end);

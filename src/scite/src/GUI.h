@@ -157,6 +157,7 @@ class ScintillaWindow : public Window, public Scintilla::ScintillaCall {
 public:
 	ScintillaWindow() : fn(0), ptr(0) {
 	}
+
 	void SetID(WindowID wid_) {
 		wid = wid_;
 		fn = 0;
@@ -179,13 +180,27 @@ public:
 			throw ScintillaFailure(status);
 		return retVal;
 	}
-	sptr_t CallString(unsigned int msg, uptr_t wParam, const char *s) {
+	virtual sptr_t CallString(unsigned int msg, uptr_t wParam, const char *s) {
 		return Call(msg, wParam, reinterpret_cast<sptr_t>(s));
 	}
 	sptr_t Send(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);
-	intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void *s);
-	sptr_t SendPointer(unsigned int msg, uptr_t wParam=0, void *lParam=0);
-	std::string CallReturnString(unsigned int msg, uintptr_t wParam);
+	virtual intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void *s);
+	virtual sptr_t SendPointer(unsigned int msg, uptr_t wParam=0, void *lParam=0);
+	virtual std::string CallReturnString(unsigned int msg, uintptr_t wParam);
+
+	virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
+		return ScintillaCall::Call(msg, wParam, lParam);
+	}
+	virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
+		return ScintillaCall::CallPointer(msg, wParam, s);
+	}
+	virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
+		return ScintillaCall::CallString(msg, wParam, s);
+	}
+	virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
+		return ScintillaCall::CallReturnString(msg, wParam);
+	}
+
 };
 
 bool IsDBCSLeadByte(int codePage, char ch);

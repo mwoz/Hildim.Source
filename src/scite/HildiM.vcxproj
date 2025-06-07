@@ -26,6 +26,7 @@
   <!---->
   <ItemGroup>
     <ClInclude Include="..\lexilla\access\LexillaAccess.h" />
+    <ClInclude Include="..\scintilla\include\ScintillaCall.h" />
     <ClInclude Include="lua\include\lauxlib.h" />
     <ClInclude Include="lua\src\lapi.h" />
     <ClInclude Include="lua\src\lcode.h" />
