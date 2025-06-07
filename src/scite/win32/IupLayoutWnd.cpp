@@ -507,8 +507,8 @@ void IupChildWnd::resetPixelMap() {
 
 	pixelMap.assign(vHeight + 1, { 0, 0 });
 
-	Sci_Position docCount = pS->Call(SCI_GETLINECOUNT);
-	Sci_Position count = pS->Call(SCI_VISIBLEFROMDOCLINE, docCount) + pS->Call(SCI_LINESONSCREEN);
+	Sci_Position docCount = pS->LineCount();
+	Sci_Position count = pS->VisibleFromDocLine(docCount) + pS->LinesOnScreen();
 	if (!count)
 		return;
 
@@ -517,10 +517,10 @@ void IupChildWnd::resetPixelMap() {
 	Sci_Position vLine;
 	int curMark;
 	for(Sci_Position line = 0; line <= docCount; line ++){
-		if (pS->Call(SCI_GETLINEVISIBLE, line)) {
-			curMark = static_cast<int>(pS->Call(SCI_MARKERGET, line));
+		if (pS->LineVisible(line)) {
+			curMark = pS->MarkerGet(line);
 			if (curMark & leftClr.mask) {
-				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+				vLine = pS->VisibleFromDocLine(line);
 				int id = -1;
 				for (int i = 0; i < leftClr.size; i++) {
 					if (curMark & (1 << leftClr.id[i])) {
@@ -538,7 +538,7 @@ void IupChildWnd::resetPixelMap() {
 				}
 			}
 			if (curMark & middleClr.mask) {
-				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+				vLine = pS->VisibleFromDocLine(line);
 				int id = -1;
 				for (int i = 0; i < middleClr.size; i++) {
 					if (curMark & (1 << middleClr.id[i])) {
@@ -556,7 +556,7 @@ void IupChildWnd::resetPixelMap() {
 				}
 			}
 			if (curMark & rightClr.mask) {
-				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+				vLine = pS->VisibleFromDocLine(line);
 				int id = -1;
 				for (int i = 0; i < rightClr.size; i++) {
 					if (curMark & (1 << rightClr.id[i])) {  
@@ -574,8 +574,8 @@ void IupChildWnd::resetPixelMap() {
 				}
 			}
 			Sci_Position annotLines;
-			if ((rightClr.annotation || leftClr.annotation || middleClr.annotation) && (annotLines = pS->Call(SCI_ANNOTATIONGETLINES, line))) {
-				vLine = pS->Call(SCI_VISIBLEFROMDOCLINE, line);
+			if ((rightClr.annotation || leftClr.annotation || middleClr.annotation) && (annotLines = pS->AnnotationGetLines(line))) {
+				vLine = pS->VisibleFromDocLine(line);
 				int pFirst = static_cast<int>(round((vLine + 1) * lineheightPx));
 				int pLast = static_cast<int>(max(pFirst, round((vLine + annotLines + 1) * lineheightPx)));
 				for (int i = pFirst; i <= pLast; i++) {
@@ -596,10 +596,10 @@ void IupChildWnd::FlatScroll_CB() {
 	if (bBlockFlatCollback)
 		return;
 	blockV = true;
-	pS->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
+	pS->SetFirstVisibleLine(IupGetInt(pContainer, "POSY"));
 	blockV = false;
 	blockH = true;
-	pS->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
+	pS->SetXOffset(IupGetInt(pContainer, "POSX"));
 	blockH = false;
 }
 void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
@@ -611,7 +611,7 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	case IUP_SBPOSV:
 	case IUP_SBDRAGV:
 		blockV = true;
-		pS->Call(SCI_SETFIRSTVISIBLELINE, IupGetInt(pContainer, "POSY"));
+		pS->SetFirstVisibleLine(IupGetInt(pContainer, "POSY"));
 		blockV = false;
 		break;
 	case IUP_SBLEFT:
@@ -621,7 +621,7 @@ void IupChildWnd::Scroll_CB(int op, float posx, float posy) {
 	case IUP_SBPOSH:
 	case IUP_SBDRAGH:
 		blockH = true;
-		pS->Call(SCI_SETXOFFSET, IupGetInt(pContainer, "POSX"));
+		pS->SetXOffset(IupGetInt(pContainer, "POSX"));
 		blockH = false;
 		break;
 	}
@@ -697,8 +697,8 @@ LRESULT PASCAL IupChildWnd::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		HWND h = ::FindWindowEx(hwnd, NULL, L"Scintilla", NULL);
 		::SetFocus(h);
-		if(pS->Call(SCI_GETFOCUS))
-			pS->Call(SCI_SETFOCUS, true);
+		if(pS->Focus())
+			pS->SetFocus(true);
 	}
 		return 0;
 	case SCI_GETSCROLLINFO:
@@ -1468,7 +1468,7 @@ void IupLayoutWnd::SubclassChild(const char* name, GUI::ScintillaWindow *pW){
 		ci.scrollpress = GetColorRef("SCR_PRESSCOLOR");
 		ci.scrollsize = 15;
 
-		pW->Call(SCI_LISTCUSTOMCOLORS, (WPARAM)&ci);
+		pW->Call(Scintilla::Message::ListCustomColors, (WPARAM)&ci); 
 	}
 }
 

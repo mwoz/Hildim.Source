@@ -15,6 +15,8 @@
 #include "ScintillaStructures.h"
 #include "ScintillaCall.h"
 #include <algorithm>
+
+
 void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B);
 void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s);
 float clr_brightness(long clr);
@@ -173,33 +175,12 @@ public:
 		return wid && fn && ptr;
 	}
 //!	sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0) {
-	virtual sptr_t Call(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0) {//!-chage-[OnSendEditor]
-		sptr_t retVal = fn(ptr, msg, wParam, lParam);
-		int status = static_cast<int>(fn(ptr, SCI_GETSTATUS, 0, 0));
-		if (status > 0)
-			throw ScintillaFailure(status);
-		return retVal;
-	}
-	virtual sptr_t CallString(unsigned int msg, uptr_t wParam, const char *s) {
-		return Call(msg, wParam, reinterpret_cast<sptr_t>(s));
+#define WM_SETREDRAW                    0x000B
+	virtual sptr_t CallSetRedraw() {
+		return static_cast<int>(fn(ptr, WM_SETREDRAW, 1, 0));
 	}
 	sptr_t Send(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);
-	virtual intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void *s);
 	virtual sptr_t SendPointer(unsigned int msg, uptr_t wParam=0, void *lParam=0);
-	virtual std::string CallReturnString(unsigned int msg, uintptr_t wParam);
-
-	virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
-		return ScintillaCall::Call(msg, wParam, lParam);
-	}
-	virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
-		return ScintillaCall::CallPointer(msg, wParam, s);
-	}
-	virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
-		return ScintillaCall::CallString(msg, wParam, s);
-	}
-	virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
-		return ScintillaCall::CallReturnString(msg, wParam);
-	}
 
 };
 

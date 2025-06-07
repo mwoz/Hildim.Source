@@ -564,7 +564,7 @@ void SciTEWin::CopyWithColors(CopyColorsType clrType){
 	tr.chrg.cpMax = cr.cpMax;
 	tr.lpstrText = text;
 
-	wEditor.SendPointer(SCI_GETTEXTRANGE, 0, &tr);
+	wEditor.GetTextRange(&tr);
 
 	GUI::gui_string uText;
 	const void* t;
@@ -1635,8 +1635,8 @@ LRESULT SciTEWin::KeyUp(WPARAM wParam) {
 
 LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam, bool fromMargin) {
 	GUI::ScintillaWindow *w = &wEditor;
-	if (wOutput.Call(SCI_GETFOCUS)) w = &wOutput;
-	else if (wFindRes.Call(SCI_GETFOCUS)) w = &wFindRes;
+	if (wOutput.Focus()) w = &wOutput;
+	else if (wFindRes.Focus()) w = &wFindRes;
 	if ((WPARAM)w->GetID() != wParam) return 0;		//ћы можем сюда попасть, когда закрываетс€ без выбора другое меню иуп - отсекаем этот вариант
 	GUI::Point pt = PointFromLong(static_cast<long>(lParam));
 	if ((pt.x == -1) && (pt.y == -1)) {
@@ -1645,9 +1645,9 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 			w = &wOutput;
 		else if (wFindRes.HasFocus())
 			w = &wFindRes;
-		Sci_Position position = w->Call(SCI_GETCURRENTPOS);
-		pt.x = static_cast<int>(w->Call(SCI_POINTXFROMPOSITION, 0, position));
-		pt.y = static_cast<int>(w->Call(SCI_POINTYFROMPOSITION, 0, position) + w->Call(SCI_TEXTHEIGHT, w->Call(SCI_LINEFROMPOSITION,position)));
+		Sci_Position position = w->CurrentPos();
+		pt.x = static_cast<int>(w->PointXFromPosition(position));
+		pt.y = static_cast<int>(w->PointYFromPosition(position) + w->TextHeight(w->LineFromPosition(position)));
 		POINT spt = {pt.x, pt.y};
 		::ClientToScreen(static_cast<HWND>(w->GetID()), &spt);
 		pt = GUI::Point(spt.x, spt.y);
@@ -1842,7 +1842,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return KeyUp(wParam);
 
 		case WM_MOVE:
-			wEditor.Call(SCI_CALLTIPCANCEL);
+			wEditor.CallTipCancel();
 			break;
 
 		case WM_GETMINMAXINFO:
@@ -1874,30 +1874,30 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_SETTINGCHANGE:
-			wEditor.Call(WM_SETTINGCHANGE, wParam, lParam);
-			wOutput.Call(WM_SETTINGCHANGE, wParam, lParam);
+			wEditor.Send(WM_SETTINGCHANGE, wParam, lParam);
+			wOutput.Send(WM_SETTINGCHANGE, wParam, lParam);
 			break;
 
 		case WM_SYSCOLORCHANGE:
-			wEditor.Call(WM_SYSCOLORCHANGE, wParam, lParam);
-			wOutput.Call(WM_SYSCOLORCHANGE, wParam, lParam);
+			wEditor.Send(WM_SYSCOLORCHANGE, wParam, lParam);
+			wOutput.Send(WM_SYSCOLORCHANGE, wParam, lParam);
 			break;
 
 		case WM_PALETTECHANGED:
 			if (wParam != reinterpret_cast<WPARAM>(MainHWND())) {
-				wEditor.Call(WM_PALETTECHANGED, wParam, lParam);
+				wEditor.Send(WM_PALETTECHANGED, wParam, lParam);
 				//wOutput.Call(WM_PALETTECHANGED, wParam, lParam);
 			}
 
 			break;
 
 		case WM_QUERYNEWPALETTE:
-			wEditor.Call(WM_QUERYNEWPALETTE, wParam, lParam);
+			wEditor.Send(WM_QUERYNEWPALETTE, wParam, lParam);
 			return TRUE;
 
 		case WM_ACTIVATEAPP:
 			if (props.GetInt("selection.hide.on.deactivate", 1)) {
-				wEditor.Call(SCI_HIDESELECTION, !wParam);
+				wEditor.HideSelection(!wParam);
 			}
 			extender->OnMenuChar(3, "NO");
 			// Do not want to display dialog yet as may be in middle of system mouse capture
@@ -2165,7 +2165,7 @@ LRESULT PASCAL BaseWin::StWndProc(
 SString SciTEWin::EncodeString(const SString &s) {
 	//::MessageBox(GetFocus(),SString(s).c_str(),"EncodeString:in",0);
 
-	UINT codePage = static_cast<UINT>(wEditor.Call(SCI_GETCODEPAGE));
+	UINT codePage = static_cast<UINT>(wEditor.CodePage());
 
 	if (codePage != SC_CP_UTF8) {
 		codePage = GUI::CodePageFromCharSet(characterSet, codePage); 
@@ -2179,7 +2179,7 @@ SString SciTEWin::EncodeString(const SString &s) {
 SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, int selEnd) {
 	SString s = SciTEBase::GetRangeInUIEncoding(win, selStart, selEnd);
 
-	UINT codePage = static_cast<UINT>(wEditor.Call(SCI_GETCODEPAGE));
+	UINT codePage = static_cast<UINT>(wEditor.CodePage());
 
 	if (codePage != SC_CP_UTF8) {
 		codePage = GUI::CodePageFromCharSet(characterSet, codePage);

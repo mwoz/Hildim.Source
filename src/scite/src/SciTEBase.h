@@ -492,34 +492,10 @@ protected:
 	class ScintillaWindowEditor : public GUI::ScintillaWindow
 	{
 	public:
-		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
+		virtual sptr_t Call(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
 		std::string languageCurrent = "xxx";
 
-		virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
-			return ScintillaCall::Call(msg, wParam, lParam);
-		}
-		virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
-			return ScintillaCall::CallPointer(msg, wParam, s);
-		}
-		virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
-			return ScintillaCall::CallString(msg, wParam, s);
-		}
-		virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
-			return ScintillaCall::CallReturnString(msg, wParam);
-		}
-		//virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0) {
-		//	return ScintillaWindow::Call(msg, wParam, lParam);
-		//}
-		//sptr_t CallString(unsigned int msg, uptr_t wParam, const char* s) {
-		//	return ScintillaWindow::Call(msg, wParam, reinterpret_cast<sptr_t>(s));
-		//}
-		//intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void* s) {
-		//	return ScintillaWindow::CallPointer(msg, wParam, s);
-		//}
-		//std::string CallReturnString(unsigned int msg, uintptr_t wParam) {
-		//	return ScintillaWindow::CallReturnString(msg, wParam);
-		//}
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
@@ -531,30 +507,6 @@ protected:
 		FilePath GetCoBuffPointer();
 		void Switch(bool ignorebuff = false);
 		ScintillaWindowEditor coEditor;
-		virtual intptr_t Call(Scintilla::Message msg, uintptr_t wParam = 0, intptr_t lParam = 0) {
-			return ScintillaCall::Call(msg, wParam, lParam);
-		}
-		virtual intptr_t CallPointer(Scintilla::Message msg, uintptr_t wParam, void* s) {
-			return ScintillaCall::CallPointer(msg, wParam, s);
-		}
-		virtual intptr_t CallString(Scintilla::Message msg, uintptr_t wParam, const char* s) {
-			return ScintillaCall::CallString(msg, wParam, s);
-		}
-		virtual std::string CallReturnString(Scintilla::Message msg, uintptr_t wParam) {
-			return ScintillaCall::CallReturnString(msg, wParam);
-		}
-		virtual sptr_t Call(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0) {
-			return ScintillaWindow::Call(msg, wParam, lParam);
-		}
-		sptr_t CallString(unsigned int msg, uptr_t wParam, const char* s) {
-			return ScintillaWindow::Call(msg, wParam, reinterpret_cast<sptr_t>(s));
-		}
-		intptr_t CallPointer(unsigned int msg, uintptr_t wParam, void* s) {
-			return ScintillaWindow::CallPointer(msg, wParam, s);
-		}
-		std::string CallReturnString(unsigned int msg, uintptr_t wParam) {
-			return ScintillaWindow::CallReturnString(msg, wParam);
-		}
 	
 	private:
 		FilePath buffer_L;
@@ -567,7 +519,7 @@ protected:
 	ColorConvertorLAB convMain;
 	
 	virtual sptr_t CallAll(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s);
+	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam, const char* s);
 	friend class ScintillaWindowEditor;
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
@@ -731,9 +683,9 @@ protected:
 
 	void ReadGlobalPropFile(GUI::gui_string adv);
 
-	sptr_t CallFocused(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	sptr_t CallPane(int destination, unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	void CallChildren(unsigned int msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t CallFocused(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	sptr_t CallPane(int destination, Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
+	void CallChildren(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
 
 	Sci_Position LengthDocument();
 	Sci_Position GetCaretInLine();

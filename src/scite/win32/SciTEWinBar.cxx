@@ -185,7 +185,7 @@ void SciTEWin::Creation() {
 	if (!wEditorL.CanCall())
 		exit(FALSE);
 	wEditorL.Show();
-	wEditorL.Call(SCI_USEPOPUP, 0);
+	wEditorL.UsePopUp(Scintilla::PopUp::Never);
 	layout.SubclassChild("Source", &wEditorL);
 	WindowSetFocus(wEditorL);
 	wEditor.SetID(wEditorL.GetID());
@@ -205,7 +205,7 @@ void SciTEWin::Creation() {
 	if (!wEditorR.CanCall())
 		exit(FALSE);
 	wEditorR.Show();
-	wEditorR.Call(SCI_USEPOPUP, 0);
+	wEditorR.UsePopUp(Scintilla::PopUp::Never);
 	layout.SubclassChild("CoSource", &wEditorR);
 	wEditor.coEditor.SetID(wEditorR.GetID());
 
@@ -224,9 +224,9 @@ void SciTEWin::Creation() {
 		exit(FALSE); 
 	wOutput.Show();
 	// No selection margin on output window
-	wOutput.Call(SCI_SETMARGINWIDTHN, 1, 0);
+	wOutput.SetMarginWidthN(1, 0);
 	//wOutput.Call(SCI_SETCARETPERIOD, 0);
-	wOutput.Call(SCI_USEPOPUP, 0);
+	wOutput.UsePopUp(Scintilla::PopUp::Never);
 	layout.SubclassChild("Run", &wOutput);
 
 	wFindRes.SetID(::CreateWindowEx(
@@ -244,9 +244,9 @@ void SciTEWin::Creation() {
 		exit(FALSE);
 	wFindRes.Show();
 	// No selection margin on output window
-	wFindRes.Call(SCI_SETMARGINWIDTHN, 1, 0);
+	wFindRes.SetMarginWidthN(1, 0);
 	//wFindRes.Call(SCI_SETCARETPERIOD, 0);
-	wFindRes.Call(SCI_USEPOPUP, 0);
+	wFindRes.UsePopUp(Scintilla::PopUp::Never);
 	layout.SubclassChild("FindRes", &wFindRes);
 	
 	::DragAcceptFiles(MainHWND(), true);

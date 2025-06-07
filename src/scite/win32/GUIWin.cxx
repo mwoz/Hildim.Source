@@ -406,17 +406,17 @@ bool IsDBCSLeadByte(int codePage, char ch) {
 	else
 		return ::IsDBCSLeadByteEx(codePage, ch) != 0;
 }
-intptr_t ScintillaWindow::CallPointer(unsigned int msg, uintptr_t wParam, void *s) {
-	return Call(msg, wParam, reinterpret_cast<intptr_t>(s));
-}
-std::string ScintillaWindow::CallReturnString(unsigned int msg, uintptr_t wParam) {
-	size_t len = CallPointer(msg, wParam, nullptr);
-	if (len) {
-		std::string value(len, '\0');
-		CallPointer(msg, wParam, value.data());
-		return value;
-	} else {
-		return std::string();
-	}
-}
+//intptr_t ScintillaWindow::CallPointer(unsigned int msg, uintptr_t wParam, void *s) {
+//	return Call(msg, wParam, reinterpret_cast<intptr_t>(s));
+//}
+//std::string ScintillaWindow::CallReturnString(unsigned int msg, uintptr_t wParam) {
+//	size_t len = CallPointer(msg, wParam, nullptr);
+//	if (len) {
+//		std::string value(len, '\0');
+//		CallPointer(msg, wParam, value.data());
+//		return value;
+//	} else {
+//		return std::string();
+//	}
+//}
 }

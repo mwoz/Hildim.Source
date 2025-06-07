@@ -290,29 +290,29 @@ static bool isNotStringParams(unsigned int msg) {
 #define _MAX_SEND_RECURSIVE_CALL 100
 static int static_iOnSendEditorCallsCount = 0;
 
-sptr_t SciTEBase::ScintillaWindowEditor::Call( unsigned int msg, uptr_t wParam, sptr_t lParam )
+sptr_t SciTEBase::ScintillaWindowEditor::Call(Scintilla::Message msg, uptr_t wParam, sptr_t lParam )
 {
 	const char *result = NULL;
-	if (pBase->extender && isInterruptableMessage(msg) && static_iOnSendEditorCallsCount < _MAX_SEND_RECURSIVE_CALL) {
+	if (pBase->extender && isInterruptableMessage(static_cast<unsigned int>(msg)) && static_iOnSendEditorCallsCount < _MAX_SEND_RECURSIVE_CALL) {
 		static_iOnSendEditorCallsCount++; 
-		if (!isNotStringParams(msg))
-			result = pBase->extender->OnSendEditor(msg, wParam, reinterpret_cast<const char *>(lParam));
+		if (!isNotStringParams(static_cast<unsigned int>(msg)))
+			result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, reinterpret_cast<const char *>(lParam));
 		else
-			result = pBase->extender->OnSendEditor(msg, wParam, lParam);
+			result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, lParam);
 		static_iOnSendEditorCallsCount--;
 	}
 	if (result != NULL) {
 		if (pBase->recording && static_iOnSendEditorCallsCount == 0) {
 			// send record macro notification
 			SCNotification notification;
-			notification.message = msg;
+			notification.message = static_cast<unsigned int>(msg);
 			notification.wParam = wParam;
 			notification.lParam = lParam;  
 			pBase->RecordMacroCommand(&notification);
 		}
 		return reinterpret_cast<sptr_t>(result);
 	} else {
-		if (msg == SCI_SETREADONLY) {
+		if (msg == Message::SetReadOnly) {
 			pBase->buffers.buffers[pBase->buffers.Current()].ROMarker = wParam ? true : false;
 		}
 		return ScintillaWindow::Call( msg, wParam, lParam);
@@ -427,7 +427,7 @@ sptr_t SciTEBase::CallAll(Scintilla::Message msg, uptr_t wParam, sptr_t lParam) 
 	wEditorR.Call(msg, wParam, lParam);
 	return wEditorL.Call(msg, wParam, lParam);
 }
-sptr_t SciTEBase::CallFocused(unsigned int msg, uptr_t wParam, sptr_t lParam) {
+sptr_t SciTEBase::CallFocused(Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
 	if (wOutput.HasFocus())
 		return wOutput.Call(msg, wParam, lParam);
 	else if (wFindRes.HasFocus())
@@ -436,7 +436,7 @@ sptr_t SciTEBase::CallFocused(unsigned int msg, uptr_t wParam, sptr_t lParam) {
 		return wEditor.Call(msg, wParam, lParam);
 }
 
-sptr_t SciTEBase::CallPane(int destination, unsigned int msg, uptr_t wParam, sptr_t lParam) {
+sptr_t SciTEBase::CallPane(int destination, Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
 	if (destination == IDM_SRCWIN)
 		return wEditor.Call(msg, wParam, lParam);
 	else if (destination == IDM_RUNWIN)
@@ -447,7 +447,7 @@ sptr_t SciTEBase::CallPane(int destination, unsigned int msg, uptr_t wParam, spt
 		return CallFocused(msg, wParam, lParam);
 }
 
-void SciTEBase::CallChildren(unsigned int msg, uptr_t wParam, sptr_t lParam) {
+void SciTEBase::CallChildren(Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
 	wEditor.Call(msg, wParam, lParam);
 	wOutput.Call(msg, wParam, lParam);
 	wFindRes.Call(msg, wParam, lParam);
@@ -740,7 +740,7 @@ void SciTEBase::SetWindowName() {
 
 Scintilla::Sci_CharacterRange SciTEBase::GetSelection() {
 	Scintilla::Sci_CharacterRange crange;
-	crange.cpMin = static_cast<Sci_PositionCR>(wEditor.SelectionEnd());
+	crange.cpMin = static_cast<Sci_PositionCR>(wEditor.SelectionStart());
 	crange.cpMax = static_cast<Sci_PositionCR>(wEditor.SelectionEnd());
 	return crange;
 }
@@ -937,12 +937,12 @@ void SciTEBase::SelectionIntoProperties() {
 	SString word = SelectionWord();
 	props.Set("CurrentWord", word.c_str());
 
-	Sci_Position selStart = CallFocused(SCI_GETSELECTIONSTART);
-	Sci_Position selEnd = CallFocused(SCI_GETSELECTIONEND);
-	props.SetInteger("SelectionStartLine", CallFocused(SCI_LINEFROMPOSITION, selStart) + 1);
-	props.SetInteger("SelectionStartColumn", CallFocused(SCI_GETCOLUMN, selStart) + 1);
-	props.SetInteger("SelectionEndLine", CallFocused(SCI_LINEFROMPOSITION, selEnd) + 1);
-	props.SetInteger("SelectionEndColumn", CallFocused(SCI_GETCOLUMN, selEnd) + 1);
+	Sci_Position selStart = CallFocused(Message::GetSelectionStart);
+	Sci_Position selEnd = CallFocused(Message::GetSelectionEnd);
+	props.SetInteger("SelectionStartLine", CallFocused(Message::LineFromPosition, selStart) + 1);
+	props.SetInteger("SelectionStartColumn", CallFocused(Message::GetColumn, selStart) + 1);
+	props.SetInteger("SelectionEndLine", CallFocused(Message::LineFromPosition, selEnd) + 1);
+	props.SetInteger("SelectionEndColumn", CallFocused(Message::LineFromPosition, selEnd) + 1);
 }
  
 SString SciTEBase::EncodeString(const SString &s) {
@@ -2153,45 +2153,45 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_UNDO:
-		CallPane(source, SCI_UNDO);
+		CallPane(source, Message::Undo);
 		CheckMenus();
 		break;
 
 	case IDM_REDO:
-		CallPane(source, SCI_REDO);
+		CallPane(source, Message::Redo);
 		CheckMenus();
 		break;
 
 	case IDM_CUT:
-		if (CallPane(source, SCI_GETSELECTIONSTART) != CallPane(source, SCI_GETSELECTIONEND)) {
-			CallPane(source, SCI_CUT);
+		if (CallPane(source, Message::GetSelectionStart) != CallPane(source, Message::GetSelectionEnd)) {
+			CallPane(source, Message::Cut);
 		}
 		break;
 	case IDM_COPY:
-		if (CallPane(source, SCI_GETSELECTIONSTART) != CallPane(source, SCI_GETSELECTIONEND)) {
+		if (CallPane(source, Message::GetSelectionStart) != CallPane(source, Message::GetSelectionEnd)) {
 			//fprintf(stderr, "Copy from %d\n", source);
-			CallPane(source, SCI_COPY);
+			CallPane(source, Message::Copy);
 		}
 		break;
 	case IDM_PASTE:
-		CallPane(source, SCI_PASTE);
+		CallPane(source, Message::Paste);
 		break;
 	case IDM_DUPLICATE:
-		CallPane(source, SCI_SELECTIONDUPLICATE);
+		CallPane(source, Message::SelectionDuplicate);
 		break;
 	case IDM_PASTEANDDOWN: {
-		Sci_Position pos = CallFocused(SCI_GETCURRENTPOS);
-		CallFocused(SCI_PASTE);
-		CallFocused(SCI_SETCURRENTPOS, pos);
-		CallFocused(SCI_CHARLEFT);
-		CallFocused(SCI_LINEDOWN);
+		Sci_Position pos = CallFocused(Message::GetCurrentPos);
+		CallFocused(Message::Paste);
+		CallFocused(Message::SetCurrentPos, pos);
+		CallFocused(Message::CharLeft);
+		CallFocused(Message::LineDown);
 	}
 		break;
 	case IDM_CLEAR:
-		CallPane(source, SCI_CLEAR);
+		CallPane(source, Message::Clear);
 		break;
 	case IDM_SELECTALL:
-		CallPane(source, SCI_SELECTALL);
+		CallPane(source, Message::SelectAll);
 		break;
 	case IDM_COPYASRTF:
 		CopyAsRTF();
@@ -2270,21 +2270,21 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_UPRCASE:
-		CallFocused(SCI_UPPERCASE);
+		CallFocused(Message::UpperCase);
 		break;
 
 	case IDM_LWRCASE:
-		CallFocused(SCI_LOWERCASE);
+		CallFocused(Message::LowerCase);
 		break;
 
 	case IDM_JOIN:
-		CallFocused(SCI_TARGETFROMSELECTION);
-		CallFocused(SCI_LINESJOIN);
+		CallFocused(Message::TargetFromSelection);
+		CallFocused(Message::LinesJoin);
 		break;
 
 	case IDM_SPLIT:
-		CallFocused(SCI_TARGETFROMSELECTION);
-		CallFocused(SCI_LINESSPLIT);
+		CallFocused(Message::TargetFromSelection);
+		CallFocused(Message::LinesSplit);
 		break;
 
 	case IDM_EXPAND:
@@ -3149,11 +3149,11 @@ void SciTEBase::BlockUpdate(int cmd) {
 		SetWindowName();
 		BuffersMenu();
 		CheckMenus();
-		wEditor.Call(WM_SETREDRAW, 1);
+		wEditor.CallSetRedraw();
 		RedrawWindow((HWND)wEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 		layout.childMap["Source"]->Redraw();
 
-		wEditor.coEditor.Call(WM_SETREDRAW, 1);
+		wEditor.coEditor.CallSetRedraw();
 		RedrawWindow((HWND)wEditor.coEditor.GetID(), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 		layout.childMap["CoSource"]->Redraw();
 	}

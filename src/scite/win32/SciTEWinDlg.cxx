@@ -581,7 +581,7 @@ void SciTEWin::Print(
 		return;
 	}
 
-	Sci_Position lengthDoc = wEditor.Call(SCI_GETLENGTH);
+	Sci_Position lengthDoc = wEditor.Length();
 	Sci_Position lengthDocMax = lengthDoc;
 	Sci_Position lengthPrinted = 0;
 
@@ -662,9 +662,7 @@ void SciTEWin::Print(
 		frPrint.chrg.cpMin = static_cast<int>(lengthPrinted);
 		frPrint.chrg.cpMax = static_cast<int>(lengthDoc);
 
-		lengthPrinted = wEditor.Call(SCI_FORMATRANGE,
-		                           printPage,
-		                           reinterpret_cast<LPARAM>(&frPrint));
+		lengthPrinted = wEditor.FormatRange(printPage, &frPrint);
 
 		if (printPage) {
 			if (footerFormat.size()) {
@@ -696,7 +694,7 @@ void SciTEWin::Print(
 			break;
 	}
 
-	wEditor.Call(SCI_FORMATRANGE, FALSE, 0);
+	wEditor.FormatRange(FALSE, 0);
 
 	::EndDoc(hdc);
 	::DeleteDC(hdc);

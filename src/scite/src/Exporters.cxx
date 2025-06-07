@@ -206,7 +206,7 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, Sci_Position start, Sci_Positi
 	if (end < 0)
 		end = lengthDoc; 
 	//RemoveFindMarks();
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 
 	// Read the default settings
 	char key[200];
@@ -361,11 +361,11 @@ void SciTEBase::SaveToStreamRTF(std::ostream &os, Sci_Position start, Sci_Positi
 			os << RTF_EOLN;
 			column = -1;
 		} else if (isUTF8 && !IsASCII(ch)) {
-			const Sci_Position nextPosition = wEditor.Call(SCI_POSITIONAFTER, iPos);
-			wEditor.Call(SCI_SETTARGETSTART, iPos);
-			wEditor.Call(SCI_SETTARGETEND, nextPosition);
+			const Sci_Position nextPosition = wEditor.PositionAfter(iPos);
+			wEditor.SetTargetStart(iPos);
+			wEditor.SetTargetEnd(nextPosition);
 			char u8Char[5] = "";
-			wEditor.CallPointer(SCI_TARGETASUTF8, 0, (void *)u8Char);
+			wEditor.TargetAsUTF8(u8Char);
 			const unsigned int u32 = UTF32Character(u8Char);
 			if (u32 < 0x10000) {
 				os << "\\u" << static_cast<short>(u32) << "?";
@@ -409,7 +409,7 @@ void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
 
 //---------- Save to HTML ----------
 void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
 		tabSize = 4;
@@ -557,7 +557,7 @@ void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
 }
 void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
 		tabSize = 4;
@@ -1284,7 +1284,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	};
 	PDFRender pr;
 
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 	// read exporter flags
 	int tabSize = props.GetInt("tabsize", PDF_TAB_DEFAULT);
 	if (tabSize < 0) {
@@ -1485,7 +1485,7 @@ static void defineTexStyle(StyleDefinition &style, FILE* fp, int istyle) {
 }
 
 void SciTEBase::SaveToTEX(FilePath saveName) {
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0)
 		tabSize = 4;
@@ -1638,7 +1638,7 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 	// We don't use entities, but empty elements for special characters
 	// but will eventually use utf-8 (once i know how to get them out).
 
-	wEditor.Call(SCI_COLOURISE, 0, -1);
+	wEditor.Colourise(0, -1);
 
 	int tabSize = props.GetInt("tabsize");
 	if (tabSize == 0) {
