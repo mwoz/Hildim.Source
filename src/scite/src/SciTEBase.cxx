@@ -122,7 +122,6 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	autoCompleteIgnoreCase = false;
 	autoCompleteIncremental = false;
 	callTipIgnoreCase = false;
-	calltipShowPerPage = 1; //!-add-[BetterCalltips]
 	autoCCausedByOnlyOne = false;
 
 	margin = false;
@@ -967,11 +966,11 @@ void SciTEBase::UIHasFocus() {
 void SciTEBase::OutputAppendStringSynchronised(const char *s, int len) {				 //
 	if (len == -1)
 		len = static_cast<int>(strlen(s));
-	wOutput.AppendText(len, s);
+	wOutput.Send(SCI_APPENDTEXT, len, reinterpret_cast<intptr_t>(s));
 	if (scrollOutput) {
-		Sci_Position line = wOutput.LineCount();
-		Sci_Position lineStart = wOutput.PositionFromLine(line);
-		wOutput.GotoPos(lineStart);
+		Sci_Position line = wOutput.Send(SCI_GETLINECOUNT);// .LineCount();
+		Sci_Position lineStart = wOutput.Send(SCI_POSITIONFROMLINE, line);// .PositionFromLine(line);
+		wOutput.Send(SCI_GOTOPOS, lineStart);
 	}
 }
 
@@ -1634,7 +1633,7 @@ Sci_Position SciTEBase::GetCurrentScrollPosition() {
 	return wEditor.DocLineFromVisible(lineDisplayTop);
 }
 
-void SciTEBase::SetLineIndentation(Sci_Position line, Sci_Position indent) {
+void SciTEBase::SetLineIndentation(Sci_Position line, int indent) {
 	if (indent < 0)
 		return;
 	Scintilla::Sci_CharacterRange crange = GetSelection();
@@ -1745,9 +1744,9 @@ void SciTEBase::MaintainIndentation(char ch) {
 			while (lastLine >= 0 && GetLineLength(lastLine) == 0)
 				lastLine--;
 		}
-		Sci_Position indentAmount = 0;
+		int indentAmount = 0;
 		if (lastLine >= 0) {
-			indentAmount = GetLineIndentation(lastLine);
+			indentAmount = static_cast<int>(GetLineIndentation(lastLine));
 		}
 		if (indentAmount > 0) {
 			SetLineIndentation(curLine, indentAmount);
@@ -2099,15 +2098,12 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_NEXTFILESTACK:
-		if (buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
+	case IDM_NEXTFILE:
+		if (cmdID == IDM_NEXTFILESTACK && buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
 			NextInStack(); // next most recently selected buffer
 			WindowSetFocus(wEditor);
 			CheckReload();
-			break;
-		}
-		// else fall through and do NEXTFILE behaviour...
-	case IDM_NEXTFILE:
-		if (buffers.size > 1) {
+		}else if (buffers.size > 1) {
 			Next(); // Use Next to tabs move left-to-right
 			WindowSetFocus(wEditor);
 		} else {
@@ -2117,15 +2113,12 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_PREVFILESTACK:
-		if (buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
+	case IDM_PREVFILE:
+		if (cmdID == IDM_PREVFILESTACK && buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
 			PrevInStack(); // next least recently selected buffer
 			WindowSetFocus(wEditor);
 			CheckReload();
-			break;
-		}
-		// else fall through and do PREVFILE behaviour...
-	case IDM_PREVFILE:
-		if (buffers.size > 1) {
+		} else if (buffers.size > 1) {
 			Prev(); // Use Prev to tabs move right-to-left
 			WindowSetFocus(wEditor);
 		} else {
@@ -2640,7 +2633,7 @@ void SciTEBase::NewLineInOutput() {
 		else if (cmd.lowercase() == "###p")
 			curOutMode = outluaPrint;
 		else if (cmd.lowercase() == "###?") {
-			const char *c;
+			const char *c = nullptr;
 			switch (curOutMode)
 			{
 			case SciTEBase::outConsole:
@@ -3023,13 +3016,13 @@ void SciTEBase::Notify(SCNotification *notification) {
 //////ToDelete
 			Sci_Position endWord = notification->position;
 			SString message="";
-			auto original = _set_se_translator([](unsigned int u, EXCEPTION_POINTERS *pExp) {
-				std::string error = "!!!WARNING: SCN_DWELLSTART exeption: ";
-				char result[11];
-				sprintf_s(result, 11, "0x%08X", u);
-				error += result;
-				throw std::exception(error.c_str());
-			}); 
+//			auto original = _set_se_translator([](unsigned int u, EXCEPTION_POINTERS *pExp) {
+//				std::string error = "!!!WARNING: SCN_DWELLSTART exeption: ";
+//				char result[11];
+//				sprintf_s(result, 11, "0x%08X", u);
+//				error += result;
+//				throw std::exception(error.c_str());
+//			}); 
 
 			try {
 				message = RangeExtendAndGrab((notification->nmhdr.idFrom == IDM_SRCWIN ? wEditorL : wEditorR),
@@ -3042,7 +3035,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					extender->DoLua(warning.c_str());
 				}
 			}
-			_set_se_translator(original);
+			//_set_se_translator(original);
 			if (message.length()) {
 				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL)); 
 			}
@@ -3134,7 +3127,7 @@ int  SciTEBase::SecondEditorActive() {
 }
 
 void SciTEBase::SavePositions() {
-	WINDOWPLACEMENT wp;
+	WINDOWPLACEMENT wp{};
 	::GetWindowPlacement((HWND)wSciTE.GetID(), &wp);
 	props.SetInteger("position.maximize", wp.showCmd == SW_SHOWMAXIMIZED);
 	props.SetInteger("position.height", wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
@@ -3390,7 +3383,7 @@ char *SciTEBase::Property(const char *key) {
 			key2[strlen(key) - 1] = 0;
 			value = props.GetExpanded(key2);
 		}
-		delete key2;
+		delete[] key2;
 	}
 	else{
 		value = props.GetExpanded(key);

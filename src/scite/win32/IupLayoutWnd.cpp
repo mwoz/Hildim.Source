@@ -1422,7 +1422,7 @@ void IupLayoutWnd::CreateLayout(lua_State* L, void* pS) {
 		{
 			HGLOBAL mem = LoadResource(hResInstance, res);
 			void* data = LockResource(mem);
-			size_t len = SizeofResource(hResInstance, res);
+			DWORD len = SizeofResource(hResInstance, res);
 
 			DWORD nFonts;
 			m_fonthandle = AddFontMemResourceEx(

@@ -64,7 +64,7 @@ public:
 	bool bProgress = false;
 	int iAll = 0;
 	int iProg = 0;
-	HWND hwnd;
+	HWND hwnd = NULL;
 	
 
 	JobQueue() {

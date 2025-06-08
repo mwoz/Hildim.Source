@@ -290,7 +290,6 @@ SciTEWin::SciTEWin(Extension *ext, GUI::gui_string &propsExt) : SciTEBase(ext) {
 
 	cmdShow = 0;
 	heightBar = 7;
-	fontTabs = 0;
 	wFocus = 0;
 	wActive = NULL;
 
@@ -358,8 +357,6 @@ SciTEWin::~SciTEWin() {
 		::FreeLibrary(hHH);
 	if (hMM)
 		::FreeLibrary(hMM);
-	if (fontTabs)
-		::DeleteObject(fontTabs);
 }
 
 uptr_t SciTEWin::GetInstance() {
@@ -555,14 +552,15 @@ void SciTEWin::CopyWithColors(CopyColorsType clrType){
 
 	bool bOpen = false;
 
-	char* text = new char[(cr.cpMax - cr.cpMin + 1)];
+	//char* text = new char[(cr.cpMax - cr.cpMin + 1)];
+	std::vector<char> text(cr.cpMax - cr.cpMin + 1);
 
 	size_t len;
 	HGLOBAL hand;
 	Sci_TextRange tr;
 	tr.chrg.cpMin = cr.cpMin;
 	tr.chrg.cpMax = cr.cpMax;
-	tr.lpstrText = text;
+	tr.lpstrText = text.data();
 
 	wEditor.GetTextRange(&tr);
 
@@ -570,15 +568,15 @@ void SciTEWin::CopyWithColors(CopyColorsType clrType){
 	const void* t;
 
 	if (clrType != CopyColorsType::htmlText) {
-		len = strlen(text);
+		len = text.size();
 		if (codePage) {
-			uText = GUI::StringFromUTF8(text);
+			uText = GUI::StringFromUTF8(text.data());
 			len = uText.length() * 2 + 2;
 			t = uText.c_str();
 		}
 		else {
-			t = text;
-			len = strlen(text) + 1;
+			t = text.data();
+			len = text.size();
 
 		}
 		hand = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, len);
@@ -679,15 +677,19 @@ void SciTEWin::CopyWithColors(CopyColorsType clrType){
 			break;
 		}
 		hand = GlobalAlloc(GMEM_DDESHARE, sizeof(LCID));
-		LCID* lcid = (LCID*)GlobalLock(hand);
-		*lcid = GetSystemDefaultLCID();
+		if (hand) {
+			//LCID* lcid = (LCID*)GlobalLock(hand);
+			//*lcid = GetSystemDefaultLCID();
+			GlobalLock(hand);
+			GetSystemDefaultLCID();
 		GlobalUnlock(hand);
 		SetClipboardData(CF_LOCALE, hand);
+	}
 	}
 
 	if (bOpen)
 		::CloseClipboard();
-	delete[] text;
+	//delete[] text;
 }
 void SciTEWin::CopyAsHTMLText() {
 	CopyWithColors(CopyColorsType::htmlText);
@@ -882,7 +884,10 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 	}
 
 	SECURITY_ATTRIBUTES sa = {sizeof(SECURITY_ATTRIBUTES), 0, 0};
-	char buffer[16384];
+	const int MAXSIZE = 16384;
+	char *buffer;
+	buffer = new char[16384];
+	//char buffer[16384];
 	OutputAppendStringSynchronised(">");
 	OutputAppendEncodedStringSynchronised(GUI::StringFromUTF8(jobToRun.command.c_str()), codePage);
 	OutputAppendStringSynchronised("\n");
@@ -1005,7 +1010,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 			DWORD bytesAvail = 0;
 
 			if (!::PeekNamedPipe(hPipeRead, buffer,
-					     sizeof(buffer), &bytesRead, &bytesAvail, NULL)) {
+					MAXSIZE, &bytesRead, &bytesAvail, NULL)) {
 				bytesAvail = 0;
 			}
 
@@ -1052,7 +1057,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 
 			} else if (bytesAvail > 0) {
 				int bTest = ::ReadFile(hPipeRead, buffer,
-						       sizeof(buffer), &bytesRead, NULL);
+					                  MAXSIZE, &bytesRead, NULL);
 
 				if (bTest && bytesRead) {
 
@@ -1083,7 +1088,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 						if (!::SendMessage(MainHWND(), SCITE_NOTIYCMD, bytesRead, (WPARAM)(tmpbuff))){
 							OutputAppendStringSynchronised(tmpbuff, bytesRead);
 						}
-						delete tmpbuff;
+						delete[] tmpbuff;
 					}
 
 					::UpdateWindow(MainHWND());
@@ -1158,6 +1163,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 	::CloseHandle(hWriteSubProcess);
 	hWriteSubProcess = NULL;
 	subProcessGroupId = 0;
+	delete[] buffer;
 	return exitcode;
 }
 
@@ -1653,7 +1659,7 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 		pt = GUI::Point(spt.x, spt.y);
 	}
 
-	menuSource = ::GetDlgCtrlID(HwndOf(*w));
+	menuSource = ::GetDlgCtrlID(static_cast<HWND>(w->GetID()));
 	ContextMenu(*w, pt, wSciTE, fromMargin);
 	return 0;
 }
@@ -2284,16 +2290,22 @@ BRK:
 			NULL,
 			NULL,
 			&si, &pi);
-
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
 	}
 	return static_cast<int>(msg.wParam);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	typedef BOOL (WINAPI *SetDllDirectorySig)(LPCTSTR lpPathName);
-	SetDllDirectorySig SetDllDirectoryFn = (SetDllDirectorySig)::GetProcAddress(
-		::GetModuleHandle(TEXT("kernel32.dll")), "SetDllDirectoryW");
+	HMODULE kern = ::GetModuleHandle(TEXT("kernel32.dll"));
+	if (!kern) {
+		::MessageBox(NULL, TEXT("kernel32.dll could not be loaded.  HildiM will now close"),
+			TEXT("Error loading HildiM"), MB_OK | MB_ICONERROR);
+		return 1;
+	}
+	SetDllDirectorySig SetDllDirectoryFn = (SetDllDirectorySig)::GetProcAddress(kern, "SetDllDirectoryW");
 	if (SetDllDirectoryFn) {
 		// For security, remove current directory from the DLL search path
 		SetDllDirectoryFn(TEXT(""));
@@ -2330,8 +2342,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 	HMODULE hmod = ::LoadLibrary(TEXT("SciLexer.DLL"));
 	if (hmod == NULL) {
-		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  HoldiM will now close"),
-			TEXT("Error loading Scintilla"), MB_OK | MB_ICONERROR);
+		::MessageBox(NULL, TEXT("The Scintilla DLL could not be loaded.  HildiM will now close"),
+			TEXT("Error loading HildiM"), MB_OK | MB_ICONERROR);
 		return 1;
 	}
 
@@ -2348,8 +2360,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 }
 
 LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
-	LRESULT r = pSciTEWin->NotifyGetMsgProc(nCode, wParam, lParam);
-	return CallNextHookEx(macroHook, nCode, wParam, lParam) || r;
+	pSciTEWin->NotifyGetMsgProc(nCode, wParam, lParam);
+	return CallNextHookEx(macroHook, nCode, wParam, lParam);
 }
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)

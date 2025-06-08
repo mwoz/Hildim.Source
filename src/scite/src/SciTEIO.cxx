@@ -343,9 +343,12 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 //!		Utf8_16_Read convert; //!-remove-[utf8.auto.check]
 		CurrentBuffer()->SetTimeFromFile();
 		wEditor.ClearAll();
-		char data[blockSize];
-		size_t lenFile = fread(data, 1, sizeof(data), fp);
-		UniMode codingCookie = CodingCookieValue(data, lenFile);
+		//char data[blockSize];
+		//char* data = new char[blockSize];
+		std::vector<char> data(blockSize);
+
+		size_t lenFile = fread(data.data(), 1, data.size(), fp);
+		UniMode codingCookie = CodingCookieValue(data.data(), lenFile);
 
 		Utf8_16_Read convert(codingCookie==uni8Bit);
 		convert._encoding = filePath._encoding;
@@ -355,15 +358,16 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		bool firstBlock = true;
 		bBlockTextChangeNotify = true;
 		while (lenFile > 0) {
-			lenFile = convert.convert(data, lenFile);
+			lenFile = convert.convert(data.data(), lenFile);
 			char *dataBlock = convert.getNewBuf();
 			if ((firstBlock) && (language == "")) {
 				languageOverride = DiscoverLanguage(dataBlock, lenFile);
 			}
 			firstBlock = false;
 			wEditor.AddText(lenFile, dataBlock);
-			lenFile = fread(data, 1, sizeof(data), fp);
+			lenFile = fread(data.data(), 1, data.size(), fp);
 		}
+		//delete[] data;
 		bBlockTextChangeNotify = false;
 		fclose(fp);
 
@@ -443,9 +447,11 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 	int result = 2;
 	if (fp) {
 		result = 0;
-		char data[blockSize];
-		size_t lenFile = fread(data, 1, sizeof(data), fp);
-		UniMode codingCookie = CodingCookieValue(data, lenFile);
+		//char data[blockSize];
+		//char *data = new char[blockSize];
+		std::vector<char> data(blockSize);
+		size_t lenFile = fread(data.data(), 1, blockSize, fp);
+		UniMode codingCookie = CodingCookieValue(data.data(), lenFile);
 
 		Utf8_16_Read convert(codingCookie == uni8Bit );
 		convert._encoding = filePath._encoding;
@@ -453,7 +459,7 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 		size_t lenCompare = 0;
 		
 		while (lenFile > 0) {
-			lenFile = convert.convert(data, lenFile);
+			lenFile = convert.convert(data.data(), lenFile);
 			char *dataBlock = convert.getNewBuf();
 			if (memcmp((void*)dataBlock, (void*)(txtCompare + lenCompare), lenFile)) {
 				result = 1;
@@ -461,7 +467,7 @@ int SciTEBase::CompareFile(FilePath &fileCompare, const char* txtCompare) {
 			}
 
 			lenCompare += lenFile;
-			lenFile = fread(data, 1, sizeof(data), fp);
+			lenFile = fread(data.data(), 1, data.size(), fp);
 		}
 		fclose(fp);
 	}
@@ -926,7 +932,7 @@ class BufferedFile {
 		}
 	}
 public:
-	BufferedFile(FilePath fPath) {
+	BufferedFile(FilePath fPath) :buffer() {
 		fp = fPath.Open(fileRead);
 		readAll = false;
 		exhausted = fp == NULL;
@@ -983,7 +989,7 @@ class FileReader {
 	Utf8_16::encodingType encType;
 	bool isEncoding = false;
 public:
-	int m_LineLen;
+	int m_LineLen = 0;
 	FileReader(FilePath fPath, bool caseSensitive_) {
 		bf = new BufferedFile(fPath);
 		lineNum = 0;

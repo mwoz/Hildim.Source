@@ -17,7 +17,7 @@ public:
 	bool sortedNoCase;
 	int starts[256];
 	StringList(bool onlyLineEnds_ = false) :
-		words(0), wordsNoCase(0), list(0), len(0), onlyLineEnds(onlyLineEnds_),
+		words(0), wordsNoCase(0), list(0), len(0), onlyLineEnds(onlyLineEnds_), starts(),
 		sorted(false), sortedNoCase(false) {}
 	~StringList() { Clear(); }
 	operator bool() const { return len ? true : false; }

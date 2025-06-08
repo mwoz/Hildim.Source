@@ -12,7 +12,7 @@
 class TextReader {
 	// Private so TextReader objects can not be copied
 	TextReader(const TextReader &source);
-	TextReader &operator=(const TextReader &);
+	//TextReader &operator=(const TextReader &);
 protected:
 	enum {extremePosition=0x7FFFFFFF};
 	/** @a bufferSize is a trade off between time taken to copy the characters
@@ -36,6 +36,7 @@ public:
 		endPos(0),
 		codePage(0),
 		sw(sw_),
+		buf(""),
 		lenDoc(-1) {
 	}
 	char operator[](Sci_Position position) {
@@ -74,7 +75,7 @@ public:
 class StyleWriter : public TextReader {
 	// Private so StyleWriter objects can not be copied
 	StyleWriter(const StyleWriter &source);
-	StyleWriter &operator=(const StyleWriter &);
+	//StyleWriter &operator=(const StyleWriter &);
 protected:
 	char styleBuf[bufferSize];
 	int validLen;
@@ -82,6 +83,7 @@ protected:
 public:
 	StyleWriter(GUI::ScintillaWindow &sw_) :
 		TextReader(sw_),
+		styleBuf(""),
 		validLen(0),
 		startSeg(0) {
 	}

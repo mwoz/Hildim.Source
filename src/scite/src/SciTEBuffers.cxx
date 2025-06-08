@@ -87,7 +87,7 @@ void BufferList::Allocate(int maxSize) {
 	stack[0] = 0;
 }
 
-int BufferList::Add(sptr_t doc) {
+int BufferList::Add(IDocumentEditable* doc) {
 	if (length < size) {
 		length++;
 	}
@@ -150,7 +150,7 @@ int BufferList::NextByIdm(int idm){
 
 void BufferList::RemoveCurrent() {
 	// Delete and move up to fill gap but ensure doc pointer is saved.
-	sptr_t currentDoc = buffers[current].doc;
+	IDocumentEditable* currentDoc = buffers[current].doc;
 	for (int i = current;i < length - 1;i++) {
 		buffers[i] = buffers[i + 1];
 	}
@@ -324,13 +324,13 @@ void SciTEBase::ChangeTabWnd() {
 	Buffer* bPrev = buffers.CurrentBuffer();
 	int iPrev = buffers.Current();
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
-	sptr_t d = bPrev->doc;
+	IDocumentEditable* d = bPrev->doc;
 
 	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
-	wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
-	wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
+	wEditor.coEditor.AddRefDocument(d);
+	wEditor.coEditor.SetDocPointer(d);
 
 	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
 
@@ -354,9 +354,9 @@ void SciTEBase::ChangeTabWnd() {
 		bBlockRedraw = true;
 	}
 	else {
-		sptr_t d = reinterpret_cast<sptr_t>(wEditor.coEditor.CreateDocument(0, DocumentOption::Default));
-		wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
-		wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
+		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
+		wEditor.coEditor.AddRefDocument(d);
+		wEditor.coEditor.SetDocPointer(d);
 		wEditor.SetCoBuffPointer(NULL);
 			wEditor.Switch(true);
 		if (iPrevSide == IDM_SRCWIN) {
@@ -376,12 +376,12 @@ void SciTEBase::CloneTab(){
 		return;
 
 	Buffer* bPrev = buffers.CurrentBuffer();
-	sptr_t d = bPrev->doc;
+	IDocumentEditable* d = bPrev->doc;
 	int iPrev = buffers.Current();
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
-	wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
-	wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
+	wEditor.coEditor.AddRefDocument(d);
+	wEditor.coEditor.SetDocPointer(d);
 	wEditor.SetCoBuffPointer(&absPath);
 
 	wEditor.coEditor.SetZoom(wEditor.Zoom());
@@ -426,13 +426,13 @@ void SciTEBase::CheckRightEditorVisible() {
 	}
 }
 
-sptr_t SciTEBase::GetDocumentAt(int index) {
+IDocumentEditable* SciTEBase::GetDocumentAt(int index) {
 	if (index < 0 || index >= buffers.size) {
 		return 0;
 	}
 	if (buffers.buffers[index].doc == 0) {
 		// Create a new document buffer
-		buffers.buffers[index].doc = reinterpret_cast<sptr_t>(wEditor.CreateDocument(0, DocumentOption::Default));
+		buffers.buffers[index].doc = wEditor.CreateDocument(0, DocumentOption::Default);
 	}
 	return buffers.buffers[index].doc;
 }
@@ -493,7 +493,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	Buffer bufferNext = buffers.buffers[buffers.Current()];
 	SetFileName(bufferNext, true, switchTab);
 	if (!bExit) {
-		wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(GetDocumentAt(buffers.Current())));
+		wEditor.SetDocPointer(GetDocumentAt(buffers.Current()));
 		RestoreState(bufferNext, switchTab);
 		if (startSide == buffers.buffers[index].editorSide) {
 			wEditor.SetScrollWidth(100);
@@ -536,8 +536,8 @@ void SciTEBase::UpdateBuffersCoCurrent() {
 	if (index < 0)
 		return;
 
-	buffers.buffers[index].selection.cpMin = wEditor.coEditor.SelectionStart();
-	buffers.buffers[index].selection.cpMax = wEditor.coEditor.SelectionEnd();
+	buffers.buffers[index].selection.cpMin = static_cast<PositionCR>(wEditor.coEditor.SelectionStart());
+	buffers.buffers[index].selection.cpMax = static_cast<PositionCR>(wEditor.coEditor.SelectionEnd());
 	buffers.buffers[index].scrollPosition = wEditor.coEditor.DocLineFromVisible(wEditor.coEditor.FirstVisibleLine());
 }
 
@@ -612,8 +612,8 @@ void SciTEBase::InitialiseBuffers() {
 	if (!buffers.initialised) {
 		buffers.initialised = true;
 		// First document is the default from creation of control
-		buffers.buffers[0].doc = reinterpret_cast<sptr_t>(wEditor.DocPointer());
-		wEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(buffers.buffers[0].doc)); // We own this reference
+		buffers.buffers[0].doc = wEditor.DocPointer();
+		wEditor.AddRefDocument(buffers.buffers[0].doc); // We own this reference
 	}
 }
 
@@ -702,8 +702,8 @@ void SciTEBase::New() {
 		buffers.SetCurrent(buffers.Add());
 	}
 
-	sptr_t doc = GetDocumentAt(buffers.Current());
-	wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(doc));
+	IDocumentEditable* doc = GetDocumentAt(buffers.Current());
+	wEditor.SetDocPointer(doc);
 
 	FilePath curDirectory(filePath.Directory());
 	filePath.Set(curDirectory, GUI_TEXT(""));
@@ -778,7 +778,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					buffers.CurrentBuffer()->Friend()->isDirty = true;
 				buffers.CurrentBuffer()->Friend()->pFriend = false;
 				buffers.CurrentBuffer()->pFriend = false;
-				wEditor.ReleaseDocument(reinterpret_cast<IDocumentEditable*>(buffers.CurrentBuffer()->doc));
+				wEditor.ReleaseDocument(buffers.CurrentBuffer()->doc);
 				buffers.CurrentBuffer()->doc = 0;
 				IDocumentEditable* d = wEditor.CreateDocument(0, DocumentOption::Default);
 				wEditor.AddRefDocument(d);
@@ -797,10 +797,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 				else{
 					FilePath p = buffers.buffers[nextFriend].AbsolutePath();
 					wEditor.SetCoBuffPointer(&p);
-					sptr_t d = buffers.buffers[nextFriend].doc;
+					IDocumentEditable* d = buffers.buffers[nextFriend].doc;
 
-					wEditor.coEditor.AddRefDocument(reinterpret_cast<IDocumentEditable*>(d));
-					wEditor.coEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(d));
+					wEditor.coEditor.AddRefDocument(d);
+					wEditor.coEditor.SetDocPointer(d);
 				}
 			}
 		}
@@ -810,7 +810,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			SetFileName(bufferNext);
 		else
 			filePath = bufferNext;
-		wEditor.SetDocPointer(reinterpret_cast<IDocumentEditable*>(GetDocumentAt(buffers.Current())));
+		wEditor.SetDocPointer(GetDocumentAt(buffers.Current()));
 		if (closingLast) {
 			ClearDocument();
 		}
@@ -1671,7 +1671,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 		        style != SCE_ERR_DIFF_ADDITION &&
 		        style != SCE_ERR_DIFF_CHANGED &&
 		        style != SCE_ERR_DIFF_DELETION) {
-			wBottom.MarkerDeleteAll(static_cast<uptr_t>(-1));
+			wBottom.MarkerDeleteAll(-1);
 			wBottom.MarkerDefine(0, Scintilla::MarkerSymbol::SmallRect);
 			wBottom.MarkerSetFore(0, ColourOfProperty("error.marker.fore", ColourRGB(0x7f, 0, 0)));
 			wBottom.MarkerSetBack(0, ColourOfProperty("error.line.back", ColourOfProperty("error.marker.back", ColourRGB(0xff, 0xff, 0)))); //!-change-[ErrorLineBack]

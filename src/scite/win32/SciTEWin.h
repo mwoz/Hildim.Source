@@ -139,11 +139,9 @@ protected:
 	static const TCHAR *classNameInternal;
 	static SciTEWin *app;
 	WINDOWPLACEMENT winPlace;
-	RECT rcWorkArea;
 	GUI::gui_char openWhat[200];
 	bool modalParameters;
 	int filterDefault;
-	bool staticBuild;
 	int menuSource;
 	std::deque<GUI::gui_string> dropFilesQueue;
 	virtual GUI::Rectangle GetClientRectangle();
@@ -165,10 +163,6 @@ protected:
 	HMODULE hHH;
 	/// Multimedia (sound) module
 	HMODULE hMM;
-
-	// Tab Bar
-	TCITEM tie;
-	HFONT fontTabs;
 
 	/// Preserve focus during deactivation
 	HWND wFocus;
@@ -243,8 +237,8 @@ protected:
 	SString restartCmdLine = "-";
 	LRESULT		OnChangeCBChain(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDrawClipBoardMsg(WPARAM wParam);
-	HWND hNextCBWnd;
-	WORD cfColumnSelect;
+	HWND hNextCBWnd = NULL;
+	WORD cfColumnSelect = 0;
 	virtual bool IsRunAsAdmin();
 	virtual bool NewInstance(const char* arg, bool asAdmin);
 public:
@@ -314,6 +308,7 @@ public:
 		case sciFindres:
 			return &wFindRes;
 		}
+		return nullptr;
 	}
 };
 

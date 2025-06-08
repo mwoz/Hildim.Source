@@ -102,7 +102,7 @@ public:
 
 class Buffer : public RecentFile {
 public:
-	sptr_t doc;
+	Scintilla::IDocumentEditable* doc;
 	bool isDirty;
 	bool ROMarker; 
 	bool useMonoFont;
@@ -114,7 +114,7 @@ public:
 	std::vector<Sci_Position> foldState;
 	int editorSide;
 	bool pFriend;
-	BufferListAPI* pBase;
+	BufferListAPI* pBase = nullptr;
 	int FriendIndex() {
 		return  pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
 	}
@@ -186,7 +186,7 @@ public:
 	BufferList();
 	~BufferList();
 	void Allocate(int maxSize);
-	int Add(sptr_t doc = NULL);
+	int Add(Scintilla::IDocumentEditable* doc = NULL);
 	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, uptr_t forIdm = NULL);
 	void RemoveCurrent();
 	int NextByIdm(int idm);
@@ -422,17 +422,17 @@ private:
 class ColorConvertorLAB : public ColorConvertor {
 
 private:
-	int nPoints;
+	int nPoints = 0;
 	bool inicialized = false;
 	std::string prevPoints = "";
 
-	float m_x[CONVERTORLAB_MAXPOINTS], m_y[CONVERTORLAB_MAXPOINTS];
-	float m_k[CONVERTORLAB_MAXPOINTS], m_b[CONVERTORLAB_MAXPOINTS];
+	float m_x[CONVERTORLAB_MAXPOINTS]{}, m_y[CONVERTORLAB_MAXPOINTS]{};
+	float m_k[CONVERTORLAB_MAXPOINTS]{}, m_b[CONVERTORLAB_MAXPOINTS]{};
 public:
 	ColorConvertorLAB() {}
 	~ColorConvertorLAB() {}
-	virtual void Init(const char *points, ExtensionAPI *h);
-	virtual Scintilla::Colour Convert(Scintilla::Colour colorIn);
+	void Init(const char *points, ExtensionAPI *h);
+	Scintilla::Colour Convert(Scintilla::Colour colorIn);
 };
 
 class SciTEBase : public ExtensionAPI, public Searcher {
@@ -524,10 +524,10 @@ protected:
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
-	bool viewWs;
-	bool viewIndent;
-	bool viewHisoryIndicators;
-	bool viewHisoryMarkers;
+	bool viewWs = false;
+	bool viewIndent = false;
+	bool viewHisoryIndicators = false;
+	bool viewHisoryMarkers = false;
 	bool iuptbVisible;
 	SString sbValue;	///< Status bar text.
 	int sbNum;	///< Number of the currenly displayed status bar information.
@@ -567,9 +567,7 @@ protected:
 
 	bool autoCompleteIgnoreCase;
 	bool autoCompleteIncremental;
-	bool callTipAutomatic; //!-add-[BetterCalltips]
 	bool callTipIgnoreCase;
-	int calltipShowPerPage; //!-add-[BetterCalltips]
 	bool autoCCausedByOnlyOne;
 	SString calltipWordCharacters;
 	SString calltipParametersStart;
@@ -623,7 +621,7 @@ protected:
 	BufferList buffers;
 
 	// Handle buffers
-	sptr_t GetDocumentAt(int index);
+	Scintilla::IDocumentEditable* GetDocumentAt(int index);
 	
 	void UpdateBuffersCurrent();
 	void UpdateBuffersCoCurrent();
@@ -692,7 +690,7 @@ protected:
 	void GetLine(char *text, int sizeText, Sci_Position line = -1);
 	void GetRange(GUI::ScintillaWindow &win, Sci_Position start, Sci_Position end, char *text);
 	int IsLinePreprocessorCondition(char *line);
-	bool FindMatchingPreprocCondPosition(bool isForward, Sci_Position &mppcAtCaret, Sci_Position &mppcMatch);
+	//bool FindMatchingPreprocCondPosition(bool isForward, Sci_Position &mppcAtCaret, Sci_Position &mppcMatch);
 	bool FindMatchingBracePosition(bool editor, Sci_Position &braceAtCaret, Sci_Position &braceOpposite, bool sloppy);
 	void BraceMatch(bool editor);
 
@@ -808,7 +806,7 @@ protected:
 	virtual bool StartBlockComment();
 	virtual bool StartBoxComment();
 	virtual bool StartStreamComment();
-	void SetLineIndentation(Sci_Position line, Sci_Position indent);
+	void SetLineIndentation(Sci_Position line, int indent);
 	Sci_Position GetLineIndentation(Sci_Position line);
 	Sci_Position GetLineIndentPosition(Sci_Position line);
 	//bool RangeIsAllWhitespace(Sci_Position start, Sci_Position end);
@@ -988,7 +986,7 @@ public:
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);
-	void operator=(const SciTEBase&);
+	//void operator=(const SciTEBase&);
 };
 
 

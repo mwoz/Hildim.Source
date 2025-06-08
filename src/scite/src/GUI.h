@@ -153,7 +153,7 @@ struct ScintillaFailure {
 class ScintillaWindow : public Window, public Scintilla::ScintillaCall {
 	// Private so ScintillaWindow objects can not be copied
 	ScintillaWindow(const ScintillaWindow &source);
-	ScintillaWindow &operator=(const ScintillaWindow &);
+	//ScintillaWindow &operator=(const ScintillaWindow &);
 	SciFnDirect fn;
 	sptr_t ptr;
 public:

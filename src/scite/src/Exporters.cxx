@@ -418,12 +418,15 @@ void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
 	constexpr int StyleLastPredefined = STYLE_LASTPREDEFINED;
 
 	std::string bgColour;
-	std::string spanOpen[STYLE_MAX + 1];
-	std::string spanClose[STYLE_MAX + 1];
+	std::vector<std::string> spanOpen;
+	std::vector<std::string> spanClose;
 	std::string style;
 	std::string pStyle = "";
 	std::string defBack = "";
 	SString sval;
+
+	//spanOpen = new std::string[STYLE_MAX + 1];
+	//spanClose = new std::string[STYLE_MAX + 1];
 
 	char key[200];
 	sprintf(key, "style.%s.%0d", language.c_str(), 0);
@@ -436,8 +439,10 @@ void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
 	
 
 	for (int istyle = 0; istyle <= STYLE_MAX; istyle++) {
-		spanOpen[istyle] = "";
-		spanClose[istyle] = "";
+		spanOpen.push_back("");
+		spanClose.push_back("");
+		//spanOpen[istyle] = "";
+		//spanClose[istyle] = "";
 		style = "";
 		if ((istyle > STYLE_DEFAULT) && (istyle <= StyleLastPredefined))
 			continue;
@@ -554,6 +559,8 @@ void SciTEBase::SaveToStreamHTMLText(std::ostream& os, int start, int end) {
 		}
 	}
 	os << "</p>";
+//	delete[] spanOpen;
+//	delete[] spanClose;
 }
 void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 
@@ -1056,23 +1063,23 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	class PDFRender {
 	private:
 		bool pageStarted;
-		bool firstLine;
+		bool firstLine = false;
 		int pageCount;
-		int pageContentStart;
-		double xPos, yPos;	// position tracking for line wrapping
+		int pageContentStart = 0;
+		double xPos = 0, yPos = 0;	// position tracking for line wrapping
 		SString pageData;	// holds PDF stream contents
 		SString segment;	// character data
-		char *segStyle;		// style of segment
-		bool justWhiteSpace;
-		int styleCurrent, stylePrev;
-		double leading;
+		char *segStyle = nullptr;		// style of segment
+		bool justWhiteSpace = false;
+		int styleCurrent = 0, stylePrev = 0;
+		double leading = 0;
 		char *buffer;
 	public:
-		PDFObjectTracker *oT;
-		PDFStyle *style;
-		int fontSize;		// properties supplied by user
-		int fontSet;
-		int pageWidth, pageHeight;
+		PDFObjectTracker *oT = nullptr;
+		PDFStyle *style = nullptr;
+		int fontSize = 0;		// properties supplied by user
+		int fontSet = 0;
+		int pageWidth = 0, pageHeight = 0;
 		GUI::Rectangle pageMargin;
 		//
 		PDFRender() {

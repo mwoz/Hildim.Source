@@ -1537,18 +1537,8 @@ void SciTEBase::ReadPropertiesEx() {
 	char key[200];
 	SString sval;
 
-//!-start-[BetterCalltips]
-	sval = FindLanguageProperty("calltip.*.automatic", "1");
-	callTipAutomatic = sval == "1";
-//!-end-[BetterCalltips]
-
 	sval = FindLanguageProperty("calltip.*.ignorecase");
 	callTipIgnoreCase = sval == "1";
-
-//!-start-[BetterCalltips]
-	calltipShowPerPage = FindIntLanguageProperty("calltip.*.show.per.page", 1);
-	if (calltipShowPerPage < 1) calltipShowPerPage = 1;
-//!-end-[BetterCalltips]
 
 	calltipWordCharacters = FindLanguageProperty("calltip.*.word.characters",
 		"_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");

@@ -634,7 +634,7 @@ static int cf_pane_getchar(lua_State *L) {
 static int cf_pane_getutf8text(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 	int np = lua_gettop(L);
-	sptr_t cp = host->Send(p, Message::GetCodePage, 0, 0);
+	int cp = static_cast<int>(host->Send(p, Message::GetCodePage, 0, 0));
 	if (np == 1) {
 		sptr_t size = host->Send(p, Message::GetLength, 0, 0);
 		char* buff = new char[size + 1];
@@ -938,16 +938,22 @@ static int cf_editor_set_foreground(lua_State* L) {
 	const char* er = NULL;
 
 	hCurrWnd = ::GetForegroundWindow();
-	if (!hCurrWnd && !er)
+	if (!hCurrWnd) {
 		er = "Coud not GetForegroundWindow";
+		goto error;
+	}
 	iMyTID = GetCurrentThreadId();
 	iCurrTID = GetWindowThreadProcessId(hCurrWnd, 0);
-	if (!iCurrTID && !er)
+	if (!iCurrTID){
 		er = "Coud not GetWindowThreadProcessId";
+		goto error;
+	}
 
 	BOOL b = AttachThreadInput(iMyTID, iCurrTID, TRUE);
-	if (!iCurrTID && !er)
+	if (!iCurrTID){
 		er = "Coud not AttachThreadInput";
+		goto error;
+	}
 
 	// hWnd - дескриптор окна.
 	int i;
@@ -960,6 +966,8 @@ static int cf_editor_set_foreground(lua_State* L) {
 
 	AttachThreadInput(iMyTID, iCurrTID, FALSE);
 
+	
+error:
 	if (er) {
 		lua_pushstring(L, er);
 		return 1;
