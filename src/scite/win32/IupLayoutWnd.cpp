@@ -1421,19 +1421,20 @@ void IupLayoutWnd::CreateLayout(lua_State* L, void* pS) {
 		if (res)
 		{
 			HGLOBAL mem = LoadResource(hResInstance, res);
-			void* data = LockResource(mem);
-			DWORD len = SizeofResource(hResInstance, res);
+			if (mem) {
+				void* data = LockResource(mem);
+				DWORD len = SizeofResource(hResInstance, res);
 
-			DWORD nFonts;
-			m_fonthandle = AddFontMemResourceEx(
-				data,       	// font resource
-				len,       	// number of bytes in font resource 
-				NULL,          	// Reserved. Must be 0.
-				&nFonts      	// number of fonts installed
-			);
-			assert(m_fonthandle);
-
+				DWORD nFonts = 0;
+				m_fonthandle = AddFontMemResourceEx(
+					data,       	// font resource
+					len,       	// number of bytes in font resource 
+					NULL,          	// Reserved. Must be 0.
+					&nFonts      	// number of fonts installed
+				);
+			}
 		}
+		assert(m_fonthandle);
 	}
 
 }

@@ -461,6 +461,8 @@ void Editor::Redraw() {
 		wMargin.InvalidateAll();
 	} else if (paintState == PaintState::notPainting) {
 		redrawPendingText = true;
+		topline_pending = topLine;
+		xOffset_pending = xOffset;
 	}
 }
 
@@ -1866,8 +1868,11 @@ void Editor::RefreshPixMaps(Surface *surfaceWindow) {
 void Editor::Paint(Surface *surfaceWindow, PRectangle rcArea) {
 	if (redrawPendingText && paintState == PaintState::painting) {
 		ChangeScrollBars();
+		if (topline_pending = topLine)
+			SetVerticalScrollPos();
+		if(xOffset_pending != xOffset)
+			SetHorizontalScrollPos();
 	}
-	
 	
 	redrawPendingText = false;
 	redrawPendingMargin = false;

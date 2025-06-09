@@ -191,6 +191,8 @@ protected:	// ScintillaBase subclass needs access to much of Editor
 	// Optimization that avoids superfluous invalidations
 	bool redrawPendingText = false;
 	bool redrawPendingMargin = false;
+	int  xOffset_pending = 0;
+	Line topline_pending = 0;
 
 	/** Style resources may be expensive to allocate so are cached between uses.
 	 * When a style attribute is changed, this cache is flushed. */
