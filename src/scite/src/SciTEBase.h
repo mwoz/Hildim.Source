@@ -189,6 +189,8 @@ public:
 	int Add(Scintilla::IDocumentEditable* doc = NULL);
 	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, uptr_t forIdm = NULL);
 	void RemoveCurrent();
+	int NextByIdm_Settings(int idm);
+	int NextByIdm_Stack(int idm);
 	int NextByIdm(int idm);
 	int Current() const;
 	Buffer *CurrentBuffer();

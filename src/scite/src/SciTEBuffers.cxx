@@ -136,6 +136,20 @@ int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t
 	return -1;
 }
 
+int BufferList::NextByIdm_Settings(int idm) {
+	return SciTEBase::GetProps()->GetInt("buffers.zorder.switching", 0) ? NextByIdm_Stack(idm) : NextByIdm(idm);
+}
+int BufferList::NextByIdm_Stack(int idm) {
+	for (int i = stackcurrent + 1; i < length; i++) {
+		if (buffers[stack[i]].editorSide == idm)
+			return stack[i];
+	}
+	for (int i = 0; i < stackcurrent; i++) {
+		if (buffers[stack[i]].editorSide == idm)
+			return stack[i];
+	}
+	return -1;
+}
 int BufferList::NextByIdm(int idm){
 	for (int i = current + 1; i < length; i++){
 		if (buffers[i].editorSide == idm)
@@ -784,13 +798,15 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 				wEditor.AddRefDocument(d);
 				wEditor.SetDocPointer(d);
 			}
+
 			ClearDocument();
 
 			buffers.RemoveCurrent();
+
 			if (extender && !makingRoomForNew)
 				extender->ActivateBuffer(buffers.Current());
 			if (prevIdm != buffers.CurrentBuffer()->editorSide){
-				nextFriend = buffers.NextByIdm(prevIdm);
+				nextFriend = buffers.NextByIdm_Settings(prevIdm);
 				if (nextFriend == -1){
 					wEditor.SetCoBuffPointer(NULL);
 				}
@@ -798,12 +814,17 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					FilePath p = buffers.buffers[nextFriend].AbsolutePath();
 					wEditor.SetCoBuffPointer(&p);
 					IDocumentEditable* d = buffers.buffers[nextFriend].doc;
-
+				
 					wEditor.coEditor.AddRefDocument(d);
 					wEditor.coEditor.SetDocPointer(d);
+					wEditor.coEditor.StyleClearAll();
+				
+					SetStyleFor(wEditor.coEditor, "*");
+					SetStyleFor(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
 				}
 			}
 		}
+		
 		Buffer bufferNext = buffers.buffers[buffers.Current()];
 
 		if (updateUI)
@@ -816,16 +837,6 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 		if (updateUI) {
 			CheckReload();
-			//if (prevIdm != buffers.CurrentBuffer()->editorSide) {
-			//	FilePath fp = wEditor.GetCoBuffPointer();
-			//	int coNum = buffers.GetDocumentByName(fp);
-			//	if (coNum > -1) {
-			//		wEditor.coEditor.Colourise(0, -1);
-			//		//wEditor.Switch();
-			//		//RestoreState(buffers.buffers[coNum]);
-			//		//wEditor.Switch();
-			//	}
-			//}
 
 			RestoreState(bufferNext);
 			if (prevIdm == buffers.CurrentBuffer()->editorSide)
@@ -1049,6 +1060,12 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
+		int coPos = -1;
+		if (SecondEditorActive()) {
+			int coIdm = wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN;
+			coPos = buffers.NextByIdm_Settings(coIdm);
+		}
+
 
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;
@@ -1122,7 +1139,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : chtabForeColor);
 				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, ihui);
 
-				if (pos == buffers.Current()) {
+				if (pos == buffers.Current() || pos == coPos) {
 					intptr_t p = posR;
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "VALUEPOS", reinterpret_cast<const char*>(p));
 					IupSetAttribute(IupTab(IDM_COSRCWIN), "FORECOLOR", ro ? chtabActForeROColor : chtabActForeColor);
@@ -1140,7 +1157,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : chtabForeColor);
 				IupSetIntId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, ihui);
 
-				if (pos == buffers.Current()) {
+				if (pos == buffers.Current() || pos == coPos) {
 					intptr_t maxP = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE"));
 					intptr_t p = posL;
 					IupSetAttribute(IupTab(IDM_SRCWIN), "VALUEPOS", reinterpret_cast<const char*>(p));
