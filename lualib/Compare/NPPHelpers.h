@@ -44,45 +44,46 @@ struct ColorSettings
 struct UserSettings
 {
 
-	bool			FirstFileIsNew;
+	bool			FirstFileIsNew = false;
 	int				NewFileViewId;
-	bool			CompareToPrev;
+	bool			CompareToPrev = false;
 
-	bool			EncodingsCheck;
-	bool			AlignAllMatches;
-	bool			NeverMarkIgnored;
-	bool			FollowingCaret;
-	bool			WrapAround;
-	bool			GotoFirstDiff;
-	bool			PromptToCloseOnMatch;
+	bool			EncodingsCheck = false;
+	bool			AlignAllMatches = false;
+	bool			NeverMarkIgnored = false;
+	bool			FollowingCaret = false;
+	bool			WrapAround = false;
+	bool			GotoFirstDiff = false;
+	bool			PromptToCloseOnMatch = false;
 
-	bool			DetectMoves;
-	bool			DetectCharDiffs;
-	bool			IgnoreEmptyLines;
-	bool			IgnoreChangedSpaces;
-	bool			IgnoreAllSpaces;
-	bool			IgnoreCase;
-	bool			IgnoreRegex;
-	bool			InvertRegex;
+	bool			DetectMoves = false;
+	bool			DetectCharDiffs = false;
+	bool			IgnoreEmptyLines = false;
+	bool			IgnoreChangedSpaces = false;
+	bool			IgnoreAllSpaces = false;
+	bool			IgnoreCase = false;
+	bool			IgnoreRegex = false;
+	bool			InvertRegex = false;
 	std::wstring	IgnoreRegexStr;
 
-	bool			ShowOnlyDiffs;
-	bool			ShowOnlySelections;
-	bool			UseNavBar;
+	bool			ShowOnlyDiffs = false;
+	int			    ShowDiffsContext = 0;
+	bool			ShowOnlySelections = false;
+	bool			UseNavBar = false;
 
-	bool			RecompareOnChange;
+	bool			RecompareOnChange = false;
 
-	int				ChangedThresholdPercent;
+	int				ChangedThresholdPercent = 0;
 
-	bool			EnableToolbar;
-	bool			SetAsFirstTB;
-	bool			CompareTB;
-	bool			CompareSelTB;
-	bool			ClearCompareTB;
-	bool			NavigationTB;
-	bool			ShowOnlyDiffsTB;
-	bool			NavBarTB;
-	bool            ignoreComments;
+	bool			EnableToolbar = false;
+	bool			SetAsFirstTB = false;
+	bool			CompareTB = false;
+	bool			CompareSelTB = false;
+	bool			ClearCompareTB = false;
+	bool			NavigationTB = false;
+	bool			ShowOnlyDiffsTB = false;
+	bool			NavBarTB = false;
+	bool            ignoreComments = false;
 	std::set<int>   commentStyles;
 
 	ColorSettings colors;

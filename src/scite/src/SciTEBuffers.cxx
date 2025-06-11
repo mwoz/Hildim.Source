@@ -816,6 +816,17 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 		if (updateUI) {
 			CheckReload();
+			//if (prevIdm != buffers.CurrentBuffer()->editorSide) {
+			//	FilePath fp = wEditor.GetCoBuffPointer();
+			//	int coNum = buffers.GetDocumentByName(fp);
+			//	if (coNum > -1) {
+			//		wEditor.coEditor.Colourise(0, -1);
+			//		//wEditor.Switch();
+			//		//RestoreState(buffers.buffers[coNum]);
+			//		//wEditor.Switch();
+			//	}
+			//}
+
 			RestoreState(bufferNext);
 			if (prevIdm == buffers.CurrentBuffer()->editorSide)
 				DisplayAround(bufferNext);

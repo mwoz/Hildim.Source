@@ -471,9 +471,6 @@ protected:
 	bool hideHiddenStyles = false;
 	COLORREF clrDefaultBack = NULL;
 
-	bool indentOpening;
-	bool indentClosing;
-	bool indentMaintain;
 	int statementLookback;
 	StyleAndWords statementIndent;
 	StyleAndWords statementEnd;

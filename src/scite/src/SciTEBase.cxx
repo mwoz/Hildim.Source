@@ -79,9 +79,7 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	lexLanguage = SCLEX_CPP;
 	lexLPeg = -1;
 	functionDefinition = 0;
-	indentOpening = true;
-	indentClosing = true;
-	indentMaintain = false;
+
 	statementLookback = 10;
 	preprocessorSymbol = '\0';
 
@@ -1740,10 +1738,10 @@ void SciTEBase::MaintainIndentation(char ch) {
 
 	if (((eolMode == SC_EOL_CRLF || eolMode == SC_EOL_LF) && ch == '\n') ||
 	        (eolMode == SC_EOL_CR && ch == '\r')) {
-		if (props.GetInt("indent.automatic")) {
-			while (lastLine >= 0 && GetLineLength(lastLine) == 0)
-				lastLine--;
-		}
+
+		while (lastLine >= 0 && GetLineLength(lastLine) == 0)
+			lastLine--;
+
 		int indentAmount = 0;
 		if (lastLine >= 0) {
 			indentAmount = static_cast<int>(GetLineIndentation(lastLine));
@@ -1792,7 +1790,7 @@ void SciTEBase::CharAdded(char ch) {
 				braceCount = 1;
 			} else {
 				autoCCausedByOnlyOne = false;
-				if (indentMaintain)
+				if(props.GetInt("indent.automatic"))
 					MaintainIndentation(ch);
 
 				if (autoCompleteStartCharacters.contains(ch)) {
