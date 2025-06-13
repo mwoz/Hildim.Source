@@ -413,7 +413,7 @@ int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
 	return IDM_COSRCWIN;
 }
 
-sptr_t SciTEBase::CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s){
+sptr_t SciTEBase::CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s ){
 	wEditorR.CallString(msg, wParam, s);
 	return wEditorL.CallString(msg, wParam, s);
 }

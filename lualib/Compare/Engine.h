@@ -125,7 +125,7 @@ struct CompareOptions
 	std::unique_ptr<std::wregex>	ignoreRegex;
 	bool						    invertRegex;
 
-	int		changedThresholdPercent;
+	int		changedThresholdPercent = 30;
 
 	bool	selectionCompare;
 

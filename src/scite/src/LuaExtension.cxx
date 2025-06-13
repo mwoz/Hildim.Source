@@ -730,6 +730,27 @@ static int cf_pane_append(lua_State *L) {
 	return 0;
 }
 
+static int cf_pane_eol_annotation_set(lua_State* L) {
+	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	lua_Number line = luaL_checknumber(L, 2);
+
+	switch (lua_type(L, 3)) {
+	case LUA_TNIL:
+		host->Send(p, Message::EOLAnnotationSetText, line, NULL);
+		break;
+	case LUA_TSTRING:
+	{
+		std::string ss = GUI::ConvertToUTF8(lua_tostring(L, 3), 0);
+		host->Send(p, Message::EOLAnnotationSetText, line, reinterpret_cast<sptr_t>(ss.c_str()));
+	}
+		break;
+	default:
+		luaL_argerror(L, 3, "string or nil expected");
+	}
+	
+	return 0;
+}
+
 static int cf_pane_findtext(lua_State *L) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
 
@@ -796,8 +817,8 @@ static int cf_Reg_HotKey(lua_State* L){
 		lua_pushnil(L);
 		while (lua_next(L, 1) != 0) {
 			// key is at index -2 and value at index -1
-			//ccc = luaL_checkinteger(L, -2);
-
+			const char* ccc = luaL_checkstring(L, -2);
+			int kk = luaL_checkinteger(L, -1);
 			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), static_cast<int>(luaL_checkinteger(L, -1)));
 			lua_pop(L, 1);
 			i++;
@@ -2117,6 +2138,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		// Push built-in functions into the metatable, where the custom
 		// __index metamethod will find them.
 
+		lua_pushcfunction(L, cf_pane_eol_annotation_set);
+		lua_setfield(L, -2, "eolAnnotationSet");
 		lua_pushcfunction(L, cf_pane_findtext);
 		lua_setfield(L, -2, "findtext");
 		lua_pushcfunction(L, cf_pane_textrange);
@@ -2135,12 +2158,8 @@ void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
 		lua_setfield(L, -2, "uchar");
 		lua_pushcfunction(L, cf_pane_getutf8text);
 		lua_setfield(L, -2, "utf8text");
-
-//!-start-[EncodingToLua]
 		lua_pushcfunction(luaState, cf_pane_get_codepage);
 		lua_setfield(luaState, -2, "codepage");
-//!-end-[EncodingToLua]
-
 		lua_pushcfunction(L, cf_pane_match_generator);
 		lua_pushcclosure(L, cf_pane_match, 1);
 		lua_setfield(L, -2, "match");

@@ -1466,43 +1466,34 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 	std::vector<std::set<LinesConv>> lines1Convergence(linesCount1);
 	std::vector<std::set<LinesConv>> lines2Convergence(linesCount2);
 
-#if defined(MULTITHREAD) && (MULTITHREAD != 0)
-	std::mutex mtx;
-#endif
-
+	double x = 0.001 * linesCount1 * linesCount2;
+	double percent = (-50.0 / (x * x + 1.0)) + 99.5; //эвристическая формула - меняется от 50 до 99.5 - для ускорения сравнения на болших блоках
+	
 	auto workFn =
 		[&](intptr_t startLine, intptr_t endLine)
 		{
 //			progress_ptr& progress = ProgressDlg::Get();
 
-			intptr_t linesProgress = 0;
 
 			for (intptr_t line1 = startLine; line1 < endLine; ++line1)
 			{
 				if (chunk1[line1].empty())
-				{
-					linesProgress += linesCount2;
 					continue;
-				}
+		
 
 				std::vector<Word> words1;
 
 				for (intptr_t line2 = 0; line2 < linesCount2; ++line2)
 				{
 					if (chunk2[line2].empty())
-					{
-						++linesProgress;
 						continue;
-					}
 
 					const intptr_t minSize = std::min(chunk1[line1].size(), chunk2[line2].size());
 					const intptr_t maxSize = std::max(chunk1[line1].size(), chunk2[line2].size());
 
-					if (((minSize * 100) / maxSize) < options.changedThresholdPercent)
-					{
-						++linesProgress;
+					if (((minSize * 100) / maxSize) < percent) //options.changedThresholdPercent)
 						continue;
-					}
+					
 
 					intptr_t matchesCount	= 0;
 					intptr_t longestMatch	= 0;
@@ -1512,12 +1503,8 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 						if (words1.empty())
 							words1 = getLineWords(doc1.view, doc1.lines[blockDiff1.off + line1].line, options);
 
-						//auto wordDiffs = DiffCalc<Word>(words1, words2[line2],
-						//		std::bind(&ProgressDlg::IsCancelled, progress))();
 						auto wordDiffs = DiffCalc<Word>(words1, words2[line2])();
 
-						//if (progress->IsCancelled())
-						//	return;
 
 						const std::vector<Word>& rWord = wordDiffs.second ? words2[line2] : words1;
 
@@ -1542,12 +1529,6 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 					else
 					{
 						auto charDiffs = DiffCalc<Char>(chunk1[line1], chunk2[line2])();
-								//std::bind(&ProgressDlg::IsCancelled, progress)
-						//auto charDiffs = DiffCalc<Char>(chunk1[line1], chunk2[line2],
-						//		std::bind(&ProgressDlg::IsCancelled, progress))();
-
-						//if (progress->IsCancelled())
-						//	return;
 
 						const intptr_t charDiffsSize = static_cast<intptr_t>(charDiffs.first.size());
 
@@ -1565,20 +1546,12 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 						}
 					}
 
-#if defined(MULTITHREAD) && (MULTITHREAD != 0)
-					std::lock_guard<std::mutex> lock(mtx);
-#endif
-
-					if (((matchesCount * 100) / maxSize) >= options.changedThresholdPercent)
+					if (((matchesCount * 100) / maxSize) >= percent) //options.changedThresholdPercent)
 					{
 						const float conv =
 								(static_cast<float>(matchesCount) * 100) / maxSize +
 								(static_cast<float>(longestMatch) * 100) / maxSize;
 
-						//if (!progress->Advance(linesProgress + 1))
-						//	return;
-
-						linesProgress = 0;
 
 						bool addL1C = false;
 
@@ -1633,99 +1606,14 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 							}
 						}
 					}
-					else
-					{
-						//if (!progress->Advance(linesProgress + 1))
-						//	return;
-
-						linesProgress = 0;
-					}
 				}
 			}
 		};
 
-#if defined(MULTITHREAD) && (MULTITHREAD != 0)
 
-	auto threadFn =
-		[&workFn](intptr_t startLine, intptr_t endLine)
-		{
-			try
-			{
-				workFn(startLine, endLine);
-			}
-			catch (std::exception& e)
-			{
-				char msg[128];
-				_snprintf_s(msg, _countof(msg), _TRUNCATE, "Exception occurred: %s", e.what());
-				::MessageBoxA(nppData._nppHandle, msg, "ComparePlus", MB_OK | MB_ICONWARNING);
-			}
-			catch (...)
-			{
-				::MessageBoxA(nppData._nppHandle, "Unknown exception occurred.", "ComparePlus",
-						MB_OK | MB_ICONWARNING);
-			}
-		};
-
-	int threadsCount = std::thread::hardware_concurrency() - 1;
-
-	if (threadsCount < 1)
-		threadsCount = 1;
-	else if (static_cast<intptr_t>(threadsCount) > linesCount1)
-		threadsCount = static_cast<int>(linesCount1);
-
-	if (threadsCount > 1)
-	{
-		constexpr intptr_t jobsPerThread = 200;
-
-		const intptr_t totalJobs		= linesCount1 * linesCount2;
-		const intptr_t threadsNeeded	= (totalJobs + jobsPerThread - 1) / jobsPerThread;
-
-		if (static_cast<intptr_t>(threadsCount) > threadsNeeded)
-			threadsCount = static_cast<int>(threadsNeeded);
-	}
-
-	if (threadsCount > 1)
-	{
-		const intptr_t linesPerThread = (linesCount1 + threadsCount - 1) / threadsCount;
-
-		LOGD(LOG_ALGO, "getOrderedConvergence(): threads to use: " + std::to_string(threadsCount) +
-				", jobs per thread: " + std::to_string(linesPerThread * linesCount2) + "\n");
-
-		std::vector<std::thread> threads;
-
-		for (intptr_t startLine1 = 0; startLine1 < linesCount1; startLine1 += linesPerThread)
-		{
-			const intptr_t endLine1 = std::min(startLine1 + linesPerThread, linesCount1);
-
-			LOGD(LOG_ALGO, "Thread line1 range: " + std::to_string(startLine1 + 1) +
-					" to " + std::to_string(endLine1) + "\n");
-
-			try
-			{
-				threads.emplace_back(std::bind(threadFn, startLine1, endLine1));
-			}
-			catch (...)
-			{
-				workFn(startLine1, linesCount1);
-				break;
-			}
-		}
-
-		for (auto& th : threads)
-			th.join();
-	}
-	else
-	{
-		LOGD(LOG_ALGO, "getOrderedConvergence(): using 1 thread\n");
-
-		workFn(0, linesCount1);
-	}
-
-#else
 
 	workFn(0, linesCount1);
 
-#endif // MULTITHREAD
 
 	return lines1Convergence;
 }

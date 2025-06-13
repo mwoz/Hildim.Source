@@ -753,6 +753,8 @@ void SciTEBase::SetFoldingMarkers(bool main) {
 		DefineMarker(main, SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER, fore, back);
 		break;
 	}
+	if(main)
+		DefineMarker(main, markerHideLines, SC_MARK_ARROWDOWN, back, fore);
 }
 
 void SciTEBase::DefineMarker(bool main, int marker, int markerType, Scintilla::Colour fore, Scintilla::Colour back) {
@@ -1093,16 +1095,6 @@ void SciTEBase::ReadProperties() {
 	props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT); //!-add-[EditorUnicodeMode]
 	wEditor.SetCodePage(codePage);
 
-
-#ifdef __unix__
-	SString localeCType = props.Get("LC_CTYPE");
-	if (localeCType.length())
-		setlocale(LC_CTYPE, localeCType.c_str());
-	else
-		setlocale(LC_CTYPE, "C");
-#endif
-
-
 	SString tmp_str;
 	tmp_str = props.GetNewExpand("caret.fore.", fileNameForExtension.c_str());
 
@@ -1386,14 +1378,19 @@ void SciTEBase::ReadProperties() {
 	wEditor.SetEndAtLastLine( props.GetInt("end.at.last.line", 1));
 	wEditor.SetCaretSticky(static_cast<CaretSticky>(props.GetInt("caret.sticky", 0)));
 
-	SetColourElement(&wEditor, SC_ELEMENT_HIDDEN_LINE, "list.colour", "#");
 
 	SetColourElement(&wEditor, SC_ELEMENT_LIST, "list.colour", "#");
 	SetColourElement(&wEditor, SC_ELEMENT_LIST_BACK, "list.back", "#");
 	SetColourElement(&wEditor, SC_ELEMENT_LIST_SELECTED, "list.selection", "#");
 	SetColourElement(&wEditor, SC_ELEMENT_LIST_SELECTED_BACK, "list.selection.back", "#");
 
+	SetColourElement(&wEditor, SC_ELEMENT_HIDDEN_LINE, "colour.comment", "#");
 
+	//wEditor.EOLAnnotationSetVisible(static_cast<EOLAnnotationVisible>(props.GetInt("eol.annotation.visible", static_cast<int>(EOLAnnotationVisible::Angles))));
+	wEditor.EOLAnnotationSetVisible(EOLAnnotationVisible::Angles);
+	//wEditorL.EOLAnnotationSetVisible(EOLAnnotationVisible::Angles);
+	
+	
 	if (extender) {
 		FilePath defaultDir = GetDefaultDirectory();
 		FilePath scriptPath;
@@ -1428,7 +1425,7 @@ void SciTEBase::ReadProperties() {
 void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
-	CallChildren(Message::SetTechnology, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
+	CallAll(Message::SetTechnology, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
 
 	std::string languageCurrent = wOutput.LexerLanguage();
 	if (strcmp("errorlist", languageCurrent.c_str())) {
@@ -1458,15 +1455,6 @@ void SciTEBase::ReadPropertiesEx() {
 	int outputCodePage = props.GetInt("output.code.page", codePage);
 	wOutput.SetCodePage(outputCodePage);
 	wFindRes.SetCodePage(outputCodePage);
-
-
-#ifdef __unix__
-	SString localeCType = props.Get("LC_CTYPE");
-	if (localeCType.length())
-		setlocale(LC_CTYPE, localeCType.c_str());
-	else
-		setlocale(LC_CTYPE, "C");
-#endif
 
 	wrapStyle = props.GetInt("wrap.style", SC_WRAP_WORD);
 
@@ -1585,6 +1573,7 @@ void SciTEBase::ReadPropertiesEx() {
 
 	SetFoldingMarkers(false);
 
+
 	CallChildren(Message::SetScrollWidthTracking, 1);
 
 	wOutput.SetUndoCollection(0);
@@ -1593,6 +1582,8 @@ void SciTEBase::ReadPropertiesEx() {
 	wFindRes.MarkerDefine(0, MarkerSymbol::Bar);
 	wFindRes.MarkerSetFore(0, ColourRGB(0xff, 0x80, 0x00));
 	wFindRes.MarkerSetBack(0, ColourRGB(0xff, 0x80, 0x00));
+
+
 
 }
 
@@ -1619,12 +1610,8 @@ void SciTEBase::ReadFontProperties() {
 
 	sprintf(key, "style.%s.%0d", "*", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
-/*!
-	SetOneStyle(wEditor, STYLE_DEFAULT, sval.c_str());
-	SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
-*/
-//!-start-[StyleDefault]
-#if !defined(GTK)
+
+
 	StyleDefinition style(sval.c_str(), &convMain, invertColors);
 	char sColor[8];
 	ColourDesired color;
@@ -1649,11 +1636,7 @@ void SciTEBase::ReadFontProperties() {
 	SetOneStyle(wFindRes, STYLE_DEFAULT, style);
 
 	clrDefaultBack = style.BackAsLong();
-#else
-	SetOneStyle(wEditor, STYLE_DEFAULT, sval.c_str());
-	SetOneStyle(wOutput, STYLE_DEFAULT, sval.c_str());
-#endif
-//!-end-[StyleDefault]
+
 
 	sprintf(key, "style.%s.%0d", languageName, STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
@@ -1664,11 +1647,25 @@ void SciTEBase::ReadFontProperties() {
 	}
 
 	wEditor.StyleClearAll();
+	wEditor.ReleaseAllExtendedStyles();
 
 	SetStyleFor(wEditor, "*");
 	SetStyleFor(wEditor, languageName);
 
+	int styleOffset = wEditor.AllocateExtendedStyles(32);
+	wEditor.EOLAnnotationSetStyleOffset(styleOffset);
+	
+	sval = props.GetNewExpand("font.comment");
+	{
+		style = StyleDefinition(sval.c_str(), &convMain, invertColors);
+		SetOneStyle(wEditor, styleOffset + 1, style);
+		wEditor.StyleSetBack(styleOffset + 1, layout.GetColorRef("SCR_FORECOLOR"));
+		wEditor.StyleSetFore(styleOffset + 1, layout.GetColorRef("FGCOLOR"));
+	}
+	
 	wOutput.StyleClearAll();
+
+
 	sprintf(key, "style.%s.%0d", "errorlist", STYLE_DEFAULT);
 	sval = props.GetNewExpand(key);
 	{

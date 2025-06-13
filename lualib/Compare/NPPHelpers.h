@@ -85,6 +85,7 @@ struct UserSettings
 	bool			NavBarTB = false;
 	bool            ignoreComments = false;
 	std::set<int>   commentStyles;
+	std::string     hiddehLineHeader = "";
 
 	ColorSettings colors;
 };
@@ -94,6 +95,7 @@ extern UserSettings	Settings;
 enum SciCaller {
 	sciLeft = 1, sciRight, sciOutput, sciFindres
 };
+void hideLinesHildim(pSciCaller pc, intptr_t start, intptr_t end);
 void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color);
 void setStyles(UserSettings s);
 void ready();

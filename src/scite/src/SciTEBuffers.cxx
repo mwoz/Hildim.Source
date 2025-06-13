@@ -733,6 +733,37 @@ void SciTEBase::New() {
 		extender->InitBuffer(buffers.Current());
 }
 
+void SciTEBase::RestoreUserHiddenLines(ScintillaWindowEditor&w, const Buffer& buffer) {
+	// check to see whether there is saved fold state, restore
+	for (size_t fold = 0; fold < buffer.foldState.size(); fold++) {
+		w.ToggleFold(buffer.foldState[fold]);
+	}
+	int mask = 1 << markerHideLines;
+	for (Sci_Position line = 0; ; ) {
+		Sci_Position lineNext = w.MarkerNext(line, mask);
+		if ((line < 0) || (lineNext < line))
+			break;
+		std::string annot = w.EOLAnnotationGetText(lineNext);
+
+		int count = -1;
+		try {
+			annot = annot.substr(annot.find(": ") + 2);
+			count = std::stoi(annot);
+		}
+		catch (std::exception) {}
+
+		if (count < 0) {
+			w.MarkerDelete(lineNext, markerHideLines);
+			w.Call(Message::EOLAnnotationSetText, lineNext, NULL);
+		}
+		else {
+			w.HideLines(lineNext + 1, lineNext + count);
+		}
+
+		line = lineNext + 1;
+	}
+}
+
 void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption, bool scipCollapse) {
 	if (setCaption)
 		SetWindowName();
@@ -747,10 +778,9 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption, bool scipCol
 	isReadOnly = wEditor.ReadOnly();
 	if (scipCollapse)
 		return;
-	// check to see whether there is saved fold state, restore
-	for (size_t fold = 0; fold < buffer.foldState.size(); fold++) {
-		wEditor.ToggleFold(buffer.foldState[fold]);
-	}
+
+	RestoreUserHiddenLines(wEditor, buffer);
+
 }
 
 void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew) {
@@ -817,10 +847,18 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 				
 					wEditor.coEditor.AddRefDocument(d);
 					wEditor.coEditor.SetDocPointer(d);
+
 					wEditor.coEditor.StyleClearAll();
 				
 					SetStyleFor(wEditor.coEditor, "*");
 					SetStyleFor(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
+
+					SetLineNumberWidth(&wEditor.coEditor);
+
+					RestoreUserHiddenLines(wEditor.coEditor, buffers.buffers[nextFriend]);
+
+					DisplayAround(buffers.buffers[nextFriend], &wEditor.coEditor);
+
 				}
 			}
 		}
@@ -1230,17 +1268,20 @@ RecentFile SciTEBase::GetFilePosition() {
 	return rf;
 }
 
-void SciTEBase::DisplayAround(const RecentFile &rf) {
+void SciTEBase::DisplayAround(const RecentFile &rf, ScintillaWindowEditor* w) {
 	if ((rf.selection.cpMin != INVALID_POSITION) && (rf.selection.cpMax != INVALID_POSITION)) {
-		Sci_Position lineStart = wEditor.LineFromPosition(rf.selection.cpMin);
-		wEditor.EnsureVisibleEnforcePolicy(lineStart);
-		Sci_Position lineEnd = wEditor.LineFromPosition(rf.selection.cpMax);
-		wEditor.EnsureVisibleEnforcePolicy(lineEnd);
-		SetSelection(rf.selection.cpMax, rf.selection.cpMin);
+		if (!w)
+			w = &wEditor;
 
-		Sci_Position curTop = wEditor.FirstVisibleLine();
-		Sci_Position lineTop = wEditor.VisibleFromDocLine(rf.scrollPosition);
-		wEditor.LineScroll(0, lineTop - curTop);
+		Sci_Position lineStart = w->LineFromPosition(rf.selection.cpMin);
+		w->EnsureVisibleEnforcePolicy(lineStart);
+		Sci_Position lineEnd = w->LineFromPosition(rf.selection.cpMax);
+		w->EnsureVisibleEnforcePolicy(lineEnd);
+		w->SetSel(rf.selection.cpMax, rf.selection.cpMin);
+
+		Sci_Position curTop = w->FirstVisibleLine();
+		Sci_Position lineTop = w->VisibleFromDocLine(rf.scrollPosition);
+		w->LineScroll(0, lineTop - curTop);
 	}
 }
 

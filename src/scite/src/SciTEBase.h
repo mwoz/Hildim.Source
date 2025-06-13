@@ -455,7 +455,7 @@ protected:
 	enum { importCmdID = IDM_IMPORT };
 
 	enum { indicatorMatch = INDIC_CONTAINER };
-	enum {markerScipLineFormat  = 0, markerNotUsed, markerBookmark, markerError, markerBreakPoint, markerVertAlign};
+	enum {markerScipLineFormat  = 0, markerNotUsed, markerBookmark, markerError, markerBreakPoint, markerVertAlign, markerHideLines = 20};
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 
@@ -518,7 +518,7 @@ protected:
 	ColorConvertorLAB convMain;
 	
 	virtual sptr_t CallAll(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
-	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam, const char* s);
+	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam = 0, const char* s = nullptr);
 	friend class ScintillaWindowEditor;
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
@@ -708,6 +708,7 @@ protected:
 	void SetIndentSettings();
 	void SetEol();
 	void New();
+	void RestoreUserHiddenLines(ScintillaWindowEditor& w, const Buffer& buffer);
 	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
 	bool bBlockRedraw = false;
@@ -853,7 +854,7 @@ protected:
 	void AddFileToStack(FilePath file, Scintilla::Sci_CharacterRange selection, Sci_Position scrollPos);
 	void RemoveFileFromStack(FilePath file);
 	RecentFile GetFilePosition();
-	void DisplayAround(const RecentFile &rf);
+	void DisplayAround(const RecentFile &rf, ScintillaWindowEditor* w = nullptr);
 	void StackMenu(int pos);
 	void StackMenuNext();
 	void StackMenuPrev();

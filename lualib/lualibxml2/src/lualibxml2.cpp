@@ -336,7 +336,7 @@ namespace luabridge {
         AssertValid(L, "luaGetNodeName");
         std::string result;
  
-        if ((m_node->type == XML_ATTRIBUTE_NODE || m_node->type == XML_ELEMENT_NODE) && m_node->ns) {
+        if ((m_node->type == XML_ATTRIBUTE_NODE || m_node->type == XML_ELEMENT_NODE) && m_node->ns && m_node->ns->prefix) {
             result = XML2CHR(m_node->ns->prefix);
             result += ':';
             result += XML2CHR(m_node->name);
@@ -353,7 +353,7 @@ namespace luabridge {
         if (m_node->type != XML_ATTRIBUTE_NODE)
             LuaException::Throw(LuaException(L, "luaGetName", "Property 'name' is supported for XML_ATTRIBUTE_NODE only.", 1));
 
-        if (m_node->ns) {
+        if (m_node->ns && m_node->ns->prefix) {
             result = XML2CHR(m_node->ns->prefix);
             result += ':';
             result += XML2CHR(m_node->name);
@@ -365,8 +365,8 @@ namespace luabridge {
    std::string domNode::luaGetPrefix(lua_State* L) const
     {
         AssertValid(L, "luaGetPrefix");
-        std::string result;
-        if ((m_node->type == XML_ATTRIBUTE_NODE || m_node->type == XML_ELEMENT_NODE) && m_node->ns)
+        std::string result = "";
+        if ((m_node->type == XML_ATTRIBUTE_NODE || m_node->type == XML_ELEMENT_NODE) && m_node->ns && m_node->ns->prefix)
             result = XML2CHR(m_node->ns->prefix);
         return result;
     }

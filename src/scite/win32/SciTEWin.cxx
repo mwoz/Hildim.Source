@@ -87,7 +87,8 @@ int SciTEKeys::GetVK(SString sKey){
 				keyval = sKey[0];
 		}
 		else
-			keyval &= 0xFF;
+		keyval &= 0xFF;
+
 	}
 	else if (sKey.length() > 1) {
 		if ((sKey[0] == 'F') && (isdigit(sKey[1]))) {

@@ -33,6 +33,8 @@ extern UINT	EOLtype;
 int nppBookmarkMarker = -1;
 int indicatorHighlight = -1;
 
+#define MARKER_HIDDENLINE 20
+
 void defineColor(int type, int color)
 {
 	nppData.pMain->MarkerDefine(type, Scintilla::MarkerSymbol::Background);
@@ -111,6 +113,18 @@ void setStyles(UserSettings s)
 	nppData.pSecond->RGBAImageSetWidth(14);
 	nppData.pSecond->RGBAImageSetHeight(14);
 
+}
+
+void hideLinesHildim(pSciCaller pc, intptr_t start, intptr_t end) {
+
+	pc->MarkerAdd(start - 1, MARKER_HIDDENLINE);
+	pc->HideLines(start, end);
+
+	std::string t = Settings.hiddehLineHeader ;
+
+	t += std::to_string(end - start +1);
+	pc->EOLAnnotationSetText(start - 1, t.c_str());
+	pc->EOLAnnotationSetStyle(start - 1, 1);
 }
 
 void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color)
@@ -344,10 +358,10 @@ void hideOutsideRange(pSciCaller pc, intptr_t startLine, intptr_t endLine)
 
 	// First line (0) cannot be hidden so start from line 1
 	if (startLine > 1)
-		pc->HideLines(1, startLine - 1);
+		hideLinesHildim(pc, 1, startLine - 1);
 
 	if (endLine > 0 && endLine + 1 < linesCount)
-		pc->HideLines(endLine + 1, linesCount - 1);
+		hideLinesHildim(pc, endLine + 1, linesCount - 1);
 }
 
 void hideUnmarked(pSciCaller pc, int markMask)
@@ -368,6 +382,6 @@ void hideUnmarked(pSciCaller pc, int markMask)
 		if (nextMarkedLine < 0)
 			nextMarkedLine = linesCount;
 
-		pc->HideLines(nextUnmarkedLine, nextMarkedLine - 1);
+		hideLinesHildim(pc, nextUnmarkedLine, nextMarkedLine - 1);
 	}
 }
