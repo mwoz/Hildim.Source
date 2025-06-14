@@ -1587,7 +1587,22 @@ void SciTEBase::ReadPropertiesEx() {
 
 }
 
+void SciTEBase::ResetAllStyles(ScintillaWindowEditor& win, const char* languageName) {
+	win.StyleClearAll();
+	win.ReleaseAllExtendedStyles();
 
+	SetStyleFor(win, "*");
+	SetStyleFor(win, languageName);
+
+	int styleOffset = win.AllocateExtendedStyles(32);
+	win.EOLAnnotationSetStyleOffset(styleOffset);
+
+	SetOneStyle(win, styleOffset + 1, StyleDefinition(props.GetNewExpand("font.comment").c_str(), &convMain, invertColors));
+	win.StyleSetBack(styleOffset + 1, layout.GetColorRef("SCR_FORECOLOR"));
+	win.StyleSetFore(styleOffset + 1, layout.GetColorRef("FGCOLOR"));
+
+
+}
 void SciTEBase::ReadFontProperties() {
 	char key[200];
 	SString sval;
@@ -1646,22 +1661,7 @@ void SciTEBase::ReadFontProperties() {
 		SetOneStyle(wEditor, STYLE_DEFAULT, style);
 	}
 
-	wEditor.StyleClearAll();
-	wEditor.ReleaseAllExtendedStyles();
-
-	SetStyleFor(wEditor, "*");
-	SetStyleFor(wEditor, languageName);
-
-	int styleOffset = wEditor.AllocateExtendedStyles(32);
-	wEditor.EOLAnnotationSetStyleOffset(styleOffset);
-	
-	sval = props.GetNewExpand("font.comment");
-	{
-		style = StyleDefinition(sval.c_str(), &convMain, invertColors);
-		SetOneStyle(wEditor, styleOffset + 1, style);
-		wEditor.StyleSetBack(styleOffset + 1, layout.GetColorRef("SCR_FORECOLOR"));
-		wEditor.StyleSetFore(styleOffset + 1, layout.GetColorRef("FGCOLOR"));
-	}
+	ResetAllStyles(wEditor, languageName);
 	
 	wOutput.StyleClearAll();
 

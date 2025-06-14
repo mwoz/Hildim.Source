@@ -340,7 +340,8 @@ void SciTEBase::ChangeTabWnd() {
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
 	IDocumentEditable* d = bPrev->doc;
 
-	int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
+	//int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
+	int iNext = buffers.NextByIdm_Settings(iPrevSide);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.AddRefDocument(d);
@@ -361,11 +362,16 @@ void SciTEBase::ChangeTabWnd() {
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
 	if (iNext > -1) {
-		wEditor.Switch(true);
-		SetDocumentAt(iNext);
-		bBlockRedraw = false;
-		BuffersMenu();
-		bBlockRedraw = true;
+		//if (iNext > iPrev)
+		//	iNext--;
+		//wEditor.Switch(true);
+		//SetDocumentAt(iNext);
+		//bBlockRedraw = false;
+		//BuffersMenu(false, iNext);
+		//bBlockRedraw = true;
+		//bBlockRedraw = false;
+		SetCoDocumentAt(iNext);
+		//bBlockRedraw = true;
 	}
 	else {
 		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
@@ -474,6 +480,31 @@ int SciTEBase::ShiftToVisible(int index) {
 	}
 	return index;
 }
+void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
+
+	int currentbuf = buffers.Current();
+	
+	FilePath p = buffers.buffers[index].AbsolutePath();
+	wEditor.SetCoBuffPointer(&p);
+	IDocumentEditable* d = buffers.buffers[index].doc;
+
+	wEditor.coEditor.SetDocPointer(d);
+
+	ResetAllStyles(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
+
+	ScintillaWindowEditor* pCoEd = wEditor.GetWindowIdm() == IDM_SRCWIN ? &wEditorR : &wEditorL;
+	pCoEd->languageCurrent = wEditor.coEditor.LexerLanguage();
+
+	SetLineNumberWidth(&wEditor.coEditor);
+
+	RestoreUserHiddenLines(wEditor.coEditor, buffers.buffers[index]);
+
+	DisplayAround(buffers.buffers[index], &wEditor.coEditor);
+	
+	if(bSetBuffersMenu)
+		BuffersMenu(false, index);
+}
+
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
 	
 	int currentbuf = buffers.Current();
@@ -841,24 +872,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 					wEditor.SetCoBuffPointer(NULL);
 				}
 				else{
-					FilePath p = buffers.buffers[nextFriend].AbsolutePath();
-					wEditor.SetCoBuffPointer(&p);
-					IDocumentEditable* d = buffers.buffers[nextFriend].doc;
-				
-					wEditor.coEditor.AddRefDocument(d);
-					wEditor.coEditor.SetDocPointer(d);
-
-					wEditor.coEditor.StyleClearAll();
-				
-					SetStyleFor(wEditor.coEditor, "*");
-					SetStyleFor(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
-
-					SetLineNumberWidth(&wEditor.coEditor);
-
-					RestoreUserHiddenLines(wEditor.coEditor, buffers.buffers[nextFriend]);
-
-					DisplayAround(buffers.buffers[nextFriend], &wEditor.coEditor);
-
+					SetCoDocumentAt(nextFriend, false);
 				}
 			}
 		}
@@ -1057,7 +1071,7 @@ const char* SciTEBase::GetPropClr(const char* propName, char* buff, const char* 
 
 
 
-void SciTEBase::BuffersMenu(bool mousedrag) {
+void SciTEBase::BuffersMenu(bool mousedrag, int forsedCoPos) {
 	//UpdateBuffersCurrent();
 	static char tabForeColor[16];
 	static char tabROColor[16];
@@ -1100,8 +1114,10 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 
 		int coPos = -1;
 		if (SecondEditorActive()) {
-			int coIdm = wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN;
-			coPos = buffers.NextByIdm_Settings(coIdm);
+			if (forsedCoPos >= 0) 
+				coPos = forsedCoPos;
+			else
+			    coPos = buffers.NextByIdm_Settings(wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
 		}
 
 

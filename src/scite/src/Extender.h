@@ -32,6 +32,7 @@ public:
 	virtual void CheckMenus()=0; //!-add-[CheckMenus]
 	virtual char *GetTranslation(const char *s, bool retainIfNotFound = true)=0; //!-add-[LocalizationFromLua]
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
+	virtual void SetCoDocumentAt(int index, bool bSetBuffersMenu = true) = 0;
 	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;

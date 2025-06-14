@@ -1430,6 +1430,12 @@ static int bf_set_filetime(lua_State *L) {
 
 
 
+static int cf_set_co_document_at(lua_State* L) {
+	int index = static_cast<int>(luaL_checkinteger(L, 1));
+	host->SetCoDocumentAt(index);
+	return 0;
+}
+
 static int cf_set_document_at(lua_State *L){
 	int index = static_cast<int>(luaL_checkinteger(L, 1));
 	int updateStack = 1;
@@ -2596,6 +2602,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
 	lua_setfield(luaState, -2, "GetCount");
+	lua_pushcfunction(luaState, cf_set_co_document_at);
+	lua_setfield(luaState, -2, "SetCoDocumentAt");
 	lua_pushcfunction(luaState, cf_set_document_at);
 	lua_setfield(luaState, -2, "SetDocumentAt");
 	lua_pushcfunction(luaState, bf_get_buffer_name);

@@ -627,6 +627,7 @@ protected:
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
+	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
 	int ShiftToVisible(int index);
 	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
 	std::string  GetCoBufferName(){ return wEditor.GetCoBuffPointer().AsUTF8();};
@@ -660,7 +661,7 @@ protected:
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
-	void BuffersMenu(bool mousedrag = false);
+	void BuffersMenu(bool mousedrag = false, int forsedCoPos = -1);
 	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
@@ -870,6 +871,7 @@ protected:
 	void SetPropertiesInitial();
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();
+	void ResetAllStyles( ScintillaWindowEditor &win, const char * languageName);
 	void ReadFontProperties();
 	void SetOverrideLanguage(const char *lexer, bool bFireEvent);
 	StyleAndWords GetStyleAndWords(const char *base);
