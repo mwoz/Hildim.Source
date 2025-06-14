@@ -77,6 +77,10 @@ using namespace Scintilla::Internal;
 
 namespace {
 
+void* PtrFromLParam(Scintilla::sptr_t lParam) noexcept {
+	return reinterpret_cast<void*>(lParam);
+}
+
 struct ListItemData {
 	const char *text;
 	int pixId;
@@ -157,6 +161,7 @@ class ListBoxX : public ListBox {
 	int maxItemCharacters = 0;
 	unsigned int aveCharWidth = 8;
 	Window *parent = nullptr;
+	WNDPROC prevWndProc{};
 	int ctrlID = 0;
 	UINT dpi = USER_DEFAULT_SCREEN_DPI;
 	IListBoxDelegate *delegate = nullptr;
@@ -189,6 +194,7 @@ class ListBoxX : public ListBox {
 	LRESULT NcHitTest(WPARAM, LPARAM) const;
 	void CentreItem(int n);
 	void AllocateBitMap();
+	LRESULT PASCAL ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
@@ -232,7 +238,7 @@ public:
 	void Draw(DRAWITEMSTRUCT *pDrawItem);
 	LRESULT WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL StaticWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	Scintilla::Sci_ListColorsInfo* pListcolors;
+	Scintilla::Sci_ListColorsInfo* pListcolors = nullptr;
 	void OnScrollChange();
 	void sc_OnPaint(HDC hdc, RECT *rcPaint, bool bDrag, int nTrackPos);
 	void sc_Paint(bool bDrag, int nTrackPos);
@@ -801,10 +807,8 @@ void ListBoxX::AllocateBitMap() {
 	graphics.pixmapLine->Init(graphics.bm.DC(), GetID());
 }
 
-LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-	if (!prevWndProc)
-		prevWndProc = ::DefWindowProc;
+
+LRESULT PASCAL ListBoxX::ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	try {
 		ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
 		switch (iMessage) {
@@ -833,26 +837,20 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 				const LRESULT lResult = ::SendMessage(hWnd, LB_ITEMFROMPOINT, 0, lParam);
 				if (HIWORD(lResult) == 0) {
 					ListBox_SetCurSel(hWnd, LOWORD(lResult));
-					if (lbx) {
-						lbx->OnSelChange();
+					OnSelChange();
 					}
 				}
-			}
 			return 0;
 
 		case WM_LBUTTONUP:
 			return 0;
 
 		case WM_LBUTTONDBLCLK: {
-				if (lbx) {
-					lbx->OnDoubleClick();
-				}
+				OnDoubleClick();
 			}
 			return 0;
 		case WM_RBUTTONUP:{
-				if (lbx) {
-					lbx->OnContextMenu();
-				}
+				OnContextMenu();
 			}
 		return 0;
 		
@@ -864,7 +862,7 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 		case LB_SETCURSEL:
 		{
 			LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-			lbx->OnScrollChange();
+			OnScrollChange();
 			return res;
 		}
 		
@@ -874,9 +872,17 @@ LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam,
 			break;
 		}
 
+		if (prevWndProc) {
 			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
-
+		}
 	} catch (...) {
+	}
+	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
+}
+
+LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
+	if (ListBoxX* lbx = static_cast<ListBoxX*>(PointerFromWindow(::GetParent(hWnd)))) {
+		return lbx->ListProc(hWnd, iMessage, wParam, lParam);
 	}
 	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
 }
@@ -902,10 +908,10 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 				reinterpret_cast<HMENU>(static_cast<ptrdiff_t>(ctrlID)),
 				hinstanceParent,
 				0); 
-			WNDPROC prevWndProc = SubclassWindow(lb, ControlWndProc);
-			::SetWindowLongPtr(lb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
-			prevWndProc = SubclassWindow(scb, ScrollWndProc);
-			::SetWindowLongPtr(scb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(prevWndProc));
+			prevWndProc = SubclassWindow(lb, ControlWndProc);
+	
+			WNDPROC pWP = SubclassWindow(scb, ScrollWndProc);
+			::SetWindowLongPtr(scb, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWP));
 			
 			SetWindowTheme(scb, L"", L"");
 		}
@@ -944,13 +950,13 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 		break;
 
 	case WM_MEASUREITEM: {
-			MEASUREITEMSTRUCT *pMeasureItem = reinterpret_cast<MEASUREITEMSTRUCT *>(lParam);
+			MEASUREITEMSTRUCT *pMeasureItem = static_cast<MEASUREITEMSTRUCT *>(PtrFromLParam(lParam));
 			pMeasureItem->itemHeight = ItemHeight();
 		}
 		break;
 
 	case WM_DRAWITEM:
-		Draw(reinterpret_cast<DRAWITEMSTRUCT *>(lParam));
+		Draw(static_cast<DRAWITEMSTRUCT *>(PtrFromLParam(lParam)));
 		break;
 
 	case WM_DESTROY:
@@ -973,7 +979,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 		return TRUE;
 
 	case WM_GETMINMAXINFO: {
-			MINMAXINFO *minMax = reinterpret_cast<MINMAXINFO*>(lParam);
+			MINMAXINFO *minMax = static_cast<MINMAXINFO*>(PtrFromLParam(lParam));
 			minMax->ptMaxTrackSize = MaxTrackSize();
 			minMax->ptMinTrackSize = MinTrackSize();
 		}
@@ -1085,15 +1091,17 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
+
+
 LRESULT PASCAL ListBoxX::StaticWndProc(
     HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	if (iMessage == WM_CREATE) {
-		CREATESTRUCT *pCreate = reinterpret_cast<CREATESTRUCT *>(lParam);
+		CREATESTRUCT *pCreate = static_cast<CREATESTRUCT *>(PtrFromLParam(lParam));
 		SetWindowPointer(hWnd, pCreate->lpCreateParams);
 	}
 	// Find C++ object associated with window.
-	ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(hWnd));
-	if (lbx) {
+
+	if (ListBoxX* lbx = static_cast<ListBoxX*>(PointerFromWindow(hWnd))) {
 		return lbx->WndProc(hWnd, iMessage, wParam, lParam);
 	}
 	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
@@ -1207,7 +1215,7 @@ void ListBoxX::sc_OnPaint(HDC hDC, RECT* rcPaint, bool bDrag, int nTrackPos) {
 }
 
 LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
-	WNDPROC prevWndProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	WNDPROC prevWndProc_Scroll = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	ListBoxX* lbx = static_cast<ListBoxX*>(PointerFromWindow(::GetParent(hWnd)));
 	switch (iMessage) {
 	case WM_ERASEBKGND:
@@ -1215,7 +1223,7 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 	case WM_PAINT:
 	{
 		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+			return ::CallWindowProc(prevWndProc_Scroll, hWnd, iMessage, wParam, lParam);
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 		lbx->sc_OnPaint(hdc, &ps.rcPaint, false, 0);
@@ -1230,16 +1238,16 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 	case WM_MOUSEMOVE:
 	{
 		if (!lbx->pListcolors->inizialized)
-			return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+			return ::CallWindowProc(prevWndProc_Scroll, hWnd, iMessage, wParam, lParam);
 		if (iMessage == WM_MOUSEMOVE && !::GetAsyncKeyState(VK_LBUTTON)) {
-			LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+			LRESULT res = ::CallWindowProc(prevWndProc_Scroll, hWnd, iMessage, wParam, lParam);
 			lbx->sc_Paint(false, 0);
 			return res;
 		}
 
 		::DefWindowProcW(hWnd, WM_SETREDRAW, 0, 0);
 		lbx->bBlockRedraw = true;
-		LRESULT res = ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+		LRESULT res = ::CallWindowProc(prevWndProc_Scroll, hWnd, iMessage, wParam, lParam);
 		::DefWindowProcW(hWnd, WM_SETREDRAW, 1, 0);
 		lbx->bBlockRedraw = false;
 		if (!::GetAsyncKeyState(VK_LBUTTON))
@@ -1248,7 +1256,7 @@ LRESULT PASCAL ListBoxX::ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, 
 		return res;
 	}
 	}
-	return ::CallWindowProc(prevWndProc, hWnd, iMessage, wParam, lParam);
+	return ::CallWindowProc(prevWndProc_Scroll, hWnd, iMessage, wParam, lParam);
 }
 
 namespace Scintilla::Internal {

@@ -42,6 +42,7 @@ AutoComplete::AutoComplete() :
 	ignoreCase(false),
 	chooseSingle(0),
 	options(AutoCompleteOption::Normal),
+	imageScale(1.0),
 	posStart(0),
 	startLen(0),
 	cancelAtStartPos(true),
