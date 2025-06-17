@@ -2987,11 +2987,11 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_NEEDSHOWN: {
-		const Scintilla::Line lineStart = wEditor.LineFromPosition(notification->position);
-		const Scintilla::Line lineEnd = wEditor.LineFromPosition(notification->position + notification->length);
-		for (Scintilla::Line line = lineStart; line <= lineEnd; line++) {
-			wEditor.EnsureVisible(line); //.EnsureLineVisible(line, false);
-		}
+		//const Scintilla::Line lineStart = wEditor.LineFromPosition(notification->position);
+		//const Scintilla::Line lineEnd = wEditor.LineFromPosition(notification->position + notification->length);
+		//for (Scintilla::Line line = lineStart; line <= lineEnd; line++) {
+		//	wEditor.EnsureVisible(line); //.EnsureLineVisible(line, false);
+		//}
 //							if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
 		}
 		break;
