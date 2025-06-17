@@ -1353,7 +1353,7 @@ void compareLines(const DocCmpInfo& doc1, const DocCmpInfo& doc2, diffInfo& bloc
 
 							// Are similarities a considerable portion of the diff?
 							if ((int)((matchLen * 100) / std::max(sec1.size(), sec2.size())) >=
-								options.changedThresholdPercent)
+								options.inLine_Percent)
 							{
 								for (const auto& sd: sectionDiffs)
 								{
@@ -1436,7 +1436,7 @@ void compareLines(const DocCmpInfo& doc1, const DocCmpInfo& doc2, diffInfo& bloc
 		}
 
 		// Not enough portion of the lines matches - consider them totally different
-		if (((totalLineMatchLen * 100) / std::max(lineLen1, lineLen2)) < options.changedThresholdPercent)
+		if (((totalLineMatchLen * 100) / std::max(lineLen1, lineLen2)) < options.inLine_Percent)
 		{
 			pBlockDiff1->info.changedLines.pop_back();
 			pBlockDiff2->info.changedLines.pop_back();
@@ -1467,8 +1467,9 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 	std::vector<std::set<LinesConv>> lines2Convergence(linesCount2);
 
 	double x = 0.001 * linesCount1 * linesCount2;
-	double percent = (-50.0 / (x * x + 1.0)) + 99.5; //эвристическая формула - меняется от 50 до 99.5 - для ускорения сравнения на болших блоках
-	
+	double factor = pow(10, (-options.bigBlockFactor));
+	double percent = ((options.inBlock_Percent - 100.0) / ((x * x* x* x * factor + 1.0))) + 99.5; //эвристическая формула - меняется от options.inBlock_Percent до 99.5 - для ускорения сравнения на болших блоках
+
 	auto workFn =
 		[&](intptr_t startLine, intptr_t endLine)
 		{
@@ -1546,7 +1547,7 @@ std::vector<std::set<LinesConv>> getOrderedConvergence(const DocCmpInfo& doc1, c
 						}
 					}
 
-					if (((matchesCount * 100) / maxSize) >= percent) //options.changedThresholdPercent)
+					if (((matchesCount * 100) / maxSize) >= options.inBlock_Percent) //options.changedThresholdPercent)
 					{
 						const float conv =
 								(static_cast<float>(matchesCount) * 100) / maxSize +

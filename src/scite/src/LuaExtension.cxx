@@ -392,6 +392,15 @@ static int cf_get_is64bit(lua_State* L) {
 	return 1;
 }
 
+static int cf_switch_tabs(lua_State* L) {
+	int side = static_cast<int>(luaL_checkinteger(L, 1));
+	if (side < -1 || side > 1)
+		luaL_argerror(L, 1, " allowed values: -1, 0, 1");
+	bool forward = lua_toboolean(L, 2);
+	host->UiDocTabulation(side, forward);
+	return 0;
+}
+
 static int cf_get_keyboard_layout(lua_State* L) {
 	
 	char buff[KL_NAMELENGTH];
@@ -910,11 +919,6 @@ static int sf_SwitchMouseHook(lua_State* L){
 
 static int sf_RunInConcole(lua_State* L) {
 	host->RunInConcole();
-	return 0;
-}
-
-static int sf_ReloadProperties(lua_State* L) {
-	host->ReloadProperties();
 	return 0;
 }
 
@@ -1843,7 +1847,13 @@ static const char *CallNamedFunction(const char *name, LUA_INTEGER numberArg, LU
 	}
 	return handled;
 }
-//!-end-[OnSendEditor]
+
+static int sf_ReloadProperties(lua_State* L) {
+	host->ReloadProperties();
+	CallNamedFunction("OnReloadProperties");
+	return 0;
+}
+
 
 static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool bSetter) {
 	ExtensionAPI::Pane p = check_pane_object(L, 1);
@@ -2597,6 +2607,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_get_is64bit);
 	lua_setfield(luaState, -2, "Is64Bit");
+
+	lua_pushcfunction(luaState, cf_switch_tabs);
+	lua_setfield(luaState, -2, "SwitchTabs");
 
 	// buffers
 	lua_newtable(luaState);

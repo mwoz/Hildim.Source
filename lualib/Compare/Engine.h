@@ -105,29 +105,29 @@ struct CompareOptions
 		ignoreRegex = nullptr;
 	}
 
-	int		newFileViewId;
+	int		newFileViewId = 0;
 
-	bool	findUniqueMode;
+	bool	findUniqueMode = false;
 
-	bool	alignAllMatches;
-	bool	neverMarkIgnored;
-	bool	detectMoves;
-	bool	detectCharDiffs;
-	bool	ignoreEmptyLines;
-	bool	ignoreChangedSpaces;
-	bool    ignoreIndent;
-	bool	ignoreAllSpaces;
-	bool	ignoreCase;
+	bool	alignAllMatches = false;
+	bool	neverMarkIgnored = false;
+	bool	detectMoves = false;
+	bool	detectCharDiffs = false;
+	bool	ignoreEmptyLines = false;
+	bool	ignoreChangedSpaces = false;
+	bool    ignoreIndent = false;
+	bool	ignoreAllSpaces = false;
+	bool	ignoreCase = false;
 	FoldType_t     foldType = NOT_SET;
-
-	bool	recompareOnChange;
 
 	std::unique_ptr<std::wregex>	ignoreRegex;
 	bool						    invertRegex;
 
-	int		changedThresholdPercent = 30;
+	int		inLine_Percent = 50;
+	int		inBlock_Percent = 50;
+	short bigBlockFactor = 8;
 
-	bool	selectionCompare;
+	bool	selectionCompare = false;
 
 	std::pair<intptr_t, intptr_t>	selections[2];
 };

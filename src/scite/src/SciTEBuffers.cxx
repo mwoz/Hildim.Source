@@ -217,14 +217,29 @@ void BufferList::PopStack() {
 		stack[i] = index;
 	}
 }
-int BufferList::StackNextBySide(int side, int curr){
+
+int BufferList::StackPrevBySide(int side){
+	int stmp = stackcurrent;
+	int res;
+	for (int i = length - 1; i >= 0; i--) {
+		if (--stackcurrent < 0)
+			stackcurrent = length - 1;
+		res = stack[stackcurrent];
+		if(buffers[res].editorSide == side && Current() != res)
+			return res;
+	}
+	stackcurrent = stmp;
+	return - 1;
+}
+
+int BufferList::StackNextBySide(int side){
 	int stmp = stackcurrent;
 	int res;
 	for (int i = 0; i < length; i++) {
 		if (++stackcurrent >= length)
 			stackcurrent = 0;
 		res = stack[stackcurrent];
-		if(buffers[res].editorSide == side && curr != res)
+		if(buffers[res].editorSide == side && Current() != res)
 			return res;
 	}
 	stackcurrent = stmp;
@@ -354,25 +369,12 @@ void SciTEBase::ChangeTabWnd() {
 	SetFileName((FilePath)(*bPrev));
 	CurrentBuffer()->overrideExtension = "";
 
-	//ReadProperties();
-	//SetIndentSettings();
-	//SetEol();
 	UpdateBuffersCurrent();
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	if (iNext > -1) {
-		//if (iNext > iPrev)
-		//	iNext--;
-		//wEditor.Switch(true);
-		//SetDocumentAt(iNext);
-		//bBlockRedraw = false;
-		//BuffersMenu(false, iNext);
-		//bBlockRedraw = true;
-		//bBlockRedraw = false;
+	if (iNext > -1) 
 		SetCoDocumentAt(iNext);
-		//bBlockRedraw = true;
-	}
 	else {
 		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
 		wEditor.coEditor.AddRefDocument(d);
@@ -1018,16 +1020,24 @@ void SciTEBase::MoveTabLeft() {
 	ShiftTab(indexFrom, indexTo);
 }
 
-void SciTEBase::NextInStack() {
+void SciTEBase::UiDocTabulation(int side, bool forward) {
+	int idm = side == -1 ? -1:side ? IDM_COSRCWIN:IDM_SRCWIN;
+	if (forward)
+		NextInStack(idm);
+	else
+		PrevInStack(idm);
+}
+
+void SciTEBase::NextInStack(int idm) {
 	extender->OnNavigation("Switch");
-	SetDocumentAt(buffers.StackNext(), false);
+	SetDocumentAt(idm== -1 ? buffers.StackNext() : buffers.StackPrevBySide(idm), false);
 	extender->OnNavigation("Switch-");
 	CheckReload();
 }
 
-void SciTEBase::PrevInStack() {
+void SciTEBase::PrevInStack(int idm) {
 	extender->OnNavigation("Switch");
-	SetDocumentAt(buffers.StackPrev(), false);
+	SetDocumentAt(idm == -1 ? buffers.StackPrev() : buffers.StackPrevBySide(idm), false);
 	extender->OnNavigation("Switch-");
 	CheckReload();
 }

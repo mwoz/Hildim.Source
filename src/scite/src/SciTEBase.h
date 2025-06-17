@@ -196,7 +196,8 @@ public:
 	Buffer *CurrentBuffer();
 	void SetCurrent(int index);
 	int StackNext();
-	int StackNextBySide(int side, int curr);
+	int StackPrevBySide(int side);
+	int StackNextBySide(int side);
 	int StackPrev();
 	void CommitStackSelection();
 	void MoveToStackTop(int index);
@@ -665,8 +666,9 @@ protected:
 	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
-	void NextInStack();
-	void PrevInStack();
+	void UiDocTabulation(int side, bool forward);
+	void NextInStack(int idm = -1);
+	void PrevInStack(int idm = -1);
 	void EndStackedTabbing();
 
 	void ShiftTab(int indexFrom, int indexTo, bool mose = false);

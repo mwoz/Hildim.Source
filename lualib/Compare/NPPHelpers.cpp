@@ -143,7 +143,7 @@ char **getAllLines(pSciCaller pc,int *length, int **lineNum){
 	Scintilla::Line docLines=pc->LineCount();
 	char **lines=new char*[docLines];
 	*lineNum=new int[docLines];
-	int textCount=0;
+	Scintilla::Position textCount=0;
 	for(Scintilla::Line line=0;line<docLines;line++)
 	{
 		
