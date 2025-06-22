@@ -127,50 +127,6 @@ void hideLinesHildim(pSciCaller pc, intptr_t start, intptr_t end) {
 	pc->EOLAnnotationSetStyle(start - 1, 1);
 }
 
-void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color)
-{
-	if (length > 0)
-	{
-		//const int curIndic = pc->IndicatorCurrent();
-		//pc->SetIndicatorCurrent(indicatorHighlight);
-		//pc->SetIndicatorValue(color | SC_INDICVALUEBIT);
-		pc->IndicatorFillRange(start, length);
-		//pc->SetIndicatorCurrent(curIndic);
-	}
-}
-
-char **getAllLines(pSciCaller pc,int *length, int **lineNum){
-	Scintilla::Line docLines=pc->LineCount();
-	char **lines=new char*[docLines];
-	*lineNum=new int[docLines];
-	Scintilla::Position textCount=0;
-	for(Scintilla::Line line=0;line<docLines;line++)
-	{
-		
-		//clearLine(window,line);
-		Scintilla::Position lineLength = pc->LineLength(line);
-		(*lineNum)[line]=textCount;
-		textCount+=lineLength;
-
-		if(lineLength>0){
-			lines[line] = new char[lineLength+1];
-			pc->GetLine(line, lines[line]);		
-			int i=0;
-			for(i=0;i<lineLength&& lines[line][i]!='\n' && lines[line][i]!='\r';i++);
-
-			
-			lines[line][i]=0;
-			
-					
-		}else{
-			lines[line]="";
-		}
-
-	}
-	*length=docLines;
-	return lines;
-}
-
 static int prev_offset;
 void resetPrevOffset() {
 	prev_offset = -2;
@@ -294,7 +250,7 @@ void clearChangedIndicator(pSciCaller pc, intptr_t start, intptr_t length)
 	}
 }
 
-inline intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line)
+intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line)
 {
 	intptr_t visibleLine = pc->VisibleFromDocLine(line) - 1;
 
@@ -302,29 +258,6 @@ inline intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line)
 		visibleLine = 0;
 
 	return pc->DocLineFromVisible(visibleLine);
-}
-
-void addBlankSection(pSciCaller pc, intptr_t line, intptr_t length, intptr_t textLinePos, const char* text)
-{
-	if (length <= 0)
-		return;
-
-	std::vector<char> blank(length - 1, '\n');
-	//std::vector<char> blank(length, '\n');
-	blank.push_back('\0');
-
-	if (textLinePos > 0 && text != nullptr)
-	{
-		if (length < textLinePos)
-			return;
-		blank.insert(blank.begin() + textLinePos - 1, text, text + strlen(text));
-
-		//blank.resize(blank.size() - 1);
-	}
-
-	
-
-	pc->AnnotationSetText(getPreviousUnhiddenLine(pc, line), blank.data());
 }
 
 void addBlankSectionAfter(pSciCaller pc, intptr_t line, intptr_t length)

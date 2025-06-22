@@ -1815,8 +1815,11 @@ void markLineDiffs(const CompareInfo& cmpInfo, const diffInfo& bd, intptr_t line
 	int color = (cmpInfo.doc1.blockDiffMask == MARKER_MASK_ADDED) ?
 			Settings.colors.add_highlight : Settings.colors.rem_highlight;
 
-	for (const auto& change : bd.info.changedLines[lineIdx].changes)
-		markTextAsChanged(pS1, linePos + change.off, change.len, color);
+	for (const auto& change : bd.info.changedLines[lineIdx].changes) {
+		if (change.len > 0)
+			pS1->IndicatorFillRange(linePos + change.off, change.len);
+
+	}
 
 	markLine(cmpInfo.doc1.view, line, MARKER_MASK_CHANGED);
 
@@ -1825,8 +1828,11 @@ void markLineDiffs(const CompareInfo& cmpInfo, const diffInfo& bd, intptr_t line
 	color = (cmpInfo.doc2.blockDiffMask == MARKER_MASK_ADDED) ?
 			Settings.colors.add_highlight : Settings.colors.rem_highlight; 
 
-	for (const auto& change: bd.info.matchBlock->info.changedLines[lineIdx].changes)
-		markTextAsChanged(pS2, linePos + change.off, change.len, color);
+	for (const auto& change: bd.info.matchBlock->info.changedLines[lineIdx].changes) {
+		if (change.len > 0)
+			pS2->IndicatorFillRange(linePos + change.off, change.len);
+
+	}
 
 	markLine(cmpInfo.doc2.view, line, MARKER_MASK_CHANGED);
 }

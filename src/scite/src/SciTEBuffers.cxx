@@ -1030,7 +1030,7 @@ void SciTEBase::UiDocTabulation(int side, bool forward) {
 
 void SciTEBase::NextInStack(int idm) {
 	extender->OnNavigation("Switch");
-	SetDocumentAt(idm== -1 ? buffers.StackNext() : buffers.StackPrevBySide(idm), false);
+	SetDocumentAt(idm== -1 ? buffers.StackNext() : buffers.StackNextBySide(idm), false);
 	extender->OnNavigation("Switch-");
 	CheckReload();
 }
@@ -1126,8 +1126,8 @@ void SciTEBase::BuffersMenu(bool mousedrag, int forsedCoPos) {
 		if (SecondEditorActive()) {
 			if (forsedCoPos >= 0) 
 				coPos = forsedCoPos;
-			else
-			    coPos = buffers.NextByIdm_Settings(wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
+			//else
+			 //   coPos = buffers.NextByIdm_Settings(wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
 		}
 
 

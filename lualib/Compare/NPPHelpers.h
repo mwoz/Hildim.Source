@@ -96,7 +96,6 @@ enum SciCaller {
 	sciLeft = 1, sciRight, sciOutput, sciFindres
 };
 void hideLinesHildim(pSciCaller pc, intptr_t start, intptr_t end);
-void markTextAsChanged(pSciCaller pc, intptr_t start, intptr_t length, int color);
 void setStyles(UserSettings s);
 void ready();
 void wait();
@@ -106,7 +105,6 @@ void setTextStyle(pSciCaller pc, ColorSettings s);
 void setChangedStyle(pSciCaller pc, ColorSettings s);
 void defineSymbol(int type,int symbol);
 void defineColor(int type,int color);
-char **getAllLines(pSciCaller pc,int *length, int **lineNum);
 
 void resetPrevOffset();
 __declspec(dllimport) void* GetCaller(SciCaller c);
@@ -118,8 +116,7 @@ void clearWindow(pSciCaller pc);
 std::vector<intptr_t> getFoldedLines(pSciCaller pc);
 void setFoldedLines(pSciCaller pc, const std::vector<intptr_t>& foldedLines);
 void clearChangedIndicator(pSciCaller pc, intptr_t start, intptr_t length);
-inline intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line);
-void addBlankSection(pSciCaller pc, intptr_t line, intptr_t length, intptr_t textLinePos = 0, const char* text = nullptr);
+intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line);
 void addBlankSectionAfter(pSciCaller pc, intptr_t line, intptr_t length);
 bool isLineFolded(pSciCaller pc, intptr_t line);
 void hideOutsideRange(pSciCaller pc, intptr_t startLine, intptr_t endLine);
