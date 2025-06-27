@@ -229,8 +229,7 @@ public:
 				}
 				if (i == src->len - 1 + i0)  {
 					cursor++;
-					src = ((cursor._Ptr->off >= start && cursor._Ptr->off <= start+ annotLen)? cursor._Ptr : nullptr);
-					i0 = i + 1;
+					src = nullptr;
 				}
 			}
 		}

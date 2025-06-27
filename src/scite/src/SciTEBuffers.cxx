@@ -504,7 +504,7 @@ void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
 	DisplayAround(buffers.buffers[index], &wEditor.coEditor);
 	
 	if(bSetBuffersMenu)
-		BuffersMenu(false, index);
+		BuffersMenu(false);
 }
 
 void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
@@ -1081,7 +1081,7 @@ const char* SciTEBase::GetPropClr(const char* propName, char* buff, const char* 
 
 
 
-void SciTEBase::BuffersMenu(bool mousedrag, int forsedCoPos) {
+void SciTEBase::BuffersMenu(bool mousedrag) {
 	//UpdateBuffersCurrent();
 	static char tabForeColor[16];
 	static char tabROColor[16];
@@ -1122,15 +1122,8 @@ void SciTEBase::BuffersMenu(bool mousedrag, int forsedCoPos) {
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
-		int coPos = -1;
-		if (SecondEditorActive()) {
-			if (forsedCoPos >= 0) 
-				coPos = forsedCoPos;
-			//else
-			 //   coPos = buffers.NextByIdm_Settings(wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
-		}
-
-
+		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN) : -1;
+		
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;
 			GUI::gui_string entry;

@@ -662,7 +662,7 @@ protected:
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
-	void BuffersMenu(bool mousedrag = false, int forsedCoPos = -1);
+	void BuffersMenu(bool mousedrag = false);
 	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
