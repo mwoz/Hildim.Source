@@ -24,12 +24,14 @@ std::string string_format(const char* format, Args ... args)
 	std::snprintf(buf.get(), size, format, args ...);
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
-void throw_L_error(lua_State* L, const char *str);
+void throw_L_error(lua_State* L, const char* str)
+{
+	lua_pushstring(L, str);
+	lua_error(L);
+}
 int wrap_cmsg(lua_State* L, CMessage* msg);
-CMessage* cmessage_arg(lua_State* L,LPCSTR module , int idx = 1);
-void cmesage_Destroy(lua_State* L);
-void cmesage_gc(lua_State* L);
-LUA_API const char* lua_pushstringW(lua_State* L, const WCHAR* s);
+
+
 struct MB2W
 {
 	MB2W(const char* src, int cp = CP_ACP)
@@ -77,3 +79,6 @@ struct W2MB
 private:
 	char* buffer;
 };
+LUA_API const char* lua_pushstringW(lua_State* L, const WCHAR* w) {
+	return lua_pushstring(L, W2MB(w).c_str());
+}

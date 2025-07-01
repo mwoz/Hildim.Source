@@ -163,19 +163,6 @@ namespace luabridge {
 	//typedef RefCountedScriptPtr<luaMessage> RCMessage;
 	typedef RefCountedObjectPtr<luaMessage> RCMessage;
 
-	int pushLuaMessage(lua_State* L, luaMessage* msg)
-	{ 
-		//detail::StackHelper<RCMessage, false>::push(L, RCMessage(msg))
-
-		new (lua_newuserdata(L, sizeof(detail::UserdataShared<RCMessage>))) detail::UserdataShared<RCMessage>(RCMessage(msg));
-		lua_rawgetp(L, LUA_REGISTRYINDEX, detail::getClassRegistryKey<luaMessage>());
-		// If this goes off it means the class T is unregistered!
-		assert(lua_istable(L, -1));
-		lua_setmetatable(L, -2);
-		return 1;
-	}
-
-
 	class luaMessage : public RefCountedObject//
 	{
 	public: 

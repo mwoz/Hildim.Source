@@ -30,9 +30,6 @@
     <ClCompile Include="mblua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mblua_util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
