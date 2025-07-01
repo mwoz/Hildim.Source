@@ -15,6 +15,17 @@ void CL_mbConnector::SetCallback(int idx)
 	lua_pushvalue(L,idx);
 	callback_idx = luaL_ref(L,LUA_REGISTRYINDEX);
 }
+
+//int pushLuaMessage(lua_State* L, CMessage* msg)
+//{
+//	new (lua_newuserdata(L, sizeof(UserdataShared<C>))) UserdataShared<C>(c);
+//	lua_rawgetp(L, LUA_REGISTRYINDEX, getClassRegistryKey<T>());
+//	// If this goes off it means the class T is unregistered!
+//	assert(lua_istable(L, -1));
+//	lua_setmetatable(L, -2);
+//	return 1;
+//}
+
 HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CMessage* pMsg)
 {
 	HRESULT r = 0;
@@ -26,6 +37,9 @@ HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CM
 		else
 			lua_pushnil(L);
 		lua_pushinteger(L, error);
+
+
+
 		wrap_cmsg(L,pMsg);
 		r = 1;
 		if (lua_pcall(L,4,0,0)) { //обработка ошибки

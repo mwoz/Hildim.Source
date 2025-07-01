@@ -81,7 +81,6 @@
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbUtils.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="L_mbConnector.cpp" />
     <ClCompile Include="mblua.cpp" />
     <ClCompile Include="mblua_util.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -143,7 +142,6 @@
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.h" />
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbUtils.h" />
     <ClInclude Include="$(SolutionDir)\Ext\freetype6\src\gzip\infblock.h" />
-    <ClInclude Include="L_mbConnector.h" />
     <ClInclude Include="mblua.h" />
     <ClInclude Include="mblua_util.h" />
     <ClInclude Include="Resource.h" />

@@ -27,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="L_mbConnector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="mblua.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -180,9 +177,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="L_mbConnector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="mblua.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -17,9 +17,9 @@
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <PreprocessorDefinitions>__AUTOMATION_ON;AUTOMATION_ON;VB_EXCLUDE_XML;_NOLOG;PROJECT_HILDIM;USE_OPEN_SSL;NO_MB_STATISTICS_LOG_ON_DESTROY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__AUTOMATION_ON;AUTOMATION_ON;VB_EXCLUDE_XML;_NOLOG;USE_TLXLIB_VARIANT;PROJECT_HILDIM;USE_OPEN_SSL;NO_MB_STATISTICS_LOG_ON_DESTROY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\;$(ProjectDir)\openssl\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\;$(ProjectDir)\openssl\;$(ProjectDir)..\LuaBridge\;$(ProjectDir)..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>msxml2.lib;zlib1.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>

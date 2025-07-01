@@ -4,37 +4,21 @@
 #include "stdafx.h"
 #include "Utils/CrashStat.h"
 #include "mblua.h"
-#include "Containers/tlxMessage.h"
-#include "MessageBus/mbTransport.h"
-#include "L_mbConnector.h"
+//#include "Containers/tlxMessage.h"
+//#include "MessageBus/mbTransport.h"
+//#include "L_mbConnector.h"
 #include "mblua_util.h"
 #include "Utils/syslog.h"
-#include "msxml2.h"
 #include <string>
 #include <io.h>  
 #include <fcntl.h>  
-#include <activscp.h>
-
-
 #include "VbEngine\VbLexer.h"
 #include "VbEngine\VbRuntime.h"
 #include <functional>
 #include <sstream>
-#include <thread>
-
-extern "C" {
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
-#include "../../iup/include/iup.h"
-}
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#endif
-enum { SURROGATE_LEAD_FIRST = 0xD800 };
-enum { SURROGATE_TRAIL_FIRST = 0xDC00 };
-enum { SURROGATE_TRAIL_LAST = 0xDFFF };
+#endif                                               
 
 CmbTransport* mbTransport = NULL; 
 CString m_strDaemon = "xxx";
@@ -42,62 +26,6 @@ CString m_strLan = "xxx";
 CString m_strNetwork = "xxx";
 CString m_strService = "xxx";
 
-class CSimpleScriptSite :
-	public IActiveScriptSite,
-	public IActiveScriptSiteWindow
-{
-public:
-	CSimpleScriptSite(lua_State* pL) : m_cRefCount(1), m_hWnd(NULL), L(pL) {}
-
-	// IUnknown
-
-	STDMETHOD_(ULONG, AddRef)();
-	STDMETHOD_(ULONG, Release)();
-	STDMETHOD(QueryInterface)(REFIID riid, void **ppvObject);
-
-	// IActiveScriptSite
-
-	STDMETHOD(GetLCID)(LCID *plcid) { *plcid = 0; return S_OK; }
-	STDMETHOD(GetItemInfo)(LPCOLESTR pstrName, DWORD dwReturnMask, IUnknown **ppiunkItem, ITypeInfo **ppti) { return TYPE_E_ELEMENTNOTFOUND; }
-	STDMETHOD(GetDocVersionString)(BSTR *pbstrVersion) { *pbstrVersion = SysAllocString(L"1.0"); return S_OK; }
-	STDMETHOD(OnScriptTerminate)(const VARIANT *pvarResult, const EXCEPINFO *pexcepinfo) { return S_OK; }
-	STDMETHOD(OnStateChange)(SCRIPTSTATE ssScriptState) { return S_OK; }
-	STDMETHOD(OnScriptError)(IActiveScriptError *pError) {
-		DWORD dwCookie;
-		long lChar;
-		ULONG ulLineNo;
-		BSTR bstrSource = NULL;
-		EXCEPINFO ei;
-
-		pError->GetSourcePosition(&dwCookie, &ulLineNo, &lChar);
-		pError->GetSourceLineText(&bstrSource);
-		pError->GetExceptionInfo(&ei);
-		lua_pushstringW(L, CString(ei.bstrSource));
-		lua_pushstringW(L, CString(ei.bstrDescription));
-		lua_pushinteger(L, ulLineNo + 1);
-		lua_pushinteger(L, lChar);
-		isError = true;
-		return S_OK; 
-	
-	}
-	STDMETHOD(OnEnterScript)(void) { return S_OK; }
-	STDMETHOD(OnLeaveScript)(void) { return S_OK; }
-
-	// IActiveScriptSiteWindow
-
-	STDMETHOD(GetWindow)(HWND *phWnd) { *phWnd = m_hWnd; return S_OK; }
-	STDMETHOD(EnableModeless)(BOOL fEnable) { return S_OK; }
-
-	// Miscellaneous
-
-	HRESULT SetWindow(HWND hWnd) { m_hWnd = hWnd; return S_OK; }
-
-public:
-	LONG m_cRefCount;
-	HWND m_hWnd;
-	bool isError = false;
-	lua_State* L;
-};
 
 class SysLogCalback : public IsysLogCallback
 {
@@ -133,34 +61,6 @@ protected:
 };
 
 static SysLogCalback* m_pSysLogCalback = nullptr;
-
-
-STDMETHODIMP_(ULONG) CSimpleScriptSite::AddRef() {
-	return InterlockedIncrement(&m_cRefCount);
-}
-
-STDMETHODIMP_(ULONG) CSimpleScriptSite::Release() {
-	if (!InterlockedDecrement(&m_cRefCount)) {
-		delete this;
-		return 0;
-	}
-	return m_cRefCount;
-}
-
-STDMETHODIMP CSimpleScriptSite::QueryInterface(REFIID riid, void **ppvObject) {
-	if (riid == IID_IUnknown || riid == IID_IActiveScriptSiteWindow) {
-		*ppvObject = (IActiveScriptSiteWindow *)this;
-		AddRef();
-		return NOERROR;
-	}
-	if (riid == IID_IActiveScriptSite) {
-		*ppvObject = (IActiveScriptSite *)this;
-		AddRef();
-		return NOERROR;
-	}
-	return E_NOINTERFACE;
-}
-
 
 namespace vb {
 
@@ -375,79 +275,6 @@ static int do_CheckVbScriptPlus(lua_State* L) {
 	return 4;
 }
 
-static int do_CheckVbScript(lua_State* L) {
-	HRESULT hr;
-	CLSID clsid;
-	char* strerror = NULL;
-	// Active Scripting
-	hr = CLSIDFromProgID(L"VBScript", &clsid);
-	if (FAILED(hr)) {
-		return 0;
-	}
-
-	CSimpleScriptSite* pScriptSite = new CSimpleScriptSite(L);
-	CComPtr<IActiveScript> spVBScript;
-	CComPtr<IActiveScriptParse> spVBScriptParse;
-	hr = spVBScript.CoCreateInstance(OLESTR("VBScript"));
-	if (FAILED(hr)) {
-		strerror = "Internal Error 1";
-		goto err;
-	}
-	hr = spVBScript->SetScriptSite(pScriptSite);
-	if (FAILED(hr)) {
-		strerror = "Internal Error 2";
-		goto err;
-	}
-
-	hr = spVBScript->QueryInterface(&spVBScriptParse);
-	if (FAILED(hr)) {
-		return 0;
-	}
-	hr = spVBScriptParse->InitNew();
-	if (FAILED(hr)) {
-		strerror = "Internal Error 3";
-		goto err;
-	}
-
-	EXCEPINFO ei = { };
-
-	const char *code = lua_tostring(L, 1);
-
-	int result_u;
-	result_u = MultiByteToWideChar(CP_ACP, 0, code, -1, 0, 0);
-	if (!result_u)
-		return 0;
-
-	wchar_t *wcode = new wchar_t[result_u];
-	if (!MultiByteToWideChar(CP_ACP, 0, code, -1, wcode, result_u)) {
-		delete[] wcode;
-		strerror = "Internal Error 4";
-		goto err;
-	}
-	//LPOLESTR wcode2 = OLESTR("MsgBox \"Hello World! The current time is: \"");
-	hr = spVBScriptParse->ParseScriptText(wcode, NULL, NULL, NULL, 0, 0, 0, NULL, &ei);
-	//hr = spVBScriptParse->ParseScriptText(OLESTR("MsgBox \"Hello World! The current time is: \" & Now"), NULL, NULL, NULL, 0, 0, 0, &result, &ei);
-	bool isErr = pScriptSite->isError;
-	spVBScriptParse = NULL;
-	spVBScript = NULL;
-	pScriptSite->Release();
-	pScriptSite = NULL;
-
-	delete[] wcode;
-
-	if (isErr)
-		return 4;
-
-	if (FAILED(hr)) {
-		strerror = "Internal Error 5";
-		goto err;
-	}
-	return 0;
-err: 
-	lua_pushstring(L, strerror);
-	return 1;
-}
-
 //
 //TODO: If this DLL is dynamically linked against the MFC DLLs,
 //		any functions exported from this DLL which call into
@@ -516,19 +343,79 @@ int CmbluaApp::ExitInstance()
 }
 /////////////////////////////////////////
 
+CL_mbConnector::~CL_mbConnector(void)
+{
+}
+void CL_mbConnector::SetCallback(int idx)
+{
+	if (callback_idx != 0)
+	{
+		luaL_unref(L, LUA_REGISTRYINDEX, callback_idx);
+	}
+	lua_pushvalue(L, idx);
+	callback_idx = luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+
+HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CMessage* pMsg)
+{
+	HRESULT r = 0;
+	if (callback_idx != 0) {
+		lua_rawgeti(L, LUA_REGISTRYINDEX, callback_idx);
+		lua_pushlightuserdata(L, (void*)handle);
+		if (pOpaque)
+			wrap_cmsg(L, (CMessage*)pOpaque);
+		else
+			lua_pushnil(L);
+		lua_pushinteger(L, error);
+
+		luabridge::luaMessage* pm = new luabridge::luaMessage(pMsg);
+
+		luabridge::pushLuaMessage(L, pm);
+
+		//wrap_cmsg(L, pMsg);
+		r = 1;
+		if (lua_pcall(L, 4, 0, 0)) { //обработка ошибки
+			if (lua_isstring(L, -1)) {
+				size_t len;
+				const char* msg = lua_tolstring(L, -1, &len);
+				char* buff = new char[len + 2];
+				strncpy_s(buff, len + 2, msg, len);
+				buff[len] = '\n';
+				buff[len + 1] = '\0';
+				lua_pop(L, 1);
+				if (lua_checkstack(L, 3)) {
+					lua_getglobal(L, "output");
+					lua_getfield(L, -1, "AddText");
+					lua_insert(L, -2);
+					lua_pushstring(L, buff);
+					lua_pcall(L, 2, 0, 0);
+				}
+				delete[] buff;
+			}
+		}
+	}
+	if (m_autodestroy)
+	{
+		m_pManager->mbUnsubscribeAll(this);
+		delete this;
+	}
+	return r;
+}
+
+
 int do_CreateMessage(lua_State* L)
 {
 	CMessage *msg = new CMessage();
 	wrap_cmsg(L, msg);
 	return 1;
 }
-int do_CreateMessageLite(lua_State* L)
+luabridge::RCMessage do_CreateMessage2(lua_State* L)
 {
-	CMessage *msg = new CMessage();
-	wrap_cmsg(L, msg);
-	lua_pushlightuserdata(L, (void*)msg);
-	return 1;
+	luabridge::luaMessage*msg = new luabridge::luaMessage();
+	return luabridge::RCMessage(msg);
 }
+
 
 int do_GetGuid(lua_State* L) 	{
 	CString s = mbTransport->mbCreateInbox(false);
@@ -668,6 +555,13 @@ int do_CreateMbTransport(lua_State* L)
 	}
 	return 0;
 }
+bool do_Publish2(luabridge::luaMessage* src) {
+	if (m_strLan != "xxx")
+	{
+		return (mbTransport->mbPublish(src->getCMsg()) == MB_ERROR_OK);
+	}
+	return false;
+}
 int do_Publish(lua_State* L)
 {
 	if( m_strLan != "xxx")
@@ -683,14 +577,53 @@ int do_Publish(lua_State* L)
 	}
 	return 1;
 }
+int do_Subscribe2(lua_State* L) {
+	if (m_strLan != "xxx")
+	{
+		const char* cc = luaL_typename(L, 1);
+		CL_mbConnector* cn = new CL_mbConnector(mbTransport, L);
+		cn->SetCallback();
+		//mb_handle h = mbTransport->mbSubscribe(cn,luaL_checkstring(L,2),lua_touserdata(L,3));
+		
+
+		mb_handle h = mbTransport->mbSubscribe((CmbConnectorBase*)cn, luaL_checkstring(L, 2), lua_touserdata(L, 3));
+		lua_pushlightuserdata(L, (void*)h);
+		return 1;
+	}
+	return 0;
+}
 int do_Subscribe(lua_State* L)
 {
 	if( m_strLan != "xxx")
 	{
+		const char* cc = luaL_typename(L, 1);
 		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L);
 		cn->SetCallback(); 
 		//mb_handle h = mbTransport->mbSubscribe(cn,luaL_checkstring(L,2),lua_touserdata(L,3));
 		mb_handle h = mbTransport->mbSubscribe((CmbConnectorBase*)cn, luaL_checkstring(L, 2), lua_touserdata(L, 3));
+		lua_pushlightuserdata(L,(void*)h);
+		return 1;
+	}
+	return 0;
+}
+int do_Request2(lua_State* L)
+{
+	if( m_strLan != "xxx")
+	{
+		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L,true);
+		cn->SetCallback();
+		CMessage* opaque = NULL;
+		luabridge::luaMessage* lOpaque = (luabridge::luaMessage*)luaL_testudata(L, 4, (const char*)luabridge::detail::getClassRegistryKey<luabridge::luaMessage>());
+		if (lOpaque) {
+			opaque = lOpaque->getCMsg();
+			opaque->InternalAddRef();	
+		}
+
+		luabridge::luaMessage* lMsg = luabridge::detail::StackHelper<luabridge::RCMessage, true>::get(L, 2);
+
+		int t = lMsg->getReferenceCount();
+
+		mb_handle h = mbTransport->mbRequest(cn,lMsg->getCMsg(), luaL_checkinteger(L, 3), (void*)opaque);
 		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
@@ -726,48 +659,7 @@ int do_Destroy(lua_State* L)
     mbTransport->destroy();
 	return 0;
 }
-int do_CheckXML(lua_State* L)
-{
-	CString strXml = luaL_checkstring(L,1);
 
-	HRESULT hr;
-	IXMLDOMDocument * pXMLDoc;
-	//...
-	hr = CoInitialize(NULL); 
-	// Check the return value, hr...
-	hr = CoCreateInstance(CLSID_DOMDocument30, NULL, CLSCTX_INPROC_SERVER, 
-		   IID_IXMLDOMDocument, (void**)&pXMLDoc);
-	// Check the return value, hr...
-	VARIANT_BOOL bSuccessful;
-	pXMLDoc->loadXML(strXml.AllocSysString(),&bSuccessful);
-	int irez = 0;
-	if(!bSuccessful)
-	{
-		IXMLDOMParseError *pIParseError = NULL;
-		pXMLDoc->get_parseError(&pIParseError);
-
-		long lineNum;
-		pIParseError->get_line(&lineNum);
-		
-		long linePos;
-		pIParseError->get_linepos(&linePos);
-
-		BSTR reason;
-		pIParseError->get_reason(&reason);
-
-		lua_pushinteger(L, lineNum);
-		lua_pushinteger(L, linePos);
-		lua_pushstringW(L, CString(reason));
-
-		pIParseError->Release();
-		pIParseError = NULL;
-		irez = 3;
-
-	}
-	pXMLDoc->Release();
-
-	return irez;
-}
 int mesage_GetName(lua_State* L)
 {
 	lua_pushstringW(L, cmessage_arg(L, "Name")->id());
@@ -1599,7 +1491,7 @@ int mesage_ExistsMessage(lua_State* L)
 }
 luaL_Reg mblua[] = {
 	{"CreateMessage",do_CreateMessage},
-	{"RestoreMessage",do_RestoreMessage},
+	{"RestoreMessage",do_RestoreMessage}, //-----
 	{"CreateMbTransport",do_CreateMbTransport},
 	{"StopSyslog",do_StopSyslog},
 	{"StartMbDebug",do_StartMbDebug},
@@ -1609,10 +1501,8 @@ luaL_Reg mblua[] = {
 	{"UnSubscribe", do_UnSubscribe},
 	{"Request", do_Request},
 	{"Destroy",do_Destroy},
-	{"CheckXML",do_CheckXML },
 	{"GetGuid",do_GetGuid },
 	{"CheckVbScript",do_CheckVbScriptPlus },
-	{"CheckVbScriptMS",do_CheckVbScript },
 	{NULL, NULL},
 };
 luaL_Reg message_methods[] = {
@@ -1627,7 +1517,7 @@ luaL_Reg message_methods[] = {
 	{"SetField", mesage_SetField },
 	{"FieldType", mesage_FieldType },
 	{"FieldName", mesage_FieldName },
-	{"Store",mesage_Store},
+	{"Store",mesage_Store},                        //-----
 	{"Destroy", mesage_Destroy},
 	{"GetMessage",mesage_GetMessage},
 	{"Message",mesage_Message},
@@ -1650,6 +1540,653 @@ luaL_Reg message_methods[] = {
 	{NULL, NULL},
 };
 
+
+namespace luabridge {
+	void luaMessage::luaAddField(lua_State* L) {
+		CString Id = luaH_CheckCString(L, 2);
+		const Variant& Value = luaH_CheckVariant(L, 3);
+		CDatum* pDatum = CDatum::FromVariant(Value);
+		if (pDatum)
+			m->AddDatum(Id, pDatum->value());
+		else
+			m->AddDatum(Id, ::VariantFromVariant(Value));
+	
+		//const Variant& Value = *ctx.pParams[1];
+	}
+
+	CDatum* luaMessage::getDatumByArg(lua_State* L, int arg) {
+		switch (lua_type(L, 2)) {
+		case LUA_TSTRING:
+			return m->GetDatum(luaH_CheckCString(L, 2));
+			break;
+		case LUA_TNUMBER:
+			return m->GetDatum(luaL_checkinteger(L, 2));
+			break;
+		default:
+		{
+			std::string er("Invalid type for argumrnent: \"");
+			er += luaL_typename(L, 2);
+			er += "\"";
+			throw_L_error(L, er.c_str());
+		}
+		}
+		return nullptr;
+	}
+
+	int  luaMessage::xSetField(lua_State* L) { 
+
+		CDatum* d;
+		Variant v = luaH_CheckVariant(L, 3);
+
+		switch (lua_type(L, 2)) {
+		case LUA_TSTRING:
+			m->SetDatum(CString(luaL_checkstring(L, 2)), v);
+			break;
+		case LUA_TNUMBER:
+			d = m->GetDatum(lua_tointeger(L, 2));
+			if (d)
+				d->value(v);
+			else
+			{
+				std::string er("Index not exist: ");
+				er += std::to_string(v.intValue);
+				throw_L_error(L, er.c_str());
+			}
+			break;
+		default:
+		{
+			std::string er("Invalid type for argumrnent: \"");
+			er += luaL_typename(L, 2);
+			er += "\"";
+			throw_L_error(L, er.c_str());
+		}
+		}
+		return 0;
+	}
+
+	void luaMessage::xSetPathValue(lua_State* L)
+	{
+		Variant v = luaH_CheckVariant(L, 3);
+		m->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(), v);
+	}
+	int luaMessage::xCounts(lua_State* L)
+	{
+		lua_pushinteger(L, m->GetDataCount());
+		lua_pushinteger(L, m->GetMsgsCount());
+		return 2;
+	}
+	int luaMessage::xSubjects(lua_State* L)
+	{
+		if (lua_type(L, 2) == LUA_TSTRING)
+			m->m_strSendSubject = luaL_checkstring(L, 2);
+		if (lua_type(L, 3) == LUA_TSTRING)
+			m->m_strReplySubject = luaL_checkstring(L, 3);
+
+		lua_pushstringW(L, m->m_strSendSubject);
+		lua_pushstringW(L, m->m_strReplySubject);
+		lua_pushstringW(L, m->id());
+		return 3;
+	}
+
+	int luaMessage::xRSCounts(lua_State* L) {
+		CRecordset* rs = m->GetRecordset();
+		if (!rs)
+			return 0;
+		lua_pushinteger(L, rs->GetColumnCount());
+		lua_pushinteger(L, rs->GetRecordCount());
+		return 2;
+	}
+
+	int luaMessage::xFillList(lua_State* L) {
+
+		luaL_checkudata(L, 2, "iupHandle");
+
+		int firstLine = luaL_checkinteger(L, 3);
+		int firstCol = luaL_checkinteger(L, 4);
+		bool setNum = false;
+		bool setId = false;
+
+
+		if (firstCol == 0) {
+			firstCol = 1;
+			setId = true;
+		}
+		else if (firstCol < 0) {
+			firstCol = firstCol * -1;
+			setNum = true;
+		}
+		bool setNull = false;
+
+		if (!lua_istable(L, 5))
+			throw_L_error(L, "mesage_FillList:Argument 5 isn't a table");
+
+		int nFields = luaL_len(L, 5);
+		int* fMap = new int[nFields];
+		bool* fUtf = new bool[nFields];
+
+		for (int i = 0; i < nFields; i++) {
+			lua_rawgeti(L, 5, i + 1);
+			fMap[i] = luaL_checkinteger(L, -1);
+		}
+
+		if (lua_istable(L, 6)) {
+			if (nFields != luaL_len(L, 6))
+				throw_L_error(L, "mesage_FillList:Tables 5 and 6 have different lengths");
+
+			for (int i = 0; i < nFields; i++) {
+				lua_rawgeti(L, 6, i + 1);
+				fUtf[i] = (luaL_checkinteger(L, -1) != 0);
+			}
+		}
+		else {
+			bool b = lua_toboolean(L, 6);
+			for (int i = 0; i < nFields; i++) {
+				fUtf[i] = b;
+			}
+
+		}
+		if (lua_isboolean(L, 7))
+			setNull = lua_toboolean(L, 7);
+
+		lua_getglobal(L, "scite");
+		lua_getfield(L, -1, "GetListHandlers");
+		lua_pushvalue(L, 2);
+		if (lua_pcall(L, 1, 2, 0) != LUA_OK)
+			throw_L_error(L, "mesage_FillList:Internal error");
+
+		_PF* pFunc = (_PF*)lua_touserdata(L, -2);
+		void* pList = lua_touserdata(L, -1);
+
+		int msgCnt;
+		CRecordset* rs = m->GetRecordset();
+		if (rs)
+			msgCnt = rs->GetRecordCount();
+		else
+			msgCnt = m->GetMsgsCount();
+
+		lua_settop(L, 2);
+		lua_getglobal(L, "iup");
+		lua_getfield(L, -1, "GetAttribute");
+		lua_pushvalue(L, 2);
+		lua_pushstring(L, "NUMCOL");
+
+		if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+			throw_L_error(L, "mesage_FillList:Internal error");
+
+
+		const char* pCh;
+		pCh = lua_tostring(L, -1);
+		int curCol = atoi(pCh);
+		if (curCol < nFields)
+			throw_L_error(L, "mesage_FillList:not enough columns");
+
+
+		lua_settop(L, 3);
+		lua_getfield(L, -1, "GetAttribute");
+		lua_pushvalue(L, 2);
+		lua_pushstring(L, "NUMLIN");
+
+		if (lua_pcall(L, 2, 1, 0) != LUA_OK)
+			throw_L_error(L, "mesage_FillList:Internal error");
+		pCh = lua_tostring(L, -1);
+
+
+		char buf[256];
+
+		lua_settop(L, 3);
+		lua_getfield(L, -1, "SetAttribute");
+		lua_pushvalue(L, 2);
+		lua_pushstring(L, "DELLIN");
+
+		strcpy(buf, "1-");
+		strcat(buf, pCh);
+		lua_pushstring(L, buf);
+		if (lua_pcall(L, 3, 0, 0) != LUA_OK)
+			throw_L_error(L, "mesage_FillList:Internal error");
+
+		lua_settop(L, 3);
+		lua_getfield(L, -1, "SetAttribute");
+		lua_pushvalue(L, 2);
+		lua_pushstring(L, "ADDLIN");
+		strcpy(buf, "1-");
+		itoa(msgCnt, buf + 2, 10);
+		lua_pushstring(L, buf);
+		if (lua_pcall(L, 3, 0, 0) != LUA_OK)
+			throw_L_error(L, "mesage_FillList:Internal error");
+
+		if (rs) {
+			CRecordsetReader reader = rs->CreateReader();
+			Variant value;
+			for (int i = 0; i < msgCnt; i++) {
+				if (setNum || setId) {
+					_ltoa(i + firstLine, buf, 10);
+					pFunc(pList, i + firstLine, 0, buf);
+				}
+				reader.MoveNext();
+				for (int j = 0; j < nFields; j++) {
+					reader.GetValue(fMap[j] - 1, value);
+
+					const char* out = NULL;
+
+					switch (value.type) {
+					case Variant::Type::Double:
+					{
+						sprintf(buf, "%.9f", value.dblValue);
+						out = buf;
+					}
+					break;
+					case Variant::Type::Integer:
+					{
+						_ltoa(value.longValue, buf, 10);
+						out = buf;
+					}
+					break;
+					case Variant::Type::Boolean:
+					{
+						out = value.boolValue ? "<true>" : "<false>";
+					}
+					break;
+					case Variant::Type::Date:
+					{
+						ATL::COleDateTime dt = value.dateValue;
+						strcpy(buf, W2MB(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str());
+						out = buf;
+					}
+					break;
+					case Variant::Type::String:
+					{
+						SetBstrCell(pFunc, pList, i, j, fUtf[j], CStringEx(value.strValue));
+					}
+					break;
+					case Variant::Type::Null:
+					{
+						if (setNull)
+							out = "<null>";
+					}
+					break;
+					}
+					if (out)
+						pFunc(pList, i + firstLine, j + firstCol, out);
+				}
+			}
+		}
+		else {
+
+			for (int i = 0; i < msgCnt; i++) {
+				if (setNum) {
+					_ltoa(i + firstLine, buf, 10);
+					pFunc(pList, i + firstLine, 0, buf);
+				}
+				else if (setId) {
+					pFunc(pList, i + firstLine, 0, W2MB(m->GetMsg(i)->id()).c_str());
+				}
+				for (int j = 0; j < nFields; j++) {
+
+					CDatum* d = m->GetMsg(i)->GetDatum(fMap[j] - 1);
+
+					const char* out = NULL;
+					if (d) {
+						if (!d) return 0;
+						switch (d->value().type) {
+						case Variant::Type::Double:
+						{
+							double v;
+							d->GetValueAsDouble(v);
+							sprintf(buf, "%.9f", v);
+							out = buf;
+						}
+						break;
+						case Variant::Type::Integer:
+						{
+							long v;
+							d->GetValueAsLong(v);
+							_ltoa(v, buf, 10);
+							out = buf;
+						}
+						break;
+						case Variant::Type::Boolean:
+						{
+							bool v;
+							d->GetValueAsBool(v);
+							out = v ? "<true>" : "<false>";
+						}
+						break;
+						case Variant::Type::Date:
+						{
+							ATL::COleDateTime dt;
+							d->GetValueAsDate(dt);
+							strcpy(buf, W2MB(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str());
+							out = buf;
+						}
+						break;
+						case Variant::Type::String:
+						{
+							SetBstrCell(pFunc, pList, i, j, fUtf[j], d->GetValueText());
+						}
+						break;
+						case Variant::Type::Null:
+						{
+							if (setNull)
+								out = "<null>";
+						}
+						break;
+						}
+					}
+					if (out)
+						pFunc(pList, i + firstLine, j + firstCol, out);
+				}
+			}
+		}
+		delete[] fMap;
+		delete[] fUtf;
+
+		return 0;
+	}
+	
+	int luaMessage::xRSGetRecord(lua_State* L)
+	{
+		CRecordset* rs = m->GetRecordset();
+		if (!rs)
+			return 0;
+		int row = luaL_checkinteger(L, 2);
+
+		CString strId;
+		Variant value;
+		CRecordsetReader reader = rs->CreateReader();
+		for (int i = 0; i <= row; i++) {
+			if (!reader.MoveNext())
+				return 0;
+		}
+
+		lua_createtable(L, rs->GetColumnCount(), 0);
+
+		char* type;
+		for (int i = 0; i < rs->GetColumnCount(); i++) {
+			lua_pushinteger(L, i + 1);
+			lua_createtable(L, 0, 3);
+
+			reader.GetValue(i, value);
+			switch (value.type) {
+			case Variant::Type::Double:
+			{
+				type = "R8";
+				lua_pushnumber(L, value.dblValue);
+			}
+			break;
+			case Variant::Type::Integer:
+			{
+				type = "I4";
+				lua_pushinteger(L, value.longValue);
+			}
+			break;
+			case Variant::Type::Boolean:
+			{
+				type = "BOOL";
+				lua_pushboolean(L, (value.boolValue == VARIANT_TRUE));
+			}
+			break;
+			case Variant::Type::Date:
+			{
+				type = "DATE";
+				ATL::COleDateTime dt = value.dateValue;
+				lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
+			}
+			break;
+			case Variant::Type::String:
+			{
+				type = "BSTR";
+				CStringEx str = value.strValue;
+				lua_pushstringW(L, str);
+			}
+			break;
+			default:
+				type = "NULL";
+				lua_pushnil(L);
+			}
+			lua_setfield(L, -2, "value");
+
+			lua_pushstringW(L, rs->GetColumn(i)->GetName());
+			lua_setfield(L, -2, "title");
+
+			lua_pushstring(L, type);
+			lua_setfield(L, -2, "type");
+
+			lua_settable(L, -3);
+
+		}
+		return 1;
+	}
+	
+	int luaMessage::xRSColumn(lua_State* L)
+	{
+		CRecordset* rs = m->GetRecordset();
+		if (!rs)
+			return 0;
+		int col = luaL_checkinteger(L, 2);
+		lua_pushstringW(L, rs->GetColumn(col)->GetName());
+		return 1;
+	}
+	
+	int luaMessage::xSaveFieldBinary(lua_State* L) {
+		int err = 0;
+		char* b = NULL;
+
+		CString fldName = luaL_checkstring(L, 2);
+		CString path = luaL_checkstring(L, 3);
+		char* description;
+		DWORD l;
+
+		CDatum* d = m->GetDatum(fldName);
+		if (!d->value().IsBuffer()) {
+			err = -1;
+			description = "Not Binary Data";
+			goto err;
+		}
+		{
+			l = d->GetDataSize();
+			b = new char[l];
+
+			Variant::Buffer* pBuffer = (Variant::Buffer*)d->value().customValue;
+			memcpy(b, pBuffer->ptr, pBuffer->size);
+
+			int pf;
+
+			err = _wsopen_s(&pf, path, _O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _SH_DENYRW, _S_IWRITE);
+			if (err) {
+				description = "Open File Error";
+				goto err;
+			}
+			if (l != _write(pf, (b), l)) {
+				err = -2;
+				description = "Write File Error";
+				goto err;
+			}
+
+			err = _close(pf);
+			if (err) {
+				description = "Close File Error";
+				goto err;
+			}
+		}
+	err:
+		if (b)
+			delete[]b;
+		lua_pushinteger(L, err);
+		if (err)
+			lua_pushstring(L, description);
+		else
+			lua_pushinteger(L, l);
+		return 2;
+	}
+
+	int luaMessage::xAddFieldBinary(lua_State* L) {
+		CString fldName = luaL_checkstring(L, 2);
+		CString path = luaL_checkstring(L, 3);
+		int err;
+		char* description;
+
+		int pf;
+		char* b = NULL;
+		err = _wsopen_s(&pf, path, _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+		if (err) {
+			description = "Open File error";
+			goto err;
+		}
+
+		DWORD l = _filelength(pf);
+
+		b = new char[l];
+
+
+		if (l != _read(pf, b, l)) {
+			err = -1;
+			description = "Read File error";
+			goto err;
+		}
+		err = _close(pf);
+		if (err) {
+			description = "Close File error";
+			goto err;
+		}
+		{
+			Variant::Buffer* pBuffer = new Variant::Buffer();
+			pBuffer->ptr = new BYTE[l];
+			pBuffer->size = l;
+			//v.Attach(pBuffer);
+
+
+			for (DWORD i = 0; i < l; i++) {
+				((BYTE*)pBuffer->ptr)[i] = (BYTE)b[i];
+			}
+
+			m->AddDatum(fldName, pBuffer);
+		}
+
+	err:
+		if (b)
+			delete[]b;
+		lua_pushinteger(L, err);
+		if (err)
+			lua_pushstring(L, description);
+		else
+			lua_pushinteger(L, l);
+		return 2;
+	}
+
+	
+	RCMessage luaMessage::luaExecute(std::string param) {
+		CMessage* msgOut = new CMessage();
+		if (m->ExecCommand(param.c_str(), NULL, msgOut))
+			return new luaMessage(msgOut, false);
+		
+		delete msgOut;
+		return nullptr;
+	}
+
+	RCMessage luaMessage::luaRemoveMessage(lua_State* L) {
+		const Variant& Index = luaH_CheckVariant(L, 2);
+
+		LONG lIndex;
+		CMessage* pMsg = NULL;
+		if (Index.type == Variant::Type::String)
+			pMsg = m->DetachMsg(Index.strValue);
+		else if (::LongFromVariant(Index, &lIndex))
+			pMsg = m->DetachMsg(lIndex);
+		if(!pMsg)
+			return nullptr;
+
+		return RCMessage(new luaMessage(pMsg));
+	}
+	
+	bool luaMessage::luaAddMessage(std::string sub, luaMessage* added) {
+
+		CString Id = ToCStr(sub);
+
+		if (!added || !added->getCMsg())
+			return false;
+		CMessage* pMsg = added->getCMsg();
+
+
+		added->getCMsg()->InternalAddRef();
+		added->getCMsg()->id(Id);
+		m->AttachMsg(pMsg);
+
+		return true;
+
+	}
+	
+	
+	void bindToLUA(lua_State* L)
+	{
+
+		auto nspace =
+			getGlobalNamespace(L)
+			 .beginNamespace("mblua")
+			 //.beginNamespace("MBLUA2")
+			 .addConstant("VERSION", 321)
+			 .addFunction("GetGuid", do_GetGuid)
+			 .addFunction("CreateMbTransport", do_CreateMbTransport)
+			 .addFunction("StopSyslog", do_StopSyslog)
+			 .addFunction("StartMbDebug", do_StartMbDebug)
+			 .addFunction("StopMbDebug", do_StopMbDebug)
+			 .addFunction("Publish", do_Publish2)
+			 .addFunction("Subscribe", do_Subscribe2)
+			 .addFunction("UnSubscribe", do_UnSubscribe)
+			 .addFunction("Destroy", do_Destroy)
+			 .addFunction("Request", do_Request2)
+			 .addFunction("CheckVbScript", do_CheckVbScriptPlus)
+			 .addFunction("CreateMessage", do_CreateMessage2)
+
+			 .beginClass<luaMessage>("Message")
+			  .addConstructor <void (*) (void), RCMessage >()
+			  .addFunction("ToString", &luaMessage::luaToString)
+			  .addFunction("SetPathValue", &luaMessage::xSetPathValue)
+			  .addFunction("GetWireText", &luaMessage::luaGetWireText)
+			  .addFunction("GetPathValue", &luaMessage::luaGetPathValue)
+			  .addFunction("Subjects", &luaMessage::xSubjects)
+			  .addFunction("Counts", &luaMessage::xCounts)
+			  .addFunction("Field", &luaMessage::xFieldValue)
+			  .addFunction("RemoveField", &luaMessage::xRemoveField)
+			  .addFunction("SetField", &luaMessage::xSetField)
+			  .addFunction("FieldType", &luaMessage::xFieldType)
+			  .addFunction("FieldName", &luaMessage::xFieldName)
+			  .addFunction("FillList", &luaMessage::xFillList)
+			  .addFunction("RSCounts", &luaMessage::xRSCounts)
+			  .addFunction("RSGetRecord", &luaMessage::xRSGetRecord)
+			  .addFunction("RSColumn", &luaMessage::xRSColumn)
+			  .addFunction("SaveFieldBinary", &luaMessage::xSaveFieldBinary)
+			  .addFunction("AddFieldBinary", &luaMessage::xAddFieldBinary)
+
+
+			  .addFunction("Destroy", &luaMessage::xDestroy)
+			  .addFunction("GetMessage", &luaMessage::luaGetMessage)
+			  .addFunction("Message", &luaMessage::lua_Message)
+			  .addFunction("Execute", &luaMessage::luaExecute)
+			  .addFunction("Reset", &luaMessage::luaReset)
+			  .addFunction("RemoveMessage", &luaMessage::luaRemoveMessage)
+			  .addFunction("AttachMessage", &luaMessage::luaAddMessage)
+			  .addFunction("ExistsMessage", &luaMessage::luaExistsMessage)
+			  .addFunction("Name", &luaMessage::luaGetName)
+			  .addFunction("CopyFrom", &luaMessage::luaCopyFrom)
+
+			  .addFunction("addField", &luaMessage::luaAddField)
+			  .addProperty("toString",&luaMessage::luaToString)
+			  .addFunction("getPathValue", &luaMessage::luaGetPathValue)
+			  .addFunction("getWireText", &luaMessage::luaGetWireText)
+			  .addFunction("getMessage", &luaMessage::luaGetMessage)
+			  .addFunction("message", &luaMessage::lua_Message)
+			  .addFunction("execute", &luaMessage::luaExecute)
+			  .addFunction("reset", &luaMessage::luaReset) 
+			  .addFunction("removeMessage", &luaMessage::luaRemoveMessage)
+			  .addFunction("addMessage", &luaMessage::luaAddMessage)
+			  .addFunction("existsMessage", &luaMessage::luaExistsMessage)
+			  .addProperty("name", &luaMessage::luaGetName)
+			  .addFunction("copyFrom", &luaMessage::luaCopyFrom)
+			 .endClass()
+		   .endNamespace();
+	}
+}
+
 extern "C" __declspec(dllexport)
 int luaopen_mblua(lua_State *L)
 {
@@ -1658,12 +2195,15 @@ int luaopen_mblua(lua_State *L)
 	// that it is the foreground window, so we hunt through all windows
 	// associated with this thread (the main GUI thread) to find a window
 	// matching the appropriate class name
-	luaL_newmetatable(L, MESSAGEOBJECT);  // create metatable for window objects
-	lua_pushvalue(L, -1);  // push metatable
-	lua_setfield(L, -2, "__index");  // metatable.__index = metatable
-	luaL_setfuncs(L, message_methods, 0);
+//	luaL_newmetatable(L, MESSAGEOBJECT);  // create metatable for window objects
+//	lua_pushvalue(L, -1);  // push metatable
+//	lua_setfield(L, -2, "__index");  // metatable.__index = metatable
+//	luaL_setfuncs(L, message_methods, 0);
+//
+//	lua_newtable(L);
+//	luaL_setfuncs(L, mblua, 0);
 
-	lua_newtable(L);
-	luaL_setfuncs(L, mblua, 0);
+	luabridge::bindToLUA(L);
+
 	return 1;
 }
