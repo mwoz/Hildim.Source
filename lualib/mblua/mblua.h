@@ -57,24 +57,41 @@ std::string ToStr(LPCWSTR lpcwszStr, int CP = CP_ACP)
 	}
 	return "";
 }
-CString ToCStr(std::string& str) {
+CString ToCStr(const char* str) {
 	// Determine the length of the wide string          CP_UTF8
 	int len = MultiByteToWideChar(
-		CP_ACP, 0, str.c_str(), -1, nullptr, 0);
+		CP_ACP, 0, str, -1, nullptr, 0);
 	if (len == 0) {
 		return CString();
 	}
 
 	// Convert the string
 	std::wstring wide_str(len, 0);
-	MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1,
+	MultiByteToWideChar(CP_ACP, 0, str, -1,
 		&wide_str[0], len);
 
 	CString s(wide_str.c_str());
 	return s;
 }
+CString ToCStr(std::string& str) {
+	return ToCStr(str.c_str());
+	//// Determine the length of the wide string          CP_UTF8
+	//int len = MultiByteToWideChar(
+	//	CP_ACP, 0, str.c_str(), -1, nullptr, 0);
+	//if (len == 0) {
+	//	return CString();
+	//}
+	//
+	//// Convert the string
+	//std::wstring wide_str(len, 0);
+	//MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1,
+	//	&wide_str[0], len);
+	//
+	//CString s(wide_str.c_str());
+	//return s;
+}
 CString luaH_CheckCString(lua_State* L, int arg) {
-	std::string str = luaL_checkstring(L, arg);
+	const char* str = luaL_checkstring(L, arg);
 
 	return ToCStr(str);
 }
@@ -160,10 +177,26 @@ namespace luabridge {
 
 
 	class luaMessage;
-	//typedef RefCountedScriptPtr<luaMessage> RCMessage;
 	typedef RefCountedObjectPtr<luaMessage> RCMessage;
+	class luaDatum;
+	typedef RefCountedObjectPtr<luaDatum> RCDatum;
 
-	class luaMessage : public RefCountedObject//
+	class luaDatum : public RefCountedObject
+	{
+	public:
+		luaDatum(CDatum* pd, bool add = true) { d = pd ? pd : new CDatum(); if (add) d->InternalAddRef(); };
+		~luaDatum() {
+			d->InternalRelease();
+		};
+		int luaGetValue(lua_State* L) { luaH_PushVariant(L, d->value()); return 1; }
+		void luaSetValue(lua_State* L) { d->value(luaH_CheckVariant(L, 2)); }
+		std::string luaGetName() const { return ToStr(d->id()); };
+		std::string luaValueText() const { return ToStr(d ->GetValueText(0)); };
+	private:
+		CDatum* d = nullptr;
+	};
+
+	class luaMessage : public RefCountedObject
 	{
 	public: 
 		luaMessage() { m = new CMessage(); };
@@ -171,9 +204,9 @@ namespace luabridge {
 		~luaMessage() { 
 			m->InternalRelease(); 
 		};
-		void luaAddField(lua_State* L);
+		//void luaAddField(lua_State* L);
 		std::string luaToString(lua_State* L) const{ return ToStr(m->ToString()); }
-		void xSetPathValue(lua_State* L);
+	
 		int xCounts(lua_State* L);
 		int xSubjects(lua_State* L);
 		int xFieldValue(lua_State* L){
@@ -194,33 +227,33 @@ namespace luabridge {
 		int xSaveFieldBinary(lua_State* L);
 		int xAddFieldBinary(lua_State* L);
 	
-		std::string luaGetName() { 
-			return ToStr(m->id()); 
-		
-		}
-	//	void vbsGetFieldCount(vb::CallContext& ctx);
-	//	void vbsGetMessageCount(vb::CallContext& ctx);
-	//	void vbsGetSendSubject(vb::CallContext& ctx);
-	//	void vbsSetSendSubject(vb::CallContext& ctx);
-	//	void vbsGetReplySubject(vb::CallContext& ctx);
-	//	void vbsSetReplySubject(vb::CallContext& ctx);
+		std::string luaGetName() { return ToStr(m->id());} 
+
+		int luaGetFieldCount() { return m->GetDataCount(); }
+	
+		int luaGetMessageCount(){ return m->GetMsgsCount();}
+	
+		std::string luaGetSendSubject(lua_State* L) const { return ToStr(m->m_strSendSubject); }
+		void luaSetSendSubject(const char* v, lua_State* L) { m->m_strSendSubject = ToCStr(v); }
+		std::string luaGetReplySubject(lua_State* L) const { return ToStr(m->m_strReplySubject); }
+		void luaSetReplySubject(const char* v, lua_State* L) { m->m_strReplySubject = ToCStr(v); }
 	//	void vbsGetRecordset(vb::CallContext& ctx);
 	//	void vbsSetRecordset(vb::CallContext& ctx);
 		void luaReset() { m->CleanUp(); };
-	//	void vbsAddField(vb::CallContext& ctx);
-	//	void vbsInsertField(vb::CallContext& ctx);
-	//	void vbsUpdateField(vb::CallContext& ctx);
-	//	void vbsRemoveField(vb::CallContext& ctx);
+		void luaAddField(std::string id, lua_State* L);
+		void luaInsertField(std::string id, lua_State* L);
+		void luaUpdateField(std::string id, lua_State* L);
+		RCDatum luaRemoveField(lua_State* L);
 		bool luaAddMessage(std::string sub, luaMessage* added);
-	//	void vbsInsertMessage(vb::CallContext& ctx);
-	//	void vbsUpdateMessage(vb::CallContext& ctx);
+		bool luaInsertMessage(std::string id, luaMessage* inserted, LONG lIndex);
+		bool luaUpdateMessage(std::string id, luaMessage* updFrom);
 		RCMessage luaRemoveMessage(lua_State* L);
-	//	void vbsField(vb::CallContext& ctx);
+		RCDatum luaField(int i, lua_State* L) const;
 		RCMessage lua_Message(int Index) { 
 			return RCMessage(new luaMessage(m->GetMsg(Index)));
 		}
-	//	void vbsGetMessageIndex(vb::CallContext& ctx);
-	//	void vbsExistsField(vb::CallContext& ctx);
+		int luaGetMessageIndex(std::string id);
+		bool luaExistsField(std::string id){ return (m->GetDatum(ToCStr(id)) != NULL); }
 		bool luaExistsMessage(std::string path) { return (m->GetMsg(ToCStr(path)) != NULL); };
 		void luaCopyFrom(luaMessage* src) { m->AddContentFrom(src->getCMsg()); };
 	//	void vbsGetFieldText(vb::CallContext& ctx);
@@ -231,27 +264,27 @@ namespace luabridge {
 			return RCMessage(new luaMessage(m->AddMsgByPath(ToCStr(path))) );
 		}
 		RCMessage luaExecute(std::string param);
-	//	void vbsAddHeadMessage(vb::CallContext& ctx);
-	//	void vbsAddTailMessage(vb::CallContext& ctx);
-	//	void vbsRemoveHeadMessage(vb::CallContext& ctx);
-	//	void vbsRemoveTailMessage(vb::CallContext& ctx);
-	//	void vbsUpdateFrom(vb::CallContext& ctx);
-	//	void vbsGetFieldValue(vb::CallContext& ctx);
-		int luaGetPathValue(lua_State* L) {
-			CDatum* d = m->GetDatumByPath(luaH_CheckCString(L, 2));
-			Variant& v = d ? d->value() : Variant();
-			return luaH_PushVariant(L, v);
-			//return luaH_PushVariant(L, m->GetDatumByPath(luaH_CheckCString(L, 2))->value() ); 
+		bool luaAddHeadMessage(std::string id, luaMessage* added);
+		RCMessage luaRemoveHeadMessage() { return RCMessage(new luaMessage(m->DetachHeadMsg(), false)); }
+		RCMessage luaRemoveTailMessage() { return RCMessage(new luaMessage(m->DetachTailMsg(), false)); }
+		void luaUpdateFrom(luaMessage* from) { m->AddContentFrom(from->getCMsg()); }
+		int luaGetFieldValue(lua_State* L) {
+			CDatum* d;
+			return (d = m->GetDatum(luaH_CheckCString(L, 2))) ? luaH_PushVariant(L, d->value()) : 0;
 		}
-	//	void vbsFlatMessage(vb::CallContext& ctx);
-	//	void vbsAttachContents(vb::CallContext& ctx);
-	//	void vbsAddPathField(vb::CallContext& ctx);
-	//	void vbsUpdatePathField(vb::CallContext& ctx);
-	//	void vbsRemovePathField(vb::CallContext& ctx);
+		int luaGetPathValue(lua_State* L) {
+			CDatum* d;
+			return (d = m->GetDatumByPath(luaH_CheckCString(L, 2))) ? luaH_PushVariant(L, d->value()) : 0;
+		}
+		void luaFlatMessage() { m->vbsFlatMessage(vb::CallContext()); };
+		void luaAttachContents(luaMessage* from);
+		void luaAddPathField(std::string path, lua_State* L) { m->AddDatumByPath(ToCStr(path), luaH_CheckVariant(L, 3)); }
+		void luaUpdatePathField(std::string path, lua_State* L) { m->SetDatumByPath(ToCStr(path), luaH_CheckVariant(L, 3)); }
+		RCDatum luaRemovePathField(std::string path) { return RCDatum(new luaDatum(m->DetachDatumByPath(ToCStr(path)))); }
 	//	void vbsStore(vb::CallContext& ctx);
 	//	void vbsRestore(vb::CallContext& ctx);
 		std::string luaGetWireText(lua_State* L) { return ToStr(m->GetWireText()); };
-	//	void vbsSetWireText(vb::CallContext& ctx);
+		int luaSetWireText(lua_State* L);
 	
 		CMessage* getCMsg() { return m; } 
 	private:

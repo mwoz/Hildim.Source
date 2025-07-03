@@ -336,14 +336,14 @@ HRESULT CL_mbConnector::OnMbReply(mb_handle handle, void* pOpaque, int error, CM
 		lua_rawgeti(L, LUA_REGISTRYINDEX, callback_idx);
 		lua_pushlightuserdata(L, (void*)handle);
 		if (pOpaque) {
-			luabridge::luaMessage* opaq = new luabridge::luaMessage((CMessage*)pOpaque);
+			luabridge::luaMessage* opaq = new luabridge::luaMessage((CMessage*)pOpaque, false);
 			luabridge::detail::StackHelper<luabridge::RCMessage, true>::push(L, luabridge::RCMessage(opaq));
 		}
 		else
 			lua_pushnil(L);
 		lua_pushinteger(L, error);
 
-		luabridge::luaMessage* pm = new luabridge::luaMessage(pMsg);
+		luabridge::luaMessage* pm = new luabridge::luaMessage(pMsg, false);
 
 		luabridge::detail::StackHelper<luabridge::RCMessage, true>::push(L, luabridge::RCMessage(pm));
 
@@ -532,11 +532,13 @@ int do_Request2(lua_State* L)
 		CL_mbConnector *cn = new CL_mbConnector(mbTransport,L,true);
 		cn->SetCallback();
 		CMessage* opaque = NULL;
-		luabridge::luaMessage* lOpaque = (luabridge::luaMessage*)luaL_testudata(L, 4, (const char*)luabridge::detail::getClassRegistryKey<luabridge::luaMessage>());
+		luabridge::luaMessage* lOpaque = luabridge::detail::StackHelper<luabridge::RCMessage, true>::get(L, 4);
 		if (lOpaque) {
 			opaque = lOpaque->getCMsg();
 			opaque->InternalAddRef();	
 		}
+		else if (lua_type(L, 4) == LUA_TNONE)
+			throw_L_error(L, "Opaque is not a message");
 
 		luabridge::luaMessage* lMsg = luabridge::detail::StackHelper<luabridge::RCMessage, true>::get(L, 2);
 
@@ -563,7 +565,7 @@ int do_Destroy(lua_State* L)
 
 
 namespace luabridge {
-	void luaMessage::luaAddField(lua_State* L) {
+	/*void luaMessage::luaAddField(lua_State* L) {
 		CString Id = luaH_CheckCString(L, 2);
 		const Variant& Value = luaH_CheckVariant(L, 3);
 		CDatum* pDatum = CDatum::FromVariant(Value);
@@ -573,7 +575,7 @@ namespace luabridge {
 			m->AddDatum(Id, ::VariantFromVariant(Value));
 	
 		//const Variant& Value = *ctx.pParams[1];
-	}
+	}*/
 
 	CDatum* luaMessage::getDatumByArg(lua_State* L, int arg) {
 		switch (lua_type(L, 2)) {
@@ -625,11 +627,6 @@ namespace luabridge {
 		return 0;
 	}
 
-	void luaMessage::xSetPathValue(lua_State* L)
-	{
-		Variant v = luaH_CheckVariant(L, 3);
-		m->SetDatumByPath(MB2W(luaL_checkstring(L, 2)).c_str(), v);
-	}
 	int luaMessage::xCounts(lua_State* L)
 	{
 		lua_pushinteger(L, m->GetDataCount());
@@ -1162,7 +1159,168 @@ namespace luabridge {
 
 	}
 	
+
+	void luaMessage::luaAddField(std::string id, lua_State* L)
+	{
+		CString Id = ToCStr(id);
+		const Variant& Value = luaH_CheckVariant(L, 3);
+
+		m->AddDatum(Id, ::VariantFromVariant(Value));
+	}
+      
+	void luaMessage::luaInsertField(std::string id, lua_State* L)
+	{
+		CString Id = ToCStr(id);
+		const Variant& Value = luaH_CheckVariant(L, 3);
+
+		m->AddDatum(Id, ::VariantFromVariant(Value), luaL_checkinteger(L, 4));
+	}
+
+	void luaMessage::luaUpdateField(std::string id, lua_State* L)
+	{
+		CString Id = ToCStr(id);
+		const Variant& Value = luaH_CheckVariant(L, 3);
+
+		CDatum* pOldDatum = m->GetDatum(Id);
+		if (pOldDatum == NULL)
+			m->AddDatum(Id, ::VariantFromVariant(Value));
+		else
+			pOldDatum->value(::VariantFromVariant(Value));
+	}
+
+	RCDatum luaMessage::luaRemoveField( lua_State* L)
+	{
+		CDatum* d;
+
+		switch (lua_type(L, 2)) {
+		case LUA_TSTRING:
+			d = m->DetachDatum(CString(luaL_checkstring(L, 2)));
+			break;
+		case LUA_TNUMBER:
+			d = m->DetachDatum(static_cast<int>(lua_tointeger(L, 2)));
+			break;
+		default:
+		{
+			std::string er("Invalid type for argumrnent: \"");
+			er += luaL_typename(L, 2);
+			er += "\"";
+			throw_L_error(L, er.c_str());
+			return nullptr;
+		}
+		}
+		return RCDatum(new luaDatum(d));
+	}
 	
+	RCDatum luaMessage::luaField(int i, lua_State* L) const{
+		CDatum* d = m->GetDatum(i);
+		if (!d)
+			return nullptr;
+			//throw_L_error(L, "Invalid index");
+		return RCDatum(new luaDatum(m->GetDatum(i)));
+	}
+
+	bool luaMessage::luaInsertMessage(std::string id, luaMessage* inserted, LONG lIndex)
+	{
+		CString Id = ToCStr(id);
+	
+		CMessage* pMsg = inserted->getCMsg();
+		if (pMsg == NULL)
+			return false;
+
+		pMsg->InternalAddRef();
+		pMsg->id(Id);
+
+		m->AttachMsg(pMsg, lIndex);
+
+		return true;
+
+	}
+
+	bool luaMessage::luaUpdateMessage(std::string id, luaMessage* updFrom)
+	{
+		CString Id = ToCStr(id);
+
+		CMessage* pMsg = updFrom->getCMsg();
+		if (pMsg == NULL)
+			return false;
+
+		pMsg->InternalAddRef();
+		pMsg->id(Id);
+		CMessage* pOldMsg = m->ReplaceMsg(pMsg);
+		if (pOldMsg) pOldMsg->InternalRelease();
+
+		return true;
+
+	}
+
+	int luaMessage::luaGetMessageIndex(std::string id)
+	{
+		CString Id = ToCStr(id);
+		int cnt = m->GetMsgsCount();
+	
+		for (int i = 0; i < cnt; i++)
+		{
+			if (m->GetMsg(i)->id() == Id)
+			    return i;
+		}
+		return -1;
+	}
+
+	bool luaMessage::luaAddHeadMessage(std::string id, luaMessage* added)
+	{
+		CString Id = ToCStr(id);
+
+		CMessage* pMsg = added->getCMsg();
+		if (pMsg == NULL)
+			return false;
+
+		pMsg->InternalAddRef();
+
+		pMsg->id(Id);
+		return (m->AttachHeadMsg(pMsg) != 0);
+	}
+
+	void luaMessage::luaAttachContents(luaMessage* from)
+	{
+		CMessage* pMsg = from->getCMsg();
+		if (pMsg == NULL) return;
+
+		for (int i = 0; i < pMsg->GetMsgsCount(); i++)
+		{
+			CMessage* pSubMsg = pMsg->GetMsg(i);
+			pSubMsg->InternalAddRef();
+			m->AttachMsg(pSubMsg);
+		}
+		for (int i = 0; i < pMsg->GetDataCount(); i++)
+		{
+			CDatum* pDatum = pMsg->GetDatum(i);
+			pDatum->InternalAddRef();
+			m->AttachDatum(pDatum);
+		}
+
+		// recordset
+		CRecordset* pRecordset = pMsg->GetRecordset();
+		if (pRecordset != NULL)
+		{
+			pRecordset->InternalAddRef();
+			m->AttachRecordset(pRecordset);
+		}
+	}
+	int luaMessage::luaSetWireText(lua_State* L)
+	{
+		CString strData = luaH_CheckCString(L, 2);
+
+		CString strError;
+		bool bResult = m->SetWireText(strData, strError);
+		if (!bResult) {
+			lua_pushnil(L);
+			lua_pushstring(L, ToStr(strError).c_str());
+			return 2;
+		}
+		lua_pushboolean(L, true);
+		return 1;
+	}
+
 	void bindToLUA(lua_State* L)
 	{
 
@@ -1186,10 +1344,6 @@ namespace luabridge {
 
 			 .beginClass<luaMessage>("Message")
 			  .addConstructor <void (*) (void), RCMessage >()
-			  .addFunction("ToString", &luaMessage::luaToString)
-			  .addFunction("SetPathValue", &luaMessage::xSetPathValue)
-			  .addFunction("GetWireText", &luaMessage::luaGetWireText)
-			  .addFunction("GetPathValue", &luaMessage::luaGetPathValue)
 			  .addFunction("Subjects", &luaMessage::xSubjects)
 			  .addFunction("Counts", &luaMessage::xCounts)
 			  .addFunction("Field", &luaMessage::xFieldValue)
@@ -1204,8 +1358,11 @@ namespace luabridge {
 			  .addFunction("SaveFieldBinary", &luaMessage::xSaveFieldBinary)
 			  .addFunction("AddFieldBinary", &luaMessage::xAddFieldBinary)
 
-
-			  .addFunction("Destroy", &luaMessage::xDestroy)
+			  .addFunction("ToString", &luaMessage::luaToString)
+			  .addFunction("SetPathValue", &luaMessage::luaUpdatePathField)
+			  .addFunction("GetWireText", &luaMessage::luaGetWireText)
+			  .addFunction("GetPathValue", &luaMessage::luaGetPathValue)
+		      .addFunction("Destroy", &luaMessage::xDestroy)
 			  .addFunction("GetMessage", &luaMessage::luaGetMessage)
 			  .addFunction("Message", &luaMessage::lua_Message)
 			  .addFunction("Execute", &luaMessage::luaExecute)
@@ -1216,19 +1373,51 @@ namespace luabridge {
 			  .addFunction("Name", &luaMessage::luaGetName)
 			  .addFunction("CopyFrom", &luaMessage::luaCopyFrom)
 
+			  .addFunction("__toString", &luaMessage::luaToString)
 			  .addFunction("addField", &luaMessage::luaAddField)
-			  .addProperty("toString",&luaMessage::luaToString)
+			  .addFunction("addMessage", &luaMessage::luaAddMessage)
+			  .addFunction("addHeadMessage", &luaMessage::luaAddHeadMessage)
+			  .addFunction("addPathField", &luaMessage::luaAddPathField)
+			  .addFunction("addTailMessage", &luaMessage::luaAddMessage) //правильно!
+			  .addFunction("attachContents", &luaMessage::luaAttachContents) 
+			  .addFunction("copyFrom", &luaMessage::luaCopyFrom)
+			  .addFunction("execute", &luaMessage::luaExecute)
+			  .addFunction("existsField", &luaMessage::luaExistsField)
+			  .addFunction("existsMessage", &luaMessage::luaExistsMessage)
+			  .addFunction("field", &luaMessage::luaField)
+			  .addFunction("flatMessage", &luaMessage::luaFlatMessage)
+			  .addFunction("getMessage", &luaMessage::luaGetMessage)
+			  .addFunction("getMessageIndex", &luaMessage::luaGetMessageIndex)
+			  .addFunction("getFieldValue", &luaMessage::luaGetFieldValue)
 			  .addFunction("getPathValue", &luaMessage::luaGetPathValue)
 			  .addFunction("getWireText", &luaMessage::luaGetWireText)
-			  .addFunction("getMessage", &luaMessage::luaGetMessage)
+			  .addFunction("insertField", &luaMessage::luaInsertField)
+			  .addFunction("insertMessage", &luaMessage::luaInsertMessage)
 			  .addFunction("message", &luaMessage::lua_Message)
-			  .addFunction("execute", &luaMessage::luaExecute)
-			  .addFunction("reset", &luaMessage::luaReset) 
+			  .addFunction("removeField", &luaMessage::luaRemoveField)
+			  .addFunction("removeHeadMessage", &luaMessage::luaRemoveHeadMessage)
 			  .addFunction("removeMessage", &luaMessage::luaRemoveMessage)
-			  .addFunction("addMessage", &luaMessage::luaAddMessage)
-			  .addFunction("existsMessage", &luaMessage::luaExistsMessage)
+			  .addFunction("removePathField", &luaMessage::luaRemovePathField)
+			  .addFunction("removeTailMessage", &luaMessage::luaRemoveTailMessage)
+			  .addFunction("reset", &luaMessage::luaReset)
+			  .addFunction("setWireText", &luaMessage::luaSetWireText)
+			  .addFunction("updateField", &luaMessage::luaUpdateField)
+			  .addFunction("updateFrom", &luaMessage::luaUpdateFrom)
+			  .addFunction("updateMessage", &luaMessage::luaUpdateMessage)
+			  .addFunction("updatePathField", &luaMessage::luaUpdatePathField)
+			  .addProperty("fieldCount", &luaMessage::luaGetFieldCount)
+			  .addProperty("messageCount", &luaMessage::luaGetFieldCount)
 			  .addProperty("name", &luaMessage::luaGetName)
-			  .addFunction("copyFrom", &luaMessage::luaCopyFrom)
+			  .addProperty("replySubject", &luaMessage::luaGetReplySubject, &luaMessage::luaSetReplySubject)
+			  .addProperty("sendSubject", &luaMessage::luaGetSendSubject, &luaMessage::luaSetSendSubject)
+			  .addProperty("toString", &luaMessage::luaToString)
+			 .endClass()
+			 .beginClass<luaDatum>("LUADatum")
+			  .addFunction("__tostring", &luaDatum::luaValueText)
+			  .addFunction("getValue", &luaDatum::luaGetValue)
+			  .addFunction("setValue", &luaDatum::luaSetValue)
+			  .addProperty("name", &luaDatum::luaGetName)
+			  .addProperty("text", &luaDatum::luaValueText)
 			 .endClass()
 		   .endNamespace();
 	}
