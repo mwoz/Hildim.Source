@@ -488,12 +488,18 @@ int do_CreateMbTransport(lua_State* L)
 	}
 	return 0;
 }
-bool do_Publish2(luabridge::luaMessage* src) {
+bool do_Publish2(luabridge::luaMessage* src, lua_State* L) {
 	if (m_strLan != "xxx")
 	{
+		if (!src)
+			throw_L_error(L, "Bad argument #2 to 'Publish' (Message expected, got no value)");
 		return (mbTransport->mbPublish(src->getCMsg()) == MB_ERROR_OK);
-	}
+	}else
+		throw_L_error(L, "Disconnected! Publish Impossible");
 	return false;
+}
+bool do_getConnected() {
+	return m_strLan != "xxx";
 }
 
 int do_Subscribe2(lua_State* L) {
@@ -542,12 +548,15 @@ int do_Request2(lua_State* L)
 
 		luabridge::luaMessage* lMsg = luabridge::detail::StackHelper<luabridge::RCMessage, true>::get(L, 2);
 
-		int t = lMsg->getReferenceCount();
+		if(!lMsg)
+			throw_L_error(L, "Bad argument #2 to 'Request' (Message expected, got no value)");
 
 		mb_handle h = mbTransport->mbRequest(cn,lMsg->getCMsg(), static_cast<int>(luaL_checkinteger(L, 3)), (void*)opaque);
 		lua_pushlightuserdata(L,(void*)h);
 		return 1;
 	}
+	else
+		throw_L_error(L, "Disconnected! Request Impossible");
 	return 0;
 }
 
@@ -1341,7 +1350,7 @@ namespace luabridge {
 			 .addFunction("Request", do_Request2)
 			 .addFunction("CheckVbScript", do_CheckVbScriptPlus)
 			 .addFunction("CreateMessage", do_CreateMessage2)
-
+			 .addProperty("connected", do_getConnected)
 			 .beginClass<luaMessage>("Message")
 			  .addConstructor <void (*) (void), RCMessage >()
 			  .addFunction("Subjects", &luaMessage::xSubjects)
@@ -1406,7 +1415,7 @@ namespace luabridge {
 			  .addFunction("updateMessage", &luaMessage::luaUpdateMessage)
 			  .addFunction("updatePathField", &luaMessage::luaUpdatePathField)
 			  .addProperty("fieldCount", &luaMessage::luaGetFieldCount)
-			  .addProperty("messageCount", &luaMessage::luaGetFieldCount)
+			  .addProperty("messageCount", &luaMessage::luaGetMessageCount)
 			  .addProperty("name", &luaMessage::luaGetName)
 			  .addProperty("replySubject", &luaMessage::luaGetReplySubject, &luaMessage::luaSetReplySubject)
 			  .addProperty("sendSubject", &luaMessage::luaGetSendSubject, &luaMessage::luaSetSendSubject)

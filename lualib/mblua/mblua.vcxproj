@@ -81,6 +81,7 @@
     <ClCompile Include="$(CommonLibCPPDir)/VbEngine\VbUtils.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\tsFileWriter.cpp" />
     <ClCompile Include="mblua.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -141,6 +142,7 @@
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbRuntimeManager.h" />
     <ClInclude Include="$(CommonLibCPPDir)/VbEngine\VbUtils.h" />
     <ClInclude Include="$(SolutionDir)\Ext\freetype6\src\gzip\infblock.h" />
+    <ClInclude Include="$(CommonLibCPPDir)/IO\tsFileWriter.h" />
     <ClInclude Include="mblua.h" />
     <ClInclude Include="mblua_util.h" />
     <ClInclude Include="Resource.h" />

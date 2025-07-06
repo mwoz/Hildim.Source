@@ -156,6 +156,9 @@
     <ClCompile Include="$(CommonLibCPPDir)/Windows\WMIquery.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(CommonLibCPPDir)/IO\tsFileWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mblua.def">
@@ -319,6 +322,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(CommonLibCPPDir)/Windows\WMIquery.h">
+    <ClInclude Include="$(CommonLibCPPDir)/IO\tsFileWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
