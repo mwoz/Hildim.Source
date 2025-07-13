@@ -73,6 +73,7 @@ function iup.TreeSetNodeAttrib(ih, tnode, id)
   if tnode.color then iup.SetAttribute(ih, "COLOR"..id, tnode.color) end
   if tnode.titlefont then iup.SetAttribute(ih, "TITLEFONT"..id, tnode.titlefont) end
   if tnode.marked then iup.SetAttribute(ih, "MARKED"..id, tnode.marked) end
+  if tnode.itemtip then iup.SetAttribute(ih, "ITEMTIP"..id, tnode.itemtip) end
   if tnode.image then iup.TreeSetAttributeHandle(ih, "IMAGE"..id, tnode.image) end
   if tnode.imageexpanded then iup.TreeSetAttributeHandle(ih, "IMAGEEXPANDED"..id, tnode.imageexpanded) end
   if tnode.userid then iup.TreeSetUserId(ih, id, tnode.userid) end

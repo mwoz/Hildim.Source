@@ -1382,7 +1382,7 @@ namespace luabridge {
 			  .addFunction("Name", &luaMessage::luaGetName)
 			  .addFunction("CopyFrom", &luaMessage::luaCopyFrom)
 
-			  .addFunction("__toString", &luaMessage::luaToString)
+			  .addFunction("__tostring", &luaMessage::luaToString)
 			  .addFunction("addField", &luaMessage::luaAddField)
 			  .addFunction("addMessage", &luaMessage::luaAddMessage)
 			  .addFunction("addHeadMessage", &luaMessage::luaAddHeadMessage)

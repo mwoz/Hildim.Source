@@ -1594,8 +1594,9 @@ void SciTEBase::ResetAllStyles(ScintillaWindowEditor& win, const char* languageN
 	SetStyleFor(win, "*");
 	SetStyleFor(win, languageName);
 
-	int styleOffset = win.AllocateExtendedStyles(32);
+	int styleOffset = win.AllocateExtendedStyles(64);
 	win.EOLAnnotationSetStyleOffset(styleOffset);
+	win.AnnotationSetStyleOffset(styleOffset);
 
 	SetOneStyle(win, styleOffset + 1, StyleDefinition(props.GetNewExpand("font.comment").c_str(), &convMain, invertColors));
 	win.StyleSetBack(styleOffset + 1, layout.GetColorRef("SCR_FORECOLOR"));

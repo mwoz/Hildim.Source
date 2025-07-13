@@ -161,119 +161,6 @@ SciTEBase::~SciTEBase() {
 //!	popup.Destroy();	//!-remove-[ExtendedContextMenu]
 }
 
-//!-start-[OnSendEditor]
-static bool isInterruptableMessage(unsigned int msg) {
-	switch (msg) {
-	// Enumerates all macroable messages
-	// list copied from /scintilla/src/Editor.cxx
-		case SCI_CUT:
-		case SCI_COPY:
-		case SCI_PASTE:
-		case SCI_CLEAR:
-		case SCI_REPLACESEL:
-		case SCI_ADDTEXT:
-		case SCI_INSERTTEXT:
-		case SCI_APPENDTEXT:
-		case SCI_CLEARALL:
-		case SCI_SELECTALL:
-		case SCI_GOTOLINE:
-		case SCI_GOTOPOS:
-		case SCI_SEARCHANCHOR:
-		case SCI_SEARCHNEXT:
-		case SCI_SEARCHPREV:
-		case SCI_LINEDOWN:
-		case SCI_LINEDOWNEXTEND:
-		case SCI_PARADOWN:
-		case SCI_PARADOWNEXTEND:
-		case SCI_LINEUP:
-		case SCI_LINEUPEXTEND:
-		case SCI_PARAUP:
-		case SCI_PARAUPEXTEND:
-		case SCI_CHARLEFT:
-		case SCI_CHARLEFTEXTEND:
-		case SCI_CHARRIGHT:
-		case SCI_CHARRIGHTEXTEND:
-		case SCI_WORDLEFT:
-		case SCI_WORDLEFTEXTEND:
-		case SCI_WORDRIGHT:
-		case SCI_WORDRIGHTEXTEND:
-		case SCI_WORDPARTLEFT:
-		case SCI_WORDPARTLEFTEXTEND:
-		case SCI_WORDPARTRIGHT:
-		case SCI_WORDPARTRIGHTEXTEND:
-		case SCI_WORDLEFTEND:
-		case SCI_WORDLEFTENDEXTEND:
-		case SCI_WORDRIGHTEND:
-		case SCI_WORDRIGHTENDEXTEND:
-		case SCI_HOME:
-		case SCI_HOMEEXTEND:
-		case SCI_LINEEND:
-		case SCI_LINEENDEXTEND:
-		case SCI_HOMEWRAP:
-		case SCI_HOMEWRAPEXTEND:
-		case SCI_LINEENDWRAP:
-		case SCI_LINEENDWRAPEXTEND:
-		case SCI_DOCUMENTSTART:
-		case SCI_DOCUMENTSTARTEXTEND:
-		case SCI_DOCUMENTEND:
-		case SCI_DOCUMENTENDEXTEND:
-		case SCI_STUTTEREDPAGEUP:
-		case SCI_STUTTEREDPAGEUPEXTEND:
-		case SCI_STUTTEREDPAGEDOWN:
-		case SCI_STUTTEREDPAGEDOWNEXTEND:
-		case SCI_PAGEUP:
-		case SCI_PAGEUPEXTEND:
-		case SCI_PAGEDOWN:
-		case SCI_PAGEDOWNEXTEND:
-		case SCI_EDITTOGGLEOVERTYPE:
-		case SCI_CANCEL:
-		case SCI_DELETEBACK:
-		case SCI_TAB:
-		case SCI_BACKTAB:
-		case SCI_FORMFEED:
-		case SCI_VCHOME:
-		case SCI_VCHOMEEXTEND:
-		case SCI_VCHOMEWRAP:
-		case SCI_VCHOMEWRAPEXTEND:
-		case SCI_DELWORDLEFT:
-		case SCI_DELWORDRIGHT:
-		case SCI_DELLINELEFT:
-		case SCI_DELLINERIGHT:
-		case SCI_LINECOPY:
-		case SCI_LINECUT:
-		case SCI_LINEDELETE:
-		case SCI_LINETRANSPOSE:
-		case SCI_LINEDUPLICATE:
-		case SCI_LOWERCASE:
-		case SCI_UPPERCASE:
-		case SCI_LINESCROLLDOWN:
-		case SCI_LINESCROLLUP:
-		case SCI_DELETEBACKNOTLINE:
-		case SCI_HOMEDISPLAY:
-		case SCI_HOMEDISPLAYEXTEND:
-		case SCI_LINEENDDISPLAY:
-		case SCI_LINEENDDISPLAYEXTEND:
-		case SCI_SETSELECTIONMODE:
-		case SCI_LINEDOWNRECTEXTEND:
-		case SCI_LINEUPRECTEXTEND:
-		case SCI_CHARLEFTRECTEXTEND:
-		case SCI_CHARRIGHTRECTEXTEND:
-		case SCI_HOMERECTEXTEND:
-		case SCI_VCHOMERECTEXTEND:
-		case SCI_LINEENDRECTEXTEND:
-		case SCI_PAGEUPRECTEXTEND:
-		case SCI_PAGEDOWNRECTEXTEND:
-		case SCI_SELECTIONDUPLICATE:
-	// One more interruptable messages
-		case SCI_SETREADONLY:
-		case SCI_MARKERADD:
-		case SCI_MARKERDELETE:
-		case SCI_MARKERDELETEALL:
-			return true;
-	}
-	return false;
-}
-
 // messages list witch has not string parameter 
 static bool isNotStringParams(unsigned int msg) {
 	switch (msg) {
@@ -290,14 +177,121 @@ static int static_iOnSendEditorCallsCount = 0;
 sptr_t SciTEBase::ScintillaWindowEditor::Call(Scintilla::Message msg, uptr_t wParam, sptr_t lParam )
 {
 	const char *result = NULL;
-	if (pBase->extender && isInterruptableMessage(static_cast<unsigned int>(msg)) && static_iOnSendEditorCallsCount < _MAX_SEND_RECURSIVE_CALL) {
-		static_iOnSendEditorCallsCount++; 
-		if (!isNotStringParams(static_cast<unsigned int>(msg)))
-			result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, reinterpret_cast<const char *>(lParam));
-		else
-			result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, lParam);
-		static_iOnSendEditorCallsCount--;
+	switch (msg) {
+	case Scintilla::Message::AddText:
+	case Scintilla::Message::AppendText:
+	case Scintilla::Message::BackTab:
+	case Scintilla::Message::Cancel:
+	case Scintilla::Message::CharLeft:
+	case Scintilla::Message::CharLeftExtend:
+	case Scintilla::Message::CharLeftRectExtend:
+	case Scintilla::Message::CharRight:
+	case Scintilla::Message::CharRightExtend:
+	case Scintilla::Message::CharRightRectExtend:
+	case Scintilla::Message::Clear:
+	case Scintilla::Message::ClearAll:
+	case Scintilla::Message::Copy:
+	case Scintilla::Message::Cut:
+	case Scintilla::Message::DeleteBack:
+	case Scintilla::Message::DeleteBackNotLine:
+	case Scintilla::Message::DelLineLeft:
+	case Scintilla::Message::DelLineRight:
+	case Scintilla::Message::DelWordLeft:
+	case Scintilla::Message::DelWordRight:
+	case Scintilla::Message::DocumentEnd:
+	case Scintilla::Message::DocumentEndExtend:
+	case Scintilla::Message::DocumentStart:
+	case Scintilla::Message::DocumentStartExtend:
+	case Scintilla::Message::EditToggleOvertype:
+	case Scintilla::Message::FormFeed:
+	case Scintilla::Message::GotoLine:
+	case Scintilla::Message::GotoPos:
+	case Scintilla::Message::Home:
+	case Scintilla::Message::HomeDisplay:
+	case Scintilla::Message::HomeDisplayExtend:
+	case Scintilla::Message::HomeExtend:
+	case Scintilla::Message::HomeRectExtend:
+	case Scintilla::Message::HomeWrap:
+	case Scintilla::Message::HomeWrapExtend:
+	case Scintilla::Message::InsertText:
+	case Scintilla::Message::LineCopy:
+	case Scintilla::Message::LineCut:
+	case Scintilla::Message::LineDelete:
+	case Scintilla::Message::LineDown:
+	case Scintilla::Message::LineDownExtend:
+	case Scintilla::Message::LineDownRectExtend:
+	case Scintilla::Message::LineDuplicate:
+	case Scintilla::Message::LineEnd:
+	case Scintilla::Message::LineEndDisplay:
+	case Scintilla::Message::LineEndDisplayExtend:
+	case Scintilla::Message::LineEndExtend:
+	case Scintilla::Message::LineEndRectExtend:
+	case Scintilla::Message::LineEndWrap:
+	case Scintilla::Message::LineEndWrapExtend:
+	case Scintilla::Message::LineScrollDown:
+	case Scintilla::Message::LineScrollUp:
+	case Scintilla::Message::LineTranspose:
+	case Scintilla::Message::LineUp:
+	case Scintilla::Message::LineUpExtend:
+	case Scintilla::Message::LineUpRectExtend:
+	case Scintilla::Message::LowerCase:
+	case Scintilla::Message::MarkerAdd:
+	case Scintilla::Message::MarkerDelete:
+	case Scintilla::Message::MarkerDeleteAll:
+	case Scintilla::Message::PageDown:
+	case Scintilla::Message::PageDownExtend:
+	case Scintilla::Message::PageDownRectExtend:
+	case Scintilla::Message::PageUp:
+	case Scintilla::Message::PageUpExtend:
+	case Scintilla::Message::PageUpRectExtend:
+	case Scintilla::Message::ParaDown:
+	case Scintilla::Message::ParaDownExtend:
+	case Scintilla::Message::ParaUp:
+	case Scintilla::Message::ParaUpExtend:
+	case Scintilla::Message::Paste:
+	case Scintilla::Message::ReplaceSel:
+	case Scintilla::Message::SearchAnchor:
+	case Scintilla::Message::SearchNext:
+	case Scintilla::Message::SearchPrev:
+	case Scintilla::Message::SelectAll:
+	case Scintilla::Message::SelectionDuplicate:
+	case Scintilla::Message::SetReadOnly:
+	case Scintilla::Message::SetSelectionMode:
+	case Scintilla::Message::StutteredPageDown:
+	case Scintilla::Message::StutteredPageDownExtend:
+	case Scintilla::Message::StutteredPageUp:
+	case Scintilla::Message::StutteredPageUpExtend:
+	case Scintilla::Message::Tab:
+	case Scintilla::Message::UpperCase:
+	case Scintilla::Message::VCHome:
+	case Scintilla::Message::VCHomeExtend:
+	case Scintilla::Message::VCHomeRectExtend:
+	case Scintilla::Message::VCHomeWrap:
+	case Scintilla::Message::VCHomeWrapExtend:
+	case Scintilla::Message::WordLeft:
+	case Scintilla::Message::WordLeftEnd:
+	case Scintilla::Message::WordLeftEndExtend:
+	case Scintilla::Message::WordLeftExtend:
+	case Scintilla::Message::WordPartLeft:
+	case Scintilla::Message::WordPartLeftExtend:
+	case Scintilla::Message::WordPartRight:
+	case Scintilla::Message::WordPartRightExtend:
+	case Scintilla::Message::WordRight:
+	case Scintilla::Message::WordRightEnd:
+	case Scintilla::Message::WordRightEndExtend:
+	case Scintilla::Message::WordRightExtend:
+		if (static_iOnSendEditorCallsCount < _MAX_SEND_RECURSIVE_CALL) {
+			static_iOnSendEditorCallsCount++; 
+			if (!isNotStringParams(static_cast<unsigned int>(msg)))
+				result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, reinterpret_cast<const char *>(lParam));
+			else
+				result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, lParam);
+			static_iOnSendEditorCallsCount--;
+		}	
+		break;
 	}
+
+
 	if (result != NULL) {
 		if (pBase->recording && static_iOnSendEditorCallsCount == 0) {
 			// send record macro notification
@@ -3039,7 +3033,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 				}
 			}
 			//_set_se_translator(original);
-			if (message.length()) {
+			if (message.length() && notification->nmhdr.idFrom == wEditor.GetWindowIdm()) {
 				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL)); 
 			}
 		}

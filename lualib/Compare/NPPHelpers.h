@@ -86,11 +86,18 @@ struct UserSettings
 	bool            ignoreComments = false;
 	std::set<int>   commentStyles;
 	std::string     hiddehLineHeader = "";
+	int             annotationStyle1 = STYLE_DEFAULT;
+	int             annotationStyle2 = STYLE_DEFAULT;
 
 	ColorSettings colors;
 };
 
 extern UserSettings	Settings;
+
+enum class SciSide {
+	Main = 1,
+	Second 
+};
 
 enum SciCaller {
 	sciLeft = 1, sciRight, sciOutput, sciFindres
@@ -117,7 +124,8 @@ std::vector<intptr_t> getFoldedLines(pSciCaller pc);
 void setFoldedLines(pSciCaller pc, const std::vector<intptr_t>& foldedLines);
 void clearChangedIndicator(pSciCaller pc, intptr_t start, intptr_t length);
 intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line);
-void addBlankSectionAfter(pSciCaller pc, intptr_t line, intptr_t length);
+void setAnnotationTextStyled(SciSide s, intptr_t line, const char* text);
+void addBlankSectionAfter(SciSide s, intptr_t line, intptr_t length);
 bool isLineFolded(pSciCaller pc, intptr_t line);
 void hideOutsideRange(pSciCaller pc, intptr_t startLine, intptr_t endLine);
 void hideUnmarked(pSciCaller pc, int markMask);

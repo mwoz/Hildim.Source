@@ -259,16 +259,22 @@ intptr_t getPreviousUnhiddenLine(pSciCaller pc, intptr_t line)
 
 	return pc->DocLineFromVisible(visibleLine);
 }
+void setAnnotationTextStyled(SciSide s, intptr_t line, const char* text) {
+	pSciCaller pc = s == SciSide::Main ? nppData.pMain : nppData.pSecond;
+	pc->AnnotationSetText(line, text);
+	pc->AnnotationSetStyle(line, s == SciSide::Main ? Settings.annotationStyle1 : Settings.annotationStyle2);
+}
 
-void addBlankSectionAfter(pSciCaller pc, intptr_t line, intptr_t length)
+void addBlankSectionAfter(SciSide s, intptr_t line, intptr_t length)
 {
 	if (length <= 0)
 		return;
+	pSciCaller pc = s == SciSide::Main ? nppData.pMain : nppData.pSecond;
 
 	std::vector<char> blank(length - 1, '\n');
 	blank.push_back('\0');
 
-	pc->AnnotationSetText(pc->DocLineFromVisible(pc->VisibleFromDocLine(line)), blank.data());
+	setAnnotationTextStyled(s ,pc->DocLineFromVisible(pc->VisibleFromDocLine(line)), blank.data());
 }
 
 bool isLineFolded(pSciCaller pc, intptr_t line)
