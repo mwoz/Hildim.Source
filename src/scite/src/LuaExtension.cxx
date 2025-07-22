@@ -944,13 +944,13 @@ static int cf_editor_set_foreground(lua_State* L) {
 	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
 	WINDOWPLACEMENT placement{};
 	placement.length = sizeof(placement);
+	int radiusProcId = lua_tointeger(L, 1);
+	bool allwaysSafe = lua_toboolean(L, 2);
 	
 	if (!GetWindowPlacement(hChild, &placement)) {
 		lua_pushstring(L, "Failed to window placement!");
 		return 1;
 	}	
-		
-	
 	
 	bool minimized = placement.showCmd == SW_SHOWMINIMIZED;
 	if (minimized) {
@@ -967,8 +967,15 @@ static int cf_editor_set_foreground(lua_State* L) {
 		er = "Coud not GetForegroundWindow";
 		goto error;
 	}
+
+	DWORD iCurProcId;
 	iMyTID = GetCurrentThreadId();
-	iCurrTID = GetWindowThreadProcessId(hCurrWnd, 0);
+	iCurrTID = GetWindowThreadProcessId(hCurrWnd, &iCurProcId);
+	if (iCurProcId == radiusProcId || allwaysSafe) {
+		::SetForegroundWindow(hChild);
+		return 0;
+	}
+
 	if (!iCurrTID){
 		er = "Coud not GetWindowThreadProcessId";
 		goto error;

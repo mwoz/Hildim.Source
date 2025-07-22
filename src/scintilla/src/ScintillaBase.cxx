@@ -565,14 +565,15 @@ void ScintillaBase::CallTipShow(Point pt, const char *defn) {
 	}
 //!-start-[BetterCalltips]
 	// adjust X position so that max. amount of calltip text is visible
-	if (rc.Width() > rcClient.Width())
-		rc.Move(-rc.left, 0);
-	else if (rc.right > rcClient.right)
-		rc.Move(-(rc.right - rcClient.right), 0);
+//	if (rc.Width() > rcClient.Width())
+//		rc.Move(-rc.left, 0);
+//	else if (rc.right > rcClient.right)
+//		rc.Move(-(rc.right - rcClient.right), 0);
 //!-end-[BetterCalltips]
 	// Now display the window.
 	CreateCallTipWindow(rc);
-	ct.wCallTip.SetPositionRelative(rc, &wMain);
+	ct.wCallTip.SetPosition(rc);
+	//ct.wCallTip.SetPositionRelative(rc, &wMain);
 	ct.wCallTip.Show();
 	ct.wCallTip.InvalidateAll();
 }

@@ -688,6 +688,12 @@ namespace luabridge {
 		}
 	}
 
+	std::string Date2StdStr(ATL::COleDateTime dt) {
+		CString s = dt.Format(L"%Y-%m-%d %H:%M:%S");
+		s.Replace(L" 00:00:00", L"");
+		return ToStr(s.GetBuffer());
+	}
+	
 	int luaMessage::xFillList(lua_State* L) {
 
 		luaL_checkudata(L, 2, "iupHandle");
@@ -840,7 +846,7 @@ namespace luabridge {
 					case Variant::Type::Date:
 					{
 						ATL::COleDateTime dt = value.dateValue;
-						buf = ToStr(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
+						buf = Date2StdStr(dt);
 						out = buf.c_str();
 					}
 					break;
@@ -908,7 +914,7 @@ namespace luabridge {
 						{
 							ATL::COleDateTime dt;
 							d->GetValueAsDate(dt);
-							buf = ToStr(dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
+							buf = Date2StdStr(dt);
 							out = buf.c_str();
 						}
 						break;
@@ -962,38 +968,40 @@ namespace luabridge {
 			switch (value.type) {
 			case Variant::Type::Double:
 			{
-				type = "R8";
+				type = "Double";
 				lua_pushnumber(L, value.dblValue);
 			}
 			break;
 			case Variant::Type::Integer:
 			{
-				type = "I4";
+				type = "Integer";
 				lua_pushinteger(L, value.longValue);
 			}
 			break;
 			case Variant::Type::Boolean:
 			{
-				type = "BOOL";
+				type = "Boolean";
 				lua_pushboolean(L, (value.boolValue));
 			}
 			break;
 			case Variant::Type::Date:
 			{
-				type = "DATE";
+				type = "Date";
 				ATL::COleDateTime dt = value.dateValue;
-				lua_pushstringW(L, dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer());
+				CString s = dt.Format(L"%Y-%m-%d %H:%M:%S");
+				s.Replace(L" 00:00:00", L"");
+				lua_pushstringW(L, s.GetBuffer());
 			}
 			break;
 			case Variant::Type::String:
 			{
-				type = "BSTR";
+				type = "String";
 				CStringEx str = value.strValue;
 				lua_pushstringW(L, str);
 			}
 			break;
 			default:
-				type = "NULL";
+				type = "Null";
 				lua_pushnil(L);
 			}
 			lua_setfield(L, -2, "value");
@@ -1126,6 +1134,83 @@ namespace luabridge {
 		return 2;
 	}
 
+	std::string Vartype2VbType(CString & type) {
+		if (type == _T("BSTR"))
+			return "String";
+		if (type == _T("I4"))
+			return "Integer";
+		if (type == _T("R8"))
+			return "Double";
+		if (type == _T("DATE"))
+			return "Date";
+		if (type == _T("BOOL"))
+			return "Boolean";
+		if (type == _T("NULL"))
+			return "Null";
+		if (type == _T("EMPTY"))
+			return "Empty";
+		if (type == _T("ARRAY"))
+			return "Array";
+
+		return "Unsupported";
+	}
+	std::string luaMessage::luaGetFieldText(lua_State* L) {
+		CDatum* d = getDatumByArg(L, 2);
+		if (!d)
+			return ("Empty"); 
+		return ToStr(d->GetValueText(false));
+//		Variant v = d->value();
+//		switch(v.type){
+//		case Variant::Type::Double:
+//		{
+//			std::string res("");
+//			res += v.dblValue;
+//			return res;
+//			//return std::to_string(v.dblValue);
+//		}
+//			break;
+//		case Variant::Type::Integer:
+//		case Variant::Type::Long:
+//			return std::to_string(v.intValue);
+//			break;
+//		case Variant::Type::Boolean:
+//			return v.boolValue ? "True" : "False";
+//			break;
+//		case Variant::Type::Date:
+//		{
+//			ATL::COleDateTime dt = v.dateValue;
+//			CString s = dt.Format(L"%Y-%m-%d %H:%M:%S");
+//			s.Replace(L" 00:00:00", L"");
+//			lua_pushstring(L, ToStr(s.GetBuffer()).c_str());
+//		}
+//		break;
+//		case Variant::Type::String:
+//			return ToStr(v.strValue);
+//			break;
+//		case Variant::Type::Empty:
+//			return "Empty";
+//			break;
+//		case Variant::Type::Null:
+//			return "Null";
+//			break;
+//		default:
+//			lua_pushnil(L);
+//		}
+//		return "???";
+	}
+	std::string luaMessage::luaGetPathType(std::string path) {
+		CDatum* d = m->GetDatumByPath(ToCStr(path));
+		if (!d)
+			return ("Empty");
+		return Vartype2VbType(d->GetVarTypeText());
+
+	}
+	std::string luaMessage::luaGetFieldype(lua_State* L) {
+		CDatum* d = getDatumByArg(L, 2);
+		if (!d)
+			return ("Empty");
+		return Vartype2VbType(d->GetVarTypeText());
+	}
 	
 	RCMessage luaMessage::luaExecute(std::string param) {
 		CMessage* msgOut = new CMessage();
@@ -1358,7 +1443,6 @@ namespace luabridge {
 			  .addFunction("Field", &luaMessage::xFieldValue)
 			  .addFunction("RemoveField", &luaMessage::xRemoveField)
 			  .addFunction("SetField", &luaMessage::xSetField)
-			  .addFunction("FieldType", &luaMessage::xFieldType)
 			  .addFunction("FieldName", &luaMessage::xFieldName)
 			  .addFunction("FillList", &luaMessage::xFillList)
 			  .addFunction("RSCounts", &luaMessage::xRSCounts)
@@ -1382,6 +1466,8 @@ namespace luabridge {
 			  .addFunction("Name", &luaMessage::luaGetName)
 			  .addFunction("CopyFrom", &luaMessage::luaCopyFrom)
 
+			  .addFunction("getFieldType", &luaMessage::luaGetFieldype)
+			  .addFunction("getPathType", &luaMessage::luaGetPathType)
 			  .addFunction("__tostring", &luaMessage::luaToString)
 			  .addFunction("addField", &luaMessage::luaAddField)
 			  .addFunction("addMessage", &luaMessage::luaAddMessage)
@@ -1397,6 +1483,7 @@ namespace luabridge {
 			  .addFunction("flatMessage", &luaMessage::luaFlatMessage)
 			  .addFunction("getMessage", &luaMessage::luaGetMessage)
 			  .addFunction("getMessageIndex", &luaMessage::luaGetMessageIndex)
+			  .addFunction("getFieldText", &luaMessage::luaGetFieldText)
 			  .addFunction("getFieldValue", &luaMessage::luaGetFieldValue)
 			  .addFunction("getPathValue", &luaMessage::luaGetPathValue)
 			  .addFunction("getWireText", &luaMessage::luaGetWireText)

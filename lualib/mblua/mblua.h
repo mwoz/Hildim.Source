@@ -157,8 +157,9 @@ int luaH_PushVariant(lua_State* L, Variant v) {
 	case Variant::Type::Date:
 	{
 		ATL::COleDateTime dt = v.dateValue;
-		dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer();
-		lua_pushstring(L, ToStr( dt.Format(L"%Y-%m-%d %H:%M:%S").GetBuffer()).c_str() );
+		CString s = dt.Format(L"%Y-%m-%d %H:%M:%S");
+		s.Replace(L" 00:00:00", L"");
+		lua_pushstring(L, ToStr( s.GetBuffer()).c_str() );
 	}
 	break;
 	case Variant::Type::String:
@@ -217,7 +218,6 @@ namespace luabridge {
 		int xRemoveField(lua_State* L) { getDatumByArg(L, 2)->~CDatum(); return 0; }
 			
 		int xSetField(lua_State* L);
-		int xFieldType(lua_State* L) { lua_pushstring(L, ToStr(getDatumByArg(L, 2)->GetVarTypeText()).c_str()); return 1; }
 		int xFieldName(lua_State* L) { lua_pushstring(L, ToStr(getDatumByArg(L, 2)->id()).c_str()); return 1; }
 		int xDestroy(lua_State* L) {  return 0; }
 		int xFillList(lua_State* L);
@@ -226,6 +226,9 @@ namespace luabridge {
 		int xRSColumn(lua_State* L);
 		int xSaveFieldBinary(lua_State* L);
 		int xAddFieldBinary(lua_State* L);
+		
+		std::string luaGetFieldype(lua_State* L);
+		std::string luaGetPathType(std::string path);
 	
 		std::string luaGetName() { return ToStr(m->id());} 
 
@@ -256,7 +259,7 @@ namespace luabridge {
 		bool luaExistsField(std::string id){ return (m->GetDatum(ToCStr(id)) != NULL); }
 		bool luaExistsMessage(std::string path) { return (m->GetMsg(ToCStr(path)) != NULL); };
 		void luaCopyFrom(luaMessage* src) { m->AddContentFrom(src->getCMsg()); };
-	//	void vbsGetFieldText(vb::CallContext& ctx);
+	    std::string luaGetFieldText(lua_State* L);
 	//	void vbsGetFieldNumber(vb::CallContext& ctx);
 	//	void vbsGetFieldDate(vb::CallContext& ctx);
 	//	void vbsToString(vb::CallContext& ctx);

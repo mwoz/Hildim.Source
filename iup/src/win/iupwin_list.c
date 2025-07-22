@@ -1724,7 +1724,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		break;
 
 	case WM_PAINT:
-		if (iupAttribGetBoolean(ih->parent, "FLAT")){
+		//if (iupAttribGetBoolean(ih->parent, "FLAT")){
+		if (iupAttribGetBoolean(ih, "FLAT")){
             if (!ih->data->in_redraw) {
                 KillTimer(cbstatic, 10);
                 SetTimer(cbstatic, 10, 0, NULL);
@@ -1735,7 +1736,8 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 			BOOL bEdit = ih->data->has_editbox;
 
 			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(ih->handle, &ps);            
+
+            HDC hdc = BeginPaint(ih->handle, &ps);            
 			POINT cursor;
 			GetCursorPos(&cursor);
 			MapWindowPoints(NULL, ih->handle, &cursor, 1);
