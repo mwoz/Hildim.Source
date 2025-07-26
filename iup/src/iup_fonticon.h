@@ -8,7 +8,6 @@ extern "C" {
 	struct _IcontrolData
 	{
 		int numIcons;
-		int invert;
 	};
 	typedef struct _FontIconData
 	{

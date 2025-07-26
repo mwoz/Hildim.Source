@@ -155,11 +155,11 @@ public:
 	}
 //!-start-[OpenNonExistent]
 	bool DocumentNotSaved()  {
-		bool rez = (isDirty || (!IsUntitled() && (fileModTime == 0)));
+		bool rez = (isDirty);// || (!IsUntitled() && (fileModTime == 0)));
 		if (rez || !pFriend)
 			return rez;
 		Buffer* b = Friend();
-		return b && (b->isDirty || (!b->IsUntitled() && (b->fileModTime == 0)));
+		return b && (b->isDirty);// || (!b->IsUntitled() && (b->fileModTime == 0)));
 	}
 //!-end-[OpenNonExistent]
 };
@@ -627,7 +627,7 @@ protected:
 	void UpdateBuffersCoCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
-	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false);
+	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true);
 	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
 	int ShiftToVisible(int index);
 	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};

@@ -41,7 +41,6 @@ static int iupFontIconCreateMethod(Ihandle* ih, void** params)
         fid = (FontIconData*)malloc(count * sizeof(FontIconData));
 
         float fSize = 0;
-        ih->data->invert = -1;
         
         do
         {   
@@ -70,19 +69,9 @@ static int iupFontIconCreateMethod(Ihandle* ih, void** params)
                   do {
                       
                       if (elem) {
-                          switch (*elem) {
-                          case 'I':
-                              if (elem[1] != 'N' || elem[2] != 'V')
-                                  goto err;
-                              ih->data->invert = maxIcon;
-                              break;
-                          default:
-                          {
-                              fid[maxIcon].r = 0, fid[maxIcon].g = 0, fid[maxIcon].b = 0;
+                          fid[maxIcon].r = 0, fid[maxIcon].g = 0, fid[maxIcon].b = 0;
 
-                              iupStrToRGB(elem, &(fid[maxIcon].r), &(fid[maxIcon].g), &(fid[maxIcon].b));
-                          }
-                          }
+                          iupStrToRGB(elem, &(fid[maxIcon].r), &(fid[maxIcon].g), &(fid[maxIcon].b));
                       }
                       iupStrNextValue(elem, len2, &elementsLen, ',');
                       if (len2 > elementsLen + 1)
@@ -110,10 +99,6 @@ err:
 static char* iFontIconGetCountAttrib(Ihandle* ih)
 {
     return iupStrReturnInt(ih->data->numIcons);
-}
-static char* iFontIconGetNumColorText(Ihandle* ih)
-{
-    return iupStrReturnInt(ih->data->invert);
 }
 
 static void iupFontIconDestroyMethod(Ihandle* ih)
@@ -153,7 +138,6 @@ Iclass* iupFontIconNewClass(void)
 	/* Common */
     iupClassRegisterAttribute(ic, "WID", NULL, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT | IUPAF_NO_STRING);
     iupClassRegisterAttribute(ic, "COUNT", iFontIconGetCountAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-    iupClassRegisterAttribute(ic, "NUMCOLORTEXT", iFontIconGetNumColorText, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 
 
 	//iupdrvMenuInitClass(ic);

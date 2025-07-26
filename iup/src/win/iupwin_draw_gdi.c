@@ -808,15 +808,7 @@ IUP_SDK_API int iupdrwDrawFontIcon(IdrawCanvas* dc, HDC hbitmap, const char* nam
     for (int i = 0; i < iCount; i++) {
         wtext[0] = fid[i].ch;
         unsigned char r = fid[i].r, g = fid[i].g, b = fid[i].b;
-        if (i == numTxtColor) {
-            if ((bg_b * 299.0 + bg_g * 587.0 + bg_r * 114.0) / 1000. > 125.0) {
-                r = 0, g = 0, b = 0;
-            }
-            else
-            {
-                r = 255, g = 255, b = 255;
-            }
-        }
+
         if (make_inactive)
             iupImageColorMakeInactive(&r, &g, &b, bg_r, bg_g, bg_b);
         SetTextColor(hbitmap, RGB(r, g, b));

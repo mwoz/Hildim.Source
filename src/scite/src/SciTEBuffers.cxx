@@ -359,6 +359,8 @@ void SciTEBase::ChangeTabWnd() {
 	int iNext = buffers.NextByIdm_Settings(iPrevSide);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
+	Scintilla::Line fv = wEditor.DocLineFromVisible(wEditor.FirstVisibleLine());
+	
 	wEditor.coEditor.AddRefDocument(d);
 	wEditor.coEditor.SetDocPointer(d);
 
@@ -388,7 +390,9 @@ void SciTEBase::ChangeTabWnd() {
 	bBlockRedraw = false;
 	int p = props.GetInt("tabctrl.alwayssavepos");
 	props.SetInteger("tabctrl.alwayssavepos", 1);
-	SetDocumentAt(iPrev);
+	SetDocumentAt(iPrev, true, true, false, false);
+	wEditor.SetFirstVisibleLine(wEditor.VisibleFromDocLine(fv));
+
 	props.SetInteger("tabctrl.alwayssavepos", p);
 	buffers.stackcurrent = origStackCur;
 }
@@ -507,7 +511,7 @@ void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
 		BuffersMenu(false);
 }
 
-void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit) {
+void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool bExit, bool setAround) {
 	
 	int currentbuf = buffers.Current();
 	if (	index < 0 ||
@@ -551,7 +555,8 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		if (lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
 
-		DisplayAround(bufferNext);
+		if(setAround)
+		    DisplayAround(bufferNext);
 
 		CheckMenus();
 	} else if (startSide == buffers.buffers[index].editorSide) {
@@ -1001,7 +1006,7 @@ void SciTEBase::ShiftTab(int indexFrom, int indexTo, bool mouse) {
 	buffers.SetCurrent(indexTo);
 	BuffersMenu(mouse);
 
-	DisplayAround(buffers.buffers[buffers.Current()]);
+	//DisplayAround(buffers.buffers[buffers.Current()]);
 }
 
 void SciTEBase::MoveTabRight() {
