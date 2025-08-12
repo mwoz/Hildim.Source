@@ -1345,16 +1345,14 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
       }
 
       /* title focus */
-      if (ih->data->has_focus && ih->data->focus_id == node->id && focus_feedback)
-        iupdrvDrawFocusRect(dc, title_x, node_y, title_x + node->title_width - 1, node_y + node_h - 1);
 
   	  if (ih->data->extratext_width)
       {
   	    int extra_x = ih->currentwidth - ih->data->extratext_width;
-		  if(node->selected && selcolor)
-			iupdrvDrawRectangle(dc, title_x, node_y, ih->currentwidth - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
-		  else  
-		    iupdrvDrawRectangle(dc, extra_x , node_y, ih->currentwidth, node_y + node_h , iupDrawStrToColor(bg_color, 0), IUP_DRAW_FILL, 1);
+		iupdrvDrawRectangle(dc, extra_x , node_y, ih->currentwidth, node_y + node_h , iupDrawStrToColor(bg_color, 0), IUP_DRAW_FILL, 1);
+        if (node->selected && selcolor) 
+            iupdrvDrawRectangle(dc, title_x, node_y, ih->currentwidth - 1, node_y + node_h - 1, selcolor, IUP_DRAW_FILL, 1);
+ 
 
         if (node->extratext)
         {
@@ -1494,6 +1492,10 @@ static int iFlatTreeResize_CB(Ihandle* ih, int width, int height)
   (void)height;
 
   iFlatTreeUpdateScrollBar(ih);
+
+  if (ih->data->extratext_width && (ih->currentwidth < ih->data->extratext_width + EXTRAWIDTH_SPACE) && ih->currentwidth > EXTRAWIDTH_SPACE) {
+      ih->data->extratext_width = ih->currentwidth - EXTRAWIDTH_SPACE;
+  }
 
   return IUP_DEFAULT;
 }
@@ -2271,15 +2273,19 @@ static int iFlatTreeMotion_CB(Ihandle* ih, int x, int y, char* status)
       IupSetAttribute(ih, "CURSOR", "SPLITTER_VERT");
     else
       IupSetAttribute(ih, "CURSOR", "ARROW");
-  }
+  
 
-  if (iup_isbutton1(status) && ih->data->extratext_width && ih->data->extratext_move)
-  {
-    ih->data->extratext_width = ih->currentwidth - x;
-    IupRedraw(ih, 0);
-    return IUP_DEFAULT;
+    if (iup_isbutton1(status) && ih->data->extratext_width && ih->data->extratext_move)
+    {
+      ih->data->extratext_width = ih->currentwidth - x;
+      if (ih->data->extratext_width < EXTRAWIDTH_SPACE)
+          ih->data->extratext_width = EXTRAWIDTH_SPACE;
+      if (extra_x < EXTRAWIDTH_SPACE)
+          ih->data->extratext_width = ih->currentwidth - EXTRAWIDTH_SPACE;
+      IupRedraw(ih, 0);
+      return IUP_DEFAULT;
+    }
   }
-
   id = iFlatTreeConvertXYToId(ih, x, y);
   if (id < 0)
   {

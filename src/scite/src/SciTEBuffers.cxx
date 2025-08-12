@@ -126,6 +126,11 @@ int BufferList::Add(IDocumentEditable* doc) {
 
 int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t forIdm) {
 	if (!filename.IsSet()) {
+		for (int i = 0; i < length; i++) {
+			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (!forIdm || forIdm == buffers[i].editorSide)) {
+				return i;
+			}
+		}
 		return -1;
 	}
 	for (int i = 0;i < length;i++) {
@@ -160,6 +165,28 @@ int BufferList::NextByIdm(int idm){
 			return i;
 	}
 	return -1;
+}
+
+void BufferList::RemoveAt(int id) {
+	bool remove = false;
+	for (int i = 0; i < length; i++) {
+		if (stack[i] == id) {
+			remove = true;
+		}
+		else {
+			if (stack[i] > id)
+				stack[i]--;
+			if (remove)
+				stack[i - 1] = stack[i];
+		}
+	}
+	for (int i = id; i < length - 1; i++) {
+		buffers[i] = buffers[i + 1];
+	}
+	if (stackcurrent == length)
+		stackcurrent--;
+
+	length--;
 }
 
 void BufferList::RemoveCurrent() {
@@ -347,16 +374,39 @@ void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
 }
 
 void SciTEBase::ChangeTabWnd() {
-	if (buffers.CurrentBuffer()->pFriend)
+	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled())
 		return;
-	int origStackCur = buffers.stackcurrent;
-	Buffer* bPrev = buffers.CurrentBuffer();
 	int iPrev = buffers.Current();
+	
+	Buffer* bPrev = buffers.CurrentBuffer();
+
+	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+
+	//if (!wEditor.GetCoBuffPointer().IsSet() ) {
+	if (wEditor.GetCoBuffPointer().IsUntitled() ) {
+		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
+		Buffer* coBuff = nullptr;
+		if (coId > -1) {
+			coBuff = &buffers.buffers[coId];
+			if (coBuff->IsUntitled() && !coBuff->isDirty) {
+				wEditor.coEditor.ReleaseDocument(coBuff->doc);
+				coBuff->doc = 0;
+				buffers.RemoveAt(coId);
+				if (coId < iPrev) {
+					iPrev--;
+					buffers.SetCurrent(iPrev);
+					bPrev = buffers.CurrentBuffer();
+				}
+			}
+		}
+	}
+
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
+	int iNext = buffers.NextByIdm(iPrevSide);
+	int origStackCur = buffers.stackcurrent;
+
 	IDocumentEditable* d = bPrev->doc;
 
-	//int iNext = buffers.StackNextBySide(buffers.CurrentBuffer()->editorSide, iPrev);
-	int iNext = buffers.NextByIdm_Settings(iPrevSide);
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	Scintilla::Line fv = wEditor.DocLineFromVisible(wEditor.FirstVisibleLine());
@@ -364,7 +414,7 @@ void SciTEBase::ChangeTabWnd() {
 	wEditor.coEditor.AddRefDocument(d);
 	wEditor.coEditor.SetDocPointer(d);
 
-	bPrev->editorSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+	bPrev->editorSide = coSide;
 
 	wEditor.Switch();
 	bBlockRedraw = true;
@@ -382,15 +432,18 @@ void SciTEBase::ChangeTabWnd() {
 		wEditor.coEditor.AddRefDocument(d);
 		wEditor.coEditor.SetDocPointer(d);
 		wEditor.SetCoBuffPointer(NULL);
+		if (iPrevSide == IDM_SRCWIN ||  props.GetInt("additional.view.stay.visible")) {
 			wEditor.Switch(true);
-		if (iPrevSide == IDM_SRCWIN) {
 			New();
 		}
 	}
 	bBlockRedraw = false;
 	int p = props.GetInt("tabctrl.alwayssavepos");
 	props.SetInteger("tabctrl.alwayssavepos", 1);
-	SetDocumentAt(iPrev, true, true, false, false);
+	ReadProperties();
+
+	BuffersMenu();
+
 	wEditor.SetFirstVisibleLine(wEditor.VisibleFromDocLine(fv));
 
 	props.SetInteger("tabctrl.alwayssavepos", p);
@@ -398,12 +451,31 @@ void SciTEBase::ChangeTabWnd() {
 }
 
 void SciTEBase::CloneTab(){
-	if (buffers.CurrentBuffer()->pFriend)
+	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled())
 		return;
-
-	Buffer* bPrev = buffers.CurrentBuffer();
-	IDocumentEditable* d = bPrev->doc;
 	int iPrev = buffers.Current();
+	Buffer* bPrev = buffers.CurrentBuffer();
+	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+
+	if (wEditor.GetCoBuffPointer().IsUntitled()) {
+		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
+		Buffer* coBuff = nullptr;
+		if (coId > -1) {
+			coBuff = &buffers.buffers[coId];
+			if (coBuff->IsUntitled() && !coBuff->isDirty) {
+				wEditor.coEditor.ReleaseDocument(coBuff->doc);
+				coBuff->doc = 0;
+				buffers.RemoveAt(coId);
+				if (coId < iPrev) {
+					iPrev--;
+					buffers.SetCurrent(iPrev);
+					bPrev = buffers.CurrentBuffer();
+				}
+			}
+		}
+	}
+
+	IDocumentEditable* d = bPrev->doc;
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.AddRefDocument(d);
@@ -726,7 +798,169 @@ void SciTEBase::SetEol() {
 		wEditor.SetEOLMode(EndOfLine::CrLf);
 	}
 }
+bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defExt, int encoding, const char* txt, const GUI::gui_char* path, bool unic) {
+	// See if we can have a buffer for the file to open
+	if (!CanMakeRoom(!(false))) {
+		return false;
+	}
+	bool needunic = unic || !defName;
+	InitialiseBuffers();
+	UpdateBuffersCurrent();
 
+	int side = CurrentBuffer()->editorSide;
+
+	FilePath curDirectory(filePath.Directory());
+	curDirectory = path ? path : filePath.Directory();
+
+	if (curDirectory.AsInternal() == GUI_TEXT(""))
+		curDirectory.Set(GetSciteDefaultHome());
+
+
+	FilePath fileName;
+	GUI::gui_string ext = defExt ? defExt: filePath.Extension().AsInternal();
+
+	GUI::gui_string name0 = defName ? defName : (extender ? extender->LocalizeText("Untitled") : GUI_TEXT("Untitled"));
+	GUI::gui_string name;
+	int counter = 0;
+	bool isUnic = true;
+
+	do {
+		do {
+			counter++;
+			isUnic = true;
+			name = name0;
+			if(needunic)
+				name += GUI::gui_string(std::to_wstring(counter).c_str());
+			
+			for (int i = 0; i < buffers.length; i++) {
+				FilePath fp = buffers.buffers[i].BaseName();
+				if (fp.AsInternal() == name) {
+					if (!needunic) {
+						if (buffers.buffers[i].Extension().AsInternal() == ext) {
+							Open(buffers.buffers[i].AbsolutePath());
+
+							goto setbuffer;
+						}
+					}
+					else {
+						isUnic = false;
+						break;
+					}
+				}
+			}
+
+		} while (!isUnic);
+		fileName.Set(name + (ext == L"" ? L"" : GUI_TEXT(".") + ext));
+		filePath.Set(curDirectory, fileName);
+	} while (!defName && filePath.Exists());
+
+	bool emptyInSrc = buffers.buffers[buffers.Current()].IsUntitled() &&
+		!buffers.buffers[buffers.Current()].isDirty;
+
+	if (!defName || (!emptyInSrc && ((buffers.length > 1) ||
+		(buffers.Current() != 0) ||
+		(buffers.buffers[0].isDirty) ||
+		(!buffers.buffers[0].IsUntitled())))) {
+		if (buffers.size == buffers.length) {
+			Close(false, false, true);
+		}
+		buffers.SetCurrent(buffers.Add());
+	}
+
+	IDocumentEditable* doc = GetDocumentAt(buffers.Current());
+	wEditor.SetDocPointer(doc);
+
+	SetFileName(filePath);
+	wEditor.SetBuffPointer(&filePath);
+
+	CurrentBuffer()->isDirty = false;
+	CurrentBuffer()->boundWithFS = false;
+	jobQueue.isBuilding = false;
+	jobQueue.isBuilt = false;
+	isReadOnly = false;	// No sense to create an empty, read-only buffer...
+	CurrentBuffer()->editorSide = side;
+
+	ClearDocument();
+
+	if (extender)
+		extender->InitBuffer(buffers.Current());
+
+
+	CurrentBuffer()->overrideExtension = "";
+
+	ReadProperties();
+	wEditor.SetScrollWidthTracking(1);
+	wEditor.SetScrollWidth(100);
+	SetIndentSettings();
+	SetEol();
+	UpdateBuffersCurrent();
+
+setbuffer:
+	wEditor.SetReadOnly(0);
+	wEditor.Cancel();
+
+	wEditor.SetUndoCollection(0);
+
+	if (encoding) {
+		wEditor.SetBuffEncoding(encoding);
+
+		CurrentBuffer()->unicodeMode = static_cast<UniMode>(encoding - IDM_ENCODING_DEFAULT);
+		if (CurrentBuffer()->unicodeMode != uni8Bit) {
+			// Override the code page if Unicode
+			codePage = SC_CP_UTF8;
+		}
+		else {
+			codePage = props.GetInt("code.page");
+		}
+		props.SetInteger("editor.unicode.mode", CurrentBuffer()->unicodeMode + IDM_ENCODING_DEFAULT);
+		wEditor.SetCodePage(codePage);
+
+		if (wEditor.CodePage() != codePage) {
+			codePage = 0;
+			wEditor.SetCodePage(codePage);
+		}
+	}
+
+	if (txt) {
+		if (encoding && encoding != IDM_ENCODING_DEFAULT) {
+			wEditor.SetText(GUI::ConvertToUTF8(txt, CP_ACP).c_str());
+		}else
+		    wEditor.SetText(txt);
+	}
+
+	wEditor.SetUndoCollection(1);
+
+
+
+	wEditor.SetChangeHistory(static_cast<ChangeHistoryOption>((viewHisoryMarkers ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_MARKERS) : 0)
+		| (viewHisoryIndicators ? (SC_CHANGE_HISTORY_ENABLED | SC_CHANGE_HISTORY_INDICATORS) : 0)));
+
+	// Flick focus to the output window and back to
+	// ensure palette realised correctly.
+	WindowSetFocus(wOutput);
+	WindowSetFocus(wEditor);
+	wEditor.SetSavePoint();
+
+	wEditor.GotoPos(0);
+	Redraw();
+	wEditor.EmptyUndoBuffer();
+
+
+
+	SetWindowName();
+	if (lineNumbers && lineNumbersExpand)
+		SetLineNumberWidth();
+	bBlockRedraw = false;
+
+	BuffersMenu();
+	if (extender) {
+		extender->OnOpen(filePath.AsUTF8().c_str());
+		extender->OnNavigation("Open-");
+	}
+
+	return true;
+
+}
 void SciTEBase::New() {
 	InitialiseBuffers();
 	UpdateBuffersCurrent();
@@ -739,11 +973,9 @@ void SciTEBase::New() {
 
 	// If the current buffer is the initial untitled, clean buffer then overwrite it,
 	// otherwise add a new buffer.
-	bool emptyInSrc = false;
-	if (wEditor.GetWindowIdm() == IDM_SRCWIN && SecondEditorActive()) {
-		emptyInSrc = (buffers.NextByIdm(IDM_SRCWIN) == -1 && buffers.buffers[buffers.Current()].IsUntitled() &&
-			!buffers.buffers[buffers.Current()].isDirty);
-	}
+	bool emptyInSrc = buffers.buffers[buffers.Current()].IsUntitled() &&
+		!buffers.buffers[buffers.Current()].isDirty;
+
 	if (!emptyInSrc && ((buffers.length > 1) ||
 	        (buffers.Current() != 0) ||
 	        (buffers.buffers[0].isDirty) ||
@@ -894,6 +1126,12 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		if (closingLast) {
 			ClearDocument();
 		}
+		if (nextFriend == -1 && (prevIdm == IDM_SRCWIN || props.GetInt("additional.view.stay.visible"))) {
+			wEditor.Switch();
+			New();
+			wEditor.SetCoBuffPointer(&bufferNext);
+		}
+
 		if (updateUI) {
 			CheckReload();
 

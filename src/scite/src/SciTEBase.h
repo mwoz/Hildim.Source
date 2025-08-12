@@ -104,6 +104,7 @@ class Buffer : public RecentFile {
 public:
 	Scintilla::IDocumentEditable* doc;
 	bool isDirty;
+	bool boundWithFS;
 	bool ROMarker; 
 	bool useMonoFont;
 	UniMode unicodeMode;
@@ -126,13 +127,13 @@ public:
 		return (Buffer*)pBase->GetAt(i);
 	}
 	Buffer() :
-//!			RecentFile(), doc(0), isDirty(false), useMonoFont(false),
-			RecentFile(), doc(0), isDirty(false), ROMarker(false), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
+			RecentFile(), doc(0), isDirty(false), boundWithFS(true), ROMarker(false), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
 			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(IDM_SRCWIN), foldState(), pFriend(false){}
 
 	void Init(BufferListAPI* pB) {
 		RecentFile::Init();
 		isDirty = false;
+		boundWithFS = true;
 		ROMarker = false; //!-add-[ReadOnlyTabMarker]
 		useMonoFont = false;
 		unicodeMode = uni8Bit;
@@ -143,6 +144,7 @@ public:
 		foldState.clear();
 		pFriend = false;
 		pBase = pB;
+		doc = 0;
 	}
 
 	void SetTimeFromFile() {
@@ -188,6 +190,7 @@ public:
 	void Allocate(int maxSize);
 	int Add(Scintilla::IDocumentEditable* doc = NULL);
 	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, uptr_t forIdm = NULL);
+	void RemoveAt(int ids);
 	void RemoveCurrent();
 	int NextByIdm_Settings(int idm);
 	int NextByIdm_Stack(int idm);
@@ -630,6 +633,8 @@ protected:
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true);
 	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
 	int ShiftToVisible(int index);
+	bool  GetBufferUntitled(int i) { return buffers.buffers[i].IsUntitled(); };
+	char GetEditorSide() { return wEditor.GetPtr() == wEditorL.GetPtr() ? 'L' : 'R'; }
 	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
 	std::string  GetCoBufferName(){ return wEditor.GetCoBuffPointer().AsUTF8();};
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
@@ -711,6 +716,7 @@ protected:
 	void SetIndentSettings();
 	void SetEol();
 	void New();
+	bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false);
 	void RestoreUserHiddenLines(ScintillaWindowEditor& w, const Buffer& buffer);
 	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);

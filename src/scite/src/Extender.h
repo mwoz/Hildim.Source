@@ -36,6 +36,8 @@ public:
 	virtual void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true) = 0;
 	virtual int GetBuffersCount() = 0;
 	virtual int GetCurrentBufer() = 0;
+	virtual bool GetBufferUntitled(int i) = 0;
+	virtual char GetEditorSide() = 0;
 	virtual std::string GetCoBufferName() = 0;
 	virtual std::string GetBufferName(int i) = 0;
 	virtual void SetBufferEncoding(int i, int e) = 0;
@@ -77,6 +79,7 @@ public:
 	virtual bool NewInstance(const char* arg, bool asAdmin) =0;
 	virtual bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile) = 0;
 	virtual unsigned long InvertColor(unsigned long clr) = 0;
+	virtual bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false) = 0;
 };
 
 /**

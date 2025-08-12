@@ -392,6 +392,90 @@ static int cf_get_is64bit(lua_State* L) {
 	return 1;
 }
 
+static int cf_new_file(lua_State* L) {
+	int argType = lua_type(L, 1);
+
+	const GUI::gui_char* defName= nullptr;
+	const GUI::gui_char* defExt = nullptr;
+	int encoding                = 0; 
+	const char* txt             = nullptr;
+	bool unic                   = false; 
+	const GUI::gui_char* path   = nullptr;
+	GUI::gui_string s_name;
+	GUI::gui_string s_path;
+	GUI::gui_string s_ext;
+	std::string s_text;
+	
+	switch (lua_type(L, 1)) {
+	case LUA_TTABLE:
+		lua_pushliteral(L, "encoding");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TNUMBER) {
+			encoding = static_cast<int>(lua_tointegerx(L, (-1), NULL));
+		}
+		lua_pop(L, 1);
+
+		lua_pushliteral(L, "name");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TSTRING) {
+			s_name = GUI::StringFromUTF8(lua_tostring(L, -1));
+			defName = s_name.c_str();
+		}
+		lua_pop(L, 1);
+
+		lua_pushliteral(L, "ext");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TSTRING) {
+			s_ext = GUI::StringFromUTF8(lua_tostring(L, -1));
+			defExt = s_ext.c_str();
+		}
+		lua_pop(L, 1);
+
+		lua_pushliteral(L, "path");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TSTRING) {
+			s_path = GUI::StringFromUTF8(lua_tostring(L, -1));
+			path = s_path.c_str();
+		}
+		lua_pop(L, 1);
+
+		lua_pushliteral(L, "text");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TSTRING) {
+			s_text = lua_tostring(L, -1);
+			txt = s_text.c_str();
+		}
+		lua_pop(L, 1);
+		lua_pushliteral(L, "unicue");
+		lua_gettable(L, -2);
+		if (lua_type(L, -1) == LUA_TBOOLEAN) {
+			unic = lua_toboolean(L, -1);
+		}
+		lua_pop(L, 1);
+
+		break;
+	case LUA_TNONE:
+		defName = nullptr;
+		encoding = 0;
+		txt = nullptr;
+		unic = false;
+		path = nullptr;
+		break;
+	default:
+		luaL_argerror(L, 1, "table or not value expected");
+		return 0;
+	}
+
+	bool rez = host->NewFile(defName, defExt, encoding, txt, path, unic);
+	lua_pushboolean(L, rez);
+	return 1;
+}
+
+static int cf_editor_side(lua_State* L) {
+	lua_pushstring(L, host->GetEditorSide() == 'L' ? "L" : "R");
+	return 1;
+}
+
 static int cf_switch_tabs(lua_State* L) {
 	int side = static_cast<int>(luaL_checkinteger(L, 1));
 	if (side < -1 || side > 1)
@@ -938,6 +1022,12 @@ static int sf_BlockUpdate(lua_State* L) {
 	return 0;
 }
 
+static int cf_set_foreground_hwnd(lua_State* L) {
+	HWND w = (HWND)luaL_checkinteger(L, 1);
+	::SetForegroundWindow(w);
+	return 0;
+}
+
 static int cf_editor_set_foreground(lua_State* L) {
 
 	HWND hChild = NULL;
@@ -948,8 +1038,9 @@ static int cf_editor_set_foreground(lua_State* L) {
 	bool allwaysSafe = lua_toboolean(L, 2);
 	
 	if (!GetWindowPlacement(hChild, &placement)) {
+		lua_pushnil(L);
 		lua_pushstring(L, "Failed to window placement!");
-		return 1;
+		return 2;
 	}	
 	
 	bool minimized = placement.showCmd == SW_SHOWMINIMIZED;
@@ -968,12 +1059,25 @@ static int cf_editor_set_foreground(lua_State* L) {
 		goto error;
 	}
 
+
 	DWORD iCurProcId;
 	iMyTID = GetCurrentThreadId();
 	iCurrTID = GetWindowThreadProcessId(hCurrWnd, &iCurProcId);
 	if (iCurProcId == radiusProcId || allwaysSafe) {
-		::SetForegroundWindow(hChild);
-		return 0;
+		bool doSet = true;
+		if (iCurProcId != radiusProcId) {
+			WCHAR clName[50];
+			::GetClassName(hCurrWnd, clName, 49);
+
+			doSet = lstrcmpiW(clName, L"TscShellContainerClass");
+
+
+
+		}
+		if (doSet) {
+			::SetForegroundWindow(hChild);
+			goto ok;
+		}
 	}
 
 	if (!iCurrTID){
@@ -1001,10 +1105,13 @@ static int cf_editor_set_foreground(lua_State* L) {
 	
 error:
 	if (er) {
+		lua_pushnil(L);
 		lua_pushstring(L, er);
-		return 1;
+		return 2;
 	}
-	return 0;
+ok:
+	lua_pushinteger(L, (DWORD)hCurrWnd);
+	return 1;
 }
 
 static int sf_SetOverrideLanguage(lua_State* L){
@@ -1398,6 +1505,12 @@ static int bf_get_buffer_name(lua_State *L){
 	return 1;
 }
 
+static int bf_get_buffer_untitled(lua_State *L){
+	int i = static_cast<int>(luaL_checkinteger(L, 1));
+	lua_pushboolean(L, host->GetBufferUntitled(i));
+	return 1;
+}
+
 static int bf_save_cobuffer_pos(lua_State *L){
 	host->UpdateBuffersCoCurrent();
 	return 1;
@@ -1443,12 +1556,20 @@ static int bf_set_filetime(lua_State *L) {
 
 static int cf_set_co_document_at(lua_State* L) {
 	int index = static_cast<int>(luaL_checkinteger(L, 1));
+	if (index < 0 || index >+ host->GetBuffersCount() ) {
+		luaL_error(L, "SetCoDocumentAt: number must be positive and less then BuffersCount");
+		return 0;
+	}
 	host->SetCoDocumentAt(index);
 	return 0;
 }
 
 static int cf_set_document_at(lua_State *L){
 	int index = static_cast<int>(luaL_checkinteger(L, 1));
+	if (index < 0 || index >+host->GetBuffersCount()) {
+		luaL_error(L, "SetDocumentAt: number must be positive and less then BuffersCount");
+		return 0;
+	}
 	int updateStack = 1;
 	if (lua_isboolean(L, 2))
 		updateStack = lua_toboolean(L, 2);
@@ -2576,6 +2697,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_editor_set_foreground);
 	lua_setfield(luaState, -2, "SetForeground");
 
+	lua_pushcfunction(luaState, cf_set_foreground_hwnd);
+	lua_setfield(luaState, -2, "SetForegroundHwnd");
+
 	lua_pushcfunction(luaState, sf_SetRestart);
 	lua_setfield(luaState, -2, "SetRestart");
 
@@ -2618,6 +2742,12 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_pushcfunction(luaState, cf_switch_tabs);
 	lua_setfield(luaState, -2, "SwitchTabs");
 
+	lua_pushcfunction(luaState, cf_new_file);
+	lua_setfield(luaState, -2, "NewFile");
+
+	lua_pushcfunction(luaState, cf_editor_side);
+	lua_setfield(luaState, -2, "EditorSide");
+
 	// buffers
 	lua_newtable(luaState);
 	lua_pushcfunction(luaState, bf_get_count);
@@ -2644,6 +2774,8 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setfield(luaState, -2, "GetCurrent");
 	lua_pushcfunction(luaState, bf_save_cobuffer_pos);
 	lua_setfield(luaState, -2, "SaveCoBuffPos");
+	lua_pushcfunction(luaState, bf_get_buffer_untitled);
+	lua_setfield(luaState, -2, "UntitledAt");
 
 	lua_pushcfunction(luaState, bf_get_buffer_side);
 	lua_setfield(luaState, -2, "GetBufferSide");

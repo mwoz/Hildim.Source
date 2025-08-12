@@ -181,7 +181,7 @@ public:
 	}
 	sptr_t Send(unsigned int msg, uptr_t wParam=0, sptr_t lParam=0);
 	virtual sptr_t SendPointer(unsigned int msg, uptr_t wParam=0, void *lParam=0);
-
+	sptr_t GetPtr() { return ptr; }
 };
 
 bool IsDBCSLeadByte(int codePage, char ch);

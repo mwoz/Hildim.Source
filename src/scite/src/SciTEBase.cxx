@@ -339,17 +339,18 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(uptr_t wndIdm, FilePath* pBuff
 		else if (lstrcmpW(buffer_L.AsInternal() ,L"") )
 		{
 			int id = pBase->buffers.GetDocumentByName(buffer_L, false, IDM_SRCWIN);
+			if (id == -1)
+				id = pBase->buffers.NextByIdm(IDM_SRCWIN);
 			if (id > -1) {
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
 			}
-			//throw std::runtime_error("Buffers Filed");
+			pBase->SetWindowName();
 			return;
 		}
 	}
 	else if (wndIdm == IDM_COSRCWIN){
-		if (!pBuff && !lstrcmpW(buffer_R.AsInternal(), L""))
-			return;
+
 		SetID(pBase->wEditorR.GetID());	
 		coEditor.SetID(pBase->wEditorL.GetID());
 		if (pBuff){
@@ -358,11 +359,12 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(uptr_t wndIdm, FilePath* pBuff
 		else
 		{
 			int id = pBase->buffers.GetDocumentByName(buffer_R, false, IDM_COSRCWIN);
+			if (id == -1)
+				id = pBase->buffers.NextByIdm(IDM_COSRCWIN);
 			if (id > -1) {
 				pBase->SetDocumentAt(id, true, true, true);
 				return;
 			}
-			//throw std::runtime_error("Buffers Filed");
 			return;
 		}
 	}
@@ -2697,7 +2699,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_FOCUSIN:
 		if ((notification->nmhdr.idFrom == IDM_SRCWIN) || (notification->nmhdr.idFrom == IDM_COSRCWIN)){
 			if (wEditor.GetWindowIdm() != notification->nmhdr.idFrom) { 
-				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
+ 				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
 				CheckReload();
 			}
 		}

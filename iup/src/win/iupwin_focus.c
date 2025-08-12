@@ -58,11 +58,15 @@ void iupdrvSetFocus(Ihandle *ih)
   SendMessage(ih->handle, WM_CHANGEUISTATE, UIS_CLEAR|UISF_HIDEFOCUS, 0);  /* clear+hidefocus=showfocus */
 }
 
-void iupwinWmSetFocus(Ihandle *ih)
+void iupwinWmSetFocus(Ihandle* ih)
 {
-  Ihandle* dialog = IupGetDialog(ih);
-  if (ih != dialog)
-    iupAttribSet(dialog, "_IUPWIN_LASTFOCUS", (char*)ih);  /* used by IupMenu and here. */
+    Ihandle* dialog = IupGetDialog(ih);
+    if (ih != dialog)
+    {
+        if (!dialog) //При деаттаче из меню тут пддали
+            return;
+        iupAttribSet(dialog, "_IUPWIN_LASTFOCUS", (char*)ih);  /* used by IupMenu and here. */
+    }
   else
   {
     /* here ih is a dialog */

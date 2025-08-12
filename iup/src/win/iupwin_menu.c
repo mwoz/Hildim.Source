@@ -521,20 +521,6 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
 
         char* img = iupAttribGet(ih, "IMAGE");
 
-//       if (img) {
-//           if (img[0] == '#') {
-//               iupdrwDrawFontIcon(NULL, hDC, img, drawitem->itemState & ODS_GRAYED, IupGetAttribute(ih, "BARCOLOR"), BCMENU_PAD, BCMENU_PAD, height - BCMENU_PAD * 2, height - BCMENU_PAD * 2);
-//           }
-//           else {
-//               HBITMAP hb = (HBITMAP)iupImageGetImage(img, NULL, drawitem->itemState & ODS_GRAYED, NULL);
-//               if (hb) {
-//                   int bpp;
-//                   iupdrvImageGetInfo(hb, NULL, NULL, &bpp);
-//                   iupwinDrawBitmap(hDC, hb, (parent->x - icon_w) / 2, (parent->y - icon_h) / 2, icon_w, icon_h, icon_w, icon_h, bpp);
-//               }
-//           } 
-//       }
-
         SetBkMode(hDC, TRANSPARENT);
         if (text && iupwinGetColorRef(root, drawitem->itemState & ODS_GRAYED ? "FGINACTIVECOLOR" : "FGCOLOR", &fgcolor))
         {
@@ -543,18 +529,7 @@ static void winMenuDrawItem(Ihandle* ih, DRAWITEMSTRUCT* drawitem)
             SelectObject(hDC, hFont);
             if (drawitem->itemState & ODS_CHECKED) {
 
-
-
-              //  if(!iupwinGetColorRef(root, "BARFGCOLOR", &barfgcolor))
-              //      barfgcolor = fgcolor;
-                
-               // SetRect(&rect, icon_w / 2, 2, icon_w * 2, height);
-              //  DrawText(hDC, IupGetInt(parent, "RADIO") ? radioSYM : checkSYM, 1, &rect, 0);
-
-                img = IupGetInt(parent, "RADIO") ? "#MENU_radio" : "#MENU_check";
-
-
-                // iupdrwDrawFontIcon(NULL, hDC, img, drawitem->itemState & ODS_GRAYED, IupGetAttribute(ih, "BARCOLOR"), BCMENU_PAD, BCMENU_PAD, height - BCMENU_PAD * 2, height - BCMENU_PAD * 2);
+                img = IupGetInt(parent, "RADIO") ? "#MENU_radio" : (IupGetInt(ih, "RADIO") ? "#MENU_radio" : "#MENU_check");
 
             }
             

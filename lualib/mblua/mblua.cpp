@@ -828,7 +828,8 @@ namespace luabridge {
 					switch (value.type) {
 					case Variant::Type::Double:
 					{
-						std::snprintf(&buf[0], 250, "%.9f", std::forward<double>(value.dblValue));
+						buf = std::string(100, 0);
+						int res = std::snprintf(&buf[0], 99, "%.9f", std::forward<double>(value.dblValue));
 						out = buf.c_str();
 					}
 					break;
