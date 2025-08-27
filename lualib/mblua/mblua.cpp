@@ -605,37 +605,6 @@ namespace luabridge {
 		return nullptr;
 	}
 
-	int  luaMessage::xSetField(lua_State* L) { 
-
-		CDatum* d;
-		Variant v = luaH_CheckVariant(L, 3);
-
-		switch (lua_type(L, 2)) {
-		case LUA_TSTRING:
-			m->SetDatum(CString(luaL_checkstring(L, 2)), v);
-			break;
-		case LUA_TNUMBER:
-			d = m->GetDatum(static_cast<int>(lua_tointeger(L, 2)));
-			if (d)
-				d->value(v);
-			else
-			{
-				std::string er("Index not exist: ");
-				er += std::to_string(v.intValue);
-				throw_L_error(L, er.c_str());
-			}
-			break;
-		default:
-		{
-			std::string er("Invalid type for argumrnent: \"");
-			er += luaL_typename(L, 2);
-			er += "\"";
-			throw_L_error(L, er.c_str());
-		}
-		}
-		return 0;
-	}
-
 	int luaMessage::xCounts(lua_State* L)
 	{
 		lua_pushinteger(L, m->GetDataCount());
@@ -1442,8 +1411,6 @@ namespace luabridge {
 			  .addFunction("Subjects", &luaMessage::xSubjects)
 			  .addFunction("Counts", &luaMessage::xCounts)
 			  .addFunction("Field", &luaMessage::xFieldValue)
-			  .addFunction("RemoveField", &luaMessage::xRemoveField)
-			  .addFunction("SetField", &luaMessage::xSetField)
 			  .addFunction("FieldName", &luaMessage::xFieldName)
 			  .addFunction("FillList", &luaMessage::xFillList)
 			  .addFunction("RSCounts", &luaMessage::xRSCounts)

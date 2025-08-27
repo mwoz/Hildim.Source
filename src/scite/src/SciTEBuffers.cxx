@@ -961,11 +961,11 @@ setbuffer:
 	return true;
 
 }
-void SciTEBase::New() {
+void SciTEBase::New(bool force) {
 	InitialiseBuffers();
 	UpdateBuffersCurrent();
 
-	if ((buffers.size == 1) && (!buffers.buffers[0].IsUntitled())) {
+	if ((buffers.size == 1) && (!buffers.buffers[0].IsUntitled() )) {
 		AddFileToStack(buffers.buffers[0],
 		        buffers.buffers[0].selection,
 		        buffers.buffers[0].scrollPosition);
@@ -973,17 +973,18 @@ void SciTEBase::New() {
 
 	// If the current buffer is the initial untitled, clean buffer then overwrite it,
 	// otherwise add a new buffer.
-	bool emptyInSrc = buffers.buffers[buffers.Current()].IsUntitled() &&
+	bool emptyInSrc = (buffers.buffers[buffers.Current()].IsUntitled()) &&
 		!buffers.buffers[buffers.Current()].isDirty;
+		
 
-	if (!emptyInSrc && ((buffers.length > 1) ||
+	if (force || (!emptyInSrc && ((buffers.length > 1) ||
 	        (buffers.Current() != 0) ||
-	        (buffers.buffers[0].isDirty) ||
-	        (!buffers.buffers[0].IsUntitled()))) {
+	        (buffers.buffers[0].isDirty) || 
+	        (!buffers.buffers[0].IsUntitled())))) {
 		if (buffers.size == buffers.length) {
 			Close(false, false, true);
 		}
-		buffers.SetCurrent(buffers.Add());
+	buffers.SetCurrent(buffers.Add());
 	}
 
 	IDocumentEditable* doc = GetDocumentAt(buffers.Current());
@@ -1057,6 +1058,9 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	bool closingLast = false;
 	int nextFriend = -2;
 	int prevIdm = -2;
+	if (buffers.CurrentBuffer()->IsUntitled())
+		return;
+
 	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 	if (extender) {
 		extender->OnClose(filePath.AsUTF8().c_str());
@@ -1128,7 +1132,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		}
 		if (nextFriend == -1 && (prevIdm == IDM_SRCWIN || props.GetInt("additional.view.stay.visible"))) {
 			wEditor.Switch();
-			New();
+			New(true);
 			wEditor.SetCoBuffPointer(&bufferNext);
 		}
 
@@ -1151,10 +1155,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		extender->OnNavigation("Close-");
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
-	if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
-		wEditor.Switch();
-		New();
-	}
+	//if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
+	//	wEditor.Switch();
+	//	New();
+	//}
 
 	if (closingLast && props.GetInt("quit.on.close.last") && !loadingSession) {
 		QuitProgram();

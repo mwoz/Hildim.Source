@@ -215,9 +215,7 @@ namespace luabridge {
 			Variant& v = d ? d->value() : Variant();
 			return luaH_PushVariant(L, v); 
 		}
-		int xRemoveField(lua_State* L) { getDatumByArg(L, 2)->~CDatum(); return 0; }
 			
-		int xSetField(lua_State* L);
 		int xFieldName(lua_State* L) { lua_pushstring(L, ToStr(getDatumByArg(L, 2)->id()).c_str()); return 1; }
 		int xDestroy(lua_State* L) {  return 0; }
 		int xFillList(lua_State* L);

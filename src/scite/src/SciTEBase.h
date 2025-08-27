@@ -715,7 +715,7 @@ protected:
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize) = 0;
 	void SetIndentSettings();
 	void SetEol();
-	void New();
+	void New(bool force = false);
 	bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false);
 	void RestoreUserHiddenLines(ScintillaWindowEditor& w, const Buffer& buffer);
 	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
