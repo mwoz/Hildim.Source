@@ -1356,9 +1356,21 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
 
         if (node->extratext)
         {
-          iupFlatDrawIcon(ih, dc, extra_x + 10, node_y, ih->data->extratext_width, node_h,
-                          IUP_IMGPOS_LEFT, 10, IUP_ALIGN_ALEFT, IUP_ALIGN_ACENTER, 0, 0,
-                          NULL, 0, node->extratext, text_flags, 0, fore_color, bg_color, active);
+          int firstLine = strcspn(node->extratext, "\n\r");
+          if (firstLine < strlen(node->extratext)) {
+              char l[500];
+              if (firstLine > 499)
+                  firstLine = 499;
+              strncpy(l, node->extratext, firstLine);
+              l[firstLine] = 0;
+              iupFlatDrawIcon(ih, dc, extra_x + 10, node_y, ih->data->extratext_width, node_h,
+                  IUP_IMGPOS_LEFT, 10, IUP_ALIGN_ALEFT, IUP_ALIGN_ACENTER, 0, 0,
+                  NULL, 0, l, text_flags, 0, fore_color, bg_color, active);
+
+          } else
+              iupFlatDrawIcon(ih, dc, extra_x + 10, node_y, ih->data->extratext_width, node_h,
+                              IUP_IMGPOS_LEFT, 10, IUP_ALIGN_ALEFT, IUP_ALIGN_ACENTER, 0, 0,
+                              NULL, 0, node->extratext, text_flags, 0, fore_color, bg_color, active);
         }
   	  }
     }

@@ -1019,17 +1019,19 @@ void findBestMatch(const CompareInfo& cmpInfo, const diffInfo& lookupDiff, intpt
 class full2docMap {
 private:
 	pSciCaller pc;
-	std::map<intptr_t, intptr_t> lines;
+	std::map<intptr_t, intptr_t> lines; 
 	intptr_t lastF = -1;
 public:
 	full2docMap(pSciCaller p) : pc(p) {}
 	intptr_t docLine(intptr_t fullLine) {
 		intptr_t lastD = lastF >= 0 ? lines.at(lastF) : -1;
+		intptr_t maxLine = pc->LineCount() - 1;
+
 		for (; lastF <= fullLine; lastF++) {
 			do {
 				lastD++;
-			} while (pc->LineIndentPosition(lastD) == pc->LineEndPosition(lastD));
-			lines[lastF + 1] = lastD;
+			} while (pc->LineIndentPosition(lastD) == pc->LineEndPosition(lastD) && lastD<= maxLine);
+    			lines[lastF + 1] = lastD;
 		}
 		return lines.at(fullLine);
 	}
