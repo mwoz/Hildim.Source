@@ -1058,11 +1058,16 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	bool closingLast = false;
 	int nextFriend = -2;
 	int prevIdm = -2;
-	if (buffers.CurrentBuffer()->IsUntitled())
-		return;
+	bool closingEmptyRight = false;
+	if (buffers.CurrentBuffer()->IsUntitled()) {
+		if (!props.GetInt("additional.view.stay.visible") && buffers.CurrentBuffer()->editorSide == IDM_COSRCWIN) 
+			closingEmptyRight = true;
+		else
+			return;
+	}		
 
 	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
-	if (extender) {
+	if (extender && !closingEmptyRight) {
 		extender->OnClose(filePath.AsUTF8().c_str());
 		extender->OnNavigation("Close");
 	}
