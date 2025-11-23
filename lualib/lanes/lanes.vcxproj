@@ -3,7 +3,7 @@
   <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{877A0F1F-CC4E-45FD-9A28-1DC3EFDBDE27}</ProjectGuid>
+    <ProjectGuid>{877A0F1F-CC4E-45FD-9A28-1DC3EFDBDE28}</ProjectGuid>
     <RootNamespace>lanes</RootNamespace>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>

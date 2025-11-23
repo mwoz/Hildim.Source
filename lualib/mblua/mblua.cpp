@@ -683,16 +683,30 @@ namespace luabridge {
 		}
 		bool setNull = false;
 
-		if (!lua_istable(L, 5))
-			throw_L_error(L, "mesage_FillList:Argument 5 isn't a table");
+		if (!lua_istable(L, 5) && !lua_isnumber(L, 5))
+			throw_L_error(L, "mesage_FillList:Argument 5 isn't a table or number");
 
-		int nFields = static_cast<int>(luaL_len(L, 5));
-		int* fMap = new int[nFields];
-		bool* fUtf = new bool[nFields];
+		int nFields;
+		int* fMap;
+		bool* fUtf;
 
-		for (int i = 0; i < nFields; i++) {
-			lua_rawgeti(L, 5, i + 1);
-			fMap[i] = static_cast<int>(luaL_checkinteger(L, -1));
+		if (lua_istable(L, 5)) {
+			nFields = static_cast<int>(luaL_len(L, 5));
+			fMap = new int[nFields];
+			fUtf = new bool[nFields];
+			for (int i = 0; i < nFields; i++) {
+				lua_rawgeti(L, 5, i + 1);
+				fMap[i] = static_cast<int>(luaL_checkinteger(L, -1));
+			}
+		}
+		else
+		{
+			nFields = static_cast<int>(luaL_checkinteger(L, 5));
+			fMap = new int[nFields];
+			fUtf = new bool[nFields];
+			for (int i = 0; i < nFields; i++) {
+				fMap[i] = i + 1;
+			}
 		}
 
 		if (lua_istable(L, 6)) {
@@ -717,7 +731,7 @@ namespace luabridge {
 		lua_getglobal(L, "scite");
 		lua_getfield(L, -1, "GetListHandlers");
 		lua_pushvalue(L, 2);
-		if (lua_pcall(L, 1, 2, 0) != LUA_OK)
+ 		if (lua_pcall(L, 1, 2, 0) != LUA_OK)
 			throw_L_error(L, "mesage_FillList:Internal error");
 
 		_PF* pFunc = (_PF*)lua_touserdata(L, -2);

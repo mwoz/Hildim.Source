@@ -2469,11 +2469,11 @@ int OnParamKeyPress(int c, int press) {
 }
 
 
-void setListVal(void* IH, int lin, int col, const char* value) {
+static void setListVal(void* IH, int lin, int col, const char* value) {
 	iupMatrixSetValue((Ihandle*)IH, lin, col, value, 0);
 }
 
-int sf_GetListHandlers(lua_State *L) {
+static int sf_GetListHandlers(lua_State *L) {
 	lua_pushlightuserdata(L, (void*)setListVal);
 	lua_pushlightuserdata(L, (void*)iuplua_checkihandle(L, 1));
 	return 2;
