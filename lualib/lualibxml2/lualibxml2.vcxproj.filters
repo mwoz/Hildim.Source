@@ -26,82 +26,82 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LuaBridge\Array.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Array.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\List.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\List.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\LuaBridge.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\LuaBridge.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\Map.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Map.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\Optional.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Optional.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\Pair.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Pair.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\RefCountedObject.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\RefCountedObject.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\RefCountedPtr.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\RefCountedPtr.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\UnorderedMap.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\UnorderedMap.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\Vector.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Vector.h">
       <Filter>Файлы заголовков\LuaBridge</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\CFunctions.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\CFunctions.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\ClassInfo.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\ClassInfo.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Config.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Config.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Constructor.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Constructor.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\dump.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\dump.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\FuncTraits.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\FuncTraits.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Iterator.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Iterator.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\LuaException.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\LuaException.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\LuaHelpers.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\LuaHelpers.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\LuaRef.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\LuaRef.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Namespace.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Namespace.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Security.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Security.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Stack.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Stack.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\TypeList.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\TypeList.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\TypeTraits.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\TypeTraits.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
-    <ClInclude Include="LuaBridge\detail\Userdata.h">
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\detail\Userdata.h">
       <Filter>Файлы заголовков\LuaBridge\detail</Filter>
     </ClInclude>
     <ClInclude Include="include\lualibxml2.h">

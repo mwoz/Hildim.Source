@@ -129,7 +129,7 @@ private:
 
         // no return
     }
-
+//private:
     static bool isInstance(lua_State* L, int index, void const* registryClassKey)
     {
         index = lua_absindex(L, index);
