@@ -79,9 +79,7 @@ public:
         This is done automatically by the smart pointer, but is public just
         in case it's needed for nefarious purposes.
     */
-    void incReferenceCount() const { 
-        ++refCount; 
-    }
+    void incReferenceCount() const { ++refCount; }
 
     /** Decreases the object's reference count.
 
@@ -161,7 +159,7 @@ public:
 
         @param refCountedObject A reference counted object to own.
     */
-    RefCountedObjectPtr(ReferenceCountedObjectClass* const refCountedObject) noexcept
+    RefCountedObjectPtr(ReferenceCountedObjectClass* const refCountedObject)
         : referencedObject(refCountedObject)
     {
         if (refCountedObject != nullptr)
@@ -173,7 +171,7 @@ public:
 
         @param other Another pointer.
     */
-    RefCountedObjectPtr(const RefCountedObjectPtr& other) noexcept : referencedObject(other.referencedObject)
+    RefCountedObjectPtr(const RefCountedObjectPtr& other) : referencedObject(other.referencedObject)
     {
         if (referencedObject != nullptr)
             referencedObject->incReferenceCount();
@@ -184,7 +182,7 @@ public:
 
       @param other Another pointer.
     */
-    RefCountedObjectPtr(RefCountedObjectPtr&& other) noexcept : referencedObject(other.referencedObject)
+    RefCountedObjectPtr(RefCountedObjectPtr&& other) : referencedObject(other.referencedObject)
     {
         other.referencedObject = nullptr;
     }
@@ -234,7 +232,7 @@ public:
       @param other A pointer to assign from.
       @returns This pointer.
      */
-    RefCountedObjectPtr& operator=(RefCountedObjectPtr&& other) noexcept
+    RefCountedObjectPtr& operator=(RefCountedObjectPtr&& other)
     {
         std::swap(referencedObject, other.referencedObject);
         return *this;

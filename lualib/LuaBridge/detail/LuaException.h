@@ -14,7 +14,7 @@ class LuaException : public std::exception
 {
 private:
     lua_State* m_L;
-    std::string m_what = "";
+    std::string m_what;
 
 public:
     //----------------------------------------------------------------------------
@@ -25,7 +25,7 @@ public:
 
     //----------------------------------------------------------------------------
 
-    LuaException(lua_State* L, char const* f, char const* d, long ec) : m_L(L) { m_what += f; m_what += ":\n"; m_what += d; if(ec>1) whatFromStack(); }
+    LuaException(lua_State* L, char const*, char const*, long) : m_L(L) { whatFromStack(); }
 
     //----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ protected:
         if (lua_gettop(m_L) > 0)
         {
             char const* s = lua_tostring(m_L, -1);
-            m_what += s ? s : "";
+            m_what = s ? s : "";
         }
         else
         {
