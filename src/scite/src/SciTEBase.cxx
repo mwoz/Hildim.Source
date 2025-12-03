@@ -2799,7 +2799,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_COLORIZED:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
+		if (notification->nmhdr.idFrom == wEditor.GetWindowIdm()) {
 			if (extender) 
 				handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
