@@ -1513,7 +1513,7 @@ static int bf_get_buffer_untitled(lua_State *L){
 
 static int bf_save_cobuffer_pos(lua_State *L){
 	host->UpdateBuffersCoCurrent();
-	return 1;
+	return 0;
 }
 
 static int bf_get_cobuffer_name(lua_State *L){

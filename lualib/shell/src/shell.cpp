@@ -417,12 +417,10 @@ typedef struct tagENUMINFO
 	// In Parameters
 	DWORD PId;
 	char className[50];
+	char windowText[50];
 
 	// Out Parameters
 	HWND  hWnd;
-	HWND  hEmptyWnd;
-	HWND  hInvisibleWnd;
-	HWND  hEmptyInvisibleWnd;
 } ENUMINFO, *PENUMINFO;
 
 typedef struct tagSHELLPROCINFO
@@ -453,27 +451,24 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 	// compare the process ID with the one given as search parameter
 	if (pInfo->PId == pid)
 	{
+		HWND hDesctop = GetDesktopWindow();
 		char s[50];
 		if(pInfo->className)
 			::RealGetWindowClassA(hWnd, s, 50);
 		if (!pInfo->className || !strcmp(s, pInfo->className)) {
 			// look for the visibility first
-			if (::IsWindowVisible(hWnd)) {
 				// look for the title next
-				if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0) {
-					pInfo->hWnd = hWnd;
+			if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0) {
+
+				if(!::GetWindow(hWnd, GW_OWNER)){
+					if (!pInfo->windowText || !strncmp(szTitle, pInfo->windowText, strlen(pInfo->windowText))) {
+						pInfo->hWnd = hWnd;
 
 						// we have found the right window
 						return(FALSE);
-				} else
-					pInfo->hEmptyWnd = hWnd;
-			} else {
-				// look for the title next
-				if (::GetWindowText(hWnd, szTitle, _MAX_PATH) != 0) {
-					pInfo->hInvisibleWnd = hWnd;
-				} else
-					pInfo->hEmptyInvisibleWnd = hWnd;
-			}
+					}
+				}
+			} 
 		}
 	}
 
@@ -524,8 +519,7 @@ static int async_mouse_state(lua_State *L){
 	return 3;
 }
 
-static int activate_proc_wnd(lua_State *L)
-{
+static HWND proc_to_wnd(lua_State* L) {
 	ENUMINFO EnumInfo;
 	HWND w;
 	DWORD PId;
@@ -533,16 +527,19 @@ static int activate_proc_wnd(lua_State *L)
 	// set the search parameters 
 	EnumInfo.PId = PId;
 	EnumInfo.className[0] = 0;
-	const char *s = luaL_checkstring(L, 2);
+	EnumInfo.windowText[0] = 0;
+	const char* s = lua_tostring(L, 2);
 	if (s) {
 		strncpy(EnumInfo.className, s, 50);
+	}
+	s = lua_tostring(L, 3);
+	if (s) {
+		strncpy(EnumInfo.windowText, s, 50);
 	}
 
 	// set the return parameters to default values
 	EnumInfo.hWnd = NULL;
-	EnumInfo.hEmptyWnd = NULL;
-	EnumInfo.hInvisibleWnd = NULL;
-	EnumInfo.hEmptyInvisibleWnd = NULL;
+
 
 	// do the search among the top level windows
 	::EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)&EnumInfo);
@@ -551,12 +548,65 @@ static int activate_proc_wnd(lua_State *L)
 	w = NULL;
 	if (EnumInfo.hWnd != NULL)
 		w = EnumInfo.hWnd;
-	else if (EnumInfo.hEmptyWnd != NULL)
-		w = EnumInfo.hEmptyWnd;
-	else if (EnumInfo.hInvisibleWnd != NULL)
-		w = EnumInfo.hInvisibleWnd;
-	else
-		w = EnumInfo.hEmptyInvisibleWnd;
+	return w;
+
+}
+
+static int set_foreground_hwnd(lua_State* L) {
+	HWND w = reinterpret_cast<HWND>(luaL_checkinteger(L, 1));
+	if (!::IsWindow(w))
+		return 1;
+
+	WINDOWPLACEMENT placement{};
+	placement.length = sizeof(placement);
+	if (!GetWindowPlacement(w, &placement))
+		return 0;
+	if (placement.showCmd == SW_SHOWMINIMIZED) {
+		ShowWindow(w, SW_MAXIMIZE);
+	}
+
+	::SetForegroundWindow(w);
+	lua_pushboolean(L, true);
+	return 0;
+}
+
+static int get_proc_wnd(lua_State* L) {
+	lua_pushinteger(L, reinterpret_cast<lua_Integer>(proc_to_wnd(L)));
+	return 1;
+}
+static int find_hwnd_class(lua_State* L) {
+	HWND hChild = NULL;
+	LPCSTR sClass = lua_tostring(L, 1);
+	LPCSTR sName = lua_tostring(L, 2);
+	//hChild = ::FindWindowExW(NULL, hChild, L"HildiMWindow", NULL);
+
+	lua_newtable(L);
+	int i = 1;
+	char cpt[200];
+	for (HWND h = ::FindWindowEx(NULL, NULL, sClass, sName); h; h = ::FindWindowEx(NULL, h, sClass, sName) ) {
+
+		lua_pushinteger(L, i);
+		lua_newtable(L);
+		lua_pushstring(L, "HWND");
+		lua_pushinteger(L, reinterpret_cast<lua_Integer>(h));
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "Caption");
+		::GetWindowText(h, cpt, 199);
+		lua_pushstring(L, cpt);
+		lua_settable(L, -3);
+
+		lua_settable(L, -3);
+		i++;
+	}
+	return 1;
+
+ }
+
+static int activate_proc_wnd(lua_State *L)
+{
+	ENUMINFO EnumInfo;
+	HWND w = proc_to_wnd(L);
 	if (w){
 		int ret = ::SetForegroundWindow(w);
 		lua_pushnumber(L, ret);
@@ -1603,6 +1653,9 @@ luaL_Reg shell[] =
 	{ "clockStart", clock_start },
 	{ "clockDiff", clock_diff },
 	{ "startProc", do_startProc },
+	{ "findWindows", find_hwnd_class },
+	{ "getProcWnd", get_proc_wnd },
+	{ "setForeground", set_foreground_hwnd },
 	{ NULL, NULL }
 };
 

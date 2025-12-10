@@ -127,6 +127,7 @@
     <ClCompile Include="..\lexers\LexSAS.cxx" />
     <ClCompile Include="..\lexers\LexScriptol.cxx" />
     <ClCompile Include="..\lexers\LexSearchResult.cxx" />
+    <ClCompile Include="..\lexers\LexSINEX.cxx" />
     <ClCompile Include="..\lexers\LexSmalltalk.cxx" />
     <ClCompile Include="..\lexers\LexSML.cxx" />
     <ClCompile Include="..\lexers\LexSorcus.cxx" />

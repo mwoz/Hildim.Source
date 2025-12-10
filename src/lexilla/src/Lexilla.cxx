@@ -143,6 +143,7 @@ extern const LexerModule lmRust;
 extern const LexerModule lmSAS;
 extern const LexerModule lmSearchResult;
 extern const LexerModule lmScriptol;
+extern const LexerModule lmSINEX;
 extern const LexerModule lmSmalltalk;
 extern const LexerModule lmSML;
 extern const LexerModule lmSorc;
@@ -302,6 +303,7 @@ void AddEachLexer() {
 		&lmSAS,
 		&lmSearchResult,
 		&lmScriptol,
+		&lmSINEX,
 		&lmSmalltalk,
 		&lmSML,
 		&lmSorc,
