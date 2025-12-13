@@ -653,7 +653,7 @@ static int setfileattr( lua_State* L )
 		return 1;
 	}
 
-	DWORD attr = luaL_checkint( L, -1 );
+	DWORD attr = static_cast<int>(luaL_checkinteger( L, -1 ));
 	lua_pushboolean( L, ::SetFileAttributesW(f.c_str(), attr));
 	return 1;
 }
