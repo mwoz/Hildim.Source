@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E3295C37-D1C4-40F8-86A6-5A9856661B2B}</ProjectGuid>
+    <RootNamespace>zziplib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+  <!---->
+  <ItemGroup>
+    <ClCompile Include="src\zzip\dir.c" />
+    <ClCompile Include="src\zzip\err.c" />
+    <ClCompile Include="src\zzip\fetch.c" />
+    <ClCompile Include="src\zzip\file.c" />
+    <ClCompile Include="src\zzip\info.c" />
+    <ClCompile Include="src\zzip\plugin.c" />
+    <ClCompile Include="src\zzip\stat.c" />
+    <ClCompile Include="src\zzip\zip.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\zzip\conf.h" />
+    <ClInclude Include="src\zzip\fetch.h" />
+    <ClInclude Include="src\zzip\file.h" />
+    <ClInclude Include="src\zzip\format.h" />
+    <ClInclude Include="src\zzip\lib.h" />
+    <ClInclude Include="src\zzip\plugin.h" />
+    <ClInclude Include="src\zzip\stdint.h" />
+    <ClInclude Include="src\zzip\zzip.h" />
+    <ClInclude Include="src\zzip\_config.h" />
+    <ClInclude Include="src\zzip\_msvc.h" />
+    <ClInclude Include="src\zzip\__debug.h" />
+    <ClInclude Include="src\zzip\__dirent.h" />
+    <ClInclude Include="src\zzip\__hints.h" />
+    <ClInclude Include="src\zzip\__mmap.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

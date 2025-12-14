@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C5A8F7A8-4767-4D86-B333-7530DE0118D8}</ProjectGuid>
+    <RootNamespace>luazip</RootNamespace>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <!---->
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Hildim.Default.props" />
+  <PropertyGroup Label="Configuration">
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)DefaultProjectProps.props" />
+    <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
+    <Import Project="$(ProgectPropertiesFile)" />
+  </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile />
+  </ItemDefinitionGroup>
+  <!---->
+  <ItemGroup>
+    <ClInclude Include="src\luazip.h" />
+    <ClInclude Include="src\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\luazip.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\luazip.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
