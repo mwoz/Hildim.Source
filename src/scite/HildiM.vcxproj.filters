@@ -307,6 +307,9 @@
     </None>
     <None Include="win32\resource" />
     <None Include="ClassDiagram.cd" />
+    <None Include="Hildim.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="win32\SciTE.exe.manifest">

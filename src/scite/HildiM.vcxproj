@@ -22,6 +22,24 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile />
+    <Link>
+      <ModuleDefinitionFile>Hildim.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <ModuleDefinitionFile>Hildim.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Link>
+      <ModuleDefinitionFile>Hildim.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Link>
+      <ModuleDefinitionFile>Hildim.def</ModuleDefinitionFile>
+    </Link>
   </ItemDefinitionGroup>
   <!---->
   <ItemGroup>
@@ -77,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="Hildim.def" />
     <None Include="win32\DragDrop.cur" />
     <None Include="win32\resource" />
   </ItemGroup>

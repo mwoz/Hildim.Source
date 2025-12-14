@@ -2437,7 +2437,7 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 }
 void SciTEWin::PostLoadScript() {
 }
-__declspec(dllexport) void* GetCaller(SciCaller c) {
+void* GetCaller(SciCaller c) {
 	return reinterpret_cast<void*>(pSciTEWin->GetCaler(c));
 }
 

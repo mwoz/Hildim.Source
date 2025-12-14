@@ -1,35 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)\ProjectConfiguration.props" />
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{01818D2C-65AF-4D5C-9452-4DFF401C6461}</ProjectGuid>
     <RootNamespace>cdwin</RootNamespace>
     <TargetName>cd</TargetName>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
-<!---->
+  <!---->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(SolutionDir)\Hildim.Default.props" />
   <PropertyGroup Label="Configuration">
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" >
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)DefaultProjectProps.props" />
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
-<!---->
+  <!---->
   <ItemDefinitionGroup>
     <Lib>
-      <AdditionalDependencies>cdcore.lib;zlib1.lib;freetype6.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cdcore.lib;freetype6.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\src\win32\cdwin.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\cd.def"/>
+    <None Include="..\src\cd.def" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\win32\cdwclp.c" />

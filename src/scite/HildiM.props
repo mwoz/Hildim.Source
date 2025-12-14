@@ -20,7 +20,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\src\scite\src;$(SolutionDir)\src\scintilla\include;$(SolutionDir)\src\lexilla\include;$(SolutionDir)\src\scite\lua\src;$(SolutionDir)\iup\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;lua.lib;cd.lib;cdcontextplus.lib;cdlua.lib;iup.lib;iupcd.lib;iupcontrols.lib;iupcore.lib;iupole.lib;iupweb.lib;iuplua.lib;iupluacd.lib;iupluacontrols.lib;iupluaole.lib;iupluaweb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>imm32.lib;comctl32.lib;UxTheme.lib;Msimg32.lib;version.lib;lua.lib;cd.lib;cdcontextplus.lib;cdlua.lib;iup.lib;iupcd.lib;iupcontrols.lib;iupcore.lib;iupole.lib;iupweb.lib;iuplua.lib;iupluacd.lib;iupluacontrols.lib;iupluaole.lib;iupluaweb.lib;zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ForceSymbolReferences>%(ForceSymbolReferences)</ForceSymbolReferences>
     </Link>
     <PreBuildEvent>
       <Command>$(LUA) "$(LUA_DIR)Version.lua"  "$(HildimVersion)" "$(IUPVersion)"  "$(SolutionDir)/"</Command>

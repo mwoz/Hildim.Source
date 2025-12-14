@@ -22,7 +22,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\CommonLib\;$(ProjectDir)\openssl\;$(ProjectDir)..\LuaBridge\;$(ProjectDir)..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>msxml2.lib;zlib1.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msxml2.lib;libcrypto.lib;libssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRTD.lib;MSVCRT.lib</IgnoreSpecificDefaultLibraries>
       <AdditionalLibraryDirectories>$(ProjectDir)/libs/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
