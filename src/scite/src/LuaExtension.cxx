@@ -1055,7 +1055,7 @@ static int cf_editor_set_foreground(lua_State* L) {
 
 	hCurrWnd = ::GetForegroundWindow();
 	if (!hCurrWnd) {
-		er = "Coud not GetForegroundWindow";
+		er = "Could not GetForegroundWindow";
 		goto error;
 	}
 

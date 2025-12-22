@@ -402,7 +402,9 @@ void SciTEBase::ChangeTabWnd() {
 	}
 
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
-	int iNext = buffers.NextByIdm(iPrevSide);
+	//int iNext = buffers.NextByIdm(iPrevSide);
+	int iNext = buffers.NextByIdm_Stack(iPrevSide);
+
 	int origStackCur = buffers.stackcurrent;
 
 	IDocumentEditable* d = bPrev->doc;
