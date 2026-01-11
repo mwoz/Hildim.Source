@@ -746,7 +746,7 @@ protected:
 	int SaveIfUnsure(bool forceQuestion = false, bool forNewRoom = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
-	bool Save(bool bNotSaveNotChanged = false);
+	bool Save(bool bNotSaveNotChanged = false, bool  = true);
 	void SaveAs(const GUI::gui_char *file, bool fixCase);
 	virtual void SaveACopy() = 0;
 	void SaveToStreamHTMLText(std::ostream &os, int start = 0, int end = -1);

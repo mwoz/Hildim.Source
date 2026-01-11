@@ -431,31 +431,31 @@ namespace luabridge {
        BuildNodeText(m_node, result, startCdata, endCdata);
 
        // trim right till the last CDATA
-       while (endCdata < result.length() && result.length() > 0)
-       {
-           char c = result[result.length() - 1];
-           if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
-               result.erase(result.cend());
-           else
-               break;
+       if (endCdata >= 0) {
+           while (endCdata < result.length() && result.length() > 0)
+           {
+               char c = result[result.length() - 1];
+               if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
+                   result.erase(result.cend());
+               else
+                   break;
+           }
+           // trim left to the first CDATA
+           if (startCdata < 0)
+               startCdata = result.length();
+
+           int spaceCount = 0;
+           while (spaceCount < startCdata)
+           {
+               char c = result[spaceCount];
+               if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
+                   spaceCount++;
+               else
+                   break;
+           }
+           if (spaceCount > 0)
+               result.erase(0, spaceCount);
        }
-
-       // trim left to the first CDATA
-       if (startCdata < 0)
-           startCdata = result.length();
-
-       int spaceCount = 0;
-       while (spaceCount < startCdata)
-       {
-           char c = result[spaceCount];
-           if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
-               spaceCount++;
-           else
-               break;
-       }
-       if (spaceCount > 0)
-           result.erase(0, spaceCount);
-
        return result;
    }
    void domNode::luaSetText(const char* text, lua_State* L) {
@@ -1002,9 +1002,34 @@ namespace luabridge {
             m_doc = parserCtx->myDoc;
             m_node = (xmlNodePtr)m_doc;
         }
-
         xmlFreeParserCtxt(parserCtx);
 
+        if (result == 0 && m_doc->children && m_doc->children->ns) {
+    
+            m_selectNamespaces.erase(m_selectNamespaces.cbegin(), m_selectNamespaces.cend());
+            xmlNs* n;
+            size_t sz_str = 0;
+            for (n = m_doc->children->ns; n != nullptr; n = n->next) {
+                if (n->prefix && n->href) {
+                    m_selectNamespaces[n->prefix ? (char*)n->prefix : "xmlns"] = (char*)n->href;
+                    sz_str += strlen((char*)n->prefix) + strlen((char*)n->href) + 20;
+                }
+            }
+            m_propNamespaces = "";
+            m_propNamespaces.reserve(sz_str);
+            for (n = m_doc->children->ns; n != nullptr; n = n->next) {
+                if (n->prefix && n->href) {
+                    if (m_propNamespaces != "")
+                        m_propNamespaces += " ";
+                    m_propNamespaces += "xmlns:";
+                    m_propNamespaces += (char*)n->prefix;
+                    m_propNamespaces += "='";
+                    m_propNamespaces += (char*)n->href;
+                    m_propNamespaces += "'";
+                }
+            }
+        }
+        
         return (result == 0);
     }
     RCError domDocument::luaGetParseError() const {

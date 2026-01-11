@@ -846,10 +846,12 @@ void SciTEBase::ReloadProperties() {
 }
 
 // Returns false if cancelled or failed to save
-bool SciTEBase::Save(bool bNotSaveNotChanged) {
-	if (!filePath.IsUntitled()) {
+bool SciTEBase::Save(bool bNotSaveNotChanged, bool checkFileTime) {
+	//fileModTime==0 у созданных по CtrlN закладок - БезымянныйN, а filePath.IsUntitled - это закладка, 
+	// которая остается после закрытия всех файлов - Безымянный 
+	if (!filePath.IsUntitled() && (!checkFileTime || buffers.buffers[buffers.Current()].fileModTime) ) {
 		int decision;
-
+		
 		if (props.GetInt("save.deletes.first")) {
 			filePath.Remove();
 		} else if (props.GetInt("save.check.modified.time")) {
@@ -887,7 +889,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged) {
 
 void SciTEBase::SaveAs(const GUI::gui_char *file, bool fixCase) {
 	SetFileName(file, fixCase);
-	Save();
+	Save(false, false);
 	ReadProperties();
 	wEditor.ClearDocumentStyle();
 	wEditor.Colourise(0, -1);

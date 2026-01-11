@@ -213,7 +213,7 @@ void LexerRubrica::Anchor(LexAccessor &styler, StyleContext &sc) {
 		sc.SetState(SCE_RBR_CELL);
 		sc.Forward(mtch[1].length());
 		sc.SetState(SCE_RBR_OPERATOR);
-		sc.Forward(2);
+		sc.Forward(1);
 	}
 }
 
@@ -227,6 +227,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 		int curState = sc.state;
 
 		if (curState == SCE_RBR_DEFAULT || curState == SCE_RBR_BOLD || curState == SCE_RBR_ITALICS || curState == SCE_RBR_UNDERLINED || curState == SCE_RBR_OPERATOR || curState == SCE_RBR_KEYWORD) {
+			
 			if (sc.Match("{{color|")) {
 				sc.SetState(SCE_RBR_OPERATOR);
 				sc.Forward(2);
@@ -278,6 +279,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 					sc.Forward(mtch[1].length());
 					sc.SetState(SCE_RBR_OPERATOR);
 					sc.Forward(2);
+					continue;
 				}
 				sc.SetState(SCE_RBR_DEFAULT);
 			} else if (sc.Match("[[")) {
@@ -410,7 +412,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 				sc.SetState(SCE_RBR_OPERATOR);
 				sc.Forward(2);
 				sc.SetState(SCE_RBR_OPERATOR_END);
-			} else if (sc.Match("|}") || sc.Match("||") || sc.Match("!|") || sc.Match("#*") || sc.Match("*#") || sc.Match("##")) {
+			} else if (sc.Match("|}") || sc.Match("||") || sc.Match("!|")) {
 				sc.SetState(SCE_RBR_OPERATOR);
 				sc.Forward(1);
 			} else if (sc.Match("!") || sc.Match("|")) {
@@ -426,11 +428,13 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 					sc.SetState(SCE_RBR_CELL);
 					sc.Forward(mtch[1].length());
 					sc.SetState(SCE_RBR_OPERATOR);
-					sc.Forward();
-					sc.SetState(SCE_RBR_DEFAULT);
+					//sc.Forward();
+					//sc.SetState(SCE_RBR_DEFAULT);
 				}
 			} else if (sc.Match("*") || sc.Match("#")) {
 				sc.SetState(SCE_RBR_OPERATOR);
+				while (sc.chNext == '#' || sc.chNext == '*')
+					sc.Forward();
 
 			} else if (sc.Match("====")) {
 				sc.SetState(SCE_RBR_OPERATOR);
@@ -457,13 +461,32 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 				if (sc.Match("{{anchor|"))
 					Anchor(styler, sc);
 				sc.SetState(SCE_RBR_HEADER1);
-			} else if (sc.Match("<pre>")) {
-				sc.SetState(SCE_RBR_KEYWORD);
-				sc.Forward(5);
-				sc.SetState(SCE_RBR_PRE);
-			} else if (sc.Match("<pre ")) {
-				sc.SetState(SCE_RBR_PRE_TAG);
-				sc.Forward(4);
+			} else if (sc.Match("<pre>") || sc.Match("<pre ")) {
+				bool setColor = true;
+				for (Sci_PositionU pp = sc.currentPos-2; pp--; pp > 0 ) {
+					switch (styler[pp]) {
+					case '\r':
+					case '\n':
+						goto prev_tested;
+					case ' ':
+						break;
+					default:
+						setColor = false;
+						goto prev_tested;
+					}
+				}
+prev_tested:
+				if (setColor) {
+					if (styler[sc.currentPos + 4] == '>') {
+						sc.SetState(SCE_RBR_KEYWORD);
+						sc.Forward(5);
+						sc.SetState(SCE_RBR_PRE);
+					}
+					else {
+						sc.SetState(SCE_RBR_PRE_TAG);
+						sc.Forward(4);
+					}
+				}
 			}
 		} else if (sc.atLineEnd) {
 			//sc.SetState(SCE_RBR_DEFAULT);

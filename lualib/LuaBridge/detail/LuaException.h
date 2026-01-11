@@ -25,7 +25,19 @@ public:
 
     //----------------------------------------------------------------------------
 
-    LuaException(lua_State* L, char const*, char const*, long) : m_L(L) { whatFromStack(); }
+    LuaException(lua_State* L, char const* s1, char const* s2, long) : m_L(L) { 
+        if (s1 || s2) {
+            std::string e("");
+            if (s1) {
+                e += s1;
+                e += ": ";
+            }
+            if (s2)
+                e += s2;
+            lua_pushstring(L, e.c_str());
+        }
+        whatFromStack(); 
+    }
 
     //----------------------------------------------------------------------------
 
