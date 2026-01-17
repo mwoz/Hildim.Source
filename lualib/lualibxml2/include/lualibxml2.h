@@ -89,7 +89,10 @@ namespace luabridge {
         RCNode luaInsertBefore(domNode* node, domNode* nodeBefore, lua_State* L);
         void luaRemoveChild(domNode* nodeRef, lua_State* L);
         RCNode luaSelectSingleNode(const char* xpath, lua_State* L) const;
-        RCNodeList luaSelectNodes(const char* xpath, lua_State* L);
+        RCNodeList luaGetElementsByTagName(const char* name, lua_State* L);
+        RCNode luaGetElementByTagName(const char* name, bool deep, lua_State* L);
+        RCNodeList luaSelectNodes(const char* name, lua_State* L);
+        std::string luaCompareDocumentPosition(domNode* node2Compare, lua_State* L);
         std::string luaGetAttribute(const char* name, lua_State* L) const;
         void luaSetAttribute(const char* name, const char* value, lua_State* L);
         inline AttributeIdx luaAttribute();
@@ -108,6 +111,8 @@ namespace luabridge {
         domNode() {}  // needed for VbXmlDocument constructor
         void InvalidateNodeList(xmlNodePtr cur);
         void ClearOwnership() { m_isNodeOwner = false; }
+        void findElementsByName(const std::string& tagName, domNodeList* result);
+        domNode* findElementByName(const std::string& tagName, bool deep);
 
     protected:
         xmlNodePtr m_node{ nullptr };
@@ -238,6 +243,7 @@ namespace luabridge {
     public:
 
 
+        domNodeList(){}
         domNodeList(domNode* node, bool attributes);
         domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count);
         virtual ~domNodeList();
@@ -246,6 +252,7 @@ namespace luabridge {
         inline domNode* GetItem(LUA_INTEGER i) { return m_nodes[i]; };
         inline domNode* GetParentNodeRef() { return m_nodeRef; }
         inline bool IsAttributeList()  const{ return m_isAttributeList; }
+        void AddXmlNode(domDocument* doc, xmlNodePtr node);
 
         size_t luaGetLength(lua_State* L);
         RCNode luaGetItem(int index, lua_State* L);

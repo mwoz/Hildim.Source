@@ -238,12 +238,16 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
     }
     else
     {
+      char* check_mark_color = iupAttribGet(ih, "CHECKMARKCOLOR");
       char* check_fgcolor = iupAttribGet(ih, "CHECKFGCOLOR");
       char* check_bgcolor = iupAttribGetStr(ih, "CHECKBGCOLOR");
       char* bordercolor   = iupAttribGetStr(ih, "BORDERCOLOR");
 
       if (!check_fgcolor)
         check_fgcolor = fgcolor;
+
+      if (!check_mark_color)
+          check_mark_color = check_fgcolor;
 
       if ((ih->data->pressed && ih->data->highlighted) || (selected && !ih->data->highlighted))
       {
@@ -288,6 +292,9 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
                               ITOGGLE_BORDER, check_fgcolor, bgcolor, active);
 
       /* check mark */
+      if (ih->data->pressed || ih->data->highlighted)
+          check_mark_color = check_fgcolor;
+
       if (selected)
       {
         if (radio)
@@ -299,7 +306,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
         else
           iupFlatDrawCheckMark(dc, check_xmin + ITOGGLE_SPACE + ITOGGLE_BORDER, check_xmin + check_size - ITOGGLE_SPACE - ITOGGLE_BORDER,
                                    check_ymin + ITOGGLE_SPACE + ITOGGLE_BORDER, check_ymin + check_size - ITOGGLE_SPACE - ITOGGLE_BORDER,
-                                   check_fgcolor, check_bgcolor, active);
+                                   check_mark_color, check_bgcolor, active);
       }
     }
   }
@@ -921,6 +928,7 @@ Iclass* iupFlatToggleNewClass(void)
   iupClassRegisterAttribute(ic, "CHECKFGCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKHLCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKPSCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "CHECKMARKCOLOR", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 
   iupClassRegisterAttribute(ic, "CHECKIMAGE", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "CHECKIMAGEPRESS", NULL, NULL, NULL, NULL, IUPAF_IHANDLENAME | IUPAF_NO_DEFAULTVALUE | IUPAF_NO_INHERIT);

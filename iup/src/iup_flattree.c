@@ -1296,7 +1296,7 @@ static int iFlatTreeDrawNodes(Ihandle *ih, IdrawCanvas* dc, iFlatTreeNode *node,
         else if (ih->data->empty_toggle)
           toggle_gap = ih->data->toggle_size;
       }
-
+      toggle_gap += 4;
       /* only the image */
       iupFlatDrawIcon(ih, dc, node_x + toggle_gap, node_y, image_gap - ih->data->icon_spacing, node_h,
                       IUP_IMGPOS_LEFT, ih->data->icon_spacing, IUP_ALIGN_ALEFT, IUP_ALIGN_ACENTER, 0, 0,

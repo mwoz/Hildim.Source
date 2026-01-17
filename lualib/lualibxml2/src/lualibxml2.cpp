@@ -427,11 +427,11 @@ namespace luabridge {
        AssertValid(L, "luaGetText");
 
        std::string result;
-       size_t startCdata = -1, endCdata = -1;
+       size_t startCdata = SIZE_MAX, endCdata = SIZE_MAX; 
        BuildNodeText(m_node, result, startCdata, endCdata);
 
        // trim right till the last CDATA
-       if (endCdata >= 0) {
+       if (endCdata != SIZE_MAX) {
            while (endCdata < result.length() && result.length() > 0)
            {
                char c = result[result.length() - 1];
@@ -441,7 +441,7 @@ namespace luabridge {
                    break;
            }
            // trim left to the first CDATA
-           if (startCdata < 0)
+           if (startCdata != SIZE_MAX)
                startCdata = result.length();
 
            int spaceCount = 0;
@@ -691,10 +691,64 @@ namespace luabridge {
         }
         xmlXPathFreeContext(xpathCtx);    
     }
+    // Функция для рекурсивного поиска элементов по имени тега
+    void domNode::findElementsByName(const std::string& tagName, domNodeList* result) {
+        if (!m_node)
+            return;
+        // Проверяем, является ли текущий узел элементом (XML_ELEMENT_NODE)
+        if (m_node->type == XML_ELEMENT_NODE) {
+            // Сравниваем имя тега (без учёта пространства имён)
+            if (std::string(XML2CHR(m_node->name)) == tagName) {
+                result->AddXmlNode(m_docRef, m_node);
+            }
+            // Рекурсивно обходим дочерние узлы
+            xmlNode* child = m_node->children;
+            while (child != nullptr) {
+                domNode childDoc = domNode(m_docRef, child, false);
+                childDoc.findElementsByName(tagName, result);
+                child = child->next;
+            }
+        }
+    }
+    RCNodeList domNode::luaGetElementsByTagName(const char* name, lua_State* L) {
+        AssertValid(L, "luaGetElementsByTagName");
+        domNodeList* l = new domNodeList();
+        findElementsByName(name, l);
+        return RCNodeList(l);
+    }
+    domNode* domNode::findElementByName(const std::string& tagName, bool deep) {
+        if (!m_node)
+            return nullptr;
+        // Проверяем, является ли текущий узел элементом (XML_ELEMENT_NODE)
+        if (m_node->type == XML_ELEMENT_NODE) {
+
+            xmlNode* child = m_node->children;
+            while (child != nullptr) {
+                if (std::string(XML2CHR(child->name)) == tagName)
+                    return m_docRef->CreateNodeRef(child);
+                child = child->next;
+            }
+            if(!deep)
+                return nullptr;
+            child = m_node->children;
+            while (child != nullptr) {
+                domNode childDoc = domNode(m_docRef, child, false);
+                domNode* result = childDoc.findElementByName(tagName, true);
+                if (result)
+                    return result;
+                child = child->next;
+            }
+        }
+        return nullptr;
+    }
+    RCNode domNode::luaGetElementByTagName(const char* name, bool deep, lua_State* L) {
+        AssertValid(L, "luaGetElementByTagName");
+        return RCNode(findElementByName(name, deep));
+    }
 
     RCNodeList domNode::luaSelectNodes(const char* xpath, lua_State* L) {
         AssertValid(L, "luaSelectNodes");
-        RCNodeList result;
+        RCNodeList result; 
         xmlXPathContextPtr xpathCtx = m_docRef->NewXPathContext(L);
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
@@ -705,13 +759,78 @@ namespace luabridge {
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
         CheckXpathResult(xpathResult, xpathCtx, L);
 
-        xmlNodeSetPtr noteSet = xpathResult->nodesetval;
+        xmlNodeSetPtr noteSet = xpathResult->nodesetval; 
         domNodeList* l = new domNodeList(m_docRef, noteSet ? noteSet->nodeTab : nullptr, noteSet ? noteSet->nodeNr : 0);
 
         result = RCNodeList(l);
         xmlXPathFreeObject(xpathResult);
         return result;
 
+    }
+
+    // Вспомогательная функция: получить путь от узла до корня
+    std::vector<xmlNodePtr> getAncestorPath(xmlNodePtr node) {
+        std::vector<xmlNodePtr> path;
+        while (node != nullptr) {
+            path.push_back(node);
+            node = node->parent;
+        }
+        return path;
+    }
+
+    std::string domNode::luaCompareDocumentPosition(domNode* node2Compare, lua_State* L) {
+        AssertValid(L, "luaCompareDocumentPosition");
+        if (!node2Compare) {
+            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "Second node is null.", 1));
+        }
+
+        if (node2Compare->GetNode() == m_node) return "=";
+
+        // Получаем пути до корня
+        auto path1 = getAncestorPath(m_node);
+        auto path2 = getAncestorPath(node2Compare->GetNode());
+
+        // Находим ближайшего общего предка (LCA)
+        xmlNodePtr lca = nullptr;
+        int i1 = path1.size() - 1;  // индекс в path1 (от корня)
+        int i2 = path2.size() - 1;  // индекс в path2 (от корня)
+
+        while (i1 >= 0 && i2 >= 0 && path1[i1] == path2[i2]) {
+            lca = path1[i1];
+            i1--;
+            i2--;
+        }
+
+        if (!lca) {
+            // не в одном документе (маловероятно)
+            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "The nodes being compared should not belong to different documents.", 1));
+        }
+
+        // Теперь i1 и i2 указывают на первых различающихся потомков LCA
+        // Нужно сравнить их позиции в списке детей LCA
+        xmlNodePtr child1 = (i1 >= 0) ? path1[i1] : nullptr;
+        xmlNodePtr child2 = (i2 >= 0) ? path2[i2] : nullptr;
+
+        if (!child1 || !child2) {
+            // Один из узлов — прямой предок другого
+            // Тот, что выше в иерархии, идёт раньше
+            return (child1) ? ">" : "<";  // node2 выше > раньше; node1 выше > раньше
+        }
+
+        // Сравниваем позиции child1 и child2 в списке детей LCA
+        int pos1 = -1, pos2 = -1;
+        int idx = 0;
+        for (xmlNodePtr cur = lca->children; cur; cur = cur->next, idx++) {
+            if (cur == child1) pos1 = idx;
+            if (cur == child2) pos2 = idx;
+        }
+
+        if (pos1 == -1 || pos2 == -1) {
+            // ошибка
+            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "Internal Error!", 1));
+        }
+
+        return (pos1 < pos2) ? "<" : ">";
     }
 
     std::string domNode::luaGetAttribute(const char* name, lua_State* L) const{
@@ -1293,6 +1412,9 @@ namespace luabridge {
        else
           return m_nodes.size();
    }
+   void domNodeList::AddXmlNode(domDocument* doc, xmlNodePtr node) {
+       m_nodes.push_back(doc->CreateNodeRef(node, true));
+   }
 
    RCNode domNodeList::luaGetItem(int index, lua_State* L)
    {
@@ -1673,7 +1795,10 @@ namespace luabridge {
             .addFunction("selectSingleNode", &domNode::luaSelectSingleNode)
             .addFunction("selectNodes", &domNode::luaSelectNodes)
             .addFunction("getAttribute", &domNode::luaGetAttribute)
-            .addFunction("setAttribute", &domNode::luaSetAttribute);
+            .addFunction("setAttribute", &domNode::luaSetAttribute)
+            .addFunction("getElementsByTagName", &domNode::luaGetElementsByTagName)
+            .addFunction("getElementByTagName", &domNode::luaGetElementByTagName)
+            .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition);
 
 
         lua_pushcfunction(L, &domNode::luaGetEnumerator);

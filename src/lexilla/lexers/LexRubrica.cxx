@@ -404,7 +404,7 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 			goto forward;
 		}
 
-		if (sc.atLineStart) {
+		if (sc.atLineStart && curState != SCE_RBR_PRE) {
 			if (curState == SCE_RBR_OPERATOR_END || curState == SCE_RBR_KEYWORD) {
 				sc.SetState(SCE_RBR_DEFAULT);
 			}

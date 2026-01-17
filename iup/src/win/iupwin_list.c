@@ -1723,6 +1723,17 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 		return 1;
 		break;
 
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDBLCLK:
+        if (ih->data->has_editbox) {
+            SendMessage(ih->handle, CB_SHOWDROPDOWN, TRUE, 0);
+            HWND cbedit = (HWND)iupAttribGet(ih, "_IUPWIN_EDITBOX");
+            SetFocus(cbedit);
+            return 1;
+        }
+
+		break;
+
 	case WM_PAINT:
 		//if (iupAttribGetBoolean(ih->parent, "FLAT")){
 		if (iupAttribGetBoolean(ih, "FLAT")){
@@ -1806,7 +1817,7 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 
 				line_poly[0].x = 0;
 				line_poly[0].y = h - 2;
-				line_poly[1].x = w - 17;
+                line_poly[1].x = w - h  + 2;
 				line_poly[1].y = h - 2;
 				BOOL b = Polyline(hdc, line_poly, 2);
 			
@@ -1844,16 +1855,20 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 				HFONT hFont = (HFONT)iupwinGetHFont(font);
 				SelectObject(hdc, hFont);
 				TCHAR * wtext = iupwinStrToSystemLen(text, &len);
-				SetRect(&rect, 5, (h - h1) / 2, w - 17, h);
+				SetRect(&rect, 5, (h - h1) / 2, w - h, h);
 				DrawText(hdc, wtext, len, &rect, 0);
-			}
+            }
+            int x1, y1, s1;
+            s1 = h / 5;
+            x1 = w - h / 2;
+            y1 = h / 2;
 
-			line_poly[0].x = w - 12-2;
-			line_poly[0].y = h/2 - 1;
-			line_poly[1].x = w - 5-2;
-			line_poly[1].y = h / 2 - 1;
-			line_poly[2].x = w - 9-2;
-			line_poly[2].y = h / 2 + 3;
+			line_poly[0].x = x1 - s1;
+			line_poly[0].y = y1;
+			line_poly[1].x = x1 + s1;
+			line_poly[1].y = y1;
+			line_poly[2].x = x1 ;
+            line_poly[2].y = y1 + s1;
 
 			iupwinGetColorRef(ih, bEdit ? "TXTFGCOLOR" : "STATICFGCOLOR", &RGBbgcolor);
 
@@ -1940,6 +1955,34 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
       }
       break;
   }
+  case WM_SIZE:
+      if (ih->data->has_editbox) {
+
+          int w, h;
+          char* c = iupBaseGetCurrentSizeAttrib(ih);
+          if (!c)
+              break;
+          iupStrToIntInt(c, &w, &h, 'x');
+          COMBOBOXINFO boxinfo;
+
+          ZeroMemory(&boxinfo, sizeof(COMBOBOXINFO));
+          boxinfo.cbSize = sizeof(COMBOBOXINFO);
+
+          BOOL sized = iupAttribGet(ih, "_IUPWIN_RESIZED");
+
+          UINT flag = 1 ? SWP_NOZORDER | SWP_NOMOVE | SWP_SHOWWINDOW: SWP_NOZORDER | SWP_NOMOVE | SWP_HIDEWINDOW;
+
+          GetComboBoxInfo(ih->handle, &boxinfo);
+          SetWindowPos(boxinfo.hwndItem, NULL, 0, 0, w - h, boxinfo.rcItem.bottom, SWP_NOZORDER | SWP_NOMOVE );
+
+          if (!sized) {
+              iupAttribSet(ih, "_IUPWIN_RESIZED", 1);
+              //ShowWindow(boxinfo.hwndItem, SW_SHOWNORMAL);
+          }
+  
+         
+      } 
+      break;
   }
 
   return 0;
@@ -2294,7 +2337,7 @@ static int winListMapMethod(Ihandle* ih)
 
     if (ih->data->has_editbox)
     {
-		ih->data->block_sel = 0;
+	  ih->data->block_sel = 0;
       iupwinHandleAdd(ih, boxinfo.hwndItem);
       iupAttribSet(ih, "_IUPWIN_EDITBOX", (char*)boxinfo.hwndItem);
 
