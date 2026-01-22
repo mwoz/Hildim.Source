@@ -154,7 +154,7 @@ tStringBuffer tUtil::bstr2string(BSTR bstr, bool nullTerminated)
 
 }
 
-BSTR tUtil::string2bstr(const char * string, size_t len)
+BSTR tUtil::string2bstr(const char * string, size_t len, int codePage)
 {
   if(!string)
     return NULL;
@@ -170,11 +170,11 @@ BSTR tUtil::string2bstr(const char * string, size_t len)
     {
       if (len != -1 && len > INT_MAX) LUACOM_ERROR("string too long");
       int lenWide =
-        MultiByteToWideChar(CP_UTF8, 0, string, static_cast<int>(len), NULL, 0);
+        MultiByteToWideChar(codePage, 0, string, static_cast<int>(len), NULL, 0);
       if(lenWide == 0)
         LUACOM_ERROR(tUtil::GetErrorMessage(GetLastError()));
-      bstr = SysAllocStringLen(NULL, lenWide); // plus initializes '\0' terminator
-      MultiByteToWideChar(  CP_UTF8, 0, string, static_cast<int>(len), bstr, lenWide);
+      bstr = SysAllocStringLen(NULL, lenWide); // plus initializes '\0' terminator   CP_UTF8 ??
+      MultiByteToWideChar(codePage, 0, string, static_cast<int>(len), bstr, lenWide);
     }
     return bstr;
   }

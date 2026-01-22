@@ -266,7 +266,7 @@ static int iFlatToggleRedraw_CB(Ihandle* ih)
           }
         }
       }
-      else if (ih->data->highlighted)
+       else if (ih->data->highlighted)
       {
         char* hlcolor = iupAttribGetStr(ih, "CHECKHLCOLOR");
         if (hlcolor)

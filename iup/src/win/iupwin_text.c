@@ -1849,7 +1849,8 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
 
       /* even aborting WM_KEYDOWN, a WM_CHAR will be sent, so ignore it also */
       /* if a dialog was shown, the loop will be processed, so ignore out of focus WM_CHAR messages */
-      if (GetFocus() != ih->handle || iupAttribGet(ih, "_IUPWIN_IGNORE_CHAR"))
+      //не так же не логичновыполнять какие-то колбэки в ридонил контролах - иначе зачем их было делать ридонли...
+      if (GetFocus() != ih->handle || iupAttribGet(ih, "_IUPWIN_IGNORE_CHAR") || iupAttribGetBoolean(ih, "READONLY"))
       {
         iupAttribSet(ih, "_IUPWIN_IGNORE_CHAR", NULL);
         *result = 0;
@@ -1886,7 +1887,7 @@ static int winTextMsgProc(Ihandle* ih, UINT msg, WPARAM wp, LPARAM lp, LRESULT *
           TCHAR insert_value[2];
           insert_value[0] = c;
           insert_value[1] = 0;
-
+         //нелогично вызываавть колбек для ридонил контролов - не проис
           if (!winTextCallActionCb(ih, iupwinStrFromSystem(insert_value), 0))  /* insert */
             ret = 1;
         }

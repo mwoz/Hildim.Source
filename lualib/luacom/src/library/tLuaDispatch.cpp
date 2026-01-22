@@ -501,7 +501,7 @@ void tLuaDispatch::FillExceptionInfo(EXCEPINFO *pexcepinfo, const char *text)
   pexcepinfo->wCode             = 1000;
   pexcepinfo->wReserved         = 0;
   pexcepinfo->bstrSource        = tUtil::string2bstr("LuaCOM");
-  pexcepinfo->bstrDescription   = tUtil::string2bstr(text);
+  pexcepinfo->bstrDescription   = tUtil::string2bstr(text, -1, CP_ACP);
   pexcepinfo->bstrHelpFile      = NULL;
   pexcepinfo->pvReserved        = NULL;
   pexcepinfo->pfnDeferredFillIn = NULL;

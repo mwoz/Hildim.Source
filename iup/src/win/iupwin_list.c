@@ -166,13 +166,14 @@ void iupdrvListAddItemSpace(Ihandle* ih, int *h)
 void iupdrvListAddBorders(Ihandle* ih, int *x, int *y)
 {
   /* LAYOUT_DECORATION_ESTIMATE */
+    int y0 = (*y);
   int border_size = 2 * 4;
   (*x) += border_size;
   (*y) += border_size;
 
   if (ih->data->is_dropdown)
   {
-    (*x) += 3; /* extra space for the dropdown button */
+      (*x) += 3; /* extra space for the dropdown button */
 
     /* IMPORTANT: In Windows the DROPDOWN box is always sized by the system
        to have the height just right to include the borders and the text.
@@ -1855,12 +1856,12 @@ static int winListStaticProc(Ihandle* ih, HWND cbstatic, UINT msg, WPARAM wp, LP
 				HFONT hFont = (HFONT)iupwinGetHFont(font);
 				SelectObject(hdc, hFont);
 				TCHAR * wtext = iupwinStrToSystemLen(text, &len);
-				SetRect(&rect, 5, (h - h1) / 2, w - h, h);
+				SetRect(&rect, 5, (h - h1) / 2, w - h *2 /3, h);
 				DrawText(hdc, wtext, len, &rect, 0);
             }
             int x1, y1, s1;
-            s1 = h / 5;
-            x1 = w - h / 2;
+            s1 = h / 6;
+            x1 = w - h / 3;
             y1 = h / 2;
 
 			line_poly[0].x = x1 - s1;
@@ -1973,7 +1974,7 @@ static int winListComboListProc(Ihandle* ih, HWND cblist, UINT msg, WPARAM wp, L
           UINT flag = 1 ? SWP_NOZORDER | SWP_NOMOVE | SWP_SHOWWINDOW: SWP_NOZORDER | SWP_NOMOVE | SWP_HIDEWINDOW;
 
           GetComboBoxInfo(ih->handle, &boxinfo);
-          SetWindowPos(boxinfo.hwndItem, NULL, 0, 0, w - h, boxinfo.rcItem.bottom, SWP_NOZORDER | SWP_NOMOVE );
+         // SetWindowPos(boxinfo.hwndItem, NULL, 0, 0, w - h * 2/3, boxinfo.rcItem.bottom - 3, SWP_NOZORDER | SWP_NOMOVE );
 
           if (!sized) {
               iupAttribSet(ih, "_IUPWIN_RESIZED", 1);

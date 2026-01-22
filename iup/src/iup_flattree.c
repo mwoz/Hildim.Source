@@ -1996,6 +1996,71 @@ static int iFlatTreeCallDragDropCb(Ihandle* ih, int drag_id, int drop_id, int is
   return IUP_CONTINUE; /* allow to move/copy by default if callback not defined */
 }
 
+static int iFlatTreeAdditionalMouseUI(Ihandle* ih, iFlatTreeNode* node, char* status, int newState, int redraw) {
+
+  iFlatTreeNode* nodeProc; 
+  if (iup_isalt(status)) { 
+    nodeProc = node->parent;
+    if (!nodeProc)
+      return IUP_DEFAULT;
+  
+    if (!iup_isshift(status)) {
+
+        char sId[30];  /* +4,294,967,296 */
+        sprintf(sId, "%d", nodeProc->id);
+        iFlatTreeSetValueAttrib(ih, sId);
+
+        newState = IFLATTREE_COLLAPSED;
+
+        IFni cbBranchClose = (IFni)IupGetCallback(ih, "BRANCHCLOSE_CB");
+
+        if (cbBranchClose && cbBranchClose(ih, nodeProc->id) == IUP_IGNORE)
+            return IUP_DEFAULT;
+    }
+  } else 
+      nodeProc = node;
+
+  if (iup_iscontrol(status)) {
+      if (!iup_isshift(status) || nodeProc->state == IFLATTREE_COLLAPSED) {
+          nodeProc->state = newState;
+          iFlatTreeUpdateNodeExpanded(nodeProc);
+      }
+      else if (!iup_isalt(status) && nodeProc->first_child) {
+          newState = nodeProc->first_child->state == IFLATTREE_EXPANDED ? IFLATTREE_COLLAPSED : IFLATTREE_EXPANDED;
+      }
+      nodeProc = nodeProc->first_child;
+      while (nodeProc) {
+          iFlatTreeAdditionalMouseUI(ih, nodeProc, " C      ", newState, 0);
+          nodeProc = nodeProc->brother;
+      }
+  }
+  else if (iup_isshift(status)) {
+      if (nodeProc->state == IFLATTREE_COLLAPSED) {
+          nodeProc->state = newState;
+          iFlatTreeUpdateNodeExpanded(nodeProc);
+      }
+      else if (!iup_isalt(status) && nodeProc->first_child) {
+          newState = nodeProc->first_child->state == IFLATTREE_EXPANDED ? IFLATTREE_COLLAPSED : IFLATTREE_EXPANDED;
+      }
+      nodeProc = nodeProc->first_child;
+      while (nodeProc) {
+          nodeProc->state = newState;
+          iFlatTreeUpdateNodeExpanded(nodeProc);
+          nodeProc = nodeProc->brother;
+      }
+
+  }
+  else {
+    nodeProc->state = newState;
+    iFlatTreeUpdateNodeExpanded(nodeProc);
+
+  }
+  if(redraw)
+    iFlatTreeRedraw(ih, 0, 1);  /* scrollbar update only */
+  return IUP_DEFAULT;
+
+}
+
 static int iFlatTreeButton_CB(Ihandle* ih, int button, int pressed, int x, int y, char* status)
 {
   IFniiiis button_cb = (IFniiiis)IupGetCallback(ih, "FLAT_BUTTON_CB");
@@ -2118,19 +2183,25 @@ static int iFlatTreeButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 
       if (x > xmin && x < xmax)  /* inside expander */
       {
+        int isAdvUI = iupAttribGetBoolean(ih, "ADVANCEDMOUSEUI");
         if (node->state == IFLATTREE_EXPANDED)
         {
           IFni cbBranchClose = (IFni)IupGetCallback(ih, "BRANCHCLOSE_CB");
-          if (cbBranchClose && cbBranchClose(ih, node->id) == IUP_IGNORE)
+          if (!(isAdvUI && iup_isalt(status) && !iup_isshift(status)) && cbBranchClose && cbBranchClose(ih, node->id) == IUP_IGNORE)
             return IUP_DEFAULT;
+
+          if ((iup_isalt(status) || iup_isshift(status) || iup_iscontrol(status)) && isAdvUI)
+            return iFlatTreeAdditionalMouseUI(ih, node, status, IFLATTREE_COLLAPSED, 1);
 
           node->state = IFLATTREE_COLLAPSED;
         }
         else
         {
           IFni cbBranchOpen = (IFni)IupGetCallback(ih, "BRANCHOPEN_CB");
-          if (cbBranchOpen && cbBranchOpen(ih, node->id) == IUP_IGNORE)
+          if (!(isAdvUI && iup_isalt(status) && !iup_isshift(status)) && cbBranchOpen && cbBranchOpen(ih, node->id) == IUP_IGNORE)
             return IUP_DEFAULT;
+          if ((iup_isalt(status) || iup_isshift(status) || iup_iscontrol(status)) && isAdvUI)
+            return iFlatTreeAdditionalMouseUI(ih, node, status, IFLATTREE_EXPANDED, 1);
 
           node->state = IFLATTREE_EXPANDED;
         }
@@ -4269,6 +4340,7 @@ Iclass* iupFlatTreeNewClass(void)
   iupClassRegisterAttribute(ic, "BORDERWIDTH", iFlatTreeGetBorderWidthAttrib, iFlatTreeSetBorderWidthAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NOT_MAPPED);  /* inheritable */
   iupClassRegisterAttribute(ic, "ICONSPACING", iFlatTreeGetIconSpacingAttrib, iFlatTreeSetIconSpacingAttrib, IUPAF_SAMEASSYSTEM, "2", IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
   iupClassRegisterAttribute(ic, "TOPITEM", NULL, iFlatTreeSetTopItemAttrib, NULL, NULL, IUPAF_NOT_MAPPED | IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+  iupClassRegisterAttribute(ic, "ADVANCEDMOUSEUI", NULL, NULL, IUPAF_SAMEASSYSTEM, "YES", IUPAF_NO_INHERIT);
 
   /* Expanders */
   iupClassRegisterAttribute(ic, "BUTTONSIZE", iFlatTreeGetButtonSizeAttrib, iFlatTreeSetButtonSizeAttrib, NULL, NULL, IUPAF_NO_INHERIT | IUPAF_NOT_MAPPED);

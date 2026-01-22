@@ -20,6 +20,11 @@
     <Import Project="$(SolutionDir)$(Configuration)_$(Platform).props" />
     <Import Project="$(ProgectPropertiesFile)" />
   </ImportGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <!---->
   <ItemGroup>
     <ClInclude Include="resource.h" />

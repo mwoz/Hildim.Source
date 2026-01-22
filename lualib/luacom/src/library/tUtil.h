@@ -19,7 +19,7 @@ public:
   static void log_verbose(const char *who, const char *what,...);
   static void CloseLogFile(void);
   static bool OpenLogFile(const char *name);
-  static BSTR string2bstr(const char *string, size_t len = -1);
+  static BSTR string2bstr(const char *string, size_t len = -1, int codePage = CP_UTF8);
   static tStringBuffer bstr2string(BSTR bstr, bool nullTerminated = true);
   static tStringBuffer GetErrorMessage(DWORD errorcode);
   static bool IsValidString(LPCTSTR string);

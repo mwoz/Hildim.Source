@@ -636,8 +636,13 @@ static void iFlatDrawText(IdrawCanvas* dc, int x, int y, int w, int h, const cha
     return;
 
   color = iupDrawStrToColor(fgcolor, 0);
-  if (!active)
-    color = iFlatDrawColorMakeInactive(color, bgcolor);
+  if (!active) {
+     unsigned char r = iupDrawRed(color), g = iupDrawGreen(color), b = iupDrawBlue(color);
+     if (r > 230 && r > 230 && g > 230) {
+         color = iupDrawColor(170, 170, 170, iupDrawAlpha(color));
+     } else
+       color = iFlatDrawColorMakeInactive(color, bgcolor);
+  }
 
   iupdrvDrawText(dc, str, (int)strlen(str), x, y, w, h, color, font, text_flags | IUP_DRAW_LAYOUTCENTER, text_orientation);  /* layout is always center here */
 }

@@ -75,6 +75,8 @@ static int GetParam(lua_State *L)
   if (param_count > LUA_MAX_PARAM)
     return 0;
 
+  int check_utf8_mode = 0;
+
   for (i = 0; i < param_count; i++)
   {
     char t = iupGetParamType(f, &line_size);
@@ -122,8 +124,10 @@ static int GetParam(lua_State *L)
     case 'n':
     case 'c':
       max_str = 512;
-      if (t == 'f')
+      if (t == 'f') {
         max_str = 4096;
+        check_utf8_mode = 1;
+      }
       else if (t == 'm')
         max_str = 10240;
       s = luaL_checklstring(L, lua_param_start, &size); lua_param_start++;
@@ -145,8 +149,19 @@ static int GetParam(lua_State *L)
     gp.func_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     gp.has_func = 1;
   }
+  
+  if (check_utf8_mode) {
+    char* curMode = IupGetGlobal("UTF8MODE_FILE");
+    if (curMode && !iupStrBoolean(curMode)) 
+      IupSetGlobal("UTF8MODE_FILE", "YES");
+    else
+      check_utf8_mode = 0;
+  }
 
   ret = IupGetParamv(title, param_action, user_data, format, param_count, param_extra, param_data);
+  
+  if(check_utf8_mode)
+    IupSetGlobal("UTF8MODE_FILE", "NO");
 
   lua_pushboolean(L, ret);
 
