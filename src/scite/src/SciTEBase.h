@@ -1,4 +1,4 @@
-// SciTE - Scintilla based Text Editor
+// SciTE - Scintilla based Text  Editor
 /** @file SciTEBase.h
  ** Definition of platform independent base class of editor.
  **/
