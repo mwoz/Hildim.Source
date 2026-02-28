@@ -483,10 +483,19 @@ void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	RecentFile rf = GetFilePosition();
 	EnsureRangeVisible(0, wEditor.Length(), false); 
 	// Zero all the style bytes
+	SString fn = "x.";
+	fn += lexer;
+	fn = fn.lowercase();
+
 	wEditor.ClearDocumentStyle();
 
-	CurrentBuffer()->overrideExtension = "x.";
-	CurrentBuffer()->overrideExtension += lexer;
+	if (props.GetNewExpand("lexer.", props.Get("FileNameExt").lowercase().c_str()) == props.GetNewExpand("lexer.", fn.c_str())) {
+		CurrentBuffer()->overrideExtension = "";
+	}
+	else {
+		CurrentBuffer()->overrideExtension = "x.";
+		CurrentBuffer()->overrideExtension += lexer;
+	}
 	ReadProperties();
 	SetIndentSettings();
 	wEditor.Colourise(0, -1);
@@ -3370,7 +3379,9 @@ void SciTEBase::Trace(const char *s) {
 		EnsureVisible();
 
 }
-
+SString SciTEBase::PropertyNewExpand(const char* base, const char* fileNameExt) {
+	return props.GetNewExpand(base, fileNameExt);
+}
 char *SciTEBase::Property(const char *key) {
 	SString value;
 	if (key[strlen(key) - 1] == '$'){

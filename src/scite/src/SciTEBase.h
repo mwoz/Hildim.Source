@@ -959,6 +959,7 @@ protected:
 	virtual bool SwitchMacroHook(bool bSet) = 0;
 public:
 	char *Property(const char *key);
+	SString PropertyNewExpand(const char *base, const char* fileNameExt);
 
 	enum { maxParam = 4 };
 

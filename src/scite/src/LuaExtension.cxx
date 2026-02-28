@@ -1369,6 +1369,13 @@ static int cf_props_metatable_index(lua_State *L) {
 	return 0;
 }
 
+static int cf_props_new_expand(lua_State* L) {
+	const char* base = lua_tostring(L, 1);
+	const char* fileNameExt = lua_tostring(L, 2);
+	lua_pushstring(L, host->PropertyNewExpand(base, fileNameExt).c_str());
+	return 1;
+}
+
 static int cf_props_metatable_newindex(lua_State *L) {
 	int selfArg = lua_isuserdata(L, 1) ? 1 : 0;
 
@@ -2590,6 +2597,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 		lua_setfield(luaState, -2, "__index");
 		lua_pushcfunction(luaState, cf_props_metatable_newindex);
 		lua_setfield(luaState, -2, "__newindex");
+
 	}
 	lua_setmetatable(luaState, -2);
 	lua_setglobal(luaState, "props");
@@ -2747,6 +2755,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_editor_side);
 	lua_setfield(luaState, -2, "EditorSide");
+
+	lua_pushcfunction(luaState, cf_props_new_expand);
+	lua_setfield(luaState, -2, "PropsNewExpand");
 
 	// buffers
 	lua_newtable(luaState);

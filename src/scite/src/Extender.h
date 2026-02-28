@@ -24,6 +24,7 @@ public:
 	virtual void Insert(Pane p, Sci_Position pos, const char *s)=0;
 	virtual void Trace(const char *s)=0;
 	virtual char *Property(const char *key)=0;
+	virtual SString PropertyNewExpand(const char * base, const char * fileNameExt)=0;
 	virtual void SetProperty(const char *key, const char *val)=0;
 	virtual void UnsetProperty(const char *key)=0;
 	virtual uptr_t GetInstance()=0;

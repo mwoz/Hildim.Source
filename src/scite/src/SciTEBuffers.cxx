@@ -814,7 +814,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 	FilePath curDirectory(filePath.Directory());
 	curDirectory = path ? path : filePath.Directory();
 
-	if (curDirectory.AsInternal() == GUI_TEXT(""))
+	if (wcslen(curDirectory.AsInternal()) == 0)
 		curDirectory.Set(GetSciteDefaultHome());
 
 
