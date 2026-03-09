@@ -73,6 +73,7 @@ extern const LexerModule lmEiffelkw;
 extern const LexerModule lmErlang;
 extern const LexerModule lmErrorList;
 extern const LexerModule lmESCRIPT;
+extern const LexerModule lmEscSeq;
 extern const LexerModule lmF77;
 extern const LexerModule lmFlagShip;
 extern const LexerModule lmFormEngine;
@@ -233,6 +234,7 @@ void AddEachLexer() {
 		&lmErlang,
 		&lmErrorList,
 		&lmESCRIPT,
+		&lmEscSeq,
 		&lmF77,
 		&lmFlagShip,
 		&lmFormEngine,

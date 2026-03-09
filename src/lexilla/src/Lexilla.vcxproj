@@ -64,6 +64,7 @@
     <ClCompile Include="..\lexers\LexErlang.cxx" />
     <ClCompile Include="..\lexers\LexErrorList.cxx" />
     <ClCompile Include="..\lexers\LexEScript.cxx" />
+    <ClCompile Include="..\lexers\LexEscSeq.cxx" />
     <ClCompile Include="..\lexers\LexFlagship.cxx" />
     <ClCompile Include="..\lexers\LexFormEngine.cxx" />
     <ClCompile Include="..\lexers\LexForth.cxx" />

@@ -896,6 +896,8 @@ virtual	void AllocateLineCharacterIndex(Scintilla::LineCharacterIndexType lineCh
 virtual	void ReleaseLineCharacterIndex(Scintilla::LineCharacterIndexType lineCharacterIndex);
 virtual	Line LineFromIndexPosition(Position pos, Scintilla::LineCharacterIndexType lineCharacterIndex);
 virtual	Position IndexPositionFromLine(Line line, Scintilla::LineCharacterIndexType lineCharacterIndex);
+virtual	bool DragDropEnabled();
+virtual	void SetDragDropEnabled(bool dragDropEnabled);
 virtual	void StartRecord();
 virtual	void StopRecord();
 virtual	int Lexer();

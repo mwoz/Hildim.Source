@@ -201,8 +201,8 @@ class ListBoxX : public ListBox {
 	LRESULT NcHitTest(WPARAM, LPARAM) const;
 	void CentreItem(int n);
 	void AllocateBitMap();
-	LRESULT PASCAL ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	static LRESULT PASCAL ScrollWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
 	static constexpr POINT ItemInset {0, 0};	// Padding around whole item
@@ -244,7 +244,7 @@ public:
 	void SetOptions(ListOptions options_) override;
 	void Draw(DRAWITEMSTRUCT *pDrawItem);
 	LRESULT WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
-	static LRESULT PASCAL StaticWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 	Scintilla::Sci_ListColorsInfo* pListcolors = nullptr;
 	void OnScrollChange();
 	void sc_OnPaint(HDC hdc, RECT *rcPaint, bool bDrag, int nTrackPos);
@@ -813,7 +813,7 @@ void ListBoxX::AllocateBitMap() {
 }
 
 
-LRESULT PASCAL ListBoxX::ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK ListBoxX::ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	try {
 		ListBoxX *lbx = static_cast<ListBoxX *>(PointerFromWindow(::GetParent(hWnd)));
 		switch (iMessage) {
@@ -885,7 +885,7 @@ LRESULT PASCAL ListBoxX::ListProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARA
 	return ::DefWindowProc(hWnd, iMessage, wParam, lParam);
 }
 
-LRESULT PASCAL ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK ListBoxX::ControlWndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	if (ListBoxX* lbx = static_cast<ListBoxX*>(PointerFromWindow(::GetParent(hWnd)))) {
 		return lbx->ListProc(hWnd, iMessage, wParam, lParam);
 	}
@@ -1095,7 +1095,7 @@ LRESULT ListBoxX::WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam
 
 
 
-LRESULT PASCAL ListBoxX::StaticWndProc(
+LRESULT CALLBACK ListBoxX::StaticWndProc(
     HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam) {
 	if (iMessage == WM_CREATE) {
 		CREATESTRUCT *pCreate = static_cast<CREATESTRUCT *>(PtrFromLParam(lParam));
