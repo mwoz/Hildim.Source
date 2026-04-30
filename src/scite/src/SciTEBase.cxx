@@ -107,14 +107,11 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 	ptStartDrag.y = 0;
 	capturedMouse = false;
 	firstPropertiesRead = true;
-	bufferedDraw = true;
-	twoPhaseDraw = true;
 	bracesCheck = true;
 	bracesSloppy = false;
 	bracesStyle = 0;
 	braceCount = 0;
 
-	indentationWSVisible = true;
 	indentExamine = SC_IV_LOOKBOTH;
 
 	autoCompleteIgnoreCase = false;
@@ -444,19 +441,6 @@ void SciTEBase::CallChildren(Scintilla::Message msg, uptr_t wParam, sptr_t lPara
 	wEditor.Call(msg, wParam, lParam);
 	wOutput.Call(msg, wParam, lParam);
 	wFindRes.Call(msg, wParam, lParam);
-}
-
-void SciTEBase::ViewWhitespace(bool view) {
-	if (view && indentationWSVisible) {
-		wEditorL.SetViewWS(WhiteSpace::VisibleAlways);
-		wEditorR.SetViewWS(WhiteSpace::VisibleAlways);
-	} else if (view){
-		wEditorL.SetViewWS(WhiteSpace::VisibleAfterIndent);
-		wEditorR.SetViewWS(WhiteSpace::VisibleAfterIndent);
-	} else {
-		wEditorL.SetViewWS(WhiteSpace::Invisible);
-		wEditorR.SetViewWS(WhiteSpace::Invisible);
-	}
 }
 
 StyleAndWords SciTEBase::GetStyleAndWords(const char *base) {
@@ -2388,12 +2372,6 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		wEditor.ConvertEOLs(wEditor.EOLMode());
 		break;
 
-	case IDM_VIEWSPACE:
-		viewWs = (WhiteSpace::Invisible == wEditor.ViewWS());
-		ViewWhitespace(viewWs);
-		CheckMenus();
-		Redraw();
-		break;
 	case IDM_VIEWHISTORYINDICATORS:
 	case IDM_VIEWHISTORYMARKERS:
 		if(cmdID == IDM_VIEWHISTORYINDICATORS)
@@ -3079,8 +3057,6 @@ void SciTEBase::Notify(SCNotification *notification) {
 }
 
 void SciTEBase::CheckMenus() {
-
-	props.SetInteger("view.whitespace", viewWs);
 	props.SetInteger("view.history.indicators", viewHisoryIndicators);
 	props.SetInteger("view.history.markers", viewHisoryMarkers);
 	props.SetInteger("view.indentation.guides", viewIndent);

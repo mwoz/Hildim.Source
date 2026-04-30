@@ -906,18 +906,17 @@ static int cf_Reg_HotKey(lua_State* L){
 			++count;
 			lua_pop(L, 1);
 		}
-		LPACCEL  acc = (LPACCEL)LocalAlloc(LPTR, count * sizeof(ACCEL));
+
+		LPACCEL acc = new ACCEL[count];
+		
 		lua_pushnil(L);
 		while (lua_next(L, 1) != 0) {
-			// key is at index -2 and value at index -1
-			const char* ccc = luaL_checkstring(L, -2);
-			int kk = luaL_checkinteger(L, -1);
 			SciTEKeys::FillAccel((void*)(acc + i), luaL_checkstring(L, -2), static_cast<int>(luaL_checkinteger(L, -1)));
 			lua_pop(L, 1);
 			i++;
 		}
 		host->SetAcceleratorTable((void*) ::CreateAcceleratorTable(acc, count));
-		//delete acc;
+		delete acc;
 	}
 	return 1;
 }

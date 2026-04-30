@@ -527,7 +527,6 @@ protected:
 //!-end-[OnSendEditor]
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
-	bool viewWs = false;
 	bool viewIndent = false;
 	bool viewHisoryIndicators = false;
 	bool viewHisoryMarkers = false;
@@ -558,14 +557,11 @@ protected:
 	GUI::Point ptStartDrag;
 	bool capturedMouse;
 	bool firstPropertiesRead;
-	bool bufferedDraw;
-	bool twoPhaseDraw;
 	bool bracesCheck;
 	bool bracesSloppy;
 	int bracesStyle;
 	int braceCount;
 
-	bool indentationWSVisible;
 	int indentExamine;
 
 	bool autoCompleteIgnoreCase;
@@ -872,7 +868,6 @@ protected:
 	JobSubsystem SubsystemType(const char *cmd, int item = -1);
 
 	void AssignKey(int key, int mods, int cmd);
-	void ViewWhitespace(bool view);
 
 	//void ImportMenu(int pos);
 	//void SetLanguageMenu();

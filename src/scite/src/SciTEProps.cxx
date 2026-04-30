@@ -1161,6 +1161,8 @@ void SciTEBase::ReadProperties() {
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_TEXT, "selection.additional.fore", "selection.additional.alpha");
 
 	SetColourElement(&wEditor, SC_ELEMENT_SELECTION_ADDITIONAL_BACK, "selection.additional.back", "selection.additional.alpha");
+	
+	SetColourElement(&wEditor, SC_ELEMENT_FOLD_LINE, "foldline.colour", "foldline.alpha");
 
 
 	SString whitespaceFore = props.Get("whitespace.fore");
@@ -1252,6 +1254,8 @@ void SciTEBase::ReadProperties() {
 	wOutput.SetFoldMarginColour(1, cFold);
 	wFindRes.SetFoldMarginColour(1, cFold);
 
+	wEditor.SetWhitespaceSize(props.GetInt("whitespace.size"));
+	wEditor.SetTabDrawMode(static_cast<TabDrawMode>(props.GetInt("tab.draw.mode")));
 	wEditor.SetViewWS(static_cast<WhiteSpace>(props.GetInt("view.whitespace")));
 	wEditor.SetIndentationGuides(static_cast<IndentView>(props.GetInt("view.indentation.guides")));
 
@@ -1273,11 +1277,6 @@ void SciTEBase::ReadProperties() {
 	lineNumbersExpand = lineMarginProp.contains('+');
 
 	SetLineNumberWidth();
-
-	bufferedDraw = props.GetInt("buffered.draw", 1);
-	wEditor.SetBufferedDraw(bufferedDraw);
-
-	wEditor.SetLayoutCache(static_cast<LineCache>(props.GetInt("cache.layout", SC_CACHE_CARET)));
 
 	bracesCheck = props.GetInt("braces.check");
 	bracesSloppy = props.GetInt("braces.sloppy");
@@ -1426,6 +1425,11 @@ void SciTEBase::ReadPropertiesEx() {
 	if (extender)
 		extender->Clear();
 	CallAll(Message::SetTechnology, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
+	CallAll(Message::SetBufferedDraw, props.GetInt("buffered.draw", 0));
+	CallAll(Message::SetPhasesDraw, props.GetInt("phases.draw", SC_PHASES_MULTIPLE));
+	CallAll(Message::SetFontQuality, props.GetInt("font.quality", SC_EFF_QUALITY_LCD_OPTIMIZED));
+	CallAll(Message::SetLayoutCache, props.GetInt("layout.cache", SC_CACHE_PAGE));
+
 
 	std::string languageCurrent = wOutput.LexerLanguage();
 	if (strcmp("errorlist", languageCurrent.c_str())) {
@@ -1546,8 +1550,6 @@ void SciTEBase::ReadPropertiesEx() {
 
 	CallChildren(Message::SetMarginLeft, 0, blankMarginLeft);
 	CallChildren(Message::SetMarginRight, 0, blankMarginRight);
-
-	CallChildren(Message::SetLayoutCache, props.GetInt("output.cache.layout", SC_CACHE_CARET));
 
 	props.Set("CurrentWordCharacters", wordCharacters.c_str() );
 
@@ -1712,13 +1714,11 @@ void SciTEBase::SetPropertiesInitial() {
 	wrap = props.GetInt("wrap");
 	wrapOutput = props.GetInt("output.wrap");
 	wrapFindRes = props.GetInt("findres.wrap");
-	indentationWSVisible = props.GetInt("view.indentation.whitespace", 1);
 
 	lineNumbers = props.GetInt("line.margin.visible");	
 	viewIndent = props.GetInt("view.indentation.guides");
 	viewHisoryIndicators = props.GetInt("view.history.indicators");
 	viewHisoryMarkers = props.GetInt("view.history.markers", 1);
-	viewWs = props.GetInt("view.whitespace");
 
 	marginWidth = 0;
 	SString margwidth = props.Get("margin.width");
@@ -1745,7 +1745,9 @@ void SciTEBase::ReadPropertiesInitial() {
 	int sizeVertical = props.GetInt("output.vertical.size", 0);
 	int hideOutput = props.GetInt("output.initial.hide", 0);
 
-	ViewWhitespace(props.GetInt("view.whitespace"));
+	wEditor.Call(Message::SetViewWS, props.GetInt("view.whitespace"));
+	wEditor.Call(Message::SetWhitespaceSize, props.GetInt("whitespace.size"));
+	wEditor.Call(Message::SetTabDrawMode, props.GetInt("tab.draw.mode"));
 	wEditor.Call(Message::SetIndentationGuides, props.GetInt("view.indentation.guides") ?
 		indentExamine : SC_IV_NONE);
 
