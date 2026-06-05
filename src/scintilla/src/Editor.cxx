@@ -3864,7 +3864,7 @@ int Editor::DelWordOrLine(Message iMessage) {
 
 	// Rightwards and leftwards deletions differ in treatment of virtual space.
 	// Clear virtual space for leftwards, realise for rightwards.
-	const bool leftwards = (iMessage == Message::DelWordLeft) || (iMessage == Message::DelLineLeft);
+	const bool leftwards = AnyOf(iMessage, Message::DelWordLeft, Message::DelLineLeft);
 
 	if (!additionalSelectionTyping) {
 		InvalidateWholeSelection();
@@ -4081,14 +4081,14 @@ int Editor::KeyCommand(Message iMessage) {
 		break;
 	case Message::DeleteBack:
 		DelCharBack(true);
-		if ((caretSticky == CaretSticky::Off) || (caretSticky == CaretSticky::WhiteSpace)) {
+		if (AnyOf(caretSticky, CaretSticky::Off, CaretSticky::WhiteSpace)) {
 			SetLastXChosen();
 		}
 		EnsureCaretVisible();
 		break;
 	case Message::DeleteBackNotLine:
 		DelCharBack(false);
-		if ((caretSticky == CaretSticky::Off) || (caretSticky == CaretSticky::WhiteSpace)) {
+		if (AnyOf(caretSticky, CaretSticky::Off, CaretSticky::WhiteSpace)) {
 			SetLastXChosen();
 		}
 		EnsureCaretVisible();
@@ -4917,7 +4917,7 @@ void Editor::ButtonDownWithModifiers(Point pt, unsigned int curTime, KeyMod modi
 			wordSelectAnchorEndPos = endWord;
 			wordSelectInitialCaretPos = sel.MainCaret();
 			WordSelection(wordSelectInitialCaretPos);
-		} else if (selectionUnit == TextUnit::subLine || selectionUnit == TextUnit::wholeLine) {
+		} else if (AnyOf(selectionUnit, TextUnit::subLine, TextUnit::wholeLine)) {
 			lineAnchorPos = newPos.Position();
 			LineSelection(lineAnchorPos, lineAnchorPos, selectionUnit == TextUnit::wholeLine);
 			//Platform::DebugPrintf("Triple click: %d - %d\n", anchor, currentPos);
@@ -5459,7 +5459,7 @@ Sci::Position Editor::PositionAfterMaxStyling(Sci::Position posMax, bool scrolli
 }
 
 void Editor::StartIdleStyling(bool truncatedLastStyling) {
-	if ((idleStyling == IdleStyling::All) || (idleStyling == IdleStyling::AfterVisible)) {
+	if (AnyOf(idleStyling, IdleStyling::All, IdleStyling::AfterVisible)) {
 		if (pdoc->GetEndStyled() < pdoc->Length()) {
 			// Style remainder of document in idle time
 			needIdleStyling = true;
@@ -5963,6 +5963,8 @@ Sci::Position Editor::GetTag(char *tagValue, int tagNumber) {
 }
 
 Sci::Position Editor::ReplaceTarget(ReplaceType replaceType, std::string_view text) {
+	pdoc->CheckPosition(targetRange.start.Position());
+
 	UndoGroup ug(pdoc);
 
 	std::string substituted;	// Copy in case of re-entrance
@@ -6411,7 +6413,7 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 
 	case Message::Paste:
 		Paste();
-		if ((caretSticky == CaretSticky::Off) || (caretSticky == CaretSticky::WhiteSpace)) {
+		if (AnyOf(caretSticky, CaretSticky::Off, CaretSticky::WhiteSpace)) {
 			SetLastXChosen();
 		}
 		EnsureCaretVisible();
@@ -6764,6 +6766,7 @@ sptr_t Editor::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 			Sci::Position insertPos = PositionFromUPtr(wParam);
 			if (insertPos == -1)
 				insertPos = CurrentPosition();
+			pdoc->CheckPosition(insertPos);
 			Sci::Position newCurrent = CurrentPosition();
 			const char *sz = ConstCharPtrFromSPtr(lParam);
 			const Sci::Position lengthInserted = pdoc->InsertString(insertPos, sz, strlen(sz));

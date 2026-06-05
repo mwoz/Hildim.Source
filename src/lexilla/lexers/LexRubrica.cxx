@@ -471,7 +471,10 @@ void SCI_METHOD LexerRubrica::Lex(Sci_PositionU startPos, Sci_Position length, i
 					case ' ':
 						break;
 					default:
-						setColor = false;
+						//setColor = false; 
+						setColor = (styler.BufferStyleAt(pp) != SCE_RBR_DEFAULT) ||
+							(pp > 3 && (styler[pp - 2] == '\r' || styler[pp - 2] == '\n') && 
+								styler.BufferStyleAt(pp) == SCE_RBR_OPERATOR && styler.BufferStyleAt(pp - 1) == SCE_RBR_OPERATOR );
 						goto prev_tested;
 					}
 				}

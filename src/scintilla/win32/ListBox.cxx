@@ -180,6 +180,10 @@ class ListBoxX : public ListBox {
 	MouseWheelDelta wheelDelta;
 	ListOptions options;
 	DWORD frameStyle = WS_THICKFRAME;
+	float deviceScaleFactor = 1.f;
+	[[nodiscard]] int GetFirstIntegralMultipleDeviceScaleFactor() const noexcept {
+		return static_cast<int>(std::ceil(deviceScaleFactor));
+	}
 
 	LBGraphics graphics;
 
@@ -279,6 +283,9 @@ void ListBoxX::Create(Window &parent_, int ctrlID_, Point location_, int lineHei
 		this);
 
 	dpi = DpiForWindow(hwndParent);
+	if (technology != Technology::Default) {
+		deviceScaleFactor = Internal::GetDeviceScaleFactorWhenGdiScalingActive(hwndParent);
+	}
 	POINT locationw = POINTFromPoint(location);
 	::MapWindowPoints(hwndParent, {}, &locationw, 1);
 	location = PointFromPOINT(locationw);
@@ -440,7 +447,8 @@ void ListBoxX::Draw(DRAWITEMSTRUCT *pDrawItem) {
 #endif
 
 	const PRectangle rcItemBase = PRectangleFromRECT(pDrawItem->rcItem);
-	const PRectangle rcItem(0, 0, rcItemBase.Width(), rcItemBase.Height());
+	const int integralDeviceScaleFactor = GetFirstIntegralMultipleDeviceScaleFactor();
+	const PRectangle rcItem(0, 0, rcItemBase.Width() * integralDeviceScaleFactor, rcItemBase.Height() * integralDeviceScaleFactor);
 	PRectangle rcBox = rcItem;
 	rcBox.left += TextOffset();
 	ColourRGBA colourFore;
@@ -476,6 +484,7 @@ void ListBoxX::Draw(DRAWITEMSTRUCT *pDrawItem) {
 		PRectangle rcImage = rcItem;
 		rcImage.left = left;
 		rcImage.right = rcImage.left + images.GetWidth();
+		rcImage.bottom = rcImage.top + rcItemBase.Height();
 		graphics.pixmapLine->DrawRGBAImage(rcImage,
 			pimage->GetWidth(), pimage->GetHeight(), pimage->Pixels());
 	}
@@ -491,7 +500,11 @@ void ListBoxX::Draw(DRAWITEMSTRUCT *pDrawItem) {
 
 	// Blit from hMemDC to hDC
 	const SIZE extent = SizeOfRect(pDrawItem->rcItem);
-	::BitBlt(pDrawItem->hDC, pDrawItem->rcItem.left, pDrawItem->rcItem.top, extent.cx, extent.cy, graphics.bm.DC(), 0, 0, SRCCOPY);
+	if (integralDeviceScaleFactor == 1) {
+	   ::BitBlt(pDrawItem->hDC, pDrawItem->rcItem.left, pDrawItem->rcItem.top, extent.cx, extent.cy, graphics.bm.DC(), 0, 0, SRCCOPY);
+	} else {
+		::StretchBlt(pDrawItem->hDC, pDrawItem->rcItem.left, pDrawItem->rcItem.top, extent.cx, extent.cy, graphics.bm.DC(), 0, 0, extent.cx * integralDeviceScaleFactor, extent.cy * integralDeviceScaleFactor, SRCCOPY);
+	}
 }
 
 void ListBoxX::AppendListItem(const char *text, const char *numword) {
@@ -773,7 +786,8 @@ void ListBoxX::CentreItem(int n) {
 }
 
 void ListBoxX::AllocateBitMap() {
-	const SIZE extent { GetClientExtent().x, ItemHeight() };
+	const int integralDeviceScaleFactor = GetFirstIntegralMultipleDeviceScaleFactor();
+	const SIZE extent { GetClientExtent().x * integralDeviceScaleFactor, ItemHeight() * integralDeviceScaleFactor };
 
 	graphics.bm.Create({}, extent.cx, -extent.cy, nullptr);
 	if (!graphics.bm) {
@@ -790,9 +804,12 @@ void ListBoxX::AllocateBitMap() {
 			return;
 		}
 
+		const FLOAT dpiTarget = dpiDefault * static_cast<float>(integralDeviceScaleFactor);
+
 		const D2D1_RENDER_TARGET_PROPERTIES drtp = D2D1::RenderTargetProperties(
 			D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			{ DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED });
+			{ DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+			dpiTarget, dpiTarget);
 
 		HRESULT hr = CreateDCRenderTarget(&drtp, graphics.pBMDCTarget);
 		if (FAILED(hr) || !graphics.pBMDCTarget) {
