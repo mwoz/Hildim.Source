@@ -1,6 +1,6 @@
 // SciTE - Scintilla based Text Editor
 /** @file GUIWin.cxx
- ** Interface to platform GUI facilities.
+ ** Interface to platform GUI  facilities.
  ** Split off from Scintilla's Platform.h to avoid SciTE depending on implementation of Scintilla.
  **/
 // Copyright 1998-2010 by Neil Hodgson <neilh@scintilla.org>
