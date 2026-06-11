@@ -16,6 +16,7 @@
 
 #include <stdexcept>
 #include <new>
+#include <utility>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -1402,17 +1403,16 @@ void ScintillaWin::SelectionToHangul() {
 	const Sci::Position utf16Len = pdoc->CountUTF16(selStart, selEnd);
 
 	if (utf16Len > 0) {
-		std::string documentStr(documentStrLen, '\0');
-		pdoc->GetCharRange(documentStr.data(), selStart, documentStrLen);
+		const std::string documentStr = RangeText(selStart, selStart + documentStrLen);
 
 		std::wstring uniStr = StringDecode(documentStr, CodePageOfDocument());
 		const bool converted = HanjaDict::GetHangulOfHanja(uniStr);
 
 		if (converted) {
-			documentStr = StringEncode(uniStr, CodePageOfDocument());
+			const std::string hangul = StringEncode(uniStr, CodePageOfDocument());
 			UndoGroup ug(pdoc);
 			ClearSelection();
-			InsertPaste(documentStr.data(), documentStr.size());
+			InsertPaste(hangul);
 		}
 	}
 }
@@ -2514,7 +2514,7 @@ sptr_t ScintillaWin::WndProc(Message iMessage, uptr_t wParam, sptr_t lParam) {
 		}
 	} catch (std::bad_alloc &) {
 		errorStatus = Status::BadAlloc;
-	} catch (Failure &failure) {
+	} catch (const Failure &failure) {
 		errorStatus = failure.status;
 	} catch (...) {
 		errorStatus = Status::Failure;
@@ -3090,7 +3090,6 @@ bool SupportedFormat(const FORMATETC *pFE) noexcept {
 }
 
 
-//!-start-[InsertMultiPasteText]
 void ScintillaWin::InsertMultiPasteText(const char *text, size_t len) {
 	std::string	convertedText;
 	if (convertPastes) {
@@ -3129,32 +3128,24 @@ void ScintillaWin::InsertMultiPasteText(const char *text, size_t len) {
 		}
 	}
 }
-//!-end-[InsertMultiPasteText]
+
 void ScintillaWin::Paste() {
-	Clipboard clipboard(MainHWND());
-	if (!clipboard) {
-		return;
-	}
-/*!-remove-[InsertMultiPasteText]
-	UndoGroup ug(pdoc);
-	const bool isLine = SelectionEmpty() &&
-		(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
-	ClearSelection(multiPasteMode == MultiPaste::Each);
-	bool isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
-*/
-//!-start-[InsertMultiPasteText]
-	bool isLine = SelectionEmpty() && (::IsClipboardFormatAvailable(cfLineSelect) != 0);
-	SelectionPosition selStart;
-	bool isRectangular = ::IsClipboardFormatAvailable(cfColumnSelect) != 0;
-	bool isMultiPaste = (!isRectangular)&&(!isLine)&&(sel.Count()>1);
-	if(!isMultiPaste) {
-		UndoGroup ug(pdoc);
-		ClearSelection();
-		selStart = sel.IsRectangular() ?
-			sel.Rectangular().Start() :
-			sel.Range(sel.Main()).Start();
-	}
-//!-end-[InsertMultiPasteText]
+    bool isLine = false;
+	bool isRectangular = false;
+	bool hasUnicodeText = false;
+	bool isMultiPaste = false;
+	std::string putf;
+
+	{
+    	Clipboard clipboard(MainHWND());
+    	if (!clipboard) {
+    		return;
+    	}
+
+		isLine = SelectionEmpty() &&
+			(::IsClipboardFormatAvailable(cfLineSelect) || ::IsClipboardFormatAvailable(cfVSLineTag));
+		isRectangular = (::IsClipboardFormatAvailable(cfColumnSelect) != 0);
+		
 	if (!isRectangular) {
 		// Evaluate "Borland IDE Block Type" explicitly
 		GlobalMemory memBorlandSelection(::GetClipboardData(cfBorlandIDEBlockType));
@@ -3162,20 +3153,29 @@ void ScintillaWin::Paste() {
 			isRectangular = (memBorlandSelection.Size() == 1) && (static_cast<BYTE *>(memBorlandSelection.ptr)[0] == 0x02);
 			memBorlandSelection.Unlock();
 		}
-	}
-	const PasteShape pasteShape = isRectangular ? PasteShape::rectangular : (isLine ? PasteShape::line : PasteShape::stream);
+		}
 
 	// Use CF_UNICODETEXT if available
 	GlobalMemory memUSelection(::GetClipboardData(CF_UNICODETEXT));
 	if (const wchar_t *uptr = static_cast<const wchar_t *>(memUSelection.ptr)) {
-		const std::string putf = EncodeWString(uptr);
-		if (!isMultiPaste) {
-		InsertPasteShape(putf.c_str(), putf.length(), pasteShape);
-		} else {
+			hasUnicodeText = true;
+			putf = EncodeWString(uptr);
+			memUSelection.Unlock();
+		}
+	}
+
+	if (hasUnicodeText) {
+		isMultiPaste = (!isRectangular) && (!isLine) && (sel.Count() > 1) && (putf.find_first_of("\r\n") == std::string::npos);
+		UndoGroup ug(pdoc);
+		if (isMultiPaste) {
 			InsertMultiPasteText(putf.c_str(), putf.length());
 		}
-
-		memUSelection.Unlock();
+		else
+		{
+			const PasteShape pasteShape = isRectangular ? PasteShape::rectangular : (isLine ? PasteShape::line : PasteShape::stream);
+			ClearSelection(multiPasteMode == MultiPaste::Each);
+			InsertPasteShape(putf, pasteShape);
+		}
 	}
 	Redraw();
 }
@@ -3594,7 +3594,7 @@ void ScintillaWin::GetMouseParameters() noexcept {
 }
 
 void ScintillaWin::CopyToGlobal(GlobalMemory &gmUnicode, const SelectionText &selectedText) {
-	const std::string_view svSelected(selectedText.Data(), selectedText.LengthWithTerminator());
+	const std::string_view svSelected = selectedText.AsViewWithTerminator();
 	if (IsUnicodeMode()) {
 		const size_t uchars = UTF16Length(svSelected);
 		gmUnicode.Allocate(2 * uchars);
@@ -3883,6 +3883,8 @@ STDMETHODIMP ScintillaWin::Drop(LPDATAOBJECT pIDataSource, DWORD grfKeyState,
 			memUDrop.Unlock();
 		}
 
+		// Free data
+		::ReleaseStgMedium(&medium);
 		if (putf.empty()) {
 			return S_OK;
 		}
@@ -3894,10 +3896,8 @@ STDMETHODIMP ScintillaWin::Drop(LPDATAOBJECT pIDataSource, DWORD grfKeyState,
 		::ScreenToClient(MainHWND(), &rpt);
 		const SelectionPosition movePos = SPositionFromLocation(PointFromPOINT(rpt), false, false, UserVirtualSpace());
 
-		DropAt(movePos, putf.c_str(), putf.size(), *pdwEffect == DROPEFFECT_MOVE, isRectangular);
+		DropAt(movePos, putf, *pdwEffect == DROPEFFECT_MOVE, isRectangular);
 
-		// Free data
-		::ReleaseStgMedium(&medium);
 
 		return S_OK;
 	} catch (...) {
