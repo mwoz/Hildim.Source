@@ -71,6 +71,7 @@
 #define MYSPELLMGR_HXX_
 
 #include "hunvisapi.h"
+#include "hunversion.h"
 #include "w_char.hxx"
 #include "atypes.hxx"
 #include <string>
@@ -83,6 +84,7 @@
 #endif
 
 #define MAXSHARPS 5
+#define MAXBREAKDEPTH 10
 
 #ifndef MAXWORDLEN
 #define MAXWORDLEN 100
@@ -111,13 +113,13 @@ class LIBHUNSPELL_DLL_EXPORTED Hunspell {
    * long path names (without the long path prefix Hunspell will use fopen()
    * with system-dependent character encoding instead of _wfopen()).
    */
-  Hunspell(const char* affpath, const char* dpath, const char* key = NULL);
+  Hunspell(const char* affpath, const char* dpath, const char* key = nullptr);
   Hunspell(const Hunspell&) = delete;
   Hunspell& operator=(const Hunspell&) = delete;
   ~Hunspell();
 
   /* load extra dictionaries (only dic files) */
-  int add_dic(const char* dpath, const char* key = NULL);
+  int add_dic(const char* dpath, const char* key = nullptr);
 
   /* spell(word) - spellcheck word
    * output: false = bad word, true = good word
@@ -128,8 +130,8 @@ class LIBHUNSPELL_DLL_EXPORTED Hunspell {
    *     SPELL_FORBIDDEN = an explicit forbidden word
    *   root: root (stem), when input is a word with affix(es)
    */
-  bool spell(const std::string& word, int* info = NULL, std::string* root = NULL);
-  H_DEPRECATED int spell(const char* word, int* info = NULL, char** root = NULL);
+  bool spell(const std::string& word, int* info = nullptr, std::string* root = nullptr);
+  H_DEPRECATED int spell(const char* word, int* info = nullptr, char** root = nullptr);
 
   /* suggest(suggestions, word) - search suggestions
    * input: pointer to an array of strings pointer and the (bad) word
@@ -197,7 +199,7 @@ class LIBHUNSPELL_DLL_EXPORTED Hunspell {
 
   int add(const std::string& word);
 
-  int add_with_flags(const std::string& word, const std::string& flags, const std::string& desc = NULL);
+  int add_with_flags(const std::string& word, const std::string& flags, const std::string& desc = "");
 
   /* add word to the run-time dictionary with affix flags of
    * the example (a dictionary word): Hunspell will recognize
@@ -218,7 +220,12 @@ class LIBHUNSPELL_DLL_EXPORTED Hunspell {
   const std::vector<w_char>& get_wordchars_utf16() const;
 
   struct cs_info* get_csconv();
-  
+
+  /* version of the hunspell library itself, for example "1.7.3" */
+  static const char* get_library_version();
+
+  /* version string from the affix file's VERSION line, not the library
+   * version */
   const char* get_version() const;
   const std::string& get_version_cpp() const;
 
