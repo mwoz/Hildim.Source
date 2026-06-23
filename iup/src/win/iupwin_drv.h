@@ -11,7 +11,9 @@
 extern "C" {
 #endif
 
-
+	extern HCURSOR iupwinCUR_SPLITTER_VERT;
+	extern HCURSOR iupwinCUR_SPLITTER_HORIZ;
+	HCURSOR iupwinCreateOutlinedCursor(LPWSTR cursorId, COLORREF innerColor, COLORREF borderColor);
 /* global variables */
 /* declared where they are initialized */
 extern HINSTANCE iupwin_hinstance;      /* iupwin_open.c */

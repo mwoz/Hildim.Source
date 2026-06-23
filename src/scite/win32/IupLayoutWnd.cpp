@@ -1403,10 +1403,64 @@ void IupLayoutWnd::Close(){
 	IupClose();
 }
 
+void ResetCursorsRecursive(Ihandle* h) {
+	Ihandle* hChild = h->firstchild;
+	if (!hChild)
+		return;
+	do {
+		ResetCursorsRecursive(hChild);
+		char* val = IupGetAttribute(hChild, "CURSOR");
+		
+		if (val && val[0]) {
+			if (!strcmp(val, "SPLITTER_VERT")) {
+				IupSetAttribute(hChild, "_IUPWIN_CURSOR_SPLITTER_VERT", NULL);
+				IupSetAttribute(hChild, "CURSOR", "SPLITTER_VERT");
+			}
+			else if (!strcmp(val, "SPLITTER_HORIZ")) {
+				IupSetAttribute(hChild, "_IUPWIN_CURSOR_SPLITTER_HORIZ", NULL);
+				IupSetAttribute(hChild, "CURSOR", "SPLITTER_HORIZ");
+			}
+		}
+		hChild = hChild->brother;
+	} while (hChild);
+
+}
+
+void IupLayoutWnd::CreateCursors() {
+	COLORREF border = GetColorRef("FGCOLOR");
+	bool isInvert = !strcmp(((SciTEWin*)pSciteWin)->Property("invert.lexer.colors"), "1");
+	int r = GetRValue(border);
+	int g = GetGValue(border);
+	int b = GetBValue(border);
+	if (!isInvert && r > 200 && g > 200 && b > 200)
+	{
+		border = RGB(1, 1, 1);
+	}
+	else if (isInvert && r < 20 && g < 20 && b < 20) {
+		border = RGB(254, 254, 254);
+	}
+	iupwinCUR_SPLITTER_VERT = iupwinCreateOutlinedCursor(IDC_SIZEWE, GetColorRef("BORDERCOLOR"), border);
+	iupwinCUR_SPLITTER_HORIZ = iupwinCreateOutlinedCursor(IDC_SIZENS, GetColorRef("BORDERCOLOR"), border);
+}
+
+void IupLayoutWnd::RecreateCursors() {
+	HCURSOR h1 = iupwinCUR_SPLITTER_VERT;
+	HCURSOR h2 = iupwinCUR_SPLITTER_HORIZ;
+	CreateCursors();
+	ResetCursorsRecursive(ihDialog);
+	if (h1)
+		DestroyCursor(h1);
+	if (h2)
+		DestroyCursor(h2);
+}
 void IupLayoutWnd::CreateLayout(lua_State* L, void* pS) {
+	
 	pSciteWin = (SciTEBase*)pS;
 	hMain = Create_dialog();
-	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)((SciTEWin*)pSciteWin)->GetID());
+	IupSetAttribute(hMain, "NATIVEPARENT", (const char*)((SciTEWin*)pSciteWin)->GetID()); 
+	
+	CreateCursors();
+
 	IupShowXY(hMain, 0, 0);
 	HWND h = (HWND)IupGetAttribute(hMain, "HWND");
 	subclassedProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(h, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatWndProc)));
@@ -1436,7 +1490,6 @@ void IupLayoutWnd::CreateLayout(lua_State* L, void* pS) {
 		}
 		assert(m_fonthandle);
 	}
-
 }
 
 HWND IupLayoutWnd::GetChildHWND(const char* name){

@@ -383,6 +383,8 @@ public:
 	IupLayoutWnd();
 	~IupLayoutWnd();
 	void CreateLayout(lua_State *L, void *pS);
+	void RecreateCursors();
+	void CreateCursors();
 	HWND GetChildHWND(const char* name);
 	void SubclassChild(const char* name, GUI::ScintillaWindow *pW);
 	void GetPaneRect(const char *name, LPRECT pRc);

@@ -234,12 +234,12 @@ static int iSboxSetDirectionAttrib(Ihandle* ih, const char* value)
   if (ih->data->direction == ISBOX_EAST || ih->data->direction == ISBOX_WEST)
   {
     IupSetAttribute(ih->firstchild, "ORIENTATION", "VERTICAL");
-    IupSetAttribute(ih->firstchild, "CURSOR", "RESIZE_WE");
+    IupSetAttribute(ih->firstchild, "CURSOR", "SPLITTER_VERT");
   }
   else
   {
     IupSetAttribute(ih->firstchild, "ORIENTATION", "HORIZONTAL");
-    IupSetAttribute(ih->firstchild, "CURSOR", "RESIZE_NS");
+    IupSetAttribute(ih->firstchild, "CURSOR", "SPLITTER_HORIZ");
   }
 
   return 0;  /* do not store value in hash table */
@@ -425,7 +425,7 @@ static int iSboxCreateMethod(Ihandle* ih, void** params)
   iupChildTreeAppend(ih, bar);  /* bar will always be the firstchild */
 
   IupSetAttribute(bar, "EXPAND", "NO");
-  IupSetAttribute(bar, "CURSOR", "RESIZE_WE");
+  IupSetAttribute(bar, "CURSOR", "SPLITTER_VERT");
   IupSetAttribute(bar, "ORIENTATION", "VERTICAL");
   IupSetAttribute(bar, "STYLE", "FILL");
   IupSetAttribute(bar, "COLOR", "160 160 160");

@@ -1881,19 +1881,26 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_SETTINGCHANGE:
-			wEditor.Send(WM_SETTINGCHANGE, wParam, lParam);
+			wEditorL.Send(WM_SETTINGCHANGE, wParam, lParam); 
+			wEditorR.Send(WM_SETTINGCHANGE, wParam, lParam);
 			wOutput.Send(WM_SETTINGCHANGE, wParam, lParam);
+			wFindRes.Send(WM_SETTINGCHANGE, wParam, lParam);
+			layout.RecreateCursors();
 			break;
 
 		case WM_SYSCOLORCHANGE:
-			wEditor.Send(WM_SYSCOLORCHANGE, wParam, lParam);
+			wEditorL.Send(WM_SYSCOLORCHANGE, wParam, lParam);
+			wEditorR.Send(WM_SYSCOLORCHANGE, wParam, lParam);
 			wOutput.Send(WM_SYSCOLORCHANGE, wParam, lParam);
+			wFindRes.Send(WM_SYSCOLORCHANGE, wParam, lParam);
 			break;
 
 		case WM_PALETTECHANGED:
 			if (wParam != reinterpret_cast<WPARAM>(MainHWND())) {
-				wEditor.Send(WM_PALETTECHANGED, wParam, lParam);
-				//wOutput.Call(WM_PALETTECHANGED, wParam, lParam);
+				wEditorL.Send(WM_PALETTECHANGED, wParam, lParam);
+				wEditorR.Send(WM_PALETTECHANGED, wParam, lParam);
+				wOutput.Send(WM_PALETTECHANGED, wParam, lParam);
+				wFindRes.Send(WM_PALETTECHANGED, wParam, lParam);
 			}
 
 			break;

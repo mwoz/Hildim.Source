@@ -1,4 +1,4 @@
-/** \file
+﻿/** \file
  * \brief Windows Base Procedure
  *
  * See Copyright Notice in "iup.h"
@@ -808,6 +808,250 @@ static HCURSOR winLoadComCtlCursor(LPCTSTR lpCursorName)
   return cur;
 }
 
+HCURSOR iupwinCUR_SPLITTER_VERT;
+HCURSOR iupwinCUR_SPLITTER_HORIZ;
+// Структура с запасом под палитру (до 256 цветов)
+typedef struct {
+    BITMAPINFOHEADER bmiHeader;
+    RGBQUAD bmiColors[256];
+} SAFE_BITMAPINFO;
+
+HCURSOR iupwinCreateOutlinedCursor(LPCTSTR lpCursorName, COLORREF innerColor, COLORREF borderColor) {
+    HCURSOR hCursor = LoadCursor(NULL, lpCursorName);
+    if (!hCursor) return NULL;
+
+    ICONINFO iconInfo;
+    if (!GetIconInfo(hCursor, &iconInfo)) return NULL;
+
+    int cx = GetSystemMetrics(SM_CXCURSOR);
+    int cy = GetSystemMetrics(SM_CYCURSOR);
+    if (cx == 0 || cy == 0) {
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+
+    HDC hdc = GetDC(NULL);
+    if (!hdc) {
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+
+    // ---- Чтение маски (1 bpp) ----
+    SAFE_BITMAPINFO maskBMI = { 0 };
+    maskBMI.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    maskBMI.bmiHeader.biWidth = cx;
+    maskBMI.bmiHeader.biHeight = cy;          // положительное = снизу вверх
+    maskBMI.bmiHeader.biPlanes = 1;
+    maskBMI.bmiHeader.biBitCount = 1;
+    maskBMI.bmiHeader.biCompression = BI_RGB;
+
+    int maskStride = ((cx + 31) / 32) * 4;
+    int maskSize = maskStride * cy;
+    BYTE* maskBits = (BYTE*)malloc(maskSize);
+    if (!maskBits) {
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+
+    if (GetDIBits(hdc, iconInfo.hbmMask, 0, cy, maskBits, (BITMAPINFO*)&maskBMI, DIB_RGB_COLORS) != cy) {
+        free(maskBits);
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+
+    // ---- Чтение цветного растра (32 bpp), если есть ----
+    BOOL hasColor = (iconInfo.hbmColor != NULL);
+    int colorStride = cx * 4;
+    int colorSize = colorStride * cy;
+    BYTE* colorBits = NULL;
+    SAFE_BITMAPINFO colorBMI = { 0 };
+    colorBMI.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    colorBMI.bmiHeader.biWidth = cx;
+    colorBMI.bmiHeader.biHeight = cy;
+    colorBMI.bmiHeader.biPlanes = 1;
+    colorBMI.bmiHeader.biBitCount = 32;
+    colorBMI.bmiHeader.biCompression = BI_RGB;
+
+    if (hasColor) {
+        colorBits = (BYTE*)malloc(colorSize);
+        if (!colorBits) {
+            free(maskBits);
+            ReleaseDC(NULL, hdc);
+            DeleteObject(iconInfo.hbmMask);
+            DeleteObject(iconInfo.hbmColor);
+            return NULL;
+        }
+        if (GetDIBits(hdc, iconInfo.hbmColor, 0, cy, colorBits, (BITMAPINFO*)&colorBMI, DIB_RGB_COLORS) != cy) {
+            free(maskBits);
+            free(colorBits);
+            ReleaseDC(NULL, hdc);
+            DeleteObject(iconInfo.hbmMask);
+            DeleteObject(iconInfo.hbmColor);
+            return NULL;
+        }
+    }
+
+    // ---- Построение массива видимости ----
+    BOOL* visible = (BOOL*)malloc(cx * cy * sizeof(BOOL));
+    if (!visible) {
+        free(maskBits);
+        if (colorBits) free(colorBits);
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+
+    for (int y = 0; y < cy; ++y) {
+        // Маска и цветной растр хранятся снизу вверх, поэтому переворачиваем Y
+        BYTE* maskRow = maskBits + (cy - 1 - y) * maskStride;
+        BYTE* colorRow = colorBits ? (colorBits + (cy - 1 - y) * colorStride) : NULL;
+
+        for (int x = 0; x < cx; ++x) {
+            int idx = y * cx + x;
+            if (colorRow) {
+                BYTE* pixel = colorRow + x * 4;
+                BYTE alpha = pixel[3];
+                if (alpha >= 128) {
+                    visible[idx] = TRUE;
+                }
+                else {
+                    // если альфа нулевая, используем маску (бит = 0 – видим)
+                    int byteIdx = x / 8;
+                    int bitPos = x % 8;
+                    BYTE maskBit = (maskRow[byteIdx] >> (7 - bitPos)) & 1;
+                    visible[idx] = (maskBit == 0);
+                }
+            }
+            else {
+                // монохромный курсор
+                int byteIdx = x / 8;
+                int bitPos = x % 8;
+                BYTE maskBit = (maskRow[byteIdx] >> (7 - bitPos)) & 1;
+                visible[idx] = (maskBit == 0);
+            }
+        }
+    }
+
+    // ---- Создание новых растров ----
+    BYTE* newColorBits = (BYTE*)malloc(colorSize);
+    BYTE* newMaskBits = (BYTE*)malloc(maskSize);
+    if (!newColorBits || !newMaskBits) {
+        free(visible); free(maskBits); if (colorBits) free(colorBits);
+        if (newColorBits) free(newColorBits);
+        if (newMaskBits) free(newMaskBits);
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+    memset(newColorBits, 0, colorSize);
+    memset(newMaskBits, 0, maskSize);
+
+    BYTE innerR = GetRValue(innerColor);
+    BYTE innerG = GetGValue(innerColor);
+    BYTE innerB = GetBValue(innerColor);
+    BYTE borderR = GetRValue(borderColor);
+    BYTE borderG = GetGValue(borderColor);
+    BYTE borderB = GetBValue(borderColor);
+
+    for (int y = 0; y < cy; ++y) {
+        // Новые растры также создаём снизу вверх (для совместимости)
+        BYTE* newMaskRow = newMaskBits + (cy - 1 - y) * maskStride;
+        BYTE* newColorRow = newColorBits + (cy - 1 - y) * colorStride;
+
+        for (int x = 0; x < cx; ++x) {
+            int idx = y * cx + x;
+            if (!visible[idx]) {
+                BYTE* dst = newColorRow + x * 4;
+                dst[0] = 0; dst[1] = 0; dst[2] = 0; dst[3] = 0;
+                continue;
+            }
+
+            // Определяем границу (4 соседа)
+            int isBorder = 0;
+            if (y == 0 || !visible[(y - 1) * cx + x]) isBorder = 1;
+            else if (y == cy - 1 || !visible[(y + 1) * cx + x]) isBorder = 1;
+            else if (x == 0 || !visible[y * cx + (x - 1)]) isBorder = 1;
+            else if (x == cx - 1 || !visible[y * cx + (x + 1)]) isBorder = 1;
+
+            BYTE* dst = newColorRow + x * 4;
+            if (isBorder) {
+                dst[0] = borderB;
+                dst[1] = borderG;
+                dst[2] = borderR;
+            }
+            else {
+                dst[0] = innerB;
+                dst[1] = innerG;
+                dst[2] = innerR;
+            }
+            dst[3] = 255;
+
+            // Устанавливаем бит маски (1 – видимый)
+            int byteIdx = x / 8;
+            int bitPos = x % 8;
+            newMaskRow[byteIdx] |= (1 << (7 - bitPos));
+        }
+    }
+
+    // ---- Создание HBITMAP для цветного растра ----
+    // Используем ту же структуру colorBMI (32 бита)
+    HBITMAP hNewColor = CreateDIBSection(hdc, (BITMAPINFO*)&colorBMI, DIB_RGB_COLORS, NULL, NULL, 0);
+    if (!hNewColor) {
+        free(visible); free(maskBits); if (colorBits) free(colorBits);
+        free(newColorBits); free(newMaskBits);
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+    SetDIBits(hdc, hNewColor, 0, cy, newColorBits, (BITMAPINFO*)&colorBMI, DIB_RGB_COLORS);
+
+    // ---- Создание HBITMAP для маски (1 bpp) ----
+    HBITMAP hNewMask = CreateDIBSection(hdc, (BITMAPINFO*)&maskBMI, DIB_RGB_COLORS, NULL, NULL, 0);
+    if (!hNewMask) {
+        DeleteObject(hNewColor);
+        free(visible); free(maskBits); if (colorBits) free(colorBits);
+        free(newColorBits); free(newMaskBits);
+        ReleaseDC(NULL, hdc);
+        DeleteObject(iconInfo.hbmMask);
+        if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+        return NULL;
+    }
+    SetDIBits(hdc, hNewMask, 0, cy, newMaskBits, (BITMAPINFO*)&maskBMI, DIB_RGB_COLORS);
+
+    // ---- Создание нового курсора ----
+    ICONINFO newInfo = { 0 };
+    newInfo.fIcon = FALSE;
+    newInfo.xHotspot = iconInfo.xHotspot;
+    newInfo.yHotspot = iconInfo.yHotspot;
+    newInfo.hbmMask = hNewMask;
+    newInfo.hbmColor = hNewColor;
+
+    HCURSOR hNewCursor = CreateIconIndirect(&newInfo);
+
+    // ---- Очистка ----
+    DeleteObject(iconInfo.hbmMask);
+    if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+    DeleteObject(hNewMask);
+    DeleteObject(hNewColor);
+    free(visible);
+    free(maskBits);
+    if (colorBits) free(colorBits);
+    free(newColorBits);
+    free(newMaskBits);
+    ReleaseDC(NULL, hdc);
+
+    return hNewCursor;
+}
+
 HCURSOR iupwinGetCursor(Ihandle* ih, const char* name)
 {
   static struct {
@@ -877,9 +1121,9 @@ HCURSOR iupwinGetCursor(Ihandle* ih, const char* name)
   if (!cur)
   {
     if (iupStrEqualNoCase(name, "SPLITTER_VERT"))
-      cur = winLoadComCtlCursor(MAKEINTRESOURCE(107));
+      cur = iupwinCUR_SPLITTER_VERT ? iupwinCUR_SPLITTER_VERT : winLoadComCtlCursor(MAKEINTRESOURCE(107));
     else if (iupStrEqualNoCase(name, "SPLITTER_HORIZ"))
-      cur = winLoadComCtlCursor(MAKEINTRESOURCE(135));
+      cur = iupwinCUR_SPLITTER_HORIZ ? iupwinCUR_SPLITTER_HORIZ : winLoadComCtlCursor(MAKEINTRESOURCE(135));
   }
 
   iupAttribSet(ih, str, (char*)cur);

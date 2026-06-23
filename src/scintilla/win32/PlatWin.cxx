@@ -406,7 +406,7 @@ std::optional<DWORD> RegGetDWORD(HKEY hKey, LPCWSTR valueName) noexcept {
 	}
 	return {};
 }
-
+/**
 class CursorHelper {
 	GDIBitMap bm;
 	DWORD *pixels = nullptr;
@@ -565,7 +565,7 @@ public:
 		}
 	}
 };
-
+*/
 void ChooseCursor(LPCTSTR cursor) noexcept {
 	::SetCursor(::LoadCursor({}, cursor));
 }
@@ -601,7 +601,168 @@ void ChooseCursor(Window::Cursor curs) noexcept {
 
 }
 
+
+// Структура с запасом под палитру (максимум 256 цветов для 8 bpp)
+struct SafeBitmapInfo : public BITMAPINFO {
+	RGBQUAD bmiColors[256];  // запас для палитры
+};
+
+HBITMAP ReflectBitmapHorizontally(HBITMAP hbmSrc) {
+	if (!hbmSrc) return NULL;
+
+	BITMAP bm;
+	if (GetObject(hbmSrc, sizeof(BITMAP), &bm) == 0)
+		return NULL;
+
+	int width = bm.bmWidth;
+	int height = bm.bmHeight;
+	int bpp = bm.bmBitsPixel;
+
+	HDC hdc = GetDC(NULL);
+	if (!hdc) return NULL;
+
+	// Заполняем заголовок DIB
+	SafeBitmapInfo bmi = { 0 };
+	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biWidth = width;
+	bmi.bmiHeader.biHeight = height;   // положительное = строки снизу вверх
+	bmi.bmiHeader.biPlanes = 1;
+	bmi.bmiHeader.biBitCount = bpp;
+	bmi.bmiHeader.biCompression = BI_RGB;
+	bmi.bmiHeader.biSizeImage = 0;
+
+	int stride = ((width * bpp + 31) / 32) * 4;
+	int imageSize = stride * height;
+
+	BYTE* bits = (BYTE*)malloc(imageSize);
+	if (!bits) {
+		ReleaseDC(NULL, hdc);
+		return NULL;
+	}
+
+	// Получаем биты (теперь bmi содержит достаточно места для палитры)
+	if (GetDIBits(hdc, hbmSrc, 0, height, bits, (BITMAPINFO*)&bmi, DIB_RGB_COLORS) != height) {
+		free(bits);
+		ReleaseDC(NULL, hdc);
+		return NULL;
+	}
+
+	BYTE* newBits = (BYTE*)malloc(imageSize);
+	if (!newBits) {
+		free(bits);
+		ReleaseDC(NULL, hdc);
+		return NULL;
+	}
+
+	// --- Горизонтальное отражение (та же логика, что и раньше) ---
+	for (int y = 0; y < height; ++y) {
+		BYTE* srcRow = bits + y * stride;
+		BYTE* dstRow = newBits + y * stride;
+
+		switch (bpp) {
+		case 1: {
+			int bytesPerRow = stride;
+			for (int byteIdx = 0; byteIdx < bytesPerRow; ++byteIdx) {
+				BYTE srcByte = srcRow[byteIdx];
+				BYTE dstByte = 0;
+				for (int bit = 0; bit < 8; ++bit) {
+					if (srcByte & (1 << bit))
+						dstByte |= (1 << (7 - bit));
+				}
+				dstRow[bytesPerRow - 1 - byteIdx] = dstByte;
+			}
+			break;
+		}
+		case 8: {
+			for (int x = 0; x < width; ++x)
+				dstRow[x] = srcRow[width - 1 - x];
+			break;
+		}
+		case 16: {
+			WORD* src16 = (WORD*)srcRow;
+			WORD* dst16 = (WORD*)dstRow;
+			for (int x = 0; x < width; ++x)
+				dst16[x] = src16[width - 1 - x];
+			break;
+		}
+		case 24: {
+			for (int x = 0; x < width; ++x) {
+				BYTE* srcPix = srcRow + x * 3;
+				BYTE* dstPix = dstRow + (width - 1 - x) * 3;
+				dstPix[0] = srcPix[0];
+				dstPix[1] = srcPix[1];
+				dstPix[2] = srcPix[2];
+			}
+			break;
+		}
+		case 32: {
+			DWORD* src32 = (DWORD*)srcRow;
+			DWORD* dst32 = (DWORD*)dstRow;
+			for (int x = 0; x < width; ++x)
+				dst32[x] = src32[width - 1 - x];
+			break;
+		}
+		default:
+			memcpy(dstRow, srcRow, stride);
+			break;
+		}
+	}
+
+	// Создаём новый битмап
+	HBITMAP hbmNew = CreateDIBitmap(hdc, &bmi.bmiHeader, CBM_INIT,
+		newBits, (BITMAPINFO*)&bmi, DIB_RGB_COLORS);
+
+	free(bits);
+	free(newBits);
+	ReleaseDC(NULL, hdc);
+
+	return hbmNew;
+}
+
 HCURSOR LoadReverseArrowCursor(UINT dpi) noexcept {
+	// 1. Получаем оригинальный системный курсор
+	HCURSOR hOriginalCursor = LoadCursor(NULL, IDC_ARROW);
+	if (!hOriginalCursor) 
+		return {};
+
+	// 2. Создаем его независимую копию
+	HCURSOR hCursorCopy = CopyCursor(hOriginalCursor);
+	if (!hCursorCopy) 
+		return {};
+
+	// 3. Получаем информацию о растровой маске и цвете курсора
+	ICONINFO info = { 0 };
+	if (!GetIconInfo(hCursorCopy, &info)) 
+		return {};
+
+	// 4. Размеры курсора
+	int cx = GetSystemMetrics(SM_CXCURSOR);
+	int cy = GetSystemMetrics(SM_CYCURSOR);
+
+	// 5. Пересчёт hotspot для горизонтального отражения
+	DWORD newX = (cx - 1) - info.xHotspot;
+	DWORD newY = info.yHotspot;
+
+	// 6. Отражаем растры по горизонтали
+	HBITMAP hMaskNew = ReflectBitmapHorizontally(info.hbmMask);
+	HBITMAP hColorNew = NULL;
+	if (info.hbmColor) {
+		hColorNew = ReflectBitmapHorizontally(info.hbmColor);
+	}
+
+	// 7. Создаём новый курсор
+	ICONINFO newInfo = info;
+	newInfo.xHotspot = newX;
+	newInfo.yHotspot = newY;
+	newInfo.hbmMask = hMaskNew;
+	newInfo.hbmColor = hColorNew;
+
+	HCURSOR hReflected = CreateIconIndirect(&newInfo);
+	if (!hReflected)
+		return {};
+	return hReflected;
+	
+	/**
 	// https://learn.microsoft.com/en-us/answers/questions/815036/windows-cursor-size
 	constexpr DWORD defaultCursorBaseSize = 32;
 	constexpr DWORD maxCursorBaseSize = 16*(1 + 15); // 16*(1 + CursorSize)
@@ -658,6 +819,7 @@ HCURSOR LoadReverseArrowCursor(UINT dpi) noexcept {
 	cursorHelper.Draw(fillColour, strokeColour);
 	HCURSOR cursor = cursorHelper.Create();
 	return cursor;
+	 */
 }
 
 void Window::SetCursor(Cursor curs) {
