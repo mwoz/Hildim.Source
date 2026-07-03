@@ -305,6 +305,7 @@ namespace luabridge {
         RCError luaGetParseError() const;
 
         void luaSetParameter(const char* name, const char* value);
+        std::string luaGetTransformLog() const;
 
         bool luaLoadXml(const char* xml);
         RCDocument luaTransform(domDocument* docRef);

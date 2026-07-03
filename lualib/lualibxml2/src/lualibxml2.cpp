@@ -1608,21 +1608,22 @@ namespace luabridge {
 
    static void XMLCDECL XsltTransformError(void* ctx, const char* msg, ...)
    {
-       // do nothing - it prevents printing error text to console
-       va_list args;
-       std::string s(msg);
-       va_start(args, msg);
-       std::string errorText = string_format(s, args);
-       va_end(args);
-      
-       domXsltProcessor* processor = (domXsltProcessor*)ctx;
-       processor->AddErrorText(errorText);
+         va_list args;
+         va_start(args, msg);
+
+         char buffer[4096];
+         vsnprintf(buffer, sizeof(buffer), msg, args);
+         va_end(args);
+         domXsltProcessor* processor = (domXsltProcessor*)ctx;
+         processor->AddErrorText(buffer);
    }
 
    domXsltProcessor::domXsltProcessor()
    {
        m_stylesheet = nullptr;
        m_parseError = new domParseError();
+       m_errorText.empty();
+       xsltSetGenericErrorFunc(this, XsltTransformError);
    }
 
    domXsltProcessor::~domXsltProcessor()
@@ -1648,6 +1649,10 @@ namespace luabridge {
        return RCProcessor(new domXsltProcessor());
    }
 
+   std::string domXsltProcessor::luaGetTransformLog() const
+   {
+       return m_errorText;
+   }
    RCError domXsltProcessor::luaGetParseError() const
    {
        return RCError(m_parseError);
@@ -1663,6 +1668,7 @@ namespace luabridge {
 
    bool domXsltProcessor::luaLoadXml(const char* xml)
    {
+       m_errorText.clear();
        auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
        xmlSwitchEncodingName(parserCtx, "UTF-8");
        if (parserCtx->sax)
@@ -1683,7 +1689,8 @@ namespace luabridge {
            if (m_stylesheet == nullptr)
            {
                result = -1;
-               m_parseError->Set(-1, "Failed to process XSLT document.");
+               m_errorText = "Failed to process XSLT document:\n" + m_errorText;
+               m_parseError->Set(-1, m_errorText);
                xmlFreeDoc(doc);
                parserCtx->myDoc = nullptr;
            }
@@ -1858,6 +1865,7 @@ namespace luabridge {
             .endClass()
             .beginClass <domXsltProcessor>("XsltProcessor")
                 .addConstructor <void (*) (void), RCProcessor >()
+                .addProperty("transformLog", &domXsltProcessor::luaGetTransformLog)
                 .addProperty("parseError", &domXsltProcessor::luaGetParseError)
                 .addFunction("setParameter", &domXsltProcessor::luaSetParameter)
                 .addFunction("loadXml", &domXsltProcessor::luaLoadXml)
