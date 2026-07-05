@@ -427,8 +427,10 @@ void SciTEBase::ChangeTabWnd() {
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	if (iNext > -1) 
+	if (iNext > -1) {
 		SetCoDocumentAt(iNext);
+		wEditor.SetBuffPointer(bPrev);
+	}                              
 	else {
 		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
 		wEditor.coEditor.AddRefDocument(d);
