@@ -401,9 +401,12 @@ FilePath SciTEBase::ScintillaWindowSwitcher::GetCoBuffPointer() {
 	}
 }
 
-int SciTEBase::ScintillaWindowSwitcher::GetWindowIdm(){
-	if (GetID() == pBase->wEditorL.GetID())	return IDM_SRCWIN;
-	return IDM_COSRCWIN;
+bool SciTEBase::ScintillaWindowEditor::SameAs(const ScintillaWindowEditor& other) const noexcept {
+	return GetID() == other.GetID();
+}
+
+EsitorSide SciTEBase::ScintillaWindowSwitcher::GetWindowIdm() const noexcept {
+	return SameAs(pBase->wEditorL) ? idm_srcwin : idm_cosrcwin;
 }
 
 sptr_t SciTEBase::CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s ){
@@ -2684,8 +2687,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 	bool handled = false;
 	switch (notification->nmhdr.code) {
 	case SCN_FOCUSIN:
-		if ((notification->nmhdr.idFrom == IDM_SRCWIN) || (notification->nmhdr.idFrom == IDM_COSRCWIN)){
-			if (wEditor.GetWindowIdm() != notification->nmhdr.idFrom) { 
+		if ((notification->nmhdr.idFrom == idm_srcwin) || (notification->nmhdr.idFrom == idm_cosrcwin)){
+			if (GetEditorIdm() != notification->nmhdr.idFrom) {
  				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
 				CheckReload();
 			}
@@ -2786,7 +2789,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_COLORIZED:
-		if (notification->nmhdr.idFrom == wEditor.GetWindowIdm()) {
+		if (notification->nmhdr.idFrom == GetEditorIdm()) {
 			if (extender) 
 				handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
@@ -2816,13 +2819,13 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_SAVEPOINTLEFT:
-		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
+		if (notification->nmhdr.idFrom == idm_srcwin || notification->nmhdr.idFrom == idm_cosrcwin) {
 			if (extender) {
 				handled = extender->OnSavePointLeft();
 				extender->OnShowActivate(-1, -1, -1);
 			}
 			if (!handled) {
-				if(wEditor.GetWindowIdm() == notification->nmhdr.idFrom)
+				if(GetEditorIdm() == notification->nmhdr.idFrom)
 					CurrentBuffer()->isDirty = true;
 				else {
 					FilePath fp = wEditor.GetCoBuffPointer();  
@@ -3021,8 +3024,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					extender->DoLua(warning.c_str());
 				}
 			}
-			//_set_se_translator(original);
-			if (message.length() && notification->nmhdr.idFrom == wEditor.GetWindowIdm()) {
+			if (message.length() && notification->nmhdr.idFrom == GetEditorIdm()) {
 				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL)); 
 			}
 		}
@@ -3044,7 +3046,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		else{
 			int zoom = static_cast<int>(wEditor.Zoom());
-			if (wEditor.GetWindowIdm() == IDM_SRCWIN)
+			if (GetEditorIdm() == idm_srcwin)
 				props.SetInteger("magnification", zoom);
 			else
 				props.SetInteger("right.magnification", zoom);

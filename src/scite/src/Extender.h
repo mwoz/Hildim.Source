@@ -81,6 +81,7 @@ public:
 	virtual bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile) = 0;
 	virtual unsigned long InvertColor(unsigned long clr) = 0;
 	virtual bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false) = 0;
+	virtual void ChangeTabWnd(int insertIn = -1) = 0;
 };
 
 /**

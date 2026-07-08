@@ -93,6 +93,7 @@ enum UniMode {
     uni8Bit = 0, uni16BE = 1, uni16LE = 2, uniUTF8 = 3,
     uniCookie = 4
 };
+enum EsitorSide { idm_srcwin = 350, idm_cosrcwin = 356 };
 
 class BufferListAPI {
 public:
@@ -169,7 +170,7 @@ public:
 class EditSwitcher{
 public:
 	virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) = 0;
-	virtual int GetWindowIdm() = 0;
+	virtual EsitorSide GetWindowIdm() const noexcept = 0;
 	virtual void SetBuffPointer(FilePath* pBuf) = 0;
 	virtual void SetBuffEncoding(int e) = 0;
 };
@@ -500,12 +501,13 @@ protected:
 		virtual sptr_t Call(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
 		SciTEBase* pBase;
 		std::string languageCurrent = "xxx";
+		bool SameAs(const ScintillaWindowEditor& other) const noexcept;
 
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
-		virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) ;
-		virtual int GetWindowIdm();
+		virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf);
+		EsitorSide GetWindowIdm() const noexcept;
 		virtual void SetBuffPointer(FilePath* pBuf);
 		virtual void SetCoBuffPointer(FilePath* pBuf);
 		virtual void SetBuffEncoding(int e);
@@ -678,7 +680,7 @@ protected:
 	void MoveTabRight();
 	void MoveTabLeft();
 	void CloneTab();
-	void ChangeTabWnd();
+	void ChangeTabWnd(int insertIn = -1);
 	virtual void OrderTabsBy(std::map<int, int> &order);
 	virtual void PostLoadScript() = 0;
 	void CheckRightEditorVisible();
@@ -966,6 +968,8 @@ public:
 	void SetProperty(const char *key, const char *val);
 	
 	GUI::WindowID GetID() { return wSciTE.GetID(); }
+
+	EsitorSide GetEditorIdm(bool direct = true) { return (wEditor.SameAs(wEditorL) == direct) ? idm_srcwin : idm_cosrcwin; }
 
 //!-start-[GetApplicationProps]
 	static SciTEBase *GetApplicationInstance();

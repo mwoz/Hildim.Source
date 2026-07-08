@@ -101,7 +101,7 @@ public:
 		wid = wid_;
 		return *this;
 	}
-	WindowID GetID() const {
+	WindowID GetID() const noexcept {
 		return wid;
 	}
 	void SetID(WindowID wid_) {

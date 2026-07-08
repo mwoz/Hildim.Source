@@ -372,6 +372,11 @@ static int iFlatTabsGetCountAttrib(Ihandle* ih) {
 	for (pos = 0; iupAttribGetId(ih, "TABTITLE", pos); pos++);
 	return pos;
 }
+static char* iFlatTabsGetCountAttrib2(Ihandle* ih)
+{
+	return iupStrReturnInt(iFlatTabsGetCountAttrib(ih));
+}
+
 
 static int iFlatTabsRedraw_CB(Ihandle* ih) {
 
@@ -971,8 +976,11 @@ static int iFlatTabsButton_CB(Ihandle* ih, int button, int pressed, int x, int y
 				POINT p;
 				GetCursorPos(&p);
 				HWND hwnd = WindowFromPoint(p);
-				if (hwnd)
+				if (hwnd) {
 					ihTarget = iupwinHandleGet((InativeHandle*)hwnd);
+					if (!ihTarget)
+						ihTarget = iupwinHandleGet((InativeHandle*)GetParent(hwnd));
+				}
 			} else {
 				dragTab = ih->data->dragTab;
 			}
@@ -1059,8 +1067,11 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status) {
 			POINT p;
 			GetCursorPos(&p);
 			HWND hwnd = WindowFromPoint(p);
-			if (hwnd)
+			if (hwnd) {
 				ihTarget = iupwinHandleGet((InativeHandle*)hwnd);
+				if(!ihTarget)
+					ihTarget = iupwinHandleGet((InativeHandle*)GetParent(hwnd));
+			}
 		}
 		if (cb(ih, ihTarget, x, y, tab_found, dragTab, start, status) == IUP_IGNORE)
 			return IUP_DEFAULT;
@@ -1517,6 +1528,16 @@ static int iFlatTabsSetExpandButtonStateAttrib(Ihandle* ih, const char* value) {
 
 
 /*********************************************************************************/
+static int iFlatHTabsConvertXYToPos(Ihandle* ih, int x, int y)
+{
+	int inside_close;
+	int show_close = iupAttribGetBoolean(ih, "SHOWCLOSE");
+	int tab_found = iFlatTabsFindTab(ih, x, y, show_close, &inside_close);
+	if (tab_found > ITABS_NONE)
+		return tab_found;
+	else
+		return -1;
+}
 
 #define ATTRIB_ID_COUNT 6
 const static char* attrib_id[ATTRIB_ID_COUNT] = {
@@ -1559,6 +1580,8 @@ static int iFlatTabsCreateMethod(Ihandle* ih, void **params) {
 	msz[0] = 'x';
 	h += 6;
 	_itoa(h, msz + 1, 10);
+
+	IupSetCallback(ih, "_IUP_XY2POS_CB", (Icallback)iFlatHTabsConvertXYToPos);
 
 	iupAttribSet(ih, "MAXSIZE", msz);
 	iupAttribSetInt(ih, "_IUPFTABS_HIGHLIGHTED", ITABS_NONE);
@@ -1636,7 +1659,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	/* IupFlatTabs only */
 	iupClassRegisterAttribute(ic, "VALUE", iFlatTabsGetValueAttrib, iFlatTabsSetValueAttrib, NULL, NULL, IUPAF_NO_STRING | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "VALUEPOS", iFlatTabsGetValuePosAttrib, iFlatTabsSetValuePosAttrib, IUPAF_SAMEASSYSTEM, "0", IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
-	iupClassRegisterAttribute(ic, "COUNT", (IattribGetFunc)iFlatTabsGetCountAttrib, NULL, NULL, NULL, IUPAF_NO_STRING | IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
+	iupClassRegisterAttribute(ic, "COUNT", iFlatTabsGetCountAttrib2, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "FIXEDWIDTH", NULL, iFlatTabsUpdateSetAttrib, NULL, NULL, IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "TABCHANGEONCHECK", NULL, NULL, NULL, NULL, IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "REDRAW", NULL, iupFlatTabsDrawSetRedrawAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);

@@ -373,16 +373,16 @@ void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
 	BuffersMenu();
 }
 
-void SciTEBase::ChangeTabWnd() {
+void SciTEBase::ChangeTabWnd(int insertIn) {
 	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled())
 		return;
-	int iPrev = buffers.Current();
+	int iPrev = buffers.Current(); 
 	
 	Buffer* bPrev = buffers.CurrentBuffer();
+	int prevId = buffers.Current();
 
 	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
-
-	//if (!wEditor.GetCoBuffPointer().IsSet() ) {
+	
 	if (wEditor.GetCoBuffPointer().IsUntitled() ) {
 		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
 		Buffer* coBuff = nullptr;
@@ -402,49 +402,62 @@ void SciTEBase::ChangeTabWnd() {
 	}
 
 	int iPrevSide = buffers.CurrentBuffer()->editorSide;
-	//int iNext = buffers.NextByIdm(iPrevSide);
+	
 	int iNext = buffers.NextByIdm_Stack(iPrevSide);
+	FilePath pNext = L"";
+	if (iNext > -1)
+		pNext = buffers.buffers[iNext].AbsolutePath();
 
 	int origStackCur = buffers.stackcurrent;
 
 	IDocumentEditable* d = bPrev->doc;
 
-
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	Scintilla::Line fv = wEditor.DocLineFromVisible(wEditor.FirstVisibleLine());
 	
-	wEditor.coEditor.AddRefDocument(d);
-	wEditor.coEditor.SetDocPointer(d);
 
 	bPrev->editorSide = coSide;
-
-	wEditor.Switch();
 	bBlockRedraw = true;
-	SetFileName((FilePath)(*bPrev));
+	
 	CurrentBuffer()->overrideExtension = "";
-
 	UpdateBuffersCurrent();
-
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
+	int realIns = insertIn < 0 ? iNext : (insertIn >= buffers.length ? buffers.length  : insertIn);
+	if (prevId < insertIn && insertIn <= buffers.length)
+		realIns--;
 	if (iNext > -1) {
-		SetCoDocumentAt(iNext);
-		wEditor.SetBuffPointer(bPrev);
+
+		iNext = buffers.GetDocumentByName(pNext, false, iPrevSide);
+		SetDocumentAt(iNext, false, false);
+			
 	}                              
 	else {
+
 		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
 		wEditor.coEditor.AddRefDocument(d);
 		wEditor.coEditor.SetDocPointer(d);
 		wEditor.SetCoBuffPointer(NULL);
 		if (iPrevSide == IDM_SRCWIN ||  props.GetInt("additional.view.stay.visible")) {
-			wEditor.Switch(true);
 			New();
+		
+			pNext = buffers.buffers[buffers.Current()].AbsolutePath();
 		}
 	}
+	buffers.ShiftTo(prevId, realIns);
+	filePath = buffers.CurrentBuffer()->AbsolutePath();
+
+	buffers.buffers[realIns].editorSide = coSide;
+
 	bBlockRedraw = false;
 	int p = props.GetInt("tabctrl.alwayssavepos");
 	props.SetInteger("tabctrl.alwayssavepos", 1);
 	ReadProperties();
+
+	
+	wEditor.Switch();
+	SetDocumentAt(realIns, false, false);
+	wEditor.SetCoBuffPointer(&pNext);
 
 	BuffersMenu();
 
@@ -563,9 +576,6 @@ int SciTEBase::ShiftToVisible(int index) {
 	return index;
 }
 void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
-
-	int currentbuf = buffers.Current();
-	
 	FilePath p = buffers.buffers[index].AbsolutePath();
 	wEditor.SetCoBuffPointer(&p);
 	IDocumentEditable* d = buffers.buffers[index].doc;
@@ -574,7 +584,7 @@ void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
 
 	ResetAllStyles(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
 
-	ScintillaWindowEditor* pCoEd = wEditor.GetWindowIdm() == IDM_SRCWIN ? &wEditorR : &wEditorL;
+	ScintillaWindowEditor* pCoEd = GetEditorIdm() == idm_srcwin ? &wEditorR : &wEditorL;
 	pCoEd->languageCurrent = wEditor.coEditor.LexerLanguage();
 
 	SetLineNumberWidth(&wEditor.coEditor);
@@ -1255,6 +1265,7 @@ void SciTEBase::Prev() {
 void SciTEBase::ShiftTab(int indexFrom, int indexTo, bool mouse) {
 	buffers.ShiftTo(indexFrom, indexTo);
 	buffers.SetCurrent(indexTo);
+	filePath = buffers.CurrentBuffer()->AbsolutePath();
 	BuffersMenu(mouse);
 
 	//DisplayAround(buffers.buffers[buffers.Current()]);
@@ -1357,8 +1368,8 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 	IupStoreAttribute(IupTab(IDM_SRCWIN), "SATURATION", props.Get("tabctrl.cut.saturation").c_str());
 	IupStoreAttribute(IupTab(IDM_SRCWIN), "ILLUMINATION", props.Get("tabctrl.cut.illumination").c_str());
 
-	intptr_t oldLCount = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_SRCWIN), "COUNT"));
-	intptr_t oldLCountR = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_COSRCWIN), "COUNT"));
+	intptr_t oldLCount = IupGetInt(IupTab(IDM_SRCWIN), "COUNT");
+	intptr_t oldLCountR = IupGetInt(IupTab(IDM_COSRCWIN), "COUNT");
 	int posL = 0, posR = 0;
 	if (buffers.size > 1) {
 
@@ -1378,7 +1389,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
-		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, wEditor.GetWindowIdm() == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN) : -1;
+		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, GetEditorIdm(false)) : -1;
 		
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;

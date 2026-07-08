@@ -1375,6 +1375,12 @@ static int cf_props_new_expand(lua_State* L) {
 	return 1;
 }
 
+static int cf_change_tab(lua_State* L) {
+	int insertIn = lua_isnil(L, 1) ? -1 : lua_tointeger(L, 1);
+	host->ChangeTabWnd(insertIn);
+	return 1;
+}
+
 static int cf_props_metatable_newindex(lua_State *L) {
 	int selfArg = lua_isuserdata(L, 1) ? 1 : 0;
 
@@ -2757,6 +2763,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_props_new_expand);
 	lua_setfield(luaState, -2, "PropsNewExpand");
+
+	lua_pushcfunction(luaState, cf_change_tab);
+	lua_setfield(luaState, -2, "ChangeTab");
 
 	// buffers
 	lua_newtable(luaState);
