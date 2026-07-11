@@ -1820,23 +1820,34 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		break;
 
 		case SCITE_DROP:
+		{
+			if (SecondEditorActive()) {
+				POINT pt;
+				GetCursorPos(&pt);
+				if (WindowFromPoint(pt) == wEditor.coEditor.GetID()) {
+					int iDoc = buffers.GetDocumentByName(wEditor.GetCoBuffPointer());
+					SetDocumentAt(iDoc);
+				}
+			}
 			// Open the files
 			extender->OnNavigation("_openSet");
 			while (!dropFilesQueue.empty()) {
 				FilePath file(dropFilesQueue.front());
-				if (dropFilesQueue.size() == 1){
+				if (dropFilesQueue.size() == 1) {
 					extender->OnNavigation("_openSetLast");
 				}
 				dropFilesQueue.pop_front();
 				if (file.Exists()) {
 					Open(file.AsInternal());
-				} else {
+				}
+				else {
 					extender->HildiAlarm("Could not open file\n'%1'.",
 						MB_OK | MB_ICONWARNING, file.AsInternal());
 				}
-			} 
+			}
 			extender->OnNavigation("_-openSet");
-			break;
+		}
+		break;
 
 		case WM_NOTIFY:
 			Notify(reinterpret_cast<SCNotification *>(lParam));

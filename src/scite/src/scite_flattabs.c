@@ -417,8 +417,10 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 	int extra_width;
 	int extra_buttons = iupAttribGetInt(ih, "EXTRABUTTONS");
 	int valuepos = iupAttribGetInt(ih, "VALUEPOS");
+	int insertpos = iupAttribGetInt(ih, "INSERTPOS");
 	scroll_pos = iupAttribGetInt(ih, "_IUPFTABS_SCROLLPOS");
-
+	int insertPoints[14];
+	insertPoints[1] = -1;
 
 	iupAttribGetIntInt(ih, "TABSPADDING", &horiz_padding, &vert_padding, 'x');
 	int iWidth = max(iupAttribGetInt(ih, "_IUPFWIDTH"), ih->currentwidth);
@@ -573,6 +575,28 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 			iupFlatDrawBox(dc, tab_x, tab_x + tab_w, 0, title_height, background_color, NULL, 1);
 		else
 			background_color = tabs_bgcolor;
+
+		if (pos == insertpos) {
+			int half = title_height / 2;
+
+			insertPoints[0] = tab_x + tab_w - half;
+			insertPoints[1] = 0;
+			insertPoints[2] = tab_x + tab_w + half;
+			insertPoints[3] = 0;
+			insertPoints[4] = tab_x + tab_w + 1;
+			insertPoints[5] = half;
+			insertPoints[6] = insertPoints[2];
+			insertPoints[7] = title_height;
+			insertPoints[8] = insertPoints[0];
+			insertPoints[9] = title_height;
+			insertPoints[10] = tab_x + tab_w - 1;
+			insertPoints[11] = half;
+			insertPoints[12] = insertPoints[0];
+			insertPoints[13] = 0;
+
+		}
+				
+		
 		if (show_lines) {
 			if (valuepos == pos)//
 			{
@@ -628,6 +652,12 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 		}
 	}
 
+	if (insertPoints[1] != -1) {
+		long insertcolor = iupDrawStrToColor(iupAttribGetStr(ih, "BGCOLORMOVIED"), 0);
+
+		iupdrvDrawPolygon(dc, insertPoints, 7, insertcolor, IUP_DRAW_FILL, 1);
+		iupdrvDrawPolygon(dc, insertPoints, 7, line_color, IUP_DRAW_STROKE, 2);
+	}
 
 	if (scroll_pos > 0) {
 		char* foreground_color = tabs_forecolor;
@@ -1075,8 +1105,8 @@ static int iFlatTabsMotion_CB(Ihandle *ih, int x, int y, char *status) {
 		}
 		if (cb(ih, ihTarget, x, y, tab_found, dragTab, start, status) == IUP_IGNORE)
 			return IUP_DEFAULT;
-
-		if ((cbS) && start && (tab_found >= 0 || tab_found == -3 || tab_found == -2) && ih->data->dragTab != tab_found && !ih->data->xFreeMax) {
+// && ih->data->dragTab != tab_found
+		if ((cbS) && start && (tab_found >= 0 || tab_found == -3 || tab_found == -2) && !ih->data->xFreeMax) {
 			if (tab_found == -3)
 				tab_found = ih->data->dragTab + 1;
 			else if (tab_found == -2)
@@ -1227,6 +1257,7 @@ static int iFlatTabsSetCancelDragAttrib(Ihandle* ih, const char* value) {
 	ih->data->xFreeMax = 0;
 	return 0;
 }
+
 
 static int iupFlatTabsDrawSetRedrawAttrib(Ihandle* ih, const char* value) {
 	iupdrvRedrawNow(ih);
@@ -1665,6 +1696,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttribute(ic, "REDRAW", NULL, iupFlatTabsDrawSetRedrawAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "LASTVISIBLE", (IattribGetFunc)iFlatTabsGetLastVisibleAttrib, NULL, NULL, NULL, IUPAF_READONLY | IUPAF_NO_INHERIT);
 	iupClassRegisterAttribute(ic, "CANCELDRAG", NULL, iFlatTabsSetCancelDragAttrib, NULL, NULL, IUPAF_WRITEONLY | IUPAF_NO_INHERIT);
+	iupClassRegisterAttribute(ic, "INSERTPOS", NULL, NULL, "-1", NULL, IUPAF_NO_INHERIT);
 
 	/* IupFlatTabs Child only */
 	iupClassRegisterAttributeId(ic, "TABTITLE", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
