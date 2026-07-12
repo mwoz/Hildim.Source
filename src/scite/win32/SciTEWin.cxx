@@ -1783,7 +1783,18 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 		case SCITE_NOTIFYTREAD:
 		{
-			extender->OnLindaNotify((const char*)wParam, (const char*)lParam);
+			char* str = (char*)wParam;
+			if (str) {
+				if (lParam) {
+					Trace((const char*)lParam);
+					Trace("\n");
+				}
+				else {
+					extender->OnLindaNotify(str);
+					HeapFree(GetProcessHeap(), 0, str);
+				}
+
+			}
 			return 0;
 		}
 		case SCITE_NOTIYCMD:
@@ -1947,8 +1958,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			DropFiles(reinterpret_cast<HDROP>(wParam));
 			break;
 
-		case WM_COPYDATA:
-			return uniqueInstance.CopyData(reinterpret_cast<COPYDATASTRUCT *>(lParam));
+		case WM_COPYDATA: 
+			return uniqueInstance.CopyData(reinterpret_cast<COPYDATASTRUCT*>(lParam));
 
 		case WM_DRAWCLIPBOARD:
 			return OnDrawClipBoardMsg(wParam);

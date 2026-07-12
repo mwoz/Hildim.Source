@@ -3716,11 +3716,7 @@ const char *LuaExtension::OnSendEditor(unsigned int msg, uptr_t wp, sptr_t lp) {
 	return CallNamedFunction("OnSendEditor", msg, static_cast<unsigned int>(wp), static_cast<unsigned int>(lp));
 }
 //!-end-[OnSendEditor]
-bool LuaExtension::OnLindaNotify(const char* key, const char* msg) {
-	if (!strcmp(key, "print")) {
-		host->Trace(msg);
-		host->Trace("\n");
-	}
+bool LuaExtension::OnLindaNotify(const char* key) {
 	return CallNamedFunction("OnLindaNotify", key);
 }
 

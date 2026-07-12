@@ -509,8 +509,12 @@ int hildim_print(lua_State* L) {
 }
 void hildim_notify(lua_State* L) {
     const char* d = luaL_checkstring(L, 2);
-    if (d[0] != '_')
-        PostMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)d, 0);
+    if (d[0] != '_') {
+        size_t n = strlen(d) + 1;
+        char* copy = static_cast<char*>(HeapAlloc(GetProcessHeap(), 0, n));
+        if (copy) memcpy(copy, d, n);
+        PostMessage(m_hwnd, SCITE_NOTIFYTREAD, (WPARAM)copy, 0);                                             
+    }
 }
 void hildim_notifyError(lua_State* L, LuaError rc) {
     if (lua_isstring(L, 1))

@@ -246,7 +246,7 @@ namespace {
 
             // all arguments of receive() but the first are passed to the keeper's receive function
             STACK_CHECK(_K, 0);
-            hildim_notify(L_);
+//            hildim_notify(L_);
 
             _pushed = keeper_call(_K, _selected_keeper_receive, L_, _linda, _key_i);
             if (!_pushed.has_value()) {

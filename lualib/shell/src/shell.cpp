@@ -718,8 +718,13 @@ static int proc_Continue(lua_State* L) {
 		char bufStr[MAX_CMD];
 		while (::PeekNamedPipe(sh->FReadPipe, NULL, 0, &BytesRead, &TotalBytesAvail, NULL)) {
 			if (TotalBytesAvail == 0) {
-				if (::GetExitCodeProcess(sh->pi.hProcess, &exit_code) == FALSE ||
-					exit_code != STILL_ACTIVE) {
+				int ec = ::GetExitCodeProcess(sh->pi.hProcess, &exit_code);
+				if (!ec) {
+					lua_pushstring(L, "E");
+					lua_pushstring(L, "Internal error 1");
+					return 2;
+				} else
+				if (exit_code != STILL_ACTIVE) {
 					lua_pushstring(L, "S");
 					lua_pushstring(L, "");
 					break;
@@ -728,6 +733,7 @@ static int proc_Continue(lua_State* L) {
 					continue;
 				}
 			} else {
+				std::string out = "";
 				while (TotalBytesAvail > BytesRead) {
 					if (TotalBytesAvail - BytesRead > MAX_CMD - 1) {
 						BytesToRead = MAX_CMD - 1;
@@ -747,10 +753,11 @@ static int proc_Continue(lua_State* L) {
 					BytesRead += PipeReaded;
 					bufCmdLine[PipeReaded] = '\0';
 					::OemToAnsi(bufCmdLine.GetBuffer(), bufStr);
-					lua_pushstring(L, "C");
-					lua_pushstring(L, bufStr);
-					return 2;
+					out += bufStr;
 				}
+				lua_pushstring(L, "C");
+				lua_pushstring(L, out.c_str());
+				return 2;
 			}
 		}
 	} catch (...) {
@@ -758,12 +765,21 @@ static int proc_Continue(lua_State* L) {
 
 	// Код завершения процесса
 	DWORD out_exitcode;
-	::GetExitCodeProcess(sh->pi.hProcess,  &out_exitcode);
-	lua_pushnumber(L, out_exitcode);
-	::CloseHandle(sh->pi.hProcess);
-	::CloseHandle(sh->FReadPipe);
-	::CloseHandle(sh->FWritePipe);
-	return 3;
+	int ec = ::GetExitCodeProcess(sh->pi.hProcess, &out_exitcode);
+	if (ec) {
+		lua_pushstring(L, "E");
+		lua_pushstring(L, "");
+		lua_pushnumber(L, out_exitcode);
+		::CloseHandle(sh->pi.hProcess);
+		::CloseHandle(sh->FReadPipe);
+		::CloseHandle(sh->FWritePipe);
+		return 3;
+	}
+	else {
+		lua_pushstring(L, "E");
+		lua_pushstring(L, "Internal error 2");
+		return 2;
+	}
 }
 
 static int do_startProc(lua_State* L) {

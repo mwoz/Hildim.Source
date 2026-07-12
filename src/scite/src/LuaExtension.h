@@ -49,7 +49,7 @@ public:
 	virtual bool OnMenuCommand(int, int); 
 	virtual const char *OnSendEditor(unsigned int, uptr_t, const char *);
 	virtual const char *OnSendEditor(unsigned int, uptr_t, sptr_t);
-	virtual bool OnLindaNotify(const char*, const char* );
+	virtual bool OnLindaNotify(const char*);
 	virtual bool OnColorized(Sci_Position, Sci_Position);
 	virtual const char *OnContextMenu(unsigned int, unsigned int, const char *);
 	virtual bool OnFindProgress(uptr_t state, sptr_t all);
