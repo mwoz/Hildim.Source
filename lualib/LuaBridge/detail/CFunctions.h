@@ -13,6 +13,20 @@
 namespace luabridge {
 
 namespace detail {
+    template<int Index, typename List>
+    struct TypeAt;
+
+    template<typename Head, typename Tail>
+    struct TypeAt<0, TypeList<Head, Tail>>
+    {
+        using type = Head;
+    };
+
+    template<int Index, typename Head, typename Tail>
+    struct TypeAt<Index, TypeList<Head, Tail>>
+    {
+        using type = typename TypeAt<Index - 1, Tail>::type;
+    };
 
 // We use a structure so we can define everything in the header.
 //
@@ -302,7 +316,7 @@ struct CFunc
         lua_CFunction to call a class member lua_CFunction.
 
         The member function pointer is in the first upvalue.
-        The object userdata ('this') value is at top ot the Lua stack.
+        The object userdata ('this') value is at the top of the Lua stack.
     */
     template<class T>
     struct CallMemberCFunction
@@ -370,7 +384,171 @@ struct CFunc
 
     //--------------------------------------------------------------------------
 
-    // SFINAE Helpers
+    //----------------------------------------------------------------------
+    // Indexed property support: create proxy userdata with __index / __newindex
+    //----------------------------------------------------------------------
+    template<class T, class GetterMemFn>
+    struct IndexedGetter
+    {
+        using ReturnType = typename detail::FuncTraits<GetterMemFn>::ReturnType;
+        using Params = typename detail::FuncTraits<GetterMemFn>::Params;
+        using KeyType = typename TypeAt<0, Params>::type;
+
+        static int f(lua_State* L)
+        {
+            // upvalue 1: userdata containing GetterMemFn
+            GetterMemFn const& mf = *static_cast<GetterMemFn const*>(lua_touserdata(L, lua_upvalueindex(1)));
+
+            // arg1 = proxy userdata, which stores T* at userdata memory
+            T* t = *static_cast<T**>(lua_touserdata(L, 1));
+            if (!t)
+            {
+                lua_pushnil(L);
+                return 1;
+            }
+
+            // get key of arbitrary supported type
+            KeyType key = Stack<KeyType>::get(L, 2);
+
+            // Call member getter: ReturnType (T::*)(KeyType, lua_State*)
+            ReturnType res = (t->*mf)(key, L);
+            Stack<ReturnType>::push(L, res);
+            return 1;
+        }
+    };
+
+    template<class T, class SetMemFn>
+    struct IndexedSetter
+    {
+        using Params = typename detail::FuncTraits<SetMemFn>::Params;
+        using KeyType = typename TypeAt<0, Params>::type;
+        using ValueType = typename TypeAt<1, Params>::type;
+        using SetMemFnType = SetMemFn;
+
+        static int f(lua_State* L)
+        {
+            assert(lua_isuserdata(L, lua_upvalueindex(1)));
+            SetMemFnType const& mf = *static_cast<SetMemFnType const*>(lua_touserdata(L, lua_upvalueindex(1)));
+
+            T* t = *static_cast<T**>(lua_touserdata(L, 1));
+            if (!t) return 0;
+
+            // get key and value from Lua stack using Stack<>
+            KeyType key = Stack<KeyType>::get(L, 2);
+            ValueType value = Stack<ValueType>::get(L, 3);
+
+            (t->*mf)(key, value, L);
+            return 0;
+        }
+    };
+
+    // Primary template: Setter present
+    template<class T, class GetterMemFn, class SetterMemFn >
+    struct IndexedPropertyCreator
+    {
+        // upvalue indices:
+        // upvalue 1 : userdata copy of GetterMemFn
+        // upvalue 2 : userdata copy of SetterMemFn
+
+        static int f(lua_State* L)
+        {
+            // stack: 1 => object (this)
+            T* obj = Userdata::get<T>(L, 1, false);
+            if (!obj)
+            {
+                lua_pushnil(L);
+                return 1;
+            }
+
+            // allocate proxy userdata to store pointer T*
+            T** ud = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+            *ud = obj;
+            // increment ref count
+            obj->incReferenceCount();
+
+            // create metatable for this proxy (a fresh metatable per property instance is fine)
+            lua_newtable(L); // mt on top
+
+            // __index closure: copy getter userdata from creator upvalue (index 1)
+            lua_pushvalue(L, lua_upvalueindex(1)); // push getter userdata
+            lua_pushcclosure(L, &IndexedGetter<T, GetterMemFn>::f, 1);
+            lua_setfield(L, -2, "__index");
+
+            // __newindex: creator's upvalue 2 holds setter userdata
+            lua_pushvalue(L, lua_upvalueindex(2)); // setter userdata
+            lua_pushcclosure(L, &IndexedSetter<T, SetterMemFn>::f, 1);
+            lua_setfield(L, -2, "__newindex");
+
+            // __gc metamethod
+            lua_pushcfunction(L, [](lua_State* Lgc)->int {
+                T** p = static_cast<T**>(lua_touserdata(Lgc, 1));
+                if (p && *p) {
+                    (*p)->decReferenceCount();
+                    *p = nullptr;
+                }
+                return 0;
+                });
+            lua_setfield(L, -2, "__gc");
+
+            // set metatable to proxy userdata (ud is below mt on stack)
+            lua_setmetatable(L, -2);
+
+            // proxy userdata remains on stack as return value
+            return 1;
+        }
+    };
+
+    // Specialization: no Setter (read-only indexed property)
+    template<class T, class GetterMemFn>
+    struct IndexedPropertyCreator<T, GetterMemFn, void>
+    {
+        // upvalue indices:
+        // upvalue 1 : userdata copy of GetterMemFn
+
+        static int f(lua_State* L)
+        {
+            // stack: 1 => object (this)
+            T* obj = Userdata::get<T>(L, 1, false);
+            if (!obj)
+            {
+                lua_pushnil(L);
+                return 1;
+            }
+
+            // allocate proxy userdata to store pointer T*
+            T** ud = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+            *ud = obj;
+            // increment ref count
+            obj->incReferenceCount();
+
+            // create metatable for this proxy (a fresh metatable per property instance is fine)
+            lua_newtable(L); // mt on top
+
+            // __index closure: copy getter userdata from creator upvalue (index 1)
+            lua_pushvalue(L, lua_upvalueindex(1)); // push getter userdata
+            lua_pushcclosure(L, &IndexedGetter<T, GetterMemFn>::f, 1);
+            lua_setfield(L, -2, "__index");
+
+            // No __newindex (read-only)
+
+            // __gc metamethod
+            lua_pushcfunction(L, [](lua_State* Lgc)->int {
+                T** p = static_cast<T**>(lua_touserdata(Lgc, 1));
+                if (p && *p) {
+                    (*p)->decReferenceCount();
+                    *p = nullptr;
+                }
+                return 0;
+                });
+            lua_setfield(L, -2, "__gc");
+
+            // set metatable to proxy userdata (ud is below mt on stack)
+            lua_setmetatable(L, -2);
+
+            // proxy userdata remains on stack as return value
+            return 1;
+        }
+    };
 
     template<class MemFnPtr, bool isConst>
     struct CallMemberFunctionHelper

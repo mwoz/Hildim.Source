@@ -833,7 +833,7 @@ namespace luabridge {
         return (pos1 < pos2) ? "<" : ">";
     }
 
-    std::string domNode::luaGetAttribute(const char* name, lua_State* L) const{
+    std::string domNode::luaGetAttribute(std::string name, lua_State* L) {
         AssertValid(L, "luaGetAttribute");
 
 
@@ -841,7 +841,7 @@ namespace luabridge {
             LuaException::Throw(LuaException(L, "luaGetAttribute", "XML node is not an element.", 1));
         }
 
-        xmlAttrPtr prop = xmlHasProp(m_node, CHR2XML(name));
+        xmlAttrPtr prop = xmlHasProp(m_node, CHR2XML(name.c_str()));
         if (prop)
         {
             std::string result;
@@ -857,7 +857,7 @@ namespace luabridge {
         }
         return "";
     }
-    void domNode::luaSetAttribute(const char* name, const char* value, lua_State* L)
+    void domNode::luaSetAttribute(std::string name, std::string value, lua_State* L)
     {
         AssertValid(L, "luaSetAttribute");
 
@@ -865,18 +865,9 @@ namespace luabridge {
             LuaException::Throw(LuaException(L,"luaSetAttribute", "XML node is not an element.", 1));
         }
 
-        xmlSetProp(m_node, CHR2XML(name), CHR2XML(value));
+        xmlSetProp(m_node, CHR2XML(name.c_str()), CHR2XML(value.c_str()));
     }
 
-    AttributeIdx domNode::luaAttribute() {
-        return AttributeIdx(this);
-    }
-    NodesIdx domNode::luaNodes() {
-        return NodesIdx(this);
-    }
-    SingleNodeIdx domNode::luaSingleNode() const{
-        return SingleNodeIdx(this);
-    }
     void domNode::luaRemoveAttribute(const char* name, lua_State* L)
     {
         AssertValid(L, "luaRemoveAttribute");
@@ -929,7 +920,8 @@ namespace luabridge {
 
             if (node) {
                 detail::UserdataPtr::push<domNode>(L, node);
-                return 1;
+                detail::UserdataPtr::push<domNode>(L, node);
+                return 2;
             }
             else {
                 lua_pushnil(L);
@@ -1416,23 +1408,26 @@ namespace luabridge {
        m_nodes.push_back(doc->CreateNodeRef(node, true));
    }
 
-   RCNode domNodeList::luaGetItem(int index, lua_State* L)
-   {
-
+   domNode* domNodeList::GetItem(LUA_INTEGER index, lua_State* L) {
        if (m_nodeRef)
        {
            if (m_isAttributeList)
-               return RCNode(m_nodeRef->GetAttribute(index, L));
+               return m_nodeRef->GetAttribute(index, L);
            else
-               return RCNode(m_nodeRef->GetChild(index, L));
+               return m_nodeRef->GetChild(index, L);
        }
        else
        {
            if (index < 0 || index >= m_nodes.size())
-               return RCNode(nullptr);
+               return nullptr;
            else
-               return RCNode(m_nodes[index]);
+               return m_nodes[index];
        }
+   }
+   RCNode domNodeList::luaGetItem(int index, lua_State* L)
+   {
+       return RCNode(GetItem(index, L));
+
    }
 
    RCNode domNodeList::luaGetNamedItem(const char* name, lua_State* L)
@@ -1480,7 +1475,7 @@ namespace luabridge {
             LUA_INTEGER i = luaL_checkinteger(L, 2);
             if (static_cast<LUA_INTEGER>(lst->luaGetLength(L)) > i) {
                 lua_pushinteger(L, i + 1);                   
-                detail::UserdataPtr::push<domNode>(L, lst->GetItem(i));
+                detail::UserdataPtr::push<domNode>(L, lst->GetItem(i, L));
                 return 2;
             }
             else{
@@ -1771,7 +1766,9 @@ namespace luabridge {
             .beginClass <domNode>("xmlNode")
             .addProperty("xml", &domNode::luaGetXml)
             .addFunction("__tostring", &domNode::luaTostring)
-            .addProperty("attribute", &domNode::luaAttribute) //- get/set
+
+            .addIndexedProperty("attribute", &domNode::luaGetAttribute, &domNode::luaSetAttribute)
+
             .addProperty("nodeType", &domNode::luaGetNodeType)
             .addProperty("baseName", &domNode::luaGetBaseName)
             .addProperty("nodeName", &domNode::luaGetNodeName)
@@ -1796,8 +1793,6 @@ namespace luabridge {
             .addProperty("hasChildNodes", &domNode::luaHasChildNodes)
             .addFunction("insertBefore", &domNode::luaInsertBefore)
             .addFunction("removeChild", &domNode::luaRemoveChild)
-            .addProperty("singleNode", &domNode::luaSingleNode)
-            .addProperty("nodes", &domNode::luaNodes)
 
             .addFunction("selectSingleNode", &domNode::luaSelectSingleNode)
             .addFunction("selectNodes", &domNode::luaSelectNodes)
@@ -1806,13 +1801,13 @@ namespace luabridge {
             .addFunction("getElementsByTagName", &domNode::luaGetElementsByTagName)
             .addFunction("getElementByTagName", &domNode::luaGetElementByTagName)
             .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition);
-
+          
 
         lua_pushcfunction(L, &domNode::luaGetEnumerator);
-        rawsetfield(L, -3, "childNodes"); // class table
+        rawsetfield(L, -3, "childNodesEnum"); // class table
 
             
-        auto nspace2 = nspace
+           auto nspace2 = nspace
             .endClass()
             .deriveClass <domDocument, domNode>("Document")
                 .addConstructor <void (*) (void), RCDocument >()
@@ -1828,16 +1823,7 @@ namespace luabridge {
                 .addFunction("getProperty", &domDocument::luaGetProperty)
                 .addFunction("setValidator", &domDocument::luaSetValidator)
             .endClass()
-            .beginClass <AttributeIdx>("AttributeIdx")
-                .addFunction("__index", &AttributeIdx::get)
-                .addFunction("__newindex", &AttributeIdx::set)
-            .endClass()
-            .beginClass <SingleNodeIdx>("SingleNodeIdx")
-                .addFunction("__index", &SingleNodeIdx::get)
-            .endClass()
-            .beginClass <NodesIdx>("NodesIdx")
-                .addFunction("__index", &NodesIdx::get)
-            .endClass()
+
             .beginClass <domParseError>("ParseError")
                 .addProperty("errorCode", &domParseError::m_errorCode, false)
                 .addProperty("line", &domParseError::m_line, false)
@@ -1855,6 +1841,7 @@ namespace luabridge {
         rawsetfield(L, -3, "elements"); // class table
      
       nspace2.endClass()
+      //nspace.endClass()
             .beginClass <domXmlSchema>("XmlSchema")
                 .addConstructor <void (*) (void), RCSchema >()
                 .addStaticFunction("newObject", &domXmlSchema::luaNewObject)

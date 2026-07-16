@@ -1017,6 +1017,54 @@ class Namespace : public detail::Registrar
 
             return *this;
         }
+
+        //--------------------------------------------------------------------------
+        /**
+         * Add an indexed property.
+         *
+         * Getter signature: TG (T::*)(std::string, lua_State*)
+         * Setter signature: void (T::*)(std::string, TS, lua_State*)
+         *
+         * The property value (when read) is a proxy userdata supporting index access:
+         *    obj.property["key"]  -> calls getter("key", L)
+         * and assignment:
+         *    obj.property["key"] = value -> calls setter("key", value, L)
+         */
+        template<class TG, class TK, class TS = TG>
+        Class<T>& addIndexedProperty(char const* name,
+            TG(T::* get)(TK, lua_State*),
+            void (T::* set)(TK, TS, lua_State*) = 0)
+        {
+            assertStackState(); // Stack: const table (co), class table (cl), static table (st)
+
+            // push copy of getter member ptr as userdata (upvalue for creator)
+            typedef TG(T::* GetMemFn)(TK, lua_State*);
+            new (lua_newuserdata(L, sizeof(GetMemFn))) GetMemFn(get); // Stack: co, cl, st, get_ud
+
+            if (set != 0)
+            {
+                typedef void (T::* SetMemFn)(TK, TS, lua_State*);
+                new (lua_newuserdata(L, sizeof(SetMemFn))) SetMemFn(set); // Stack: co, cl, st, get_ud, set_ud
+                // push creator closure with two upvalues (get_ud, set_ud)
+                lua_pushcclosure(L, &detail::CFunc::IndexedPropertyCreator<T, GetMemFn, SetMemFn>::f, 2); // Stack: co, cl, st, creator
+            }
+            else
+            {
+                // push creator closure with one upvalue (get_ud)
+                lua_pushcclosure(L, &detail::CFunc::IndexedPropertyCreator<T, GetMemFn, void>::f, 1); // Stack: co, cl, st, creator
+            }
+
+            // Register creator as property getter
+            CFunc::addGetter(L, name, -3); // Stack restored to co, cl, st
+
+            // For setter of the property itself (not indexed), we don't provide direct assignment to property;
+            // keep property itself read-only (or we could register a write error)
+            lua_pushstring(L, name);
+            lua_pushcclosure(L, &CFunc::readOnlyError, 1);
+            CFunc::addSetter(L, name, -2);
+
+            return *this;
+        }
     };
 
 private:

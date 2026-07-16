@@ -23,7 +23,7 @@ extern "C" {
 namespace luabridge {
     struct AttributeIdx;
     struct NodesIdx;
-    struct SingleNodeIdx;
+
     class domDocument;
     class domNodeList;
     class domNode;
@@ -93,11 +93,9 @@ namespace luabridge {
         RCNode luaGetElementByTagName(const char* name, bool deep, lua_State* L);
         RCNodeList luaSelectNodes(const char* name, lua_State* L);
         std::string luaCompareDocumentPosition(domNode* node2Compare, lua_State* L);
-        std::string luaGetAttribute(const char* name, lua_State* L) const;
-        void luaSetAttribute(const char* name, const char* value, lua_State* L);
-        inline AttributeIdx luaAttribute();
-        inline NodesIdx luaNodes();
-        inline SingleNodeIdx luaSingleNode() const;
+        std::string luaGetAttribute(std::string name, lua_State* L) ;
+        void luaSetAttribute(std::string name, std::string value, lua_State* L);
+
         void luaRemoveAttribute(const char* name, lua_State* L);
         void SetDocRef(domDocument* docRef);
         
@@ -171,55 +169,6 @@ namespace luabridge {
         xmlNsPtr m_nsList{ nullptr };
     };
 
-    struct AttributeIdx {//; : public RefCountedObject {
-    public:
-        domNode* m_pNode;
-        AttributeIdx(domNode* pNode) { 
-            m_pNode = pNode; 
-        }
-        inline std::string get(const char* name, lua_State* L)  {
-            if (!m_pNode)
-                return std::string();
-            std::string rez = m_pNode->luaGetAttribute(name, L);
-            m_pNode = nullptr;
-            return rez;
-        }
-        inline void set(const char* name, const char* value, lua_State* L) {
-            if (m_pNode)
-                m_pNode->luaSetAttribute(name, value, L);
-            m_pNode = nullptr;
-        }
-        ~AttributeIdx() {
-        }
-    };
-    struct SingleNodeIdx {//; : public RefCountedObject {
-    public:
-        const domNode* m_pNode;
-        SingleNodeIdx(const domNode* pNode) { 
-            m_pNode = pNode; 
-        }
-        inline RCNode get(const char* name, lua_State* L) {
-            if (!m_pNode)
-                return RCNode();
-            RCNode rez = m_pNode->luaSelectSingleNode(name, L);
-            m_pNode = nullptr;
-            return rez;
-        }
-    };
-    struct NodesIdx {//; : public RefCountedObject {
-    public:
-        domNode* m_pNode;
-        NodesIdx(domNode* pNode) { 
-            m_pNode = pNode; 
-        }
-        inline RCNodeList get(const char* name, lua_State* L) {
-            if (!m_pNode)
-                return RCNodeList();
-            RCNodeList rez = m_pNode->luaSelectNodes(name, L);
-            return rez;
-        }
-    };
-
     class domParseError : public RefCountedObject
     {
     public:
@@ -249,7 +198,7 @@ namespace luabridge {
         virtual ~domNodeList();
 
         inline size_t GetItemCount() { return m_nodes.size(); }
-        inline domNode* GetItem(LUA_INTEGER i) { return m_nodes[i]; };
+        domNode* GetItem(LUA_INTEGER i, lua_State* L);
         inline domNode* GetParentNodeRef() { return m_nodeRef; }
         inline bool IsAttributeList()  const{ return m_isAttributeList; }
         void AddXmlNode(domDocument* doc, xmlNodePtr node);
