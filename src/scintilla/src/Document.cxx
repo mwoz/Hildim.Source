@@ -1515,6 +1515,10 @@ Sci::Position Document::InsertString(Sci::Position position, const char *s, Sci:
 			position, insertLength,
 			0, s));
 	if (insertionSet) {
+		if (insertion.empty()) {
+			enteredModification--;
+			return 0;
+		}
 		s = insertion.c_str();
 		insertLength = insertion.length();
 	}

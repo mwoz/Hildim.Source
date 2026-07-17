@@ -807,7 +807,7 @@ Sci::Position EditView::StartEndDisplayLine(Surface *surface, const EditModel &m
 		const Sci::Position posLineStart = model.pdoc->LineStart(line);
 		LayoutLine(model, surface, vs, ll.get(), model.wrapWidth);
 		const Sci::Position posInLine = pos - posLineStart;
-		if (posInLine <= ll->maxLineLength) {
+		if (posInLine <= ll->numCharsInLine) {
 			for (int subLine = 0; subLine < ll->lines; subLine++) {
 				if ((posInLine >= ll->LineStart(subLine)) &&
 				    (posInLine <= ll->LineStart(subLine + 1)) &&
@@ -1685,7 +1685,7 @@ void DrawBackground(Surface *surface, const EditModel &model, const ViewStyle &v
 					inIndentation = false;
 				}
 			}
-				surface->FillRectangleAligned(rcSegment, Fill(textBack));
+			surface->FillRectangleAligned(rcSegment, Fill(textBack));
 			if (!ts.representation) {
 				// Normal text display
 				if (vsDraw.viewWhitespace != WhiteSpace::Invisible) {

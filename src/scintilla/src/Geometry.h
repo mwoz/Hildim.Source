@@ -45,6 +45,10 @@ public:
 		return Point(x - other.x, y - other.y);
 	}
 
+	constexpr Point operator*(XYPOSITION multiplier) const noexcept {
+		return Point(x * multiplier, y * multiplier);
+	}
+
 	// Other automatically defined methods (assignment, copy constructor, destructor) are fine
 };
 
@@ -101,6 +105,15 @@ public:
 		return (rc.left == left) && (rc.right == right) &&
 			(rc.top == top) && (rc.bottom == bottom);
 	}
+	
+	constexpr PRectangle operator*(XYPOSITION multiplier) const noexcept {
+		return PRectangle(left * multiplier, top * multiplier, right * multiplier, bottom * multiplier);
+	}
+
+	constexpr PRectangle operator/(XYPOSITION divisor) const noexcept {
+		return PRectangle(left / divisor, top / divisor, right / divisor, bottom / divisor);
+	}
+
 	constexpr bool Contains(Point pt) const noexcept {
 		return (pt.x >= left) && (pt.x <= right) &&
 			(pt.y >= top) && (pt.y <= bottom);
@@ -185,7 +198,7 @@ public:
 	constexpr explicit ColourRGBA(int co_ = 0) noexcept : co(co_) {
 	}
 
-	constexpr ColourRGBA(unsigned int red, unsigned int green, unsigned int blue, unsigned int alpha= maximumByte) noexcept :
+	constexpr ColourRGBA(unsigned int red, unsigned int green, unsigned int blue, unsigned int alpha=maximumByte) noexcept :
 		ColourRGBA(red | (green << 8) | (blue << 16) | (alpha << 24)) {
 	}
 

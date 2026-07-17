@@ -258,11 +258,6 @@ int LineLayout::FindPositionFromX(XYPOSITION x, Range range, bool charPosition) 
 
 Point LineLayout::PointFromPosition(int posInLine, int lineHeight, PointEnd pe) const noexcept {
 	Point pt;
-	// In case of very long line put x at arbitrary large position
-	if (posInLine > maxLineLength) {
-		pt.x = positions[maxLineLength] - positions[LineStart(lines)];
-	}
-
 	for (int subLine = 0; subLine < lines; subLine++) {
 		const Range rangeSubLine = SubLineRange(subLine, Scope::visibleOnly);
 		if (posInLine >= rangeSubLine.start) {
@@ -357,7 +352,7 @@ void LineLayout::WrapLine(const Document *pdoc, Sci::Position posLineStart, Wrap
 					std::string_view svWithoutLast(&chars[lastLineStart], afterWrap - lastLineStart);
 					if (DiscardLastCombinedCharacter(svWithoutLast) && !svWithoutLast.empty()) {
 						lastGoodBreak = lastLineStart + static_cast<Sci::Position>(svWithoutLast.length());
-				}
+					}
 				}
 				if (lastGoodBreak == lastLineStart) {
 					// Ensure at least one character on line.
@@ -605,7 +600,7 @@ std::shared_ptr<LineLayout> LineLayoutCache::Retrieve(Sci::Line lineNumber, Sci:
 
 	if (pos < cache.size()) {
 		if (cache[pos] && !cache[pos]->CanHold(lineNumber, maxChars)) {
-			cache[pos].reset();
+			cache[pos]->ReSet(lineNumber, maxChars);
 		}
 		if (!cache[pos]) {
 			cache[pos] = std::make_shared<LineLayout>(lineNumber, maxChars);
@@ -664,8 +659,8 @@ const char *ControlCharacterString(unsigned char ch) noexcept {
 	if (ch < std::size(repsC0)) {
 		return repsC0[ch];
 	}
-		return "BAD";
-	}
+	return "BAD";
+}
 
 
 void Hexits(char *hexits, int ch) noexcept {
@@ -841,8 +836,8 @@ BreakFinder::BreakFinder(const LineLayout *ll_, const Selection *psel, Range lin
 		for (size_t r=0; r<psel->Count(); r++) {
 			const SelectionSegment portion = psel->Range(r).Intersect(segmentLine);
 			if (!portion.Empty()) {
-					Insert(portion.start.Position() - posLineStart);
-					Insert(portion.end.Position() - posLineStart);
+				Insert(portion.start.Position() - posLineStart);
+				Insert(portion.end.Position() - posLineStart);
 			}
 		}
 		// On the curses platform, the terminal is drawing its own caret, so add breaks around the
@@ -1055,8 +1050,8 @@ bool PositionCacheEntry::Retrieve(unsigned int styleNumber_, bool unicode_, std:
 		}
 		return true;
 	}
-		return false;
-	}
+	return false;
+}
 
 size_t PositionCacheEntry::Hash(unsigned int styleNumber_, bool unicode_, std::string_view sv) noexcept {
 	const size_t h1 = std::hash<std::string_view>{}(sv);
@@ -1137,7 +1132,7 @@ void PositionCache::MeasureWidths(Surface *surface, const ViewStyle &vstyle, uns
 	if (unicode) {
 		surface->MeasureWidthsUTF8(fontStyle, sv, positions);
 	} else {
-	surface->MeasureWidths(fontStyle, sv, positions);
+		surface->MeasureWidths(fontStyle, sv, positions);
 	}
 	if (probe < pces.size()) {
 		// Store into cache
