@@ -18,7 +18,9 @@
 #include <sstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#endif                                               
+#endif 
+
+#include "../hildim_force_debug_lua_state.h"
 
 CmbTransport* mbTransport = NULL; 
 CString m_strDaemon = "xxx";

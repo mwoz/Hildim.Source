@@ -9,6 +9,8 @@
 
 #define LUASPELL "spell"
 
+#include "../hildim_force_debug_lua_state.h"
+
 static Hunspell* CheckH(lua_State* L) {
 	return *reinterpret_cast<Hunspell**>(luaL_checkudata(L, 1, LUASPELL));
 }
@@ -43,7 +45,7 @@ h:spell(word) -> [boolean]
 returns true, if the word is spelled correctly
 */
 static int l_spell(lua_State *L) {
-
+	LClosure gg;
 	const std::string word = luaL_checkstring(L, 2);
 	int ret = CheckH(L)->spell(word);
 	lua_pushboolean(L, ret);

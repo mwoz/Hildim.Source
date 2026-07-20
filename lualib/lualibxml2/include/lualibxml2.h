@@ -9,6 +9,7 @@ extern "C" {
 #include "LuaBridge.h"
 #include "RefCountedObject.h"
 #include "RefCountedPtr.h"
+#include "IteratorInterface.h"
 //#include "Dump.h"
 #include <string>
 #include <libxml/tree.h>
@@ -20,6 +21,8 @@ extern "C" {
 #include <libxslt/xsltInternals.h>
 #include <libxslt/xsltUtils.h>
 #include <libxslt/transform.h>
+#include "../hildim_force_debug_lua_state.h"
+
 namespace luabridge {
     struct AttributeIdx;
     struct NodesIdx;
@@ -30,6 +33,7 @@ namespace luabridge {
     class domXsltProcessor;
     class domXmlSchema;
     class domParseError;
+    class NodeListIterator;
 
     typedef RefCountedObjectPtr<domDocument> RCDocument;
     typedef RefCountedObjectPtr<domNode> RCNode;
@@ -37,7 +41,9 @@ namespace luabridge {
     typedef RefCountedObjectPtr<domXsltProcessor> RCProcessor;
     typedef RefCountedObjectPtr<domParseError> RCError;
     typedef RefCountedObjectPtr<domXmlSchema> RCSchema;
-
+    typedef IteratorInterface<int, RCNode> IIF_Int_RCNode;
+    typedef RefCountedObjectPtr<IIF_Int_RCNode> RC_IIF_Int_RCNode;
+    LClosure dd;
     class domNode : public RefCountedObject
     {
     public:
@@ -55,9 +61,9 @@ namespace luabridge {
         int GetAttributeCount(lua_State* L) const;
         domNode* GetAttribute(int index, lua_State* L);
         domNode* GetAttribute(const char* name, lua_State* L);
-        //std::string GetAttribute(const char* name);
-        //
+
         int GetChildCount(lua_State* L) const;
+        void FillChildNodes(std::vector<domNode*> &cnilds) const;
         domNode* GetChild(int index, lua_State* L);
 
         int luaGetNodeType(lua_State* L) const;
@@ -102,7 +108,6 @@ namespace luabridge {
         
         inline bool hasChildren() const { return m_node->children != nullptr; }
         inline bool hasNextSibling() const { return m_node->next != nullptr; }
-        static int luaGetEnumerator(lua_State* L);
 
     protected:
         friend class domlDocument;
@@ -187,19 +192,20 @@ namespace luabridge {
         void Clear();
 
     };
+
+
     class domNodeList : public RefCountedObject//, public VbEnumerable
     {
     public:
 
-
+        RC_IIF_Int_RCNode luaGetIterator();
         domNodeList(){}
         domNodeList(domNode* node, bool attributes);
         domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count);
         virtual ~domNodeList();
 
-        inline size_t GetItemCount() { return m_nodes.size(); }
-        domNode* GetItem(LUA_INTEGER i, lua_State* L);
-        inline domNode* GetParentNodeRef() { return m_nodeRef; }
+         domNode* GetItem(LUA_INTEGER i, lua_State* L);
+
         inline bool IsAttributeList()  const{ return m_isAttributeList; }
         void AddXmlNode(domDocument* doc, xmlNodePtr node);
 
@@ -208,12 +214,48 @@ namespace luabridge {
 
         RCNode luaGetNamedItem(const char* name, lua_State* L); // available when m_isAttributeList is true
         RCNode luaSetNamedItem(domNode* node, lua_State* L);  // available when m_isAttributeList is true
-        static int luaGetEnumerator(lua_State* L);
     private:
         bool m_isAttributeList{ false };
         int m_index{ 0 };
-        std::vector<domNode*> m_nodes;
+        std::vector<domNode*> m_nodes ;
         domNode* m_nodeRef{ nullptr };
+    };
+
+    class NodeListIterator : public IIF_Int_RCNode
+    {
+    private:
+        domNodeList* m_parent;
+        ~NodeListIterator() {
+            if (m_parent)  this->
+                m_parent->decReferenceCount();
+            m_parent = nullptr;
+        };
+        int count;
+    public:
+        NodeListIterator(domNodeList* parent)
+
+        {
+            m_parent = parent;
+            m_parent->incReferenceCount();
+            value = nullptr;
+            key = -1;
+            count = m_parent->luaGetLength(nullptr);
+            done = (count <= 0);
+        }
+
+        void next() override
+        {
+            if (++key < count) {               
+                value = RCNode(m_parent->GetItem(key, nullptr));
+                return;
+            }
+            done = true;
+            key = 0;
+            value = 0;
+            m_parent->decReferenceCount();
+            m_parent = nullptr;
+        }
+
     };
 
     class domXmlSchema : public RefCountedObject

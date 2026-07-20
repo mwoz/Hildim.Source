@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="lua_State">
+		<DisplayString>lua_State (stack size={top.p - stack.p})</DisplayString>
+		<Expand>
+			<Item Name="[stack size]">top.p - stack.p</Item>
+			<Item Name="[stack base (0)]">stack.p</Item>
+			<Item Name="[stack top (last+1)]">top.p</Item>
+			<Item Name="[stack limit]">stack_last.p</Item>
+			<CustomListItems MaxItemsPerView="100">
+				<Variable InitialValue="top.p - stack.p" Name="stackSize"/>
+				<Variable InitialValue="0" Name="i"/>
+				<Loop>
+					<If Condition="i &lt; stackSize">
+						<Item Name="[{i}]">stack.p[i]</Item>
+						<Exec>i++</Exec>
+					</If>
+					<Break Condition="i &gt;= stackSize"/>
+				</Loop>
+			</CustomListItems>
+			<Item Name="[status]">status</Item>
+			<Item Name="[nCcalls]">nCcalls</Item>
+			<Item Name="[nci]">nci</Item>
+			<Item Name="[ci]">ci</Item>
+			<Item Name="[registry]">l_G-&gt;l_registry</Item>
+			<LinkedListItems>
+				<HeadPointer>ci</HeadPointer>
+				<NextPointer>previous</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<!-- TValue: для строк используем два варианта:
+       - короткие строки: адрес содержимого = &ts->contents (встроенное поле)
+       - длинные строки: адрес содержимого = ts->contents (указатель)
+  -->
+	<Type Name="TValue">
+		<DisplayString Condition="(tt_ &amp; 0x0F)==0">nil</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==1">boolean: {(value_.i != 0)}</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==2">lightuserdata: 0x{(void*)value_.p}</DisplayString>
+		<!-- distinguish integer vs float by full tag (mask 0x3F) -->
+		<DisplayString Condition="(tt_ &amp; 0x3F)==3">integer: {(lua_Integer)value_.i}</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x3F)==19">number: {(lua_Number)value_.n}</DisplayString>
+		<!-- strings -->
+		<DisplayString Condition="(tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)value_.gc)-&gt;shrlen &gt;= 0">
+			string: "{(char*)&amp;(((TString*)value_.gc)-&gt;contents),s}"
+		</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)value_.gc)-&gt;shrlen &lt; 0">
+			string: "{((TString*)value_.gc)-&gt;contents,s}"
+		</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==5">table: 0x{(void*)value_.gc}</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==6">function: 0x{(void*)value_.p}</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==7">userdata: 0x{(void*)value_.gc}</DisplayString>
+		<DisplayString Condition="(tt_ &amp; 0x0F)==8">thread: 0x{(void*)value_.gc}</DisplayString>
+		<DisplayString>unknown (tag={tt_})</DisplayString>
+		<Expand>
+			<Item Name="[type]">tt_ &amp; 0x0F</Item>
+			<Item Name="[tag]">tt_</Item>
+			<Item Name="[value]">value_</Item>
+			<Item Condition="(tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)value_.gc)-&gt;shrlen &gt;= 0" Name="[string contents]">
+				(char*)&amp;(((TString*)value_.gc)-&gt;contents),s
+			</Item>
+			<Item Condition="(tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)value_.gc)-&gt;shrlen &lt; 0" Name="[string contents]">
+				((TString*)value_.gc)-&gt;contents,s
+			</Item>
+			<Item Condition="(tt_ &amp; 0x0F)==5" Name="[table]">((Table*)value_.gc)</Item>
+         <Item Condition="(tt_ &amp; 0x0F)==7" Name="[userdata]">((Udata*)value_.gc)</Item>
+			<Item Condition="(tt_ &amp; 0x0F)==8" Name="[thread]">((lua_State*)value_.gc)</Item>
+		</Expand>
+
+	</Type>
+	<!-- TString: тоже два варианта отображения -->
+	<Type Name="TString">
+		<DisplayString Condition="shrlen &gt;= 0">{(char*)&amp;(this-&gt;contents),s}</DisplayString>
+		<DisplayString Condition="shrlen &lt; 0">{(this-&gt;contents),s}</DisplayString>
+		<Expand>
+			<Item Name="[length]">(shrlen &gt;= 0) ? (unsigned)shrlen : (unsigned)u.lnglen</Item>
+			<Item Name="[hash]">hash</Item>
+			<Item Name="[contents]" Condition="shrlen &gt;= 0">(char*)&amp;(this-&gt;contents),s</Item>
+			<Item Name="[contents]" Condition="shrlen &lt; 0">(this-&gt;contents),s</Item>
+		</Expand>
+	</Type>
+	<Type Name="StackValue">
+		<DisplayString>{val}</DisplayString>
+	</Type>
+	<Type Name="CallInfo">
+		<DisplayString>{func.p}</DisplayString>
+		<Expand>
+			<Item Name="[func]">func.p</Item>
+			<Item Name="[top]">top.p</Item>
+			<Item Name="[previous]">previous</Item>
+			<Item Name="[next]">next</Item>
+			<Item Name="[callstatus]">callstatus</Item>
+		</Expand>
+	</Type>
+	<Type Name="Table">
+		<DisplayString>table (array={asize}, hash={1&lt;&lt;lsizenode})</DisplayString>
+		<Expand>
+			<Item Name="[asize]">asize</Item>
+			<Item Name="[lsizenode]">lsizenode</Item>
+			<Item Condition="metatable!=0" Name="[metatable]">metatable</Item>
+			<IndexListItems>
+				<Size>asize</Size>
+				<ValueNode>array[$i]</ValueNode>
+			</IndexListItems>
+			<IndexListItems>
+				<Size>1&lt;&lt;lsizenode</Size>
+				<ValueNode>node[$i]</ValueNode>
+			</IndexListItems>
+		</Expand>
+	</Type>
+	<Type Name="Udata">
+		<DisplayString>userdata (size={len})</DisplayString>
+		<Expand>
+			<Item Name="[len]">len</Item>
+			<Item Name="[metatable]">metatable</Item>
+		</Expand>
+	</Type>
+	<Type Name="Closure">
+		<DisplayString>closure</DisplayString>
+		<Expand>
+			<Item Name="[CClosure]">c</Item>
+			<Item Name="[LClosure]">l</Item>
+		</Expand>
+	</Type>
+	<Type Name="CClosure">
+		<DisplayString>C closure (nupvalues={nupvalues})</DisplayString>
+		<Expand>
+			<Item Name="[function]">f</Item>
+			<Item Name="[nupvalues]">nupvalues</Item>
+		</Expand>
+	</Type>
+	<Type Name="LClosure">
+		<DisplayString>Lua closure</DisplayString>
+		<Expand>
+			<Item Name="[proto]">p</Item>
+			<Item Name="[nupvalues]">nupvalues</Item>
+			<Item Condition="p!=0" Name="[linedefined]">p-&gt;linedefined</Item>
+		</Expand>
+	</Type>
+	<Type Name="Proto">
+		<DisplayString Condition="source!=0">{((char*)source),s}</DisplayString>
+		<DisplayString>proto</DisplayString>
+		<Expand>
+			<Item Name="[source]">((char*)source),s</Item>
+			<Item Name="[linedefined]">linedefined</Item>
+			<Item Name="[lastlinedefined]">lastlinedefined</Item>
+			<Item Name="[nups]">sizeupvalues</Item>
+			<Item Name="[numparams]">numparams</Item>
+         <!-- вместо is_vararg используем проверку флага (PF_VAHID|PF_VATAB == 1|2) -->
+			<Item Name="[is_vararg]">((flag &amp; 3) != 0)</Item>
+			<Item Name="[maxstacksize]">maxstacksize</Item>
+		</Expand>
+	</Type>
+	<Type Name="Node">
+		<DisplayString>{i_val}</DisplayString>
+		<Expand>
+			<Item Name="[key]">u</Item>
+			<Item Name="[val]">i_val</Item>
+		</Expand>
+	</Type>
+	<Type Name="lua_State *">
+		<DisplayString>lua_State* (addr=0x{(void*)this})</DisplayString>
+		<Expand>
+			<!-- Разыменовываем указатель и показываем existing visualizer для lua_State -->
+			<Item Name="*">*((lua_State*)this)</Item>
+
+		</Expand>
+	</Type>
+	<!-- Упрощённое представление collectable-объектов: показываем кратко и не разворачиваем внутренности -->
+	<Type Name="GCObject *">
+		<DisplayString>GCObject* (addr=0x{(void*)this}, tt={tt})</DisplayString>
+	</Type>
+	<!-- CClosure: показываем только адрес функции -->
+	<Type Name="CClosure">
+		<DisplayString>C closure (f=0x{(void*)f})</DisplayString>
+	</Type>
+	<!-- LClosure: показываем proto/адрес -->
+	<Type Name="LClosure">
+		<DisplayString>Lua closure (p=0x{(void*)p})</DisplayString>
+	</Type>
+	<!-- TString (если ещё не добавлено) — компактно содержимое -->
+	<Type Name="TString">
+		<DisplayString Condition="shrlen &gt;= 0">{(char*)&amp;(this-&gt;contents),s}</DisplayString>
+		<DisplayString Condition="shrlen &lt; 0">{(this-&gt;contents),s}</DisplayString>
+	</Type>
+	<!-- Компактные представления для Value и GCObject, применимые и в DLL -->
+	<Type Name="Value">
+		<!-- Если есть collectable-поинтер -->
+		<DisplayString Condition="gc != 0">gc=0x{(void*)gc}</DisplayString>
+		<!-- указатель (light userdata) -->
+		<DisplayString Condition="gc == 0 &amp;&amp; p != 0">p=0x{(void*)p}</DisplayString>
+		<!-- функция -->
+		<DisplayString Condition="gc == 0 &amp;&amp; p == 0 &amp;&amp; f != 0">f=0x{(void*)f}</DisplayString>
+		<!-- целое -->
+		<DisplayString Condition="gc == 0 &amp;&amp; p == 0 &amp;&amp; f == 0 &amp;&amp; i != 0">i={(long long)i}</DisplayString>
+		<!-- число/байт -->
+		<DisplayString>n={(double)n} ub={(unsigned char)ub}</DisplayString>
+
+	</Type>
+	<Type Name="Value *">
+		<DisplayString>Value* (addr=0x{(void*)this})</DisplayString>
+	</Type>
+	<!-- GCObject: не разворачиваем внутренности, показываем базовые атрибуты -->
+	<Type Name="GCObject">
+		<DisplayString>GCObject (tt={tt}, marked={marked}, next=0x{(void*)next})</DisplayString>
+	</Type>
+	<Type Name="GCObject *">
+		<DisplayString>GCObject* (addr=0x{(void*)this})</DisplayString>
+	</Type>
+	<!-- Упрощённое, единообразное представление элементов стека -->
+	<Type Name="StackValue">
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==0">nil</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==1">boolean: {(val.value_.i != 0)}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==2">lightuserdata: 0x{(void*)val.value_.p}</DisplayString>
+		<!-- integer vs float: различаем по полному тегу -->
+		<DisplayString Condition="(val.tt_ &amp; 0x3F)==3">integer: {(lua_Integer)val.value_.i}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x3F)==19">number: {(lua_Number)val.value_.n}</DisplayString>
+		<!-- строки: короткие/длинные -->
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)val.value_.gc)-&gt;shrlen &gt;= 0">
+			string: "{(char*)&amp;(((TString*)val.value_.gc)-&gt;contents),s}"
+		</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==4 &amp;&amp; ((TString*)val.value_.gc)-&gt;shrlen &lt; 0">
+			string: "{((TString*)val.value_.gc)-&gt;contents,s}"
+		</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==5">table: 0x{(void*)val.value_.gc}</DisplayString>
+		<!-- функции: либо light (p), либо collectable closure (gc)  -->
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==6 &amp;&amp; val.value_.p != 0 &amp;&amp; ((GCObject*)val.value_.gc)-&gt;tt == 6">
+			LUA:{(char*)&amp;(((TString*)((LClosure*)val.value_.p)-&gt;p-&gt;k-&gt;value_.gc)-&gt;contents),s}:{
+			((LClosure*)val.value_.p)-&gt;p-&gt;source-&gt;contents
+			}:{((LClosure*)val.value_.p)-&gt;p-&gt;linedefined
+			}
+		</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 38) == 38 &amp;&amp; val.value_.p != 0">[C]:{((LClosure*)val.value_.p)-&gt;p}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==6 &amp;&amp; val.value_.p != 0">[C]: {val.value_.p}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==6 &amp;&amp; val.value_.gc != 0">function: 0x{(void*)val.value_.gc}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==7">userdata: 0x{(void*)val.value_.gc}</DisplayString>
+		<DisplayString Condition="(val.tt_ &amp; 0x0F)==8">thread: 0x{(void*)val.value_.gc}</DisplayString>
+		<DisplayString>unknown (tag={val.tt_})</DisplayString>
+		<Expand>
+			<!-- возможность раскрыть как TValue при необходимости -->
+			<Item Name="[as TValue]">val</Item>
+
+		</Expand>
+
+	</Type>
+	<Type Name="CClosure">
+		<DisplayString>C closure (f=0x{(void*)f})</DisplayString>
+	</Type>
+	<Type Name="LClosure">
+		<DisplayString>Lua closure (p=0x{(void*)p})</DisplayString>
+	</Type>
+	<!-- Показать closure как читаемую строку-->
+	<Type Name="LClosure">
+		<DisplayString>Lua closure (proto={((LClosure*)this)-&gt;p ? (((char*)((LClosure*)this)-&gt;p-&gt;source)) : \"(anon)\"}, line={((LClosure*)this)-&gt;p ? ((int)((LClosure*)this)-&gt;p-&gt;linedefined) : 0})</DisplayString>
+	</Type>
+	<Type Name="CClosure">
+		<DisplayString>C closure (f=0x{(void*)((CClosure*)this)-&gt;f})</DisplayString>
+	</Type>
+
+</AutoVisualizer>

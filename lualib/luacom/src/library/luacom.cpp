@@ -51,6 +51,8 @@ extern "C"
 
 // some string constants
 
+#include "../hildim_force_debug_lua_state.h"
+
 #define GET_PREFIX "get"
 #define PUT_PREFIX "set"
 

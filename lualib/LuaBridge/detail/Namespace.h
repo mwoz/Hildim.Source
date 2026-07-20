@@ -11,7 +11,8 @@
 #include <LuaBridge/detail/LuaException.h>
 #include <LuaBridge/detail/Security.h>
 #include <LuaBridge/detail/TypeTraits.h>
-
+#include <LuaBridge/IteratorInterface.h>           // NEW: For iterator support
+#include <LuaBridge/detail/Stack.h> 
 #include <stdexcept>
 #include <string>
 
@@ -367,7 +368,7 @@ class Namespace : public detail::Registrar
             lua_pushcfunction(L, &CFunc::gcMetaMethod<T>); // Stack: ns, co, cl, function
             rawsetfield(L, -2, "__gc"); // cl ["__gc"] = function. Stack: ns, co, cl
             ++m_stackSize;
-
+            
             createStaticTable(name); // Stack: ns, co, cl, st
             ++m_stackSize;
 
@@ -1065,9 +1066,227 @@ class Namespace : public detail::Registrar
 
             return *this;
         }
-    };
+
+        //--------------------------------------------------------------------------
+        /**
+         * @brief Adds an enumerator (iterator) to the class.
+         *
+         * This method registers a member function that returns an iterator.
+         * The iterator can then be used in Lua with the generic `for` loop:
+         *
+         * @code
+         * for key, value in obj:enumerator(args) do
+         *     -- Use key and value
+         * end
+         * @endcode
+         *
+         * @tparam TKey    The type of the key returned by the iterator.
+         * @tparam TValue  The type of the value returned by the iterator.
+         * @tparam R       The return type of the method (must be
+         *                 `RefCountedObjectPtr<Iterator<TKey, TValue> >`).
+         *
+         * @param name    The name of the enumerator in Lua.
+         * @param method  Pointer to the const-qualified member function.
+         *
+         * @return A reference to this Class object for chaining.
+         *
+         * @note The method must take no arguments.
+         *
+         * @lua_usage
+         *   local obj = MyClass()
+         *   for k, v in obj:myEnum() do
+         *       print(k, v)
+         *   end
+         */
+        template <typename TKey, typename TValue,
+            typename R = RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >
+        Class& addIterator(const char* name,
+            R(T::* method)() const)
+        {
+            static_assert(std::is_same_v<R, RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >,
+                "Method must return RefCountedObjectPtr<IteratorInterface<TKey, TValue> >");
+
+            return addIteratorImpl<TKey, TValue, R, const T>(
+                name, method, std::index_sequence<>{}
+            );
+        }
+
+        //--------------------------------------------------------------------------
+        /**
+         * @overload
+         *
+         * @copydoc addIterator(const char*, R (T::*)() const)
+         *
+         * This overload is for non-const member functions.
+         */
+        template <typename TKey, typename TValue,
+            typename R = RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >
+        Class& addIterator(const char* name,
+            R(T::* method)())
+        {
+            static_assert(std::is_same_v<R, RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >,
+                "Method must return RefCountedObjectPtr<IteratorInterface<TKey, TValue> >");
+
+            return addIteratorImpl<TKey, TValue, R, T>(
+                name, method, std::index_sequence<>{}
+            );
+        }
+
+        //--------------------------------------------------------------------------
+        /**
+         * @brief Adds an enumerator (iterator) with arguments to the class.
+         *
+         * This method registers a member function that takes arguments and
+         * returns an iterator. The arguments are passed from Lua when the
+         * enumerator is called.
+         *
+         * @tparam TKey    The type of the key returned by the iterator.
+         * @tparam TValue  The type of the value returned by the iterator.
+         * @tparam Args    The argument types of the member function.
+         * @tparam R       The return type of the method (must be
+         *                 `RefCountedObjectPtr<Iterator<TKey, TValue> >`).
+         *
+         * @param name    The name of the enumerator in Lua.
+         * @param method  Pointer to the const-qualified member function.
+         *
+         * @return A reference to this Class object for chaining.
+         *
+         * @lua_usage
+         *   local obj = MyClass()
+         *   for k, v in obj:myEnum(minValue, maxValue) do
+         *       print(k, v)
+         *   end
+         */
+        template <typename TKey, typename TValue, typename... Args,
+            typename R = RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >
+        Class& addIterator(const char* name,
+            R(T::* method)(Args...) const)
+        {
+            static_assert(std::is_same_v<R, RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >,
+                "Method must return RefCountedObjectPtr<IteratorInterface<TKey, TValue> >");
+
+            return addIteratorImpl<TKey, TValue, R, const T, Args...>(
+                name, method, std::index_sequence_for<Args...>{}
+            );
+        }
+
+        //--------------------------------------------------------------------------
+        /**
+         * @overload
+         *
+         * @copydoc addIterator(const char*, R (T::*)(Args...) const)
+         *
+         * This overload is for non-const member functions.
+         */
+        template <typename TKey, typename TValue, typename... Args,
+            typename R = RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >
+        Class& addIterator(const char* name,
+            R(T::* method)(Args...))
+        {
+            static_assert(std::is_same_v<R, RefCountedObjectPtr<IteratorInterface<TKey, TValue> > >,
+                "Method must return RefCountedObjectPtr<IteratorInterface<TKey, TValue> >");
+
+            return addIteratorImpl<TKey, TValue, R, T, Args...>(
+                name, method, std::index_sequence_for<Args...>{}
+            );
+        }
+
 
 private:
+    //==========================================================================
+    // Private implementation of addIterator
+    //==========================================================================
+
+    //--------------------------------------------------------------------------
+    /**
+     * @brief Internal implementation of addIterator.
+     *
+     * This method creates a Lua closure that calls the specified member
+     * function with arguments extracted from the Lua stack. The closure
+     * pushes an iterator to Lua that can be used in a `for` loop.
+     *
+     * @tparam TKey      The iterator's key type.
+     * @tparam TValue    The iterator's value type.
+     * @tparam R         The return type of the member function.
+     * @tparam ClassT    The class type with const qualification (T or const T).
+     * @tparam Args      The argument types of the member function.
+     * @tparam Is        The index sequence for the argument types.
+     *
+     * @param name      The name of the enumerator in Lua.
+     * @param method    Pointer to the member function.
+     * @param seq       Unused parameter for template deduction.
+     *
+     * @return A reference to this Class object for chaining.
+     *
+     * @note This implementation currently supports only methods without arguments.
+     *       Full argument support will be added in a future update.
+     */
+    template <typename TKey, typename TValue, typename R,
+        typename ClassT, typename... Args, size_t... Is>
+    Class& addIteratorImpl(
+        const char* name,
+        R(ClassT::* method)(Args...),
+        std::index_sequence<Is...> /*seq*/)
+    {
+        assertStackState();
+        // Create a Lua C function that acts as a factory for iterators
+        auto makeIterator = [](lua_State* L) -> int {
+            // Retrieve the method pointer from the upvalue (type-safe)
+            using MemType = R (ClassT::*)(Args...);
+            MemType methodPtr = LuaIteratorWrapper<TKey, TValue>::template
+                readMethodUpvalue<MemType>(L, lua_upvalueindex(1));
+            Udata* g = (Udata*)L;
+            if (!methodPtr) {
+                luaL_error(L, "addIterator: invalid method pointer");
+                return 0;
+            }
+
+            // Get the object (self) from the Lua stack
+            // In Lua: obj:enumerator(arg1, arg2, ...)
+            ClassT* obj = Stack<ClassT*>::get(L, 1);
+           // ClassT* obj = detail::StackHelper<ClassT*>::get(L, 1);
+            if (!obj) {
+                luaL_error(L, "addIterator: invalid object");
+                return 0;
+            }
+
+            // NOTE: Currently only supports methods with no arguments.
+            // For argument support, we need to extract Args... from Lua stack
+            // using detail::Stack and a tuple.
+            // See the full implementation in the previous version of this file.
+            static_assert(sizeof...(Args) == 0,
+                "Full argument support requires tuple unpacking. "
+                "Currently only zero-argument methods are supported.");
+
+            // Call the member function
+            R iter = (obj->*methodPtr)();
+
+            // Push the iterator to Lua as a callable function
+           // LuaIteratorWrapper<TKey, TValue>::pushToLua(L, std::move(iter));
+            LuaIteratorWrapper<TKey, TValue>::pushToLua(L, iter);
+
+            return 1; // Return the iterator function
+            };
+
+        // Register the factory function in the class table
+        // Store the method pointer as a light userdata upvalue
+
+          // push method pointer as typed userdata upvalue (no memcpy)
+        LuaIteratorWrapper<TKey, TValue>::template pushMethodUpvalue<decltype(method)>(L, method);
+
+        // create the factory closure which captures the userdata
+        lua_pushcclosure(L, makeIterator, 1);
+
+        // store function in class table (use rawsetfield as original code expected)
+        lua_pushvalue(L, -1);
+        rawsetfield(L, -4, name);
+        rawsetfield(L, -4, name);
+
+        return *this;
+    }
+
+    };
+
     //----------------------------------------------------------------------------
     /**
         Open the global namespace for registrations.

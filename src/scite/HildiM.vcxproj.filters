@@ -319,4 +319,7 @@
   <ItemGroup>
     <Font Include="win32\hildim.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\lua55.natvis" />
+  </ItemGroup>
 </Project>

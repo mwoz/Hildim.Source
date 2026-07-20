@@ -172,7 +172,7 @@ namespace luabridge {
     }
     void domNode::AssertValid(lua_State* L, const char* funcname) const
     {
-        if (m_node == nullptr)
+        if (L && m_node == nullptr)
             LuaException::Throw(LuaException(L, funcname, "Invalid XML node.", 1));
     }
 
@@ -269,6 +269,7 @@ namespace luabridge {
 
         return count;
     }
+
     domNode* domNode::GetAttribute(int index, lua_State* L)
     {
         AssertValid(L, "GetAttribute by index");
@@ -287,6 +288,7 @@ namespace luabridge {
 
         return m_docRef->CreateNodeRef(node);
     }
+
     domNode* domNode::GetAttribute(const char* name, lua_State* L)
     {
         AssertValid(L, "GetAttribute by index");
@@ -296,6 +298,7 @@ namespace luabridge {
 
         return m_docRef->CreateNodeRef((xmlNodePtr)xmlHasProp(m_node, CHR2XML(name)));
     }
+
     int domNode::GetChildCount(lua_State* L) const{
         AssertValid(L, "GetChildCount");
 
@@ -305,6 +308,14 @@ namespace luabridge {
 
         return count;
     }
+
+    void domNode::FillChildNodes(std::vector<domNode*>  &cnilds) const {
+
+        for (xmlNodePtr n = m_node->children; n != nullptr; n = n->next)
+            cnilds.insert(cnilds.end(), m_docRef->CreateNodeRef(n, true));
+
+    }
+
     domNode* domNode::GetChild(int index, lua_State* L) {
         AssertValid(L, "GetChild");
 
@@ -903,37 +914,6 @@ namespace luabridge {
     void domNode::InvalidateNodeList(xmlNodePtr cur) {
 
     }
-    int domNode::luaGetEnumerator(lua_State* L) {
-        domNode* node = detail::Userdata::get<domNode>(L, 1, false);
-
-        auto ienum = [](lua_State* L) -> int {
-            domNode* nodeParent = detail::Userdata::get<domNode>(L, 1, false);
-            domNode* node = nullptr;
-            if (lua_type(L, 2) == LUA_TBOOLEAN && nodeParent->hasChildren()) {
-                node = nodeParent->luaGetFirstChild(L);
-            }
-            else {
-                nodeParent = detail::Userdata::get<domNode>(L, 2, false);
-                if (nodeParent->hasNextSibling())
-                    node = nodeParent->luaGetNextSibling(L);
-            }
-
-            if (node) {
-                detail::UserdataPtr::push<domNode>(L, node);
-                detail::UserdataPtr::push<domNode>(L, node);
-                return 2;
-            }
-            else {
-                lua_pushnil(L);
-                return 1;
-            }
-            };
-        lua_pushcfunction(L, ienum);  /* iteration function */
-        lua_pushvalue(L, 1);  /* state */
-        lua_pushboolean(L, true);  /* initial value */
-        return 3;
-
-    }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1373,8 +1353,14 @@ namespace luabridge {
     domNodeList::domNodeList(domNode* node, bool attributes)
     {
         m_isAttributeList = attributes;
-        m_nodeRef = node;
-        m_nodeRef->incReferenceCount();
+
+        if (attributes) {
+            m_nodeRef = node;
+            m_nodeRef->incReferenceCount();
+        }
+        else {
+            node->FillChildNodes(m_nodes);            
+        }
     }
 
    domNodeList::domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count)
@@ -1383,6 +1369,7 @@ namespace luabridge {
        for (int i = 0; i < count; i++)
            m_nodes.insert(m_nodes.end(), doc->CreateNodeRef(nodeArray[i], true));
    }
+
    domNodeList::~domNodeList()
    {
        for (int i = 0; i < m_nodes.size(); i++)
@@ -1397,24 +1384,20 @@ namespace luabridge {
            m_nodeRef = nullptr;
        }
    }
+
    size_t domNodeList::luaGetLength(lua_State* L)
    {
-       if (m_nodeRef)
-           return m_isAttributeList ? m_nodeRef->GetAttributeCount(L) : m_nodeRef->GetChildCount(L);
-       else
-          return m_nodes.size();
+       return m_isAttributeList ? m_nodeRef->GetAttributeCount(L) : m_nodes.size();
    }
+
    void domNodeList::AddXmlNode(domDocument* doc, xmlNodePtr node) {
        m_nodes.push_back(doc->CreateNodeRef(node, true));
    }
 
    domNode* domNodeList::GetItem(LUA_INTEGER index, lua_State* L) {
-       if (m_nodeRef)
+       if (m_isAttributeList)
        {
-           if (m_isAttributeList)
-               return m_nodeRef->GetAttribute(index, L);
-           else
-               return m_nodeRef->GetChild(index, L);
+           return m_nodeRef->GetAttribute(index, L);
        }
        else
        {
@@ -1451,6 +1434,13 @@ namespace luabridge {
        return RCNode(m_nodeRef->GetDocRef()->CreateNodeRef(m_nodeRef->InsertNode(node, L)));
    }
 
+   RC_IIF_Int_RCNode domNodeList::luaGetIterator() {
+       // Создаём объект, который наследует RefCountedObject
+        // RefCountedObjectPtr автоматически управляет его временем жизни
+       RC_IIF_Int_RCNode h;
+       return RC_IIF_Int_RCNode(new NodeListIterator(this));
+   }
+
    static int ipairsaux(lua_State* L) {
        lua_Integer i = luaL_checkinteger(L, 2);
        i = luaL_intop(+, i, 1);
@@ -1466,28 +1456,6 @@ namespace luabridge {
 
        domNodeList * lst;
    };
-
-   int domNodeList::luaGetEnumerator(lua_State* L) {
-       domNodeList* lst = detail::Userdata::get<domNodeList>(L, 1, false);
-
-        auto ienum = [](lua_State* L) -> int {
-            domNodeList* lst = detail::Userdata::get<domNodeList>(L, 1, false);
-            LUA_INTEGER i = luaL_checkinteger(L, 2);
-            if (static_cast<LUA_INTEGER>(lst->luaGetLength(L)) > i) {
-                lua_pushinteger(L, i + 1);                   
-                detail::UserdataPtr::push<domNode>(L, lst->GetItem(i, L));
-                return 2;
-            }
-            else{
-                lua_pushnil(L);
-                return 1;
-            }
-            };
-        lua_pushcfunction(L, ienum);  /* iteration function */
-        lua_pushvalue(L, 1);  /* state */
-        lua_pushinteger(L, 0);  /* initial value */
-        return 3;
-   }
 
    //////////////////////////////////////////////////////////////////////////////////////////
    
@@ -1800,14 +1768,7 @@ namespace luabridge {
             .addFunction("setAttribute", &domNode::luaSetAttribute)
             .addFunction("getElementsByTagName", &domNode::luaGetElementsByTagName)
             .addFunction("getElementByTagName", &domNode::luaGetElementByTagName)
-            .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition);
-          
-
-        lua_pushcfunction(L, &domNode::luaGetEnumerator);
-        rawsetfield(L, -3, "childNodesEnum"); // class table
-
-            
-           auto nspace2 = nspace
+            .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition) 
             .endClass()
             .deriveClass <domDocument, domNode>("Document")
                 .addConstructor <void (*) (void), RCDocument >()
@@ -1835,13 +1796,10 @@ namespace luabridge {
                 .addFunction("item", &domNodeList::luaGetItem)
                 .addFunction("__call", &domNodeList::luaGetItem)
                 .addFunction("getNamedItem", &domNodeList::luaGetNamedItem)
-                .addFunction("setNamedItem", &domNodeList::luaSetNamedItem);
-
-        lua_pushcfunction(L, &domNodeList::luaGetEnumerator);
-        rawsetfield(L, -3, "elements"); // class table
-     
-      nspace2.endClass()
-      //nspace.endClass()
+                .addFunction("setNamedItem", &domNodeList::luaSetNamedItem)
+                .addIterator<int, RCNode>("iterator", &domNodeList::luaGetIterator) 
+                .addIterator<int, RCNode>("__pairs", &domNodeList::luaGetIterator) 
+            .endClass()
             .beginClass <domXmlSchema>("XmlSchema")
                 .addConstructor <void (*) (void), RCSchema >()
                 .addStaticFunction("newObject", &domXmlSchema::luaNewObject)
