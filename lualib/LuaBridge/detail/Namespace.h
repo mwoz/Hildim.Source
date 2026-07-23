@@ -1261,11 +1261,18 @@ private:
             // Call the member function
             R iter = (obj->*methodPtr)();
 
-            // Push the iterator to Lua as a callable function
-           // LuaIteratorWrapper<TKey, TValue>::pushToLua(L, std::move(iter));
+            // Push the iterator to Lua as a callable function (first return value)
             LuaIteratorWrapper<TKey, TValue>::pushToLua(L, iter);
 
-            return 1; // Return the iterator function
+            // Push second and third values (unused placeholders)
+            lua_pushnil(L);
+            lua_pushnil(L);
+
+            // Fourth return value: duplicate the same userdata instance (do not create a second wrapper)
+            // After pushToLua the userdata is at stack top; after pushing two nils it becomes -3.
+            lua_pushvalue(L, -3);
+
+            return 4; // iterator, state(nil), control(nil), iterator-instance
             };
 
         // Register the factory function in the class table

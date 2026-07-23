@@ -55,6 +55,7 @@
     <ClInclude Include="$(SolutionDir)lualib\LuaBridge\RefCountedPtr.h" />
     <ClInclude Include="$(SolutionDir)lualib\LuaBridge\UnorderedMap.h" />
     <ClInclude Include="$(SolutionDir)lualib\LuaBridge\Vector.h" />
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\IteratorInterface.h" />
     <ClInclude Include="include\lualibxml2.h" />
   </ItemGroup>
   <ItemGroup>

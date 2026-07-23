@@ -107,6 +107,9 @@
     <ClInclude Include="include\lualibxml2.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="$(SolutionDir)lualib\LuaBridge\IteratorInterface.h">
+      <Filter>Файлы заголовков\LuaBridge</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\lualibxml2.rc">

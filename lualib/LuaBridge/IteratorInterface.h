@@ -235,7 +235,26 @@ struct LuaIteratorWrapper
                 });
             lua_setfield(L, -2, "__gc");
 
-            // Protect the metatable from Lua-side modification
+            // Add __close metamethod so to-be-closed userdata from Lua 5.4 will
+            // immediately release the wrapped iterator. Instead of destroying the
+            // userdata here (which would cause __gc to run again later), just release
+            // the stored RefCountedObjectPtr. The __gc metamethod will later run the
+            // destructor once and free the userdata memory.
+            lua_pushcfunction(L, [](lua_State* L) -> int {
+                LuaIteratorWrapper* wrapper = static_cast<LuaIteratorWrapper*>(
+                    lua_touserdata(L, 1)
+                    );
+                if (wrapper) {
+                    // release ownership without destroying userdata; this will call the
+                    // smart-pointer's decrement exactly once now. The actual object memory
+                    // will be reclaimed later by __gc (which runs destructor).
+                    wrapper->iter = nullptr;
+                }
+                return 0;
+                });
+            lua_setfield(L, -2, "__close");
+
+            // Protect the metatable from Lua-side modificationÍó òàê îíî è
             lua_pushliteral(L, "This metatable is protected");
             lua_setfield(L, -2, "__metatable");
 
