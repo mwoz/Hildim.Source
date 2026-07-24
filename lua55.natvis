@@ -127,37 +127,108 @@
    </Type>
 
 
-<Type Name="Table">
-    <DisplayString>table (array={asize}, hash={1&lt;&lt;lsizenode})</DisplayString>
+  <Type Name="Table">
+    <DisplayString>table (array={asize}, hash={(flags &amp; 0x40) ? 0 : (1&lt;&lt;lsizenode)})</DisplayString>
     <Expand>
-        <!-- Искусственная ветвь для hash-части -->
-        <Synthetic Name="hash">
-            <DisplayString>hash (size={1&lt;&lt;lsizenode})</DisplayString>
-            <Expand>
-                <IndexListItems>
-                    <Size>1&lt;&lt;lsizenode</Size>
-                    <ValueNode>node[$i]</ValueNode>
-                </IndexListItems>
-            </Expand>
-        </Synthetic>
+      <!-- Искусственная ветвь для hash-части с читаемыми ключами -->
+      <!-- Показываем hash только если не установлен BITDUMMY (1<<6) -->
+      <Synthetic Name="HASH" Condition="(flags &amp; 0x40) == 0">
+        <DisplayString>hash (size={(1&lt;&lt;lsizenode)})</DisplayString>
+        <Expand>
+          <CustomListItems MaxItemsPerView="1000">
+            <Variable InitialValue="0" Name="idx"/>
+            <Loop>
+              <If Condition="idx &lt; (1&lt;&lt;lsizenode)">
+                <!-- Показываем node[idx] — Node определяется ниже и содержит удобный разворот -->
+                <Item Name="[{idx}]">node[idx]</Item>
+                <Exec>idx++</Exec>
+              </If>
+              <Break Condition="idx &gt;= (1&lt;&lt;lsizenode)"/>
+            </Loop>
+          </CustomListItems>
+        </Expand>
+      </Synthetic>
 
-        <!-- Искусственная ветвь для array-части -->
-        <Synthetic Name="array">
-            <DisplayString>array (size={asize})</DisplayString>
-            <Expand>
-                <IndexListItems>
-                    <Size>asize</Size>
-                    <ValueNode>array[$i]</ValueNode>
-                </IndexListItems>
-            </Expand>
-        </Synthetic>
+      <!-- Искусственная ветвь для array-части с читаемыми значениями -->
+      <Synthetic Name="ARRAY-SHORT">
+        <DisplayString>array (size={asize})</DisplayString>
+        <Expand>
+          <CustomListItems MaxItemsPerView="1000">
+            <Variable InitialValue="0" Name="idx"/>
+            <Loop>
+              <If Condition="idx &lt; asize">
+                <!-- общий tag и тип -->
+      <!--          <Item Name="[{idx}].tag">*(((lu_byte*)array) + sizeof(unsigned) + idx)</Item>
+                <Item Name="[{idx}].type">(*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F)</Item>-->
 
-        <!-- Остальные поля -->
-        <Item Name="[asize]">asize</Item>
-        <Item Name="[lsizenode]">lsizenode</Item>
-        <Item Condition="metatable!=0" Name="[metatable]">metatable</Item>
+                <!-- raw Value (можно раскрыть дальше) -->
+               <!-- <Item Name="[{idx}].value">*(Value*)(array - 1 - idx)</Item>-->
+
+                <!-- строка -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 4)" Name="[{idx}].string">((TString*)(((Value*)(array - 1 - idx))->gc))</Item>
+
+                <!-- integer -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x3F) == 3)" Name="[{idx}].integer">((Value*)(array - 1 - idx))->i</Item>
+
+                <!-- number -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x3F) == 19)" Name="[{idx}].number">((Value*)(array - 1 - idx))->n</Item>
+
+                <!-- boolean -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 1)" Name="[{idx}].boolean">(((Value*)(array - 1 - idx))->i != 0)</Item>
+
+                <!-- table -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 5)" Name="[{idx}].table">((Table*)(((Value*)(array - 1 - idx))->gc))</Item>
+
+                <!-- functions: CClosure / LClosure (collectable) or light C (p) -->
+                <!-- проверяем tag low nibble == 6, есть gc, и бит варианта (bits 4-5) -->
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 6 &amp;&amp; (((Value*)(array - 1 - idx))->gc) != 0 &amp;&amp; ((((*(((lu_byte*)array) + sizeof(unsigned) + idx)) >> 4) &amp; 0x2) == 2))" Name="[{idx}].CClosure">((CClosure*)(((Value*)(array - 1 - idx))->gc))</Item>
+
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 6 &amp;&amp; (((Value*)(array - 1 - idx))->gc) != 0 &amp;&amp; ((((*(((lu_byte*)array) + sizeof(unsigned) + idx)) >> 4) &amp; 0x2) != 2))" Name="[{idx}].LClosure">((LClosure*)(((Value*)(array - 1 - idx))->gc))</Item>
+
+                <Item Condition="((*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F) == 6 &amp;&amp; (((Value*)(array - 1 - idx))->gc) == 0 &amp;&amp; (((Value*)(array - 1 - idx))->p) != 0)" Name="[{idx}].lightC">(void*)(((Value*)(array - 1 - idx))->p)</Item>
+
+                <!-- fallback: compact Value with tag in name -->
+             <!--   <Item Name="[{idx}] (compact)">*(Value*)(array - 1 - idx)</Item>-->
+
+                <Exec>idx++</Exec>
+              </If>
+              <Break Condition="idx &gt;= asize"/>
+            </Loop>
+          </CustomListItems>
+        </Expand>
+      </Synthetic>
+      <Synthetic Name="array-details">
+        <DisplayString>array (size={asize})</DisplayString>
+        <Expand>
+          <CustomListItems MaxItemsPerView="1000">
+            <Variable InitialValue="0" Name="idx"/>
+            <Loop>
+              <If Condition="idx &lt; asize">
+                <!-- общий tag и тип -->
+                <Item Name="[{idx}].tag">*(((lu_byte*)array) + sizeof(unsigned) + idx)</Item>
+                <Item Name="[{idx}].type">(*(((lu_byte*)array) + sizeof(unsigned) + idx) &amp; 0x0F)</Item>
+
+                <!-- raw Value (можно раскрыть дальше) -->
+                <Item Name="[{idx}].value">*(Value*)(array - 1 - idx)</Item>
+
+
+                <!-- fallback: compact Value with tag in name -->
+                <Item Name="[{idx}] (compact)">*(Value*)(array - 1 - idx)</Item>
+
+                <Exec>idx++</Exec>
+              </If>
+              <Break Condition="idx &gt;= asize"/>
+            </Loop>
+          </CustomListItems>
+        </Expand>
+      </Synthetic>
+
+      <!-- Остальные поля -->
+<!--      <Item Name="[asize]">asize</Item>
+      <Item Name="[lsizenode]">lsizenode</Item>-->
+      <Item Condition="metatable!=0" Name="[metatable]">metatable</Item>
     </Expand>
-</Type>
+  </Type>
    <Type Name="Udata">
       <DisplayString>userdata (size={len})</DisplayString>
       <Expand>
@@ -206,44 +277,87 @@
 
       </Expand>
    </Type>
-   <Type Name="Node">
-      <DisplayString>{i_val}</DisplayString>
-      <Expand>
-         <Item Name="[key]">u</Item>
-         <Item Name="[val]">i_val</Item>
-      </Expand>
-   </Type>
-   <Type Name="Node::NodeKey">
-      <!-- Используем key_val (ключ) и key_tt для определения типа -->
-      <DisplayString Condition="(key_tt &amp; 0x0F)==0">nil</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==1">boolean: {(key_val.i != 0)}</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==2">lightuserdata: 0x{(void*)key_val.p}</DisplayString>
-      <!-- integer vs float -->
-      <DisplayString Condition="(key_tt &amp; 0x3F)==3">integer: {(lua_Integer)key_val.i}</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x3F)==19">number: {(lua_Number)key_val.n}</DisplayString>
-      <!-- строки -->
-      <DisplayString Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &gt;= 0">
-      string: "{(char*)&amp;(((TString*)key_val.gc)-&gt;contents),s}"
-    </DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &lt; 0">
-      string: "{((TString*)key_val.gc)-&gt;contents,s}"
-    </DisplayString>
-      <!-- таблицы, функции и т.д. -->
-      <DisplayString Condition="(key_tt &amp; 0x0F)==5">table: 0x{(void*)key_val.gc}</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==6">function: 0x{(void*)key_val.p}</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==7">userdata: 0x{(void*)key_val.gc}</DisplayString>
-      <DisplayString Condition="(key_tt &amp; 0x0F)==8">thread: 0x{(void*)key_val.gc}</DisplayString>
-      <DisplayString>unknown (key_tt={key_tt})</DisplayString>
-      <Expand>
-         <Item Name="[key type]">key_tt &amp; 0x0F</Item>
-         <Item Name="[key tag]">key_tt</Item>
-         <Item Name="[key value]">key_val</Item>
-         <!-- Дополнительно: показать значение (value_) как TValue -->
-         <Item Name="[value (as TValue)]">*(TValue*)this</Item>
+<Type Name="Node">
+  <DisplayString>{i_val}</DisplayString>
+  <Expand>
+    <Item Name="[val]">i_val</Item>
+<!--    <Item Name="[key tag]">u.key_tt</Item>
+    <Item Name="[key raw]">u.key_val</Item>-->
 
-      </Expand>
+    <!-- строковый ключ: используем TString* (воспользуется существующим visualizer) -->
+    <Item Condition="(u.key_tt &amp; 0x0F)==4" Name="[key]">((TString*)u.key_val.gc)</Item>
 
-   </Type>
+    <!-- integer -->
+    <Item Condition="(u.key_tt &amp; 0x3F)==3" Name="[key]">u.key_val.i</Item>
+
+    <!-- number (float) -->
+    <Item Condition="(u.key_tt &amp; 0x3F)==19" Name="[key]">u.key_val.n</Item>
+
+    <!-- boolean -->
+    <Item Condition="(u.key_tt &amp; 0x0F)==1" Name="[key]">(u.key_val.i != 0)</Item>
+
+    <!-- table -->
+    <Item Condition="(u.key_tt &amp; 0x0F)==5" Name="[key]">((Table*)u.key_val.gc)</Item>
+
+    <!-- fallback: покажем raw Value с тегом в имени -->
+<!--    <Item Name="[key] (raw, tag={u.key_tt})">u.key_val</Item>
+
+    <Item Name="[next]">u.next</Item>-->
+  </Expand>
+</Type>
+  <Type Name="Node::NodeKey____">
+     <!-- Используем key_val (ключ) и key_tt для определения типа -->
+     <DisplayString Condition="(key_tt &amp; 0x0F)==0">nil</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==1">boolean: {(key_val.i != 0)}</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==2">lightuserdata: 0x{(void*)key_val.p}</DisplayString>
+     <!-- integer vs float -->
+     <DisplayString Condition="(key_tt &amp; 0x3F)==3">integer: {(lua_Integer)key_val.i}</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x3F)==19">number: {(lua_Number)key_val.n}</DisplayString>
+     <!-- строки -->
+     <DisplayString Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &gt;= 0">
+     string: "{(char*)&amp;(((TString*)key_val.gc)-&gt;contents),s}"
+   </DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &lt; 0">
+     string: "{((TString*)key_val.gc)-&gt;contents,s}"
+   </DisplayString>
+     <!-- таблицы, функции и т.д. -->
+     <DisplayString Condition="(key_tt &amp; 0x0F)==5">table: 0x{(void*)key_val.gc}</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==6">function: 0x{(void*)key_val.p}</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==7">userdata: 0x{(void*)key_val.gc}</DisplayString>
+     <DisplayString Condition="(key_tt &amp; 0x0F)==8">thread: 0x{(void*)key_val.gc}</DisplayString>
+     <DisplayString>unknown (key_tt={key_tt})</DisplayString>
+     <Expand>
+        <Item Name="[key type]">key_tt &amp; 0x0F</Item>
+        <Item Name="[key tag]">key_tt</Item>
+        <Item Name="[key value]">key_val</Item>
+
+        <!-- строковый ключ (short) -->
+        <Item Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &gt;= 0" Name="[key]">
+          {(char*)&amp;(((TString*)key_val.gc)->contents),s}
+        </Item>
+
+        <!-- строковый ключ (long) -->
+        <Item Condition="(key_tt &amp; 0x0F)==4 &amp;&amp; ((TString*)key_val.gc)-&gt;shrlen &lt; 0" Name="[key]">
+          {((TString*)key_val.gc)->contents,s}
+        </Item>
+
+        <!-- integer -->
+        <Item Condition="(key_tt &amp; 0x3F)==3" Name="[key]">{(lua_Integer)key_val.i}</Item>
+
+        <!-- number -->
+        <Item Condition="(key_tt &amp; 0x3F)==19" Name="[key]">{(lua_Number)key_val.n}</Item>
+
+        <!-- boolean -->
+        <Item Condition="(key_tt &amp; 0x0F)==1" Name="[key]">{(key_val.i != 0)}</Item>
+
+        <!-- универсальный fallback (показывает Value и тег в имени) -->
+        <Item Name="[key] (tag={key_tt})">key_val</Item>
+
+     </Expand>
+
+  </Type>
+
+
    <Type Name="lua_State *">
       <DisplayString>lua_State* (addr=0x{(void*)this})</DisplayString>
       <Expand>
