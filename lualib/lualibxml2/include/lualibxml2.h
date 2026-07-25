@@ -63,7 +63,7 @@ namespace luabridge {
         domNode* GetAttribute(const char* name, lua_State* L);
 
         int GetChildCount(lua_State* L) const;
-        void FillChildNodes(std::vector<domNode*> &cnilds) const;
+        void FillChildNodes(std::vector<domNode*>& cnilds) const;
         domNode* GetChild(int index, lua_State* L);
 
         int luaGetNodeType(lua_State* L) const;
@@ -78,7 +78,7 @@ namespace luabridge {
         RCNode luaGetLastChild(lua_State* L) const;
         RCNode luaGetNextSibling(lua_State* L)const;
         RCNode luaGetPreviousSibling(lua_State* L) const;
-        RCNodeList luaGetAttributes(lua_State* L) ;
+        RCNodeList luaGetAttributes(lua_State* L);
         RCNodeList luaGetChildNodes(lua_State* L);
         std::string luaGetText(lua_State* L) const;
         void luaSetText(const char* text, lua_State* L);
@@ -88,7 +88,7 @@ namespace luabridge {
         std::string GetXml(lua_State* L, bool format);
         void CheckXpathResult(xmlXPathObjectPtr xpathResult, xmlXPathContextPtr xpathCtx, lua_State* L) const;
 
-        RCNode luaAppendChild(domNode* node, lua_State* L) ;
+        RCNode luaAppendChild(domNode* node, lua_State* L);
         RCNode luaCloneNode(bool deep, lua_State* L);
         RCDocument luaCloneDocument(bool deep, lua_State* L);
         bool luaHasChildNodes(lua_State* L) const;
@@ -98,14 +98,15 @@ namespace luabridge {
         RCNodeList luaGetElementsByTagName(const char* name, lua_State* L);
         RCNode luaGetElementByTagName(const char* name, bool deep, lua_State* L);
         RCNodeList luaSelectNodes(const char* name, lua_State* L);
+        RC_IIF_Int_RCNode luaISelectNodesIter(const char* xpath, lua_State* L);
         std::string luaCompareDocumentPosition(domNode* node2Compare, lua_State* L);
-        std::string luaGetAttribute(std::string name, lua_State* L) ;
+        std::string luaGetAttribute(std::string name, lua_State* L);
         void luaSetAttribute(std::string name, std::string value, lua_State* L);
 
         void luaRemoveAttribute(const char* name, lua_State* L);
         void SetDocRef(domDocument* docRef);
-        
-        
+
+
         inline bool hasChildren() const { return m_node->children != nullptr; }
         inline bool hasNextSibling() const { return m_node->next != nullptr; }
 
@@ -185,7 +186,8 @@ namespace luabridge {
             m_errorCode(p->m_errorCode),
             m_line(p->m_line),
             m_linePos(p->m_linePos),
-            m_reasonText(p->m_reasonText) {}
+            m_reasonText(p->m_reasonText) {
+        }
 
         void Set(const xmlError* error);
         void Set(int errorCode, const std::string& text);
@@ -199,14 +201,14 @@ namespace luabridge {
     public:
 
         RC_IIF_Int_RCNode luaGetIterator();
-        domNodeList(){}
+        domNodeList() {}
         domNodeList(domNode* node, bool attributes);
         domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count);
         virtual ~domNodeList();
 
-         domNode* GetItem(LUA_INTEGER i, lua_State* L);
+        domNode* GetItem(LUA_INTEGER i, lua_State* L);
 
-        inline bool IsAttributeList()  const{ return m_isAttributeList; }
+        inline bool IsAttributeList()  const { return m_isAttributeList; }
         void AddXmlNode(domDocument* doc, xmlNodePtr node);
 
         size_t luaGetLength(lua_State* L);
@@ -217,7 +219,7 @@ namespace luabridge {
     private:
         bool m_isAttributeList{ false };
         int m_index{ 0 };
-        std::vector<domNode*> m_nodes ;
+        std::vector<domNode*> m_nodes;
         domNode* m_nodeRef{ nullptr };
     };
 
@@ -245,7 +247,7 @@ namespace luabridge {
 
         void next() override
         {
-            if (++key < count) {               
+            if (++key < count) {
                 value = RCNode(m_parent->GetItem(key, nullptr));
                 return;
             }
