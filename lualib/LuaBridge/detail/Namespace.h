@@ -1205,7 +1205,7 @@ private:
      * as a Lua C closure. It extracts arguments from the Lua stack and
      * calls the member function, then pushes the iterator result.
      *
-     * If the last argument type is lua_State*, it is passed directly
+     * If an argument type is lua_State*, it is passed directly
      * rather than extracted from the Lua stack.
      */
     template <typename TKey, typename TValue, typename R, typename ClassT, typename... Args>
@@ -1248,43 +1248,29 @@ private:
         }
 
     private:
-        // Detect if the last argument type is lua_State*
-        template <typename... Ts>
-        struct HasLuaStateAtEnd;
-
-        template <>
-        struct HasLuaStateAtEnd<> : std::false_type {};
-
-        template <typename T, typename... Ts>
-        struct HasLuaStateAtEnd<T, Ts...>
+        // Helper: for lua_State* returns L directly; for other types extracts from stack
+        template <typename T>
+        struct LuaStackExtractor
         {
-            static constexpr bool value = HasLuaStateAtEnd<Ts...>::value;
+            static T get(lua_State* L, int index)
+            {
+                return Stack<T>::get(L, index);
+            }
         };
 
-        template <typename... Ts>
-        struct HasLuaStateAtEnd<lua_State*, Ts...> : std::true_type {};
-
-        // Invoke without lua_State* (all args come from Lua stack)
-        template <size_t... Is>
-        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...>,
-            std::false_type /*hasLuaState*/)
+        template <>
+        struct LuaStackExtractor<lua_State*>
         {
-            return (obj->*methodPtr)(Stack<Args>::get(L, 2 + Is)...);
-        }
-
-        // Invoke with lua_State* (last arg is L, rest come from Lua stack)
-        template <size_t... Is>
-        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...>,
-            std::true_type /*hasLuaState*/)
-        {
-            return (obj->*methodPtr)(Stack<Args>::get(L, 2 + Is)..., L);
-        }
+            static lua_State* get(lua_State* L, int /*index*/)
+            {
+                return L;
+            }
+        };
 
         template <size_t... Is>
-        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...> seq)
+        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...>)
         {
-            return invoke(L, obj, methodPtr, seq,
-                HasLuaStateAtEnd<Args...>{});
+            return (obj->*methodPtr)(LuaStackExtractor<Args>::get(L, 2 + Is)...);
         }
     };
 
