@@ -215,7 +215,7 @@ class Namespace : public detail::Registrar
 
             lua_newtable(L); // Stack: ns, co, cl, st, propset table (ps)
             lua_rawsetp(
-                L, -2, detail::getPropsetKey()); // st [propsetKey] = pg. Stack: ns, co, cl, st
+                L, -2, detail::getPropsetKey()); // st [propsetKey] = ps. Stack: ns, co, cl, st
 
             lua_pushvalue(L, -2); // Stack: ns, co, cl, st, cl
             lua_rawsetp(L, -2, detail::getClassKey()); // st [classKey] = cl. Stack: ns, co, cl, st
@@ -1199,6 +1199,97 @@ private:
 
     //--------------------------------------------------------------------------
     /**
+     * @brief Factory struct for creating iterator closures.
+     *
+     * This struct provides a static makeIterator function that can be used
+     * as a Lua C closure. It extracts arguments from the Lua stack and
+     * calls the member function, then pushes the iterator result.
+     *
+     * If the last argument type is lua_State*, it is passed directly
+     * rather than extracted from the Lua stack.
+     */
+    template <typename TKey, typename TValue, typename R, typename ClassT, typename... Args>
+    struct IteratorFactory
+    {
+        using MemType = R (ClassT::*)(Args...);
+
+        static int makeIterator(lua_State* L)
+        {
+            // Retrieve the method pointer from the upvalue
+            MemType methodPtr = LuaIteratorWrapper<TKey, TValue>::template
+                readMethodUpvalue<MemType>(L, lua_upvalueindex(1));
+
+            if (!methodPtr) {
+                luaL_error(L, "addIterator: invalid method pointer");
+                return 0;
+            }
+
+            // Get the object (self) from the Lua stack
+            ClassT* obj = Stack<ClassT*>::get(L, 1);
+            if (!obj) {
+                luaL_error(L, "addIterator: invalid object");
+                return 0;
+            }
+
+            // Call the member function with arguments extracted from Lua stack
+            R iter = invoke(L, obj, methodPtr, std::index_sequence_for<Args...>{});
+
+            // Push the iterator to Lua as a callable userdata (first return value)
+            LuaIteratorWrapper<TKey, TValue>::pushToLua(L, iter);
+
+            // Push second and third values (unused placeholders)
+            lua_pushnil(L);
+            lua_pushnil(L);
+
+            // Fourth return value: duplicate the same userdata instance
+            lua_pushvalue(L, -3);
+
+            return 4; // iterator, state(nil), control(nil), iterator-instance
+        }
+
+    private:
+        // Detect if the last argument type is lua_State*
+        template <typename... Ts>
+        struct HasLuaStateAtEnd;
+
+        template <>
+        struct HasLuaStateAtEnd<> : std::false_type {};
+
+        template <typename T, typename... Ts>
+        struct HasLuaStateAtEnd<T, Ts...>
+        {
+            static constexpr bool value = HasLuaStateAtEnd<Ts...>::value;
+        };
+
+        template <typename... Ts>
+        struct HasLuaStateAtEnd<lua_State*, Ts...> : std::true_type {};
+
+        // Invoke without lua_State* (all args come from Lua stack)
+        template <size_t... Is>
+        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...>,
+            std::false_type /*hasLuaState*/)
+        {
+            return (obj->*methodPtr)(Stack<Args>::get(L, 2 + Is)...);
+        }
+
+        // Invoke with lua_State* (last arg is L, rest come from Lua stack)
+        template <size_t... Is>
+        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...>,
+            std::true_type /*hasLuaState*/)
+        {
+            return (obj->*methodPtr)(Stack<Args>::get(L, 2 + Is)..., L);
+        }
+
+        template <size_t... Is>
+        static R invoke(lua_State* L, ClassT* obj, MemType methodPtr, std::index_sequence<Is...> seq)
+        {
+            return invoke(L, obj, methodPtr, seq,
+                HasLuaStateAtEnd<Args...>{});
+        }
+    };
+
+    //--------------------------------------------------------------------------
+    /**
      * @brief Internal implementation of addIterator.
      *
      * This method creates a Lua closure that calls the specified member
@@ -1217,9 +1308,6 @@ private:
      * @param seq       Unused parameter for template deduction.
      *
      * @return A reference to this Class object for chaining.
-     *
-     * @note This implementation currently supports only methods without arguments.
-     *       Full argument support will be added in a future update.
      */
     template <typename TKey, typename TValue, typename R,
         typename ClassT, typename... Args, size_t... Is>
@@ -1229,62 +1317,14 @@ private:
         std::index_sequence<Is...> /*seq*/)
     {
         assertStackState();
-        // Create a Lua C function that acts as a factory for iterators
-        auto makeIterator = [](lua_State* L) -> int {
-            // Retrieve the method pointer from the upvalue (type-safe)
-            using MemType = R (ClassT::*)(Args...);
-            MemType methodPtr = LuaIteratorWrapper<TKey, TValue>::template
-                readMethodUpvalue<MemType>(L, lua_upvalueindex(1));
-            Udata* g = (Udata*)L;
-            if (!methodPtr) {
-                luaL_error(L, "addIterator: invalid method pointer");
-                return 0;
-            }
 
-            // Get the object (self) from the Lua stack
-            // In Lua: obj:enumerator(arg1, arg2, ...)
-            ClassT* obj = Stack<ClassT*>::get(L, 1);
-           // ClassT* obj = detail::StackHelper<ClassT*>::get(L, 1);
-            if (!obj) {
-                luaL_error(L, "addIterator: invalid object");
-                return 0;
-            }
-
-            // NOTE: Currently only supports methods with no arguments.
-            // For argument support, we need to extract Args... from Lua stack
-            // using detail::Stack and a tuple.
-            // See the full implementation in the previous version of this file.
-            static_assert(sizeof...(Args) == 0,
-                "Full argument support requires tuple unpacking. "
-                "Currently only zero-argument methods are supported.");
-
-            // Call the member function
-            R iter = (obj->*methodPtr)();
-
-            // Push the iterator to Lua as a callable function (first return value)
-            LuaIteratorWrapper<TKey, TValue>::pushToLua(L, iter);
-
-            // Push second and third values (unused placeholders)
-            lua_pushnil(L);
-            lua_pushnil(L);
-
-            // Fourth return value: duplicate the same userdata instance (do not create a second wrapper)
-            // After pushToLua the userdata is at stack top; after pushing two nils it becomes -3.
-            lua_pushvalue(L, -3);
-
-            return 4; // iterator, state(nil), control(nil), iterator-instance
-            };
-
-        // Register the factory function in the class table
-        // Store the method pointer as a light userdata upvalue
-
-          // push method pointer as typed userdata upvalue (no memcpy)
+        // Push method pointer as typed userdata upvalue
         LuaIteratorWrapper<TKey, TValue>::template pushMethodUpvalue<decltype(method)>(L, method);
 
-        // create the factory closure which captures the userdata
-        lua_pushcclosure(L, makeIterator, 1);
+        // Create the factory closure which captures the userdata
+        lua_pushcclosure(L, &IteratorFactory<TKey, TValue, R, ClassT, Args...>::makeIterator, 1);
 
-        // store function in class table (use rawsetfield as original code expected)
+        // Store function in class table (register both in const and class tables)
         lua_pushvalue(L, -1);
         rawsetfield(L, -4, name);
         rawsetfield(L, -4, name);
