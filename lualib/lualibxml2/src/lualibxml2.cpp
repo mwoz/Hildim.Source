@@ -27,7 +27,7 @@ namespace luabridge {
 
     static void XMLCDECL XmlCommonErrorHandler(void* ctx, const char* msg, ...)
     {
-        // переделать для показа диагностики через принт?
+        // РїРµСЂРµРґРµР»Р°С‚СЊ РґР»СЏ РїРѕРєР°Р·Р° РґРёР°РіРЅРѕСЃС‚РёРєРё С‡РµСЂРµР· РїСЂРёРЅС‚?
 
 #if defined(XML2_DEBUG)
         va_list args;
@@ -176,7 +176,7 @@ namespace luabridge {
             LuaException::Throw(LuaException(L, funcname, "Invalid XML node.", 1));
     }
 
-    xmlNodePtr domNode::InsertNode(domNode* nodeRef, lua_State* L, domNode* nodeBeforeRef ) {
+    xmlNodePtr domNode::InsertNode(domNode* nodeRef, lua_State* L, domNode* nodeBeforeRef) {
         if (nodeBeforeRef && nodeBeforeRef->GetNode()->parent != m_node)
             LuaException::Throw(LuaException(L, "InsertNode", "'Before' node is not a child node.", 1));
 
@@ -255,9 +255,9 @@ namespace luabridge {
     void domNode::UnlinkNode() noexcept {
         xmlUnlinkNode(m_node);
         m_isNodeOwner = true;
-     }
-    
-    int domNode::GetAttributeCount(lua_State* L) const{
+    }
+
+    int domNode::GetAttributeCount(lua_State* L) const {
         AssertValid(L, "GetAttributeCount");
 
         if (m_node->type != XML_ELEMENT_NODE)
@@ -299,7 +299,7 @@ namespace luabridge {
         return m_docRef->CreateNodeRef((xmlNodePtr)xmlHasProp(m_node, CHR2XML(name)));
     }
 
-    int domNode::GetChildCount(lua_State* L) const{
+    int domNode::GetChildCount(lua_State* L) const {
         AssertValid(L, "GetChildCount");
 
         int count = 0;
@@ -309,7 +309,7 @@ namespace luabridge {
         return count;
     }
 
-    void domNode::FillChildNodes(std::vector<domNode*>  &cnilds) const {
+    void domNode::FillChildNodes(std::vector<domNode*>& cnilds) const {
 
         for (xmlNodePtr n = m_node->children; n != nullptr; n = n->next)
             cnilds.insert(cnilds.end(), m_docRef->CreateNodeRef(n, true));
@@ -346,7 +346,7 @@ namespace luabridge {
     {
         AssertValid(L, "luaGetNodeName");
         std::string result;
- 
+
         if ((m_node->type == XML_ATTRIBUTE_NODE || m_node->type == XML_ELEMENT_NODE) && m_node->ns && m_node->ns->prefix) {
             result = XML2CHR(m_node->ns->prefix);
             result += ':';
@@ -356,11 +356,11 @@ namespace luabridge {
             result = XML2CHR(m_node->name);
         return result;
     }
-   std::string domNode::luaGetName(lua_State* L) const
+    std::string domNode::luaGetName(lua_State* L) const
     {
         AssertValid(L, "luaGetName");
         std::string result;
- 
+
         if (m_node->type != XML_ATTRIBUTE_NODE)
             LuaException::Throw(LuaException(L, "luaGetName", "Property 'name' is supported for XML_ATTRIBUTE_NODE only.", 1));
 
@@ -373,7 +373,7 @@ namespace luabridge {
             result = XML2CHR(m_node->name);
         return result;
     }
-   std::string domNode::luaGetPrefix(lua_State* L) const
+    std::string domNode::luaGetPrefix(lua_State* L) const
     {
         AssertValid(L, "luaGetPrefix");
         std::string result = "";
@@ -390,156 +390,156 @@ namespace luabridge {
         return result;
     }
 
-    RCDocument domNode::luaGetOwnerDocument(lua_State* L){
+    RCDocument domNode::luaGetOwnerDocument(lua_State* L) {
         AssertValid(L, "luaGetOwnerDocument");
         if (this == m_docRef)
             return RCDocument(nullptr);
         else
             return RCDocument(m_docRef);
     }
-    RCNode domNode::luaGetParentNode(lua_State* L) const{
+    RCNode domNode::luaGetParentNode(lua_State* L) const {
         AssertValid(L, "luaGetParentNode");
         return RCNode(m_docRef->CreateNodeRef(m_node->parent));
     }
-   RCNode domNode::luaGetFirstChild(lua_State* L) const{
+    RCNode domNode::luaGetFirstChild(lua_State* L) const {
         AssertValid(L, "luaGetFirstChild");
         return RCNode(m_docRef->CreateNodeRef(m_node->children));
     }
-   RCNode domNode::luaGetLastChild(lua_State* L)const{
+    RCNode domNode::luaGetLastChild(lua_State* L)const {
         AssertValid(L, "luaGetLastChild");
         return RCNode(m_docRef->CreateNodeRef(m_node->last));
     }
-   RCNode domNode::luaGetNextSibling(lua_State* L) const{
+    RCNode domNode::luaGetNextSibling(lua_State* L) const {
         AssertValid(L, "luaGetNextSibling");
         return RCNode(m_docRef->CreateNodeRef(m_node->next));
     }
-   RCNode domNode::luaGetPreviousSibling(lua_State* L) const{
+    RCNode domNode::luaGetPreviousSibling(lua_State* L) const {
         AssertValid(L, "luaGetPreviousSibling");
         return RCNode(m_docRef->CreateNodeRef(m_node->prev));
     }
-   RCNodeList domNode::luaGetAttributes(lua_State* L) {
-       AssertValid(L, "luaGetAttributes");
-       if (m_node->type != XML_ELEMENT_NODE)
-           LuaException::Throw(LuaException(L, "luaGetAttributes", "XML node is not an element.", 1));
+    RCNodeList domNode::luaGetAttributes(lua_State* L) {
+        AssertValid(L, "luaGetAttributes");
+        if (m_node->type != XML_ELEMENT_NODE)
+            LuaException::Throw(LuaException(L, "luaGetAttributes", "XML node is not an element.", 1));
 
-       return RCNodeList(new domNodeList(this, true));
+        return RCNodeList(new domNodeList(this, true));
 
-   }
+    }
 
-   RCNodeList domNode::luaGetChildNodes(lua_State* L) {
-       AssertValid(L, "luaGetChildNodes");
-       if (m_node->type != XML_ELEMENT_NODE)
-           LuaException::Throw(LuaException(L, "luaGetChildNodes", "XML node is not an element.", 1));
+    RCNodeList domNode::luaGetChildNodes(lua_State* L) {
+        AssertValid(L, "luaGetChildNodes");
+        if (m_node->type != XML_ELEMENT_NODE)
+            LuaException::Throw(LuaException(L, "luaGetChildNodes", "XML node is not an element.", 1));
 
-       return RCNodeList(new domNodeList(this, false));
-   }
+        return RCNodeList(new domNodeList(this, false));
+    }
 
-   std::string domNode::luaGetText(lua_State* L) const{
-       AssertValid(L, "luaGetText");
+    std::string domNode::luaGetText(lua_State* L) const {
+        AssertValid(L, "luaGetText");
 
-       std::string result;
-       size_t startCdata = SIZE_MAX, endCdata = SIZE_MAX; 
-       BuildNodeText(m_node, result, startCdata, endCdata);
+        std::string result;
+        size_t startCdata = SIZE_MAX, endCdata = SIZE_MAX;
+        BuildNodeText(m_node, result, startCdata, endCdata);
 
-       // trim right till the last CDATA
-       if (endCdata != SIZE_MAX) {
-           while (endCdata < result.length() && result.length() > 0)
-           {
-               char c = result[result.length() - 1];
-               if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
-                   result.erase(result.cend());
-               else
-                   break;
-           }
-           // trim left to the first CDATA
-           if (startCdata != SIZE_MAX)
-               startCdata = result.length();
+        // trim right till the last CDATA
+        if (endCdata != SIZE_MAX) {
+            while (endCdata < result.length() && result.length() > 0)
+            {
+                char c = result[result.length() - 1];
+                if (c == ' ' || c == '	' || (c >= 10 && c <= 13))
+                    result.erase(result.cend());
+                else
+                    break;
+            }
+            // trim left to the first CDATA
+            if (startCdata != SIZE_MAX)
+                startCdata = result.length();
 
-           int spaceCount = 0;
-           while (spaceCount < startCdata)
-           {
-               char c = result[spaceCount];
-               if (c == ' ' || c == '\t' || (c >= 10 && c <= 13))
-                   spaceCount++;
-               else
-                   break;
-           }
-           if (spaceCount > 0)
-               result.erase(0, spaceCount);
-       }
-       return result;
-   }
-   void domNode::luaSetText(const char* text, lua_State* L) {
-       AssertValid(L, "luaSetText");
+            int spaceCount = 0;
+            while (spaceCount < startCdata)
+            {
+                char c = result[spaceCount];
+                if (c == ' ' || c == '	' || (c >= 10 && c <= 13))
+                    spaceCount++;
+                else
+                    break;
+            }
+            if (spaceCount > 0)
+                result.erase(0, spaceCount);
+        }
+        return result;
+    }
+    void domNode::luaSetText(const char* text, lua_State* L) {
+        AssertValid(L, "luaSetText");
 
-       switch (m_node->type)
-       {
-       case XML_DOCUMENT_FRAG_NODE:
-       case XML_ELEMENT_NODE:
-       case XML_ATTRIBUTE_NODE:
-       {
-           // clear node
-           if (m_node->children)
-           {
-               InvalidateNodeList(m_node->children);
-               xmlFreeNodeList(m_node->children);
-               m_node->children = m_node->last = NULL;
-           }
+        switch (m_node->type)
+        {
+        case XML_DOCUMENT_FRAG_NODE:
+        case XML_ELEMENT_NODE:
+        case XML_ATTRIBUTE_NODE:
+        {
+            // clear node
+            if (m_node->children)
+            {
+                InvalidateNodeList(m_node->children);
+                xmlFreeNodeList(m_node->children);
+                m_node->children = m_node->last = NULL;
+            }
 
-           xmlNodePtr nodeText = xmlNewDocText(m_docRef->GetDoc(), CHR2XML(text));
-           if (nodeText)
-               xmlAddChild(m_node, nodeText);
-           break;
-       }
-       case XML_CDATA_SECTION_NODE:
-       case XML_TEXT_NODE:
-       case XML_COMMENT_NODE:
-           if (
-               m_node->content && m_node->content != (xmlChar*)&(m_node->properties) &&
-               (m_node->doc == NULL || m_node->doc->dict == NULL || xmlDictOwns(m_node->doc->dict, m_node->content) == 0)
-               )
-               xmlFree(m_node->content);
-           m_node->content = xmlStrdup(CHR2XML(text));
-           m_node->properties = NULL;
-           break;
+            xmlNodePtr nodeText = xmlNewDocText(m_docRef->GetDoc(), CHR2XML(text));
+            if (nodeText)
+                xmlAddChild(m_node, nodeText);
+            break;
+        }
+        case XML_CDATA_SECTION_NODE:
+        case XML_TEXT_NODE:
+        case XML_COMMENT_NODE:
+            if (
+                m_node->content && m_node->content != (xmlChar*)&(m_node->properties) &&
+                (m_node->doc == NULL || m_node->doc->dict == NULL || xmlDictOwns(m_node->doc->dict, m_node->content) == 0)
+                )
+                xmlFree(m_node->content);
+            m_node->content = xmlStrdup(CHR2XML(text));
+            m_node->properties = NULL;
+            break;
 
-       default:
-           LuaException::Throw(LuaException(L, "luaSetText", "Setting Text is not supported for this type of node.", 1));
-       }
-   }
-   std::string domNode::luaGetNodeValue(lua_State* L) const
-   {
-       AssertValid(L, "luaGetNodeValue");
+        default:
+            LuaException::Throw(LuaException(L, "luaSetText", "Setting Text is not supported for this type of node.", 1));
+        }
+    }
+    std::string domNode::luaGetNodeValue(lua_State* L) const
+    {
+        AssertValid(L, "luaGetNodeValue");
 
-       std::string result;
-       switch (m_node->type)
-       {
-       case XML_ATTRIBUTE_NODE:
-           if (m_node->children)
-           {
-               if (m_node->children->next == nullptr && m_node->children->type == XML_TEXT_NODE)  // optimization for the common case
-                   result = XML2CHR(m_node->children->content);
-               else
-               {
-                   auto tmp = xmlNodeGetContent(m_node);
-                   result = XML2CHR(tmp);
-                   xmlFree(tmp);
-               }
-           }
-           break;
+        std::string result;
+        switch (m_node->type)
+        {
+        case XML_ATTRIBUTE_NODE:
+            if (m_node->children)
+            {
+                if (m_node->children->next == nullptr && m_node->children->type == XML_TEXT_NODE)  // optimization for the common case
+                    result = XML2CHR(m_node->children->content);
+                else
+                {
+                    auto tmp = xmlNodeGetContent(m_node);
+                    result = XML2CHR(tmp);
+                    xmlFree(tmp);
+                }
+            }
+            break;
 
-       case XML_CDATA_SECTION_NODE:
-       case XML_TEXT_NODE:
-       case XML_COMMENT_NODE:
-           result = XML2CHR(m_node->content);
-           break;
+        case XML_CDATA_SECTION_NODE:
+        case XML_TEXT_NODE:
+        case XML_COMMENT_NODE:
+            result = XML2CHR(m_node->content);
+            break;
 
-       default:
-           break;
-       }
+        default:
+            break;
+        }
 
-       return result;
-   }
+        return result;
+    }
     std::string domNode::GetXml(lua_State* L, bool format)
     {
         AssertValid(L, "luaGetXml");
@@ -571,7 +571,7 @@ namespace luabridge {
         }
 
         xmlBufferPtr buf = xmlBufferCreate();
-        xmlSaveCtxtPtr saveCtx = xmlSaveToBuffer(buf, "UTF-8", XML_SAVE_AS_XML | XML_SAVE_NO_DECL | (format ? XML_SAVE_FORMAT : 0) );
+        xmlSaveCtxtPtr saveCtx = xmlSaveToBuffer(buf, "UTF-8", XML_SAVE_AS_XML | XML_SAVE_NO_DECL | (format ? XML_SAVE_FORMAT : 0));
         auto resultCode = xmlSaveTree(saveCtx, m_node);
         if (resultCode < 0)
         {
@@ -587,20 +587,20 @@ namespace luabridge {
         xmlSaveClose(saveCtx);
         m_node->nsDef = nsDef_Saved;  // restore ns declaration
         xmlBufferFree(buf);
-       return result.c_str();
+        return result.c_str();
     }
 
     RCNode domNode::luaAppendChild(domNode* node, lua_State* L) {
         AssertValid(L, "luaAppendChild");
 
-       if (node->GetNode()->type == XML_ATTRIBUTE_NODE)
-           LuaException::Throw(LuaException(L, "luaAppendChild", "Attribute is not allowed in this method.", 1));
+        if (node->GetNode()->type == XML_ATTRIBUTE_NODE)
+            LuaException::Throw(LuaException(L, "luaAppendChild", "Attribute is not allowed in this method.", 1));
 
         return RCNode(m_docRef->CreateNodeRef(InsertNode(node, L)));
     }
     RCNode domNode::luaCloneNode(bool deep, lua_State* L) {
         AssertValid(L, "luaCloneNode");
-        
+
         xmlNodePtr node = xmlDocCopyNode(m_node, m_docRef->GetDoc(), deep ? 1 : 0);
         if (node->type == XML_DOCUMENT_NODE)
             LuaException::Throw(LuaException(L, "luaCloneNode", "XmlDocument is not allowed in this method. Use cloneDocument", 1));
@@ -620,7 +620,7 @@ namespace luabridge {
         return (bool)(m_node->children != nullptr);
     }
 
-    RCNode domNode::luaInsertBefore(domNode* node, domNode* nodeBefore, lua_State* L)   {
+    RCNode domNode::luaInsertBefore(domNode* node, domNode* nodeBefore, lua_State* L) {
         AssertValid(L, "luaInsertBefore");
 
         if (node->GetNode()->type == XML_ATTRIBUTE_NODE)
@@ -656,35 +656,35 @@ namespace luabridge {
             return RCNode(nullptr);
         else {
             domNode* pNode = m_docRef->CreateNodeRef(xpathResult->nodesetval->nodeTab[0]);
-          //  pNode->GetDocRef()->incReferenceCount();
+            //  pNode->GetDocRef()->incReferenceCount();
             result = RCNode(pNode);
         }
         xmlXPathFreeObject(xpathResult);
         return result;
     }
 
-    void domNode::CheckXpathResult(xmlXPathObjectPtr xpathResult, xmlXPathContextPtr xpathCtx, lua_State* L) const{
+    void domNode::CheckXpathResult(xmlXPathObjectPtr xpathResult, xmlXPathContextPtr xpathCtx, lua_State* L) const {
 
         if (xpathResult == NULL)
         {
             std::string s = "Invalid XPath expression ";
             char* erCode = "";
             switch (xpathCtx->lastError.code) {
-                case XML_XPATH_NUMBER_ERROR: erCode = "NUMBER_ERROR "; break;
-                case XML_XPATH_UNFINISHED_LITERAL_ERROR: erCode = "UNFINISHED_LITERAL_ERROR "; break;
-                case XML_XPATH_START_LITERAL_ERROR: erCode = "START_LITERAL_ERROR "; break;
-                case XML_XPATH_VARIABLE_REF_ERROR: erCode = "VARIABLE_REF_ERROR "; break;
-                case XML_XPATH_UNDEF_VARIABLE_ERROR: erCode = "UNDEF_VARIABLE_ERROR "; break;
-                case XML_XPATH_INVALID_PREDICATE_ERROR: erCode = "INVALID_PREDICATE_ERROR "; break;
-                case XML_XPATH_EXPR_ERROR: erCode = "EXPR_ERROR "; break;
-                case XML_XPATH_UNCLOSED_ERROR: erCode = "UNCLOSED_ERROR "; break;
-                case XML_XPATH_UNKNOWN_FUNC_ERROR: erCode = "UNKNOWN_FUNC_ERROR "; break;
-                case XML_XPATH_INVALID_OPERAND: erCode = "INVALID_OPERAND "; break;
-                case XML_XPATH_INVALID_TYPE: erCode = "INVALID_TYPE "; break;
-                case XML_XPATH_INVALID_ARITY: erCode = "INVALID_ARITY "; break;
-                case XML_XPATH_INVALID_CTXT_SIZE: erCode = "INVALID_CTXT_SIZE "; break;
-                case XML_XPATH_INVALID_CTXT_POSITION: erCode = "INVALID_CTXT_POSITION "; break;
-                case XML_XPATH_MEMORY_ERROR: erCode = "MEMORY_ERROR "; break;
+            case XML_XPATH_NUMBER_ERROR: erCode = "NUMBER_ERROR "; break;
+            case XML_XPATH_UNFINISHED_LITERAL_ERROR: erCode = "UNFINISHED_LITERAL_ERROR "; break;
+            case XML_XPATH_START_LITERAL_ERROR: erCode = "START_LITERAL_ERROR "; break;
+            case XML_XPATH_VARIABLE_REF_ERROR: erCode = "VARIABLE_REF_ERROR "; break;
+            case XML_XPATH_UNDEF_VARIABLE_ERROR: erCode = "UNDEF_VARIABLE_ERROR "; break;
+            case XML_XPATH_INVALID_PREDICATE_ERROR: erCode = "INVALID_PREDICATE_ERROR "; break;
+            case XML_XPATH_EXPR_ERROR: erCode = "EXPR_ERROR "; break;
+            case XML_XPATH_UNCLOSED_ERROR: erCode = "UNCLOSED_ERROR "; break;
+            case XML_XPATH_UNKNOWN_FUNC_ERROR: erCode = "UNKNOWN_FUNC_ERROR "; break;
+            case XML_XPATH_INVALID_OPERAND: erCode = "INVALID_OPERAND "; break;
+            case XML_XPATH_INVALID_TYPE: erCode = "INVALID_TYPE "; break;
+            case XML_XPATH_INVALID_ARITY: erCode = "INVALID_ARITY "; break;
+            case XML_XPATH_INVALID_CTXT_SIZE: erCode = "INVALID_CTXT_SIZE "; break;
+            case XML_XPATH_INVALID_CTXT_POSITION: erCode = "INVALID_CTXT_POSITION "; break;
+            case XML_XPATH_MEMORY_ERROR: erCode = "MEMORY_ERROR "; break;
             }
             s += erCode;
 
@@ -693,26 +693,26 @@ namespace luabridge {
             std::string parse = xpathCtx->lastError.str1;
             s += parse.substr(0, xpathCtx->lastError.int1);
             s += "-->";
-            s += parse.substr(xpathCtx->lastError.int1 , 1);
+            s += parse.substr(xpathCtx->lastError.int1, 1);
             s += "<--";
-            if(parse.length() > xpathCtx->lastError.int1)
+            if (parse.length() > xpathCtx->lastError.int1)
                 s += parse.substr(xpathCtx->lastError.int1 + 1);
             xmlXPathFreeContext(xpathCtx);
             LuaException::Throw(LuaException(L, "CheckXpathResult", s.c_str(), 1));
         }
-        xmlXPathFreeContext(xpathCtx);    
+        xmlXPathFreeContext(xpathCtx);
     }
-    // Функция для рекурсивного поиска элементов по имени тега
+    // Р¤СѓРЅРєС†РёСЏ РґР»СЏ СЂРµРєСѓСЂСЃРёРІРЅРѕРіРѕ РїРѕРёСЃРєР° СЌР»РµРјРµРЅС‚РѕРІ РїРѕ РёРјРµРЅРё С‚РµРіР°
     void domNode::findElementsByName(const std::string& tagName, domNodeList* result) {
         if (!m_node)
             return;
-        // Проверяем, является ли текущий узел элементом (XML_ELEMENT_NODE)
+        // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ СѓР·РµР» СЌР»РµРјРµРЅС‚РѕРј (XML_ELEMENT_NODE)
         if (m_node->type == XML_ELEMENT_NODE) {
-            // Сравниваем имя тега (без учёта пространства имён)
+            // РЎСЂР°РІРЅРёРІР°РµРј РёРјСЏ С‚РµРіР° (Р±РµР· СѓС‡С‘С‚Р° РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° РёРјС‘РЅ)
             if (std::string(XML2CHR(m_node->name)) == tagName) {
                 result->AddXmlNode(m_docRef, m_node);
             }
-            // Рекурсивно обходим дочерние узлы
+            // Р РµРєСѓСЂСЃРёРІРЅРѕ РѕР±С…РѕРґРёРј РґРѕС‡РµСЂРЅРёРµ СѓР·Р»С‹
             xmlNode* child = m_node->children;
             while (child != nullptr) {
                 domNode childDoc = domNode(m_docRef, child, false);
@@ -730,7 +730,7 @@ namespace luabridge {
     domNode* domNode::findElementByName(const std::string& tagName, bool deep) {
         if (!m_node)
             return nullptr;
-        // Проверяем, является ли текущий узел элементом (XML_ELEMENT_NODE)
+        // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ СѓР·РµР» СЌР»РµРјРµРЅС‚РѕРј (XML_ELEMENT_NODE)
         if (m_node->type == XML_ELEMENT_NODE) {
 
             xmlNode* child = m_node->children;
@@ -739,7 +739,7 @@ namespace luabridge {
                     return m_docRef->CreateNodeRef(child);
                 child = child->next;
             }
-            if(!deep)
+            if (!deep)
                 return nullptr;
             child = m_node->children;
             while (child != nullptr) {
@@ -759,7 +759,7 @@ namespace luabridge {
 
     RCNodeList domNode::luaSelectNodes(const char* xpath, lua_State* L) {
         AssertValid(L, "luaSelectNodes");
-        RCNodeList result; 
+        RCNodeList result;
         xmlXPathContextPtr xpathCtx = m_docRef->NewXPathContext(L);
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
@@ -770,7 +770,7 @@ namespace luabridge {
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
         CheckXpathResult(xpathResult, xpathCtx, L);
 
-        xmlNodeSetPtr noteSet = xpathResult->nodesetval; 
+        xmlNodeSetPtr noteSet = xpathResult->nodesetval;
         domNodeList* l = new domNodeList(m_docRef, noteSet ? noteSet->nodeTab : nullptr, noteSet ? noteSet->nodeNr : 0);
 
         result = RCNodeList(l);
@@ -779,7 +779,7 @@ namespace luabridge {
 
     }
 
-    // Вспомогательная функция: получить путь от узла до корня
+    // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ: РїРѕР»СѓС‡РёС‚СЊ РїСѓС‚СЊ РѕС‚ СѓР·Р»Р° РґРѕ РєРѕСЂРЅСЏ
     std::vector<xmlNodePtr> getAncestorPath(xmlNodePtr node) {
         std::vector<xmlNodePtr> path;
         while (node != nullptr) {
@@ -797,14 +797,14 @@ namespace luabridge {
 
         if (node2Compare->GetNode() == m_node) return "=";
 
-        // Получаем пути до корня
+        // РџРѕР»СѓС‡Р°РµРј РїСѓС‚Рё РґРѕ РєРѕСЂРЅСЏ
         auto path1 = getAncestorPath(m_node);
         auto path2 = getAncestorPath(node2Compare->GetNode());
 
-        // Находим ближайшего общего предка (LCA)
+        // РќР°С…РѕРґРёРј Р±Р»РёР¶Р°Р№С€РµРіРѕ РѕР±С‰РµРіРѕ РїСЂРµРґРєР° (LCA)
         xmlNodePtr lca = nullptr;
-        int i1 = path1.size() - 1;  // индекс в path1 (от корня)
-        int i2 = path2.size() - 1;  // индекс в path2 (от корня)
+        int i1 = path1.size() - 1;  // РёРЅРґРµРєСЃ РІ path1 (РѕС‚ РєРѕСЂРЅСЏ)
+        int i2 = path2.size() - 1;  // РёРЅРґРµРєСЃ РІ path2 (РѕС‚ РєРѕСЂРЅСЏ)
 
         while (i1 >= 0 && i2 >= 0 && path1[i1] == path2[i2]) {
             lca = path1[i1];
@@ -813,22 +813,22 @@ namespace luabridge {
         }
 
         if (!lca) {
-            // не в одном документе (маловероятно)
+            // РЅРµ РІ РѕРґРЅРѕРј РґРѕРєСѓРјРµРЅС‚Рµ (РјР°Р»РѕРІРµСЂРѕСЏС‚РЅРѕ)
             LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "The nodes being compared should not belong to different documents.", 1));
         }
 
-        // Теперь i1 и i2 указывают на первых различающихся потомков LCA
-        // Нужно сравнить их позиции в списке детей LCA
+        // РўРµРїРµСЂСЊ i1 Рё i2 СѓРєР°Р·С‹РІР°СЋС‚ РЅР° РїРµСЂРІС‹С… СЂР°Р·Р»РёС‡Р°СЋС‰РёС…СЃСЏ РїРѕС‚РѕРјРєРѕРІ LCA
+        // РќСѓР¶РЅРѕ СЃСЂР°РІРЅРёС‚СЊ РёС… РїРѕР·РёС†РёРё РІ СЃРїРёСЃРєРµ РґРµС‚РµР№ LCA
         xmlNodePtr child1 = (i1 >= 0) ? path1[i1] : nullptr;
         xmlNodePtr child2 = (i2 >= 0) ? path2[i2] : nullptr;
 
         if (!child1 || !child2) {
-            // Один из узлов — прямой предок другого
-            // Тот, что выше в иерархии, идёт раньше
-            return (child1) ? ">" : "<";  // node2 выше > раньше; node1 выше > раньше
+            // РћРґРёРЅ РёР· СѓР·Р»РѕРІ вЂ” РїСЂСЏРјРѕР№ РїСЂРµРґРѕРє РґСЂСѓРіРѕРіРѕ
+            // РўРѕС‚, С‡С‚Рѕ РІС‹С€Рµ РІ РёРµСЂР°СЂС…РёРё, РёРґС‘С‚ СЂР°РЅСЊС€Рµ
+            return (child1) ? ">" : "<";  // node2 РІС‹С€Рµ > СЂР°РЅСЊС€Рµ; node1 РІС‹С€Рµ > СЂР°РЅСЊС€Рµ
         }
 
-        // Сравниваем позиции child1 и child2 в списке детей LCA
+        // РЎСЂР°РІРЅРёРІР°РµРј РїРѕР·РёС†РёРё child1 Рё child2 РІ СЃРїРёСЃРєРµ РґРµС‚РµР№ LCA
         int pos1 = -1, pos2 = -1;
         int idx = 0;
         for (xmlNodePtr cur = lca->children; cur; cur = cur->next, idx++) {
@@ -837,7 +837,7 @@ namespace luabridge {
         }
 
         if (pos1 == -1 || pos2 == -1) {
-            // ошибка
+            // РѕС€РёР±РєР°
             LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "Internal Error!", 1));
         }
 
@@ -873,7 +873,7 @@ namespace luabridge {
         AssertValid(L, "luaSetAttribute");
 
         if (m_node->type != XML_ELEMENT_NODE) {
-            LuaException::Throw(LuaException(L,"luaSetAttribute", "XML node is not an element.", 1));
+            LuaException::Throw(LuaException(L, "luaSetAttribute", "XML node is not an element.", 1));
         }
 
         xmlSetProp(m_node, CHR2XML(name.c_str()), CHR2XML(value.c_str()));
@@ -901,7 +901,7 @@ namespace luabridge {
         }
     }
 
-   void domNode::SetDocRef(domDocument* docRef) {
+    void domNode::SetDocRef(domDocument* docRef) {
         //ASSERT(m_docRef != this);
         //ASSERT(docRef != this);
 
@@ -915,22 +915,22 @@ namespace luabridge {
 
     }
 
-////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
 
     domDocument::domDocument()
-        {
-            m_parseError = new domParseError();
-            m_docRef = this;
-            m_doc = xmlNewDoc(nullptr);
-            m_node = (xmlNodePtr)m_doc;
-        }
+    {
+        m_parseError = new domParseError();
+        m_docRef = this;
+        m_doc = xmlNewDoc(nullptr);
+        m_node = (xmlNodePtr)m_doc;
+    }
     domDocument::domDocument(xmlDocPtr doc)
-        {
-            m_parseError = new domParseError();
-            m_docRef = this;
-            m_doc = doc;
-            m_node = (xmlNodePtr)doc;
-        }
+    {
+        m_parseError = new domParseError();
+        m_docRef = this;
+        m_doc = doc;
+        m_node = (xmlNodePtr)doc;
+    }
     domDocument::~domDocument() {
         if (m_xmlScema)
             m_xmlScema->getReferenceCount();
@@ -948,14 +948,14 @@ namespace luabridge {
         assert(m_doc == node->doc);
         if (m_doc != node->doc)
             return nullptr;
- 
+
         if (node == m_node)
         {
-            if(setIncr)
+            if (setIncr)
                 incReferenceCount();
             return this;
         }
- 
+
         domNode* result;
         auto pair = m_mapNodeRefs.find(node);
         if (pair != m_mapNodeRefs.cend())
@@ -974,14 +974,14 @@ namespace luabridge {
         return result;
     }
 
-   
+
     domNode* domDocument::GetNodeRef(xmlNodePtr node) {
-       // auto pair = m_mapNodeRefs.at(node);
-       // if (pair)
-      //      return pair->value; 
+        // auto pair = m_mapNodeRefs.at(node);
+        // if (pair)
+       //      return pair->value; 
 
         return m_mapNodeRefs.at(node);
-       }
+    }
 
     void domDocument::RemoveNodeRef(domNode* nodeRef) {
         m_mapNodeRefs.erase(nodeRef->GetNode());
@@ -1003,8 +1003,8 @@ namespace luabridge {
             return;
 
         AttachNodeRef(nodeRef->GetDocRef(), nodeRef->GetNode(), false);
-      }
-//
+    }
+    //
     xmlXPathContextPtr domDocument::NewXPathContext(lua_State* L)
     {
         auto xpathCtx = xmlXPathNewContext(m_docRef->GetDoc());
@@ -1031,19 +1031,19 @@ namespace luabridge {
         }
         return xpathCtx;
     }
-//
-//       static void domNewObject(vb::CallContext& ctx);
-//
+    //
+    //       static void domNewObject(vb::CallContext& ctx);
+    //
     RCNode domDocument::luaGetDocumentElement() {
         domNode* p = CreateNodeRef(m_doc->children);
         return RCNode(p);
     }
-    
+
     //       void domGetParseError(vb::CallContext& ctx);
 //         
 //       void domGetPreserveWhiteSpace(vb::CallContext& ctx);
 //       void domSetPreserveWhiteSpace(vb::CallContext& ctx);
-         
+
     void domDocument::luaSetValidator(domXmlSchema* schema) {
         if (m_xmlScema)
             m_xmlScema->decReferenceCount();
@@ -1071,7 +1071,7 @@ namespace luabridge {
         m_parseError->Clear();
 
         xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | (m_preserveSpaces ? 0 : XML_PARSE_NOBLANKS));
-      
+
         int result = xmlParseDocument(parserCtx);
 
         if (result == 0)
@@ -1082,13 +1082,14 @@ namespace luabridge {
                     m_parseError->Set(xmlGetLastError());
                     xmlFreeDoc(parserCtx->myDoc);
                 }
-            } else
+            }
+            else
                 FreeDoc();
 
         }
         else
             m_parseError->Set(xmlGetLastError());
-       
+
         if (result == 0) {
             m_doc = parserCtx->myDoc;
             m_node = (xmlNodePtr)m_doc;
@@ -1096,7 +1097,7 @@ namespace luabridge {
         xmlFreeParserCtxt(parserCtx);
 
         if (result == 0 && m_doc->children && m_doc->children->ns) {
-    
+
             m_selectNamespaces.erase(m_selectNamespaces.cbegin(), m_selectNamespaces.cend());
             xmlNs* n;
             size_t sz_str = 0;
@@ -1120,14 +1121,14 @@ namespace luabridge {
                 }
             }
         }
-        
+
         return (result == 0);
     }
     RCError domDocument::luaGetParseError() const {
         return RCError(m_parseError);
     };
-    RCNode domDocument::luaCreateURINode(int type, const std::string name, std::string namespaceURI, lua_State* L){
- 
+    RCNode domDocument::luaCreateURINode(int type, const std::string name, std::string namespaceURI, lua_State* L) {
+
         // if namespace specified name can be in format 'prefix:basename'
         std::string prefix;
         std::string nameBase = name;
@@ -1224,7 +1225,7 @@ namespace luabridge {
                 std::string prefix = s.substr(xmlnsLen, posSeparator - xmlnsLen);
                 rtrim(prefix);
                 if (xmlValidateNCName(CHR2XML(prefix.c_str()), 0) != 0)
-                    LuaException::Throw(LuaException(L,"luaSetProperty",  "Invalid value for property 'SelectionNamespaces': invalid prefix.", 1));
+                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': invalid prefix.", 1));
 
                 s.erase(0, posSeparator + 1);
                 ltrim(s);
@@ -1251,11 +1252,11 @@ namespace luabridge {
             // copy to m_selectNamespaces
             m_selectNamespaces.erase(m_selectNamespaces.cbegin(), m_selectNamespaces.cend());
             auto iterator = namespaces.begin();
-            while (iterator != namespaces.cend() )
-           {
+            while (iterator != namespaces.cend())
+            {
                 m_selectNamespaces[iterator->first] = iterator->second;
                 iterator++;
-           }
+            }
 
             m_propNamespaces = value;
         }
@@ -1270,7 +1271,7 @@ namespace luabridge {
     void domDocument::FreeDoc()
     {
         auto iterator = m_mapNodeRefs.begin();
-        while(iterator != m_mapNodeRefs.cend()){
+        while (iterator != m_mapNodeRefs.cend()) {
             m_mapNodeRefs.at(iterator->first)->Invalidate();
             iterator++;
         }
@@ -1359,344 +1360,412 @@ namespace luabridge {
             m_nodeRef->incReferenceCount();
         }
         else {
-            node->FillChildNodes(m_nodes);            
+            node->FillChildNodes(m_nodes);
         }
     }
 
-   domNodeList::domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count)
-   {
-       m_isAttributeList = false; 
-       for (int i = 0; i < count; i++)
-           m_nodes.insert(m_nodes.end(), doc->CreateNodeRef(nodeArray[i], true));
-   }
+    domNodeList::domNodeList(domDocument* doc, xmlNodePtr* nodeArray, int count)
+    {
+        m_isAttributeList = false;
+        for (int i = 0; i < count; i++)
+            m_nodes.insert(m_nodes.end(), doc->CreateNodeRef(nodeArray[i], true));
+    }
 
-   domNodeList::~domNodeList()
-   {
-       for (int i = 0; i < m_nodes.size(); i++)
-       {
-           m_nodes[i]->decReferenceCount();
-       }
-       m_nodes.clear();
+    domNodeList::~domNodeList()
+    {
+        for (int i = 0; i < m_nodes.size(); i++)
+        {
+            m_nodes[i]->decReferenceCount();
+        }
+        m_nodes.clear();
 
-       if (m_nodeRef)
-       {
-           m_nodeRef->decReferenceCount();
-           m_nodeRef = nullptr;
-       }
-   }
+        if (m_nodeRef)
+        {
+            m_nodeRef->decReferenceCount();
+            m_nodeRef = nullptr;
+        }
+    }
 
-   size_t domNodeList::luaGetLength(lua_State* L)
-   {
-       return m_isAttributeList ? m_nodeRef->GetAttributeCount(L) : m_nodes.size();
-   }
+    size_t domNodeList::luaGetLength(lua_State* L)
+    {
+        return m_isAttributeList ? m_nodeRef->GetAttributeCount(L) : m_nodes.size();
+    }
 
-   void domNodeList::AddXmlNode(domDocument* doc, xmlNodePtr node) {
-       m_nodes.push_back(doc->CreateNodeRef(node, true));
-   }
+    void domNodeList::AddXmlNode(domDocument* doc, xmlNodePtr node) {
+        m_nodes.push_back(doc->CreateNodeRef(node, true));
+    }
 
-   domNode* domNodeList::GetItem(LUA_INTEGER index, lua_State* L) {
-       if (m_isAttributeList)
-       {
-           return m_nodeRef->GetAttribute(index, L);
-       }
-       else
-       {
-           if (index < 0 || index >= m_nodes.size())
-               return nullptr;
-           else
-               return m_nodes[index];
-       }
-   }
-   RCNode domNodeList::luaGetItem(int index, lua_State* L)
-   {
-       return RCNode(GetItem(index, L));
+    domNode* domNodeList::GetItem(LUA_INTEGER index, lua_State* L) {
+        if (m_isAttributeList)
+        {
+            return m_nodeRef->GetAttribute(index, L);
+        }
+        else
+        {
+            if (index < 0 || index >= m_nodes.size())
+                return nullptr;
+            else
+                return m_nodes[index];
+        }
+    }
+    RCNode domNodeList::luaGetItem(int index, lua_State* L)
+    {
+        return RCNode(GetItem(index, L));
 
-   }
+    }
 
-   RCNode domNodeList::luaGetNamedItem(const char* name, lua_State* L)
-   {
-       if (!m_isAttributeList || m_nodeRef == nullptr)
-           LuaException::Throw(LuaException(L, "luaGetNamedItem", "Method 'GetNamedItem' is supported in attributes collection.", 1));
+    RCNode domNodeList::luaGetNamedItem(const char* name, lua_State* L)
+    {
+        if (!m_isAttributeList || m_nodeRef == nullptr)
+            LuaException::Throw(LuaException(L, "luaGetNamedItem", "Method 'GetNamedItem' is supported in attributes collection.", 1));
 
-       return RCNode(m_nodeRef->GetAttribute(name, L));
-   }
+        return RCNode(m_nodeRef->GetAttribute(name, L));
+    }
 
-   RCNode domNodeList::luaSetNamedItem(domNode* node, lua_State* L)
-   {
-       if (!m_isAttributeList || m_nodeRef == nullptr)
-           LuaException::Throw(LuaException(L, "luaSetNamedItem", "Method 'SetNamedItem' is supported in attributes collection.", 1));
-  
-       if (node->GetNode()->type != XML_ATTRIBUTE_NODE)
-           LuaException::Throw(LuaException(L, "luaSetNamedItem", "Node parameter is not an XML attribute.", 1));
-  
-       if(m_nodeRef) 
-           m_nodeRef->AssertValid(L, "domNodeList::luaSetNamedItem");
-       return RCNode(m_nodeRef->GetDocRef()->CreateNodeRef(m_nodeRef->InsertNode(node, L)));
-   }
+    RCNode domNodeList::luaSetNamedItem(domNode* node, lua_State* L)
+    {
+        if (!m_isAttributeList || m_nodeRef == nullptr)
+            LuaException::Throw(LuaException(L, "luaSetNamedItem", "Method 'SetNamedItem' is supported in attributes collection.", 1));
 
-   RC_IIF_Int_RCNode domNodeList::luaGetIterator() {
-       // Создаём объект, который наследует RefCountedObject
-        // RefCountedObjectPtr автоматически управляет его временем жизни
-       RC_IIF_Int_RCNode h;
-       return RC_IIF_Int_RCNode(new NodeListIterator(this));
-   }
+        if (node->GetNode()->type != XML_ATTRIBUTE_NODE)
+            LuaException::Throw(LuaException(L, "luaSetNamedItem", "Node parameter is not an XML attribute.", 1));
 
-   static int ipairsaux(lua_State* L) {
-       lua_Integer i = luaL_checkinteger(L, 2);
-       i = luaL_intop(+, i, 1);
-       lua_pushinteger(L, i);
-       return (lua_geti(L, 1, i) == LUA_TNIL) ? 1 : 2;
-   }
-   struct enumcnt {
-       auto next() {
-           return [*this](lua_State* L) -> int {
-               return 3;
-               };
-       }
+        if (m_nodeRef)
+            m_nodeRef->AssertValid(L, "domNodeList::luaSetNamedItem");
+        return RCNode(m_nodeRef->GetDocRef()->CreateNodeRef(m_nodeRef->InsertNode(node, L)));
+    }
 
-       domNodeList * lst;
-   };
+    RC_IIF_Int_RCNode domNodeList::luaGetIterator() {
+        // РЎРѕР·РґР°С‘Рј РѕР±СЉРµРєС‚, РєРѕС‚РѕСЂС‹Р№ РЅР°СЃР»РµРґСѓРµС‚ RefCountedObject
+         // RefCountedObjectPtr Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓРїСЂР°РІР»СЏРµС‚ РµРіРѕ РІСЂРµРјРµРЅРµРј Р¶РёР·РЅРё
+        RC_IIF_Int_RCNode h;
+        return RC_IIF_Int_RCNode(new NodeListIterator(this));
+    }
 
-   //////////////////////////////////////////////////////////////////////////////////////////
-   
+    static int ipairsaux(lua_State* L) {
+        lua_Integer i = luaL_checkinteger(L, 2);
+        i = luaL_intop(+, i, 1);
+        lua_pushinteger(L, i);
+        return (lua_geti(L, 1, i) == LUA_TNIL) ? 1 : 2;
+    }
+    struct enumcnt {
+        auto next() {
+            return [*this](lua_State* L) -> int {
+                return 3;
+                };
+        }
 
-   domXmlSchema::domXmlSchema()
-   {
-       m_schema = nullptr;
-       m_schemaDoc = nullptr;
-       m_parseError = new domParseError();
-   }
+        domNodeList* lst;
+    };
 
-   domXmlSchema::~domXmlSchema()
-   {
-       m_parseError->decReferenceCount();
-       m_parseError = nullptr;
-       FreeSchema();
-   }
+    //==============================================================================
+    // SelectNodesIterator: lazy XPath iterator without intermediate NodeList
+    //==============================================================================
+    class SelectNodesIterator : public IIF_Int_RCNode
+    {
+    private:
+        domDocument* m_docRef;
+        xmlXPathObjectPtr m_xpathResult;
+        int m_count;
+        int m_index;
 
-   void domXmlSchema::FreeSchema()
-   {
-       xmlSchemaFree(m_schema);
-       m_schema = nullptr;
-       xmlFreeDoc(m_schemaDoc);
-       m_schemaDoc = nullptr;
-   }
+        ~SelectNodesIterator()
+        {
+            if (m_xpathResult)
+                xmlXPathFreeObject(m_xpathResult);
+            if (m_docRef)
+                m_docRef->decReferenceCount();
+        }
 
-   RCSchema domXmlSchema::luaNewObject()
-   {
-       return RCSchema(new domXmlSchema());
-   }
+    public:
+        SelectNodesIterator(domDocument* docRef, xmlXPathObjectPtr xpathResult)
+            : m_docRef(docRef)
+            , m_xpathResult(xpathResult)
+            , m_count(xpathResult && xpathResult->nodesetval ? xpathResult->nodesetval->nodeNr : 0)
+            , m_index(-1)
+        {
+            m_docRef->incReferenceCount();
+            key = -1;
+            value = nullptr;
+            done = (m_count <= 0);
+        }
 
-   RCError domXmlSchema::luaGetParseError() const{
-       return RCError(m_parseError);
-   }
+        void next() override
+        {
+            if (++m_index < m_count && m_xpathResult && m_xpathResult->nodesetval)
+            {
+                key = m_index + 1; // 1-based index like Lua
+                xmlNodePtr node = m_xpathResult->nodesetval->nodeTab[m_index];
+                value = RCNode(m_docRef->CreateNodeRef(node, true));
+                return;
+            }
+            done = true;
+            key = 0;
+            value = nullptr;
+        }
+    };
 
-   bool domXmlSchema::luaLoadXml(const char* xml) {
-   
-       auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
-      
-       xmlSwitchEncodingName(parserCtx, "UTF-8");
-       if (parserCtx->sax)
-       {
-           parserCtx->sax->warning = XmlCommonErrorHandler;
-           parserCtx->sax->error = XmlCommonErrorHandler;
-       }
-       xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
-       int result = xmlParseDocument(parserCtx);
-       if (result == 0)
-       {
-           m_parseError->Clear();
-           FreeSchema();
+    //==============================================================================
+    // domNode::luaISelectNodesIter - returns an iterator for use in for-in loops
+    //==============================================================================
+    RC_IIF_Int_RCNode domNode::luaISelectNodesIter(const char* xpath, lua_State* L)
+    {
+        AssertValid(L, "iselectNodes");
 
-           m_schemaDoc = parserCtx->myDoc;
-           xmlSchemaParserCtxtPtr schemaParserCtx = xmlSchemaNewDocParserCtxt(m_schemaDoc);
-           xmlSchemaSetParserErrors(schemaParserCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
-           m_schema = xmlSchemaParse(schemaParserCtx);
-           if (m_schema == nullptr)
-           {
-               result = -1;
-               FreeSchema();
-               m_parseError->Set(xmlGetLastError());
-           }
-           xmlSchemaFreeParserCtxt(schemaParserCtx);
-       }
-       else
-           m_parseError->Set(xmlGetLastError());
+        xmlXPathContextPtr xpathCtx = m_docRef->NewXPathContext(L);
+        if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
+        {
+            xmlXPathFreeContext(xpathCtx);
+            LuaException::Throw(LuaException(L, "iselectNodes", "Invalid node for XPath search.", 1));
+        }
 
-       xmlFreeParserCtxt(parserCtx);
+        xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
+        CheckXpathResult(xpathResult, xpathCtx, L);
 
-       return (result == 0);
-   }
+        // Create and return the iterator (takes ownership of xpathResult)
+        return RC_IIF_Int_RCNode(new SelectNodesIterator(m_docRef, xpathResult));
+    }
 
-   bool domXmlSchema::luaValidate(domDocument* docRef)
-   {
+    //////////////////////////////////////////////////////////////////////////////////////////
 
-       if (m_schema == nullptr)
-       {
-           m_parseError->Set(-1, "No XML schema provided.");
-           return false;
-       }
-       m_parseError->Clear();
 
-       xmlSchemaValidCtxtPtr validCtx = xmlSchemaNewValidCtxt(m_schema);
-       xmlSchemaSetValidErrors(validCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
-       int result = xmlSchemaValidateDoc(validCtx, docRef->GetDoc());
-       if (result != 0)
-           m_parseError->Set(xmlGetLastError());
-       xmlSchemaFreeValidCtxt(validCtx);
+    domXmlSchema::domXmlSchema()
+    {
+        m_schema = nullptr;
+        m_schemaDoc = nullptr;
+        m_parseError = new domParseError();
+    }
 
-       return (result == 0);
-   }
-   int domXmlSchema::InrernalValidate(xmlDocPtr doc){
-       if (m_schema == nullptr)
-       {
-           m_parseError->Set(-1, "No XML schema provided.");
-           return false;
-       }
+    domXmlSchema::~domXmlSchema()
+    {
+        m_parseError->decReferenceCount();
+        m_parseError = nullptr;
+        FreeSchema();
+    }
 
-       xmlSchemaValidCtxtPtr validCtx = xmlSchemaNewValidCtxt(m_schema);
-       xmlSchemaSetValidErrors(validCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
-       int result = xmlSchemaValidateDoc(validCtx, doc);
+    void domXmlSchema::FreeSchema()
+    {
+        xmlSchemaFree(m_schema);
+        m_schema = nullptr;
+        xmlFreeDoc(m_schemaDoc);
+        m_schemaDoc = nullptr;
+    }
 
-       xmlSchemaFreeValidCtxt(validCtx);
+    RCSchema domXmlSchema::luaNewObject()
+    {
+        return RCSchema(new domXmlSchema());
+    }
 
-       return result;
-  }
-   std::string  domXmlSchema::luaTostring(lua_State* L) {
-       domDocument d(xmlCopyDoc(m_schemaDoc, 1));
-       return d.luaTostring(L);
-   }
-   
-   //////////////////////////////////////////////////////////////////////////////////////////
+    RCError domXmlSchema::luaGetParseError() const {
+        return RCError(m_parseError);
+    }
 
-   static void XMLCDECL XsltTransformError(void* ctx, const char* msg, ...)
-   {
-         va_list args;
-         va_start(args, msg);
+    bool domXmlSchema::luaLoadXml(const char* xml) {
 
-         char buffer[4096];
-         vsnprintf(buffer, sizeof(buffer), msg, args);
-         va_end(args);
-         domXsltProcessor* processor = (domXsltProcessor*)ctx;
-         processor->AddErrorText(buffer);
-   }
+        auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
 
-   domXsltProcessor::domXsltProcessor()
-   {
-       m_stylesheet = nullptr;
-       m_parseError = new domParseError();
-       m_errorText.empty();
-       xsltSetGenericErrorFunc(this, XsltTransformError);
-   }
+        xmlSwitchEncodingName(parserCtx, "UTF-8");
+        if (parserCtx->sax)
+        {
+            parserCtx->sax->warning = XmlCommonErrorHandler;
+            parserCtx->sax->error = XmlCommonErrorHandler;
+        }
+        xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
+        int result = xmlParseDocument(parserCtx);
+        if (result == 0)
+        {
+            m_parseError->Clear();
+            FreeSchema();
 
-   domXsltProcessor::~domXsltProcessor()
-   {
-       m_parseError->decReferenceCount();
-       m_parseError = nullptr;
-       FreeStylesheet();
-   }
+            m_schemaDoc = parserCtx->myDoc;
+            xmlSchemaParserCtxtPtr schemaParserCtx = xmlSchemaNewDocParserCtxt(m_schemaDoc);
+            xmlSchemaSetParserErrors(schemaParserCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
+            m_schema = xmlSchemaParse(schemaParserCtx);
+            if (m_schema == nullptr)
+            {
+                result = -1;
+                FreeSchema();
+                m_parseError->Set(xmlGetLastError());
+            }
+            xmlSchemaFreeParserCtxt(schemaParserCtx);
+        }
+        else
+            m_parseError->Set(xmlGetLastError());
 
-   void domXsltProcessor::FreeStylesheet()
-   {
-       xsltFreeStylesheet(m_stylesheet);
-       m_stylesheet = nullptr;
-   }
+        xmlFreeParserCtxt(parserCtx);
 
-   void domXsltProcessor::AddErrorText(const std::string& errorText)
-   {
-       m_errorText += errorText;
-   }
+        return (result == 0);
+    }
 
-   RCProcessor domXsltProcessor::luaNewObject()
-   {
-       return RCProcessor(new domXsltProcessor());
-   }
+    bool domXmlSchema::luaValidate(domDocument* docRef)
+    {
 
-   std::string domXsltProcessor::luaGetTransformLog() const
-   {
-       return m_errorText;
-   }
-   RCError domXsltProcessor::luaGetParseError() const
-   {
-       return RCError(m_parseError);
-   }
+        if (m_schema == nullptr)
+        {
+            m_parseError->Set(-1, "No XML schema provided.");
+            return false;
+        }
+        m_parseError->Clear();
 
-   void domXsltProcessor::luaSetParameter(const char* name, const char* value)
-   {
-       if (m_parameters.find(name) == m_parameters.cend())
-           m_parameters.insert(m_parameters.end(),std::pair(std::string(name), std::string(value)));
-       else
-           m_parameters[name] = value; 
-   }
+        xmlSchemaValidCtxtPtr validCtx = xmlSchemaNewValidCtxt(m_schema);
+        xmlSchemaSetValidErrors(validCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
+        int result = xmlSchemaValidateDoc(validCtx, docRef->GetDoc());
+        if (result != 0)
+            m_parseError->Set(xmlGetLastError());
+        xmlSchemaFreeValidCtxt(validCtx);
 
-   bool domXsltProcessor::luaLoadXml(const char* xml)
-   {
-       m_errorText.clear();
-       auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
-       xmlSwitchEncodingName(parserCtx, "UTF-8");
-       if (parserCtx->sax)
-       {
-           parserCtx->sax->warning = XmlCommonErrorHandler;
-           parserCtx->sax->error = XmlCommonErrorHandler;
-       }
-       xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
-       int result = xmlParseDocument(parserCtx);
-       if (result == 0)
-       {
-           m_parseError->Clear();
-           FreeStylesheet();
+        return (result == 0);
+    }
+    int domXmlSchema::InrernalValidate(xmlDocPtr doc) {
+        if (m_schema == nullptr)
+        {
+            m_parseError->Set(-1, "No XML schema provided.");
+            return false;
+        }
 
-           xmlDocPtr doc = parserCtx->myDoc;
-           xmlResetLastError();
-           m_stylesheet = xsltParseStylesheetDoc(doc);  // to prevent error output to console call xsltSetGenericErrorFunc from main() function
-           if (m_stylesheet == nullptr)
-           {
-               result = -1;
-               m_errorText = "Failed to process XSLT document:\n" + m_errorText;
-               m_parseError->Set(-1, m_errorText);
-               xmlFreeDoc(doc);
-               parserCtx->myDoc = nullptr;
-           }
-       }
-       else
-           m_parseError->Set(xmlGetLastError());
+        xmlSchemaValidCtxtPtr validCtx = xmlSchemaNewValidCtxt(m_schema);
+        xmlSchemaSetValidErrors(validCtx, XmlCommonErrorHandler, XmlCommonErrorHandler, NULL);
+        int result = xmlSchemaValidateDoc(validCtx, doc);
 
-       xmlFreeParserCtxt(parserCtx);
+        xmlSchemaFreeValidCtxt(validCtx);
 
-       return (result == 0);
-   }
+        return result;
+    }
+    std::string  domXmlSchema::luaTostring(lua_State* L) {
+        domDocument d(xmlCopyDoc(m_schemaDoc, 1));
+        return d.luaTostring(L);
+    }
 
-   RCDocument domXsltProcessor::luaTransform(domDocument* docRef)
-   {
-       if (m_stylesheet == nullptr)
-       {
-           m_parseError->Set(-1, "No XSLT provided.");
-           return RCDocument(nullptr);
-       }
-       (void)m_errorText.empty();
-       m_parseError->Clear();
+    //////////////////////////////////////////////////////////////////////////////////////////
 
-       std::vector<const char*> params;
-       for (auto iterator = m_parameters.begin(); iterator != m_parameters.cend(); iterator++)
-       {
-           params.push_back(iterator->first.c_str());
-           params.push_back(iterator->second.c_str());
-       }
-       params.push_back(nullptr);
-      
-       xsltTransformContextPtr transformCtx = xsltNewTransformContext(m_stylesheet, docRef->GetDoc());
-       xsltSetTransformErrorFunc(transformCtx, this, XsltTransformError);
-       xmlDocPtr docResult = xsltApplyStylesheetUser(m_stylesheet, docRef->GetDoc(), params.data(), nullptr, nullptr, transformCtx);
-       xsltFreeTransformContext(transformCtx);
+    static void XMLCDECL XsltTransformError(void* ctx, const char* msg, ...)
+    {
+        va_list args;
+        va_start(args, msg);
 
-       if (docResult)
-           return RCDocument(new domDocument(docResult));
-       else
-       {
-           m_parseError->Set(-1, m_errorText);
-           return RCDocument(nullptr);
-       }
-   }
+        char buffer[4096];
+        vsnprintf(buffer, sizeof(buffer), msg, args);
+        va_end(args);
+        domXsltProcessor* processor = (domXsltProcessor*)ctx;
+        processor->AddErrorText(buffer);
+    }
+
+    domXsltProcessor::domXsltProcessor()
+    {
+        m_stylesheet = nullptr;
+        m_parseError = new domParseError();
+        m_errorText.empty();
+        xsltSetGenericErrorFunc(this, XsltTransformError);
+    }
+
+    domXsltProcessor::~domXsltProcessor()
+    {
+        m_parseError->decReferenceCount();
+        m_parseError = nullptr;
+        FreeStylesheet();
+    }
+
+    void domXsltProcessor::FreeStylesheet()
+    {
+        xsltFreeStylesheet(m_stylesheet);
+        m_stylesheet = nullptr;
+    }
+
+    void domXsltProcessor::AddErrorText(const std::string& errorText)
+    {
+        m_errorText += errorText;
+    }
+
+    RCProcessor domXsltProcessor::luaNewObject()
+    {
+        return RCProcessor(new domXsltProcessor());
+    }
+
+    std::string domXsltProcessor::luaGetTransformLog() const
+    {
+        return m_errorText;
+    }
+    RCError domXsltProcessor::luaGetParseError() const
+    {
+        return RCError(m_parseError);
+    }
+
+    void domXsltProcessor::luaSetParameter(const char* name, const char* value)
+    {
+        if (m_parameters.find(name) == m_parameters.cend())
+            m_parameters.insert(m_parameters.end(), std::pair(std::string(name), std::string(value)));
+        else
+            m_parameters[name] = value;
+    }
+
+    bool domXsltProcessor::luaLoadXml(const char* xml)
+    {
+        m_errorText.clear();
+        auto parserCtx = xmlCreateDocParserCtxt(CHR2XML(xml));
+        xmlSwitchEncodingName(parserCtx, "UTF-8");
+        if (parserCtx->sax)
+        {
+            parserCtx->sax->warning = XmlCommonErrorHandler;
+            parserCtx->sax->error = XmlCommonErrorHandler;
+        }
+        xmlCtxtUseOptions(parserCtx, XML_PARSE_NONET | XML_PARSE_IGNORE_ENC | XML_PARSE_NOBLANKS);
+        int result = xmlParseDocument(parserCtx);
+        if (result == 0)
+        {
+            m_parseError->Clear();
+            FreeStylesheet();
+
+            xmlDocPtr doc = parserCtx->myDoc;
+            xmlResetLastError();
+            m_stylesheet = xsltParseStylesheetDoc(doc);  // to prevent error output to console call xsltSetGenericErrorFunc from main() function
+            if (m_stylesheet == nullptr)
+            {
+                result = -1;
+                m_errorText = "Failed to process XSLT document:\n" + m_errorText;
+                m_parseError->Set(-1, m_errorText);
+                xmlFreeDoc(doc);
+                parserCtx->myDoc = nullptr;
+            }
+        }
+        else
+            m_parseError->Set(xmlGetLastError());
+
+        xmlFreeParserCtxt(parserCtx);
+
+        return (result == 0);
+    }
+
+    RCDocument domXsltProcessor::luaTransform(domDocument* docRef)
+    {
+        if (m_stylesheet == nullptr)
+        {
+            m_parseError->Set(-1, "No XSLT provided.");
+            return RCDocument(nullptr);
+        }
+        (void)m_errorText.empty();
+        m_parseError->Clear();
+
+        std::vector<const char*> params;
+        for (auto iterator = m_parameters.begin(); iterator != m_parameters.cend(); iterator++)
+        {
+            params.push_back(iterator->first.c_str());
+            params.push_back(iterator->second.c_str());
+        }
+        params.push_back(nullptr);
+
+        xsltTransformContextPtr transformCtx = xsltNewTransformContext(m_stylesheet, docRef->GetDoc());
+        xsltSetTransformErrorFunc(transformCtx, this, XsltTransformError);
+        xmlDocPtr docResult = xsltApplyStylesheetUser(m_stylesheet, docRef->GetDoc(), params.data(), nullptr, nullptr, transformCtx);
+        xsltFreeTransformContext(transformCtx);
+
+        if (docResult)
+            return RCDocument(new domDocument(docResult));
+        else
+        {
+            m_parseError->Set(-1, m_errorText);
+            return RCDocument(nullptr);
+        }
+    }
 
 
 
@@ -1764,15 +1833,16 @@ namespace luabridge {
 
             .addFunction("selectSingleNode", &domNode::luaSelectSingleNode)
             .addFunction("selectNodes", &domNode::luaSelectNodes)
+            .addIterator<int, RCNode>("iselectNodes", &domNode::luaISelectNodesIter)
             .addFunction("getAttribute", &domNode::luaGetAttribute)
             .addFunction("setAttribute", &domNode::luaSetAttribute)
             .addFunction("getElementsByTagName", &domNode::luaGetElementsByTagName)
             .addFunction("getElementByTagName", &domNode::luaGetElementByTagName)
-            .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition) 
+            .addFunction("compareDocumentPosition", &domNode::luaCompareDocumentPosition)
             .endClass()
             .deriveClass <domDocument, domNode>("Document")
                 .addConstructor <void (*) (void), RCDocument >()
-                .addFunction("__tostring", &domNode::luaTostring) 
+                .addFunction("__tostring", &domNode::luaTostring)
                 .addFunction("loadXml", &domDocument::luaLoadXml)
                 .addFunction("ceateURINode", &domDocument::luaCreateURINode)
                 .addFunction("createNode", &domDocument::luaCreateNode)
@@ -1797,7 +1867,7 @@ namespace luabridge {
                 .addFunction("__call", &domNodeList::luaGetItem)
                 .addFunction("getNamedItem", &domNodeList::luaGetNamedItem)
                 .addFunction("setNamedItem", &domNodeList::luaSetNamedItem)
-                .addIterator<int, RCNode>("__call", &domNodeList::luaGetIterator) 
+                .addIterator<int, RCNode>("__pairs", &domNodeList::luaGetIterator)
             .endClass()
             .beginClass <domXmlSchema>("XmlSchema")
                 .addConstructor <void (*) (void), RCSchema >()
