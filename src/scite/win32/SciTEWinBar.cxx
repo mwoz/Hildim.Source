@@ -17,7 +17,7 @@ void SciTEWin::SetFileProperties(
 
 	const int TEMP_LEN = 100;
 	char temp[TEMP_LEN];
-	HANDLE hf = ::CreateFileW(filePath.AsInternal(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hf = ::CreateFileW(ActiveFilePath().AsInternal(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hf != INVALID_HANDLE_VALUE) {
 		FILETIME ft;
 		::GetFileTime(hf, NULL, NULL, &ft);
@@ -36,7 +36,7 @@ void SciTEWin::SetFileProperties(
 		                NULL, temp, TEMP_LEN);
 		ps.Set("FileDate", temp);
 
-		DWORD attr = ::GetFileAttributesW(filePath.AsInternal());
+		DWORD attr = ::GetFileAttributesW(ActiveFilePath().AsInternal());
 		SString fa;
 		if (attr & FILE_ATTRIBUTE_READONLY) {
 			fa += "R";

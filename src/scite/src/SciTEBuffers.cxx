@@ -445,7 +445,6 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		}
 	}
 	buffers.ShiftTo(prevId, realIns);
-	filePath = buffers.CurrentBuffer()->AbsolutePath();
 
 	buffers.buffers[realIns].editorSide = coSide;
 
@@ -656,7 +655,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 
 	if (extender) {
-		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
 	if(!bBlockUIUpdate){
@@ -683,7 +682,7 @@ void SciTEBase::UpdateBuffersCurrent() {
 	int currentbuf = buffers.Current();
 
 	if ((buffers.length > 0) && (currentbuf >= 0)) {
-		buffers.buffers[currentbuf].Set(filePath);
+		buffers.buffers[currentbuf].Set(ActiveFilePath()); //????????
 		buffers.buffers[currentbuf].selection = GetSelection();
 		buffers.buffers[currentbuf].scrollPosition = GetCurrentScrollPosition(); 
 
@@ -823,15 +822,16 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 	int side = CurrentBuffer()->editorSide;
 
-	FilePath curDirectory(filePath.Directory());
-	curDirectory = path ? path : filePath.Directory();
+	// Используем ActiveFilePath() для получения директории текущего буфера при создании нового файла.
+	FilePath curDirectory(ActiveFilePath().Directory());
+	curDirectory = path ? path : ActiveFilePath().Directory();
 
 	if (wcslen(curDirectory.AsInternal()) == 0)
 		curDirectory.Set(GetSciteDefaultHome());
 
 
-	FilePath fileName;
-	GUI::gui_string ext = defExt ? defExt: filePath.Extension().AsInternal();
+	FilePath fileName, filepath;
+	GUI::gui_string ext = defExt ? defExt : ActiveFilePath().Extension().AsInternal();
 
 	GUI::gui_string name0 = defName ? defName : (extender ? extender->LocalizeText("Untitled") : GUI_TEXT("Untitled"));
 	GUI::gui_string name;
@@ -865,8 +865,8 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 		} while (!isUnic);
 		fileName.Set(name + (ext == L"" ? L"" : GUI_TEXT(".") + ext));
-		filePath.Set(curDirectory, fileName);
-	} while (!defName && filePath.Exists());
+		filepath.Set(curDirectory, fileName);
+	} while (!defName && filepath.Exists());
 
 	bool emptyInSrc = buffers.buffers[buffers.Current()].IsUntitled() &&
 		!buffers.buffers[buffers.Current()].isDirty;
@@ -884,8 +884,8 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 	IDocumentEditable* doc = GetDocumentAt(buffers.Current());
 	wEditor.SetDocPointer(doc);
 
-	SetFileName(filePath);
-	wEditor.SetBuffPointer(&filePath);
+	SetFileName(filepath);
+	wEditor.SetBuffPointer(&filepath);
 
 	CurrentBuffer()->isDirty = false;
 	CurrentBuffer()->boundWithFS = false;
@@ -968,7 +968,7 @@ setbuffer:
 
 	BuffersMenu();
 	if (extender) {
-		extender->OnOpen(filePath.AsUTF8().c_str());
+		extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Open-");
 	}
 
@@ -1004,9 +1004,8 @@ void SciTEBase::New(bool force) {
 	IDocumentEditable* doc = GetDocumentAt(buffers.Current());
 	wEditor.SetDocPointer(doc);
 
-	FilePath curDirectory(filePath.Directory());
-	filePath.Set(curDirectory, GUI_TEXT(""));
-	SetFileName(filePath);
+	FilePath filepath(ActiveFilePath().Directory(), GUI_TEXT(""));
+	SetFileName(filepath);
 	CurrentBuffer()->isDirty = false;
 	jobQueue.isBuilding = false;
 	jobQueue.isBuilt = false;
@@ -1082,7 +1081,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
 	if (extender && !closingEmptyRight) {
-		extender->OnClose(filePath.AsUTF8().c_str());
+		extender->OnClose(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Close");
 	}
 	bBlockRedraw = true;
@@ -1091,7 +1090,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		// With no buffer list, Close means close from MRU
 		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
 		buffers.buffers[0].Init(&buffers);
-		filePath.Set(GUI_TEXT(""));
+		ActiveFilePath().Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
 		if (!makingRoomForNew)
 			StackMenu(0); // calls New, or Open, which calls InitBuffer
@@ -1143,8 +1142,9 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 		if (updateUI)
 			SetFileName(bufferNext);
-		else
-			filePath = bufferNext;
+		else if (buffers.buffers)
+			buffers.buffers[buffers.Current()].Set(bufferNext);
+
 		wEditor.SetDocPointer(GetDocumentAt(buffers.Current()));
 		if (closingLast) {
 			ClearDocument();
@@ -1170,7 +1170,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	}
 
 	if (extender && !closingLast && !makingRoomForNew) {
-		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Close-");
 		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
 	}
@@ -1265,7 +1265,7 @@ void SciTEBase::Prev() {
 void SciTEBase::ShiftTab(int indexFrom, int indexTo, bool mouse) {
 	buffers.ShiftTo(indexFrom, indexTo);
 	buffers.SetCurrent(indexTo);
-	filePath = buffers.CurrentBuffer()->AbsolutePath();
+
 	BuffersMenu(mouse);
 
 	//DisplayAround(buffers.buffers[buffers.Current()]);
@@ -1770,7 +1770,7 @@ int DecodeMessage(const char *cdoc, char *sourcePath, int format, int &column) {
 			intptr_t length = line - (at + 4);
 			if (at && line && length > 0) {
 				strncpy(sourcePath, at + 4, length);
-				sourcePath[length] = 0;
+				sourcePath[length] = '\0';
 				line += 6;
 				return atoi(line) - 1;
 			}
@@ -2081,15 +2081,15 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 
 				GUI::gui_string sourceString = GUI::StringFromUTF8(source);
 				FilePath sourcePath(sourceString);
-//!				if (!filePath.Name().SameNameAs(sourcePath)) {
-				if (sourcePath.IsSet() && !filePath.Name().SameNameAs(sourcePath)) { //!-change-[GoMessageFix]
+
+				if (sourcePath.IsSet() && !ActiveFilePath().Name().SameNameAs(sourcePath)) { //!-change-[GoMessageFix]
 					FilePath messagePath;
 					bool bExists = false;
 					if (Exists(dirNameAtExecute.AsInternal(), sourceString.c_str(), &messagePath)) {
 						bExists = true;
 					} else if (Exists(dirNameForExecute.AsInternal(), sourceString.c_str(), &messagePath)) {
 						bExists = true;
-					} else if (Exists(filePath.Directory().AsInternal(), sourceString.c_str(), &messagePath)) {
+					} else if (Exists(ActiveFilePath().Directory().AsInternal(), sourceString.c_str(), &messagePath)) {
 						bExists = true;
 					} else if (Exists(NULL, sourceString.c_str(), &messagePath)) {
 						bExists = true;

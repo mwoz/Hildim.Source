@@ -335,11 +335,11 @@ errr:
 
 
 static int cf_scite_Read(lua_State *L) {
-	FilePath filePath = GUI::StringFromUTF8(luaL_checkstring(L, 1));
+	FilePath filepath = GUI::StringFromUTF8(luaL_checkstring(L, 1));
 	Utf8_16_Read* convert;
 	char* data;
 	size_t len;
-	if (host->ReadForScript(filePath,(void**) &convert, &data, len)) {
+	if (host->ReadForScript(filepath,(void**) &convert, &data, len)) {
 		char* c = convert->getNewBuf();
 		char* cc = new char[len + 1];
 		memcpy((void*)cc, (void*)c, len);

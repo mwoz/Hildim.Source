@@ -403,7 +403,7 @@ void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
 	}
 	if (failedWrite) {
 		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }
 
@@ -605,9 +605,9 @@ void SciTEBase::SaveToStreamHTML(std::ostream &os, int start, int end) {
 	}
 	os << "<head>\n";
 	if (titleFullPath)
-		os << "<title>" << filePath.AsUTF8().c_str() << "</title>\n";
+		os << "<title>" << ActiveFilePath().AsUTF8().c_str() << "</title>\n";
 	else
-		os << "<title>" << filePath.AsUTF8().c_str() << "</title>\n";
+		os << "<title>" << ActiveFilePath().AsUTF8().c_str() << "</title>\n";
 
 	// Probably not used by robots, but making a little advertisement for those looking
 	// at the source code doesn't hurt...
@@ -927,7 +927,7 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 	}
 	if (failedWrite) {
 		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 
 }
@@ -1390,7 +1390,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	if (!fp) {
 		// couldn't open the file for saving, issue an error message
 		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 		return;
 	}
 	// initialise PDF rendering
@@ -1541,7 +1541,7 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 
 		fputs("\\begin{document}\n\n", fp);
 		fprintf(fp, "Source File: %s\n\n\\noindent\n\\small{\n",
-		        static_cast<const char *>(titleFullPath ? filePath.AsUTF8().c_str() : filePath.Name().AsUTF8().c_str()));
+		        static_cast<const char *>(titleFullPath ?  ActiveFilePath().AsUTF8().c_str() :  ActiveFilePath().Name().AsUTF8().c_str()));
 
 		int styleCurrent = acc.StyleAt(0);
 
@@ -1608,7 +1608,7 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 		fclose(fp);
 	} else {
 		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }
 
@@ -1667,7 +1667,7 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 
 		fputs("<document xmlns='http://www.scintila.org/scite.rng'", fp);
 		fprintf(fp, " filename='%s'",
-		        static_cast<const char *>(filePath.Name().AsUTF8().c_str()));
+		        static_cast<const char *>( ActiveFilePath().Name().AsUTF8().c_str()));
 		fprintf(fp, " type='%s'", "unknown");
 		fprintf(fp, " version='%s'", "1.0");
 		fputs(">\n", fp);
@@ -1786,6 +1786,6 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 		fclose(fp);
 	} else {
 		extender->HildiAlarm("Could not save file\n'%1'",
-			MB_OK | MB_ICONWARNING, filePath.AsInternal());
+			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }

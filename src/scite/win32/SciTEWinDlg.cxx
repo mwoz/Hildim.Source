@@ -327,7 +327,7 @@ bool SciTEWin::SaveAsDialog() {
 	}
 	filter = DialogFilterFromProperty(filter.c_str());
 	int nFilter;;
-	FilePath path = ChooseSaveName(filePath.Directory(), "Save File", filter.c_str(), NULL, &nFilter);
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Save File", filter.c_str(), NULL, &nFilter);
 	if (path.IsSet()) {
 		if (nFilter == 1 && path.Extension().AsInternal() != ext && ext != GUI::gui_string(L""))
 			path = path.AsInternal() + GUI::gui_string(L".") + ext;
@@ -345,7 +345,7 @@ void SciTEWin::SaveACopy() {
 	}
 	filter = DialogFilterFromProperty(filter.c_str());
 	int nFilter;
-	FilePath path = ChooseSaveName(filePath.Directory(), "Save a Copy", filter.c_str(), NULL, &nFilter);
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Save a Copy", filter.c_str(), NULL, &nFilter);
 	if (path.IsSet()) {
 		if (nFilter == 1 && path.Extension().AsInternal() != ext && ext != GUI::gui_string(L""))
 			path = path.AsInternal() + GUI::gui_string(L".") + ext;
@@ -354,7 +354,7 @@ void SciTEWin::SaveACopy() {
 }
 
 void SciTEWin::SaveAsHTML() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Export File As HTML",
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Export File As HTML",
 	                              GUI_TEXT("Web (.html;.htm)\0*.html;*.htm\0"), ".html");
 	if (path.IsSet()) {
 		SaveToHTML(path);
@@ -362,7 +362,7 @@ void SciTEWin::SaveAsHTML() {
 }
 
 void SciTEWin::SaveAsRTF() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Export File As RTF",
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Export File As RTF",
 	                              GUI_TEXT("RTF (.rtf)\0*.rtf\0"), ".rtf");
 	if (path.IsSet()) {
 		SaveToRTF(path);
@@ -370,7 +370,7 @@ void SciTEWin::SaveAsRTF() {
 }
 
 void SciTEWin::SaveAsPDF() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Export File As PDF",
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Export File As PDF",
 	                              GUI_TEXT("PDF (.pdf)\0*.pdf\0"), ".pdf");
 	if (path.IsSet()) {
 		SaveToPDF(path);
@@ -378,7 +378,7 @@ void SciTEWin::SaveAsPDF() {
 }
 
 void SciTEWin::SaveAsTEX() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Export File As LaTeX",
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Export File As LaTeX",
 	                              GUI_TEXT("TeX (.tex)\0*.tex\0"), ".tex");
 	if (path.IsSet()) {
 		SaveToTEX(path);
@@ -386,7 +386,7 @@ void SciTEWin::SaveAsTEX() {
 }
 
 void SciTEWin::SaveAsXML() {
-	FilePath path = ChooseSaveName(filePath.Directory(), "Export File As XML",
+	FilePath path = ChooseSaveName(ActiveFilePath().Directory(), "Export File As XML",
 	                              GUI_TEXT("XML (.xml)\0*.xml\0"), ".xml");
 	if (path.IsSet()) {
 		SaveToXML(path);

@@ -1399,7 +1399,7 @@ void SciTEBase::ReadProperties() {
 			props.GetNewExpand("extension.", fileNameForExtension.c_str()).c_str());
 		if (extensionFile.length()) {
 			// find file in local directory
-			FilePath docDir = filePath.Directory();
+			FilePath docDir =  ActiveFilePath().Directory();
 			if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
 				// Found file in document directory
 				extender->Load(scriptPath.AsUTF8().c_str());
@@ -1779,14 +1779,14 @@ FilePath SciTEBase::GetUserPropertiesFileName() {
 }
 
 FilePath SciTEBase::GetLocalPropertiesFileName() {
-	return FilePath(filePath.Directory(), propLocalFileName);
+	return FilePath( ActiveFilePath().Directory(), propLocalFileName);
 }
 
 FilePath SciTEBase::GetDirectoryPropertiesFileName() {
 	FilePath propfile;
 
-	if (filePath.IsSet()) {
-		propfile.Set(filePath.Directory(), propDirectoryFileName);
+	if ( ActiveFilePath().IsSet()) {
+		propfile.Set( ActiveFilePath().Directory(), propDirectoryFileName);
 
 		// if this file does not exist try to find the prop file in a parent directory
 		while (!propfile.Directory().IsRoot() && !propfile.Exists()) {
@@ -1795,7 +1795,7 @@ FilePath SciTEBase::GetDirectoryPropertiesFileName() {
 
 		// not found -> set it to the initial directory
 		if (!propfile.Exists()) {
-			propfile.Set(filePath.Directory(), propDirectoryFileName);
+			propfile.Set( ActiveFilePath().Directory(), propDirectoryFileName);
 		}
 	}
 	return propfile;

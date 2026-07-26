@@ -691,7 +691,7 @@ void SciTEBase::BraceMatch(bool editor) {
 void SciTEBase::SetWindowName() {
 	if (bBlockUIUpdate)
 		return;
-	if (filePath.IsUntitled()) {
+	if (ActiveFilePath().IsUntitled()) {
 		windowName = extender->LocalizeText("Untitled");
 		windowName.insert(0, GUI_TEXT("("));
 		windowName += GUI_TEXT(")");
@@ -700,9 +700,9 @@ void SciTEBase::SetWindowName() {
 		windowName += GUI_TEXT(" ");
 		windowName += extender->LocalizeText("in");
 		windowName += GUI_TEXT(" ");
-		windowName += filePath.Directory().AsInternal();
+		windowName += ActiveFilePath().Directory().AsInternal();
 	} else if (props.GetInt("title.full.path") == 1) {
-		windowName = filePath.AsInternal();
+		windowName = ActiveFilePath().AsInternal();
 	} else {
 		windowName = FileNameExt().AsInternal();
 	}
@@ -1005,8 +1005,8 @@ void SciTEBase::Execute() {
 	jobQueue.cancelFlag = 0L;
 	jobQueue.SetExecuting(true);
 	CheckMenus();
-	filePath.Directory().SetWorkingDirectory();
-	dirNameAtExecute = filePath.Directory();
+	ActiveFilePath().Directory().SetWorkingDirectory();
+	dirNameAtExecute = ActiveFilePath().Directory();
 }
 
 void SciTEBase::BookmarkAdd(Sci_Position lineno) {
@@ -1988,7 +1988,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		// when doing the opening. Must be done there as user
 		// may decide to open multiple files so do not know yet
 		// how much room needed.
-		OpenDialog(filePath.Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
+		OpenDialog(ActiveFilePath().Directory(), GUI::StringFromUTF8(props.GetExpanded("open.filter").c_str()).c_str());
 		WindowSetFocus(wEditor);
 		break;
 	case IDM_OPENSELECTED:
@@ -3096,8 +3096,8 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 	buffers.buffers[i]._encoding = e;
 	buffers.buffers[i].isDirty = true;
 	if (buffers.Current() == i) {
-		filePath._encoding = e; wEditor.SetBuffEncoding(e);
-		extender->OnSwitchFile(filePath.AsUTF8().c_str());
+		wEditor.SetBuffEncoding(e);
+		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(buffers.buffers[i].editorSide);
 	}
 	BuffersMenu();

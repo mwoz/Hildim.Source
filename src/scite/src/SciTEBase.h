@@ -35,6 +35,7 @@ extern "C" {
 #include "iupcontrols.h"
 #include "iupluacontrols.h"
 #include "scite_flattabs.h"
+#include <cassert>
 }
 
 #define ELEMENTS(a) (sizeof(a) / sizeof(a[0]))
@@ -447,7 +448,7 @@ public:
 class SciTEBase : public ExtensionAPI, public Searcher {
 protected:
 	GUI::gui_string windowName = L"HildiM";
-	FilePath filePath;
+	//FilePath filePath;
 	FilePath dirNameAtExecute;
 	FilePath dirNameForExecute;
 
@@ -706,7 +707,19 @@ protected:
 	void SetWindowName();
 	void SetFileName(FilePath openName, bool fixCase = true, bool setCaption = true);
 	FilePath FileNameExt() const {
-		return filePath.Name();
+		return ActiveFilePath().Name();
+	}
+
+	// Возвращает текущий FilePath для активного буфера.
+	// Безопасно использовать при чтении (не заменяет SetFileName и не выполняет побочных эффектов).
+	FilePath ActiveFilePath() const {
+		// Если буферы инициализированы и есть хотя бы один буфер — возвращаем путь активного буфера.
+		// Иначе — возвращаем cached filePath (fallback для ранней инициализации).
+		if (buffers.initialised && buffers.length > 0 && buffers.buffers) {
+			return buffers.buffers[buffers.Current()].AbsolutePath();
+		}
+		//assert(false);
+		return FilePath();
 	}
 	void ClearDocument();
 	void CreateBuffers();
