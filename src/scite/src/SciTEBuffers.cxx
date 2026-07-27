@@ -75,6 +75,17 @@ BufferList::~BufferList() {
 	delete []stack;
 }
 
+int Buffer::FriendIndex() {
+	return pBase->GetDocumentByName(this->AbsolutePath(), false, static_cast<uptr_t>(editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin));
+}
+
+Buffer* Buffer::Friend() {
+	int i = pBase->GetDocumentByName(this->AbsolutePath(), false, static_cast<uptr_t>(editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin));
+	if (i == -1) 
+		return nullptr;
+	return &pBase->buffers[i];
+}
+
 void BufferList::Allocate(int maxSize) {
 	length = 1;
 	current = 0;
@@ -825,7 +836,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 	EditorSide side = CurrentBuffer()->editorSide;
 
-	// Используем ActiveFilePath() для получения директории текущего буфера при создании нового файла.
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ActiveFilePath() пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 	FilePath curDirectory(ActiveFilePath().Directory());
 	curDirectory = path ? path : ActiveFilePath().Directory();
 
@@ -1091,7 +1102,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
-		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
+		closingLast = true;	 //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ !!!!!!!!!!!!
 		buffers.buffers[0].Init(&buffers);
 		ActiveFilePath().Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
@@ -2041,14 +2052,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 			Sci_Position sourceLine = DecodeMessage(message.c_str(), source, style, column);
 			SString findHiglight = "";
 			if (style == SCE_ERR_GCC){
-				int posInLine = 0; //позиция в строке редактора, с которой начинается найденное слово
-				int lenSelected = 0; //длина найденного слова
-				int posInFind = 0; //начало найденной строки врезультатах поиска
-				//ищем позицию и длину найденного слова
-				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;
-				findHiglight = message.substr(posInFind + posInLine, lenSelected);
+				int posInLine = 0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\n\t\t\t\tint lenSelected = 0; //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\n\t\t\t\tint posInFind = 0; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ\n\t\t\t\t//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\n\t\t\t\twhile (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;\n\t\t\t\twhile (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;\n\t\t\t\twhile (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;\n\t\t\t\tfindHiglight = message.substr(posInFind + posInLine, lenSelected);
 			}
 			if (sourceLine >= 0) {
 //!-start-[FindResultListStyle]
