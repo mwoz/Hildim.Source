@@ -94,17 +94,15 @@ enum UniMode {
     uni8Bit = 0, uni16BE = 1, uni16LE = 2, uniUTF8 = 3,
     uniCookie = 4
 };
-enum EsitorSide { idm_srcwin = 350, idm_cosrcwin = 356 };
 
-class BufferListAPI {
-public:
-	virtual int GetDocumentByName(FilePath filename, bool excludeCurrent = false, uptr_t forIdm = NULL) = 0;
-	virtual void* GetAt(int index) = 0;
+enum class EditorSide : int {
+	SrcWin = 350,
+	CoSrcWin = 356
 };
 
 class Buffer : public RecentFile {
 public:
-	int editorSide;
+	EditorSide editorSide;
 	bool isDirty;
 	bool boundWithFS;
 	bool ROMarker; 
@@ -117,22 +115,22 @@ public:
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<Sci_Position> foldState;
 	bool pFriend;
-	BufferListAPI* pBase = nullptr;
+	class BufferList* pBase = nullptr;
 	int FriendIndex() {
-		return  pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN);
+		return  pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin);
 	}
 
 	Buffer* Friend() {
-		int i = pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == IDM_SRCWIN ? IDM_COSRCWIN : IDM_SRCWIN );
+		int i = pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin );
 		if (i == -1) 
-			return NULL;
-		return (Buffer*)pBase->GetAt(i);
+			return nullptr;
+		return &pBase->buffers[i];
 	}
 	Buffer() :
 			RecentFile(), doc(0), isDirty(false), boundWithFS(true), ROMarker(false), useMonoFont(false),  //!-change-[ReadOnlyTabMarker]
-			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(IDM_SRCWIN), foldState(), pFriend(false){}
+			unicodeMode(uni8Bit), fileModTime(0), fileModLastAsk(0), findMarks(fmNone), editorSide(EditorSide::SrcWin), foldState(), pFriend(false){}
 
-	void Init(BufferListAPI* pB) {
+	void Init(class BufferList* pB) {
 		RecentFile::Init();
 		isDirty = false;
 		boundWithFS = true;
@@ -171,12 +169,12 @@ public:
 class EditSwitcher{
 public:
 	virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) = 0;
-	virtual EsitorSide GetWindowIdm() const noexcept = 0;
+	virtual EditorSide GetWindowIdm() const noexcept = 0;
 	virtual void SetBuffPointer(FilePath* pBuf) = 0;
 	virtual void SetBuffEncoding(int e) = 0;
 };
 
-class BufferList: public BufferListAPI {
+class BufferList {
 protected:
 	int current;
 	int *stack; 
@@ -208,9 +206,6 @@ public:
 	void MoveToStackTop(int index);
 	void ShiftTo(int indexFrom, int indexTo);
 	int GetOrder(int index);
-	virtual void* GetAt(int index) {
-		return (void*) &buffers[index];
-	}
 	void OrderBy(std::map<int, int> &order);
 private:
 	void PopStack();
@@ -363,9 +358,9 @@ private:
 	void SizeEditor();
 	bool blockV = false;
 	bool blockH = false;
-	int hPx = 0; //высота горизонтального бара
-	int vPx = 0;  //ширина вертикального бара
-	UINT vHeight = 0; //текущая высота вертикального бара
+	int hPx = 0; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	int vPx = 0;  //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	UINT vHeight = 0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	bool colodizedSB = false;
 	int resetmap = false;
 	COLORREF caretColor;
@@ -508,7 +503,7 @@ protected:
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:	
 		virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf);
-		EsitorSide GetWindowIdm() const noexcept;
+		EditorSide GetWindowIdm() const noexcept;
 		virtual void SetBuffPointer(FilePath* pBuf);
 		virtual void SetCoBuffPointer(FilePath* pBuf);
 		virtual void SetBuffEncoding(int e);
@@ -645,7 +640,7 @@ protected:
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
 	int GetBuffersCount(){return buffers.length; };		
 	int GetCurrentBufer(){ return buffers.Current(); };	
-	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == IDM_SRCWIN ? 0 : 1;  };
+	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == EditorSide::SrcWin ? 0 : 1;  };
 	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
 	virtual time_t GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
 	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
@@ -710,11 +705,11 @@ protected:
 		return ActiveFilePath().Name();
 	}
 
-	// Возвращает текущий FilePath для активного буфера.
-	// Безопасно использовать при чтении (не заменяет SetFileName и не выполняет побочных эффектов).
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ FilePath пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SetFileName пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
 	FilePath ActiveFilePath() const {
-		// Если буферы инициализированы и есть хотя бы один буфер — возвращаем путь активного буфера.
-		// Иначе — возвращаем cached filePath (fallback для ранней инициализации).
+		// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+		// пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ cached filePath (fallback пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
 		if (buffers.initialised && buffers.length > 0 && buffers.buffers) {
 			return buffers.buffers[buffers.Current()].AbsolutePath();
 		}
@@ -939,7 +934,7 @@ protected:
 
 	void SendOneProperty(const char *kind, const char *key, const char *val);
 	void PropertyFromDirector(const char *arg);
-	void WideChrToMyltiBate(SString strIn, SString &strOut);//Перекодировка для последующего вывода в консоль
+	void WideChrToMyltiBate(SString strIn, SString &strOut);//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	int internalRunLuaThread(SString strCmd, SString strDesc);
 
 
@@ -982,7 +977,7 @@ public:
 	
 	GUI::WindowID GetID() { return wSciTE.GetID(); }
 
-	EsitorSide GetEditorIdm(bool direct = true) { return (wEditor.SameAs(wEditorL) == direct) ? idm_srcwin : idm_cosrcwin; }
+	EditorSide GetEditorIdm(bool direct = true) { return (wEditor.SameAs(wEditorL) == direct) ? EditorSide::SrcWin : EditorSide::CoSrcWin; }
 
 //!-start-[GetApplicationProps]
 	static SciTEBase *GetApplicationInstance();

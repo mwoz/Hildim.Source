@@ -127,14 +127,14 @@ int BufferList::Add(IDocumentEditable* doc) {
 int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t forIdm) {
 	if (!filename.IsSet()) {
 		for (int i = 0; i < length; i++) {
-			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (!forIdm || forIdm == buffers[i].editorSide)) {
+			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
 				return i;
 			}
 		}
 		return -1;
 	}
 	for (int i = 0;i < length;i++) {
-		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (!forIdm || forIdm == buffers[i].editorSide)) {
+		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
 			return i;
 		}
 	}
@@ -146,22 +146,22 @@ int BufferList::NextByIdm_Settings(int idm) {
 }
 int BufferList::NextByIdm_Stack(int idm) {
 	for (int i = stackcurrent + 1; i < length; i++) {
-		if (buffers[stack[i]].editorSide == idm)
+		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm))
 			return stack[i];
 	}
 	for (int i = 0; i < stackcurrent; i++) {
-		if (buffers[stack[i]].editorSide == idm)
+		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm))
 			return stack[i];
 	}
 	return -1;
 }
 int BufferList::NextByIdm(int idm){
 	for (int i = current + 1; i < length; i++){
-		if (buffers[i].editorSide == idm)
+		if (buffers[i].editorSide == static_cast<EditorSide>(idm))
 			return i;
 	}
 	for (int i = 0; i < current; i++){
-		if (buffers[i].editorSide == idm)
+		if (buffers[i].editorSide == static_cast<EditorSide>(idm))
 			return i;
 	}
 	return -1;
@@ -231,7 +231,7 @@ Buffer *BufferList::CurrentBuffer() {
 void BufferList::SetCurrent(int index) {
 	current = index;
 	FilePath p = buffers[current].AbsolutePath();
-	pEditor->SwitchTo(buffers[current].editorSide, &p);
+	pEditor->SwitchTo(static_cast<uptr_t>(buffers[current].editorSide), &p);
 	SciTEBase::GetProps()->SetInteger("BufferNumber", current+1); //!-add-[BufferNumber]
 }
 
@@ -252,7 +252,7 @@ int BufferList::StackPrevBySide(int side){
 		if (--stackcurrent < 0)
 			stackcurrent = length - 1;
 		res = stack[stackcurrent];
-		if(buffers[res].editorSide == side && Current() != res)
+		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
 			return res;
 	}
 	stackcurrent = stmp;
@@ -266,7 +266,7 @@ int BufferList::StackNextBySide(int side){
 		if (++stackcurrent >= length)
 			stackcurrent = 0;
 		res = stack[stackcurrent];
-		if(buffers[res].editorSide == side && Current() != res)
+		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
 			return res;
 	}
 	stackcurrent = stmp;
@@ -381,13 +381,13 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	Buffer* bPrev = buffers.CurrentBuffer();
 	int prevId = buffers.Current();
 
-	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
 	if (insertIn <= buffers.length && buffers.buffers[insertIn].editorSide != coSide)
 		insertIn = -1;
 	
 	if (wEditor.GetCoBuffPointer().IsUntitled() ) {
-		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
+		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, static_cast<uptr_t>(coSide));
 		Buffer* coBuff = nullptr;
 		if (coId > -1) {
 			coBuff = &buffers.buffers[coId];
@@ -404,9 +404,9 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		}
 	}
 
-	int iPrevSide = buffers.CurrentBuffer()->editorSide;
+	EditorSide iPrevSide = buffers.CurrentBuffer()->editorSide;
 	
-	int iNext = buffers.NextByIdm_Stack(iPrevSide);
+	int iNext = buffers.NextByIdm_Stack(static_cast<int>(iPrevSide));
 	FilePath pNext = L"";
 	if (iNext > -1)
 		pNext = buffers.buffers[iNext].AbsolutePath();
@@ -431,7 +431,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		realIns--;
 	if (iNext > -1) {
 
-		iNext = buffers.GetDocumentByName(pNext, false, iPrevSide);
+		iNext = buffers.GetDocumentByName(pNext, false, static_cast<uptr_t>(iPrevSide));
 		SetDocumentAt(iNext, false, false);
 			
 	}                              
@@ -441,7 +441,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		wEditor.coEditor.AddRefDocument(d);
 		wEditor.coEditor.SetDocPointer(d);
 		wEditor.SetCoBuffPointer(NULL);
-		if (iPrevSide == IDM_SRCWIN ||  props.GetInt("additional.view.stay.visible")) {
+		if (iPrevSide == EditorSide::SrcWin ||  props.GetInt("additional.view.stay.visible")) {
 			New();
 		
 			pNext = buffers.buffers[buffers.Current()].AbsolutePath();
@@ -474,10 +474,10 @@ void SciTEBase::CloneTab(){
 		return;
 	int iPrev = buffers.Current();
 	Buffer* bPrev = buffers.CurrentBuffer();
-	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
 	if (wEditor.GetCoBuffPointer().IsUntitled()) {
-		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
+		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, static_cast<uptr_t>(coSide));
 		Buffer* coBuff = nullptr;
 		if (coId > -1) {
 			coBuff = &buffers.buffers[coId];
@@ -529,7 +529,7 @@ void SciTEBase::CloneTab(){
 
 void SciTEBase::CheckRightEditorVisible() {
 	for (int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].editorSide != IDM_SRCWIN) {
+		if (buffers.buffers[i].editorSide != EditorSide::SrcWin) {
 			if (!m_bRightEditorVisible) {
 				m_bRightEditorVisible = true;
 				extender->OnRightEditorVisibility(true);
@@ -557,7 +557,7 @@ IDocumentEditable* SciTEBase::GetDocumentAt(int index) {
 int SciTEBase::ShiftToVisible(int index) {
 	if (::IsWindowVisible((HWND)wSciTE.GetID()) && !bBlockUIUpdate && !props.GetInt("tabctrl.moved") &&
 		(((!props.GetInt("tabctrl.alwayssavepos") && !(::GetAsyncKeyState(VK_SHIFT) & 0x8000))) || (props.GetInt("tabctrl.alwayssavepos") && (::GetAsyncKeyState(VK_SHIFT) & 0x8000)))) {
-		int side = buffers.buffers[index].editorSide;
+		EditorSide side = buffers.buffers[index].editorSide;
 		int realIndex = 0;
 		int firstSide;
 		for (int pos = 0; pos < buffers.length; pos++) {
@@ -565,7 +565,7 @@ int SciTEBase::ShiftToVisible(int index) {
 				if (!realIndex)
 					firstSide = pos;
 				if (pos == index) { 
-					if (reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(side), "LASTVISIBLE")) <= realIndex && index != firstSide) {
+					if (reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(static_cast<int>(side)), "LASTVISIBLE")) <= realIndex && index != firstSide) {
 						ShiftTab(index, firstSide);
 						index = firstSide;
 					}
@@ -586,7 +586,7 @@ void SciTEBase::SetCoDocumentAt(int index, bool bSetBuffersMenu) {
 
 	ResetAllStyles(wEditor.coEditor, wEditor.coEditor.LexerLanguage().c_str());
 
-	ScintillaWindowEditor* pCoEd = GetEditorIdm() == idm_srcwin ? &wEditorR : &wEditorL;
+	ScintillaWindowEditor* pCoEd = GetEditorIdm() == EditorSide::SrcWin ? &wEditorR : &wEditorL;
 	pCoEd->languageCurrent = wEditor.coEditor.LexerLanguage();
 
 	SetLineNumberWidth(&wEditor.coEditor);
@@ -609,9 +609,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	        currentbuf >= buffers.length) {
 		return;
 	}
-	int startSide = buffers.buffers[buffers.Current()].editorSide;
+	EditorSide startSide = buffers.buffers[buffers.Current()].editorSide;
 	if(startSide == buffers.buffers[index].editorSide)
-		layout.OnOpenClose(startSide);
+		layout.OnOpenClose(static_cast<int>(startSide));
 
 	wEditor.CallSetRedraw();
 	if(!bExit)
@@ -659,7 +659,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 
 	if (extender) {
 		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
-		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
+		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 	if(!bBlockUIUpdate){
 		wEditor.CallSetRedraw();
@@ -823,9 +823,9 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 	InitialiseBuffers();
 	UpdateBuffersCurrent();
 
-	int side = CurrentBuffer()->editorSide;
+	EditorSide side = CurrentBuffer()->editorSide;
 
-	// Используем ActiveFilePath() для получения директории текущего буфера при создании нового файла.
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ActiveFilePath() пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
 	FilePath curDirectory(ActiveFilePath().Directory());
 	curDirectory = path ? path : ActiveFilePath().Directory();
 
@@ -1076,13 +1076,13 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	int prevIdm = -2;
 	bool closingEmptyRight = false;
 	if (buffers.CurrentBuffer()->IsUntitled()) {
-		if (!props.GetInt("additional.view.stay.visible") && buffers.CurrentBuffer()->editorSide == IDM_COSRCWIN) 
+		if (!props.GetInt("additional.view.stay.visible") && buffers.CurrentBuffer()->editorSide == EditorSide::CoSrcWin) 
 			closingEmptyRight = true;
 		else
 			return;
 	}		
 
-	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
+	layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	if (extender && !closingEmptyRight) {
 		extender->OnClose(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Close");
@@ -1091,7 +1091,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
-		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
+		closingLast = true;	  //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ !!!!!!!!!!!!
 		buffers.buffers[0].Init(&buffers);
 		ActiveFilePath().Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
@@ -1109,7 +1109,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			if (extender)
 				extender->InitBuffer(0);
 		} else {
-			prevIdm = buffers.CurrentBuffer()->editorSide;
+			prevIdm = static_cast<int>(buffers.CurrentBuffer()->editorSide);
 			if (extender)
 				extender->RemoveBuffer(buffers.Current());
 			if (buffers.CurrentBuffer()->pFriend){
@@ -1130,7 +1130,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 			if (extender && !makingRoomForNew)
 				extender->ActivateBuffer(buffers.Current());
-			if (prevIdm != buffers.CurrentBuffer()->editorSide){
+			if (static_cast<EditorSide>(prevIdm) != buffers.CurrentBuffer()->editorSide){
 				nextFriend = buffers.NextByIdm_Settings(prevIdm);
 				if (nextFriend == -1){
 					wEditor.SetCoBuffPointer(NULL);
@@ -1152,7 +1152,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		if (closingLast) {
 			ClearDocument();
 		}
-		if (nextFriend == -1 && (prevIdm == IDM_SRCWIN || props.GetInt("additional.view.stay.visible"))) {
+		if (nextFriend == -1 && (static_cast<EditorSide>(prevIdm) == EditorSide::SrcWin || props.GetInt("additional.view.stay.visible"))) {
 			wEditor.Switch();
 			New(true);
 			wEditor.SetCoBuffPointer(&bufferNext);
@@ -1162,7 +1162,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			CheckReload();
 
 			RestoreState(bufferNext);
-			if (prevIdm == buffers.CurrentBuffer()->editorSide)
+			if (static_cast<EditorSide>(prevIdm) == buffers.CurrentBuffer()->editorSide)
 				DisplayAround(bufferNext);
 		}
 	}
@@ -1175,7 +1175,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	if (extender && !closingLast && !makingRoomForNew) {
 		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Close-");
-		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
+		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 	//if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
 	//	wEditor.Switch();
@@ -1454,7 +1454,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 			}
 			bool ro = buffers.buffers[pos].ROMarker;
 
-			if (buffers.buffers[pos].editorSide == IDM_COSRCWIN) {
+			if (buffers.buffers[pos].editorSide == EditorSide::CoSrcWin) {
 				if (utf8mode) {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, buffers.buffers[pos].AsUTF8().c_str());
@@ -2041,14 +2041,14 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 			Sci_Position sourceLine = DecodeMessage(message.c_str(), source, style, column);
 			SString findHiglight = "";
 			if (style == SCE_ERR_GCC){
-				int posInLine = 0; //позиция в строке редактора, с которой начинается найденное слово
-				int lenSelected = 0; //длина найденного слова
-				int posInFind = 0; //начало найденной строки врезультатах поиска
-				//ищем позицию и длину найденного слова
-				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;
-				findHiglight = message.substr(posInFind + posInLine, lenSelected);
+				int posInLine = 0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\
+				int lenSelected = 0; //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\
+				int posInFind = 0; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ\
+				//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ\
+				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;\
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;\
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;\
+				findHiglight = message.substr(posInFind + posInLine, lenSelected);\
 			}
 			if (sourceLine >= 0) {
 //!-start-[FindResultListStyle]
@@ -2179,4 +2179,3 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 	}
 	return false; //!-add-[GoMessageImprovement]
 }
-

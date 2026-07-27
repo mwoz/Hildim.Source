@@ -310,7 +310,7 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call(Scintilla::Message msg, uptr_t wPa
 
 void SciTEBase::ScintillaWindowSwitcher::Switch(bool ignorebuff){
 	FilePath f = buffer_L;
-	if (GetWindowIdm() == IDM_SRCWIN){
+	if (GetWindowIdm() == EditorSide::SrcWin){
 		SetID(pBase->wEditorR.GetID());
 		coEditor.SetID(pBase->wEditorL.GetID());
 	}
@@ -325,7 +325,7 @@ void SciTEBase::ScintillaWindowSwitcher::Switch(bool ignorebuff){
 }
 
 void SciTEBase::ScintillaWindowSwitcher::SwitchTo(uptr_t wndIdm, FilePath* pBuff){
-	bool needGrab =  (GetWindowIdm() != wndIdm);
+	bool needGrab =  (static_cast<EditorSide>(wndIdm) != GetWindowIdm());
 	if (!needGrab && !pBuff) return;
 	if (wndIdm == IDM_SRCWIN ){
 		SetID(pBase->wEditorL.GetID());	
@@ -369,7 +369,7 @@ void SciTEBase::ScintillaWindowSwitcher::SwitchTo(uptr_t wndIdm, FilePath* pBuff
 	coEditor.SetFocus(false);
 }
 void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf) {
-	if (GetWindowIdm() == IDM_SRCWIN) {
+	if (GetWindowIdm() == EditorSide::SrcWin) {
 		buffer_L.Set(pBuf ? pBuf->AsInternal() : L"");
 	} else {
 		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
@@ -377,7 +377,7 @@ void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf) {
 }
 
 void SciTEBase::ScintillaWindowSwitcher::SetBuffEncoding(int e) {
-	if (GetWindowIdm() == IDM_SRCWIN) {
+	if (GetWindowIdm() == EditorSide::SrcWin) {
 		buffer_L._encoding = e;
 	} else {
 		buffer_R._encoding = e;
@@ -385,7 +385,7 @@ void SciTEBase::ScintillaWindowSwitcher::SetBuffEncoding(int e) {
 }
 
 void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
-	if (GetWindowIdm() == IDM_SRCWIN){
+	if (GetWindowIdm() == EditorSide::SrcWin){
 		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
 	}
 	else{
@@ -394,7 +394,7 @@ void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
 }
 
 FilePath SciTEBase::ScintillaWindowSwitcher::GetCoBuffPointer() {
-	if (GetWindowIdm() == IDM_SRCWIN) {
+	if (GetWindowIdm() == EditorSide::SrcWin) {
 		return buffer_R;
 	} else {
 		return buffer_L;
@@ -405,8 +405,8 @@ bool SciTEBase::ScintillaWindowEditor::SameAs(const ScintillaWindowEditor& other
 	return GetID() == other.GetID();
 }
 
-EsitorSide SciTEBase::ScintillaWindowSwitcher::GetWindowIdm() const noexcept {
-	return SameAs(pBase->wEditorL) ? idm_srcwin : idm_cosrcwin;
+EditorSide SciTEBase::ScintillaWindowSwitcher::GetWindowIdm() const noexcept {
+	return SameAs(pBase->wEditorL) ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 }
 
 sptr_t SciTEBase::CallEditors(Scintilla::Message msg, uptr_t wParam, const char *s ){
@@ -490,7 +490,7 @@ void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	DisplayAround(rf);
 	if (bFireEvent) {
 		extender->OnSwitchFile(props.GetString("FilePath"));
-		layout.OnSwitchFile(buffers.buffers[buffers.Current()].editorSide);
+		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 
 }
@@ -576,7 +576,7 @@ static bool IsBrace(char ch) {
 bool SciTEBase::FindMatchingBracePosition(bool editor, Sci_Position &braceAtCaret, Sci_Position &braceOpposite, bool sloppy) {
 
 	bool isInside = false;
-//!	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;			  !!!TODO!!! -
+//!	GUI::ScintillaWindow &win = editor ? wEditor : wOutput;		   !!!TODO!!!
 	GUI::ScintillaWindow &win = editor ? reinterpret_cast<GUI::ScintillaWindow&>(wEditor) : wOutput; //!-change-[OnSendEditor]
 
 	int mainSel = static_cast<int>(win.MainSelection());
@@ -802,7 +802,7 @@ bool SciTEBase::iswordcharforsel(char ch) {
 // Accept path separators '/' and '\', extension separator '.', and ':', MS drive unit
 // separator, and also used for separating the line number for grep. Same for '(' and ')' for cl.
 bool SciTEBase::isfilenamecharforsel(char ch) {
-	return !strchr("\t\n\r \"$%'*,;<>?[]^`{|}", ch);
+	return !strchr("\t\n\r \\\"$%'*,;<>?[]^`{|}", ch);
 }
 
 bool SciTEBase::islexerwordcharforsel(char ch) {
@@ -2062,7 +2062,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 	case IDM_SHOWMINIMIZE:
 		::ShowWindow(static_cast<HWND>(wSciTE.GetID()), SW_SHOWMINIMIZED);
 		break;
-	case IDM_SHOWMNORMAL:
+	case IDM_SHOWNORMAL:
 		::ShowWindow(static_cast<HWND>(wSciTE.GetID()), SW_SHOWNORMAL);
 		break;
 	case IDM_ENCODING_DEFAULT:
@@ -2687,8 +2687,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 	bool handled = false;
 	switch (notification->nmhdr.code) {
 	case SCN_FOCUSIN:
-		if ((notification->nmhdr.idFrom == idm_srcwin) || (notification->nmhdr.idFrom == idm_cosrcwin)){
-			if (GetEditorIdm() != notification->nmhdr.idFrom) {
+		if ((notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin)) || (notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin))){
+			if (GetEditorIdm() != static_cast<EditorSide>(notification->nmhdr.idFrom)) {
  				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
 				CheckReload();
 			}
@@ -2789,7 +2789,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_COLORIZED:
-		if (notification->nmhdr.idFrom == GetEditorIdm()) {
+		if (notification->nmhdr.idFrom == static_cast<int>(GetEditorIdm())) {
 			if (extender) 
 				handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
@@ -2819,13 +2819,13 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		break;
 	case SCN_SAVEPOINTLEFT:
-		if (notification->nmhdr.idFrom == idm_srcwin || notification->nmhdr.idFrom == idm_cosrcwin) {
+		if (notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin) || notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin)) {
 			if (extender) {
 				handled = extender->OnSavePointLeft();
 				extender->OnShowActivate(-1, -1, -1);
 			}
 			if (!handled) {
-				if(GetEditorIdm() == notification->nmhdr.idFrom)
+				if(GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom))
 					CurrentBuffer()->isDirty = true;
 				else {
 					FilePath fp = wEditor.GetCoBuffPointer();  
@@ -2892,7 +2892,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_UPDATEUI:
 		if (extender && (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
-			if(buffers.pEditor->GetWindowIdm() == notification->nmhdr.idFrom)
+			if(buffers.pEditor->GetWindowIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom))
 				handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 			else
 				handled = extender->CoOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
@@ -2929,7 +2929,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			SetLineNumberWidth();
 
 		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD) && notification->nmhdr.idFrom != IDM_FINDRESWIN) {
-			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - в будущем могут быть еще варианты
+			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 			sptr_t p = w->LineFromPosition(w->CurrentPos());
 			if (p == notification->line + 1 || p == notification->line){
@@ -2978,7 +2978,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		//for (Scintilla::Line line = lineStart; line <= lineEnd; line++) {
 		//	wEditor.EnsureVisible(line); //.EnsureLineVisible(line, false);
 		//}
-//							if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
+//								if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) EnsureRangeVisible(notification->position, notification->position + notification->length, false);
 		}
 		break;
 
@@ -3018,13 +3018,13 @@ void SciTEBase::Notify(SCNotification *notification) {
 					notification->position, endWord, &SciTEBase::iswordcharforsel);
 			} catch (std::exception &e) {
 				if (strlen(e.what())) {
-					std::string warning = "print([[";
+					std::string warning = "print([[\n";
 					warning += e.what();
-					warning += "]])";
+					warning += "]])\n";
 					extender->DoLua(warning.c_str());
 				}
 			}
-			if (message.length() && notification->nmhdr.idFrom == GetEditorIdm()) {
+			if (message.length() && notification->nmhdr.idFrom == static_cast<int>(GetEditorIdm())) {
 				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL)); 
 			}
 		}
@@ -3046,7 +3046,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		}
 		else{
 			int zoom = static_cast<int>(wEditor.Zoom());
-			if (GetEditorIdm() == idm_srcwin)
+			if (GetEditorIdm() == EditorSide::SrcWin)
 				props.SetInteger("magnification", zoom);
 			else
 				props.SetInteger("right.magnification", zoom);
@@ -3098,7 +3098,7 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 	if (buffers.Current() == i) {
 		wEditor.SetBuffEncoding(e);
 		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
-		layout.OnSwitchFile(buffers.buffers[i].editorSide);
+		layout.OnSwitchFile(static_cast<int>(buffers.buffers[i].editorSide));
 	}
 	BuffersMenu();
 
@@ -3106,7 +3106,7 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 
 int  SciTEBase::SecondEditorActive() {
 	for (int i = 0; i < buffers.length; i++) {
-		if (buffers.buffers[i].editorSide == IDM_COSRCWIN)
+		if (buffers.buffers[i].editorSide == EditorSide::CoSrcWin)
 			return true;
 	}
 	return false;
@@ -3342,7 +3342,7 @@ void SciTEBase::Insert(Pane p, Sci_Position pos, const char *s) {
 static bool makeVisible = false;
 void SciTEBase::Trace(const char *s) {
 	if (!makeVisible) {
-		makeVisible = true;		  //Защищаемся от рекурсивного зацикливания - может возникнуть еще одна ошибка при попытке открытия окна!
+		makeVisible = true;		  //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ!
 		MakeOutputVisible(wOutput);
 		makeVisible = false;
 	} 
@@ -3406,11 +3406,11 @@ void SciTEBase::DoMenuCommand(int cmdID) {
 	Command(cmdID, 0);
 }
 int SciTEBase::ActiveEditor() {
-	return buffers.pEditor->GetWindowIdm() == IDM_SRCWIN ? 0 : 1;
+	return buffers.pEditor->GetWindowIdm() == EditorSide::SrcWin ? 0 : 1;
 }
 
 //!-start-[LocalizationFromLua]
-// TODO: переделать всё на utf8, это вызывается только из луа 
+// TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ utf8, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ 
 char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
 #if defined(GTK)
     //TODO: add get translation
@@ -3428,4 +3428,3 @@ char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
 #endif
 }
 //!-end-[LocalizationFromLua]
-
