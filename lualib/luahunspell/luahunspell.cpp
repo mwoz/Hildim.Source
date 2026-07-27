@@ -45,7 +45,6 @@ h:spell(word) -> [boolean]
 returns true, if the word is spelled correctly
 */
 static int l_spell(lua_State *L) {
-	LClosure gg;
 	const std::string word = luaL_checkstring(L, 2);
 	int ret = CheckH(L)->spell(word);
 	lua_pushboolean(L, ret);
