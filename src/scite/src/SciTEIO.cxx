@@ -1,4 +1,4 @@
-layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
+// SciTE - Scintilla based Text Editor
 /** @file SciTEIO.cxx
  ** Manage input and output with the system.
  **/
@@ -512,7 +512,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	if(setNav)
 		extender->OnNavigation("Open");
 	
-	layout.OnOpenClose(buffers.buffers[buffers.Current()].editorSide);
+	layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 
 	bBlockRedraw = true;
 	if (buffers.size == buffers.length) {
@@ -817,7 +817,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 				convert.fclose();
 			}
 		} else {
-			retVal = true; //Не смогли сохранить несохраненный - наплюем
+			retVal = true; //пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			if (!props.GetInt("save.scip.alert")) {
 				std::string cmd = "print(([[";
 				//cmd += "File ";
@@ -837,7 +837,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 
 void SciTEBase::ReloadProperties() {
 	wEditorL.languageCurrent = "xxx";
-	wEditorR.languageCurrent = "xxx"; //чтобы потом перечиталось на обоих редакторах
+	wEditorR.languageCurrent = "xxx"; //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	ReadGlobalPropFile(L"");
 	firstPropertiesRead = true;
 	ReadProperties();
@@ -848,8 +848,8 @@ void SciTEBase::ReloadProperties() {
 
 // Returns false if cancelled or failed to save
 bool SciTEBase::Save(bool bNotSaveNotChanged, bool checkFileTime) {
-	//fileModTime==0 у созданных по CtrlN закладок - БезымянныйN, а  ActiveFilePath().IsUntitled - это закладка, 
-	// которая остается после закрытия всех файлов - Безымянный 
+	//fileModTime==0 пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ CtrlN пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅN, пїЅ  ActiveFilePath().IsUntitled - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
 	if (! ActiveFilePath().IsUntitled() && (!checkFileTime || buffers.buffers[buffers.Current()].fileModTime) ) {
 		int decision;
 		
@@ -1021,7 +1021,7 @@ public:
 			lineToCompare += buf;
 			return;
 		}
-		char *chr = convert->getNewBuf();									 
+		char *chr = convert->getNewBuf();										 
 		chr[l] = '\0';
 		lineToShow += GUI::ConvertFromUTF8(chr, CP_ACP).c_str();
 		if (!caseSensitive) lineToCompare += GUI::ConvertFromUTF8(GUI::UTF8ToLower(chr), CP_ACP).c_str();
@@ -1093,7 +1093,7 @@ static bool IsWordCharacter(int ch, const char *chSet) {
 }
 
 bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented)
-{//При инициализированной luaState использует поиск regex_search для определения индекса первого вхождения подстроки в текст
+{//пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ luaState пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ regex_search пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ\
 	if (!pRegExp) {
 		char *lineEnd = text + strlen(text);
 		char *match = strstr(text, sub); 
@@ -1357,7 +1357,7 @@ static int LuaPanicFunction(lua_State *Ls) {
 	return 1;
 }
 
-///Поддержка запуска луа в отдельном потоке
+///пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 static ExtensionAPI *host = 0;
 
 inline void raise_error(lua_State *L, const char *errMsg = NULL) {

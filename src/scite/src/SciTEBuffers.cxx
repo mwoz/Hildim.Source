@@ -434,7 +434,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		iNext = buffers.GetDocumentByName(pNext, false, static_cast<uptr_t>(iPrevSide));
 		SetDocumentAt(iNext, false, false);
 			
-	}                              
+	}                             
 	else {
 
 		IDocumentEditable* d = wEditor.coEditor.CreateDocument(0, DocumentOption::Default);
@@ -1392,7 +1392,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 		IupSetAttribute(IupTab(IDM_SRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
-		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, GetEditorIdm(false)) : -1;
+		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, static_cast<uptr_t>(GetEditorIdm(false))) : -1;
 		
 		for (pos = 0; pos < buffers.length; pos++) {
 			int itemID = bufferCmdID + pos;
@@ -2041,14 +2041,13 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 			Sci_Position sourceLine = DecodeMessage(message.c_str(), source, style, column);
 			SString findHiglight = "";
 			if (style == SCE_ERR_GCC){
-				int posInLine = 0; //??????? ? ?????? ?????????, ? ??????? ?????????? ????????? ?????\
-				int lenSelected = 0; //????? ?????????? ?????\
-				int posInFind = 0; //?????? ????????? ?????? ???????????? ??????\
-				//???? ??????? ? ????? ?????????? ?????\
-				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;\
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;\
-				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;\
-				findHiglight = message.substr(posInFind + posInLine, lenSelected);\
+				int posInLine = 0;
+				int lenSelected = 0;
+				int posInFind = 0;
+				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
+				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;
+				findHiglight = message.substr(posInFind + posInLine, lenSelected);
 			}
 			if (sourceLine >= 0) {
 //!-start-[FindResultListStyle]
@@ -2072,7 +2071,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 						Sci_Position toPos = topic.length() - 1;
 						while (toPos >= 0 && pathSepChar != topic[toPos]) toPos--;
 						Sci_Position fromPos = toPos - 1;
-						while (fromPos >= 0 && '"' != topic[fromPos]) fromPos--;
+						while (fromPos >= 0 && '\"' != topic[fromPos]) fromPos--;
 						if (fromPos > 0) {
 							SString path = topic.substr(fromPos + 1, toPos - fromPos - 1);
 							path.append(source + 1);
