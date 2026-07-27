@@ -1017,7 +1017,7 @@ void SciTEBase::ReadProperties() {
 	language = props.GetNewExpand("lexer.", fileNameForExtension.c_str());
 	std::string languageCurrent = wEditor.LexerLanguage();
 
-	ScintillaWindowEditor* pEd = GetEditorIdm() == idm_srcwin ? &wEditorL : &wEditorR;
+	ScintillaWindowEditor* pEd = GetEditorIdm() == EditorSide::SrcWin ? &wEditorL : &wEditorR;
 
 
 	if (pEd->languageCurrent == language.c_str() && languageCurrent == pEd->languageCurrent){
