@@ -825,7 +825,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 	EditorSide side = CurrentBuffer()->editorSide;
 
-	// ?????????? ActiveFilePath() ??? ????????? ?????????? ???????? ?????? ??? ???????? ?????? ?????.
+	// Используем ActiveFilePath() для получения директории текущего буфера при создании нового файла.
 	FilePath curDirectory(ActiveFilePath().Directory());
 	curDirectory = path ? path : ActiveFilePath().Directory();
 
@@ -1091,7 +1091,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 	if (buffers.size == 1) {
 		// With no buffer list, Close means close from MRU
-		closingLast = true;	  //?????? ?? ????? ???????? ? ??????????? ?????? !!!!!!!!!!!!
+		closingLast = true;	  //Врядли мы будем работать в однооконном режиме !!!!!!!!!!!!
 		buffers.buffers[0].Init(&buffers);
 		ActiveFilePath().Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
@@ -2041,9 +2041,10 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 			Sci_Position sourceLine = DecodeMessage(message.c_str(), source, style, column);
 			SString findHiglight = "";
 			if (style == SCE_ERR_GCC){
-				int posInLine = 0;
-				int lenSelected = 0;
-				int posInFind = 0;
+				int posInLine = 0; //позиция в строке редактора, с которой начинается найденное слово
+				int lenSelected = 0; //длина найденного слова
+				int posInFind = 0; //начало найденной строки врезультатах поиска
+				//ищем позицию и длину найденного слова
 				while (wBottom.StyleAt(startPosLine + posInFind) == SCE_ERR_GCC && lineLength > posInFind) posInFind++;
 				while (wBottom.StyleAt(startPosLine + posInFind + posInLine) != SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine) posInLine++;
 				while (wBottom.StyleAt(startPosLine + posInFind + posInLine + lenSelected) == SCE_ERR_FIND_VALUE && lineLength > posInFind + posInLine + lenSelected) lenSelected++;

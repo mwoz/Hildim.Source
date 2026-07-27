@@ -837,7 +837,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 
 void SciTEBase::ReloadProperties() {
 	wEditorL.languageCurrent = "xxx";
-	wEditorR.languageCurrent = "xxx"; //����� ����� ������������ �� ����� ����������
+	wEditorR.languageCurrent = "xxx"; //чтобы потом перечиталось на обоих редакторах
 	ReadGlobalPropFile(L"");
 	firstPropertiesRead = true;
 	ReadProperties();
@@ -848,8 +848,8 @@ void SciTEBase::ReloadProperties() {
 
 // Returns false if cancelled or failed to save
 bool SciTEBase::Save(bool bNotSaveNotChanged, bool checkFileTime) {
-	//fileModTime==0 � ��������� �� CtrlN �������� - ����������N, �  ActiveFilePath().IsUntitled - ��� ��������, 
-	// ������� �������� ����� �������� ���� ������ - ���������� 
+	//fileModTime==0 у созданных по CtrlN закладок - БезымянныйN, а  ActiveFilePath().IsUntitled - это закладка, 
+	// которая остается после закрытия всех файлов - Безымянный 
 	if (! ActiveFilePath().IsUntitled() && (!checkFileTime || buffers.buffers[buffers.Current()].fileModTime) ) {
 		int decision;
 		
@@ -1093,7 +1093,7 @@ static bool IsWordCharacter(int ch, const char *chSet) {
 }
 
 bool SciTEBase::strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented)
-{//��� ������������������ luaState ���������� ����� regex_search ��� ����������� ������� ������� ��������� ��������� � �����\\
+{//При инициализированной luaState использует поиск regex_search для определения индекса первого вхождения подстроки в текст
 	if (!pRegExp) {
 		char *lineEnd = text + strlen(text);
 		char *match = strstr(text, sub); 
@@ -1357,7 +1357,7 @@ static int LuaPanicFunction(lua_State *Ls) {
 	return 1;
 }
 
-///��������� ������� ��� � ��������� ������
+///Поддержка запуска луа в отдельном потоке
 static ExtensionAPI *host = 0;
 
 inline void raise_error(lua_State *L, const char *errMsg = NULL) {

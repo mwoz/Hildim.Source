@@ -2929,7 +2929,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 			SetLineNumberWidth();
 
 		if (0 != (notification->modificationType & SC_MOD_CHANGEFOLD) && notification->nmhdr.idFrom != IDM_FINDRESWIN) {
-			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - � ������� ����� ���� ��� ��������
+			GUI::ScintillaWindow *w = &wEditor;	 //!TODO! - в будущем могут быть еще варианты
 
 			sptr_t p = w->LineFromPosition(w->CurrentPos());
 			if (p == notification->line + 1 || p == notification->line){
@@ -3342,7 +3342,7 @@ void SciTEBase::Insert(Pane p, Sci_Position pos, const char *s) {
 static bool makeVisible = false;
 void SciTEBase::Trace(const char *s) {
 	if (!makeVisible) {
-		makeVisible = true;		  //���������� �� ������������ ������������ - ����� ���������� ��� ���� ������ ��� ������� �������� ����!
+		makeVisible = true;		  //Защищаемся от рекурсивного зацикливания - может возникнуть еще одна ошибка при попытке открытия окна!
 		MakeOutputVisible(wOutput);
 		makeVisible = false;
 	} 
@@ -3410,7 +3410,7 @@ int SciTEBase::ActiveEditor() {
 }
 
 //!-start-[LocalizationFromLua]
-// TODO: ���������� �� �� utf8, ��� ���������� ������ �� ��� 
+// TODO: переделать всё на utf8, это вызывается только из луа 
 char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
 #if defined(GTK)
     //TODO: add get translation
