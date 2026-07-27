@@ -382,6 +382,9 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	int prevId = buffers.Current();
 
 	int coSide = bPrev->editorSide == IDM_COSRCWIN ? IDM_SRCWIN : IDM_COSRCWIN;
+
+	if (insertIn <= buffers.length && buffers.buffers[insertIn].editorSide != coSide)
+		insertIn = -1;
 	
 	if (wEditor.GetCoBuffPointer().IsUntitled() ) {
 		int coId = buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), true, coSide);
@@ -446,7 +449,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	}
 	buffers.ShiftTo(prevId, realIns);
 
-	buffers.buffers[realIns].editorSide = coSide;
+	//  buffers.buffers[realIns].editorSide = coSide;
 
 	bBlockRedraw = false;
 	int p = props.GetInt("tabctrl.alwayssavepos");
@@ -455,7 +458,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	
 	wEditor.Switch();
-	SetDocumentAt(realIns, false, false);
+	SetDocumentAt(buffers.GetDocumentByName(absPath), false, false);
 	wEditor.SetCoBuffPointer(&pNext);
 
 	BuffersMenu();

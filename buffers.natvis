@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+   <Type Name="Buffer">
+      <DisplayString>{editorSide}:{fileName}</DisplayString>
+   </Type>
+
+   <Type Name="BufferList">
+      <DisplayString>length={length} current={current} stackcurrent={stackcurrent}</DisplayString>
+      <Expand>
+         <CustomListItems MaxItemsPerView="1000">
+
+            <Variable InitialValue="0" Name="idx"/>
+            <Loop>
+               <Item Name="[{idx}]">buffers[idx]</Item>
+
+              <Exec>idx++</Exec>
+              <Break Condition="idx &gt;= length"/>
+            </Loop>
+         </CustomListItems >
+      </Expand>
+
+   </Type>
+
+</AutoVisualizer>

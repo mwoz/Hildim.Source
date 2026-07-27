@@ -321,5 +321,6 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\lua55.natvis" />
+    <Natvis Include="..\..\buffers.natvis" />
   </ItemGroup>
 </Project>

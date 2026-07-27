@@ -104,18 +104,18 @@ public:
 
 class Buffer : public RecentFile {
 public:
-	Scintilla::IDocumentEditable* doc;
+	int editorSide;
 	bool isDirty;
 	bool boundWithFS;
 	bool ROMarker; 
 	bool useMonoFont;
+	Scintilla::IDocumentEditable* doc;
 	UniMode unicodeMode;
 	time_t fileModTime;
 	time_t fileModLastAsk;
 	enum { fmNone, fmMarked, fmModified} findMarks;
 	SString overrideExtension;	///< User has chosen to use a particular language
 	std::vector<Sci_Position> foldState;
-	int editorSide;
 	bool pFriend;
 	BufferListAPI* pBase = nullptr;
 	int FriendIndex() {
