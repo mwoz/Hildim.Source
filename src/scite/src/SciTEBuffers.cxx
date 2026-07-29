@@ -68,11 +68,9 @@
 
 using namespace Scintilla;
 
-BufferList::BufferList() : current(0), stackcurrent(0), stack(0), buffers(0), size(0), length(0), initialised(false) {}
+BufferList::BufferList() : current(0), stackcurrent(0), maxLength(0), initialised(false)  {}
 
 BufferList::~BufferList() {
-	delete []buffers;
-	delete []stack;
 }
 
 int Buffer::FriendIndex() {
@@ -87,11 +85,10 @@ Buffer* Buffer::Friend() {
 }
 
 void BufferList::Allocate(int maxSize) {
-	length = 1;
+	maxLength = maxSize;
 	current = 0;
-	size = maxSize;
-	buffers = new Buffer[size];
-	stack = new int[size];
+	buffers.resize(1);
+	stack.resize(1);
 	buffers[0].Init(this);
 	FilePath p = buffers[0].AbsolutePath();
 	pEditor->SetBuffPointer(&p);
@@ -99,22 +96,27 @@ void BufferList::Allocate(int maxSize) {
 }
 
 int BufferList::Add(IDocumentEditable* doc) {
-	if (length < size) {
-		length++;
+	if ((int)buffers.size() >= maxLength) {
+		assert(false);
 	}
-	buffers[length - 1].Init(this);
+	else {
+		buffers.push_back(Buffer());
+		stack.push_back(0);
+	}
+
+	buffers.back().Init(this);
 	if (doc)
-		buffers[length - 1].doc = doc;
-	stack[length - 1] = length - 1;
-	buffers[length - 1].editorSide = pEditor->GetWindowIdm();
-	
-	MoveToStackTop(length - 1);
+		buffers.back().doc = doc;
+	stack.back() = (int)buffers.size() - 1;
+	buffers.back().editorSide = pEditor->GetWindowIdm();
+
+	MoveToStackTop((int)buffers.size() - 1);
 
 //!-start-[NewBufferPosition]
 	switch (SciTEBase::GetProps()->GetInt("buffers.new.position", 0)) {
 	case 1:
 	{
-		ShiftTo(length - 1, current + 1);
+		ShiftTo((int)buffers.size() - 1, current + 1);
 		FilePath p = buffers[current + 1].AbsolutePath();
 		pEditor->SetBuffPointer(&p);
 		return current + 1;
@@ -122,7 +124,7 @@ int BufferList::Add(IDocumentEditable* doc) {
 		break;
 	case 2:
 	{
-		ShiftTo(length - 1, 0);
+		ShiftTo((int)buffers.size() - 1, 0);
 		FilePath p = buffers[0].AbsolutePath();
 		pEditor->SetBuffPointer(&p);
 		return 0;
@@ -130,21 +132,21 @@ int BufferList::Add(IDocumentEditable* doc) {
 		break;
 	}
 //!-end-[NewBufferPosition]
-	FilePath p = buffers[length - 1].AbsolutePath();
+	FilePath p = buffers.back().AbsolutePath();
 	pEditor->SetBuffPointer(&p);
-	return length - 1;
+	return (int)buffers.size() - 1;
 }
 
 int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t forIdm) {
 	if (!filename.IsSet()) {
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < (int)buffers.size(); i++) {
 			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
 				return i;
 			}
 		}
 		return -1;
 	}
-	for (int i = 0;i < length;i++) {
+	for (int i = 0; i < (int)buffers.size(); i++) {
 		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
 			return i;
 		}
@@ -156,7 +158,7 @@ int BufferList::NextByIdm_Settings(int idm) {
 	return SciTEBase::GetProps()->GetInt("buffers.zorder.switching", 0) ? NextByIdm_Stack(idm) : NextByIdm(idm);
 }
 int BufferList::NextByIdm_Stack(int idm) {
-	for (int i = stackcurrent + 1; i < length; i++) {
+	for (int i = stackcurrent + 1; i < (int)buffers.size(); i++) {
 		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm))
 			return stack[i];
 	}
@@ -167,7 +169,7 @@ int BufferList::NextByIdm_Stack(int idm) {
 	return -1;
 }
 int BufferList::NextByIdm(int idm){
-	for (int i = current + 1; i < length; i++){
+	for (int i = current + 1; i < (int)buffers.size(); i++) {
 		if (buffers[i].editorSide == static_cast<EditorSide>(idm))
 			return i;
 	}
@@ -179,57 +181,64 @@ int BufferList::NextByIdm(int idm){
 }
 
 void BufferList::RemoveAt(int id) {
-	bool remove = false;
-	for (int i = 0; i < length; i++) {
+	// Remove id from stack
+	for (int i = 0; i < (int)stack.size(); i++) {
 		if (stack[i] == id) {
-			remove = true;
-		}
-		else {
-			if (stack[i] > id)
-				stack[i]--;
-			if (remove)
-				stack[i - 1] = stack[i];
+			stack.erase(stack.begin() + i);
+			break;
 		}
 	}
-	for (int i = id; i < length - 1; i++) {
-		buffers[i] = buffers[i + 1];
+	// Decrement stack entries that pointed past id
+	for (int& s : stack) {
+		if (s > id) s--;
 	}
-	if (stackcurrent == length)
-		stackcurrent--;
-
-	length--;
+	// Remove buffer — vector shifts the rest automatically
+	buffers.erase(buffers.begin() + id);
+	if (stackcurrent >= (int)buffers.size())
+		stackcurrent = (int)buffers.size() - 1;;
 }
 
+
 void BufferList::RemoveCurrent() {
-	// Delete and move up to fill gap but ensure doc pointer is saved.
+	// Save document pointer before removal
 	IDocumentEditable* currentDoc = buffers[current].doc;
-	for (int i = current;i < length - 1;i++) {
-		buffers[i] = buffers[i + 1];
-	}
-	buffers[length - 1].doc = currentDoc;
 
-	if (length > 1) {
+	if ((int)buffers.size() > 1) {
 		CommitStackSelection();
-		PopStack();
-		length--;
 
-		buffers[length].Init(this);
-		if (current >= length) {
-			SetCurrent(length - 1);
+		// Remove current from stack
+		for (int i = 0; i < (int)stack.size(); i++) {
+			if (stack[i] == current) {
+				stack.erase(stack.begin() + i);
+				break;
+			}
+		}
+		// Decrement stack entries that pointed past current
+		for (int& s : stack) {
+			if (s > current) s--;
+		}
+
+		// Remove buffer — vector shifts the rest automatically
+		buffers.erase(buffers.begin() + current);
+
+		if (current >= (int)buffers.size()) {
+			SetCurrent((int)buffers.size() - 1);	
 		}
 		if (current < 0) {
 			SetCurrent(0);
 		}
-//!-start-[ZorderSwitchingOnClose]
+		//!-start-[ZorderSwitchingOnClose]
 		if (SciTEBase::GetProps()->GetInt("buffers.zorder.switching", 0)) {
 			SetCurrent(stack[stackcurrent]);
 		}
-//!-end-[ZorderSwitchingOnClose]
-	} else {
+		//!-end-[ZorderSwitchingOnClose]
+	}
+	else {
 		buffers[current].Init(this);
 	}
 	MoveToStackTop(current);
 }
+
 
 int BufferList::Current() const {
 	return current;
@@ -246,22 +255,12 @@ void BufferList::SetCurrent(int index) {
 	SciTEBase::GetProps()->SetInteger("BufferNumber", current+1); //!-add-[BufferNumber]
 }
 
-void BufferList::PopStack() {
-	for (int i = 0; i < length - 1; ++i) {
-		int index = stack[i + 1];
-		// adjust the index for items that will move in buffers[]
-		if (index > current)
-			--index;
-		stack[i] = index;
-	}
-}
-
 int BufferList::StackPrevBySide(int side){
 	int stmp = stackcurrent;
 	int res;
-	for (int i = length - 1; i >= 0; i--) {
+	for (int i = (int)buffers.size() - 1; i >= 0; i--) {
 		if (--stackcurrent < 0)
-			stackcurrent = length - 1;
+			stackcurrent = (int)buffers.size() - 1;
 		res = stack[stackcurrent];
 		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
 			return res;
@@ -273,8 +272,8 @@ int BufferList::StackPrevBySide(int side){
 int BufferList::StackNextBySide(int side){
 	int stmp = stackcurrent;
 	int res;
-	for (int i = 0; i < length; i++) {
-		if (++stackcurrent >= length)
+	for (int i = 0; i < (int)buffers.size(); i++) {
+		if (++stackcurrent >= (int)buffers.size())
 			stackcurrent = 0;
 		res = stack[stackcurrent];
 		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
@@ -285,20 +284,20 @@ int BufferList::StackNextBySide(int side){
 }
 
 int BufferList::StackNext() {
-	if (++stackcurrent >= length)
+	if (++stackcurrent >= (int)buffers.size())
 		stackcurrent = 0;
 	return stack[stackcurrent];
 }
 
 int BufferList::StackPrev() {
 	if (--stackcurrent < 0)
-		stackcurrent = length - 1;
+		stackcurrent = (int)buffers.size() - 1;
 	return stack[stackcurrent];
 }
 
 int BufferList::GetOrder(int index) {
-	int res = length;
-	for (int i = 0; i < length; i++) {
+	int res = (int)buffers.size();
+	for (int i = 0; i < (int)buffers.size(); i++) {
 		if (stack[i] == index) {
 			res = i;
 			break;
@@ -310,7 +309,7 @@ int BufferList::GetOrder(int index) {
 void BufferList::MoveToStackTop(int index) {
 	// shift top chunk of stack down into the slot that index occupies
 	bool move = false;
-	for (int i = length - 1; i > 0; --i) {
+	for (int i = (int)buffers.size() - 1; i > 0; --i) {
 		if (stack[i] == index)
 			move = true;
 		if (move)
@@ -329,17 +328,21 @@ void BufferList::CommitStackSelection() {
 void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	// shift buffer to new place in buffers array
 	if (indexFrom == indexTo ||
-		indexFrom < 0 || indexFrom >= length ||
-		indexTo < 0 || indexTo >= length) return;
+		indexFrom < 0 || indexFrom >= (int)buffers.size() ||
+		indexTo < 0 || indexTo >= (int)buffers.size()) return;
 	int step = (indexFrom > indexTo) ? -1 : 1;
-	Buffer tmp = buffers[indexFrom];
-	int i;
-	for (i = indexFrom; i != indexTo; i += step) {
-		buffers[i] = buffers[i + step];
+	if (indexFrom > indexTo) {
+		std::rotate(buffers.begin() + indexTo,
+			buffers.begin() + indexFrom,
+			buffers.begin() + indexFrom + 1);
 	}
-	buffers[indexTo] = tmp;
+	else {
+		std::rotate(buffers.begin() + indexFrom,
+			buffers.begin() + indexFrom + 1,
+			buffers.begin() + indexTo + 1);
+	}
 	// update stack indexes
-	for (i = 0; i < length; i++) {
+	for (int i = 0; i < (int)buffers.size(); i++) {
 		if (stack[i] == indexFrom) {
 			stack[i] = indexTo;
 		} else if (step == 1) {
@@ -353,31 +356,41 @@ void BufferList::ShiftTo(int indexFrom, int indexTo) {
 	if (indexFrom == current) current = indexTo;
 }
 
-void BufferList::OrderBy(std::map<int, int> &order) {
-	std::map<int, Buffer> orderBuf;
-	std::map<int, int> orderStack;
-	bool bSetCur = true;
-	for (auto& elem: order) {
-		orderBuf.insert({ elem.first, buffers[elem.second] });
-		if (current == elem.second && bSetCur) {
-			current = elem.first;
-			bSetCur = false;
+void BufferList::OrderBy(std::map<int, int>& order) {
+	// Копируем все буферы на новые позиции
+	std::vector<Buffer> newBuf(buffers.size());
+	for (auto& elem : order) {
+		newBuf[elem.first] = buffers[elem.second];
+	}
+	// Для индексов, не упомянутых как destination в order — оставляем на месте
+	for (int i = 0; i < (int)buffers.size(); i++) {
+		if (order.find(i) == order.end()) {
+			newBuf[i] = buffers[i];
 		}
-		for (int i = 0; i < length; i++) {
+	}
+
+	// Обновляем current
+	for (auto& elem : order) {
+		if (current == elem.second) {
+			current = elem.first;
+			break;
+		}
+	}
+
+	// Обновляем stack
+	for (int i = 0; i < (int)stack.size(); i++) {
+		for (auto& elem : order) {
 			if (stack[i] == elem.second) {
-				orderStack.insert({ i, elem.first });
+				stack[i] = elem.first;
 				break;
 			}
 		}
 	}
-	for (auto& elem : orderBuf) {
-		buffers[elem.first] = elem.second;
-	}
-	for (auto& elem : orderStack) {
-		stack[elem.first] = elem.second;
-	}
 
+	buffers = std::move(newBuf);
 }
+
+
 
 void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
 	buffers.OrderBy(order);
@@ -394,7 +407,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
-	if (insertIn <= buffers.length && buffers.buffers[insertIn].editorSide != coSide)
+	if (insertIn < (int)buffers.buffers.size() && buffers.buffers[insertIn].editorSide != coSide)
 		insertIn = -1;
 	
 	if (wEditor.GetCoBuffPointer().IsUntitled() ) {
@@ -437,9 +450,10 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	UpdateBuffersCurrent();
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	int realIns = insertIn < 0 ? iNext : (insertIn >= buffers.length ? buffers.length  : insertIn);
-	if (prevId < insertIn && insertIn <= buffers.length)
+	int realIns = insertIn < 0 ? iNext : (insertIn >= (int)buffers.buffers.size() ? (int)buffers.buffers.size() : insertIn);
+	if (prevId < insertIn && insertIn <= (int)buffers.buffers.size())
 		realIns--;
+
 	if (iNext > -1) {
 
 		iNext = buffers.GetDocumentByName(pNext, false, static_cast<uptr_t>(iPrevSide));
@@ -539,7 +553,7 @@ void SciTEBase::CloneTab(){
 }
 
 void SciTEBase::CheckRightEditorVisible() {
-	for (int i = 0; i < buffers.length; i++) {
+	for (int i = 0; i < (int)buffers.buffers.size();  i++) {
 		if (buffers.buffers[i].editorSide != EditorSide::SrcWin) {
 			if (!m_bRightEditorVisible) {
 				m_bRightEditorVisible = true;
@@ -555,7 +569,7 @@ void SciTEBase::CheckRightEditorVisible() {
 }
 
 IDocumentEditable* SciTEBase::GetDocumentAt(int index) {
-	if (index < 0 || index >= buffers.size) {
+	if (index < 0 || index >= buffers.maxLength) {
 		return 0;
 	}
 	if (buffers.buffers[index].doc == 0) {
@@ -571,7 +585,7 @@ int SciTEBase::ShiftToVisible(int index) {
 		EditorSide side = buffers.buffers[index].editorSide;
 		int realIndex = 0;
 		int firstSide;
-		for (int pos = 0; pos < buffers.length; pos++) {
+		for (int pos = 0; pos < (int)buffers.buffers.size();  pos++) {
 			if (side == buffers.buffers[pos].editorSide) {
 				if (!realIndex)
 					firstSide = pos;
@@ -614,10 +628,10 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	
 	int currentbuf = buffers.Current();
 	if (	index < 0 ||
-	        index >= buffers.length ||
+	        index >= (int)buffers.buffers.size()  ||
 	        //index == currentbuf ||
 	        currentbuf < 0 ||
-	        currentbuf >= buffers.length) {
+	        currentbuf >= (int)buffers.buffers.size() ) {
 		return;
 	}
 	EditorSide startSide = buffers.buffers[buffers.Current()].editorSide;
@@ -634,7 +648,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 
 	if (extender) {
-		if (buffers.size > 1)
+		if (buffers.maxLength > 1)
 			extender->ActivateBuffer(index);
 		else
 			extender->InitBuffer(0);
@@ -695,7 +709,7 @@ void SciTEBase::UpdateBuffersCoCurrent() {
 void SciTEBase::UpdateBuffersCurrent() {
 	int currentbuf = buffers.Current();
 
-	if ((buffers.length > 0) && (currentbuf >= 0)) {
+	if (((int)buffers.buffers.size()  > 0) && (currentbuf >= 0)) {
 		buffers.buffers[currentbuf].Set(ActiveFilePath()); //????????
 		buffers.buffers[currentbuf].selection = GetSelection();
 		buffers.buffers[currentbuf].scrollPosition = GetCurrentScrollPosition(); 
@@ -718,7 +732,7 @@ void SciTEBase::UpdateBuffersCurrent() {
 }
 
 bool SciTEBase::IsBufferAvailable() {
-	return buffers.size > 1 && buffers.length < buffers.size;
+	return buffers.maxLength > 1 && (int)buffers.buffers.size()  < buffers.maxLength;
 }
 
 bool SciTEBase::CanMakeRoom(bool maySaveIfDirty) {
@@ -860,7 +874,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 			if(needunic)
 				name += GUI::gui_string(std::to_wstring(counter).c_str());
 			
-			for (int i = 0; i < buffers.length; i++) {
+			for (int i = 0; i < (int)buffers.buffers.size();  i++) {
 				FilePath fp = buffers.buffers[i].BaseName();
 				if (fp.AsInternal() == name) {
 					if (!needunic) {
@@ -885,11 +899,11 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 	bool emptyInSrc = buffers.buffers[buffers.Current()].IsUntitled() &&
 		!buffers.buffers[buffers.Current()].isDirty;
 
-	if (!defName || (!emptyInSrc && ((buffers.length > 1) ||
+	if (!defName || (!emptyInSrc && (((int)buffers.buffers.size()  > 1) ||
 		(buffers.Current() != 0) ||
 		(buffers.buffers[0].isDirty) ||
 		(!buffers.buffers[0].IsUntitled())))) {
-		if (buffers.size == buffers.length) {
+		if (buffers.maxLength == (int)buffers.buffers.size() ) {
 			Close(false, false, true);
 		}
 		buffers.SetCurrent(buffers.Add());
@@ -993,7 +1007,7 @@ void SciTEBase::New(bool force) {
 	InitialiseBuffers();
 	UpdateBuffersCurrent();
 
-	if ((buffers.size == 1) && (!buffers.buffers[0].IsUntitled() )) {
+	if ((buffers.maxLength == 1) && (!buffers.buffers[0].IsUntitled() )) {
 		AddFileToStack(buffers.buffers[0],
 		        buffers.buffers[0].selection,
 		        buffers.buffers[0].scrollPosition);
@@ -1005,11 +1019,11 @@ void SciTEBase::New(bool force) {
 		!buffers.buffers[buffers.Current()].isDirty;
 		
 
-	if (force || (!emptyInSrc && ((buffers.length > 1) ||
+	if (force || (!emptyInSrc && (((int)buffers.buffers.size()  > 1) ||
 	        (buffers.Current() != 0) ||
 	        (buffers.buffers[0].isDirty) || 
 	        (!buffers.buffers[0].IsUntitled())))) {
-		if (buffers.size == buffers.length) {
+		if (buffers.maxLength == (int)buffers.buffers.size() ) {
 			Close(false, false, true);
 		}
 	buffers.SetCurrent(buffers.Add());
@@ -1100,21 +1114,23 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	}
 	bBlockRedraw = true;
 
-	if (buffers.size == 1) {
+	if (buffers.maxLength == 1) {
 		// With no buffer list, Close means close from MRU
-		closingLast = true;	 //������ �� ����� �������� � ����������� ������ !!!!!!!!!!!!
+		closingLast = true;	 
 		buffers.buffers[0].Init(&buffers);
 		ActiveFilePath().Set(GUI_TEXT(""));
 		ClearDocument(); //avoid double are-you-sure
 		if (!makingRoomForNew)
 			StackMenu(0); // calls New, or Open, which calls InitBuffer
-	} else if (buffers.size > 1) {
-		if (buffers.Current() >= 0 && buffers.Current() < buffers.length) {
+	}
+	else if (buffers.maxLength > 1) {
+
+		if (buffers.Current() >= 0 && buffers.Current() < (int)buffers.buffers.size() ) {
 			UpdateBuffersCurrent();
 			Buffer buff = buffers.buffers[buffers.Current()];
 			AddFileToStack(buff, buff.selection, buff.scrollPosition);
 		}
-		closingLast = (buffers.length == 1);
+		closingLast = ((int)buffers.buffers.size()  == 1);
 		if (closingLast) {
 			buffers.buffers[0].Init(&buffers);
 			if (extender)
@@ -1156,7 +1172,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 		if (updateUI)
 			SetFileName(bufferNext);
-		else if (buffers.buffers)
+		else if (!buffers.buffers.empty())
 			buffers.buffers[buffers.Current()].Set(bufferNext);
 
 		wEditor.SetDocPointer(GetDocumentAt(buffers.Current()));
@@ -1218,7 +1234,7 @@ void SciTEBase::CloseTab(int tab) {
 
 void SciTEBase::CloseAllBuffers(bool loadingSession) {
 	if (SaveAllBuffers(false) != IDCANCEL) {
-		while (buffers.length > 1)
+		while ((int)buffers.buffers.size()  > 1)
 			Close(false, loadingSession);
 
 		Close(true, loadingSession);
@@ -1229,7 +1245,7 @@ int SciTEBase::SaveAllBuffers(bool forceQuestion, bool alwaysYes) {
 	int choice = IDYES;
 	UpdateBuffersCurrent();
 	int currentBuffer = buffers.Current();
-	for (int i = 0; (i < buffers.length) && (choice != IDCANCEL); i++) {
+	for (int i = 0; (i < (int)buffers.buffers.size() ) && (choice != IDCANCEL); i++) {
 //!		if (buffers.buffers[i].isDirty) {
 		if (buffers.buffers[i].DocumentNotSaved()) { //-change-[OpenNonExistent]
 			SetDocumentAt(i);
@@ -1249,7 +1265,7 @@ int SciTEBase::SaveAllBuffers(bool forceQuestion, bool alwaysYes) {
 void SciTEBase::SaveTitledBuffers() {
 	UpdateBuffersCurrent();
 	int currentBuffer = buffers.Current();
-	for (int i = 0; i < buffers.length; i++) {
+	for (int i = 0; i < (int)buffers.buffers.size();  i++) {
 //!		if (buffers.buffers[i].isDirty && !buffers.buffers[i].IsUntitled()) {
 		if (buffers.buffers[i].DocumentNotSaved() && !buffers.buffers[i].IsUntitled()) { //-change-[OpenNonExistent]
 			SetDocumentAt(i);
@@ -1261,7 +1277,7 @@ void SciTEBase::SaveTitledBuffers() {
 
 void SciTEBase::Next() {
 	int next = buffers.Current();
-	if (++next >= buffers.length)
+	if (++next >= (int)buffers.buffers.size() )
 		next = 0;
 	SetDocumentAt(next);
 	CheckReload();
@@ -1270,7 +1286,7 @@ void SciTEBase::Next() {
 void SciTEBase::Prev() {
 	int prev = buffers.Current();
 	if (--prev < 0)
-		prev = buffers.length - 1;
+		prev = (int)buffers.buffers.size()  - 1;
 
 	SetDocumentAt(prev);
 	CheckReload();
@@ -1286,18 +1302,18 @@ void SciTEBase::ShiftTab(int indexFrom, int indexTo, bool mouse) {
 }
 
 void SciTEBase::MoveTabRight() {
-	if (buffers.length < 2) return;
+	if ((int)buffers.buffers.size()  < 2) return;
 	int indexFrom = buffers.Current();
 	int indexTo = indexFrom + 1;
-	if (indexTo >= buffers.length) indexTo = 0;
+	if (indexTo >= (int)buffers.buffers.size() ) indexTo = 0;
 	ShiftTab(indexFrom, indexTo);
 }
 
 void SciTEBase::MoveTabLeft() {
-	if (buffers.length < 2) return;
+	if ((int)buffers.buffers.size()  < 2) return;
 	int indexFrom = buffers.Current();
 	int indexTo = indexFrom - 1;
-	if (indexTo < 0) indexTo = buffers.length - 1;
+	if (indexTo < 0) indexTo = (int)buffers.buffers.size()  - 1;
 	ShiftTab(indexFrom, indexTo);
 }
 
@@ -1385,7 +1401,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 	intptr_t oldLCount = IupGetInt(IupTab(IDM_SRCWIN), "COUNT");
 	intptr_t oldLCountR = IupGetInt(IupTab(IDM_COSRCWIN), "COUNT");
 	int posL = 0, posR = 0;
-	if (buffers.size > 1) {
+	if (buffers.maxLength > 1){
 
 		const char* chtabForeColor = GetPropClr("tabctrl.forecolor", tabForeColor, "0 0 0");
 		const char* ReadOnlyColor = GetPropClr("tabctrl.readonly.color", tabROColor, "120 120 120");
@@ -1405,7 +1421,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 
 		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(wEditor.GetCoBuffPointer(), false, static_cast<uptr_t>(GetEditorIdm(false))) : -1;
 		
-		for (pos = 0; pos < buffers.length; pos++) {
+		for (pos = 0; pos < (int)buffers.buffers.size();  pos++) {
 			int itemID = bufferCmdID + pos;
 			GUI::gui_string entry;
 			GUI::gui_string titleTab;
@@ -2102,7 +2118,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 						bExists = true;
 					} else {
 						// Look through buffers for name match
-						for (int i = buffers.length - 1; i >= 0; i--) {
+						for (int i = (int)buffers.buffers.size()  - 1; i >= 0; i--) {
 							if (sourcePath.Name().SameNameAs(buffers.buffers[i].Name())) {
 								messagePath = buffers.buffers[i];
 								bExists = true;

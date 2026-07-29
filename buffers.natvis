@@ -6,7 +6,7 @@
    </Type>
 
    <Type Name="BufferList">
-      <DisplayString>length={length} current={current} stackcurrent={stackcurrent}</DisplayString>
+      <DisplayString>length={buffers.size()} current={current} stackcurrent={stackcurrent}</DisplayString>
       <Expand>
          <CustomListItems MaxItemsPerView="1000">
 
@@ -15,7 +15,7 @@
                <Item Name="[{idx}]">buffers[idx]</Item>
 
               <Exec>idx++</Exec>
-              <Break Condition="idx &gt;= length"/>
+              <Break Condition="idx &gt;= buffers.size()"/>
             </Loop>
          </CustomListItems >
       </Expand>

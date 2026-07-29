@@ -170,13 +170,12 @@ public:
 class BufferList {
 protected:
 	int current;
-	int *stack; 
+	std::vector<int> stack;
 public:
 	int stackcurrent;
-	Buffer *buffers;
+	std::vector<Buffer> buffers;
 	EditSwitcher * pEditor;
-	int size;
-	int length;
+	int maxLength;
 	bool initialised;
 	BufferList();
 	~BufferList();
@@ -200,8 +199,7 @@ public:
 	void ShiftTo(int indexFrom, int indexTo);
 	int GetOrder(int index);
 	void OrderBy(std::map<int, int> &order);
-private:
-	void PopStack();
+
 };
 
 enum {
@@ -631,7 +629,7 @@ protected:
 	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
 	void SetBufferEncoding(int i, int e);
 	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
-	int GetBuffersCount(){return buffers.length; };		
+	int GetBuffersCount(){ return (int) buffers.buffers.size(); };
 	int GetCurrentBufer(){ return buffers.Current(); };	
 	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == EditorSide::SrcWin ? 0 : 1;  };
 	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
@@ -703,7 +701,7 @@ protected:
 	FilePath ActiveFilePath() const {
 		// ≈сли буферы инициализированы и есть хот€ бы один буфер Ч возвращаем путь активного буфера.
 		// »наче Ч возвращаем cached filePath (fallback дл€ ранней инициализации).
-		if (buffers.initialised && buffers.length > 0 && buffers.buffers) {
+		if (buffers.initialised && !buffers.buffers.empty()) {
 			return buffers.buffers[buffers.Current()].AbsolutePath();
 		}
 		//assert(false);

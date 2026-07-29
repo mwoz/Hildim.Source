@@ -713,14 +713,14 @@ void SciTEBase::SetWindowName() {
 		windowName += GUI_TEXT(" - ");
 	windowName += appName;
 
-	if (buffers.length > 1 && props.GetInt("title.show.buffers")) {
+	if ((int)buffers.buffers.size()  > 1 && props.GetInt("title.show.buffers")) {
 		windowName += GUI_TEXT(" [");
 		windowName += GUI::StringFromInteger(buffers.Current() + 1);
 		windowName += GUI_TEXT(" ");
 		windowName += extender->LocalizeText("of");
 		windowName += GUI_TEXT(" ");
-		windowName += GUI::StringFromInteger(buffers.length);
-		if(buffers.length == buffers.size)
+		windowName += GUI::StringFromInteger((int)buffers.buffers.size() );
+		if((int)buffers.buffers.size()  == buffers.maxLength)
 			windowName += GUI_TEXT("(max)");
 		windowName += GUI_TEXT("]");
 	}
@@ -2089,11 +2089,11 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_NEXTFILESTACK:
 	case IDM_NEXTFILE:
-		if (cmdID == IDM_NEXTFILESTACK && buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
+		if (cmdID == IDM_NEXTFILESTACK && buffers.maxLength > 1 && props.GetInt("buffers.zorder.switching")) {
 			NextInStack(); // next most recently selected buffer
 			WindowSetFocus(wEditor);
 			CheckReload();
-		}else if (buffers.size > 1) {
+		}else if (buffers.maxLength > 1) {
 			Next(); // Use Next to tabs move left-to-right
 			WindowSetFocus(wEditor);
 		} else {
@@ -2104,11 +2104,11 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	case IDM_PREVFILESTACK:
 	case IDM_PREVFILE:
-		if (cmdID == IDM_PREVFILESTACK && buffers.size > 1 && props.GetInt("buffers.zorder.switching")) {
+		if (cmdID == IDM_PREVFILESTACK && buffers.maxLength > 1 && props.GetInt("buffers.zorder.switching")) {
 			PrevInStack(); // next least recently selected buffer
 			WindowSetFocus(wEditor);
 			CheckReload();
-		} else if (buffers.size > 1) {
+		} else if (buffers.maxLength > 1) {
 			Prev(); // Use Prev to tabs move right-to-left
 			WindowSetFocus(wEditor);
 		} else {
@@ -3105,7 +3105,7 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 }
 
 int  SciTEBase::SecondEditorActive() {
-	for (int i = 0; i < buffers.length; i++) {
+	for (int i = 0; i < (int)buffers.buffers.size() ; i++) {
 		if (buffers.buffers[i].editorSide == EditorSide::CoSrcWin)
 			return true;
 	}

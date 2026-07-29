@@ -230,7 +230,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	}
 	ofn.Flags = OFN_HIDEREADONLY;
 
-	if (buffers.size > 1) {
+	if (buffers.maxLength > 1) {
 		ofn.Flags |=
 		    OFN_EXPLORER | OFN_NONETWORKBUTTON |
 		    OFN_PATHMUSTEXIST |

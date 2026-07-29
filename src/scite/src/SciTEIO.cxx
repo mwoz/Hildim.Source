@@ -118,7 +118,7 @@ void SciTEBase::SetFileName(FilePath openName, bool fixCase, bool setCaption) {
 	SetFileProperties(props);	//!-add-[FileAttr in PROPS]
 	if (setCaption)
 		SetWindowName();
-	if (buffers.buffers)
+	if (!buffers.buffers.empty())
 		buffers.buffers[buffers.Current()].Set(filepath);
 	if (setCaption)
 		BuffersMenu();
@@ -515,14 +515,14 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 
 	bBlockRedraw = true;
-	if (buffers.size == buffers.length) {
+	if (buffers.maxLength == (int)buffers.buffers.size() ) {
 		AddFileToStack(ActiveFilePath(), GetSelection(), GetCurrentScrollPosition());
 		ClearDocument();
 		if (extender)
 			extender->InitBuffer(buffers.Current());
 	} else {
 		if (index < 0 || !(of & ofForceLoad)) { // No new buffer, already opened
-			index = buffers.length;
+			index = (int)buffers.buffers.size() ;
 			New();
 		}
 	}
@@ -665,7 +665,7 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 	if (forNewRoom && (!CurrentBuffer()->isDirty ||  ActiveFilePath().IsTemporaly() )) {
 		int decision;
 		GUI::gui_char cnt[9];
-		swprintf(cnt, 9, L"%0d", buffers.length);
+		swprintf(cnt, 9, L"%0d", (int)buffers.buffers.size() );
 		decision = extender->HildiAlarm("%1 files have already been opened.\nClose '%2'?",
 			MB_OKCANCEL, cnt,  ActiveFilePath().Name().AsInternal());
 		if (decision == IDCANCEL)
@@ -681,7 +681,7 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 			if (! ActiveFilePath().IsUntitled()) {
 				if (forNewRoom) {
 					GUI::gui_char cnt[9];
-					swprintf(cnt, 9, L"%0d", buffers.length);
+					swprintf(cnt, 9, L"%0d", (int)buffers.buffers.size() );
 					decision = extender->HildiAlarm("%1 files have already been opened.\nSave changes to '%2' and close it?",
 						MB_YESNOCANCEL, cnt,  ActiveFilePath().AsInternal());
 					if (decision != IDCANCEL)
