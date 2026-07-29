@@ -529,7 +529,6 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	
 	SetFileName(absPath);
 	CurrentBuffer()->overrideExtension = "";
-	wEditor.SetBuffPointer(&absPath);
 	ReadProperties();
 	wEditor.SetScrollWidthTracking(1);
 	wEditor.SetScrollWidth(100);

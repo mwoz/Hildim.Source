@@ -308,8 +308,7 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call(Scintilla::Message msg, uptr_t wPa
 }
 //!-end-[OnSendEditor]
 
-void SciTEBase::ScintillaWindowSwitcher::Switch(bool ignorebuff){
-	FilePath f = buffer_L;
+void SciTEBase::ScintillaWindowSwitcher::Switch(bool /*ignorebuff*/){
 	if (GetWindowIdm() == EditorSide::SrcWin){
 		SetID(pBase->wEditorR.GetID());
 		coEditor.SetID(pBase->wEditorL.GetID());
@@ -318,86 +317,24 @@ void SciTEBase::ScintillaWindowSwitcher::Switch(bool ignorebuff){
 		SetID(pBase->wEditorL.GetID());
 		coEditor.SetID(pBase->wEditorR.GetID());
 	}
-	if (ignorebuff)
+}
+
+void SciTEBase::ScintillaWindowSwitcher::SwitchTo(EditorSide side, FilePath* pBuff){
+	if (side == GetWindowIdm() && !pBuff)
 		return;
-	buffer_L = buffer_R;
-	buffer_R = f;
-}
-
-void SciTEBase::ScintillaWindowSwitcher::SwitchTo(uptr_t wndIdm, FilePath* pBuff){
-	bool needGrab =  (static_cast<EditorSide>(wndIdm) != GetWindowIdm());
-	if (!needGrab && !pBuff) return;
-	if (wndIdm == IDM_SRCWIN ){
-		SetID(pBase->wEditorL.GetID());	
+	if (side == EditorSide::SrcWin){
+		SetID(pBase->wEditorL.GetID());
 		coEditor.SetID(pBase->wEditorR.GetID());
-		if (pBuff){
-			buffer_L.Set(pBuff->AsInternal());
-		}
-		else if (lstrcmpW(buffer_L.AsInternal() ,L"") )
-		{
-			int id = pBase->buffers.GetDocumentByName(buffer_L, false, IDM_SRCWIN);
-			if (id == -1)
-				id = pBase->buffers.NextByIdm(IDM_SRCWIN);
-			if (id > -1) {
-				pBase->SetDocumentAt(id, true, true, true);
-				return;
-			}
-			pBase->SetWindowName();
-			return;
-		}
 	}
-	else if (wndIdm == IDM_COSRCWIN){
-
-		SetID(pBase->wEditorR.GetID());	
+	else if (side == EditorSide::CoSrcWin){
+		SetID(pBase->wEditorR.GetID());
 		coEditor.SetID(pBase->wEditorL.GetID());
-		if (pBuff){
-			buffer_R.Set(pBuff->AsInternal());
-		}
-		else
-		{
-			int id = pBase->buffers.GetDocumentByName(buffer_R, false, IDM_COSRCWIN);
-			if (id == -1)
-				id = pBase->buffers.NextByIdm(IDM_COSRCWIN);
-			if (id > -1) {
-				pBase->SetDocumentAt(id, true, true, true);
-				return;
-			}
-			return;
-		}
 	}
-	else throw std::runtime_error("ScintillaWindowSwitcher: unknown idm");
-	coEditor.SetFocus(false);
-}
-void SciTEBase::ScintillaWindowSwitcher::SetBuffPointer(FilePath* pBuf) {
-	if (GetWindowIdm() == EditorSide::SrcWin) {
-		buffer_L.Set(pBuf ? pBuf->AsInternal() : L"");
-	} else {
-		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
+	else {
+		throw std::runtime_error("ScintillaWindowSwitcher: unknown side");
 	}
-}
-
-void SciTEBase::ScintillaWindowSwitcher::SetBuffEncoding(int e) {
-	if (GetWindowIdm() == EditorSide::SrcWin) {
-		buffer_L._encoding = e;
-	} else {
-		buffer_R._encoding = e;
-	}
-}
-
-void SciTEBase::ScintillaWindowSwitcher::SetCoBuffPointer(FilePath* pBuf){
-	if (GetWindowIdm() == EditorSide::SrcWin){
-		buffer_R.Set(pBuf ? pBuf->AsInternal() : L"");
-	}
-	else{
-		buffer_L.Set(pBuf ? pBuf->AsInternal(): L"");
-	}
-}
-
-FilePath SciTEBase::ScintillaWindowSwitcher::GetCoBuffPointer() {
-	if (GetWindowIdm() == EditorSide::SrcWin) {
-		return buffer_R;
-	} else {
-		return buffer_L;
+	if (pBuff) {
+		coEditor.SetFocus(false);
 	}
 }
 
@@ -2689,7 +2626,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_FOCUSIN:
 		if ((notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin)) || (notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin))){
 			if (GetEditorIdm() != static_cast<EditorSide>(notification->nmhdr.idFrom)) {
- 				wEditor.SwitchTo(notification->nmhdr.idFrom, NULL);
+					wEditor.SwitchTo(static_cast<EditorSide>(notification->nmhdr.idFrom), nullptr);
 				CheckReload();
 			}
 		}
@@ -2825,17 +2762,12 @@ void SciTEBase::Notify(SCNotification *notification) {
 				extender->OnShowActivate(-1, -1, -1);
 			}
 			if (!handled) {
-				if(GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom))
+				if (GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom)) {
 					CurrentBuffer()->isDirty = true;
-				else {
-					FilePath fp = wEditor.GetCoBuffPointer();  
-					if (fp.IsSet()) {
-						int coCur = buffers.GetDocumentByName(fp, false, notification->nmhdr.idFrom);
-						if (coCur > -1)
-							buffers.buffers[coCur].isDirty = true;
-						else
-							extender->DoLua("print'ERROR: Can not find coEditor fo cet is modify'");
-					}
+				} else {
+					int coCur = buffers.GetDocumentByName(FilePath(), false, notification->nmhdr.idFrom);
+					if (coCur > -1)
+						buffers.buffers[coCur].isDirty = true;
 				}
 				jobQueue.isBuilt = false;
 			}
@@ -3096,7 +3028,6 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 	buffers.buffers[i]._encoding = e;
 	buffers.buffers[i].isDirty = true;
 	if (buffers.Current() == i) {
-		wEditor.SetBuffEncoding(e);
 		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[i].editorSide));
 	}

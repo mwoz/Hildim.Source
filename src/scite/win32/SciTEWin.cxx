@@ -745,7 +745,7 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 
 	case IDM_FINISHEDEXECUTE: {
 			jobQueue.SetExecuting(false);
-			//if (needReadProperties) !!TODO - видимо переменную needReadProperties можно удалить
+			//if (needReadProperties) !!TODO - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ needReadProperties пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			//	ReadProperties();
 			CheckMenus();
 			for (int icmd = 0; icmd < jobQueue.commandMax; icmd++) {
@@ -1084,8 +1084,8 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 						char *tmpbuff = new char[bytesRead+ 1];
 						StrCpyNA(tmpbuff, buffer, bytesRead);
 						tmpbuff[bytesRead] = 0;
-						//Поскольку мы находимся в отдельном потоке, напрямую нельзя вызывать OnSendEditor
-						//Пошлем сообщение. Если скрипт вернет ненулевое значение, не будем ничего писать в консоль
+						//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ OnSendEditor
+						//пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 						if (!::SendMessage(MainHWND(), SCITE_NOTIYCMD, bytesRead, (WPARAM)(tmpbuff))){
 							OutputAppendStringSynchronised(tmpbuff, bytesRead);
 						}
@@ -1201,9 +1201,9 @@ void SciTEWin::ProcessExecute() {
 	returnOutputToCommand = true;
 	//::SendMessage(MainHWND(), WM_COMMAND, IDM_FINISHEDEXECUTE, 0);
 	::PostMessage(MainHWND(), WM_COMMAND, IDM_FINISHEDEXECUTE, 0);
-	//ПОСЫЛАЕМ нотификацию в главное окно, чтобы она смогла вызвать эвент у скрипта. по этому эвенту можно будет создать новый джоб
-	//(выполнитькомманду меню и пр) - изнутри этого потока этого деолать НЕЛЬЗЯ!
-	if (initJobType == jobCLI) ::PostMessage(MainHWND(), SCITE_NOTIFYCMDEXIT, exitcode, 0);//Уведомим скрипт, что команда окончилась
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	//(пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ) - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!
+	if (initJobType == jobCLI) ::PostMessage(MainHWND(), SCITE_NOTIFYCMDEXIT, exitcode, 0);//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 }
 
 void ExecThread(void *ptw) {
@@ -1432,7 +1432,7 @@ void SciTEWin::Run(const GUI::gui_string &cmdLine, bool allowDouble) {
 	if (props.GetInt("check.if.already.open") != 0 && !allowDouble) {
 		uniqueInstance.CheckOtherInstance();
 		
-		//При нажатом CTRL всегда разрешаем открывать новый инстанс - иногда открывается и при нажаотм почему-то - отменили...&& !::GetAsyncKeyState(VK_CONTROL)
+		//пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ CTRL пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ...&& !::GetAsyncKeyState(VK_CONTROL)
 		if (uniqueInstance.FindOtherInstance()) {
 			uniqueInstance.SendCommands(GUI::UTF8FromString(cmdLine).c_str());
 
@@ -1644,7 +1644,7 @@ LRESULT SciTEWin::ContextMenuMessage(UINT iMessage, WPARAM wParam, LPARAM lParam
 	GUI::ScintillaWindow *w = &wEditor;
 	if (wOutput.Focus()) w = &wOutput;
 	else if (wFindRes.Focus()) w = &wFindRes;
-	if ((WPARAM)w->GetID() != wParam) return 0;		//Мы можем сюда попасть, когда закрывается без выбора другое меню иуп - отсекаем этот вариант
+	if ((WPARAM)w->GetID() != wParam) return 0;		//пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	GUI::Point pt = PointFromLong(static_cast<long>(lParam));
 	if ((pt.x == -1) && (pt.y == -1)) {
 		// Caused by keyboard so display menu near caret
@@ -1798,11 +1798,11 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			return 0;
 		}
 		case SCITE_NOTIYCMD:
-			//Пришли даные из консольного потока  - выполним скрипт в луа
+			//пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ  - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTCMD, wParam, reinterpret_cast<const char *>(lParam));
 
 		case SCITE_NOTIFYCMDEXIT:
-			//закончился консольный поток - выполним скрипт в луа
+			//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ
 			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTEXIT, lParam, wParam);
 		case SCI_POSTCALBACK:
 			return (LRESULT)extender->OnPostCallback(static_cast<int>(wParam));
@@ -1813,7 +1813,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_MOUSEMOVE:
-			::SetCursor(::LoadCursor(NULL, IDC_ARROW)); //Сюда попадаем только при открытом модальном диалоге
+			::SetCursor(::LoadCursor(NULL, IDC_ARROW)); //пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			break;
 
 		case WM_LBUTTONDOWN:
@@ -1836,7 +1836,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				POINT pt;
 				GetCursorPos(&pt);
 				if (WindowFromPoint(pt) == wEditor.coEditor.GetID()) {
-					int iDoc = buffers.GetDocumentByName(wEditor.GetCoBuffPointer());
+					EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
+					int iDoc = buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide));
 					SetDocumentAt(iDoc);
 				}
 			}
@@ -1883,8 +1884,8 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			break;
 
 		case WM_MENUSELECT:
-			if (!topLevelPopUp) topLevelPopUp = (HMENU)lParam;	   //При снлнкте пераой строет после установеи хука запоминаем меню
-			bIsPopUpMenuItem = ((HIWORD(wParam) & MF_POPUP) ? 1 : 0) +(( topLevelPopUp != (HMENU)lParam) ? 2 : 0); //Не будем посылать нотификацию на метках открытия сабменб=ю и на сбменю
+			if (!topLevelPopUp) topLevelPopUp = (HMENU)lParam;	   //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+			bIsPopUpMenuItem = ((HIWORD(wParam) & MF_POPUP) ? 1 : 0) +(( topLevelPopUp != (HMENU)lParam) ? 2 : 0); //пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ=пїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 			break;
 
 		case WM_CLOSE:
@@ -2246,14 +2247,14 @@ LRESULT SciTEWin::OnDrawClipBoardMsg(WPARAM wParam)
 
 LRESULT SciTEWin::OnChangeCBChain(WPARAM wParam, LPARAM lParam)
 {
-	//Удалился какой-то вьювер
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	if (hNextCBWnd == (HWND)wParam)
-	{//Он следующий в очереди: изменяем нашу глобальную переменную
+	{//пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		hNextCBWnd = (HWND)lParam;
 		return 0;
 	}
 	else
-	{//Иначе пересылаем сообщение дальше
+	{//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 		return::SendMessage(hNextCBWnd, WM_CHANGECBCHAIN, wParam, lParam);
 	}
 }
@@ -2280,7 +2281,7 @@ int SciTEWin::EventLoop() {
 					break;
 				}
 				//if (!ModelessHandler(&msg) && (!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)))
-				//Изменен порядок выполнения для легкой блокировки пользовательского ввода(findres), не нарушающей работы акселераторов
+				//пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ(findres), пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 				if ((!::TranslateAccelerator(reinterpret_cast<HWND>(GetID()), GetAcceleratorTable(), &msg)) && (!ModelessHandler(&msg)))
 				{
 					::TranslateMessage(&msg);
@@ -2354,7 +2355,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In
 	GUI::gui_string advProps;
 	bool allowDouble = false;
 	if (cmdLine != L"") {
-		std::wregex re(L"^((?![-/]cmd).)*?[-/]d[-/ ]", std::regex::ECMAScript); //ищем -d ДО которого нет -cmd
+		std::wregex re(L"^((?![-/]cmd).)*?[-/]d[-/ ]", std::regex::ECMAScript); //пїЅпїЅпїЅпїЅ -d пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ -cmd
 		allowDouble = std::regex_search(cmdLine + L" ", re);
 		re = L"^((?![-/]cmd).)*?[-/]props=\"([^\"]+)\".*";
 

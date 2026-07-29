@@ -161,10 +161,8 @@ public:
 
 class EditSwitcher{
 public:
-	virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf) = 0;
+	virtual void SwitchTo(EditorSide side, FilePath* pBuf) = 0;
 	virtual EditorSide GetWindowIdm() const noexcept = 0;
-	virtual void SetBuffPointer(FilePath* pBuf) = 0;
-	virtual void SetBuffEncoding(int e) = 0;
 };
 
 class BufferList {
@@ -349,9 +347,9 @@ private:
 	void SizeEditor();
 	bool blockV = false;
 	bool blockH = false;
-	int hPx = 0; //высота горизонтального бара
-	int vPx = 0;  //ширина вертикального бара
-	UINT vHeight = 0; //текущая высота вертикального бара
+	int hPx = 0; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	int vPx = 0;  //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	UINT vHeight = 0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	bool colodizedSB = false;
 	int resetmap = false;
 	COLORREF caretColor;
@@ -492,19 +490,11 @@ protected:
 
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
-	public:	
-		virtual void SwitchTo(uptr_t wndIdm, FilePath* pBuf);
-		EditorSide GetWindowIdm() const noexcept;
-		virtual void SetBuffPointer(FilePath* pBuf);
-		virtual void SetCoBuffPointer(FilePath* pBuf);
-		virtual void SetBuffEncoding(int e);
-		FilePath GetCoBuffPointer();
+	public:
+		void SwitchTo(EditorSide side, FilePath* pBuf) override;
+		EditorSide GetWindowIdm() const noexcept override;
 		void Switch(bool ignorebuff = false);
 		ScintillaWindowEditor coEditor;
-	
-	private:
-		FilePath buffer_L;
-		FilePath buffer_R= NULL;
 	};
 	
 	ScintillaWindowSwitcher wEditor;
@@ -623,7 +613,11 @@ protected:
 	bool  GetBufferUntitled(int i) { return buffers.buffers[i].IsUntitled(); };
 	char GetEditorSide() { return wEditor.GetPtr() == wEditorL.GetPtr() ? 'L' : 'R'; }
 	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
-	std::string  GetCoBufferName(){ return wEditor.GetCoBuffPointer().AsUTF8();};
+	std::string  GetCoBufferName() {
+		EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
+		int coIdx = buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide));
+		return (coIdx >= 0) ? buffers.buffers[coIdx].AsUTF8() : std::string();
+	}
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
 	int GetBufferFileTime(int i) { return (int)buffers.buffers[i].fileModTime;};
 	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
@@ -696,11 +690,11 @@ protected:
 		return ActiveFilePath().Name();
 	}
 
-	// Возвращает текущий FilePath для активного буфера.
-	// Безопасно использовать при чтении (не заменяет SetFileName и не выполняет побочных эффектов).
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ FilePath пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SetFileName пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
 	FilePath ActiveFilePath() const {
-		// Если буферы инициализированы и есть хотя бы один буфер — возвращаем путь активного буфера.
-		// Иначе — возвращаем cached filePath (fallback для ранней инициализации).
+		// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+		// пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ cached filePath (fallback пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
 		if (buffers.initialised && !buffers.buffers.empty()) {
 			return buffers.buffers[buffers.Current()].AbsolutePath();
 		}
