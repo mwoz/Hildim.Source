@@ -347,9 +347,9 @@ private:
 	void SizeEditor();
 	bool blockV = false;
 	bool blockH = false;
-	int hPx = 0; //������ ��������������� ����
-	int vPx = 0;  //������ ������������� ����
-	UINT vHeight = 0; //������� ������ ������������� ����
+	int hPx = 0; //высота горизонтального бара
+	int vPx = 0;  //ширина вертикального бара
+	UINT vHeight = 0; //текущая высота вертикального бара
 	bool colodizedSB = false;
 	int resetmap = false;
 	COLORREF caretColor;
@@ -690,11 +690,11 @@ protected:
 		return ActiveFilePath().Name();
 	}
 
-	// ���������� ������� FilePath ��� ��������� ������.
-	// ��������� ������������ ��� ������ (�� �������� SetFileName � �� ��������� �������� ��������).
+	// Возвращает текущий FilePath для активного буфера.
+	// Безопасно использовать при чтении (не заменяет SetFileName и не выполняет побочных эффектов).
 	FilePath ActiveFilePath() const {
-		// ���� ������ ���������������� � ���� ���� �� ���� ����� � ���������� ���� ��������� ������.
-		// ����� � ���������� cached filePath (fallback ��� ������ �������������).
+		// Если буферы инициализированы и есть хотя бы один буфер — возвращаем путь активного буфера.
+		// Иначе — возвращаем cached filePath (fallback для ранней инициализации).
 		if (buffers.initialised && !buffers.buffers.empty()) {
 			return buffers.buffers[buffers.Current()].AbsolutePath();
 		}

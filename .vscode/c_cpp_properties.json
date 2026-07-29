@@ -1,0 +1,56 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src/scite/src",
+                "${workspaceFolder}/src/scintilla/include",
+                "${workspaceFolder}/src/lexilla/include",
+                "${workspaceFolder}/src/scite/lua/src",
+                "${workspaceFolder}/iup/include",
+                "${workspaceFolder}/iup/src",
+                "${workspaceFolder}/iup/src/win",
+                "${workspaceFolder}/iup/src/win/wdl",
+                "${workspaceFolder}/iup/srccd",
+                "${workspaceFolder}/iup/srccontrols",
+                "${workspaceFolder}/cd/include",
+                "${workspaceFolder}/cd/src",
+                "${workspaceFolder}/cd/src/drv",
+                "${workspaceFolder}/cd/src/svg",
+                "${workspaceFolder}/cd/src/intcgm",
+                "${workspaceFolder}/cd/src/iup",
+                "${workspaceFolder}/cd/src/sim",
+                "${workspaceFolder}/Ext/zlib1/src",
+                "${workspaceFolder}/Ext/freetype6/include",
+                "${workspaceFolder}/Ext/libxml2/include"
+            ],
+            "defines": [
+                "WIN32",
+                "_WINDOWS",
+                "UNICODE",
+                "_UNICODE",
+                "_CRT_SECURE_NO_WARNINGS",
+                "_CRT_SECURE_NO_DEPRECATE",
+                "D_SCL_SECURE_NO_WARNINGS",
+                "INCLUDE_DEPRECATED_FEATURES",
+                "__IUPDEF_H",
+                "H_CONCOLEMODE=2",
+                "IUP_DLL",
+                "CD_NO_OLD_INTERFACE",
+                "_LIB",
+                "_WIN32_WINNT=0x0501",
+                "_WIN32_IE=0x0600",
+                "COBJMACROS",
+                "WINVER=0x0501",
+                "IUP_ASSERT"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "cpp17",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}
