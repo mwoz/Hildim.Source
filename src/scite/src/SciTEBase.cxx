@@ -2772,6 +2772,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 				if (GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom)) {
 					CurrentBuffer()->isDirty = true;
 				} else {
+					//Неактивное окно может быть изменено например плагином сравнения - при копировании на другую сторону
 					EditorSide side = static_cast<EditorSide>(notification->nmhdr.idFrom);
 					Scintilla::IDocumentEditable* doc = (side == EditorSide::SrcWin) ? wEditorL.DocPointer() : wEditorR.DocPointer();
 					int coCur = buffers.GetIndexByDoc(doc);

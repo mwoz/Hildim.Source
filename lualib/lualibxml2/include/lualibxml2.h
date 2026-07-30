@@ -43,7 +43,7 @@ namespace luabridge {
     typedef RefCountedObjectPtr<domXmlSchema> RCSchema;
     typedef IteratorInterface<int, RCNode> IIF_Int_RCNode;
     typedef RefCountedObjectPtr<IIF_Int_RCNode> RC_IIF_Int_RCNode;
-    LClosure dd;
+   
     class domNode : public RefCountedObject
     {
     public:
