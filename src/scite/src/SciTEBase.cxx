@@ -2624,13 +2624,20 @@ void SciTEBase::Notify(SCNotification *notification) {
 	bool handled = false;
 	switch (notification->nmhdr.code) {
 	case SCN_FOCUSIN:
-		if ((notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin)) || (notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin))){
-			if (GetEditorIdm() != static_cast<EditorSide>(notification->nmhdr.idFrom)) {
-					wEditor.SwitchTo(static_cast<EditorSide>(notification->nmhdr.idFrom), nullptr);
+	{
+		EditorSide focusSide = static_cast<EditorSide>(notification->nmhdr.idFrom);
+		if ((focusSide == EditorSide::SrcWin) || (focusSide == EditorSide::CoSrcWin)) {
+			if (GetEditorIdm() != focusSide) {
+				wEditor.SwitchTo(focusSide, nullptr);
+				int idx = buffers.GetIndexByDoc(wEditor.DocPointer(), focusSide);
+				if (idx >= 0) {
+					SetDocumentAt(idx, true, true, true);
+				}
 				CheckReload();
 			}
 		}
 		break;
+	}
 	case SCEN_SETFOCUS:
 	case SCEN_KILLFOCUS:
 		CheckMenus();
@@ -2765,7 +2772,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 				if (GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom)) {
 					CurrentBuffer()->isDirty = true;
 				} else {
-					int coCur = buffers.GetDocumentByName(FilePath(), false, notification->nmhdr.idFrom);
+					EditorSide side = static_cast<EditorSide>(notification->nmhdr.idFrom);
+					Scintilla::IDocumentEditable* doc = (side == EditorSide::SrcWin) ? wEditorL.DocPointer() : wEditorR.DocPointer();
+					int coCur = buffers.GetIndexByDoc(doc);
 					if (coCur > -1)
 						buffers.buffers[coCur].isDirty = true;
 				}

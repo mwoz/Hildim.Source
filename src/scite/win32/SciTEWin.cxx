@@ -1833,11 +1833,13 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case SCITE_DROP:
 		{
 			if (SecondEditorActive()) {
+			    //Если мы в двухоконном режиме - обеспечим, чтобы окно, в которое мы бросаем файлы
+			    //было активным. Если бросаем куда-то еще - откроем в активном окне
 				POINT pt;
 				GetCursorPos(&pt);
 				if (WindowFromPoint(pt) == wEditor.coEditor.GetID()) {
 					EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
-					int iDoc = buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide));
+					int iDoc = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
 					SetDocumentAt(iDoc);
 				}
 			}

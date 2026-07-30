@@ -74,11 +74,11 @@ BufferList::~BufferList() {
 }
 
 int Buffer::FriendIndex() {
-	return pBase->GetDocumentByName(this->AbsolutePath(), false, static_cast<uptr_t>(editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin));
+	return pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin);
 }
 
 Buffer* Buffer::Friend() {
-	int i = pBase->GetDocumentByName(this->AbsolutePath(), false, static_cast<uptr_t>(editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin));
+	int i = pBase->GetDocumentByName(this->AbsolutePath(), false, editorSide == EditorSide::SrcWin ? EditorSide::CoSrcWin : EditorSide::SrcWin);
 	if (i == -1) 
 		return nullptr;
 	return &pBase->buffers[i];
@@ -129,18 +129,29 @@ int BufferList::Add(IDocumentEditable* doc) {
 	return (int)buffers.size() - 1;
 }
 
-int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t forIdm) {
+int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, EditorSide forIdm) {
 	if (!filename.IsSet()) {
 		for (int i = 0; i < (int)buffers.size(); i++) {
-			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
+			if ((!excludeCurrent || i != current) && buffers[i].IsUntitled() && (forIdm == EditorSide::None || forIdm == buffers[i].editorSide)) {
 				return i;
 			}
 		}
 		return -1;
 	}
 	for (int i = 0; i < (int)buffers.size(); i++) {
-		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (!forIdm || static_cast<EditorSide>(forIdm) == buffers[i].editorSide)) {
+		if ((!excludeCurrent || i != current) && buffers[i].SameNameAs(filename) && (forIdm == EditorSide::None || forIdm == buffers[i].editorSide)) {
 			return i;
+		}
+	}
+	return -1;
+}
+
+int BufferList::GetIndexByDoc(Scintilla::IDocumentEditable* doc, EditorSide forIdm) const {
+	for (int i = 0; i < static_cast<int>(buffers.size()); i++) {
+		if (buffers[i].doc == doc) {
+			if ((forIdm == EditorSide::None) || (buffers[i].editorSide == forIdm)) {
+				return i;
+			}
 		}
 	}
 	return -1;
@@ -149,13 +160,13 @@ int BufferList::GetDocumentByName(FilePath filename, bool excludeCurrent, uptr_t
 int BufferList::NextByIdm_Settings(int idm) {
 	return SciTEBase::GetProps()->GetInt("buffers.zorder.switching", 0) ? NextByIdm_Stack(idm) : NextByIdm(idm);
 }
-int BufferList::NextByIdm_Stack(int idm) {
+int BufferList::NextByIdm_Stack(int idm, int exclude) {
 	for (int i = stackcurrent + 1; i < (int)buffers.size(); i++) {
-		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm))
+		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm) && stack[i] != exclude)
 			return stack[i];
 	}
 	for (int i = 0; i < stackcurrent; i++) {
-		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm))
+		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm) && stack[i] != exclude)
 			return stack[i];
 	}
 	return -1;
@@ -403,7 +414,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 		insertIn = -1;
 	
 	{
-		int coId = buffers.GetDocumentByName(FilePath(), true, static_cast<uptr_t>(coSide));
+		int coId = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
 		Buffer* coBuff = nullptr;
 		if (coId > -1) {
 			coBuff = &buffers.buffers[coId];
@@ -422,7 +433,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	EditorSide iPrevSide = buffers.CurrentBuffer()->editorSide;
 	
-	int iNext = buffers.NextByIdm_Stack(static_cast<int>(iPrevSide));
+	int iNext = buffers.NextByIdm_Stack(static_cast<int>(iPrevSide), iPrev);
 	FilePath pNext = L"";
 	if (iNext > -1)
 		pNext = buffers.buffers[iNext].AbsolutePath();
@@ -448,7 +459,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	if (iNext > -1) {
 
-		iNext = buffers.GetDocumentByName(pNext, false, static_cast<uptr_t>(iPrevSide));
+		iNext = buffers.GetDocumentByName(pNext, false, iPrevSide);
 		SetDocumentAt(iNext, false, false);
 			
 	}
@@ -492,7 +503,7 @@ void SciTEBase::CloneTab(){
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
 	{
-		int coId = buffers.GetDocumentByName(FilePath(), true, static_cast<uptr_t>(coSide));
+		int coId = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
 		Buffer* coBuff = nullptr;
 		if (coId > -1) {
 			coBuff = &buffers.buffers[coId];
@@ -684,8 +695,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 }
 
 void SciTEBase::UpdateBuffersCoCurrent() {
-	EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
-	int index = buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide));
+	int index = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
 	if (index < 0)
 		return;
 
@@ -1402,7 +1412,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 		IupSetAttribute(IupTab(IDM_COSRCWIN), "BGCOLORMOVIED", chtabActForeMoviedColor);
 
 		EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
-		int coPos = SecondEditorActive() ? buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide)) : -1;
+		int coPos = SecondEditorActive() ? buffers.GetIndexByDoc(wEditor.coEditor.DocPointer()) : -1;
 		
 		for (pos = 0; pos < (int)buffers.buffers.size();  pos++) {
 			int itemID = bufferCmdID + pos;

@@ -96,6 +96,7 @@ enum UniMode {
 };
 
 enum class EditorSide : int {
+	None = 0,
 	SrcWin = 350,
 	CoSrcWin = 356
 };
@@ -179,11 +180,12 @@ public:
 	~BufferList();
 	void Allocate(int maxSize);
 	int Add(Scintilla::IDocumentEditable* doc = NULL);
-	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, uptr_t forIdm = NULL);
+	int GetDocumentByName(FilePath filename, bool excludeCurrent=false, EditorSide forIdm = EditorSide::None);
+	int GetIndexByDoc(Scintilla::IDocumentEditable* doc, EditorSide forIdm = EditorSide::None) const;
 	void RemoveAt(int ids);
 	void RemoveCurrent();
 	int NextByIdm_Settings(int idm);
-	int NextByIdm_Stack(int idm);
+	int NextByIdm_Stack(int idm, int exclude = -1);
 	int NextByIdm(int idm);
 	int Current() const;
 	Buffer *CurrentBuffer();
@@ -614,8 +616,7 @@ protected:
 	char GetEditorSide() { return wEditor.GetPtr() == wEditorL.GetPtr() ? 'L' : 'R'; }
 	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
 	std::string  GetCoBufferName() {
-		EditorSide coSide = (GetEditorIdm() == EditorSide::SrcWin) ? EditorSide::CoSrcWin : EditorSide::SrcWin;
-		int coIdx = buffers.GetDocumentByName(FilePath(), false, static_cast<uptr_t>(coSide));
+		int coIdx = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
 		return (coIdx >= 0) ? buffers.buffers[coIdx].AsUTF8() : std::string();
 	}
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
