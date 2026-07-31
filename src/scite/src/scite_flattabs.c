@@ -576,6 +576,31 @@ static int iFlatTabsRedraw_CB(Ihandle* ih) {
 		else
 			background_color = tabs_bgcolor;
 
+		/* draw marked triangle if TABMARKED is set */
+		{
+			char* tab_marked = iupAttribGetId(ih, "TABMARKED", pos);
+			if (tab_marked && iupStrBoolean(tab_marked)) {
+				int half_h = title_height / 2;
+				int mark_points[12];
+				long mark_color = iupDrawStrToColor(foreground_color, 0);
+
+				/* равнобедренный треугольник:
+				   вершина 1: (tab_x, title_height/2)          - середина левой границы
+				   вершина 2: (tab_x, 0)                       - левый верхний угол
+				   вершина 3: (tab_x + title_height/2, 0)      - на верхней границе */
+				mark_points[0] = tab_x;
+				mark_points[1] = half_h;
+				mark_points[2] = tab_x;
+				mark_points[3] = 0;
+				mark_points[4] = tab_x + half_h;
+				mark_points[5] = 0;
+				mark_points[6] = tab_x;
+				mark_points[7] = half_h;
+
+				iupdrvDrawPolygon(dc, mark_points, 4, mark_color, IUP_DRAW_FILL, 1);
+			}
+		}
+
 		if (pos == insertpos) {
 			int half = title_height / 2;
 
@@ -1708,6 +1733,7 @@ Iclass* iupFlattabsCtrlNewClass(void) {
 	iupClassRegisterAttributeId(ic, "TABFONT", NULL, (IattribSetIdFunc)iFlatTabsUpdateSetAttrib, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABTIP", NULL, NULL, IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABBUFFERID", NULL, NULL, IUPAF_NO_INHERIT);
+	iupClassRegisterAttributeId(ic, "TABMARKED", NULL, NULL, IUPAF_NO_INHERIT);
 
 	iupClassRegisterAttributeId(ic, "TABFONTSTYLE", iFlatTabsGetTabFontStyleAttrib, iFlatTabsSetTabFontStyleAttrib, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);
 	iupClassRegisterAttributeId(ic, "TABFONTSIZE", iFlatTabsGetTabFontSizeAttrib, iFlatTabsSetTabFontSizeAttrib, IUPAF_NO_SAVE | IUPAF_NOT_MAPPED | IUPAF_NO_INHERIT);

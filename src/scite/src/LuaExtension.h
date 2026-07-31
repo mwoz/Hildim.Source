@@ -56,7 +56,7 @@ public:
 	virtual bool OnPostCallback(int idx);
 	virtual bool OnIdle();
 	virtual bool OnLayOutNotify(const char *);
-	virtual bool OnGeneratedHotKey(long);  //Только для команд, посылаемых по хоткеям, сгенерированным автоматически!
+	virtual bool OnGeneratedHotKey(long);  //РўРѕР»СЊРєРѕ РґР»СЏ РєРѕРјР°РЅРґ, РїРѕСЃС‹Р»Р°РµРјС‹С… РїРѕ С…РѕС‚РєРµСЏРј, СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅС‹Рј Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё!
 	virtual void DoReboot();
 	virtual void DoLua(const char *c);
 	virtual void OnMouseHook(int x, int y);
@@ -73,4 +73,5 @@ public:
 	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
 	virtual GUI::gui_string LocalizeText(const char* msg);
 	virtual void OnShowActivate(int bActivate, int cmdShow, int SavePoint = 0);
+	virtual void raiseLuaError(const char* msg);
 };

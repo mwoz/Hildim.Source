@@ -11,6 +11,7 @@
 #include "Scintilla.h"
 #include <map>
 class StyleWriter;
+enum class EditorSide : int;
 
 class ExtensionAPI {
 public:
@@ -58,6 +59,7 @@ public:
 	virtual int ActiveEditor()=0;
 	virtual int GetBufferSide(int index) = 0;
 	virtual time_t GetBufferModTime(int index) = 0;
+	virtual void UiDocTabulation(EditorSide side, bool forward)=0;
 	virtual void UiDocTabulation(int side, bool forward)=0;
 	virtual bool GetBufferReadOnly(int index) = 0;
 	virtual int GetBufferUnicMode(int index) = 0;
@@ -163,6 +165,7 @@ public:
 	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) { return 0; }
 	virtual GUI::gui_string LocalizeText(const char* msg) { GUI::gui_string s; return s; };
 	virtual void OnShowActivate(int bActivate, int cmdShow, int SavePoint = 0) {};
+	virtual void raiseLuaError(const char* msg) {};
 };
 
 #endif

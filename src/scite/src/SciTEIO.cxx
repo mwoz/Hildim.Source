@@ -518,8 +518,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	if (buffers.maxLength == (int)buffers.buffers.size() ) {
 		AddFileToStack(ActiveFilePath(), GetSelection(), GetCurrentScrollPosition());
 		ClearDocument();
-		if (extender)
-			extender->InitBuffer(buffers.Current());
+		extender->InitBuffer(buffers.Current());
 	} else {
 		if (index < 0 || !(of & ofForceLoad)) { // No new buffer, already opened
 			index = (int)buffers.buffers.size() ;
@@ -563,8 +562,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	bBlockRedraw = false;
 
 	BuffersMenu();
-	if (extender)
-		extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
+	extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
 	if (setNav)
 		extender->OnNavigation("Open-");
 	return true;
@@ -781,8 +779,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 	wEditor.EndUndoAction();
 	bool bNotSaved = buffers.CurrentBuffer()->DocumentNotSaved();
 
-	if (extender)
-		retVal = extender->OnBeforeSave(saveName.AsUTF8().c_str());
+	retVal = extender->OnBeforeSave(saveName.AsUTF8().c_str());
 
 	if (!retVal) {
 		Utf8_16_Write convert;

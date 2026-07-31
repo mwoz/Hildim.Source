@@ -813,25 +813,23 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 	}
 
 	if (jobToRun.jobType == jobExtension) {
-		if (extender) {
-			// Problem: we are in the wrong thread!  That is the cause of the cursed PC.
-			// It could also lead to other problems.
+		// Problem: we are in the wrong thread!  That is the cause of the cursed PC.
+		// It could also lead to other problems.
 
-			if (jobToRun.flags & jobGroupUndo)
-				wEditor.BeginUndoAction();
+		if (jobToRun.flags & jobGroupUndo)
+			wEditor.BeginUndoAction();
 
-			extender->OnExecute(jobToRun.command.c_str());
+		extender->OnExecute(jobToRun.command.c_str());
 
-			if (jobToRun.flags & jobGroupUndo)
-				wEditor.EndUndoAction();
+		if (jobToRun.flags & jobGroupUndo)
+			wEditor.EndUndoAction();
 
-			Redraw();
-			// A Redraw "might" be needed, since Lua and Director
-			// provide enough low-level capabilities to corrupt the
-			// display.
-			// (That might have been due to a race condition, and might now be
-			// corrected by SingleThreadExtension.  Should check it some time.)
-		}
+		Redraw();
+		// A Redraw "might" be needed, since Lua and Director
+		// provide enough low-level capabilities to corrupt the
+		// display.
+		// (That might have been due to a race condition, and might now be
+		// corrected by SingleThreadExtension.  Should check it some time.)
 		return exitcode;
 	}
 
@@ -1599,7 +1597,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 		return 1l;
 */
 //!-start-[OnKey]
-	if ( extender ) {
+	{
 		char ch[4] = { 0 };
 
 		static bool sPrevIsDeadKey = false;
@@ -1615,7 +1613,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 					uFlags = 0;
 				}
 
-				unsigned char masKS[256] = { 0 }; 
+				unsigned char masKS[256] = { 0 };
 
  				if (::GetKeyboardState(masKS) && ::ToAscii(static_cast<UINT>(wParam), ::MapVirtualKeyA(static_cast<UINT>(wParam), 0 ), masKS, (LPWORD)ch, uFlags ) != 1 ) {
  					ch[0] = 0;

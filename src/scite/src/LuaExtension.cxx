@@ -1090,7 +1090,7 @@ static int cf_editor_set_foreground(lua_State* L) {
 		goto error;
 	}
 
-	// hWnd - дескриптор окна.
+	// hWnd - РґРµСЃРєСЂРёРїС‚РѕСЂ РѕРєРЅР°.
 	int i;
 	for (i = 0; i < 10 && hChild != ::GetForegroundWindow(); i++) {
 		Sleep(2);
@@ -1706,16 +1706,16 @@ static void sf_FileVersionInfo_value(lua_State* L, BYTE* pbVersionInfo, const ch
 static int sf_OrderTab(lua_State* L) {
 	luaL_checktype(L, 1, LUA_TTABLE);
 	std::map<int, int> order;
-	lua_pushnil(L);  /* first key (первый ключ) */
+	lua_pushnil(L);  /* first key (РїРµСЂРІС‹Р№ РєР»СЋС‡) */
 	while (lua_next(L, 1) != 0) {
 		/* uses 'key' (at index -2) and 'value' (at index -1) */
-		/* используем 'key' (по индексу -2) и 'value' (по индексу -1) */
+		/* РёСЃРїРѕР»СЊР·СѓРµРј 'key' (РїРѕ РёРЅРґРµРєСЃСѓ -2) Рё 'value' (РїРѕ РёРЅРґРµРєСЃСѓ -1) */
 		int key = static_cast<int>(luaL_checkinteger(L, -2));
 		int val = static_cast<int>(luaL_checkinteger(L, -1));
 		order.insert({ key, val });
 
 		/* removes 'value'; keeps 'key' for next iteration */
-		/* удаляем 'value'; сохраняя 'key' для следующей итерации */
+		/* СѓРґР°Р»СЏРµРј 'value'; СЃРѕС…СЂР°РЅСЏСЏ 'key' РґР»СЏ СЃР»РµРґСѓСЋС‰РµР№ РёС‚РµСЂР°С†РёРё */
 		lua_pop(L, 1);
 	}
 	host->OrderTabsBy(order);
@@ -2917,7 +2917,7 @@ bool LuaExtension::Finalise() {
 		iuplua_close(luaState);
 		//try{
 			lua_close(luaState);
-		//} catch (...) {} // возникает ошибка ксли была перезагрузка скрипта
+		//} catch (...) {} // РІРѕР·РЅРёРєР°РµС‚ РѕС€РёР±РєР° РєСЃР»Рё Р±С‹Р»Р° РїРµСЂРµР·Р°РіСЂСѓР·РєР° СЃРєСЂРёРїС‚Р°
 	}
 
 	luaState = NULL;
@@ -2970,7 +2970,7 @@ bool LuaExtension::InitBuffer(int index) {
 	//sprintf(msg, "InitBuffer(%d)\n", index);
 	//host->Trace(msg);
 
-	//if (index > maxBufferIndex)	- не работало в случае, когда открыты фвйл добавлялся  не в конец - проще запросить через экстендер
+	//if (index > maxBufferIndex)	- РЅРµ СЂР°Р±РѕС‚Р°Р»Рѕ РІ СЃР»СѓС‡Р°Рµ, РєРѕРіРґР° РѕС‚РєСЂС‹С‚С‹ С„РІР№Р» РґРѕР±Р°РІР»СЏР»СЃСЏ  РЅРµ РІ РєРѕРЅРµС† - РїСЂРѕС‰Рµ Р·Р°РїСЂРѕСЃРёС‚СЊ С‡РµСЂРµР· СЌРєСЃС‚РµРЅРґРµСЂ
 	//	maxBufferIndex = index;
 	maxBufferIndex = host->GetBuffersCount();
 
@@ -3610,18 +3610,18 @@ bool LuaExtension::OnMouseButtonUp(int modifiers) {
 //!-end-[OnMouseButtonUp]
 static int prevBuffer = -1;
 bool LuaExtension::OnUpdateUI(bool bModified, bool bSelChange, int flag) {
-	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
+	if (curBufferIndex < 0) return false;//РїРѕРєР° РЅРµС‚ РѕС‚РєСЂС‹С‚С‹С… СЂРµРґР°РєС‚РѕСЂРѕРІ, РЅРёРєР°РєРёС… СЌРІРµРЅС‚РѕРІ РёРґС‚Рё РЅРµ РґРѕР»Р¶РЅРѕ
 	const char *res = CallNamedFunction("OnUpdateUI", bModified, bSelChange, flag, prevBuffer != curBufferIndex);
 	prevBuffer = curBufferIndex;
 	return res;
 }
 
 bool LuaExtension::CoOnUpdateUI(bool bModified, bool bSelChange, int flag) {
-	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
+	if (curBufferIndex < 0) return false;//РїРѕРєР° РЅРµС‚ РѕС‚РєСЂС‹С‚С‹С… СЂРµРґР°РєС‚РѕСЂРѕРІ, РЅРёРєР°РєРёС… СЌРІРµРЅС‚РѕРІ РёРґС‚Рё РЅРµ РґРѕР»Р¶РЅРѕ
 	return CallNamedFunction("CoOnUpdateUI", bModified, bSelChange, flag);
 }
 bool LuaExtension::PaneOnUpdateUI(bool bModified, bool bSelChange, int flag) {
-	if (curBufferIndex < 0) return false;//пока нет открытых редакторов, никаких эвентов идти не должно
+	if (curBufferIndex < 0) return false;//РїРѕРєР° РЅРµС‚ РѕС‚РєСЂС‹С‚С‹С… СЂРµРґР°РєС‚РѕСЂРѕРІ, РЅРёРєР°РєРёС… СЌРІРµРЅС‚РѕРІ РёРґС‚Рё РЅРµ РґРѕР»Р¶РЅРѕ
 	return CallNamedFunction("PaneOnUpdateUI", bModified, bSelChange, flag);
 }
 
@@ -3883,6 +3883,12 @@ static int cf_editor_reload_startup_script(lua_State*) {
 		host->PostLoadScript();
 	}
 	return 0;
+}
+
+void LuaExtension::raiseLuaError(const char* msg) {
+	if (luaState) {
+		raise_error(luaState, msg);
+	}
 }
 
 #ifdef _MSC_VER

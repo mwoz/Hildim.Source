@@ -112,7 +112,7 @@ void SciTEBase::ReadGlobalPropFile(GUI::gui_string adv) {
 //!-end-[scite.userhome]
 
 	FilePath propfileBase = GetDefaultPropertiesFileName();	
-	//Вызываем модифицированный метод - с передачей главной директории
+	//Р’С‹Р·С‹РІР°РµРј РјРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅС‹Р№ РјРµС‚РѕРґ - СЃ РїРµСЂРµРґР°С‡РµР№ РіР»Р°РІРЅРѕР№ РґРёСЂРµРєС‚РѕСЂРёРё
 	propsBase.Read(GetSciteDefaultHome().AsUTF8().c_str(), propfileBase, propfileBase.Directory(), importFiles, importMax);
 	if (adv != L"") {
 		FilePath fAdv = adv; 
@@ -179,11 +179,11 @@ void rgb2lab(float R, float G, float B, float & l_s, float &a_s, float &b_s) {
 	var_R = var_R * 100.;
 	var_G = var_G * 100.;
 	var_B = var_B * 100.;
-	//Observer. = 2°, Illuminant = D65
+	//Observer. = 2В°, Illuminant = D65
 	double X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
 	double Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
 	double Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
-	double var_X = X / 95.047;         //ref_X =  95.047   Observer= 2°, Illuminant= D65
+	double var_X = X / 95.047;         //ref_X =  95.047   Observer= 2В°, Illuminant= D65
 	double var_Y = Y / 100.000;          //ref_Y = 100.000
 	double var_Z = Z / 108.883;          //ref_Z = 108.883
 	if (var_X > 0.008856) var_X = pow(var_X, (1. / 3.));
@@ -211,10 +211,10 @@ void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
 	else                      var_X = (var_X - 16. / 116.) / 7.787;
 	if (pow(var_Z, 3) > 0.008856) var_Z = pow(var_Z, 3);
 	else                      var_Z = (var_Z - 16. / 116.) / 7.787;
-	double X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2°, Illuminant= D65
+	double X = 95.047 * var_X;    //ref_X =  95.047     Observer= 2В°, Illuminant= D65
 	double Y = 100.000 * var_Y;   //ref_Y = 100.000
 	double Z = 108.883 * var_Z;    //ref_Z = 108.883
-	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
+	var_X = X / 100.;       //X from 0 to  95.047      (Observer = 2В°, Illuminant = D65)
 	var_Y = Y / 100.;       //Y from 0 to 100.000
 	var_Z = Z / 100.;      //Z from 0 to 108.883
 	double var_R = var_X * 3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
@@ -1025,8 +1025,7 @@ void SciTEBase::ReadProperties() {
 		return;
 	}
 	
-	if (extender)
-		extender->Clear();
+	extender->Clear();
 	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
 	Lexilla::Load(".");
 
@@ -1390,7 +1389,7 @@ void SciTEBase::ReadProperties() {
 	//wEditorL.EOLAnnotationSetVisible(EOLAnnotationVisible::Angles);
 	
 	
-	if (extender) {
+	{
 		FilePath defaultDir = GetDefaultDirectory();
 		FilePath scriptPath;
 
@@ -1422,8 +1421,7 @@ void SciTEBase::ReadProperties() {
 }
 
 void SciTEBase::ReadPropertiesEx() {
-	if (extender)
-		extender->Clear();
+	extender->Clear();
 	CallAll(Message::SetTechnology, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
 	CallAll(Message::SetBufferedDraw, props.GetInt("buffered.draw", 0));
 	CallAll(Message::SetPhasesDraw, props.GetInt("phases.draw", SC_PHASES_MULTIPLE));
@@ -1477,7 +1475,7 @@ void SciTEBase::ReadPropertiesEx() {
 	
 	SetColourElement(&wFindRes, SC_ELEMENT_CARET_LINE_BACK, "findres.caret.line.back", "findres.caret.line.back.alpha");
 
-//!-start-[output.caret]  - не будем делать в поиске
+//!-start-[output.caret]  - РЅРµ Р±СѓРґРµРј РґРµР»Р°С‚СЊ РІ РїРѕРёСЃРєРµ
 	wOutput.SetCaretFore(ColourOfProperty("output.caret.fore", ColourRGB(0x00, 0x00, 0x00)));
 
 	SetColourElement(&wOutput, SC_ELEMENT_CARET_LINE_BACK, "output.caret.line.back", "output.caret.line.back.alpha");

@@ -240,7 +240,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 		succeeded = true;
 		filterDefault = ofn.nFilterIndex;
 		// if single selection then have path+file
-		if (extender) extender->OnNavigation("Open");
+		extender->OnNavigation("Open");
 
 		if (wcslen(openName) > static_cast<size_t>(ofn.nFileOffset)) {
 			Open(openName);
@@ -254,7 +254,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 				p += wcslen(p) + 1;
 			}
 		}
-		if (extender) extender->OnNavigation("Open-");
+		extender->OnNavigation("Open-");
 	}
 	return succeeded;
 }

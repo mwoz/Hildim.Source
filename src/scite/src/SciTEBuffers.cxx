@@ -157,27 +157,27 @@ int BufferList::GetIndexByDoc(Scintilla::IDocumentEditable* doc, EditorSide forI
 	return -1;
 }
 
-int BufferList::NextByIdm_Settings(int idm) {
+int BufferList::NextByIdm_Settings(EditorSide idm) {
 	return SciTEBase::GetProps()->GetInt("buffers.zorder.switching", 0) ? NextByIdm_Stack(idm) : NextByIdm(idm);
 }
-int BufferList::NextByIdm_Stack(int idm, int exclude) {
+int BufferList::NextByIdm_Stack(EditorSide idm, int exclude) {
 	for (int i = stackcurrent + 1; i < (int)buffers.size(); i++) {
-		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm) && stack[i] != exclude)
+		if (buffers[stack[i]].editorSide == idm && stack[i] != exclude)
 			return stack[i];
 	}
 	for (int i = 0; i < stackcurrent; i++) {
-		if (buffers[stack[i]].editorSide == static_cast<EditorSide>(idm) && stack[i] != exclude)
+		if (buffers[stack[i]].editorSide == idm && stack[i] != exclude)
 			return stack[i];
 	}
 	return -1;
 }
-int BufferList::NextByIdm(int idm){
+int BufferList::NextByIdm(EditorSide idm){
 	for (int i = current + 1; i < (int)buffers.size(); i++) {
-		if (buffers[i].editorSide == static_cast<EditorSide>(idm))
+		if (buffers[i].editorSide == idm)
 			return i;
 	}
 	for (int i = 0; i < current; i++){
-		if (buffers[i].editorSide == static_cast<EditorSide>(idm))
+		if (buffers[i].editorSide == idm)
 			return i;
 	}
 	return -1;
@@ -258,28 +258,28 @@ void BufferList::SetCurrent(int index) {
 	SciTEBase::GetProps()->SetInteger("BufferNumber", current+1); //!-add-[BufferNumber]
 }
 
-int BufferList::StackPrevBySide(int side){
+int BufferList::StackPrevBySide(EditorSide side){
 	int stmp = stackcurrent;
 	int res;
 	for (int i = (int)buffers.size() - 1; i >= 0; i--) {
 		if (--stackcurrent < 0)
 			stackcurrent = (int)buffers.size() - 1;
 		res = stack[stackcurrent];
-		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
+		if(buffers[res].editorSide == side && Current() != res)
 			return res;
 	}
 	stackcurrent = stmp;
 	return - 1;
 }
 
-int BufferList::StackNextBySide(int side){
+int BufferList::StackNextBySide(EditorSide side){
 	int stmp = stackcurrent;
 	int res;
 	for (int i = 0; i < (int)buffers.size(); i++) {
 		if (++stackcurrent >= (int)buffers.size())
 			stackcurrent = 0;
 		res = stack[stackcurrent];
-		if(buffers[res].editorSide == static_cast<EditorSide>(side) && Current() != res)
+		if(buffers[res].editorSide == side && Current() != res)
 			return res;
 	}
 	stackcurrent = stmp;
@@ -401,8 +401,10 @@ void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
 }
 
 void SciTEBase::ChangeTabWnd(int insertIn) {
-	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled())
+	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled()) {
+		extender->raiseLuaError("Unable to drag the cloned tab");
 		return;
+	}
 	int iPrev = buffers.Current();
 	
 	Buffer* bPrev = buffers.CurrentBuffer();
@@ -410,6 +412,10 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
+	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
+		extender->raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to drag the tab");
+		return;
+	}
 	if (insertIn < (int)buffers.buffers.size() && buffers.buffers[insertIn].editorSide != coSide)
 		insertIn = -1;
 	
@@ -433,7 +439,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 	EditorSide iPrevSide = buffers.CurrentBuffer()->editorSide;
 	
-	int iNext = buffers.NextByIdm_Stack(static_cast<int>(iPrevSide), iPrev);
+	int iNext = buffers.NextByIdm_Stack(iPrevSide, iPrev);
 	FilePath pNext = L"";
 	if (iNext > -1)
 		pNext = buffers.buffers[iNext].AbsolutePath();
@@ -496,11 +502,17 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 }
 
 void SciTEBase::CloneTab(){
-	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled())
+	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled()) {
+		extender->raiseLuaError("repeated cloning of tabs is not allowed");
 		return;
+	}
 	int iPrev = buffers.Current();
 	Buffer* bPrev = buffers.CurrentBuffer();
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
+	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
+		extender->raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to clone");
+		return;
+	}
 
 	{
 		int coId = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
@@ -645,7 +657,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		buffers.MoveToStackTop(index);
 	}
 
-	if (extender) {
+	{
 		if (buffers.maxLength > 1)
 			extender->ActivateBuffer(index);
 		else
@@ -680,7 +692,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 		RestoreState(bufferNext, switchTab, true);
 	}
 
-	if (extender) {
+	{
 		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
@@ -921,8 +933,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 	ClearDocument();
 
-	if (extender)
-		extender->InitBuffer(buffers.Current());
+	extender->InitBuffer(buffers.Current());
 
 
 	CurrentBuffer()->overrideExtension = "";
@@ -991,7 +1002,7 @@ setbuffer:
 	bBlockRedraw = false;
 
 	BuffersMenu();
-	if (extender) {
+	{
 		extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
 		extender->OnNavigation("Open-");
 	}
@@ -1037,8 +1048,7 @@ void SciTEBase::New(bool force) {
 
 	ClearDocument();
 
-	if (extender)
-		extender->InitBuffer(buffers.Current());
+	extender->InitBuffer(buffers.Current());
 }
 
 void SciTEBase::RestoreUserHiddenLines(ScintillaWindowEditor&w, const Buffer& buffer) {
@@ -1094,7 +1104,7 @@ void SciTEBase::RestoreState(const Buffer &buffer, bool setCaption, bool scipCol
 void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew) {
 	bool closingLast = false;
 	int nextFriend = -2;
-	int prevIdm = -2;
+	EditorSide prevIdm = EditorSide::None;
 	bool closingEmptyRight = false;
 	if (buffers.CurrentBuffer()->IsUntitled()) {
 		if (!props.GetInt("additional.view.stay.visible") && buffers.CurrentBuffer()->editorSide == EditorSide::CoSrcWin) 
@@ -1129,12 +1139,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		closingLast = ((int)buffers.buffers.size()  == 1);
 		if (closingLast) {
 			buffers.buffers[0].Init(&buffers);
-			if (extender)
-				extender->InitBuffer(0);
+			extender->InitBuffer(0);
 		} else {
-			prevIdm = static_cast<int>(buffers.CurrentBuffer()->editorSide);
-			if (extender)
-				extender->RemoveBuffer(buffers.Current());
+			prevIdm = buffers.CurrentBuffer()->editorSide;
+			extender->RemoveBuffer(buffers.Current());
 			if (buffers.CurrentBuffer()->pFriend){
 				if (buffers.CurrentBuffer()->isDirty)
 					buffers.CurrentBuffer()->Friend()->isDirty = true;
@@ -1153,7 +1161,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 			if (extender && !makingRoomForNew)
 				extender->ActivateBuffer(buffers.Current());
-			if (static_cast<EditorSide>(prevIdm) != buffers.CurrentBuffer()->editorSide){
+			if (prevIdm != buffers.CurrentBuffer()->editorSide){
 				nextFriend = buffers.NextByIdm_Settings(prevIdm);
 				if (nextFriend != -1){
 					SetCoDocumentAt(nextFriend, false);
@@ -1172,7 +1180,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		if (closingLast) {
 			ClearDocument();
 		}
-		if (nextFriend == -1 && (static_cast<EditorSide>(prevIdm) == EditorSide::SrcWin || props.GetInt("additional.view.stay.visible"))) {
+		if (nextFriend == -1 && (prevIdm == EditorSide::SrcWin || props.GetInt("additional.view.stay.visible"))) {
 			wEditor.Switch();
 			New(true);
 		}
@@ -1181,7 +1189,7 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 			CheckReload();
 
 			RestoreState(bufferNext);
-			if (static_cast<EditorSide>(prevIdm) == buffers.CurrentBuffer()->editorSide)
+			if (prevIdm == buffers.CurrentBuffer()->editorSide)
 				DisplayAround(bufferNext);
 		}
 	}
@@ -1309,24 +1317,30 @@ void SciTEBase::MoveTabLeft() {
 	ShiftTab(indexFrom, indexTo);
 }
 
-void SciTEBase::UiDocTabulation(int side, bool forward) {
-	int idm = side == -1 ? -1:side ? IDM_COSRCWIN:IDM_SRCWIN;
+void SciTEBase::UiDocTabulation(EditorSide side, bool forward) {
 	if (forward)
-		NextInStack(idm);
+		NextInStack(side);
 	else
-		PrevInStack(idm);
+		PrevInStack(side);
 }
 
-void SciTEBase::NextInStack(int idm) {
+void SciTEBase::UiDocTabulation(int side, bool forward) {
+	// -1 -> EditorSide::None(0), 0 -> EditorSide::SrcWin(350), 1 -> EditorSide::CoSrcWin(356)
+	assert(side >= -1 && side <= 1);
+	static const EditorSide mapping[] = { EditorSide::None, EditorSide::SrcWin, EditorSide::CoSrcWin };
+	UiDocTabulation(mapping[side + 1], forward);
+}
+
+void SciTEBase::NextInStack(EditorSide side) {
 	extender->OnNavigation("Switch");
-	SetDocumentAt(idm== -1 ? buffers.StackNext() : buffers.StackNextBySide(idm), false);
+	SetDocumentAt(side == EditorSide::None ? buffers.StackNext() : buffers.StackNextBySide(side), false);
 	extender->OnNavigation("Switch-");
 	CheckReload();
 }
 
-void SciTEBase::PrevInStack(int idm) {
+void SciTEBase::PrevInStack(EditorSide side) {
 	extender->OnNavigation("Switch");
-	SetDocumentAt(idm == -1 ? buffers.StackPrev() : buffers.StackPrevBySide(idm), false);
+	SetDocumentAt(side == EditorSide::None ? buffers.StackPrev() : buffers.StackPrevBySide(side), false);
 	extender->OnNavigation("Switch-");
 	CheckReload();
 }
@@ -1478,13 +1492,21 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 				if (utf8mode) {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, GUI::UTF8FromString(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, buffers.buffers[pos].AsUTF8().c_str());
+					if (buffers.buffers[pos].pFriend)
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, (buffers.buffers[pos].AsUTF8() + "-CLONED").c_str());
 				} else {
 					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTITLE", posR, ToAnsi(titleTab).c_str());
-					IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					if (buffers.buffers[pos].pFriend)
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, (ToAnsi(buffers.buffers[pos].AsInternal()) + "-CLONED").c_str());
+					else
+						IupStoreAttributeId(IupTab(IDM_COSRCWIN), "TABTIP", posR, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+
 				}
 				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBUFFERID", posR, pos);
 				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABFORECOLOR", posR, ro ? ReadOnlyColor : chtabForeColor);
-				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR++, ihui);
+				IupSetIntId(IupTab(IDM_COSRCWIN), "TABBACKCOLORHUE", posR, ihui);
+				IupSetAttributeId(IupTab(IDM_COSRCWIN), "TABMARKED", posR, buffers.buffers[pos].pFriend ? "Yes" : "No");
+				posR++;
 
 				if (pos == buffers.Current() || pos == coPos) {
 					intptr_t p = posR;
@@ -1494,15 +1516,22 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 			} else {
 				if (utf8mode) {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, GUI::UTF8FromString(titleTab).c_str());
-					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, buffers.buffers[pos].AsUTF8().c_str());
+					if (buffers.buffers[pos].pFriend)
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, (buffers.buffers[pos].AsUTF8() + "-CLONED").c_str());
+					else
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, buffers.buffers[pos].AsUTF8().c_str());
 
 				} else {
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTITLE", posL, ToAnsi(titleTab).c_str());
 					IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, ToAnsi(buffers.buffers[pos].AsInternal()).c_str());
+					if (buffers.buffers[pos].pFriend)
+						IupStoreAttributeId(IupTab(IDM_SRCWIN), "TABTIP", posL, (ToAnsi(buffers.buffers[pos].AsInternal()) + "-CLONED").c_str());
 				}
 				IupSetIntId(IupTab(IDM_SRCWIN), "TABBUFFERID", posL, pos);
 				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABFORECOLOR", posL, ro ? ReadOnlyColor : chtabForeColor);
-				IupSetIntId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL++, ihui);
+				IupSetIntId(IupTab(IDM_SRCWIN), "TABBACKCOLORHUE", posL, ihui);
+				IupSetAttributeId(IupTab(IDM_SRCWIN), "TABMARKED", posL, buffers.buffers[pos].pFriend ? "Yes" : "No");
+				posL++;
 
 				if (pos == buffers.Current() || pos == coPos) {
 					intptr_t maxP = reinterpret_cast<intptr_t>(IupGetAttribute(IupTab(IDM_SRCWIN), "LASTVISIBLE"));
@@ -2145,7 +2174,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 						}
 					}
 				}
-				if (extender) extender->OnNavigation("Go");
+				extender->OnNavigation("Go");
 				WindowSetFocus(wEditor);
 
 				wEditor.MarkerDeleteAll(markerError);
@@ -2172,7 +2201,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					//simply move cursor to line, don't do any selection
 					SetSelection(startSourceLine, startSourceLine);
 				}
-				if (extender) extender->OnNavigation("Go-");
+				extender->OnNavigation("Go-");
 				message.substitute('\t', ' ');
 				message.remove("\n");
 				props.Set("CurrentMessage", message.c_str());

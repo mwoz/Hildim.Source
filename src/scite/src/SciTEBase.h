@@ -184,15 +184,15 @@ public:
 	int GetIndexByDoc(Scintilla::IDocumentEditable* doc, EditorSide forIdm = EditorSide::None) const;
 	void RemoveAt(int ids);
 	void RemoveCurrent();
-	int NextByIdm_Settings(int idm);
-	int NextByIdm_Stack(int idm, int exclude = -1);
-	int NextByIdm(int idm);
+	int NextByIdm_Settings(EditorSide idm);
+	int NextByIdm_Stack(EditorSide idm, int exclude = -1);
+	int NextByIdm(EditorSide idm);
 	int Current() const;
 	Buffer *CurrentBuffer();
 	void SetCurrent(int index);
 	int StackNext();
-	int StackPrevBySide(int side);
-	int StackNextBySide(int side);
+	int StackPrevBySide(EditorSide side);
+	int StackNextBySide(EditorSide side);
 	int StackPrev();
 	void CommitStackSelection();
 	void MoveToStackTop(int index);
@@ -653,9 +653,10 @@ protected:
 	const char* GetPropClr(const char* propName, char* buff, const char* def);
 	void Next();
 	void Prev();
+	void UiDocTabulation(EditorSide side, bool forward);
 	void UiDocTabulation(int side, bool forward);
-	void NextInStack(int idm = -1);
-	void PrevInStack(int idm = -1);
+	void NextInStack(EditorSide side = EditorSide::None);
+	void PrevInStack(EditorSide side = EditorSide::None);
 	void EndStackedTabbing();
 
 	void ShiftTab(int indexFrom, int indexTo, bool mose = false);

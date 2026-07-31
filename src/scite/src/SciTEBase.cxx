@@ -73,6 +73,10 @@
 using namespace Scintilla;
 
 SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
+	if (!ext) {
+		fprintf(stderr, "Fatal Error: Extension could not be created. HildiM will now close.\n");
+		exit(1);
+	}
 	codePage = 0;
 	characterSet = 0;
 	language = "java";
@@ -153,8 +157,7 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 
 SciTEBase::~SciTEBase() {
 	bFinalise = true;
-	if (extender)
-		extender->Finalise();
+	extender->Finalise();
 //!	popup.Destroy();	//!-remove-[ExtendedContextMenu]
 }
 
@@ -994,13 +997,13 @@ void SciTEBase::BookmarkNext(bool forwardScan, bool select) {
 	if (nextLine < 0 || nextLine == lineno)	// No bookmark (of the given type) or only one, and already on it
 		WarnUser(warnNoOtherBookmark);
 	else {
-		if (extender) extender->OnNavigation("Bkmk");
+		extender->OnNavigation("Bkmk");
 		wEditor.EnsureVisibleEnforcePolicy(nextLine);
 		wEditor.GotoLine(nextLine);
 		if (select) {
 			wEditor.SetAnchor(anchor);
 		}
-		if (extender) extender->OnNavigation("Bkmk-");
+		extender->OnNavigation("Bkmk-");
 	}
 }
 
@@ -2653,7 +2656,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_STYLENEEDED: {
-			if (extender) {
+			{
 				// Colourisation may be performed by script
 				if ((notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) && (lexLanguage == SCLEX_CONTAINER)) {
 					Sci_Position endStyled = wEditor.EndStyled();
@@ -2695,7 +2698,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_CHARADDED:
 		{
 			char cc = notification->ch;
-			if (extender) {
+			{
 				if (notification->ch > 255) {
 					wchar_t c = static_cast<wchar_t>(notification->ch);
 					WideCharToMultiByte(CP_ACP, 0, &c, 1, &cc, 1, NULL, NULL);
@@ -2716,7 +2719,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_SAVEPOINTREACHED:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
-			if (extender) {
+			{
 				handled = extender->OnSavePointReached();
 				extender->OnShowActivate(-1, -1, 1);
 			}
@@ -2734,8 +2737,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 	case SCN_COLORIZED:
 		if (notification->nmhdr.idFrom == static_cast<int>(GetEditorIdm())) {
-			if (extender) 
-				handled = extender->OnColorized(notification->wParam, notification->lParam);
+			handled = extender->OnColorized(notification->wParam, notification->lParam);
 		}
 		break;
 	case SCN_KEYCOMMAND:
@@ -2764,7 +2766,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 	case SCN_SAVEPOINTLEFT:
 		if (notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin) || notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin)) {
-			if (extender) {
+			{
 				handled = extender->OnSavePointLeft();
 				extender->OnShowActivate(-1, -1, -1);
 			}
@@ -2788,8 +2790,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_DOUBLECLICK:
-		if (extender)
-			handled = extender->OnDoubleClick(notification->modifiers);
+		handled = extender->OnDoubleClick(notification->modifiers);
 		if (!handled && notification->nmhdr.idFrom == IDM_RUNWIN) {
 			handled = GoMessage(0, wOutput);
 			if (handled)
@@ -2799,7 +2800,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_CLICK:
-		if (extender) {
+		{
 			handled = extender->OnClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
@@ -2811,7 +2812,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_HOTSPOTRELEASECLICK:
-		if (extender) {
+		{
 			handled = extender->OnHotSpotReleaseClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
@@ -2823,8 +2824,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_MOUSEBUTTONUP:
-		if (extender)
-			extender->OnMouseButtonUp(notification->modifiers);
+		extender->OnMouseButtonUp(notification->modifiers);
 		if (preserveFocusOnEditor) {
 			preserveFocusOnEditor = false;
 			WindowSetFocus(wEditor);
@@ -2833,7 +2833,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 //!-end-[OnMouseButtonUp][GoMessageImprovement]
 
 	case SCN_UPDATEUI:
-		if (extender && (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN)) {
+		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if(buffers.pEditor->GetWindowIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom))
 				handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 			else
@@ -2856,7 +2856,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					}
 				}
 			}		
-		} else if (extender) {
+		} else {
 			extender->PaneOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 		}
 		if (!handled) {
@@ -2901,9 +2901,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 		else
 			w = &wEditor;
 		
-		if (extender)
-			handled = extender->OnMarginClick(notification->margin, notification->modifiers, 
-				int(w->LineFromPosition(notification->position)), notification->nmhdr.idFrom);
+		handled = extender->OnMarginClick(notification->margin, notification->modifiers,
+			int(w->LineFromPosition(notification->position)), notification->nmhdr.idFrom);
 
 			if (!handled) {
 				if (notification->margin < 2 && !notification->modifiers) {
@@ -2925,7 +2924,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_USERLISTSELECTION: { 
-			if (extender && notification->wParam > 2)
+			if (notification->wParam > 2)
 				extender->OnUserListSelection(static_cast<int>(notification->wParam), notification->text, notification->position+1, notification->listCompletionMethod); //!-change-[UserListItemID]
 		}
 		break;
@@ -2943,7 +2942,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_DWELLSTART:
-		if (extender && (INVALID_POSITION != notification->position)) {
+		if (INVALID_POSITION != notification->position) {
 //////ToDelete
 			Sci_Position endWord = notification->position;
 			SString message="";
@@ -2973,7 +2972,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_DWELLEND:
-		if (extender) {
+		{
 			extender->OnDwellStart(0,"", ::GetAsyncKeyState(VK_CONTROL)); // flags end of calltip
 		}
 		break;
@@ -3025,7 +3024,7 @@ void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::W
 }
 
 void SciTEBase::UIAvailable() {
-	if (extender) {
+	{
 		FilePath homepath = GetSciteDefaultHome();
 		props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
 		homepath = GetSciteUserHome();
