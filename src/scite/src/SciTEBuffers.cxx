@@ -467,6 +467,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 		iNext = buffers.GetDocumentByName(pNext, false, iPrevSide);
 		SetDocumentAt(iNext, false, false);
+		ReadProperties();
 			
 	}
 	else {

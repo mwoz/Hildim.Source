@@ -829,12 +829,12 @@ static int cf_pane_eol_annotation_set(lua_State* L) {
 
 	switch (lua_type(L, 3)) {
 	case LUA_TNIL:
-		host->Send(p, Message::EOLAnnotationSetText, line, NULL);
+		host->Send(p, Message::EOLAnnotationSetText, static_cast<uptr_t>(line), NULL);
 		break;
 	case LUA_TSTRING:
 	{
 		std::string ss = GUI::ConvertToUTF8(lua_tostring(L, 3), 0);
-		host->Send(p, Message::EOLAnnotationSetText, line, reinterpret_cast<sptr_t>(ss.c_str()));
+		host->Send(p, Message::EOLAnnotationSetText, static_cast<uptr_t>(line), reinterpret_cast<sptr_t>(ss.c_str()));
 	}
 		break;
 	default:
@@ -862,14 +862,14 @@ static int cf_pane_findtext(lua_State *L) {
 
 		if (!hasError) {
 			if (nArgs > 3) {
-				ft.chrg.cpMin = static_cast<int>(luaL_checkinteger(L,4));
+				ft.chrg.cpMin = static_cast<int>(luaL_checkinteger(L, 4));
 				hasError = (lua_gettop(L) > nArgs);
 			}
 		}
 
 		if (!hasError) {
 			if (nArgs > 4) {
-				ft.chrg.cpMax = static_cast<int>(luaL_checkinteger(L,5));
+				ft.chrg.cpMax = static_cast<int>(luaL_checkinteger(L, 5));
 				hasError = (lua_gettop(L) > nArgs);
 			} else {
 				ft.chrg.cpMax = static_cast<Sci_PositionCR>(host->Send(p, Message::GetLength, 0, 0));
@@ -1033,7 +1033,7 @@ static int cf_editor_set_foreground(lua_State* L) {
 	hChild = ::FindWindowEx(NULL, hChild, L"HildiMWindow", NULL);
 	WINDOWPLACEMENT placement{};
 	placement.length = sizeof(placement);
-	int radiusProcId = lua_tointeger(L, 1);
+	int radiusProcId = static_cast<int>(lua_tointeger(L, 1));
 	bool allwaysSafe = lua_toboolean(L, 2);
 	
 	if (!GetWindowPlacement(hChild, &placement)) {
@@ -1109,7 +1109,7 @@ error:
 		return 2;
 	}
 ok:
-	lua_pushinteger(L, (DWORD)hCurrWnd);
+	lua_pushinteger(L, static_cast<lua_Integer>(reinterpret_cast<intptr_t>(hCurrWnd)));
 	return 1;
 }
 
@@ -1376,7 +1376,7 @@ static int cf_props_new_expand(lua_State* L) {
 }
 
 static int cf_change_tab(lua_State* L) {
-	int insertIn = lua_isnil(L, 1) ? -1 : lua_tointeger(L, 1);
+	int insertIn = lua_isnil(L, 1) ? -1 : static_cast<int>(lua_tointeger(L, 1));
 	host->ChangeTabWnd(insertIn);
 	return 1;
 }
@@ -1513,7 +1513,13 @@ static int bf_get_count(lua_State *L){
 
 static int bf_get_buffer_name(lua_State *L){
 	int i = static_cast<int>(luaL_checkinteger(L, 1));
-	lua_pushstring(L, host->GetBufferName(i).c_str());
+	if (i >= host->GetBuffersCount()) {
+		lua_pushstring(L, "");
+		//luaL_error(L, "An attempt to access buffer %d. The current size is %d", i, host->GetBuffersCount());
+	}
+	else {
+		lua_pushstring(L, host->GetBufferName(i).c_str());
+	}
 	return 1;
 }
 

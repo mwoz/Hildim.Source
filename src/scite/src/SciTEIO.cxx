@@ -551,6 +551,8 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 		} else {
 			wEditor.EmptyUndoBuffer();
 		}
+
+		SetFileProperties(props);
 		SString atr = props.Get("FileAttr");
 		bool isReadOnly = atr.contains("H") || atr.contains("S") || atr.contains("R");
 		wEditor.SetReadOnly(isReadOnly); 
@@ -583,8 +585,9 @@ void SciTEBase::CheckReload() {
 		if(fp.substr(0, 2) == "\\\\")
 			return;
 		time_t newModTime = ActiveFilePath().ModifiedTime();
-		DWORD attr = ::GetFileAttributesW(ActiveFilePath().AsInternal());
-		bool isRO = (attr & FILE_ATTRIBUTE_READONLY) || (attr & FILE_ATTRIBUTE_SYSTEM) || (attr & FILE_ATTRIBUTE_HIDDEN);
+		SetFileProperties(props);
+		SString atr = props.Get("FileAttr");
+		bool isRO = atr.contains("H") || atr.contains("S") || atr.contains("R");
 
 		if (ActiveFilePath().Exists() && buffers.CurrentBuffer()->ROMarker != isRO) {
 			wEditor.SetReadOnly(isRO);

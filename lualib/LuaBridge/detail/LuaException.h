@@ -7,6 +7,7 @@
 
 #include <exception>
 #include <string>
+#include "lua.h"
 
 namespace luabridge {
 
