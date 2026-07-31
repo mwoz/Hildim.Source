@@ -173,12 +173,12 @@ namespace luabridge {
     void domNode::AssertValid(lua_State* L, const char* funcname) const
     {
         if (L && m_node == nullptr)
-            LuaException::Throw(LuaException(L, funcname, "Invalid XML node.", 1));
+            LuaException::LuaThrow(LuaException(L, funcname, "Invalid XML node.", 1));
     }
 
     xmlNodePtr domNode::InsertNode(domNode* nodeRef, lua_State* L, domNode* nodeBeforeRef) {
         if (nodeBeforeRef && nodeBeforeRef->GetNode()->parent != m_node)
-            LuaException::Throw(LuaException(L, "InsertNode", "'Before' node is not a child node.", 1));
+            LuaException::LuaThrow(LuaException(L, "InsertNode", "'Before' node is not a child node.", 1));
 
         nodeRef->UnlinkNode();
 
@@ -189,7 +189,7 @@ namespace luabridge {
             int wrapResult = xmlDOMWrapAdoptNode(wrapCtx, nodeRef->GetDocRef()->GetDoc(), nodeRef->GetNode(), m_docRef->GetDoc(), m_node, 0);
             xmlDOMWrapFreeCtxt(wrapCtx);
             if (wrapResult != 0)
-                LuaException::Throw(LuaException(L, "InsertNode", "Invalid XML node for adoption into another document.", 1));
+                LuaException::LuaThrow(LuaException(L, "InsertNode", "Invalid XML node for adoption into another document.", 1));
             m_docRef->AttachNodeRef(nodeRef);
         }
         else
@@ -203,7 +203,7 @@ namespace luabridge {
         else
             newChild = xmlAddPrevSibling(nodeBeforeRef->GetNode(), nodeRef->GetNode());
         if (newChild == nullptr) {
-            LuaException::Throw(LuaException(L, "InsertNode", "Failed to add child node.", 1));
+            LuaException::LuaThrow(LuaException(L, "InsertNode", "Failed to add child node.", 1));
             return nullptr;
         }
 
@@ -294,7 +294,7 @@ namespace luabridge {
         AssertValid(L, "GetAttribute by index");
 
         if (m_node->type != XML_ELEMENT_NODE)
-            LuaException::Throw(LuaException(L, "GetAttribute by index", "Invalid XML node.", 1));
+            LuaException::LuaThrow(LuaException(L, "GetAttribute by index", "Invalid XML node.", 1));
 
         return m_docRef->CreateNodeRef((xmlNodePtr)xmlHasProp(m_node, CHR2XML(name)));
     }
@@ -362,7 +362,7 @@ namespace luabridge {
         std::string result;
 
         if (m_node->type != XML_ATTRIBUTE_NODE)
-            LuaException::Throw(LuaException(L, "luaGetName", "Property 'name' is supported for XML_ATTRIBUTE_NODE only.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetName", "Property 'name' is supported for XML_ATTRIBUTE_NODE only.", 1));
 
         if (m_node->ns && m_node->ns->prefix) {
             result = XML2CHR(m_node->ns->prefix);
@@ -420,7 +420,7 @@ namespace luabridge {
     RCNodeList domNode::luaGetAttributes(lua_State* L) {
         AssertValid(L, "luaGetAttributes");
         if (m_node->type != XML_ELEMENT_NODE)
-            LuaException::Throw(LuaException(L, "luaGetAttributes", "XML node is not an element.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetAttributes", "XML node is not an element.", 1));
 
         return RCNodeList(new domNodeList(this, true));
 
@@ -429,7 +429,7 @@ namespace luabridge {
     RCNodeList domNode::luaGetChildNodes(lua_State* L) {
         AssertValid(L, "luaGetChildNodes");
         if (m_node->type != XML_ELEMENT_NODE)
-            LuaException::Throw(LuaException(L, "luaGetChildNodes", "XML node is not an element.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetChildNodes", "XML node is not an element.", 1));
 
         return RCNodeList(new domNodeList(this, false));
     }
@@ -504,7 +504,7 @@ namespace luabridge {
             break;
 
         default:
-            LuaException::Throw(LuaException(L, "luaSetText", "Setting Text is not supported for this type of node.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetText", "Setting Text is not supported for this type of node.", 1));
         }
     }
     std::string domNode::luaGetNodeValue(lua_State* L) const
@@ -578,7 +578,7 @@ namespace luabridge {
             xmlSaveClose(saveCtx);
             m_node->nsDef = nsDef_Saved;  // restore ns declaration
 
-            LuaException::Throw(LuaException(L, "luaGetXml", "Failed to dump XML.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetXml", "Failed to dump XML.", 1));
         }
         xmlSaveFlush(saveCtx);
 
@@ -594,7 +594,7 @@ namespace luabridge {
         AssertValid(L, "luaAppendChild");
 
         if (node->GetNode()->type == XML_ATTRIBUTE_NODE)
-            LuaException::Throw(LuaException(L, "luaAppendChild", "Attribute is not allowed in this method.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaAppendChild", "Attribute is not allowed in this method.", 1));
 
         return RCNode(m_docRef->CreateNodeRef(InsertNode(node, L)));
     }
@@ -603,7 +603,7 @@ namespace luabridge {
 
         xmlNodePtr node = xmlDocCopyNode(m_node, m_docRef->GetDoc(), deep ? 1 : 0);
         if (node->type == XML_DOCUMENT_NODE)
-            LuaException::Throw(LuaException(L, "luaCloneNode", "XmlDocument is not allowed in this method. Use cloneDocument", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCloneNode", "XmlDocument is not allowed in this method. Use cloneDocument", 1));
 
         return RCNode(m_docRef->CreateNodeRef(node));
     }
@@ -624,7 +624,7 @@ namespace luabridge {
         AssertValid(L, "luaInsertBefore");
 
         if (node->GetNode()->type == XML_ATTRIBUTE_NODE)
-            LuaException::Throw(LuaException(L, "luaCloneNode", "Attribute is not allowed in this method", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCloneNode", "Attribute is not allowed in this method", 1));
         return RCNode(m_docRef->CreateNodeRef(InsertNode(node, L, nodeBefore)));
     }
 
@@ -633,7 +633,7 @@ namespace luabridge {
         AssertValid(L, "luaRemoveChild");
 
         if (nodeRef->GetNode()->parent != m_node)
-            LuaException::Throw(LuaException(L, "luaAppendChild", "XML node is not the child node.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaAppendChild", "XML node is not the child node.", 1));
 
         nodeRef->UnlinkNode();
     }
@@ -645,7 +645,7 @@ namespace luabridge {
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
             xmlXPathFreeContext(xpathCtx);
-            LuaException::Throw(LuaException(L, "luaSelectSingleNode", "Invalid node for XPath search.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSelectSingleNode", "Invalid node for XPath search.", 1));
         }
 
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
@@ -698,7 +698,7 @@ namespace luabridge {
             if (parse.length() > xpathCtx->lastError.int1)
                 s += parse.substr(xpathCtx->lastError.int1 + 1);
             xmlXPathFreeContext(xpathCtx);
-            LuaException::Throw(LuaException(L, "CheckXpathResult", s.c_str(), 1));
+            LuaException::LuaThrow(LuaException(L, "CheckXpathResult", s.c_str(), 1));
         }
         xmlXPathFreeContext(xpathCtx);
     }
@@ -764,7 +764,7 @@ namespace luabridge {
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
             xmlXPathFreeContext(xpathCtx);
-            LuaException::Throw(LuaException(L, "luaSelectNodes", "Invalid node for XPath search.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSelectNodes", "Invalid node for XPath search.", 1));
         }
 
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);
@@ -792,7 +792,7 @@ namespace luabridge {
     std::string domNode::luaCompareDocumentPosition(domNode* node2Compare, lua_State* L) {
         AssertValid(L, "luaCompareDocumentPosition");
         if (!node2Compare) {
-            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "Second node is null.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCompareDocumentPosition", "Second node is null.", 1));
         }
 
         if (node2Compare->GetNode() == m_node) return "=";
@@ -814,7 +814,7 @@ namespace luabridge {
 
         if (!lca) {
             // не в одном документе (маловероятно)
-            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "The nodes being compared should not belong to different documents.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCompareDocumentPosition", "The nodes being compared should not belong to different documents.", 1));
         }
 
         // Теперь i1 и i2 указывают на первых различающихся потомков LCA
@@ -838,7 +838,7 @@ namespace luabridge {
 
         if (pos1 == -1 || pos2 == -1) {
             // ошибка
-            LuaException::Throw(LuaException(L, "luaCompareDocumentPosition", "Internal Error!", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCompareDocumentPosition", "Internal Error!", 1));
         }
 
         return (pos1 < pos2) ? "<" : ">";
@@ -849,7 +849,7 @@ namespace luabridge {
 
 
         if (m_node->type != XML_ELEMENT_NODE) {
-            LuaException::Throw(LuaException(L, "luaGetAttribute", "XML node is not an element.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetAttribute", "XML node is not an element.", 1));
         }
 
         xmlAttrPtr prop = xmlHasProp(m_node, CHR2XML(name.c_str()));
@@ -873,7 +873,7 @@ namespace luabridge {
         AssertValid(L, "luaSetAttribute");
 
         if (m_node->type != XML_ELEMENT_NODE) {
-            LuaException::Throw(LuaException(L, "luaSetAttribute", "XML node is not an element.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetAttribute", "XML node is not an element.", 1));
         }
 
         xmlSetProp(m_node, CHR2XML(name.c_str()), CHR2XML(value.c_str()));
@@ -884,7 +884,7 @@ namespace luabridge {
         AssertValid(L, "luaRemoveAttribute");
 
         if (m_node->type != XML_ELEMENT_NODE)
-            LuaException::Throw(LuaException(L, "luaSetAttribute", "XML node is not an element.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetAttribute", "XML node is not an element.", 1));
 
         xmlAttrPtr prop = xmlHasProp(m_node, CHR2XML(name));
         if (prop == nullptr)
@@ -1009,7 +1009,7 @@ namespace luabridge {
     {
         auto xpathCtx = xmlXPathNewContext(m_docRef->GetDoc());
         if (xpathCtx == NULL)
-            LuaException::Throw(LuaException(L, "NewXPathContext", "Failed to create XPath context.", 1));
+            LuaException::LuaThrow(LuaException(L, "NewXPathContext", "Failed to create XPath context.", 1));
 
         auto iterator = m_selectNamespaces.begin();
         while (iterator != m_selectNamespaces.cend())
@@ -1025,7 +1025,7 @@ namespace luabridge {
                 s += ", uri=";
                 s += uri;
                 s += ").";
-                LuaException::Throw(LuaException(L, "NewXPathContext", s.c_str(), 1));
+                LuaException::LuaThrow(LuaException(L, "NewXPathContext", s.c_str(), 1));
             }
             iterator++;
         }
@@ -1140,7 +1140,7 @@ namespace luabridge {
             if (pos != std::string::npos)
             {
                 if (namespaceURI == "")
-                    LuaException::Throw(LuaException(L, "luaCreateNode", "Invalid argument 'name': prefix specified but 'namespaceURI' is empty.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaCreateNode", "Invalid argument 'name': prefix specified but 'namespaceURI' is empty.", 1));
 
                 prefix.assign(name.c_str(), pos);
                 nameBase.assign(name.c_str() + pos + 1);
@@ -1156,12 +1156,12 @@ namespace luabridge {
         {
         case XML_ELEMENT_NODE:
             if (!nameBase.size())
-                LuaException::Throw(LuaException(L, "luaCreateNode", "Element name must not be empty.", 1));
+                LuaException::LuaThrow(LuaException(L, "luaCreateNode", "Element name must not be empty.", 1));
             nodeRef = CreateNodeRef(xmlNewDocNode(m_doc, ns, CHR2XML(nameBase.c_str()), nullptr));
             break;
         case XML_ATTRIBUTE_NODE:
             if (!nameBase.size())
-                LuaException::Throw(LuaException(L, "luaCreateNode", "Attribute name must not be empty.", 1));
+                LuaException::LuaThrow(LuaException(L, "luaCreateNode", "Attribute name must not be empty.", 1));
             nodeRef = CreateNodeRef((xmlNodePtr)xmlNewDocProp(m_doc, CHR2XML(nameBase.c_str()), nullptr));
             if (ns)
                 xmlSetNs(nodeRef->GetNode(), ns);
@@ -1176,7 +1176,7 @@ namespace luabridge {
             nodeRef = CreateNodeRef((xmlNodePtr)xmlNewDocComment(m_doc, nullptr));
             break;
         default:
-            LuaException::Throw(LuaException(L, "luaCreateNode", "Unsupported node type", 1));
+            LuaException::LuaThrow(LuaException(L, "luaCreateNode", "Unsupported node type", 1));
         }
         return RCNode(nodeRef);
     }
@@ -1197,7 +1197,7 @@ namespace luabridge {
             return std::string("XPath");
         }
         else
-            LuaException::Throw(LuaException(L, "luaGetProperty", "Unsupported property name.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetProperty", "Unsupported property name.", 1));
         return std::string("");
 
     }
@@ -1216,35 +1216,35 @@ namespace luabridge {
             while (!s.empty())
             {
                 if (s.find("xmlns:") != 0)
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': every item should start with 'xmlns:'.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': every item should start with 'xmlns:'.", 1));
 
                 size_t posSeparator = s.find('=');
                 if (posSeparator == std::string::npos)
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no corresponding '='.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no corresponding '='.", 1));
 
                 std::string prefix = s.substr(xmlnsLen, posSeparator - xmlnsLen);
                 rtrim(prefix);
                 if (xmlValidateNCName(CHR2XML(prefix.c_str()), 0) != 0)
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': invalid prefix.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': invalid prefix.", 1));
 
                 s.erase(0, posSeparator + 1);
                 ltrim(s);
                 if (s.find('\'') != 0)
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': string literal for URI not found.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': string literal for URI not found.", 1));
 
                 posSeparator = s.find('\'', 1);
                 if (posSeparator == std::string::npos)
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': string literal for URI not found.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': string literal for URI not found.", 1));
 
                 std::string uri = s.substr(1, posSeparator - 1);
                 if (namespaces.find(prefix) != namespaces.cend())
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': non-unique prefix.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': non-unique prefix.", 1));
 
                 namespaces[prefix] = uri;
 
                 s.erase(0, posSeparator + 1);
                 if (!s.empty() && !std::isspace(s[0]))
-                    LuaException::Throw(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no whitespace between items.", 1));
+                    LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Invalid value for property 'SelectionNamespaces': no whitespace between items.", 1));
 
                 ltrim(s);
             }
@@ -1263,10 +1263,10 @@ namespace luabridge {
         else if (name == "SelectionLanguage")
         {
             if (value != "XPath")
-                LuaException::Throw(LuaException(L, "luaSetProperty", "Only 'XPath' supported for 'SelectionLanguage' property. ", 1));
+                LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Only 'XPath' supported for 'SelectionLanguage' property. ", 1));
         }
         else
-            LuaException::Throw(LuaException(L, "luaSetProperty", "Unsupported property name.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetProperty", "Unsupported property name.", 1));
     }
     void domDocument::FreeDoc()
     {
@@ -1417,7 +1417,7 @@ namespace luabridge {
     RCNode domNodeList::luaGetNamedItem(const char* name, lua_State* L)
     {
         if (!m_isAttributeList || m_nodeRef == nullptr)
-            LuaException::Throw(LuaException(L, "luaGetNamedItem", "Method 'GetNamedItem' is supported in attributes collection.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaGetNamedItem", "Method 'GetNamedItem' is supported in attributes collection.", 1));
 
         return RCNode(m_nodeRef->GetAttribute(name, L));
     }
@@ -1425,10 +1425,10 @@ namespace luabridge {
     RCNode domNodeList::luaSetNamedItem(domNode* node, lua_State* L)
     {
         if (!m_isAttributeList || m_nodeRef == nullptr)
-            LuaException::Throw(LuaException(L, "luaSetNamedItem", "Method 'SetNamedItem' is supported in attributes collection.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetNamedItem", "Method 'SetNamedItem' is supported in attributes collection.", 1));
 
         if (node->GetNode()->type != XML_ATTRIBUTE_NODE)
-            LuaException::Throw(LuaException(L, "luaSetNamedItem", "Node parameter is not an XML attribute.", 1));
+            LuaException::LuaThrow(LuaException(L, "luaSetNamedItem", "Node parameter is not an XML attribute.", 1));
 
         if (m_nodeRef)
             m_nodeRef->AssertValid(L, "domNodeList::luaSetNamedItem");
@@ -1516,7 +1516,7 @@ namespace luabridge {
         if (xmlXPathSetContextNode(m_node, xpathCtx) != 0)
         {
             xmlXPathFreeContext(xpathCtx);
-            LuaException::Throw(LuaException(L, "iselectNodes", "Invalid node for XPath search.", 1));
+            LuaException::LuaThrow(LuaException(L, "iselectNodes", "Invalid node for XPath search.", 1));
         }
 
         xmlXPathObjectPtr xpathResult = xmlXPathEvalExpression(CHR2XML(xpath), xpathCtx);

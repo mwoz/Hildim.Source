@@ -63,6 +63,29 @@ public:
 
     //----------------------------------------------------------------------------
     /**
+        Report a Lua error via luaL_error instead of throwing a C++ exception.
+
+        This is the preferred way to report errors from C++ functions registered
+        with LuaBridge. Unlike Throw(), which uses a C++ throw that must be caught
+        by Invoke::run() and converted to luaL_error, this method calls luaL_error
+        directly. This means:
+
+        - When called from within a lua_pcall, the error is caught normally.
+        - When called without pcall, the Lua script is terminated with the error
+          message instead of triggering lua_atpanic (which would crash the app).
+
+        The old Throw() method is kept for compatibility with projects that
+        catch LuaException in C++ code.
+    */
+    template<class Exception>
+    static void LuaThrow(Exception e)
+    {
+        lua_State* L = e.state();
+        luaL_error(L, "%s", e.what());
+    }
+
+    //----------------------------------------------------------------------------
+    /**
         Wrapper for lua_pcall that throws.
     */
     static void pcall(lua_State* L, int nargs = 0, int nresults = 0, int msgh = 0)
