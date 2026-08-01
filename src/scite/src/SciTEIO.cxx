@@ -402,7 +402,7 @@ void SciTEBase::OpenFile(int fileSize, bool suppressMessage) {
 		cmd += "Could not open file ";
 		cmd += ActiveFilePath().AsUTF8();
 		cmd += ".]]):from_utf8())";
-		extender->DoLua(cmd.c_str());
+		extender.DoLua(cmd.c_str());
 	}
 	if (!wEditor.UndoCollection()) {
 		wEditor.SetUndoCollection(1);
@@ -500,17 +500,17 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 		if (maxSize > 0 && size > maxSize) {
 			GUI::gui_string sSize = GUI::StringFromInteger(size);
 			GUI::gui_string sMaxSize = GUI::StringFromInteger(maxSize);
-			int answer = extender->HildiAlarm("File '%1' is %2 bytes long,\nlarger than the %3 bytes limit set in the properties.\nDo you still want to open it?",
+			int answer = extender.HildiAlarm("File '%1' is %2 bytes long,\nlarger than the %3 bytes limit set in the properties.\nDo you still want to open it?",
 				MB_YESNO | MB_ICONWARNING, absPath.AsInternal(), sSize.c_str(), sMaxSize.c_str());
 			if (answer != IDYES) {
 				return false;
 			}
 		}
 	}
-	if (extender && extender->OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
+	if (extender.OnBeforeOpen(absPath.AsUTF8().c_str(), file.Extension().AsUTF8().c_str(), encoding)) return false;
 	absPath._encoding = encoding;
 	if(setNav)
-		extender->OnNavigation("Open");
+		extender.OnNavigation("Open");
 	
 	layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 
@@ -518,7 +518,7 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	if (buffers.maxLength == (int)buffers.buffers.size() ) {
 		AddFileToStack(ActiveFilePath(), GetSelection(), GetCurrentScrollPosition());
 		ClearDocument();
-		extender->InitBuffer(buffers.Current());
+		extender.InitBuffer(buffers.Current());
 	} else {
 		if (index < 0 || !(of & ofForceLoad)) { // No new buffer, already opened
 			index = (int)buffers.buffers.size() ;
@@ -564,9 +564,9 @@ bool SciTEBase::Open(FilePath file, OpenFlags of, bool setNav) {
 	bBlockRedraw = false;
 
 	BuffersMenu();
-	extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
+	extender.OnOpen(ActiveFilePath().AsUTF8().c_str());
 	if (setNav)
-		extender->OnNavigation("Open-");
+		extender.OnNavigation("Open-");
 	return true;
 }
 
@@ -603,10 +603,10 @@ void SciTEBase::CheckReload() {
 						GUI::gui_string msg;
 						int decision;
 						if (CurrentBuffer()->isDirty) {
-							decision = extender->HildiAlarm("The file \n'%1'\n has been modified. Should it be reloaded?",
+							decision = extender.HildiAlarm("The file \n'%1'\n has been modified. Should it be reloaded?",
 								MB_YESNO, ActiveFilePath().AsInternal());
 						} else {
-							decision = extender->HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be reloaded?",
+							decision = extender.HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be reloaded?",
 								MB_YESNO, ActiveFilePath().AsInternal());
 						}
 						if (decision == IDYES) {
@@ -666,12 +666,12 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 		int decision;
 		GUI::gui_char cnt[9];
 		swprintf(cnt, 9, L"%0d", (int)buffers.buffers.size() );
-		decision = extender->HildiAlarm("%1 files have already been opened.\nClose '%2'?",
+		decision = extender.HildiAlarm("%1 files have already been opened.\nClose '%2'?",
 			MB_OKCANCEL, cnt,  ActiveFilePath().Name().AsInternal());
 		if (decision == IDCANCEL)
 			return IDCANCEL;
 			
-		extender->OnClose( ActiveFilePath().AsUTF8().c_str());
+		extender.OnClose( ActiveFilePath().AsUTF8().c_str());
 	}
 	if ((CurrentBuffer()->isDirty) && (LengthDocument() || ! ActiveFilePath().IsUntitled() || forceQuestion)) {
 		if ((props.GetInt("are.you.sure", 1) && props.GetInt("are.you.sure.close", 1)) ||
@@ -682,17 +682,17 @@ int SciTEBase::SaveIfUnsure(bool forceQuestion, bool forNewRoom) {
 				if (forNewRoom) {
 					GUI::gui_char cnt[9];
 					swprintf(cnt, 9, L"%0d", (int)buffers.buffers.size() );
-					decision = extender->HildiAlarm("%1 files have already been opened.\nSave changes to '%2' and close it?",
+					decision = extender.HildiAlarm("%1 files have already been opened.\nSave changes to '%2' and close it?",
 						MB_YESNOCANCEL, cnt,  ActiveFilePath().AsInternal());
 					if (decision != IDCANCEL)
-						extender->OnClose( ActiveFilePath().AsUTF8().c_str());
+						extender.OnClose( ActiveFilePath().AsUTF8().c_str());
 				}
 				else {
-					decision = extender->HildiAlarm("Save changes to '%1'?",
+					decision = extender.HildiAlarm("Save changes to '%1'?",
 						MB_YESNOCANCEL,  ActiveFilePath().AsInternal());
 				}
 			} else {
-				decision = extender->HildiAlarm("Save changes to (Untitled)?",
+				decision = extender.HildiAlarm("Save changes to (Untitled)?",
 					MB_YESNOCANCEL,  ActiveFilePath().AsInternal());
 			}
 			if (decision == IDYES) {
@@ -782,7 +782,7 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 	wEditor.EndUndoAction();
 	bool bNotSaved = buffers.CurrentBuffer()->DocumentNotSaved();
 
-	retVal = extender->OnBeforeSave(saveName.AsUTF8().c_str());
+	retVal = extender.OnBeforeSave(saveName.AsUTF8().c_str());
 
 	if (!retVal) {
 		Utf8_16_Write convert;
@@ -822,12 +822,12 @@ bool SciTEBase::SaveBuffer(FilePath saveName, bool bNotSaveNotChanged) {
 				//cmd += "File ";
 				cmd += saveName.AsUTF8();
 				cmd += "]]):from_utf8()..' is not changed')";
-				extender->DoLua(cmd.c_str());
+				extender.DoLua(cmd.c_str());
 			}
 		}
 
-		if (retVal && extender) {
-			extender->OnSave(saveName.AsUTF8().c_str());
+		if (retVal) {
+			extender.OnSave(saveName.AsUTF8().c_str());
 		}	
 	}
 	bBlockTextChangeNotify = false;
@@ -858,7 +858,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged, bool checkFileTime) {
 			time_t newModTime =  ActiveFilePath().ModifiedTime();
 			if ((newModTime != 0) && (CurrentBuffer()->fileModTime != 0) &&
 				(newModTime != CurrentBuffer()->fileModTime)) {
-				decision = extender->HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be saved?",
+				decision = extender.HildiAlarm("The file \n'%1'\n has been modified outside HildiM. Should it be saved?",
 					MB_YESNO | MB_ICONWARNING,   ActiveFilePath().AsInternal());
 				if (decision == IDNO) {
 					return false;
@@ -873,7 +873,7 @@ bool SciTEBase::Save(bool bNotSaveNotChanged, bool checkFileTime) {
 				ReloadProperties();
 			}
 		} else {
-			decision = extender->HildiAlarm("Could not save file\n'%1'.\nSave under a different name?",
+			decision = extender.HildiAlarm("Could not save file\n'%1'.\nSave under a different name?",
 				MB_YESNO | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 			if (decision == IDYES) {
 				return SaveAsDialog();
@@ -903,7 +903,7 @@ bool SciTEBase::SaveIfNotOpen(const FilePath &destFile, bool fixCase) {
 	FilePath absPath = destFile.AbsolutePath();
 	int index = buffers.GetDocumentByName(absPath, true /* excludeCurrent */);
 	if (index >= 0) {
-		extender->HildiAlarm("File '%1' is already open in another buffer.",
+		extender.HildiAlarm("File '%1' is already open in another buffer.",
 			MB_OK | MB_ICONWARNING, destFile.AsInternal());
 		return false;
 	} else {

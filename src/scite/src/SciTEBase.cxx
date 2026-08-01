@@ -72,11 +72,7 @@
 
 using namespace Scintilla;
 
-SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
-	if (!ext) {
-		fprintf(stderr, "Fatal Error: Extension could not be created. HildiM will now close.\n");
-		exit(1);
-	}
+SciTEBase::SciTEBase() : apis(true) {
 	codePage = 0;
 	characterSet = 0;
 	language = "java";
@@ -157,7 +153,7 @@ SciTEBase::SciTEBase(Extension *ext) : apis(true), extender(ext) {
 
 SciTEBase::~SciTEBase() {
 	bFinalise = true;
-	extender->Finalise();
+	extender.Finalise();
 //!	popup.Destroy();	//!-remove-[ExtendedContextMenu]
 }
 
@@ -283,9 +279,9 @@ sptr_t SciTEBase::ScintillaWindowEditor::Call(Scintilla::Message msg, uptr_t wPa
 		if (static_iOnSendEditorCallsCount < _MAX_SEND_RECURSIVE_CALL) {
 			static_iOnSendEditorCallsCount++; 
 			if (!isNotStringParams(static_cast<unsigned int>(msg)))
-				result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, reinterpret_cast<const char *>(lParam));
+				result = pBase->extender.OnSendEditor(static_cast<unsigned int>(msg), wParam, reinterpret_cast<const char *>(lParam));
 			else
-				result = pBase->extender->OnSendEditor(static_cast<unsigned int>(msg), wParam, lParam);
+				result = pBase->extender.OnSendEditor(static_cast<unsigned int>(msg), wParam, lParam);
 			static_iOnSendEditorCallsCount--;
 		}	
 		break;
@@ -429,7 +425,7 @@ void SciTEBase::SetOverrideLanguage(const char* lexer, bool bFireEvent) {
 	Redraw();
 	DisplayAround(rf);
 	if (bFireEvent) {
-		extender->OnSwitchFile(props.GetString("FilePath"));
+		extender.OnSwitchFile(props.GetString("FilePath"));
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 
@@ -632,13 +628,13 @@ void SciTEBase::SetWindowName() {
 	if (bBlockUIUpdate)
 		return;
 	if (ActiveFilePath().IsUntitled()) {
-		windowName = extender->LocalizeText("Untitled");
+		windowName = extender.LocalizeText("Untitled");
 		windowName.insert(0, GUI_TEXT("("));
 		windowName += GUI_TEXT(")");
 	} else if (props.GetInt("title.full.path") == 2) {
 		windowName = FileNameExt().AsInternal();
 		windowName += GUI_TEXT(" ");
-		windowName += extender->LocalizeText("in");
+		windowName += extender.LocalizeText("in");
 		windowName += GUI_TEXT(" ");
 		windowName += ActiveFilePath().Directory().AsInternal();
 	} else if (props.GetInt("title.full.path") == 1) {
@@ -657,7 +653,7 @@ void SciTEBase::SetWindowName() {
 		windowName += GUI_TEXT(" [");
 		windowName += GUI::StringFromInteger(buffers.Current() + 1);
 		windowName += GUI_TEXT(" ");
-		windowName += extender->LocalizeText("of");
+		windowName += extender.LocalizeText("of");
 		windowName += GUI_TEXT(" ");
 		windowName += GUI::StringFromInteger((int)buffers.buffers.size() );
 		if((int)buffers.buffers.size()  == buffers.maxLength)
@@ -997,13 +993,13 @@ void SciTEBase::BookmarkNext(bool forwardScan, bool select) {
 	if (nextLine < 0 || nextLine == lineno)	// No bookmark (of the given type) or only one, and already on it
 		WarnUser(warnNoOtherBookmark);
 	else {
-		extender->OnNavigation("Bkmk");
+		extender.OnNavigation("Bkmk");
 		wEditor.EnsureVisibleEnforcePolicy(nextLine);
 		wEditor.GotoLine(nextLine);
 		if (select) {
 			wEditor.SetAnchor(anchor);
 		}
-		extender->OnNavigation("Bkmk-");
+		extender.OnNavigation("Bkmk-");
 	}
 }
 
@@ -1261,7 +1257,7 @@ bool SciTEBase::StartBlockComment() {
 	SString comment = props.Get(base.c_str());
 	if (comment == "") { // user friendly error message box
 		GUI::gui_string sBase = GUI::StringFromUTF8(base.c_str());
-		extender->HildiAlarm("Block comment variable '%1' is not defined in SciTE *.properties!",
+		extender.HildiAlarm("Block comment variable '%1' is not defined in SciTE *.properties!",
 			MB_OK | MB_ICONWARNING, sBase.c_str());
 		return true;
 	}
@@ -1360,7 +1356,7 @@ bool SciTEBase::StartBoxComment() {
 		GUI::gui_string sStart = GUI::StringFromUTF8(start_base.c_str());
 		GUI::gui_string sMiddle = GUI::StringFromUTF8(middle_base.c_str());
 		GUI::gui_string sEnd = GUI::StringFromUTF8(end_base.c_str());
-		extender->HildiAlarm("Box comment variables '%1', '%2' and '%3' are not defined in SciTE *.properties!",
+		extender.HildiAlarm("Box comment variables '%1', '%2' and '%3' are not defined in SciTE *.properties!",
 			MB_OK | MB_ICONWARNING, sStart.c_str(), sMiddle.c_str(), sEnd.c_str());
 		return true;
 	}
@@ -1485,7 +1481,7 @@ bool SciTEBase::StartStreamComment() {
 	if (start_comment == "" || end_comment == "") {
 		GUI::gui_string sStart = GUI::StringFromUTF8(start_base.c_str());
 		GUI::gui_string sEnd = GUI::StringFromUTF8(end_base.c_str());
-		extender->HildiAlarm("Stream comment variables '%1' and '%2' are not defined in SciTE *.properties!",
+		extender.HildiAlarm("Stream comment variables '%1' and '%2' are not defined in SciTE *.properties!",
 			MB_OK | MB_ICONWARNING, sStart.c_str(), sEnd.c_str());
 		return true;
 	}
@@ -1500,7 +1496,7 @@ bool SciTEBase::StartStreamComment() {
 	bool move_caret = caretPosition < selectionEnd;
 	// if there is no selection?
 	if (selectionEnd - selectionStart <= 0) {
-		extender->HildiAlarm("Developer error 1648",
+		extender.HildiAlarm("Developer error 1648",
 			MB_OK | MB_ICONWARNING);
 //		Sci_Position selLine = wEditor.LineFromPosition(selectionStart);
 //		Sci_Position lineIndent = wEditor.LineIndentPosition(selLine);
@@ -1904,9 +1900,9 @@ void SciTEBase::SetLineNumberWidth(ScintillaWindowEditor *pE) {
 
 void SciTEBase::MenuCommand(int cmdID, int source) {
 //!-start-[OnMenuCommand]
-	if (extender && OnMenuCommandCallsCount < _MAX_EXTENSION_RECURSIVE_CALL) {
+	if (OnMenuCommandCallsCount < _MAX_EXTENSION_RECURSIVE_CALL) {
 		OnMenuCommandCallsCount++;
-		bool result = extender->OnMenuCommand(cmdID,source);
+		bool result = extender.OnMenuCommand(cmdID,source);
 		OnMenuCommandCallsCount--;
 		if (result) return;
 	}
@@ -2472,7 +2468,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 		break;
 
 	case IDM_REBOOT:
-		extender->DoReboot();
+		extender.DoReboot();
 		break;
 	case IDM_HELP: {
 			SelectionIntoProperties();
@@ -2498,7 +2494,7 @@ void SciTEBase::MenuCommand(int cmdID, int source) {
 
 	default:
 		if (cmdID >= IDM_GENERATED && cmdID < IDM_GENERATED + 2000){
-			extender->OnGeneratedHotKey(cmdID);
+			extender.OnGeneratedHotKey(cmdID);
 		}
 		break;
 	}
@@ -2602,11 +2598,11 @@ void SciTEBase::NewLineInOutput() {
 		Execute();
 	}
 	else if (curOutMode == outLua) {
-		extender->DoLua(cmd.c_str());
+		extender.DoLua(cmd.c_str());
 	}
 	else if (curOutMode == outluaPrint) {
 		cmd = "print(" + cmd + ")";
-		extender->DoLua(cmd.c_str());
+		extender.DoLua(cmd.c_str());
 	}
 	else if (curOutMode == outInterface)
 	{
@@ -2649,9 +2645,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 		POINT pt;
 		::GetCursorPos(&pt);
 		if(notification->listType)
-			extender->OnContextMenu(pt.x, pt.y, "USERLIST");
+			extender.OnContextMenu(pt.x, pt.y, "USERLIST");
 		else
-			extender->OnContextMenu(pt.x, pt.y, "AUTOCLIST");
+			extender.OnContextMenu(pt.x, pt.y, "AUTOCLIST");
 	}
 		break;
 
@@ -2667,7 +2663,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 					if (endStyled > 0)
 						styleStart = styler.StyleAt(endStyled - 1);
 					styler.SetCodePage(codePage);
-					extender->OnStyle(endStyled, notification->position - endStyled, 
+					extender.OnStyle(endStyled, notification->position - endStyled,
 					        styleStart, &styler);
 					styler.Flush();
 				}
@@ -2677,8 +2673,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 //!-start-[autocompleteword.incremental]
 	case SCN_AUTOCSELECTION:
-		autoCompleteIncremental = false; 
-		extender->OnAutocSelection(notification->listCompletionMethod, notification->position);
+		autoCompleteIncremental = false;
+		extender.OnAutocSelection(notification->listCompletionMethod, notification->position);
 		props.SetInteger("autocomleted.from.menu", 0);
 		props.SetInteger("autocompleteword.automatic.blocked", 0);
 		break;
@@ -2702,9 +2698,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 				if (notification->ch > 255) {
 					wchar_t c = static_cast<wchar_t>(notification->ch);
 					WideCharToMultiByte(CP_ACP, 0, &c, 1, &cc, 1, NULL, NULL);
-					handled = extender->OnChar(cc);
+					handled = extender.OnChar(cc);
 				} else {
-					handled = extender->OnChar(static_cast<char>(notification->ch));
+					handled = extender.OnChar(static_cast<char>(notification->ch));
 				}
 			}
 			if (!handled) {
@@ -2720,8 +2716,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_SAVEPOINTREACHED:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			{
-				handled = extender->OnSavePointReached();
-				extender->OnShowActivate(-1, -1, 1);
+				handled = extender.OnSavePointReached();
+				extender.OnShowActivate(-1, -1, 1);
 			}
 			if (!handled) {
 				CurrentBuffer()->isDirty = false;
@@ -2737,7 +2733,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 	case SCN_COLORIZED:
 		if (notification->nmhdr.idFrom == static_cast<int>(GetEditorIdm())) {
-			handled = extender->OnColorized(notification->wParam, notification->lParam);
+			handled = extender.OnColorized(notification->wParam, notification->lParam);
 		}
 		break;
 	case SCN_KEYCOMMAND:
@@ -2746,20 +2742,20 @@ void SciTEBase::Notify(SCNotification *notification) {
 			case SCI_PAGEUP:
 			case SCI_PAGEUPRECTEXTEND:
 			case SCI_PAGEUPEXTEND:
-				handled = extender->OnNavigation(notification->lParam ? "PageUp" : "-PageUp");
+				handled = extender.OnNavigation(notification->lParam ? "PageUp" : "-PageUp");
 				break;
 			case SCI_PAGEDOWN:
 			case SCI_PAGEDOWNEXTEND:
 			case SCI_PAGEDOWNRECTEXTEND:
-				handled = extender->OnNavigation(notification->lParam ? "PageDown":"-PageDown");
+				handled = extender.OnNavigation(notification->lParam ? "PageDown":"-PageDown");
 				break;
 			case SCI_DOCUMENTSTART:
 			case SCI_DOCUMENTSTARTEXTEND:
-				handled = extender->OnNavigation(notification->lParam ? "DocStart":"-DocStart");
+				handled = extender.OnNavigation(notification->lParam ? "DocStart":"-DocStart");
 				break;
 			case SCI_DOCUMENTEND:
 			case SCI_DOCUMENTENDEXTEND:
-				handled = extender->OnNavigation(notification->lParam ? "DocEnd":"-DocEnd");
+				handled = extender.OnNavigation(notification->lParam ? "DocEnd":"-DocEnd");
 				break;
 			}
 		}
@@ -2767,8 +2763,8 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_SAVEPOINTLEFT:
 		if (notification->nmhdr.idFrom == static_cast<int>(EditorSide::SrcWin) || notification->nmhdr.idFrom == static_cast<int>(EditorSide::CoSrcWin)) {
 			{
-				handled = extender->OnSavePointLeft();
-				extender->OnShowActivate(-1, -1, -1);
+				handled = extender.OnSavePointLeft();
+				extender.OnShowActivate(-1, -1, -1);
 			}
 			if (!handled) {
 				if (GetEditorIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom)) {
@@ -2790,7 +2786,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_DOUBLECLICK:
-		handled = extender->OnDoubleClick(notification->modifiers);
+		handled = extender.OnDoubleClick(notification->modifiers);
 		if (!handled && notification->nmhdr.idFrom == IDM_RUNWIN) {
 			handled = GoMessage(0, wOutput);
 			if (handled)
@@ -2801,7 +2797,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_CLICK:
 		{
-			handled = extender->OnClick(notification->modifiers);
+			handled = extender.OnClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
 					wOutput.Call(Message::SetMouseCapture, 0);
@@ -2813,7 +2809,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_HOTSPOTRELEASECLICK:
 		{
-			handled = extender->OnHotSpotReleaseClick(notification->modifiers);
+			handled = extender.OnHotSpotReleaseClick(notification->modifiers);
 			if (handled) {
 				if (notification->nmhdr.idFrom == IDM_RUNWIN)
 					wOutput.Call(Message::SetMouseCapture, 0);
@@ -2824,7 +2820,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		break;
 
 	case SCN_MOUSEBUTTONUP:
-		extender->OnMouseButtonUp(notification->modifiers);
+		extender.OnMouseButtonUp(notification->modifiers);
 		if (preserveFocusOnEditor) {
 			preserveFocusOnEditor = false;
 			WindowSetFocus(wEditor);
@@ -2835,9 +2831,9 @@ void SciTEBase::Notify(SCNotification *notification) {
 	case SCN_UPDATEUI:
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if(buffers.pEditor->GetWindowIdm() == static_cast<EditorSide>(notification->nmhdr.idFrom))
-				handled = extender->OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
+				handled = extender.OnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 			else
-				handled = extender->CoOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
+				handled = extender.CoOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 			
 			if (notification->updated & SC_UPDATE_SELECTION) {
 				if (notification->nmhdr.idFrom == IDM_SRCWIN) {
@@ -2857,7 +2853,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 				}
 			}		
 		} else {
-			extender->PaneOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
+			extender.PaneOnUpdateUI(notification->updated & ((SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT) << 4), notification->updated & SC_UPDATE_SELECTION, notification->updated);
 		}
 		if (!handled) {
 			BraceMatch(notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN);
@@ -2875,18 +2871,18 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 			sptr_t p = w->LineFromPosition(w->CurrentPos());
 			if (p == notification->line + 1 || p == notification->line){
-				extender->OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+				extender.OnCurrentLineFold(notification->line, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
 					notification->foldLevelPrev, notification->foldLevelNow); 
 			}
 		}
 		if (notification->nmhdr.idFrom == IDM_SRCWIN || notification->nmhdr.idFrom == IDM_COSRCWIN) {
 			if (!bBlockTextChangeNotify) {
-				if (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) { 
-					extender->OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
+				if (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) {
+					extender.OnTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1,
 						notification->linesAdded, notification->modificationType); 
 				}
 				else if (notification->modificationType & (SC_MOD_BEFOREINSERT | SC_MOD_BEFOREDELETE)) {
-					extender->BeforeTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1, notification->text, notification->modificationType);
+					extender.BeforeTextChanged(notification->position, notification->nmhdr.idFrom == IDM_SRCWIN ? 0 : 1, notification->text, notification->modificationType);
 				}
 			}
 		}
@@ -2901,7 +2897,7 @@ void SciTEBase::Notify(SCNotification *notification) {
 		else
 			w = &wEditor;
 		
-		handled = extender->OnMarginClick(notification->margin, notification->modifiers,
+		handled = extender.OnMarginClick(notification->margin, notification->modifiers,
 			int(w->LineFromPosition(notification->position)), notification->nmhdr.idFrom);
 
 			if (!handled) {
@@ -2925,12 +2921,12 @@ void SciTEBase::Notify(SCNotification *notification) {
 
 	case SCN_USERLISTSELECTION: { 
 			if (notification->wParam > 2)
-				extender->OnUserListSelection(static_cast<int>(notification->wParam), notification->text, notification->position+1, notification->listCompletionMethod); //!-change-[UserListItemID]
+				extender.OnUserListSelection(static_cast<int>(notification->wParam), notification->text, notification->position+1, notification->listCompletionMethod); //!-change-[UserListItemID]
 		}
 		break;
 
-	case SCN_CALLTIPCLICK: 
-		extender->OnCallTipClick(notification->position); 
+	case SCN_CALLTIPCLICK:
+		extender.OnCallTipClick(notification->position);
 		break;
 
 	case SCN_MACRORECORD:
@@ -2962,18 +2958,18 @@ void SciTEBase::Notify(SCNotification *notification) {
 					std::string warning = "print([[\n";
 					warning += e.what();
 					warning += "]])\n";
-					extender->DoLua(warning.c_str());
+					extender.DoLua(warning.c_str());
 				}
 			}
 			if (message.length() && notification->nmhdr.idFrom == static_cast<int>(GetEditorIdm())) {
-				extender->OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL)); 
+				extender.OnDwellStart(notification->position,message.c_str(), ::GetAsyncKeyState(VK_CONTROL));
 			}
 		}
 		break;
 
 	case SCN_DWELLEND:
 		{
-			extender->OnDwellStart(0,"", ::GetAsyncKeyState(VK_CONTROL)); // flags end of calltip
+			extender.OnDwellStart(0,"", ::GetAsyncKeyState(VK_CONTROL)); // flags end of calltip
 		}
 		break;
 
@@ -3012,15 +3008,15 @@ void SciTEBase::CheckMenus() {
 void SciTEBase::ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd, int isMargin) {
 	SString mnuFake = "";
 	if (wSource.GetID() == wOutput.GetID())
-		extender->OnContextMenu(pt.x, pt.y, "OUTPUT");
+		extender.OnContextMenu(pt.x, pt.y, "OUTPUT");
 	else if (wSource.GetID() == wFindRes.GetID() && isMargin)
-		extender->OnContextMenu(pt.x, pt.y, "FINDRESMARGIN");
+		extender.OnContextMenu(pt.x, pt.y, "FINDRESMARGIN");
 	else if (wSource.GetID() == wFindRes.GetID())
-		extender->OnContextMenu(pt.x, pt.y, "FINDRES");
+		extender.OnContextMenu(pt.x, pt.y, "FINDRES");
 	else if(isMargin)
-		extender->OnContextMenu(pt.x, pt.y, "EDITMARGIN");
+		extender.OnContextMenu(pt.x, pt.y, "EDITMARGIN");
 	else
-		extender->OnContextMenu(pt.x, pt.y, "EDITOR");
+		extender.OnContextMenu(pt.x, pt.y, "EDITOR");
 }
 
 void SciTEBase::UIAvailable() {
@@ -3029,7 +3025,7 @@ void SciTEBase::UIAvailable() {
 		props.Set("SciteDefaultHome", homepath.AsUTF8().c_str());
 		homepath = GetSciteUserHome();
 		props.Set("SciteUserHome", homepath.AsUTF8().c_str());
-		//extender->Initialise(this);
+		//extender.Initialise(this);
 	}
 }
 
@@ -3037,7 +3033,7 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 	buffers.buffers[i]._encoding = e;
 	buffers.buffers[i].isDirty = true;
 	if (buffers.Current() == i) {
-		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
+		extender.OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[i].editorSide));
 	}
 	BuffersMenu();
@@ -3094,7 +3090,7 @@ void SciTEBase::SendOneProperty(const char *kind, const char *key, const char *v
 	strcat(m, key);
 	strcat(m, "=");
 	strcat(m, val);
-	extender->SendProperty(m);
+	extender.SendProperty(m);
 	delete []m;
 }
 
@@ -3124,7 +3120,7 @@ void SciTEBase::StartRecordMacro() {
 }
 
 bool SciTEBase::RecordMacroCommand(SCNotification *notification) {
-	if (extender && static_iOnSendEditorCallsCount == 0) { //!-add-[OnSendEditor]
+	if (static_iOnSendEditorCallsCount == 0) { //!-add-[OnSendEditor]
 		char *sParam;
 		bool handled;
 		sParam = (char*)(notification->lParam);
@@ -3140,9 +3136,9 @@ bool SciTEBase::RecordMacroCommand(SCNotification *notification) {
 			if (IFaceTable::functions[fIdx].paramType[1] == IFaceType::iface_void)
 				lp = 0;
 			if (sParam != NULL) {
-				handled = extender->OnMacro(fName, wp, NULL, sParam); 
+				handled = extender.OnMacro(fName, wp, NULL, sParam);
 			} else {
-				handled = extender->OnMacro(fName, wp, lp, NULL);
+				handled = extender.OnMacro(fName, wp, lp, NULL);
 			}
 			return handled;
 		}
@@ -3356,7 +3352,7 @@ char *SciTEBase::GetTranslation(const char *s, bool retainIfNotFound) {
     //TODO: add get translation
     return NULL;
 #else
-	GUI::gui_string sValue = extender->LocalizeText(s);
+	GUI::gui_string sValue = extender.LocalizeText(s);
 	const wchar_t *lpw = sValue.c_str();
 	int _convert = (lstrlenW(lpw)+1)*2;
 	LPSTR lpa = (LPSTR)malloc(_convert);

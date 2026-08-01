@@ -402,7 +402,7 @@ void SciTEBase::OrderTabsBy(std::map<int, int> &order) {
 
 void SciTEBase::ChangeTabWnd(int insertIn) {
 	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled()) {
-		extender->raiseLuaError("Unable to drag the cloned tab");
+		extender.raiseLuaError("Unable to drag the cloned tab");
 		return;
 	}
 	int iPrev = buffers.Current();
@@ -413,7 +413,7 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 
 	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
-		extender->raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to drag the tab");
+		extender.raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to drag the tab");
 		return;
 	}
 	if (insertIn < (int)buffers.buffers.size() && buffers.buffers[insertIn].editorSide != coSide)
@@ -504,14 +504,14 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 void SciTEBase::CloneTab(){
 	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled()) {
-		extender->raiseLuaError("repeated cloning of tabs is not allowed");
+		extender.raiseLuaError("repeated cloning of tabs is not allowed");
 		return;
 	}
 	int iPrev = buffers.Current();
 	Buffer* bPrev = buffers.CurrentBuffer();
 	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
-		extender->raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to clone");
+		extender.raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to clone");
 		return;
 	}
 
@@ -570,13 +570,13 @@ void SciTEBase::CheckRightEditorVisible() {
 		if (buffers.buffers[i].editorSide != EditorSide::SrcWin) {
 			if (!m_bRightEditorVisible) {
 				m_bRightEditorVisible = true;
-				extender->OnRightEditorVisibility(true);
+				extender.OnRightEditorVisibility(true);
 			}
 			return;
 		}
 	}
 	if (m_bRightEditorVisible) {
-		extender->OnRightEditorVisibility(false);
+		extender.OnRightEditorVisibility(false);
 		m_bRightEditorVisible = false;
 	}
 }
@@ -660,9 +660,9 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 
 	{
 		if (buffers.maxLength > 1)
-			extender->ActivateBuffer(index);
+			extender.ActivateBuffer(index);
 		else
-			extender->InitBuffer(0);
+			extender.InitBuffer(0);
 	}
 
 	Buffer bufferNext = buffers.buffers[buffers.Current()];
@@ -694,7 +694,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 	}
 
 	{
-		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
+		extender.OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 	if(!bBlockUIUpdate){
@@ -872,7 +872,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 	FilePath fileName, filepath;
 	GUI::gui_string ext = defExt ? defExt : ActiveFilePath().Extension().AsInternal();
 
-	GUI::gui_string name0 = defName ? defName : (extender ? extender->LocalizeText("Untitled") : GUI_TEXT("Untitled"));
+	GUI::gui_string name0 = defName ? defName : extender.LocalizeText("Untitled");
 	GUI::gui_string name;
 	int counter = 0;
 	bool isUnic = true;
@@ -934,7 +934,7 @@ bool SciTEBase::NewFile(const GUI::gui_char* defName, const GUI::gui_char* defEx
 
 	ClearDocument();
 
-	extender->InitBuffer(buffers.Current());
+	extender.InitBuffer(buffers.Current());
 
 
 	CurrentBuffer()->overrideExtension = "";
@@ -1004,8 +1004,8 @@ setbuffer:
 
 	BuffersMenu();
 	{
-		extender->OnOpen(ActiveFilePath().AsUTF8().c_str());
-		extender->OnNavigation("Open-");
+		extender.OnOpen(ActiveFilePath().AsUTF8().c_str());
+		extender.OnNavigation("Open-");
 	}
 
 	return true;
@@ -1049,7 +1049,7 @@ void SciTEBase::New(bool force) {
 
 	ClearDocument();
 
-	extender->InitBuffer(buffers.Current());
+	extender.InitBuffer(buffers.Current());
 }
 
 void SciTEBase::RestoreUserHiddenLines(ScintillaWindowEditor&w, const Buffer& buffer) {
@@ -1115,9 +1115,9 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 	}		
 
 	layout.OnOpenClose(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
-	if (extender && !closingEmptyRight) {
-		extender->OnClose(ActiveFilePath().AsUTF8().c_str());
-		extender->OnNavigation("Close");
+	if (!closingEmptyRight) {
+		extender.OnClose(ActiveFilePath().AsUTF8().c_str());
+		extender.OnNavigation("Close");
 	}
 	bBlockRedraw = true;
 
@@ -1140,10 +1140,10 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		closingLast = ((int)buffers.buffers.size()  == 1);
 		if (closingLast) {
 			buffers.buffers[0].Init(&buffers);
-			extender->InitBuffer(0);
+			extender.InitBuffer(0);
 		} else {
 			prevIdm = buffers.CurrentBuffer()->editorSide;
-			extender->RemoveBuffer(buffers.Current());
+			extender.RemoveBuffer(buffers.Current());
 			if (buffers.CurrentBuffer()->pFriend){
 				if (buffers.CurrentBuffer()->isDirty)
 					buffers.CurrentBuffer()->Friend()->isDirty = true;
@@ -1160,8 +1160,8 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 
 			buffers.RemoveCurrent();
 
-			if (extender && !makingRoomForNew)
-				extender->ActivateBuffer(buffers.Current());
+			if (!makingRoomForNew)
+				extender.ActivateBuffer(buffers.Current());
 			if (prevIdm != buffers.CurrentBuffer()->editorSide){
 				nextFriend = buffers.NextByIdm_Settings(prevIdm);
 				if (nextFriend != -1){
@@ -1200,9 +1200,9 @@ void SciTEBase::Close(bool updateUI, bool loadingSession, bool makingRoomForNew)
 		BuffersMenu();
 	}
 
-	if (extender && !closingLast && !makingRoomForNew) {
-		extender->OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
-		extender->OnNavigation("Close-");
+	if (!closingLast && !makingRoomForNew) {
+		extender.OnSwitchFile(ActiveFilePath().AsUTF8().c_str());
+		extender.OnNavigation("Close-");
 		layout.OnSwitchFile(static_cast<int>(buffers.buffers[buffers.Current()].editorSide));
 	}
 	//if (nextFriend == -1 && prevIdm == IDM_SRCWIN){
@@ -1333,16 +1333,16 @@ void SciTEBase::UiDocTabulation(int side, bool forward) {
 }
 
 void SciTEBase::NextInStack(EditorSide side) {
-	extender->OnNavigation("Switch");
+	extender.OnNavigation("Switch");
 	SetDocumentAt(side == EditorSide::None ? buffers.StackNext() : buffers.StackNextBySide(side), false);
-	extender->OnNavigation("Switch-");
+	extender.OnNavigation("Switch-");
 	CheckReload();
 }
 
 void SciTEBase::PrevInStack(EditorSide side) {
-	extender->OnNavigation("Switch");
+	extender.OnNavigation("Switch");
 	SetDocumentAt(side == EditorSide::None ? buffers.StackPrev() : buffers.StackPrevBySide(side), false);
-	extender->OnNavigation("Switch-");
+	extender.OnNavigation("Switch-");
 	CheckReload();
 }
 
@@ -1436,7 +1436,7 @@ void SciTEBase::BuffersMenu(bool mousedrag) {
 			int ihui = -1;
 
 			if (buffers.buffers[pos].IsUntitled()) {
-				GUI::gui_string untitled = extender->LocalizeText("Untitled");
+				GUI::gui_string untitled = extender.LocalizeText("Untitled");
 				entry += untitled;
 				titleTab += untitled;
 			} else {
@@ -1680,9 +1680,9 @@ void SciTEBase::StackMenu(int pos) {
 			} else if (recentFileStack[pos].IsSet()) {
 				RecentFile rf = recentFileStack[pos];
 				// Already asked user so don't allow Open to ask again.
-				extender->OnNavigation("Open");
+				extender.OnNavigation("Open");
 				Open(rf, ofNoSaveIfDirty);
-				extender->OnNavigation("Open-");
+				extender.OnNavigation("Open-");
 				DisplayAround(rf);
 			}
 		}
@@ -2175,7 +2175,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 						}
 					}
 				}
-				extender->OnNavigation("Go");
+				extender.OnNavigation("Go");
 				WindowSetFocus(wEditor);
 
 				wEditor.MarkerDeleteAll(markerError);
@@ -2202,7 +2202,7 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 					//simply move cursor to line, don't do any selection
 					SetSelection(startSourceLine, startSourceLine);
 				}
-				extender->OnNavigation("Go-");
+				extender.OnNavigation("Go-");
 				message.substitute('\t', ' ');
 				message.remove("\n");
 				props.Set("CurrentMessage", message.c_str());

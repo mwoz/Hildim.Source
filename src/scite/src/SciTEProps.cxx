@@ -1025,7 +1025,7 @@ void SciTEBase::ReadProperties() {
 		return;
 	}
 	
-	extender->Clear();
+	extender.Clear();
 	//const std::string lexillaPath = props.GetExpandedString("lexilla.path");
 	Lexilla::Load(".");
 
@@ -1401,13 +1401,13 @@ void SciTEBase::ReadProperties() {
 			FilePath docDir =  ActiveFilePath().Directory();
 			if (Exists(docDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
 				// Found file in document directory
-				extender->Load(scriptPath.AsUTF8().c_str());
+				extender.Load(scriptPath.AsUTF8().c_str());
 			} else if (Exists(defaultDir.AsInternal(), extensionFile.c_str(), &scriptPath)) {
 				// Found file in global directory
-				extender->Load(scriptPath.AsUTF8().c_str());
+				extender.Load(scriptPath.AsUTF8().c_str());
 			} else if (Exists(GUI_TEXT(""), extensionFile.c_str(), &scriptPath)) {
 				// Found as completely specified file name
-				extender->Load(scriptPath.AsUTF8().c_str());
+				extender.Load(scriptPath.AsUTF8().c_str());
 			}
 		}
 	}
@@ -1421,7 +1421,7 @@ void SciTEBase::ReadProperties() {
 }
 
 void SciTEBase::ReadPropertiesEx() {
-	extender->Clear();
+	extender.Clear();
 	CallAll(Message::SetTechnology, props.GetInt("technology", SC_TECHNOLOGY_DIRECT_WRITE_1));
 	CallAll(Message::SetBufferedDraw, props.GetInt("buffered.draw", 0));
 	CallAll(Message::SetPhasesDraw, props.GetInt("phases.draw", SC_PHASES_MULTIPLE));

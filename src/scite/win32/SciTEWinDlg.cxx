@@ -132,11 +132,11 @@ void SciTEWin::WarnUser(int warnID, const char *msg /* = NULL */, bool isCanBeAl
 	PlayThisSound(sound, atoi(soundDuration), hMM);
 //!-start-[WarningMessage]
 	if (warning_msg.length() > 0 && isCanBeAlerted) {
-		warning_msg = GUI::UTF8FromString(extender->LocalizeText(warning_msg.c_str())).c_str();
+		warning_msg = GUI::UTF8FromString(extender.LocalizeText(warning_msg.c_str())).c_str();
 		warning_msg += "     ";
 		if (msg != NULL) {
 			warning_msg += "\n";
-			warning_msg += GUI::UTF8FromString(extender->LocalizeText(msg)).c_str();
+			warning_msg += GUI::UTF8FromString(extender.LocalizeText(msg)).c_str();
 			warning_msg += "     ";
 		}
 		WindowMessageBox(wEditor, GUI::StringFromUTF8(warning_msg.c_str()), MB_OK | MB_ICONWARNING);
@@ -177,7 +177,7 @@ GUI::gui_string SciTEWin::DialogFilterFromProperty(const GUI::gui_char *filterPr
 				next += wcslen(filter.c_str() + next) + 1;
 				filter.erase(start, next - start);
 			} else {
-				GUI::gui_string localised = extender->LocalizeText(GUI::UTF8FromString(filterName).c_str());
+				GUI::gui_string localised = extender.LocalizeText(GUI::UTF8FromString(filterName).c_str());
 				if (localised.size()) {
 					filter.erase(start, wcslen(filterName));
 					filter.insert(start, localised.c_str());
@@ -196,7 +196,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	GUI::gui_string openFilter = DialogFilterFromProperty(filter);
 
 	if (!openWhat[0]) {
-		wcscpy(openWhat, extender->LocalizeText("Custom Filter").c_str());
+		wcscpy(openWhat, extender.LocalizeText("Custom Filter").c_str());
 		openWhat[wcslen(openWhat) + 1] = '\0';
 	}
 
@@ -223,7 +223,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 	ofn.lpstrCustomFilter = openWhat;
 	ofn.nMaxCustFilter = ELEMENTS(openWhat);
 	ofn.nFilterIndex = filterDefault;
-	GUI::gui_string translatedTitle = extender->LocalizeText("Open File");
+	GUI::gui_string translatedTitle = extender.LocalizeText("Open File");
 	ofn.lpstrTitle = translatedTitle.c_str();
 	if (props.GetInt("open.dialog.in.file.directory")) {
 		ofn.lpstrInitialDir = directory.AsInternal();
@@ -240,7 +240,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 		succeeded = true;
 		filterDefault = ofn.nFilterIndex;
 		// if single selection then have path+file
-		extender->OnNavigation("Open");
+		extender.OnNavigation("Open");
 
 		if (wcslen(openName) > static_cast<size_t>(ofn.nFileOffset)) {
 			Open(openName);
@@ -254,7 +254,7 @@ bool SciTEWin::OpenDialog(FilePath directory, const GUI::gui_char *filter) {
 				p += wcslen(p) + 1;
 			}
 		}
-		extender->OnNavigation("Open-");
+		extender.OnNavigation("Open-");
 	}
 	return succeeded;
 }
@@ -289,7 +289,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		ofn.hInstance = hInstance;
 		ofn.lpstrFile = saveName;
 		ofn.nMaxFile = ELEMENTS(saveName);
-		GUI::gui_string translatedTitle = extender->LocalizeText(title);
+		GUI::gui_string translatedTitle = extender.LocalizeText(title);
 		ofn.lpstrTitle = translatedTitle.c_str();
 		ofn.Flags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_NONETWORKBUTTON;
 		ofn.lpstrFilter = filter;
@@ -312,7 +312,7 @@ FilePath SciTEWin::ChooseSaveName(FilePath directory, const char *title, const G
 		dialogsOnScreen--;
 	}
 	if (curBuff != buffers.Current()) {
-		extender->DoLua("print'The current buffer was switched during the pop-up dialog. Operation canceled'");
+		extender.DoLua("print'The current buffer was switched during the pop-up dialog. Operation canceled'");
 		FilePath p;
 		return p;
 	}
@@ -575,7 +575,7 @@ void SciTEWin::Print(
 		::DeleteDC(hdc);
 		DeleteFontObject(fontHeader);
 		DeleteFontObject(fontFooter);
-		extender->HildiAlarm("Can not start printer document.",
+		extender.HildiAlarm("Can not start printer document.",
 			MB_OK);
 		return;
 	}

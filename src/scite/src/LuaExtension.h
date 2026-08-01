@@ -3,75 +3,83 @@
 // Copyright 1998-2000 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
-class LuaExtension : public Extension {
+#ifndef LUAEXTENSION_H
+#define LUAEXTENSION_H
+
+#include "Extender.h"
+
+class LuaExtension {
 
 public:
 
 	LuaExtension();
 	virtual ~LuaExtension();
 
-	virtual bool Initialise(ExtensionAPI *host_);
-	virtual void PostInit(void* h);
-	virtual void* GetLuaState();
-	virtual bool Finalise();
-	virtual bool Clear();
-	virtual bool Load(const char *filename);
+	bool Initialise(ExtensionAPI *host_);
+	void PostInit(void* h);
+	void* GetLuaState();
+	bool Finalise();
+	bool Clear();
+	bool Load(const char *filename);
 
-	virtual bool InitBuffer(int);
-	virtual bool ActivateBuffer(int);
-	virtual bool RemoveBuffer(int);
+	bool InitBuffer(int);
+	bool ActivateBuffer(int);
+	bool RemoveBuffer(int);
 
-	virtual bool OnOpen(const char *filename);
-	virtual bool OnSwitchFile(const char *filename);
-	virtual bool OnBeforeSave(const char *filename);
-	virtual bool OnBeforeOpen(const char *filename, const char *extension, int& encoding);
-	virtual bool OnSave(const char *filename);
-	virtual bool OnChar(char ch);
-	virtual bool OnExecute(const char *s);
-	virtual bool OnSavePointReached();
-	virtual bool OnSavePointLeft();
-	virtual bool OnStyle(Sci_Position startPos, Sci_Position lengthDoc, int initStyle, StyleWriter *styler);
-	virtual bool OnDoubleClick(int modifiers); 
-	virtual bool OnClick(int modifiers); 
-	virtual bool OnMouseButtonUp(int modifiers); 
-	virtual bool OnHotSpotReleaseClick(int modifiers); 
-	virtual bool PaneOnUpdateUI(bool bModified, bool bSelChange, int flag); 
-	virtual bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag);
-	virtual bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
-	virtual bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id);
-	virtual bool OnCallTipClick(Sci_Position pos);
-	virtual bool OnUserListSelection(int listType, const char *selection, Sci_Position id, int method);
-	virtual bool OnNavigation(const char *item);
-	virtual bool OnKey(int keyval, int modifiers, char ch); 
-	virtual bool OnDwellStart(Sci_Position pos, const char *wordd, bool ctrl);
-	virtual bool OnClose(const char *filename);
-	virtual bool OnMacro(const char *func, uptr_t w, sptr_t l, const char *s);
-	virtual bool OnMenuCommand(int, int); 
-	virtual const char *OnSendEditor(unsigned int, uptr_t, const char *);
-	virtual const char *OnSendEditor(unsigned int, uptr_t, sptr_t);
-	virtual bool OnLindaNotify(const char*);
-	virtual bool OnColorized(Sci_Position, Sci_Position);
-	virtual const char *OnContextMenu(unsigned int, unsigned int, const char *);
-	virtual bool OnFindProgress(uptr_t state, sptr_t all);
-	virtual bool OnPostCallback(int idx);
-	virtual bool OnIdle();
-	virtual bool OnLayOutNotify(const char *);
-	virtual bool OnGeneratedHotKey(long);  //Только для команд, посылаемых по хоткеям, сгенерированным автоматически!
-	virtual void DoReboot();
-	virtual void DoLua(const char *c);
-	virtual void OnMouseHook(int x, int y);
-	virtual bool OnMacroBlocked(int msg, intptr_t wParam, intptr_t lParam);
-	virtual sptr_t OnMenuChar(int flag, const char* key);
-	virtual bool OnDrawClipboard(int flag);
-	virtual void OnRightEditorVisibility(bool show);
-	virtual void OnTextChanged(Sci_Position position, int leg, Sci_Position linesAdded, int flag);
-	virtual void BeforeTextChanged(Sci_Position position, int leg, const char* t, int type);
-	virtual void OnCurrentLineFold(Sci_Position line, int leg, int foldLevelPrev, int foldLevelNow);
-	virtual bool OnAutocSelection(int method, Sci_Position firstPos);
-	virtual void OnCommandLine(const char* line);
-	virtual void OnChangeFocus(int, int);
-	virtual int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3);
-	virtual GUI::gui_string LocalizeText(const char* msg);
-	virtual void OnShowActivate(int bActivate, int cmdShow, int SavePoint = 0);
-	virtual void raiseLuaError(const char* msg);
+	bool OnOpen(const char *filename);
+	bool OnSwitchFile(const char *filename);
+	bool OnBeforeSave(const char *filename);
+	bool OnBeforeOpen(const char *filename, const char *extension, int& encoding);
+	bool OnSave(const char *filename);
+	bool OnChar(char ch);
+	bool OnExecute(const char *s);
+	bool OnSavePointReached();
+	bool OnSavePointLeft();
+	bool OnStyle(Sci_Position startPos, Sci_Position lengthDoc, int initStyle, StyleWriter *styler);
+	bool OnDoubleClick(int modifiers); 
+	bool OnClick(int modifiers); 
+	bool OnMouseButtonUp(int modifiers); 
+	bool OnHotSpotReleaseClick(int modifiers); 
+	bool PaneOnUpdateUI(bool bModified, bool bSelChange, int flag); 
+	bool CoOnUpdateUI(bool bModified, bool bSelChange, int flag);
+	bool OnUpdateUI(bool bModified, bool bSelChange, int flag);
+	bool OnMarginClick(unsigned int margin, unsigned int modif, long line, uptr_t id);
+	bool OnCallTipClick(Sci_Position pos);
+	bool OnUserListSelection(int listType, const char *selection, Sci_Position id, int method);
+	bool OnNavigation(const char *item);
+	bool OnKey(int keyval, int modifiers, char ch); 
+	bool OnDwellStart(Sci_Position pos, const char *wordd, bool ctrl);
+	bool OnClose(const char *filename);
+	bool OnMacro(const char *func, uptr_t w, sptr_t l, const char *s);
+	bool OnMenuCommand(int, int); 
+	const char *OnSendEditor(unsigned int, uptr_t, const char *);
+	const char *OnSendEditor(unsigned int, uptr_t, sptr_t);
+	bool OnLindaNotify(const char*);
+	bool OnColorized(Sci_Position, Sci_Position);
+	const char *OnContextMenu(unsigned int, unsigned int, const char *);
+	bool OnFindProgress(uptr_t state, sptr_t all);
+	bool OnPostCallback(int idx);
+	bool OnIdle();
+	bool OnLayOutNotify(const char *);
+	bool OnGeneratedHotKey(long);  //Только для команд, посылаемых по хоткеям, сгенерированным автоматически!
+	void DoReboot();
+	void DoLua(const char *c);
+	void OnMouseHook(int x, int y);
+	bool OnMacroBlocked(int msg, intptr_t wParam, intptr_t lParam);
+	sptr_t OnMenuChar(int flag, const char* key);
+	bool OnDrawClipboard(int flag);
+	void OnRightEditorVisibility(bool show);
+	void OnTextChanged(Sci_Position position, int leg, Sci_Position linesAdded, int flag);
+	void BeforeTextChanged(Sci_Position position, int leg, const char* t, int type);
+	void OnCurrentLineFold(Sci_Position line, int leg, int foldLevelPrev, int foldLevelNow);
+	bool OnAutocSelection(int method, Sci_Position firstPos);
+	void OnCommandLine(const char* line);
+	void OnChangeFocus(int, int);
+	int HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = nullptr, const GUI::gui_char *p2 = nullptr, const GUI::gui_char *p3 = nullptr);
+	bool SendProperty(const char *) { return false; }
+	GUI::gui_string LocalizeText(const char* msg);
+	void OnShowActivate(int bActivate, int cmdShow, int SavePoint = 0);
+	void raiseLuaError(const char* msg);
 };
+
+#endif

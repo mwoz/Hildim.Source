@@ -402,7 +402,7 @@ void SciTEBase::SaveToRTF(const FilePath &saveName, int start, int end) {
 		}
 	}
 	if (failedWrite) {
-		extender->HildiAlarm("Could not save file\n'%1'",
+		extender.HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }
@@ -926,7 +926,7 @@ void SciTEBase::SaveToHTML(FilePath saveName) {
 		}
 	}
 	if (failedWrite) {
-		extender->HildiAlarm("Could not save file\n'%1'",
+		extender.HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 
@@ -1133,7 +1133,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 			}
 			// start to write PDF file here (PDF1.4Ref(p63))
 			// ASCII>127 characters to indicate binary-possible stream
-			oT->write("%PDF-1.3\n%�쏢\n");
+			oT->write("%PDF-1.3\n%�쏢\n");
 			styleCurrent = STYLE_DEFAULT;
 
 			// build objects for font resources; note that font objects are
@@ -1389,7 +1389,7 @@ void SciTEBase::SaveToPDF(FilePath saveName) {
 	FILE *fp = saveName.Open(GUI_TEXT("wb"));
 	if (!fp) {
 		// couldn't open the file for saving, issue an error message
-		extender->HildiAlarm("Could not save file\n'%1'",
+		extender.HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 		return;
 	}
@@ -1607,7 +1607,7 @@ void SciTEBase::SaveToTEX(FilePath saveName) {
 		fputs("}\n} %end small\n\n\\end{document}\n", fp); //close last empty style macros and document too
 		fclose(fp);
 	} else {
-		extender->HildiAlarm("Could not save file\n'%1'",
+		extender.HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }
@@ -1785,7 +1785,7 @@ void SciTEBase::SaveToXML(FilePath saveName) {
 
 		fclose(fp);
 	} else {
-		extender->HildiAlarm("Could not save file\n'%1'",
+		extender.HildiAlarm("Could not save file\n'%1'",
 			MB_OK | MB_ICONWARNING,  ActiveFilePath().AsInternal());
 	}
 }

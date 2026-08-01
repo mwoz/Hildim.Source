@@ -35,6 +35,7 @@ extern "C" {
 #include "iupcontrols.h"
 #include "iupluacontrols.h"
 #include "scite_flattabs.h"
+#include "LuaExtension.h"
 #include <cassert>
 }
 
@@ -533,7 +534,7 @@ protected:
 	bool openFilesHere;
 //!	enum { toolMax = 50 };
 	enum { toolMax = 300 }; //!-change-[ToolsMax]
-	Extension *extender;
+	LuaExtension extender;
 	bool needReadProperties;
 	bool preserveFocusOnEditor; //!-add-[GoMessageImprovement]
 
@@ -957,7 +958,7 @@ public:
 
 	enum { maxParam = 4 };
 
-	SciTEBase(Extension *ext = 0);
+	SciTEBase();
 	virtual ~SciTEBase();
 
 	void SetProperty(const char *key, const char *val);

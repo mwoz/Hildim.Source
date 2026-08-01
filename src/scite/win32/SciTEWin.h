@@ -168,7 +168,7 @@ protected:
 	HWND wFocus;
 	HWND wActive;
 
-	//GUI::Rectangle rFindReplace;//позиция окна поиска\замены
+	//GUI::Rectangle rFindReplace;//РїРѕР·РёС†РёСЏ РѕРєРЅР° РїРѕРёСЃРєР°\Р·Р°РјРµРЅС‹
 
 	virtual void GetWindowPosition(int *left, int *top, int *width, int *height, int *maximize);
 
@@ -243,7 +243,7 @@ protected:
 	virtual bool NewInstance(const char* arg, bool asAdmin);
 public:
 
-	SciTEWin(Extension *ext, GUI::gui_string &propsExt);
+	SciTEWin(GUI::gui_string &propsExt);
 	~SciTEWin();
 
 	bool DialogHandled(GUI::WindowID id, MSG *pmsg);

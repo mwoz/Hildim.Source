@@ -3837,7 +3837,7 @@ GUI::gui_string LuaExtension::LocalizeText(const char* msg) {
 	return GUI::StringFromUTF8(msg);
 }
 
-int LuaExtension::HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1 = NULL, const GUI::gui_char *p2 = NULL, const GUI::gui_char *p3 = NULL) {
+int LuaExtension::HildiAlarm(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) {
 	int handled = NULL; 
 	if (luaState) {
 		lua_getglobal(luaState, "_HildiAlarm");

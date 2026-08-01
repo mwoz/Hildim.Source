@@ -145,9 +145,9 @@ int OnTabShift(Ihandle * ih, int old_tab, int new_tab) {
 }
 
 int SciTEWin::OnTab(Ihandle * ih, int new_pos, int old_pos) {
-	extender->OnNavigation("Switch");
+	extender.OnNavigation("Switch");
 	SetDocumentAt(IupGetIntId(ih, "TABBUFFERID", new_pos));
-	extender->OnNavigation("Switch-");
+	extender.OnNavigation("Switch-");
 	CheckReload();
 	return IUP_DEFAULT;
 }
@@ -160,7 +160,7 @@ int SciTEWin::OnShift(Ihandle * ih, int old_tab, int new_tab) {
 
 void SciTEWin::Creation() {
 	pSciTE = this;
-	lua_State *L = (lua_State*)extender->GetLuaState();
+	lua_State *L = (lua_State*)extender.GetLuaState();
 	
 	layout.CreateLayout(L, this);
 

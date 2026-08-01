@@ -92,7 +92,7 @@ LRESULT UniqueInstance::CopyData(COPYDATASTRUCT *pcds) {
 		}
 		const char *text = static_cast<char *>(pcds->lpData);
 		if (text && strlen(text) > 0) {
-			stw->extender->OnCommandLine(text);
+			stw->extender.OnCommandLine(text);
 		}
 		::FlashWindow(stw->MainHWND(), FALSE);
 	}

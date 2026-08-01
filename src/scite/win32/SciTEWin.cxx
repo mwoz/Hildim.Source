@@ -285,7 +285,7 @@ LRESULT CALLBACK KeyBoardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	return CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
 }
 
-SciTEWin::SciTEWin(Extension *ext, GUI::gui_string &propsExt) : SciTEBase(ext) {
+SciTEWin::SciTEWin(GUI::gui_string &propsExt) : SciTEBase() {
 	app = this;
 	pSciTEWin = this;
 
@@ -705,10 +705,10 @@ void SciTEWin::CopyAsRTF() {
 void SciTEWin::MakeOutputVisible(GUI::ScintillaWindow &wBottom)
 {
 	if (wFindRes.GetID() == wBottom.GetID()){
-		extender->OnLayOutNotify("SHOW_FINDRES");
+		extender.OnLayOutNotify("SHOW_FINDRES");
 	}
 	else if (wOutput.GetID() == wBottom.GetID()){
-		extender->OnLayOutNotify("SHOW_OUTPUT");
+		extender.OnLayOutNotify("SHOW_OUTPUT");
 	}
 }
 
@@ -731,11 +731,11 @@ void SciTEWin::Command(WPARAM wParam, LPARAM lParam) {
 		if (HIWORD(wParam) == SCEN_SETFOCUS) {
 			wFocus = reinterpret_cast<HWND>(lParam);
 			CheckMenus();
-			extender->OnChangeFocus(cmdID, 1);
+			extender.OnChangeFocus(cmdID, 1);
 		}
 		if (HIWORD(wParam) == SCEN_KILLFOCUS) {
 			CheckMenus();
-			extender->OnChangeFocus(cmdID, 0);
+			extender.OnChangeFocus(cmdID, 0);
 		}
 		break;
 
@@ -819,7 +819,7 @@ DWORD SciTEWin::ExecuteOne(const Job &jobToRun, bool &seenOutput) {
 		if (jobToRun.flags & jobGroupUndo)
 			wEditor.BeginUndoAction();
 
-		extender->OnExecute(jobToRun.command.c_str());
+		extender.OnExecute(jobToRun.command.c_str());
 
 		if (jobToRun.flags & jobGroupUndo)
 			wEditor.EndUndoAction();
@@ -1367,7 +1367,7 @@ void SciTEWin::CreateUI() {
 		left += width;
 	}
 	UIAvailable();
-	extender->Initialise(this);
+	extender.Initialise(this);
 
 	// Pass 'this' pointer in lpParam of CreateWindow().
 	wSciTE = ::CreateWindowEx(
@@ -1409,7 +1409,7 @@ void SciTEWin::CreateUI() {
 	delete []ps;
 	BOOL b = FALSE;
 					 	
-	extender->PostInit((void*)layout.hMain);
+	extender.PostInit((void*)layout.hMain);
 
 }
 
@@ -1622,7 +1622,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 			sPrevIsDeadKey = false;
 		}
 
-		if ( extender->OnKey( (int)wParam, modifiers, ch[0] ) ) {
+		if ( extender.OnKey( (int)wParam, modifiers, ch[0] ) ) {
 			return 1l;	  
 		}
 	}
@@ -1633,7 +1633,7 @@ LRESULT SciTEWin::KeyDown(WPARAM wParam) {
 LRESULT SciTEWin::KeyUp(WPARAM wParam) {
 	if (wParam == VK_CONTROL) {
 		EndStackedTabbing();
-		extender->OnDwellStart(0, "", false);
+		extender.OnDwellStart(0, "", false);
 	}
 	return 0l;
 }
@@ -1694,7 +1694,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 
 		case WM_NCACTIVATE:
 		{
-			extender->OnShowActivate(wParam ? 1 : 0, layout.ShowBorder(wParam));
+			extender.OnShowActivate(wParam ? 1 : 0, layout.ShowBorder(wParam));
 			return ::DefWindowProc(MainHWND(), iMessage, wParam, -1);
 		}
 		break;
@@ -1702,7 +1702,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		case WM_WINDOWPOSCHANGED:
 		{
 			LRESULT r = ::DefWindowProcW(MainHWND(), iMessage, wParam, lParam);
-			extender->OnShowActivate(-1, layout.ShowBorder(true));
+			extender.OnShowActivate(-1, layout.ShowBorder(true));
 			return r;
 		}
 
@@ -1714,7 +1714,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		{
 			LRESULT r = ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 			layout.Fit();
-			extender->OnShowActivate(-1, -1);
+			extender.OnShowActivate(-1, -1);
 			return r;
 		}
 		break;
@@ -1732,7 +1732,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				menuSource = 0;
 				::EndMenu();
 				if (bAltReleased)
-					extender->OnMenuChar(1, "");
+					extender.OnMenuChar(1, "");
 			}
 			break;
 		case WM_INITMENUPOPUP:
@@ -1750,7 +1750,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				char key[2];
 				key[1] = 0;
 				key[0] = static_cast<char>(LOWORD(wParam));
-				return extender->OnMenuChar(wp & 0xff, key);
+				return extender.OnMenuChar(wp & 0xff, key);
 			}
 			break;
 
@@ -1788,7 +1788,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 					Trace("\n");
 				}
 				else {
-					extender->OnLindaNotify(str);
+					extender.OnLindaNotify(str);
 					HeapFree(GetProcessHeap(), 0, str);
 				}
 
@@ -1797,15 +1797,15 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 		}
 		case SCITE_NOTIYCMD:
 			//Пришли даные из консольного потока  - выполним скрипт в луа
-			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTCMD, wParam, reinterpret_cast<const char *>(lParam));
+			return (LRESULT)extender.OnSendEditor(SCN_NOTYFY_OUTPUTCMD, wParam, reinterpret_cast<const char *>(lParam));
 
 		case SCITE_NOTIFYCMDEXIT:
 			//закончился консольный поток - выполним скрипт в луа
-			return (LRESULT)extender->OnSendEditor(SCN_NOTYFY_OUTPUTEXIT, lParam, wParam);
+			return (LRESULT)extender.OnSendEditor(SCN_NOTYFY_OUTPUTEXIT, lParam, wParam);
 		case SCI_POSTCALBACK:
-			return (LRESULT)extender->OnPostCallback(static_cast<int>(wParam));
+			return (LRESULT)extender.OnPostCallback(static_cast<int>(wParam));
 		case SCI_FINDPROGRESS:
-			return (LRESULT)extender->OnFindProgress(wParam, lParam);
+			return (LRESULT)extender.OnFindProgress(wParam, lParam);
 		case SCI_POSTPONECHECKRELOAD:
 			CheckReload();
 			break;
@@ -1842,22 +1842,22 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 				}
 			}
 			// Open the files
-			extender->OnNavigation("_openSet");
+			extender.OnNavigation("_openSet");
 			while (!dropFilesQueue.empty()) {
 				FilePath file(dropFilesQueue.front());
 				if (dropFilesQueue.size() == 1) {
-					extender->OnNavigation("_openSetLast");
+					extender.OnNavigation("_openSetLast");
 				}
 				dropFilesQueue.pop_front();
 				if (file.Exists()) {
 					Open(file.AsInternal());
 				}
 				else {
-					extender->HildiAlarm("Could not open file\n'%1'.",
+					extender.HildiAlarm("Could not open file\n'%1'.",
 						MB_OK | MB_ICONWARNING, file.AsInternal());
 				}
 			}
-			extender->OnNavigation("_-openSet");
+			extender.OnNavigation("_-openSet");
 		}
 		break;
 
@@ -1936,7 +1936,7 @@ LRESULT SciTEWin::WndProc(UINT iMessage, WPARAM wParam, LPARAM lParam) {
 			if (props.GetInt("selection.hide.on.deactivate", 1)) {
 				wEditor.HideSelection(!wParam);
 			}
-			extender->OnMenuChar(3, "NO");
+			extender.OnMenuChar(3, "NO");
 			// Do not want to display dialog yet as may be in middle of system mouse capture
 			::PostMessage(MainHWND(), WM_COMMAND, IDM_ACTIVATE, wParam);
 			if(wParam == WA_INACTIVE)
@@ -2229,7 +2229,7 @@ SString SciTEWin::GetRangeInUIEncoding(GUI::ScintillaWindow &win, int selStart, 
 LRESULT SciTEWin::OnDrawClipBoardMsg(WPARAM wParam)
 {
 	if (wParam == 1){
-		extender->OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1 ) : 0);
+		extender.OnDrawClipboard(::IsClipboardFormatAvailable(CF_TEXT) ? (::IsClipboardFormatAvailable(cfColumnSelect) ? 2 : 1 ) : 0);
 	}
 	else
 	{
@@ -2274,7 +2274,7 @@ int SciTEWin::EventLoop() {
 					switch (msg.wParam) {
 					case VK_MENU:
 						if (!kbdHookOn) {
-							extender->OnMenuChar(3, "YES");
+							extender.OnMenuChar(3, "YES");
 						}
 						break;
 					}
@@ -2292,7 +2292,7 @@ int SciTEWin::EventLoop() {
 			else goto BRK;
 		}
 		layout.OnIdle();
-		extender->OnIdle();
+		extender.OnIdle();
 		WaitMessage();
 	}
 BRK:
@@ -2342,9 +2342,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In
 		SetDllDirectoryFn(TEXT(""));
 	}
 	 
-	LuaExtension multiExtender;
-	Extension *extender = &multiExtender;
-
 	GUI::gui_string cmdLine = GetCommandLine();
 	if (cmdLine[0] == '\"') {
 		cmdLine = cmdLine.substr(cmdLine.substr(1).find('\"') + 2);
@@ -2366,7 +2363,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ LPSTR, _In
 		}
 	}
 
-	SciTEWin MainWind(extender, advProps);
+	SciTEWin MainWind(advProps);
 	SciTEWin::Register(hInstance);
 
 	Lexilla::SetDefaultDirectory(GetSciTEPath(FilePath()).AsUTF8());
@@ -2443,7 +2440,7 @@ LRESULT SciTEWin::NotifyGetMsgProc(int nCode, WPARAM wParam, LPARAM lParam) {
 		case WM_MBUTTONDBLCLK:
 		case WM_MBUTTONDOWN:
 		case WM_MBUTTONUP:
-			if(extender->OnMacroBlocked(pMessage->message, reinterpret_cast<intptr_t>(pMessage) - wParam, static_cast<intptr_t>(pMessage->lParam)))
+			if(extender.OnMacroBlocked(pMessage->message, reinterpret_cast<intptr_t>(pMessage) - wParam, static_cast<intptr_t>(pMessage->lParam)))
 				pMessage->message = 0;
 			break;
 		}
@@ -2456,13 +2453,13 @@ void SciTEWin::NotifyMouseHook(int nCode, WPARAM wParam, LPARAM lParam){
 		LPMOUSEHOOKSTRUCT mh = (LPMOUSEHOOKSTRUCT)lParam;
 		RECT area;
 		SystemParametersInfoA(SPI_GETWORKAREA, 0, &area, 0);
-		extender->OnMouseHook(mh->pt.x - area.left, mh->pt.y - area.top);
+		extender.OnMouseHook(mh->pt.x - area.left, mh->pt.y - area.top);
 	} else if (wParam == WM_RBUTTONUP) { //|| wParam == WM_RBUTTONDOWN
-		extender->OnMouseHook(-7000, -7000);
+		extender.OnMouseHook(-7000, -7000);
 	} else if (wParam == WM_KEYUP) {
-		extender->OnMenuChar(2, lParam > 0 ? "1" : "-1");
+		extender.OnMenuChar(2, lParam > 0 ? "1" : "-1");
 	} else if (wParam == WM_KEYDOWN) {
-		extender->OnMenuChar(3, lParam > 0 ? "YES" : "NO");
+		extender.OnMenuChar(3, lParam > 0 ? "YES" : "NO");
 	}
 }
 void SciTEWin::PostLoadScript() {
