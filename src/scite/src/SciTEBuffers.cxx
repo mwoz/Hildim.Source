@@ -467,7 +467,6 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 
 		iNext = buffers.GetDocumentByName(pNext, false, iPrevSide);
 		SetDocumentAt(iNext, false, false);
-		ReadProperties();
 			
 	}
 	else {
@@ -483,15 +482,12 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	}
 	buffers.ShiftTo(prevId, realIns);
 
-	//  buffers.buffers[realIns].editorSide = coSide;
-
 	bBlockRedraw = false;
 	int p = props.GetInt("tabctrl.alwayssavepos");
 	props.SetInteger("tabctrl.alwayssavepos", 1);
-	ReadProperties();
 
-	
 	wEditor.Switch();
+
 	SetDocumentAt(buffers.GetDocumentByName(absPath), false, false);
 
 	BuffersMenu();
@@ -508,8 +504,7 @@ void SciTEBase::CloneTab(){
 		return;
 	}
 	int iPrev = buffers.Current();
-	Buffer* bPrev = buffers.CurrentBuffer();
-	EditorSide coSide = bPrev->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
+	EditorSide coSide = buffers.CurrentBuffer()->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
 	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
 		extender.raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to clone");
 		return;
@@ -527,13 +522,12 @@ void SciTEBase::CloneTab(){
 				if (coId < iPrev) {
 					iPrev--;
 					buffers.SetCurrent(iPrev);
-					bPrev = buffers.CurrentBuffer();
 				}
 			}
 		}
 	}
 
-	IDocumentEditable* d = bPrev->doc;
+	IDocumentEditable* d = buffers.CurrentBuffer()->doc;
 
 	FilePath absPath = buffers.CurrentBuffer()->AbsolutePath();
 	wEditor.coEditor.AddRefDocument(d);
@@ -546,13 +540,16 @@ void SciTEBase::CloneTab(){
 
 	wEditor.Switch();
 
+	CurrentBuffer()->pFriend = true;
+	UniMode u = CurrentBuffer()->unicodeMode;
+	
 	buffers.SetCurrent(buffers.Add(d));
-	bPrev->pFriend = true;
-	CurrentBuffer()->pFriend = true;
-	CurrentBuffer()->pFriend = true;
-	CurrentBuffer()->unicodeMode = bPrev->unicodeMode;
+	//bPrev->pFriend = true;
 
-	SetFileName((FilePath)(*bPrev));
+	CurrentBuffer()->pFriend = true;
+	CurrentBuffer()->unicodeMode = u;
+
+	SetFileName(absPath);
 	CurrentBuffer()->overrideExtension = "";
 	ReadProperties();
 	SetIndentSettings();
@@ -674,7 +671,7 @@ void SciTEBase::SetDocumentAt(int index, bool updateStack, bool switchTab, bool 
 			wEditor.SetScrollWidth(100);
 			wEditor.SetScrollWidthTracking(1);
 			wEditor.ScrollCaret();
-		}
+		} 
 
 		if (lineNumbers && lineNumbersExpand)
 			SetLineNumberWidth();
