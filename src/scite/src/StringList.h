@@ -5,6 +5,9 @@
 // Copyright 1998-2005 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
+#ifndef STRINGLIST_H
+#define STRINGLIST_H
+
 class StringList {
 public:
 	// Each word contains at least one character - a empty word acts as sentinel at the end.
@@ -33,4 +36,6 @@ public:
 	char *GetNearestWords(const char *wordStart, size_t searchLen,
 		bool ignoreCase=false, char otherSeparator='\0', bool exactLen=false);
 };
+
+#endif
 

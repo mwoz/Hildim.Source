@@ -5,6 +5,9 @@
 // Copyright 1998-2009 by Neil Hodgson <neilh@scintilla.org>
 // The License.txt file describes the conditions under which this software may be distributed.
 
+#ifndef PROPSETFILE_H
+#define PROPSETFILE_H
+
 /**
  */
 
@@ -51,3 +54,5 @@ private:
 	PropSetFile(const PropSetFile &copy);
 	void operator=(const PropSetFile &assign);
 };
+
+#endif

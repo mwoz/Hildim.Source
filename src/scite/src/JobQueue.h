@@ -11,6 +11,7 @@
 #ifndef JOBQUEUE_H
 #define JOBQUEUE_H
 #include <windows.h>
+#include "Mutex.h"
 
 enum JobSubsystem {
     jobCLI = 0, jobGUI = 1, jobShell = 2, jobExtension = 3, jobHelp = 4, jobOtherHelp = 5, jobGrep = 6};

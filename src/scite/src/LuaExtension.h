@@ -6,7 +6,7 @@
 #ifndef LUAEXTENSION_H
 #define LUAEXTENSION_H
 
-#include "Extender.h"
+class SciTEBase;
 
 class LuaExtension {
 
@@ -15,7 +15,7 @@ public:
 	LuaExtension();
 	virtual ~LuaExtension();
 
-	bool Initialise(ExtensionAPI *host_);
+	bool Initialise(SciTEBase *host_);
 	void PostInit(void* h);
 	void* GetLuaState();
 	bool Finalise();

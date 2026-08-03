@@ -62,7 +62,6 @@
 #include "FilePath.h"
 #include "PropSetFile.h"
 #include "StyleWriter.h"
-#include "Extender.h"
 #include "SciTE.h"
 #include "Mutex.h"
 #include "JobQueue.h"
@@ -3025,6 +3024,27 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 
 }
 
+bool SciTEBase::Open_script(const char* path) {
+	GUI::gui_string wstr = GUI::StringFromUTF8(path);
+	return Open(FilePath(wstr.c_str()));
+}
+
+int SciTEBase::BufferByName(const char* c) {
+	GUI::gui_string wstr = GUI::StringFromUTF8(c);
+	return buffers.GetDocumentByName(FilePath(wstr.c_str()));
+}
+
+std::string SciTEBase::GetCoBufferName() {
+    int coIdx = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
+	return (coIdx >= 0) ? buffers.buffers[coIdx].AsUTF8() : std::string();
+	//for (size_t i = 0; i < buffers.buffers.size(); i++) {
+//		if (buffers.buffers[i].editorSide == EditorSide::CoSrcWin) {
+//			return buffers.buffers[i].Name().AsUTF8();
+//		}
+//	}
+//	return "";
+}
+
 int  SciTEBase::SecondEditorActive() {
 	for (int i = 0; i < (int)buffers.buffers.size() ; i++) {
 		if (buffers.buffers[i].editorSide == EditorSide::CoSrcWin)
@@ -3175,7 +3195,7 @@ std::vector<GUI::gui_string> ListFromString(const GUI::gui_string &args) {
 	return vs;
 }
 
-// Implement ExtensionAPI methods
+// Implement SciTEBase public interface methods (formerly ExtensionAPI)
 sptr_t SciTEBase::Send(Pane p, Scintilla::Message msg, uptr_t wParam, sptr_t lParam) {
 	if (p == paneEditor)
 		return wEditor.Call(msg, wParam, lParam);

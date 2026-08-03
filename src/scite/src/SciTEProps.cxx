@@ -65,7 +65,6 @@ const GUI::gui_char menuAccessIndicator[] = GUI_TEXT("&");
 #include "FilePath.h"
 #include "PropSetFile.h"
 #include "StyleWriter.h"
-#include "Extender.h"
 #include "SciTE.h"
 #include "IFaceTable.h"
 #include "Mutex.h"
@@ -234,7 +233,7 @@ void lab2rgb(float l_s, float a_s, float b_s, float& R, float& G, float& B) {
 	B = static_cast<float>(Bd > 255 ? 255 : Bd < 0 ? 0 : Bd);
 }
 
-void ColorConvertorLAB::Init(const char *points, ExtensionAPI *h) {
+void ColorConvertorLAB::Init(const char *points, SciTEBase *h) {
 	if (inicialized && prevPoints == points) {
 		return;
 	}

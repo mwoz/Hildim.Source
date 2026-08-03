@@ -11,6 +11,12 @@
 
 #include <string>
 
+// Prevent conflict between Scintilla::Message::FindText and Windows API FindTextW macro
+// Must be defined before including Scintilla.h
+#ifdef FindTextW
+#undef FindTextW
+#endif
+
 #include "Scintilla.h"
 
 #include "GUI.h"
@@ -18,7 +24,7 @@
 #include "FilePath.h"
 #include "Utf8_16.h"
 #include "StyleWriter.h"
-#include "Extender.h"
+#include "SciTEBase.h"
 #include "LuaExtension.h"
 //#include "uiautomationclient.h"
 //#include "winerror.h"
@@ -92,7 +98,7 @@ using namespace Scintilla;
 // and for these I just make a judgement call
 
 
-static ExtensionAPI *host = 0;
+static SciTEBase *host = 0;
 static lua_State *luaState = 0;
 static bool luaDisabled = false;
 
@@ -121,8 +127,8 @@ LuaExtension::LuaExtension() {}
 LuaExtension::~LuaExtension() {}
 
 // Forward declarations
-static ExtensionAPI::Pane check_pane_object(lua_State *L, int index);
-static void push_pane_object(lua_State *L, ExtensionAPI::Pane p);
+static SciTEBase::Pane check_pane_object(lua_State *L, int index);
+static void push_pane_object(lua_State *L, SciTEBase::Pane p);
 static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool bSetter = false);
 
 inline bool IFaceTypeIsScriptable(IFaceType t, int index) {
@@ -590,7 +596,7 @@ static int cf_scite_check_menus(lua_State *) {
 
 //!-start-[EncodingToLua]
 static int cf_pane_get_codepage(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	UINT codePage = static_cast<UINT>(host->Send(p, Message::GetCodePage));
 	if(codePage != SC_CP_UTF8) {
 		unsigned int cs = SC_CHARSET_DEFAULT;
@@ -667,19 +673,19 @@ static int lua_string_utf8len(lua_State *L) {
 }
 //!-end-[EncodingToLua]
 
-static ExtensionAPI::Pane check_pane_object(lua_State *L, int index) {
-	ExtensionAPI::Pane *pPane = reinterpret_cast<ExtensionAPI::Pane*>(checkudata(L, index, "SciTE_MT_Pane"));
+static SciTEBase::Pane check_pane_object(lua_State *L, int index) {
+	SciTEBase::Pane *pPane = reinterpret_cast<SciTEBase::Pane*>(checkudata(L, index, "SciTE_MT_Pane"));
 
 	if ((!pPane) && lua_istable(L, index)) {
 		// so that nested objects have a convenient way to do a back reference
 		int absIndex = absolute_index(L, index);
 		lua_pushliteral(L, "pane");
 		lua_gettable(L, absIndex);
-		pPane = reinterpret_cast<ExtensionAPI::Pane*>(checkudata(L, -1, "SciTE_MT_Pane"));
+		pPane = reinterpret_cast<SciTEBase::Pane*>(checkudata(L, -1, "SciTE_MT_Pane"));
 	}
 
 	if (pPane) {
-		if ((*pPane == ExtensionAPI::paneEditor) && (curBufferIndex < 0))
+		if ((*pPane == SciTEBase::paneEditor) && (curBufferIndex < 0))
 			raise_error(L, "Editor pane is not accessible at this time.");
 
 		return *pPane;
@@ -693,11 +699,11 @@ static ExtensionAPI::Pane check_pane_object(lua_State *L, int index) {
 		lua_pushliteral(L, "Pane object expected.");
 
 	raise_error(L);
-	return ExtensionAPI::paneOutput; // this line never reached
+	return SciTEBase::paneOutput; // this line never reached
 }
 
 static int cf_pane_getU(lua_State* L, DWORD msg) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	if (lua_gettop(L) >= 2) {
 		UINT cpPos = static_cast<UINT>(luaL_checknumber(L, 2));
 
@@ -725,7 +731,7 @@ static int cf_pane_getchar(lua_State *L) {
 	return cf_pane_getU(L, SCI_GETCHARAT);
 }
 static int cf_pane_getutf8text(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	int np = lua_gettop(L);
 	int cp = static_cast<int>(host->Send(p, Message::GetCodePage, 0, 0));
 	if (np == 1) {
@@ -745,7 +751,7 @@ static int cf_pane_getutf8text(lua_State *L) {
 	}
 }
 static int cf_pane_line(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	if (lua_gettop(L) >= 2) {
 		int cpLine = static_cast<int>(luaL_checknumber(L, 2));
 
@@ -773,7 +779,7 @@ static int cf_pane_line(lua_State *L) {
 }
 
 static int cf_pane_textrange(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 
 	if (lua_gettop(L) >= 3) {
 		int cpMin = static_cast<int>(luaL_checknumber(L, 2));
@@ -801,7 +807,7 @@ static int cf_pane_textrange(lua_State *L) {
 }
 
 static int cf_pane_insert(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	int pos = static_cast<int>(luaL_checkinteger(L, 2));
 	const char *s = luaL_checkstring(L, 3);
 	host->Insert(p, pos, s);
@@ -809,7 +815,7 @@ static int cf_pane_insert(lua_State *L) {
 }
 
 static int cf_pane_remove(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	int cpMin = static_cast<int>(luaL_checknumber(L, 2));
 	int cpMax = static_cast<int>(luaL_checknumber(L, 3));
 	host->Remove(p, cpMin, cpMax);
@@ -817,14 +823,14 @@ static int cf_pane_remove(lua_State *L) {
 }
 
 static int cf_pane_append(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	const char *s = luaL_checkstring(L, 2);
 	host->Insert(p, host->Send(p, Message::GetLength, 0, 0), s);
 	return 0;
 }
 
 static int cf_pane_eol_annotation_set(lua_State* L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	lua_Number line = luaL_checknumber(L, 2);
 
 	switch (lua_type(L, 3)) {
@@ -845,7 +851,7 @@ static int cf_pane_eol_annotation_set(lua_State* L) {
 }
 
 static int cf_pane_findtext(lua_State *L) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 
 	int nArgs = lua_gettop(L);
 
@@ -877,7 +883,7 @@ static int cf_pane_findtext(lua_State *L) {
 		}
 
 		if (!hasError) {
-			sptr_t result = host->Send(p, Message::FindText, static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
+			sptr_t result = host->Send(p, static_cast<Scintilla::Message>(2150), static_cast<uptr_t>(flags), reinterpret_cast<sptr_t>(&ft));
 			if (result >= 0) {
 				lua_pushinteger(L, ft.chrgText.cpMin);
 				lua_pushinteger(L, ft.chrgText.cpMax);
@@ -1157,7 +1163,7 @@ static int sf_CheckRegexp(lua_State* L){
 // loops and is more tamper-resistant.
 
 struct PaneMatchObject {
-	ExtensionAPI::Pane pane;
+	SciTEBase::Pane pane;
 	Sci_Position startPos;
 	Sci_Position endPos;
 	int flags; // this is really part of the state, but is kept here for convenience
@@ -1252,7 +1258,7 @@ static int cf_match_metatable_tostring(lua_State *L) {
 static int cf_pane_match(lua_State *L) {
 	int nargs = lua_gettop(L);
 
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 	luaL_checkstring(L, 2);
 
 	int generatorIndex = lua_upvalueindex(1);
@@ -1332,7 +1338,7 @@ static int cf_pane_match_generator(lua_State *L) {
 	ft.lpstrText = const_cast<char*>(text);
 
 	if (ft.chrg.cpMax > ft.chrg.cpMin) {
-		sptr_t result = host->Send(pmo->pane, Message::FindText, static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
+		sptr_t result = host->Send(pmo->pane, static_cast<Scintilla::Message>(2150), static_cast<uptr_t>(pmo->flags), reinterpret_cast<sptr_t>(&ft));
 		if (result >= 0) {
 			pmo->startPos = ft.chrgText.cpMin;
 			pmo->endPos = pmo->endPosOrig = ft.chrgText.cpMax; 
@@ -2007,7 +2013,7 @@ static int sf_ReloadProperties(lua_State* L) {
 
 
 static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool bSetter) {
-	ExtensionAPI::Pane p = check_pane_object(L, 1);
+	SciTEBase::Pane p = check_pane_object(L, 1);
 
 	int arg = 2;
 
@@ -2094,7 +2100,7 @@ static int iface_function_helper(lua_State *L, const IFaceFunction &func, bool b
 }
 
 struct IFacePropertyBinding {
-	ExtensionAPI::Pane pane;
+	SciTEBase::Pane pane;
 	const IFaceProperty *prop;
 };
 
@@ -2187,7 +2193,7 @@ static int push_iface_propval(lua_State *L, const char *name) {
 		} else if (prop.paramType == iface_bool) {
 			// The bool getter is untested since there are none in the iface.
 			// However, the following is suggested as a reference protocol.
-			ExtensionAPI::Pane p = check_pane_object(L, 1);
+			SciTEBase::Pane p = check_pane_object(L, 1);
 
 			if (prop.getter) {
 				if (host->Send(p, static_cast<Message>(prop.getter), 1, 0)) {
@@ -2294,8 +2300,8 @@ static int cf_pane_metatable_newindex(lua_State *L) {
 	return 0;
 }
 
-void push_pane_object(lua_State *L, ExtensionAPI::Pane p) {
-	*reinterpret_cast<ExtensionAPI::Pane*>(lua_newuserdata(L, sizeof(p))) = p;
+void push_pane_object(lua_State *L, SciTEBase::Pane p) {
+	*reinterpret_cast<SciTEBase::Pane*>(lua_newuserdata(L, sizeof(p))) = p;
 	if (luaL_newmetatable(L, "SciTE_MT_Pane")) {
 		lua_pushcfunction(L, cf_pane_metatable_index);
 		lua_setfield(L, -2, "__index");
@@ -2619,16 +2625,16 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	lua_setglobal(luaState, "props");
 
 	// pane objects
-	push_pane_object(luaState, ExtensionAPI::paneEditor);
+	push_pane_object(luaState, SciTEBase::paneEditor);
 	lua_setglobal(luaState, "editor");
 
-	push_pane_object(luaState, ExtensionAPI::paneCoEditor);
+	push_pane_object(luaState, SciTEBase::paneCoEditor);
 	lua_setglobal(luaState, "coeditor");
 
-	push_pane_object(luaState, ExtensionAPI::paneOutput);
+	push_pane_object(luaState, SciTEBase::paneOutput);
 	lua_setglobal(luaState, "output");
 
-	push_pane_object(luaState, ExtensionAPI::paneFindRes); 
+	push_pane_object(luaState, SciTEBase::paneFindRes);
 	lua_setglobal(luaState, "findres");
 
 	// scite
@@ -2908,7 +2914,7 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 	return true;
 }
 
-bool LuaExtension::Initialise(ExtensionAPI *host_) {
+bool LuaExtension::Initialise(SciTEBase *host_) {
 	host = host_;
 
 	if (CheckStartupScript()) {
@@ -3493,7 +3499,7 @@ bool LuaExtension::OnStyle(Sci_Position startPos, Sci_Position lengthDoc, int in
 			sc.lengthDoc = static_cast<int>(lengthDoc);
 			sc.initStyle = initStyle;
 			sc.styler = styler;
-			sc.codePage = static_cast<int>(host->Send(ExtensionAPI::paneEditor, Message::GetCodePage));
+			sc.codePage = static_cast<int>(host->Send(SciTEBase::paneEditor, Message::GetCodePage));
 
 			lua_newtable(luaState);
 

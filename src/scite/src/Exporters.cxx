@@ -59,7 +59,6 @@
 #include "FilePath.h"
 #include "PropSetFile.h"
 #include "StyleWriter.h"
-#include "Extender.h"
 #include "SciTE.h"
 #include "Mutex.h"
 #include "JobQueue.h"

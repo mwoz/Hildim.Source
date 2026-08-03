@@ -25,6 +25,14 @@ extern const GUI::gui_char propAbbrevFileName[];
 #endif
 #endif
 #include <regex>
+#include <map>
+#include <vector>
+
+#include "Scintilla.h"
+#include "SciTE.h"
+#include "PropSetFile.h"
+#include "JobQueue.h"
+#include "StringList.h"
 
 extern "C" {
 #include "lua.h"
@@ -35,9 +43,13 @@ extern "C" {
 #include "iupcontrols.h"
 #include "iupluacontrols.h"
 #include "scite_flattabs.h"
-#include "LuaExtension.h"
 #include <cassert>
 }
+
+#include "LuaExtension.h"
+
+// Free function used by Exporters.cxx (defined in SciTEProps.cxx)
+int IntFromHexByte(const char *hexByte);
 
 #define ELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
@@ -98,8 +110,10 @@ enum UniMode {
 
 enum class EditorSide : int {
 	None = 0,
-	SrcWin = 350,
-	CoSrcWin = 356
+	SrcWin = 1,
+	CoSrcWin = 2,
+	OutWin = 3,
+	FindResWin = 4
 };
 
 class Buffer : public RecentFile {
@@ -107,7 +121,7 @@ public:
 	EditorSide editorSide;
 	bool isDirty;
 	bool boundWithFS;
-	bool ROMarker; 
+	bool ROMarker;
 	bool useMonoFont;
 	Scintilla::IDocumentEditable* doc;
 	UniMode unicodeMode;
@@ -161,7 +175,7 @@ public:
 //!-end-[OpenNonExistent]
 };
 
-class EditSwitcher{
+class EditSwitcher {
 public:
 	virtual void SwitchTo(EditorSide side, FilePath* pBuf) = 0;
 	virtual EditorSide GetWindowIdm() const noexcept = 0;
@@ -199,42 +213,15 @@ public:
 	void MoveToStackTop(int index);
 	void ShiftTo(int indexFrom, int indexTo);
 	int GetOrder(int index);
-	void OrderBy(std::map<int, int> &order);
-
+	void OrderBy(std::map<int, int>& order);
 };
-
-enum {
-    heightTools = 24,
-    heightTab = 24,
-    heightStatus = 20,
-    statusPosWidth = 256
-};
-
-/// Warning IDs.
-enum {
-    warnFindWrapped = 1,
-    warnNotFound,
-    warnNoOtherBookmark,
-    warnWrongFile,
-    warnExecuteOK,
-    warnExecuteKO
-};
-
-/// Codes representing the effect a line has on indentation.
-enum IndentationStatus {
-    isNone,		// no effect on indentation
-    isBlockStart,	// indentation block begin such as "{" or VB "function"
-    isBlockEnd,	// indentation end indicator such as "}" or VB "end"
-    isKeyWordStart	// Keywords that cause indentation
-};
-
-int IntFromHexDigit(int ch);
-int IntFromHexByte(const char *hexByte);
 
 class ColorConvertor {
 public:
-	virtual void Init(const char *points, ExtensionAPI *h) = 0;
-	virtual Scintilla::Colour Convert(Scintilla::Colour colorIn) = 0;
+	ColorConvertor() {}
+	virtual ~ColorConvertor() {}
+	virtual void Init(const char *points, SciTEBase *h) {}
+	virtual Scintilla::Colour Convert(Scintilla::Colour colorIn) { return colorIn; }
 };
 
 class StyleDefinition {
@@ -388,20 +375,119 @@ private:
 public:
 	ColorConvertorLAB() {}
 	~ColorConvertorLAB() {}
-	void Init(const char *points, ExtensionAPI *h);
+	void Init(const char *points, SciTEBase *h);
 	Scintilla::Colour Convert(Scintilla::Colour colorIn);
 };
 
-class SciTEBase : public ExtensionAPI {
+class SciTEBase {
+// ====================================================================
+// public: методы ExtensionAPI и методы, доступные из LuaExtension
+// ====================================================================
+public:
+	// ExtensionAPI methods
+	enum Pane { paneEditor = 1, paneCoEditor = 2, paneOutput = 3, paneFindRes = 4 };
+	sptr_t Send(Pane p, Scintilla::Message, uptr_t wParam = 0, sptr_t lParam = 0);
+	char *Range(Pane p, Sci_Position start, Sci_Position end);
+	char *Line(Pane p, Sci_Position line, int bNeedEnd);
+	void Remove(Pane p, Sci_Position start, Sci_Position end);
+	void Insert(Pane p, Sci_Position pos, const char *s);
+	void Trace(const char *s);
+	void UnsetProperty(const char *key);
+	uptr_t GetInstance();
+	void ShutDown();
+	void DoMenuCommand(int cmdID);
+	char *Property(const char *key);
+	SString PropertyNewExpand(const char *base, const char* fileNameExt);
+	void SetProperty(const char *key, const char *val);
+	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
+	unsigned long InvertColor(unsigned long clr);
+
+	// Методы, вызываемые из LuaExtension (были в private SciTEBase)
+	int GetBufferSide(int index) { return static_cast<int>(buffers.buffers[index].editorSide); }
+	int GetBufferOrder(int index) { return buffers.GetOrder(index); }
+	time_t GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
+	int GetBufferUnicMode(int index) { return static_cast<int>(buffers.buffers[index].unicodeMode); }
+	bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; }
+	bool Open_script(const char* path);
+	void SavePositions();
+	void BlockUpdate(int cmd);
+	void Close_script();
+	int Cloned(int index) { return buffers.buffers[index].pFriend ? buffers.buffers[index].FriendIndex() : -1; }
+	int IndexOfClone(int index) { return buffers.buffers[index].FriendIndex(); }
+	int BufferByName(const char* c);
+	void OrderTabsBy(std::map<int, int> &order);
+	bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile);
+	int ActiveEditor();
+	void RunInConcole();
+
+	// Методы, вызываемые из LuaExtension (были в protected SciTEBase)
+	bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false);
+	char GetEditorSide() { return wEditor.SameAs(wEditorL) ? 'L' : 'R'; }
+	void UiDocTabulation(int side, bool forward);
+	char *GetTranslation(const char *s, bool retainIfNotFound = true);
+	virtual void CheckMenus();
+	void SetOverrideLanguage(const char *lexer, bool bFireEvent);
+	void ReloadProperties();
+	int SecondEditorActive();
+	int GetCurrentBufer() { return buffers.Current(); }
+	int GetBuffersCount() { return static_cast<int>(buffers.buffers.size()); }
+	std::string GetBufferName(int i) { return buffers.buffers[i].Name().AsUTF8(); }
+	bool GetBufferUntitled(int i) { return buffers.buffers[i].IsUntitled(); }
+	void UpdateBuffersCoCurrent();
+	std::string GetCoBufferName();
+	bool GetBuffersSavedState(int i) { return !buffers.buffers[i].isDirty; }
+	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; }
+	void SetBufferEncoding(int i, int e);
+	int GetBufferFileTime(int i) { return static_cast<int>(buffers.buffers[i].fileModTime); }
+	void ClearBufferFileTime(int i) { buffers.buffers[i].fileModTime = 0; }
+	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
+	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true);
+	void CloneTab(int insertIn = -1);
+	void ChangeTabWnd(int insertIn = -1);
+	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
+	virtual void RunAsync(int idx) = 0;
+	virtual void SetRestart(const char* cmdLine) = 0;
+
+	// Виртуальные методы из ExtensionAPI, реализованные в SciTEWin
+	virtual void SetAcceleratorTable(void *h) = 0;
+	virtual void EnsureVisible() = 0;
+	virtual void HideForeReolad(int close) = 0;
+	virtual bool SwitchMouseHook(bool bSet) = 0;
+	virtual void ExecuteHelp(const char *cmd, int hh_cmd) = 0;
+	virtual void PostLoadScript() = 0;
+	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
+	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
+
+	enum { maxParam = 4 };
+
+	SciTEBase();
+	virtual ~SciTEBase();
+
+	static SciTEBase *GetApplicationInstance();
+	static PropSetFile *GetProps() {
+		SciTEBase *app = GetApplicationInstance();
+		if (app != NULL) return &(app->props);
+		return NULL;
+	}
+	virtual Ihandle * IupTab(int id) = 0;
+	virtual bool IsRunAsAdmin() = 0;
+	virtual bool NewInstance(const char* arg, bool asAdmin) = 0;
+
+	// Публичные члены, доступные из IupLayoutWnd (не наследник SciTEBase) через ((SciTEWin*)pSciteWin)->
+	GUI::WindowID GetID() { return wSciTE.GetID(); }
+	bool bBlockUIUpdate = false;
+	IupLayoutWnd layout;
+
+// ====================================================================
+// protected: методы, вызываемые из SciTEWin или виртуальные (переопределяемые в SciTEWin)
+// ====================================================================
 protected:
 	GUI::gui_string windowName = L"HildiM";
-	//FilePath filePath;
 	FilePath dirNameAtExecute;
 	FilePath dirNameForExecute;
 
-//!	enum { fileStackMax = 10 };
-	enum { fileStackMax = 30 }; //!-change-[MoreRecentFiles]
-	enum { fileStackMaxDefault = 10 }; //!-add-[MoreRecentFiles]
+	enum { fileStackMax = 30 };
+	enum { fileStackMaxDefault = 10 };
 	RecentFile recentFileStack[fileStackMax];
 	enum { fileStackCmdID = IDM_MRUFILE, bufferCmdID = IDM_BUFFER };
 
@@ -410,7 +496,7 @@ protected:
 	enum { importCmdID = IDM_IMPORT };
 
 	enum { indicatorMatch = INDIC_CONTAINER };
-	enum {markerScipLineFormat  = 0, markerNotUsed, markerBookmark, markerError, markerBreakPoint, markerVertAlign, markerHideLines = 20};
+	enum { markerScipLineFormat = 0, markerNotUsed, markerBookmark, markerError, markerBreakPoint, markerVertAlign, markerHideLines = 20 };
 	SString parameterisedCommand;
 	char abbrevInsert[200];
 
@@ -433,16 +519,14 @@ protected:
 	StyleAndWords statementEnd;
 	StyleAndWords blockStart;
 	StyleAndWords blockEnd;
-	enum { noPPC, ppcStart, ppcMiddle, ppcEnd, ppcDummy };	///< Indicate the kind of preprocessor condition line
-	char preprocessorSymbol;	///< Preprocessor symbol (in C: #)
-	StringList preprocCondStart;	///< List of preprocessor conditional start keywords (in C: if ifdef ifndef)
-	StringList preprocCondMiddle;	///< List of preprocessor conditional middle keywords (in C: else elif)
-	StringList preprocCondEnd;	///< List of preprocessor conditional end keywords (in C: endif)
+	enum { noPPC, ppcStart, ppcMiddle, ppcEnd, ppcDummy };
+	char preprocessorSymbol;
+	StringList preprocCondStart;
+	StringList preprocCondMiddle;
+	StringList preprocCondEnd;
 
-	GUI::Window wSciTE;  
+	GUI::Window wSciTE;
 
-//!	GUI::ScintillaWindow wEditor;
-//!-start-[OnSendEditor]
 	class ScintillaWindowEditor : public GUI::ScintillaWindow
 	{
 	public:
@@ -450,7 +534,6 @@ protected:
 		SciTEBase* pBase;
 		std::string languageCurrent = "xxx";
 		bool SameAs(const ScintillaWindowEditor& other) const noexcept;
-
 	};
 	class ScintillaWindowSwitcher : public ScintillaWindowEditor, public EditSwitcher {
 	public:
@@ -459,31 +542,29 @@ protected:
 		void Switch(bool ignorebuff = false);
 		ScintillaWindowEditor coEditor;
 	};
-	
+
 	ScintillaWindowSwitcher wEditor;
 	ScintillaWindowEditor wEditorR;
 	ScintillaWindowEditor wEditorL;
 	ColorConvertorLAB convMain;
-	
+
 	virtual sptr_t CallAll(Scintilla::Message msg, uptr_t wParam = 0, sptr_t lParam = 0);
 	sptr_t CallEditors(Scintilla::Message msg, uptr_t wParam = 0, const char* s = nullptr);
 	friend class ScintillaWindowEditor;
-//!-end-[OnSendEditor]
+
 	GUI::ScintillaWindow wOutput;
 	GUI::ScintillaWindow wFindRes;
 	bool viewIndent = false;
 	bool viewHisoryIndicators = false;
 	bool viewHisoryMarkers = false;
 	bool iuptbVisible;
-	SString sbValue;	///< Status bar text.
-	int sbNum;	///< Number of the currenly displayed status bar information.
+	SString sbValue;
+	int sbNum;
 	int visHeightTools;
 	int visHeightTab;
 	int visHeightEditor;
 	int visHeightIuptool;
 	int heightBar;
-	// Prevent automatic load dialog appearing at the same time as
-	// other dialogs as this can leads to reentry errors.
 	int dialogsOnScreen;
 	bool topMost;
 	bool wrap;
@@ -492,11 +573,10 @@ protected:
 	int wrapStyle;
 	bool isReadOnly;
 	bool openFilesHere;
-//!	enum { toolMax = 50 };
-	enum { toolMax = 300 }; //!-change-[ToolsMax]
+	enum { toolMax = 300 };
 	LuaExtension extender;
 	bool needReadProperties;
-	bool preserveFocusOnEditor; //!-add-[GoMessageImprovement]
+	bool preserveFocusOnEditor;
 
 	GUI::Point ptStartDrag;
 	bool capturedMouse;
@@ -526,11 +606,11 @@ protected:
 
 	bool margin;
 	int marginWidth;
-	enum { marginWidthDefault = 20};
+	enum { marginWidthDefault = 20 };
 
 	bool foldMargin;
 	int foldMarginWidth;
-	enum { foldMarginWidthDefault = 14};
+	enum { foldMarginWidthDefault = 14 };
 
 	bool lineNumbers;
 	int lineNumbersWidth;
@@ -558,55 +638,18 @@ protected:
 
 	FilePath pathAbbreviations;
 
-	PropSetFile propsStatus;	// Not attached to a file but need SetInteger method.
+	PropSetFile propsStatus;
 
 	enum { bufferMax = 1000 };
 	BufferList buffers;
 
 	// Handle buffers
 	Scintilla::IDocumentEditable* GetDocumentAt(int index);
-	
+
 	void UpdateBuffersCurrent();
-	void UpdateBuffersCoCurrent();
 	bool IsBufferAvailable();
 	bool CanMakeRoom(bool maySaveIfDirty = true);
-	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true);
-	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
 	int ShiftToVisible(int index);
-	bool  GetBufferUntitled(int i) { return buffers.buffers[i].IsUntitled(); };
-	char GetEditorSide() { return wEditor.GetPtr() == wEditorL.GetPtr() ? 'L' : 'R'; }
-	std::string  GetBufferName(int i){ return buffers.buffers[i].AsUTF8();};
-	std::string  GetCoBufferName() {
-		int coIdx = buffers.GetIndexByDoc(wEditor.coEditor.DocPointer());
-		return (coIdx >= 0) ? buffers.buffers[coIdx].AsUTF8() : std::string();
-	}
-	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; };
-	int GetBufferFileTime(int i) { return (int)buffers.buffers[i].fileModTime;};
-	void ClearBufferFileTime(int i) { buffers.buffers[i].SetTimeFromFile();	SetWindowName();BuffersMenu();	};
-	void SetBufferEncoding(int i, int e);
-	bool GetBuffersSavedState(int i){ return ! buffers.buffers[i].DocumentNotSaved(); };
-	int GetBuffersCount(){ return (int) buffers.buffers.size(); };
-	int GetCurrentBufer(){ return buffers.Current(); };	
-	virtual int GetBufferSide(int index) { return buffers.buffers[index].editorSide == EditorSide::SrcWin ? 0 : 1;  };
-	virtual int GetBufferOrder(int index) { return buffers.GetOrder(index); };
-	virtual time_t GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
-	virtual int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; };
-	virtual bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; };
-	virtual int SecondEditorActive();
-	virtual bool Open_script(const char* path) {return Open(GUI::StringFromUTF8(path), ofNone, true);};
-	virtual void SavePositions();
-	virtual void BlockUpdate(int cmd);
-	virtual void Close_script();
-		
-	virtual int Cloned(int index) {
-		return buffers.buffers[index].pFriend;
-	}
-	virtual int IndexOfClone(int index) {
-		return buffers.buffers[index].FriendIndex();
-	}
-	virtual int BufferByName(const char* c) {
-		return buffers.GetDocumentByName(FilePath(GUI::StringFromUTF8(c)));
-	}
 	Buffer *CurrentBuffer() {
 		return buffers.CurrentBuffer();
 	}
@@ -615,7 +658,6 @@ protected:
 	void Next();
 	void Prev();
 	void UiDocTabulation(EditorSide side, bool forward);
-	void UiDocTabulation(int side, bool forward);
 	void NextInStack(EditorSide side = EditorSide::None);
 	void PrevInStack(EditorSide side = EditorSide::None);
 	void EndStackedTabbing();
@@ -623,10 +665,6 @@ protected:
 	void ShiftTab(int indexFrom, int indexTo, bool mose = false);
 	void MoveTabRight();
 	void MoveTabLeft();
-	void CloneTab(int insertIn = -1);
-	void ChangeTabWnd(int insertIn = -1);
-	virtual void OrderTabsBy(std::map<int, int> &order);
-	virtual void PostLoadScript() = 0;
 	void CheckRightEditorVisible();
 	bool m_bRightEditorVisible = false;
 
@@ -641,27 +679,30 @@ protected:
 	void GetLine(char *text, int sizeText, Sci_Position line = -1);
 	void GetRange(GUI::ScintillaWindow &win, Sci_Position start, Sci_Position end, char *text);
 	int IsLinePreprocessorCondition(char *line);
-	//bool FindMatchingPreprocCondPosition(bool isForward, Sci_Position &mppcAtCaret, Sci_Position &mppcMatch);
 	bool FindMatchingBracePosition(bool editor, Sci_Position &braceAtCaret, Sci_Position &braceOpposite, bool sloppy);
 	void BraceMatch(bool editor);
 
-//!	virtual void WarnUser(int warnID) = 0;
-	virtual void WarnUser(int warnID, const char *msg = NULL, bool isCanBeAlerted = true) = 0; //!-change-[WarningMessage]
+	// WarnUser flags (were in Extender.h)
+	enum {
+		warnFindWrapped = 1,
+		warnNotFound = 2,
+		warnWrongFile = 3,
+		warnExecuteOK = 4,
+		warnExecuteKO = 5,
+		warnNoOtherBookmark = 6
+	};
+
+	virtual void WarnUser(int warnID, const char *msg = NULL, bool isCanBeAlerted = true) = 0;
+
 	void SetWindowName();
 	void SetFileName(FilePath openName, bool fixCase = true, bool setCaption = true);
 	FilePath FileNameExt() const {
 		return ActiveFilePath().Name();
 	}
-
-	// Возвращает текущий FilePath для активного буфера.
-	// Безопасно использовать при чтении (не заменяет SetFileName и не выполняет побочных эффектов).
 	FilePath ActiveFilePath() const {
-		// Если буферы инициализированы и есть хотя бы один буфер — возвращаем путь активного буфера.
-		// Иначе — возвращаем cached filePath (fallback для ранней инициализации).
 		if (buffers.initialised && !buffers.buffers.empty()) {
 			return buffers.buffers[buffers.Current()].AbsolutePath();
 		}
-		//assert(false);
 		return FilePath();
 	}
 	void ClearDocument();
@@ -672,9 +713,8 @@ protected:
 	void SetIndentSettings();
 	void SetEol();
 	void New(bool force = false);
-	bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false);
 	void RestoreUserHiddenLines(ScintillaWindowEditor& w, const Buffer& buffer);
-	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse= false);
+	void RestoreState(const Buffer &buffer, bool setCaption = true, bool scipCollapse = false);
 	void Close(bool updateUI = true, bool loadingSession = false, bool makingRoomForNew = false);
 	bool bBlockRedraw = false;
 	bool bBlockTextChangeNotify = false;
@@ -683,18 +723,16 @@ protected:
 	void DiscoverIndentSetting();
 	SString DiscoverLanguage(const char *buf, size_t length);
 	void OpenFile(int fileSize, bool suppressMessage);
-	virtual bool ReadForScript(FilePath &fileCompare, void** convert, char** data, size_t &lenFile);
-	virtual void OpenUriList(const char *) {}
 	virtual bool OpenDialog(FilePath directory, const GUI::gui_char *filter) = 0;
 	virtual bool SaveAsDialog() = 0;
 
 	void CountLineEnds(int &linesCR, int &linesLF, int &linesCRLF);
 	enum OpenFlags {
-	    ofNone = 0, 		// Default
-	    ofNoSaveIfDirty = 1, 	// Suppress check for unsaved changes
-	    ofForceLoad = 2,	// Reload file even if already in a buffer
-	    ofPreserveUndo = 4,	// Do not delete undo history
-	    ofQuiet = 8		// Avoid "Could not open file" message
+		ofNone = 0,
+		ofNoSaveIfDirty = 1,
+		ofForceLoad = 2,
+		ofPreserveUndo = 4,
+		ofQuiet = 8
 	};
 	bool Open(FilePath file, OpenFlags of = ofNone, bool setNav = false);
 	void Revert();
@@ -702,7 +740,7 @@ protected:
 	int SaveIfUnsure(bool forceQuestion = false, bool forNewRoom = false);
 	int SaveIfUnsureForBuilt();
 	bool SaveIfNotOpen(const FilePath &destFile, bool fixCase);
-	bool Save(bool bNotSaveNotChanged = false, bool  = true);
+	bool Save(bool bNotSaveNotChanged = false, bool = true);
 	void SaveAs(const GUI::gui_char *file, bool fixCase);
 	virtual void SaveACopy() = 0;
 	void SaveToStreamHTMLText(std::ostream &os, int start = 0, int end = -1);
@@ -735,13 +773,12 @@ protected:
 	virtual void PrintSetup() {}
 	Scintilla::Sci_CharacterRange GetSelection();
 	void SetSelection(Sci_Position anchor, Sci_Position currentPos);
-	//	void SelectionExtend(char *sel, int len, char *notselchar);
 	void GetCTag(char *sel, int len);
 	SString GetRange(GUI::ScintillaWindow &win, Sci_Position selStart, Sci_Position selEnd);
 	virtual SString GetRangeInUIEncoding(GUI::ScintillaWindow &win, Sci_Position selStart, Sci_Position selEnd);
 	SString GetLine(GUI::ScintillaWindow &win, Sci_Position line);
 	SString RangeExtendAndGrab(GUI::ScintillaWindow &wCurrent, Sci_Position &selStart, Sci_Position &selEnd,
-	        bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
+		bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	SString SelectionExtend(bool (SciTEBase::*ischarforsel)(char ch), bool stripEol = true);
 	void FindWordAtCaret(Sci_Position &start, Sci_Position &end);
 	bool SelectWordAtCaret();
@@ -749,8 +786,6 @@ protected:
 	SString SelectionFilename();
 	void SelectionIntoProperties();
 	virtual SString EncodeString(const SString &s);
-	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
-	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
 
 	void GoMatchingBrace(bool select);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
@@ -761,17 +796,10 @@ protected:
 
 	bool GoMessage(int dir, GUI::ScintillaWindow &wBottom);
 	char *GetNearestWords(const char *wordStart, size_t searchLen,
-		const char *separators, bool ignoreCase=false, bool exactLen=false);
-	virtual void EliminateDuplicateWords(char *words);
-	virtual bool StartAutoComplete();
-	virtual bool StartAutoCompleteWord(bool onlyOneWord);
-	virtual bool StartBlockComment();
-	virtual bool StartBoxComment();
-	virtual bool StartStreamComment();
+		const char *separators, bool ignoreCase = false, bool exactLen = false);
 	void SetLineIndentation(Sci_Position line, int indent);
 	Sci_Position GetLineIndentation(Sci_Position line);
 	Sci_Position GetLineIndentPosition(Sci_Position line);
-	//bool RangeIsAllWhitespace(Sci_Position start, Sci_Position end);
 	void MaintainIndentation(char ch);
 	void CharAdded(char ch);
 	void CharAddedOutput(int ch);
@@ -780,8 +808,8 @@ protected:
 	Sci_Position GetCurrentLineNumber();
 	Sci_Position GetCurrentScrollPosition();
 	virtual void AddCommand(const SString &cmd, const SString &dir,
-	        JobSubsystem jobType, const SString &input = "",
-	        int flags = 0);
+		JobSubsystem jobType, const SString &input = "",
+		int flags = 0);
 
 	virtual void QuitProgram() = 0;
 	void CloseTab(int tab);
@@ -807,8 +835,6 @@ protected:
 	void BookmarkToggle(Sci_Position lineno = -1);
 	void BookmarkNext(bool forwardScan = true, bool select = false);
 
-	virtual void CheckMenus();
-//!	virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) = 0; //!-remove-[ExtendedContextMenu]
 	void ContextMenu(GUI::ScintillaWindow &wSource, GUI::Point pt, GUI::Window wCmd, int isMargin = 0);
 
 	void DropFileStackTop();
@@ -826,14 +852,11 @@ protected:
 
 	void AssignKey(int key, int mods, int cmd);
 
-	//void ImportMenu(int pos);
-	//void SetLanguageMenu();
 	void SetPropertiesInitial();
 	SString GetFileNameProperty(const char *name);
 	virtual void ReadPropertiesInitial();
-	void ResetAllStyles( ScintillaWindowEditor &win, const char * languageName);
+	void ResetAllStyles(ScintillaWindowEditor &win, const char * languageName);
 	void ReadFontProperties();
-	void SetOverrideLanguage(const char *lexer, bool bFireEvent);
 	StyleAndWords GetStyleAndWords(const char *base);
 	SString ExtensionFileName();
 	const char *GetNextPropItem(const char *pStart, char *pPropItem, int maxLen);
@@ -841,17 +864,16 @@ protected:
 	void DefineMarker(bool main, int marker, int markerType, Scintilla::Colour fore, Scintilla::Colour back);
 	void SetFoldingMarkers(bool main);
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
-	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0); //!-add-[BetterCalltips]
+	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0);
 	virtual void ReadProperties();
 	virtual void ReadPropertiesEx();
 	void SetColourElement(GUI::ScintillaWindow *pWin, int elem, const char *colourProp, const char *alphaProp);
 	void SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd);
 	void SetStyleFor(GUI::ScintillaWindow &win, const char *language);
-	void ReloadProperties();
 
 	void CheckReload();
 	void Activate(bool activeApp);
-	virtual GUI::Rectangle GetClientRectangle()=0;
+	virtual GUI::Rectangle GetClientRectangle() = 0;
 	void Redraw();
 
 	enum { splitOut = 1, splitSidebar = 2, splitFindRes };
@@ -863,95 +885,56 @@ protected:
 	bool RecordMacroCommand(SCNotification *notification);
 
 	enum GrepFlags {
-	    grepNone = 0, grepWholeWord = 1, grepMatchCase = 2, grepStdOut = 4,
+		grepNone = 0, grepWholeWord = 1, grepMatchCase = 2, grepStdOut = 4,
 		grepDot = 8, grepBinary = 16, grepRegExp = 32, grepSubDir = 64, grepGroup = 128, grepProgress = 256
 	};
-	typedef struct GrepOut{
+	typedef struct GrepOut {
 		SString strOut;
 		int iLines;
 		int iFiles;
 		int iInFiles;
-	}GrepOut;
-	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, size_t basePath, GrepOut *grepOut, std::regex *pRegExp); //!-change-[FindResultListStyle]
+	} GrepOut;
+	void GrepRecursive(GrepFlags gf, FilePath baseDir, const char *searchString, const GUI::gui_char *fileTypes, size_t basePath, GrepOut *grepOut, std::regex *pRegExp);
 	void CountRecursive(GrepFlags gf, FilePath baseDir, const GUI::gui_char *fileTypes, GrepOut *grepOut);
 	bool strstrRegExp(char *text, const char *sub, void *pRegExp, GrepFlags gf, const char* charsAccented);
 	void InternalGrep(GrepFlags gf, const GUI::gui_char *directory, const GUI::gui_char *files, const char *search);
 
 	void SendOneProperty(const char *kind, const char *key, const char *val);
 	void PropertyFromDirector(const char *arg);
-	void WideChrToMyltiBate(SString strIn, SString &strOut);//????????????? ??? ???????????? ?????? ? ???????
+	void WideChrToMyltiBate(SString strIn, SString &strOut);
 	int internalRunLuaThread(SString strCmd, SString strDesc);
-
-
-	// ExtensionAPI
-	sptr_t Send(Pane p, Scintilla::Message, uptr_t wParam = 0, sptr_t lParam = 0);
-	char *Range(Pane p, Sci_Position start, Sci_Position end);
-	char *Line(Pane p, Sci_Position line, int bNeedEnd);
-	void Remove(Pane p, Sci_Position start, Sci_Position end);
-	void Insert(Pane p, Sci_Position pos, const char *s);
-	void Trace(const char *s);
-	void UnsetProperty(const char *key);
-	uptr_t GetInstance();
-	void ShutDown();
-public:
-	void DoMenuCommand(int cmdID);
-protected:
-	virtual int ActiveEditor();
-	char *GetTranslation(const char *s, bool retainIfNotFound = true); //!-add-[LocalizationFromLua]
-	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter) = 0;
-	virtual void RunInConcole();
-	virtual void RunAsync(int idx)=0;
-	virtual void SetRestart(const char* cmdLine)=0;
 
 	// Valid CurrentWord characters
 	bool iswordcharforsel(char ch);
 	bool isfilenamecharforsel(char ch);
 	bool islexerwordcharforsel(char ch);
-	int OnMenuCommandCallsCount; //!-add-[OnMenuCommand]
+	int OnMenuCommandCallsCount;
 	virtual bool SwitchMacroHook(bool bSet) = 0;
-public:
-	char *Property(const char *key);
-	SString PropertyNewExpand(const char *base, const char* fileNameExt);
-
-	enum { maxParam = 4 };
-
-	SciTEBase();
-	virtual ~SciTEBase();
-
-	void SetProperty(const char *key, const char *val);
-	
-	GUI::WindowID GetID() { return wSciTE.GetID(); }
-
 	EditorSide GetEditorIdm(bool direct = true) { return (wEditor.SameAs(wEditorL) == direct) ? EditorSide::SrcWin : EditorSide::CoSrcWin; }
 
-//!-start-[GetApplicationProps]
-	static SciTEBase *GetApplicationInstance();
-	static PropSetFile *GetProps() {
-		SciTEBase *app = GetApplicationInstance();
-		if (app != NULL) return &(app->props);
-		return NULL;
-	}
-//!-end-[GetApplicationProps]
-	enum OutputMode{ outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
+	enum OutputMode { outConsole = 1, outLua = 2, outInterface = 3, outluaPrint = 4, outNull = 0 };
 #if defined(_DEBUG) && defined(H_CONCOLEMODE)
 	OutputMode curOutMode = static_cast<OutputMode>(H_CONCOLEMODE);
 #else
 	OutputMode curOutMode = outNull;
 #endif
-	virtual Ihandle * IupTab(int id) = 0;
 	bool bFinalise = false;
-	bool bBlockUIUpdate = false;
-	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
-	virtual bool IsRunAsAdmin() = 0;
-	virtual bool NewInstance(const char* arg, bool asAdmin)= 0;
 	Scintilla::Colour ColourOfProperty(const char *key, Scintilla::Colour colourDefault, bool invClr = false);
-	unsigned long InvertColor(unsigned long clr);
-	IupLayoutWnd layout;
 
+// ====================================================================
+// private: методы, используемые только внутри SciTEBase
+// ====================================================================
 private:
 	// un-implemented copy-constructor and assignment operator
 	SciTEBase(const SciTEBase&);
-	//void operator=(const SciTEBase&);
+
+	void OpenUriList(const char *) {}
+	void EliminateDuplicateWords(char *words);
+	bool StartAutoComplete();
+	bool StartAutoCompleteWord(bool onlyOneWord);
+	bool StartBlockComment();
+	bool StartBoxComment();
+	bool StartStreamComment();
 };
 
 
