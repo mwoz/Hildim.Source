@@ -860,22 +860,23 @@ static int do_startProc(lua_State* L) {
 	return 1;
 }
 
-// запустить через CreateProcess в скрытом режиме
-static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* strOut, const char *longpar)
+// Обработать вывод CreateProcess и вернуть результат
+static BOOL RunProcessHide(CPath& path, DWORD* out_exitcode, CSimpleString* strOut, const char* longpar, lua_State *L)
 {
 	static const int MAX_CMD = 10240;
+	static const DWORD PROCESS_TIMEOUT_MS = 30000; // 30 секунд таймаут
 
 	STARTUPINFOA si = { sizeof(STARTUPINFOA) };
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_HIDE;
 
-	// устанавливаем именованные каналы на потоки ввода/вывода
+	// Инициализировать стандартный вывод на основе типа входа/выхода
 	BOOL bUsePipes = FALSE;
 	HANDLE FWritePipe = NULL;
 	HANDLE FReadPipe = NULL;
 	SECURITY_ATTRIBUTES pa = { sizeof(pa), NULL, TRUE };
-	bUsePipes = ::CreatePipe( &FReadPipe, &FWritePipe, &pa, 0 );
-	if ( bUsePipes != FALSE )
+	bUsePipes = ::CreatePipe(&FReadPipe, &FWritePipe, &pa, 0);
+	if (bUsePipes != FALSE)
 	{
 		si.hStdOutput = FWritePipe;
 		si.hStdInput = FReadPipe;
@@ -883,48 +884,64 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 		si.dwFlags = STARTF_USESTDHANDLES | si.dwFlags;
 	}
 
-	// запускаем процесс
-	CMemBuffer< char, MAX_CMD > bufCmdLine; // строковой буфер длиной MAX_CMD
+	// Подготовить командную строку
+	CMemBuffer< char, MAX_CMD > bufCmdLine;
 	bufCmdLine.GetBuffer()[0] = 0;
-	strcat( bufCmdLine.GetBuffer(), "\"" );
-	strcat( bufCmdLine.GetBuffer(), path.GetPath() );
-	strcat( bufCmdLine.GetBuffer(), "\"" );
-	if ( path.GetFileParams() != NULL )
+	strcat(bufCmdLine.GetBuffer(), "\"");
+	strcat(bufCmdLine.GetBuffer(), path.GetPath());
+	strcat(bufCmdLine.GetBuffer(), "\"");
+	if (path.GetFileParams() != NULL)
 	{
-		strcat( bufCmdLine.GetBuffer(), " " );
-		strcat( bufCmdLine.GetBuffer(), path.GetFileParams() );
+		strcat(bufCmdLine.GetBuffer(), " ");
+		strcat(bufCmdLine.GetBuffer(), path.GetFileParams());
 	}
 	if (longpar)
 	{
-		strcat( bufCmdLine.GetBuffer(), " " );
-		strcat( bufCmdLine.GetBuffer(), longpar);
+		strcat(bufCmdLine.GetBuffer(), " ");
+		strcat(bufCmdLine.GetBuffer(), longpar);
 	}
-	char *lp = NULL;
+	char* lp = NULL;
 	if (strlen(currentDir) > 0)	lp = currentDir;
 	PROCESS_INFORMATION pi = { 0 };
-	BOOL RetCode = ::CreateProcessA( NULL, // не используем имя файла, все в строке запуска
-									 bufCmdLine.GetBuffer(), // строка запуска
-									 NULL, // Process handle not inheritable
-									 NULL, // Thread handle not inheritable
-									 TRUE, // Set handle inheritance to FALSE
-									 0, // No creation flags
-									 NULL, // Use parent's environment block
-									 lp, //path.GetDirectory(), // устанавливаем дирректорию запуска
-									 &si, // STARTUPINFO
-									 &pi ); // PROCESS_INFORMATION
+	BOOL RetCode = ::CreateProcessA(NULL,
+		bufCmdLine.GetBuffer(),
+		NULL,
+		NULL,
+		TRUE,
+		0,
+		NULL,
+		lp,
+		&si,
+		&pi);
 
-	// если провалили запуск сообщаем об ошибке
-	if ( RetCode == FALSE )
+	// если процесс завершился ошибкой на старте
+	if (RetCode == FALSE)
 	{
-		::CloseHandle( FReadPipe );
-		::CloseHandle( FWritePipe );
+		::CloseHandle(FReadPipe);
+		::CloseHandle(FWritePipe);
 		return FALSE;
 	}
 
-	// закрываем описатель потока, в нем нет необходимости 
-	::CloseHandle( pi.hThread );
+	// Процесс запущен успешно, поток нам не нужен
+	::CloseHandle(pi.hThread);
 
-	// ожидаем завершение работы процесса
+	// Закрыть конец записи в родительском процессе
+	::CloseHandle(FWritePipe);
+	FWritePipe = NULL;
+
+	// Установить pipe в неблокирующий режим (non-blocking)
+	DWORD dwMode = PIPE_NOWAIT;
+	if (!::SetNamedPipeHandleState(FReadPipe, &dwMode, NULL, NULL))
+	{
+		::CloseHandle(pi.hProcess);
+		::CloseHandle(FReadPipe);
+		return FALSE;
+	}
+
+	// Получить текущее время для отслеживания таймаута
+	DWORD dwStartTime = ::GetTickCount();
+
+	// Читать стандартный вывод дочернего процесса
 	try
 	{
 		DWORD BytesToRead = 0;
@@ -932,13 +949,36 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 		DWORD TotalBytesAvail = 0;
 		DWORD PipeReaded = 0;
 		DWORD exit_code = 0;
-		CMemBuffer< char, MAX_CMD > bufStr; // строковой буфер длиной MAX_CMD
-		while ( ::PeekNamedPipe( FReadPipe, NULL, 0, &BytesRead, &TotalBytesAvail, NULL ) )
+		CMemBuffer< char, MAX_CMD > bufStr;
+
+		while (TRUE)
 		{
-			if ( TotalBytesAvail == 0 )
+			// Проверить таймаут
+			DWORD dwElapsedTime = ::GetTickCount() - dwStartTime;
+			if (dwElapsedTime >= 3000)
 			{
-				if ( ::GetExitCodeProcess( pi.hProcess, &exit_code ) == FALSE ||
-					 exit_code != STILL_ACTIVE )
+				// Таймаут истёк, завершить процесс принудительно
+				::TerminateProcess(pi.hProcess, 1);
+				luaL_error(L, "The command:\n%s\nwas terminated by timeout", lua_tostring(L, 1));
+				break;
+			}
+
+			// PeekNamedPipe теперь не будет блокироваться
+			if (::PeekNamedPipe(FReadPipe, NULL, 0, &BytesRead, &TotalBytesAvail, NULL) == FALSE)
+			{
+				// Ошибка при чтении из pipe
+				DWORD dwError = ::GetLastError();
+				if (dwError == ERROR_PIPE_NOT_CONNECTED || dwError == ERROR_BROKEN_PIPE)
+				{
+					// Процесс завершился
+					break;
+				}
+			}
+
+			if (TotalBytesAvail == 0)
+			{
+				if (::GetExitCodeProcess(pi.hProcess, &exit_code) == FALSE ||
+					exit_code != STILL_ACTIVE)
 				{
 					break;
 				}
@@ -950,9 +990,9 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 			}
 			else
 			{
-				while ( TotalBytesAvail > BytesRead )
+				while (TotalBytesAvail > BytesRead)
 				{
-					if ( TotalBytesAvail - BytesRead > MAX_CMD - 1 )
+					if (TotalBytesAvail - BytesRead > MAX_CMD - 1)
 					{
 						BytesToRead = MAX_CMD - 1;
 					}
@@ -960,19 +1000,19 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 					{
 						BytesToRead = TotalBytesAvail - BytesRead;
 					}
-					if ( ::ReadFile( FReadPipe,
-									 bufCmdLine.GetBuffer(),
-									 BytesToRead,
-									 &PipeReaded,
-									 NULL ) == FALSE )
+					if (::ReadFile(FReadPipe,
+						bufCmdLine.GetBuffer(),
+						BytesToRead,
+						&PipeReaded,
+						NULL) == FALSE)
 					{
 						break;
 					}
-					if ( PipeReaded <= 0 ) continue;
+					if (PipeReaded <= 0) continue;
 					BytesRead += PipeReaded;
-					bufCmdLine[ PipeReaded ] = '\0';
-					::OemToAnsi( bufCmdLine.GetBuffer(), bufStr.GetBuffer() );
-					strOut->Append( bufStr.GetBuffer() );
+					bufCmdLine[PipeReaded] = '\0';
+					::OemToAnsi(bufCmdLine.GetBuffer(), bufStr.GetBuffer());
+					strOut->Append(bufStr.GetBuffer());
 				}
 			}
 		}
@@ -981,11 +1021,15 @@ static BOOL RunProcessHide( CPath& path, DWORD* out_exitcode, CSimpleString* str
 	{
 	}
 
-	// Код завершения процесса
-	::GetExitCodeProcess( pi.hProcess, out_exitcode );
-	::CloseHandle( pi.hProcess );
-	::CloseHandle( FReadPipe );
-	::CloseHandle( FWritePipe );
+	// Дождаться завершения процесса
+	::WaitForSingleObject(pi.hProcess, 1000);
+
+	// Получить код выхода процесса
+	::GetExitCodeProcess(pi.hProcess, out_exitcode);
+	::CloseHandle(pi.hProcess);
+	::CloseHandle(FReadPipe);
+	if (FWritePipe != NULL)
+		::CloseHandle(FWritePipe);
 	return TRUE;
 }
 
@@ -1220,7 +1264,7 @@ static int exec( lua_State* L )
 
 	if ( useConsoleOut != FALSE )
 	{
-		bSuccess = RunProcessHide( file, &exit_code, &strOut, longpar) ||
+		bSuccess = RunProcessHide( file, &exit_code, &strOut, longpar, L) ||
 				   ExecuteHide( file, &exit_code, &strOut, longpar);
 	}
 	else
