@@ -1380,6 +1380,11 @@ static int cf_change_tab(lua_State* L) {
 	host->ChangeTabWnd(insertIn);
 	return 1;
 }
+static int cf_clone_tab(lua_State* L) {
+	int insertIn = lua_isnil(L, 1) ? -1 : static_cast<int>(lua_tointeger(L, 1));
+	host->CloneTab(insertIn);
+	return 1;
+}
 
 static int cf_props_metatable_newindex(lua_State *L) {
 	int selfArg = lua_isuserdata(L, 1) ? 1 : 0;
@@ -2772,6 +2777,9 @@ static bool InitGlobalScope(bool checkProperties, bool forceReload = false) {
 
 	lua_pushcfunction(luaState, cf_change_tab);
 	lua_setfield(luaState, -2, "ChangeTab");
+
+	lua_pushcfunction(luaState, cf_clone_tab);
+	lua_setfield(luaState, -2, "CloneTab");
 
 	// buffers
 	lua_newtable(luaState);

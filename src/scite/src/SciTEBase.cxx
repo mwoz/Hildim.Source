@@ -874,21 +874,6 @@ SString SciTEBase::EncodeString(const SString &s) {
 	return SString(s);
 }
 
-bool SciTEBase::FindHasText() const {
-	return findWhat[0];
-}
-
-void SciTEBase::MoveBack(int distance) {
-	Scintilla::Sci_CharacterRange cr = GetSelection();
-	SetSelection(cr.cpMin - distance, cr.cpMin - distance);
-}
-
-void SciTEBase::UIClosed() {
-}
-
-void SciTEBase::UIHasFocus() {
-}
-
 void SciTEBase::OutputAppendStringSynchronised(const char *s, int len) {				 //
 	if (len == -1)
 		len = static_cast<int>(strlen(s));

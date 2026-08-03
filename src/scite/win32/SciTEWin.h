@@ -226,7 +226,6 @@ protected:
 	void Command(WPARAM wParam, LPARAM lParam);
 	HWND MainHWND();
 
-	virtual void UIClosed();
 	virtual int PerformGrepEx(const char *sParams, const char *findWhat, const char *directory, const char *filter);
 
 

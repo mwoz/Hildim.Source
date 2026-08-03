@@ -1730,12 +1730,6 @@ void SciTEBase::SetPropertiesInitial() {
 	if (foldMarginWidth == 0)
 		foldMarginWidth = foldMarginWidthDefault;
 
-	matchCase = props.GetInt("find.replace.matchcase");
-	regExp = props.GetInt("find.replace.regexp");
-	unSlash = props.GetInt("find.replace.escapes");
-	wrapFind = props.GetInt("find.replace.wrap", 1);
-	focusOnReplace = props.GetInt("find.replacewith.focus", 1);
-	subDirSearch = props.GetInt("find.in.subfolders", 1);
 }
 
 void SciTEBase::ReadPropertiesInitial() {

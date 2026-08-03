@@ -271,46 +271,6 @@ struct StyleAndWords {
 	bool IsSingleChar() { return words.length() == 1; }
 };
 
-// Interface between SciTE and dialogs and strips for find and replace
-class Searcher {
-public:
-	SString findWhat;
-	SString replaceWhat;
-
-	bool wholeWord = false;
-	bool matchCase = false;
-	bool regExp = false;
-	bool unSlash = false;
-	bool wrapFind = true;
-	bool reverseFind = false;
-	bool subDirSearch = false;
-
-	bool replacing = false;
-	bool havefound = false;
-	bool findInStyle = false;
-	int  findStyle = 0;
-
-	bool focusOnReplace = false;
-
-	Searcher() {}
-
-	virtual bool FindHasText() const = 0;
-	virtual void MoveBack(int distance) = 0;
-
-	virtual void UIClosed() = 0;
-	virtual void UIHasFocus() = 0;
-};
-
-class SearchUI {
-protected:
-	Searcher *pSearcher;
-public:
-	SearchUI() : pSearcher(0) {
-	}
-	void SetSearcher(Searcher *pSearcher_) {
-		pSearcher = pSearcher_;
-	}
-};
 typedef struct sb_colors { long left; long right; long middle; } sb_colors;
 struct sb_colorsetting {
 	int size;
@@ -432,7 +392,7 @@ public:
 	Scintilla::Colour Convert(Scintilla::Colour colorIn);
 };
 
-class SciTEBase : public ExtensionAPI, public Searcher {
+class SciTEBase : public ExtensionAPI {
 protected:
 	GUI::gui_string windowName = L"HildiM";
 	//FilePath filePath;
@@ -663,7 +623,7 @@ protected:
 	void ShiftTab(int indexFrom, int indexTo, bool mose = false);
 	void MoveTabRight();
 	void MoveTabLeft();
-	void CloneTab();
+	void CloneTab(int insertIn = -1);
 	void ChangeTabWnd(int insertIn = -1);
 	virtual void OrderTabsBy(std::map<int, int> &order);
 	virtual void PostLoadScript() = 0;
@@ -791,10 +751,7 @@ protected:
 	virtual SString EncodeString(const SString &s);
 	virtual int WindowMessageBox(GUI::Window &w, const GUI::gui_string &msg, int style) = 0;
 	virtual int WindowMessageBox(const char* msg, int flag, const GUI::gui_char *p1, const GUI::gui_char *p2, const GUI::gui_char *p3) = 0;
-	virtual bool FindHasText() const;
-	virtual void MoveBack(int distance);
-	virtual void UIClosed();
-	virtual void UIHasFocus();
+
 	void GoMatchingBrace(bool select);
 	void OutputAppendStringSynchronised(const char *s, int len = -1);
 	virtual void MakeOutputVisible(GUI::ScintillaWindow &wBottom);

@@ -498,13 +498,15 @@ void SciTEBase::ChangeTabWnd(int insertIn) {
 	buffers.stackcurrent = origStackCur;
 }
 
-void SciTEBase::CloneTab(){
+void SciTEBase::CloneTab(int insertIn){
 	if (buffers.CurrentBuffer()->pFriend || buffers.CurrentBuffer()->IsUntitled()) {
 		extender.raiseLuaError("repeated cloning of tabs is not allowed");
 		return;
 	}
 	int iPrev = buffers.Current();
 	EditorSide coSide = buffers.CurrentBuffer()->editorSide == EditorSide::CoSrcWin ? EditorSide::SrcWin : EditorSide::CoSrcWin;
+	if (insertIn >= (int)buffers.buffers.size() || buffers.buffers[insertIn].editorSide != coSide)
+		insertIn = -1;
 	if (buffers.GetIndexByDoc(wEditor.DocPointer(), coSide) > -1) {
 		extender.raiseLuaError("Critical error: Dublicate DocPointer, bat not cloned. Unable to clone");
 		return;
@@ -543,8 +545,14 @@ void SciTEBase::CloneTab(){
 	CurrentBuffer()->pFriend = true;
 	UniMode u = CurrentBuffer()->unicodeMode;
 	
-	buffers.SetCurrent(buffers.Add(d));
+	int newIdx = buffers.Add(d);
+	buffers.SetCurrent(newIdx);
 	//bPrev->pFriend = true;
+	if (insertIn >= 0) {
+		if (iPrev < insertIn)
+			insertIn--;
+		buffers.ShiftTo(newIdx, insertIn + 1);
+	}
 
 	CurrentBuffer()->pFriend = true;
 	CurrentBuffer()->unicodeMode = u;
@@ -558,7 +566,7 @@ void SciTEBase::CloneTab(){
 
 	buffers.CurrentBuffer()->SetTimeFromFile();
 
-	SetDocumentAt(iPrev + 1);
+	SetDocumentAt(insertIn >= 0 ? insertIn + 1 : iPrev + 1);
 
 }
 
@@ -2165,7 +2173,6 @@ bool SciTEBase::GoMessage(int dir, GUI::ScintillaWindow &wBottom) { //!-change-[
 							//if tag is linenumber, get line
 							sourceLine = atol(cTag) - 1;
 						} else {
-							findWhat = cTag;
 							//FindNext(false);
 							//get linenumber for marker from found position
 							sourceLine = wEditor.LineFromPosition(wEditor.CurrentPos());

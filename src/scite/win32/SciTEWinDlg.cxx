@@ -789,13 +789,6 @@ public:
 
 };
 
-
-void SciTEWin::UIClosed() {
-	SciTEBase::UIClosed();
-	props.Set("Replacements", "");
-	WindowSetFocus(wEditor);
-}
-
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp
 
