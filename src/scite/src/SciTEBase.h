@@ -110,10 +110,10 @@ enum UniMode {
 
 enum class EditorSide : int {
 	None = 0,
-	SrcWin = 1,
-	CoSrcWin = 2,
-	OutWin = 3,
-	FindResWin = 4
+	SrcWin = IDM_SRCWIN,
+	CoSrcWin = IDM_COSRCWIN,
+	OutWin = IDM_RUNWIN,
+	FindResWin = IDM_FINDRESWIN
 };
 
 class Buffer : public RecentFile {
@@ -399,20 +399,20 @@ public:
 	char *Property(const char *key);
 	SString PropertyNewExpand(const char *base, const char* fileNameExt);
 	void SetProperty(const char *key, const char *val);
-	virtual int CompareFile(FilePath &fileCompare, const char* txtCompare);
+	int CompareFile(FilePath &fileCompare, const char* txtCompare);
 	unsigned long InvertColor(unsigned long clr);
 
 	// Методы, вызываемые из LuaExtension (были в private SciTEBase)
-	int GetBufferSide(int index) { return static_cast<int>(buffers.buffers[index].editorSide); }
+	int GetBufferSide(int index) { return buffers.buffers[index].editorSide == EditorSide::SrcWin ? 0 : 1; }
 	int GetBufferOrder(int index) { return buffers.GetOrder(index); }
 	time_t GetBufferModTime(int index) { return buffers.buffers[index].fileModTime; }
-	int GetBufferUnicMode(int index) { return static_cast<int>(buffers.buffers[index].unicodeMode); }
+	int GetBufferUnicMode(int index) { return buffers.buffers[index].unicodeMode + IDM_ENCODING_DEFAULT; }
 	bool GetBufferReadOnly(int index) { return buffers.buffers[index].ROMarker; }
 	bool Open_script(const char* path);
 	void SavePositions();
 	void BlockUpdate(int cmd);
 	void Close_script();
-	int Cloned(int index) { return buffers.buffers[index].pFriend ? buffers.buffers[index].FriendIndex() : -1; }
+	int Cloned(int index) { return buffers.buffers[index].pFriend; }
 	int IndexOfClone(int index) { return buffers.buffers[index].FriendIndex(); }
 	int BufferByName(const char* c);
 	void OrderTabsBy(std::map<int, int> &order);
@@ -422,7 +422,7 @@ public:
 
 	// Методы, вызываемые из LuaExtension (были в protected SciTEBase)
 	bool NewFile(const GUI::gui_char* defName = nullptr, const GUI::gui_char* defExt = nullptr, int encoding = 0, const char* txt = nullptr, const GUI::gui_char* path = nullptr, bool unic = false);
-	char GetEditorSide() { return wEditor.SameAs(wEditorL) ? 'L' : 'R'; }
+	char GetEditorSide() { return wEditor.GetPtr() == wEditorL.GetPtr() ? 'L' : 'R'; }
 	void UiDocTabulation(int side, bool forward);
 	char *GetTranslation(const char *s, bool retainIfNotFound = true);
 	virtual void CheckMenus();
@@ -431,15 +431,15 @@ public:
 	int SecondEditorActive();
 	int GetCurrentBufer() { return buffers.Current(); }
 	int GetBuffersCount() { return static_cast<int>(buffers.buffers.size()); }
-	std::string GetBufferName(int i) { return buffers.buffers[i].Name().AsUTF8(); }
+	std::string GetBufferName(int i) { return buffers.buffers[i].AsUTF8(); }
 	bool GetBufferUntitled(int i) { return buffers.buffers[i].IsUntitled(); }
 	void UpdateBuffersCoCurrent();
 	std::string GetCoBufferName();
-	bool GetBuffersSavedState(int i) { return !buffers.buffers[i].isDirty; }
+	bool GetBuffersSavedState(int i) { return !buffers.buffers[i].DocumentNotSaved(); }
 	int GetBufferEncoding(int i) { return buffers.buffers[i]._encoding; }
 	void SetBufferEncoding(int i, int e);
 	int GetBufferFileTime(int i) { return static_cast<int>(buffers.buffers[i].fileModTime); }
-	void ClearBufferFileTime(int i) { buffers.buffers[i].fileModTime = 0; }
+	void ClearBufferFileTime(int i);
 	void SetCoDocumentAt(int index, bool bSetBuffersMenu = true);
 	void SetDocumentAt(int index, bool updateStack = true, bool switchTab = true, bool bExit = false, bool setAround = true);
 	void CloneTab(int insertIn = -1);
@@ -854,7 +854,7 @@ protected:
 
 	void SetPropertiesInitial();
 	SString GetFileNameProperty(const char *name);
-	virtual void ReadPropertiesInitial();
+	void ReadPropertiesInitial();
 	void ResetAllStyles(ScintillaWindowEditor &win, const char * languageName);
 	void ReadFontProperties();
 	StyleAndWords GetStyleAndWords(const char *base);
@@ -866,7 +866,7 @@ protected:
 	SString FindLanguageProperty(const char *pattern, const char *defaultValue = "");
 	int FindIntLanguageProperty(const char *pattern, int defaultValue = 0);
 	virtual void ReadProperties();
-	virtual void ReadPropertiesEx();
+	void ReadPropertiesEx();
 	void SetColourElement(GUI::ScintillaWindow *pWin, int elem, const char *colourProp, const char *alphaProp);
 	void SetOneStyle(GUI::ScintillaWindow &win, int style, const StyleDefinition &sd);
 	void SetStyleFor(GUI::ScintillaWindow &win, const char *language);

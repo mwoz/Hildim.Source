@@ -3024,6 +3024,12 @@ void SciTEBase::SetBufferEncoding(int i, int e) {
 
 }
 
+void SciTEBase::ClearBufferFileTime(int i) {
+	buffers.buffers[i].SetTimeFromFile();
+	SetWindowName();
+	BuffersMenu();
+}
+
 bool SciTEBase::Open_script(const char* path) {
 	GUI::gui_string wstr = GUI::StringFromUTF8(path);
 	return Open(FilePath(wstr.c_str()));
