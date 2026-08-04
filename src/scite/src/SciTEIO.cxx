@@ -113,13 +113,8 @@ void SciTEBase::SetFileName(FilePath openName, bool fixCase, bool setCaption) {
 	props.Set("FileDir", filepath.Directory().AsUTF8().c_str());
 	props.Set("FileName", filepath.BaseName().AsUTF8().c_str());
 	props.Set("FileExt", filepath.Extension().AsUTF8().c_str());
-	std::string fne = filepath.BaseName().AsUTF8().c_str();
-	if (filepath.Extension().AsUTF8().length() > 0) {
-		fne += '.';
-		fne += filepath.Extension().AsUTF8().c_str();
-	}
-	//props.Set("FileNameExt", FileNameExt().AsUTF8().c_str());
-	props.Set("FileNameExt", fne.c_str());
+	props.Set("FileNameExt", filepath.Name().AsUTF8().c_str());
+
 	SetFileProperties(props);	
 	if (setCaption)
 		SetWindowName();

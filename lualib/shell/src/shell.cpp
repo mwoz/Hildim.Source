@@ -1017,8 +1017,9 @@ static BOOL RunProcessHide(CPath& path, DWORD* out_exitcode, CSimpleString* strO
 			}
 		}
 	}
-	catch (...)
-	{
+	catch (std::exception& e)
+	{ 
+		luaL_error(L, "Error when execute command:\n%s\n%s", lua_tostring(L, 1), e.what());
 	}
 
 	// Дождаться завершения процесса
